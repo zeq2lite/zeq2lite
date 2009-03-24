@@ -1,0 +1,5 @@
+SCC = This is a Source Code Control file
+
+[cgame.dsp]
+SCC_Aux_Path = "\\Purgatory\Purgatory\idSourceControl"
+SCC_Project_Name = "$/MissionPack/code/cgame", KWFAAAAA

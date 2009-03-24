@@ -1,0 +1,60 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: ui - Win32 Debug TA--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\WINDOWS\TEMP\RSPE323.TMP" with contents
+[
+/nologo /G5 /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "UI_EXPORTS" /D "MISSIONPACK" /FR"Debug_TA/" /Fp"Debug_TA/ui.pch" /YX /Fo"Debug_TA/" /Fd"Debug_TA/" /FD /GZ /c 
+"D:\Quake III Arena\code\game\bg_misc.c"
+"D:\Quake III Arena\code\game\q_math.c"
+"D:\Quake III Arena\code\game\q_shared.c"
+"D:\Quake III Arena\code\ui\ui_atoms.c"
+"D:\Quake III Arena\code\ui\ui_gameinfo.c"
+"D:\Quake III Arena\code\ui\ui_main.c"
+"D:\Quake III Arena\code\ui\ui_players.c"
+"D:\Quake III Arena\code\ui\ui_shared.c"
+"D:\Quake III Arena\code\ui\ui_syscalls.c"
+"D:\Quake III Arena\code\ui\ui_util.c"
+]
+Creating command line "cl.exe @C:\WINDOWS\TEMP\RSPE323.TMP" 
+Creating temporary file "C:\WINDOWS\TEMP\RSPE324.TMP" with contents
+[
+/nologo /base:"0x40000000" /dll /incremental:yes /pdb:"../Debug/ui.pdb" /map:"Debug_TA/uix86.map" /debug /machine:I386 /def:".\ui.def" /out:"../Debug_TA/uix86.dll" /implib:"Debug_TA/uix86.lib" /pdbtype:sept 
+".\Debug_TA\bg_misc.obj"
+".\Debug_TA\q_math.obj"
+".\Debug_TA\q_shared.obj"
+".\Debug_TA\ui_atoms.obj"
+".\Debug_TA\ui_gameinfo.obj"
+".\Debug_TA\ui_main.obj"
+".\Debug_TA\ui_players.obj"
+".\Debug_TA\ui_shared.obj"
+".\Debug_TA\ui_syscalls.obj"
+".\Debug_TA\ui_util.obj"
+]
+Creating command line "link.exe @C:\WINDOWS\TEMP\RSPE324.TMP"
+<h3>Output Window</h3>
+Compiling...
+bg_misc.c
+q_math.c
+q_shared.c
+ui_atoms.c
+ui_gameinfo.c
+ui_main.c
+ui_players.c
+ui_shared.c
+ui_syscalls.c
+ui_util.c
+Linking...
+   Creating library Debug_TA/uix86.lib and object Debug_TA/uix86.exp
+
+
+
+<h3>Results</h3>
+uix86.dll - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

@@ -1,0 +1,973 @@
+<?xml version="1.0"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.00"
+	Name="q3_ui"
+	SccProjectName="&quot;$/MissionPack/code/q3_ui&quot;, VFLAAAAA"
+	SccAuxPath="\\Purgatory\Purgatory\idSourceControl"
+	SccLocalPath="."
+	SccProvider="MSSCCI:SourceSafe">
+	<Build>
+		<Settings>
+			<Platform
+				Name="Win32"/>
+			<Configuration
+				Name="Release|Win32"
+				IntermediateDirectory=".\Release"
+				OutputDirectory=".\Release"
+				ConfigurationType="2"
+				UseOfMFC="0"
+				ATLMinimizesCRunTimeLibraryUsage="FALSE"
+				CharacterSet="2">
+				<Tool
+					Name="VCBscMakeTool"
+					SuppressStartupMessage="TRUE"
+					OutputFile=".\Release/q3_ui.bsc"/>
+				<Tool
+					Name="VCCLCompilerTool"
+					InlineFunctionExpansion="1"
+					Defines="WIN32;NDEBUG;_WINDOWS;_USRDLL;Q3_UI_EXPORTS"
+					StringPooling="TRUE"
+					RuntimeLibrary="0"
+					PackageFunctions="TRUE"
+					UsePrecompiledHeader="2"
+					PrecompiledHeaderFile=".\Release/q3_ui.pch"
+					AsmListingLocation=".\Release/"
+					ObjectFile=".\Release/"
+					ProgramDataBaseFileName=".\Release/"
+					WarnLevel="3"
+					SuppressStartupMessage="TRUE"/>
+				<Tool
+					Name="VCCustomBuildTool"/>
+				<Tool
+					Name="VCLinkerTool"
+					AdditionalOptions="/MACHINE:I386"
+					AdditionalInputs="odbc32.lib odbccp32.lib"
+					OutputFile="../Release/uix86.dll"
+					LinkIncremental="1"
+					SuppressStartupMessage="TRUE"
+					ModuleDefinitionFile=".\ui.def"
+					ProgramDatabaseFile=".\Release/uix86.pdb"
+					ImportLibrary=".\Release/uix86.lib"/>
+				<Tool
+					Name="VCMIDLTool"
+					Defines="NDEBUG"
+					MkTypLibCompatibility="TRUE"
+					SuppressStartupMessage="TRUE"
+					TargetEnvironment="1"
+					TypeLibraryName=".\Release/q3_ui.tlb"/>
+				<Tool
+					Name="VCPostBuildEventTool"/>
+				<Tool
+					Name="VCPreBuildEventTool"/>
+				<Tool
+					Name="VCPreLinkEventTool"/>
+				<Tool
+					Name="VCResourceCompilerTool"
+					Defines="NDEBUG"
+					Culture="1033"/>
+				<Tool
+					Name="VCSDLTool"/>
+			</Configuration>
+			<Configuration
+				Name="Debug TA|Win32"
+				IntermediateDirectory=".\Debug_TA"
+				OutputDirectory=".\Debug_TA"
+				ConfigurationType="2"
+				UseOfMFC="0"
+				ATLMinimizesCRunTimeLibraryUsage="FALSE"
+				CharacterSet="2">
+				<Tool
+					Name="VCBscMakeTool"
+					SuppressStartupMessage="TRUE"
+					OutputFile=".\Debug_TA/q3_ui.bsc"/>
+				<Tool
+					Name="VCCLCompilerTool"
+					Optimization="0"
+					OptimizeForProcessor="1"
+					Defines="WIN32;_DEBUG;_WINDOWS;_USRDLL;UI_EXPORTS"
+					RuntimeLibrary="1"
+					UsePrecompiledHeader="2"
+					PrecompiledHeaderFile="Debug/q3_ui.pch"
+					AsmListingLocation=".\Debug_TA/"
+					ObjectFile="Debug/"
+					ProgramDataBaseFileName="Debug/"
+					BrowseInformation="1"
+					WarnLevel="3"
+					SuppressStartupMessage="TRUE"
+					DebugInformation="4"/>
+				<Tool
+					Name="VCCustomBuildTool"/>
+				<Tool
+					Name="VCLinkerTool"
+					AdditionalOptions="/MACHINE:I386"
+					AdditionalInputs="odbc32.lib odbccp32.lib"
+					OutputFile="../Debug_TA/uix86_old.dll"
+					LinkIncremental="2"
+					SuppressStartupMessage="TRUE"
+					ModuleDefinitionFile=".\ui.def"
+					GenerateDebug="TRUE"
+					ProgramDatabaseFile="../Debug_TA/ui.pdb"
+					GenerateMapFile="TRUE"
+					MapFileName="Debug_TA/uix86.map"
+					BaseAddress="0x40000000"
+					ImportLibrary="Debug_TA/uix86.lib"/>
+				<Tool
+					Name="VCMIDLTool"
+					Defines="_DEBUG"
+					MkTypLibCompatibility="TRUE"
+					SuppressStartupMessage="TRUE"
+					TargetEnvironment="1"
+					TypeLibraryName=".\Debug_TA/q3_ui.tlb"/>
+				<Tool
+					Name="VCPostBuildEventTool"/>
+				<Tool
+					Name="VCPreBuildEventTool"/>
+				<Tool
+					Name="VCPreLinkEventTool"/>
+				<Tool
+					Name="VCResourceCompilerTool"
+					Defines="_DEBUG"
+					Culture="1033"/>
+				<Tool
+					Name="VCSDLTool"/>
+			</Configuration>
+			<Configuration
+				Name="Debug|Win32"
+				IntermediateDirectory=".\q3_ui___Win32_Debug"
+				OutputDirectory=".\q3_ui___Win32_Debug"
+				ConfigurationType="2"
+				UseOfMFC="0"
+				ATLMinimizesCRunTimeLibraryUsage="FALSE"
+				CharacterSet="2">
+				<Tool
+					Name="VCBscMakeTool"
+					SuppressStartupMessage="TRUE"
+					OutputFile=".\q3_ui___Win32_Debug/q3_ui.bsc"/>
+				<Tool
+					Name="VCCLCompilerTool"
+					Optimization="0"
+					OptimizeForProcessor="1"
+					Defines="WIN32;_DEBUG;_WINDOWS;_USRDLL;UI_EXPORTS"
+					RuntimeLibrary="1"
+					UsePrecompiledHeader="2"
+					PrecompiledHeaderFile="Debug/q3_ui.pch"
+					AsmListingLocation=".\q3_ui___Win32_Debug/"
+					ObjectFile="Debug/"
+					ProgramDataBaseFileName="Debug/"
+					BrowseInformation="1"
+					WarnLevel="3"
+					SuppressStartupMessage="TRUE"
+					DebugInformation="4"/>
+				<Tool
+					Name="VCCustomBuildTool"/>
+				<Tool
+					Name="VCLinkerTool"
+					AdditionalOptions="/MACHINE:I386"
+					AdditionalInputs="odbc32.lib odbccp32.lib"
+					OutputFile="../Debug/uix86.dll"
+					LinkIncremental="2"
+					SuppressStartupMessage="TRUE"
+					ModuleDefinitionFile=".\ui.def"
+					GenerateDebug="TRUE"
+					ProgramDatabaseFile="../Debug/ui.pdb"
+					GenerateMapFile="TRUE"
+					MapFileName="Debug/uix86.map"
+					BaseAddress="0x40000000"
+					ImportLibrary="Debug/uix86.lib"/>
+				<Tool
+					Name="VCMIDLTool"
+					Defines="_DEBUG"
+					MkTypLibCompatibility="TRUE"
+					SuppressStartupMessage="TRUE"
+					TargetEnvironment="1"
+					TypeLibraryName=".\q3_ui___Win32_Debug/q3_ui.tlb"/>
+				<Tool
+					Name="VCPostBuildEventTool"/>
+				<Tool
+					Name="VCPreBuildEventTool"/>
+				<Tool
+					Name="VCPreLinkEventTool"/>
+				<Tool
+					Name="VCResourceCompilerTool"
+					Defines="_DEBUG"
+					Culture="1033"/>
+				<Tool
+					Name="VCSDLTool"/>
+			</Configuration>
+			<Configuration
+				Name="Release TA|Win32"
+				IntermediateDirectory=".\Release_TA"
+				OutputDirectory=".\Release_TA"
+				ConfigurationType="2"
+				UseOfMFC="0"
+				ATLMinimizesCRunTimeLibraryUsage="FALSE"
+				CharacterSet="2">
+				<Tool
+					Name="VCBscMakeTool"
+					SuppressStartupMessage="TRUE"
+					OutputFile=".\Release_TA/q3_ui.bsc"/>
+				<Tool
+					Name="VCCLCompilerTool"
+					InlineFunctionExpansion="1"
+					Defines="WIN32;NDEBUG;_WINDOWS;_USRDLL;Q3_UI_EXPORTS"
+					StringPooling="TRUE"
+					RuntimeLibrary="0"
+					PackageFunctions="TRUE"
+					UsePrecompiledHeader="2"
+					PrecompiledHeaderFile=".\Release_TA/q3_ui.pch"
+					AsmListingLocation=".\Release_TA/"
+					ObjectFile=".\Release_TA/"
+					ProgramDataBaseFileName=".\Release_TA/"
+					WarnLevel="3"
+					SuppressStartupMessage="TRUE"/>
+				<Tool
+					Name="VCCustomBuildTool"/>
+				<Tool
+					Name="VCLinkerTool"
+					AdditionalOptions="/MACHINE:I386"
+					AdditionalInputs="odbc32.lib odbccp32.lib"
+					OutputFile="../Release_TA/uix86_old.dll"
+					LinkIncremental="1"
+					SuppressStartupMessage="TRUE"
+					ModuleDefinitionFile=".\ui.def"
+					ProgramDatabaseFile=".\Release_TA/uix86_old.pdb"
+					ImportLibrary="Release_TA/q3_ui.lib"/>
+				<Tool
+					Name="VCMIDLTool"
+					Defines="NDEBUG"
+					MkTypLibCompatibility="TRUE"
+					SuppressStartupMessage="TRUE"
+					TargetEnvironment="1"
+					TypeLibraryName=".\Release_TA/q3_ui.tlb"/>
+				<Tool
+					Name="VCPostBuildEventTool"/>
+				<Tool
+					Name="VCPreBuildEventTool"/>
+				<Tool
+					Name="VCPreLinkEventTool"/>
+				<Tool
+					Name="VCResourceCompilerTool"
+					Defines="NDEBUG"
+					Culture="1033"/>
+				<Tool
+					Name="VCSDLTool"/>
+			</Configuration>
+		</Settings>
+	</Build>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			<File
+				RelativePath="..\game\bg_misc.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\game\q_math.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\game\q_shared.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui.def">
+			</File>
+			<File
+				RelativePath=".\ui_addbots.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_atoms.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_cdkey.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_cinematics.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_confirm.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_connect.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_controls2.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_credits.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_demo2.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_display.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_gameinfo.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_ingame.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_loadconfig.c">
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_main.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_menu.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_mfield.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_mods.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_network.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_options.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_playermodel.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_players.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_playersettings.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_preferences.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_qmenu.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_removebots.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_saveconfig.c">
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_serverinfo.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_servers2.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_setup.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_sound.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_sparena.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_specifyserver.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_splevel.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_sppostgame.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_spreset.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_spskill.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_startserver.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_syscalls.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_team.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_teamorders.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ui_video.c">
+				<FileConfiguration
+					Name="Debug TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release TA|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl">
+			<File
+				RelativePath=".\keycodes.h">
+			</File>
+			<File
+				RelativePath="..\game\q_shared.h">
+			</File>
+			<File
+				RelativePath=".\ui_local.h">
+			</File>
+			<File
+				RelativePath=".\ui_public.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>
