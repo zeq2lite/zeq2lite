@@ -2354,7 +2354,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	if ( ps->pm_type != PM_SPECTATOR && ps->stats[STAT_HEALTH] <= 0 ) {
 		return;		// no view changes at all
 	}
-/*
+
 	// ADDING FOR ZEQ2
 	// If we're flying, use quaternion multiplication to work on player's
 	// local axes.
@@ -2390,7 +2390,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		AnglesToQuat(offset_angles, quatRot);
 		QuatMul(quatOrient, quatRot, quatResult);
 		QuatToAngles(quatResult, new_angles);
-*/
+
 		// HACK: Because an exact pitch of -90 degrees STILL causes trouble troughout the
 		//       code due to 'bad mathematics', we give a slight nudge if this threatens
 		//       to happen. 2 degrees is not really noticeable, and is big enough to
@@ -2410,10 +2410,10 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		for (i=0; i<3; i++) {
 			ps->viewangles[i] = AngleNormalize180(new_angles[i]);
 			ps->delta_angles[i] = ANGLE2SHORT(ps->viewangles[i]) - cmd->angles[i];
-		}/*
+		}
 		return;
 	}
-*/
+
 	// We've been flying and we've inverted our pitch to a good amount upside down.
 	// Cheat the view, by adjusting the yaw to 'swing around' and adjusting the pitch to match.
 	pitchNorm = AngleNormalize180(ps->viewangles[PITCH]);
@@ -2443,7 +2443,6 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 				temp = -16000;
 			}
 		}
-/*
 		// ADDING FOR ZEQ2
 		// Incase we've been flying, our roll might've been changed.
 		if ( i == ROLL && ps->viewangles[i] != 0) {
@@ -2451,7 +2450,6 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 			ps->delta_angles[i] = 0 - cmd->angles[i];
 		}
 		// END ADDING
-*/
 		ps->viewangles[i] = SHORT2ANGLE(temp);
 	}
 }
