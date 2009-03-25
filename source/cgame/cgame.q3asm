@@ -1,4 +1,4 @@
--o "\quake3\zeq2\vm\cgame"
+-o "..\..\cgame.qvm"
 cg_main
 ..\cg_syscalls
 cg_consolecmds

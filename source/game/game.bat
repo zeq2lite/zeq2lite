@@ -1,4 +1,5 @@
 @echo off
+md vm
 cd vm
 
 set cc=call ..\..\compile.bat
@@ -85,7 +86,7 @@ if "%1"=="TA" goto TA
 %cc%  ../g_weapPhysAttributes.c
 @if errorlevel 1 goto quit
 
-..\..\..\bin_nt\q3asm -f ../game
+..\..\q3asm -f ../game
 goto quit
 
 :TA
@@ -162,3 +163,4 @@ q3asm -f ../game
 :quit
 del *.asm
 cd ..
+rd vm

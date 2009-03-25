@@ -1,4 +1,5 @@
 @echo off
+md vm
 cd vm
 
 set cc=call ..\..\compile.bat -DCGAME
@@ -81,7 +82,7 @@ if "%1"=="TA" goto TA
 @if errorlevel 1 goto quit
 
 
-..\..\..\bin_nt\q3asm -f ../cgame
+..\..\q3asm -f ../cgame
 goto quit
 
 :TA
@@ -144,3 +145,4 @@ q3asm -f ../cgame_ta
 :quit
 del *.asm
 cd ..
+rd vm
