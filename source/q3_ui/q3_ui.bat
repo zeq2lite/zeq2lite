@@ -1,4 +1,5 @@
 @echo off
+md vm
 cd vm
 
 set cc=call ..\..\compile_q3_ui.bat
@@ -90,7 +91,8 @@ rem @if errorlevel 1 goto quit
 %cc% ../ui_mods.c
 @if errorlevel 1 goto quit
 
-..\..\..\bin_nt\q3asm -f ../q3_ui
+..\..\q3asm -f ../q3_ui
 del *.asm
 :quit
 cd ..
+rd vm
