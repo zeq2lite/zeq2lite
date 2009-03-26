@@ -1606,7 +1606,7 @@ static void PM_Footsteps( void ) {
 	// ADDING FOR ZEQ2
 	// If we're dashing, fill in correct leg animations.
 	// Leave cycle intact, but don't advance.
-	if ( VectorLength(pm->ps->dashDir ) > 0.0f ) {
+	if ( VectorLength(pm->ps->dashDir ) > 0.0f && pm->xyspeed >= 500) {
 		if ( pm->ps->dashDir[0] > 0 ) {
 			PM_ContinueLegsAnim( LEGS_DASH_FORWARD );
 		} else if ( pm->ps->dashDir[0] < 0 ) {
@@ -1642,22 +1642,22 @@ static void PM_Footsteps( void ) {
 		}
 
 		if ( pm->cmd.forwardmove > 0 ) {
-			PM_ContinueLegsAnim( LEGS_DASH_FORWARD );
+			if ( pm->ps->pm_flags & PMF_BOOST_HELD ) {
+				PM_ContinueLegsAnim( LEGS_FLY_FORWARD );
+			} else {
+				PM_ContinueLegsAnim( LEGS_DASH_FORWARD );
+			}
 		} else if ( pm->cmd.forwardmove < 0 ) {
-			PM_ContinueLegsAnim( LEGS_DASH_BACKWARD );
+			if ( pm->ps->pm_flags & PMF_BOOST_HELD ) {
+				PM_ContinueLegsAnim( LEGS_FLY_BACKWARD );
+			} else {
+				PM_ContinueLegsAnim( LEGS_DASH_BACKWARD );
+			}
 		} else if ( pm->cmd.rightmove > 0 ) {
 			PM_ContinueLegsAnim( LEGS_DASH_RIGHT );
 		} else if ( pm->cmd.rightmove < 0 ) {
 			PM_ContinueLegsAnim( LEGS_DASH_LEFT );
 		}
-
-		/*
-		if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
-			PM_ContinueLegsAnim( LEGS_FLY_BACKWARD );
-		} else {
-			PM_ContinueLegsAnim( LEGS_FLY_FORWARD );
-		}
-		*/
 
 		return;
 	}
