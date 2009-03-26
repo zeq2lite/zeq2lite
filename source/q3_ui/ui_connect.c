@@ -165,7 +165,12 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	if ( !overlay ) {
 		// draw the dialog background
 		UI_SetColor( color_white );
+#if 0	// JUHOX: draw background picture for connect screen
 		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+#else
+		UI_DrawBackPic(qtrue);
+//		UI_DrawHandlePic(30, 35, 580, 36, uis.menuBackTitleShader);	// "H U N T"
+#endif
 	}
 
 	// see what information we should display

@@ -338,15 +338,26 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 	// draw the colored text
 	trap_R_SetColor( color );
 	
+	// MDave: apply the new scaling
+#if 0
 	ax = x * uis.scale + uis.bias;
 	ay = y * uis.scale;
+#else
+	ax = x * uis.scaleX;
+	ay = y * uis.scaleY;
+#endif
 
 	s = str;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
+			// MDave: apply the new scaling
+#if 0
 			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.scale;
+#else
+			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.scaleX;
+#endif
 		}
 		else if ( ch >= 'A' && ch <= 'Z' ) {
 			ch -= 'A';
@@ -354,10 +365,21 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 			frow = (float)propMapB[ch][1] / 256.0f;
 			fwidth = (float)propMapB[ch][2] / 256.0f;
 			fheight = (float)PROPB_HEIGHT / 256.0f;
+			// MDave: apply the new scaling
+#if 0
 			aw = (float)propMapB[ch][2] * uis.scale;
 			ah = (float)PROPB_HEIGHT * uis.scale;
+#else
+			aw = (float)propMapB[ch][2] * uis.scaleX;
+			ah = (float)PROPB_HEIGHT * uis.scaleY;
+#endif
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol+fwidth, frow+fheight, uis.charsetPropB );
+			// MDave: apply the new scaling
+#if 0
 			ax += (aw + (float)PROPB_GAP_WIDTH * uis.scale);
+#else
+			ax += (aw + (float)PROPB_GAP_WIDTH * uis.scaleX);
+#endif
 		}
 		s++;
 	}
@@ -448,27 +470,48 @@ static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t co
 	// draw the colored text
 	trap_R_SetColor( color );
 	
+	// JUHOX: apply the new scaling
+#if 0	
 	ax = x * uis.scale + uis.bias;
 	ay = y * uis.scale;
+#else
+	ax = x * uis.scaleX;
+	ay = y * uis.scaleY;
+#endif
 
 	s = str;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
+			// JUHOX: apply the new scaling
+#if 0
 			aw = (float)PROP_SPACE_WIDTH * uis.scale * sizeScale;
+#else
+			aw = (float)PROP_SPACE_WIDTH * uis.scaleX * sizeScale;
+#endif
 		}
 		else if ( propMap[ch][2] != -1 ) {
 			fcol = (float)propMap[ch][0] / 256.0f;
 			frow = (float)propMap[ch][1] / 256.0f;
 			fwidth = (float)propMap[ch][2] / 256.0f;
 			fheight = (float)PROP_HEIGHT / 256.0f;
+			// JUHOX: apply the new scaling
+#if 0
 			aw = (float)propMap[ch][2] * uis.scale * sizeScale;
 			ah = (float)PROP_HEIGHT * uis.scale * sizeScale;
+#else
+			aw = (float)propMap[ch][2] * uis.scaleX * sizeScale;
+			ah = (float)PROP_HEIGHT * uis.scaleY * sizeScale;
+#endif
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol+fwidth, frow+fheight, charset );
 		}
-
+		// JUHOX: apply the new scaling
+#if 0
 		ax += (aw + (float)PROP_GAP_WIDTH * uis.scale * sizeScale);
+#else
+		ax += (aw + (float)PROP_GAP_WIDTH * uis.scaleX * sizeScale);
+#endif
 		s++;
 	}
 
@@ -575,10 +618,18 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 	// draw the colored text
 	trap_R_SetColor( color );
 	
+	// JUHOX: apply the new scaling
+#if 0	
 	ax = x * uis.scale + uis.bias;
 	ay = y * uis.scale;
 	aw = charw * uis.scale;
 	ah = charh * uis.scale;
+#else
+	ax = x * uis.scaleX;
+	ay = y * uis.scaleY;
+	aw = charw * uis.scaleX;
+	ah = charh * uis.scaleY;
+#endif
 
 	s = str;
 	while ( *s )
@@ -608,6 +659,30 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 	}
 
 	trap_R_SetColor( NULL );
+}
+
+/*
+=================
+JUHOX: UI_DrawStrlen
+
+Returns character count, skiping color escape codes
+Exact copy of CG_DrawStrlen()
+=================
+*/
+int UI_DrawStrlen(const char *str) {
+	const char *s = str;
+	int count = 0;
+
+	while (*s) {
+		if (Q_IsColorString(s)) {
+			s += 2;
+		} else {
+			count++;
+			s++;
+		}
+	}
+
+	return count;
 }
 
 /*
@@ -664,13 +739,23 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 	{
 		case UI_CENTER:
 			// center justify at x
+			// JUHOX: use UI_DrawStrlen() instead of strlen
+#if 0
 			len = strlen(str);
+#else
+			len = UI_DrawStrlen(str);
+#endif
 			x   = x - len*charw/2;
 			break;
 
 		case UI_RIGHT:
 			// right justify at x
+			// JUHOX: use UI_DrawStrlen() instead of strlen
+#if 0
 			len = strlen(str);
+#else
+			len = UI_DrawStrlen(str);
+#endif
 			x   = x - len*charw;
 			break;
 
@@ -992,6 +1077,8 @@ void UI_Init( void ) {
 	trap_GetGlconfig( &uis.glconfig );
 
 	// for 640x480 virtualized screen
+	// JUHOX: wide screen option not very helpful; instead scale X & Y independent from each other
+#if 0
 	uis.scale = uis.glconfig.vidHeight * (1.0/480.0);
 	if ( uis.glconfig.vidWidth * 480 > uis.glconfig.vidHeight * 640 ) {
 		// wide screen
@@ -1001,6 +1088,10 @@ void UI_Init( void ) {
 		// no wide screen
 		uis.bias = 0;
 	}
+#else
+	uis.scaleX = uis.glconfig.vidWidth / 640.0;
+	uis.scaleY = uis.glconfig.vidHeight / 480.0;
+#endif
 
 	// initialize the menu system
 	Menu_Cache();
@@ -1018,10 +1109,18 @@ Adjusted for resolution and screen aspect ratio
 */
 void UI_AdjustFrom640( float *x, float *y, float *w, float *h ) {
 	// expect valid pointers
+	// JUHOX: apply the new scaling
+#if 0
 	*x = *x * uis.scale + uis.bias;
 	*y *= uis.scale;
 	*w *= uis.scale;
 	*h *= uis.scale;
+#else
+	*x *= uis.scaleX;
+	*y *= uis.scaleY;
+	*w *= uis.scaleX;
+	*h *= uis.scaleY;
+#endif
 }
 
 void UI_DrawNamedPic( float x, float y, float width, float height, const char *picname ) {
@@ -1104,6 +1203,27 @@ void UI_SetColor( const float *rgba ) {
 
 void UI_UpdateScreen( void ) {
 	trap_UpdateScreen();
+}
+
+/*
+=================
+JUHOX: UI_DrawBackPic
+=================
+*/
+void UI_DrawBackPic(qboolean drawPic) {
+	float x, y, w, h;
+
+	if (!drawPic) {
+		UI_FillRect(0, 0, 640, 480, colorBlack);
+	}
+	else {
+		x = 0;
+		y = 0;
+		w = 640;
+		h = 480;
+		UI_AdjustFrom640(&x, &y, &w, &h);
+		trap_R_DrawStretchPic(x, y, w, h, 0, 0, 1, 768.0/1024.0, uis.menuBackShader);
+	}
 }
 
 /*

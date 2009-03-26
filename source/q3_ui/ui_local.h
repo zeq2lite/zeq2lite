@@ -524,8 +524,14 @@ typedef struct {
 	qhandle_t			cursor;
 	qhandle_t			rb_on;
 	qhandle_t			rb_off;
+	// Scale modification from Hunt mod.
+#if 0
 	float				scale;
 	float				bias;
+#else
+	float				scaleX;
+	float				scaleY;
+#endif
 	qboolean			demoversion;
 	qboolean			firstdraw;
 } uiStatic_t;
@@ -548,6 +554,7 @@ extern void			UI_DrawBannerString( int x, int y, const char* str, int style, vec
 extern float		UI_ProportionalSizeScale( int style );
 extern void			UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color );
 extern int			UI_ProportionalStringWidth( const char* str );
+extern int			UI_DrawStrlen(const char *str);	// JUHOX
 extern void			UI_DrawString( int x, int y, const char* str, int style, vec4_t color );
 extern void			UI_DrawChar( int x, int y, int ch, int style, vec4_t color );
 extern qboolean 	UI_CursorInRect (int x, int y, int width, int height);
@@ -560,6 +567,7 @@ extern void			UI_PopMenu (void);
 extern void			UI_ForceMenuOff (void);
 extern char			*UI_Argv( int arg );
 extern char			*UI_Cvar_VariableString( const char *var_name );
+extern void			UI_DrawBackPic(qboolean drawPic);	// JUHOX
 extern void			UI_Refresh( int time );
 extern void			UI_StartDemoLoop( void );
 extern qboolean		m_entersound;
