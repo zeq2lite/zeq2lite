@@ -2,27 +2,34 @@
 md vm
 cd vm
 
-call compile ui_main.c
+set cc=call ..\..\compile.bat
+
+%cc% ../ui_main.c
 @if errorlevel 1 goto quit
-call compile ../game/bg_misc.c
+%cc% ../../game/bg_misc.c
 @if errorlevel 1 goto quit
-call compile ../game/bg_lib.c
+%cc% ../../game/bg_lib.c
 @if errorlevel 1 goto quit
-call compile ../game/q_math.c
+%cc% ../../game/q_math.c
 @if errorlevel 1 goto quit
-call compile ../game/q_shared.c
+%cc% ../../game/q_shared.c
 @if errorlevel 1 goto quit
-call compile ui_atoms.c
+%cc% ../ui_atoms.c
 @if errorlevel 1 goto quit
-call compile ui_players.c
+%cc% ../ui_players.c
 @if errorlevel 1 goto quit
-call compile ui_shared.c
+%cc% ../ui_util.c
 @if errorlevel 1 goto quit
-call compile ui_gameinfo.c
+%cc% ../ui_shared.c
+@if errorlevel 1 goto quit
+%cc% ../ui_gameinfo.c
 @if errorlevel 1 goto quit
 
-q3asm -f ../ui
+..\..\q3asm -f ../ui
 del *.asm
 :quit
 cd ..
+<<<<<<< .mine
+rd vm=======
 rd vm
+>>>>>>> .r15
