@@ -584,9 +584,10 @@ CG_DrawStatusBar
 static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
-	int			value;
 	vec4_t		hcolor;
 	vec3_t		angles;
+	const char	*healthString;
+	int healthOffset;
 	cg_userWeapon_t	*weaponGraphics;
 #ifdef MISSIONPACK
 	qhandle_t	handle;	
@@ -655,59 +656,26 @@ static void CG_DrawStatusBar( void ) {
 	//
 	// health
 	//
-	value = ps->stats[STAT_HEALTH];
-
-	// set the health gauge's color
-	if (value > (ps->stats[STAT_MAX_HEALTH] / 2.0f)) {
-		if (value < ps->stats[STAT_MAX_HEALTH]) {
-			hcolor[0] = 1.0f * ( 1 - ( (float)(2 * value) / (float)ps->stats[STAT_MAX_HEALTH]));
-		} else {
-			hcolor[0] = 0.0f;
-		}
-		hcolor[1] = 1.0f;
-	} else {
-		hcolor[0] = 1.0f;
-		hcolor[1] = 1.0f * ( (float)(2 * value) / (float)ps->stats[STAT_MAX_HEALTH]); 
-	}
-	hcolor[2] = 0.0f;
+	hcolor[0] = 0.03f;
+	hcolor[1] = 0.51f;
+	hcolor[2] = 0.92f;
 	hcolor[3] = 1.0f;
-
+	
 	// draw the gauge
- 	CG_DrawHorGauge( 115, 405, 79, 11, hcolor, colors[5], value, ps->stats[STAT_MAX_HEALTH], qfalse);
+	// CG_DrawHorGauge(x,y,width,height,color,emptyColor,value,maxValue,reversed)
+ 	CG_DrawHorGauge(60,465,161,11,hcolor,colors[5],ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
 
 	// draw the selected weapon icon
-	if (ps->weapon > 0) {
-		weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
-		CG_DrawPic( 32, 388, 68, 68, weaponGraphics->weaponIcon );
-	}
+	//if (ps->weapon > 0) {
+	//	weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
+	//	CG_DrawPic( 32, 388, 68, 68, weaponGraphics->weaponIcon );
+	//}
 
 	// draw HUD pic
-	CG_DrawPic( 0, 352, 256, 128, cgs.media.LB_HudShader );
-
-
-#ifdef MISSIONPACK
-	//
-	// cubes
-	//
-	if( cgs.gametype == GT_HARVESTER ) {
-		value = ps->generic1;
-		if( value > 99 ) {
-			value = 99;
-		}
-		trap_R_SetColor( colors[0] );
-		CG_DrawField (640 - (CHAR_WIDTH*2 + TEXT_ICON_SPACE + ICON_SIZE), 432, 2, value);
-		trap_R_SetColor( NULL );
-		// if we didn't draw a 3D icon, draw a 2D icon for armor
-		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-			if( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE ) {
-				handle = cgs.media.redCubeIcon;
-			} else {
-				handle = cgs.media.blueCubeIcon;
-			}
-			CG_DrawPic( 640 - (TEXT_ICON_SPACE + ICON_SIZE), 432, ICON_SIZE, ICON_SIZE, handle );
-		}
-	}
-#endif
+	healthString = va("%2i",ps->stats[STAT_HEALTH]);
+	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
+	CG_DrawPic(0,427,231,53,cgs.media.LB_HudShader);
+	CG_DrawSmallString(205-healthOffset,467,healthString,1.0F);
 }
 #endif
 
@@ -1353,8 +1321,8 @@ static void CG_DrawLowerRight( void ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qfalse );
 	} 
 
-	y = CG_DrawScores( y );
-	y = CG_DrawPowerups( y );
+	//y = CG_DrawScores( y );
+	//y = CG_DrawPowerups( y );
 }
 #endif // MISSIONPACK
 
