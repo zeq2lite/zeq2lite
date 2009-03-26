@@ -1,4 +1,5 @@
 @echo off
+md vm
 cd vm
 
 call compile ui_main.c
@@ -24,3 +25,4 @@ q3asm -f ../ui
 del *.asm
 :quit
 cd ..
+rd vm
