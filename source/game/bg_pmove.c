@@ -486,8 +486,11 @@ static qboolean PM_CheckPowerLevel( void ) {
 			pm->ps->stats[STAT_PLTIMER] -= 50;
 
 			// Raise health if possible
-			if ( pm->ps->stats[STAT_HEALTH] < pm->ps->stats[STAT_MAX_HEALTH] ) {
-				pm->ps->stats[STAT_HEALTH]++;
+			if ( pm->ps->stats[STAT_HEALTH] + 30 < pm->ps->stats[STAT_MAX_HEALTH] ) {
+				pm->ps->stats[STAT_HEALTH] += 30;
+			}
+			else{
+				pm->ps->stats[STAT_HEALTH] = pm->ps->stats[STAT_MAX_HEALTH];
 			}
 		}
 
@@ -521,7 +524,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 
 			// Lower health if possible
 			if ( pm->ps->stats[STAT_HEALTH] > 50 ) {
-				pm->ps->stats[STAT_HEALTH]--;
+				pm->ps->stats[STAT_HEALTH] -= 30;
 			}
 		}
 
