@@ -584,10 +584,12 @@ CG_DrawStatusBar
 static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
-	vec4_t		hcolor;
+	vec4_t		powerColor;
+	vec4_t		maxColor;
 	vec3_t		angles;
 	const char	*healthString;
 	int healthOffset;
+	long healthDisplay;
 	cg_userWeapon_t	*weaponGraphics;
 #ifdef MISSIONPACK
 	qhandle_t	handle;	
@@ -656,15 +658,15 @@ static void CG_DrawStatusBar( void ) {
 	//
 	// health
 	//
-	hcolor[0] = 0.03f;
-	hcolor[1] = 0.51f;
-	hcolor[2] = 0.92f;
-	hcolor[3] = 1.0f;
+	powerColor[0] = 0.03f;
+	powerColor[1] = 0.51f;
+	powerColor[2] = 0.92f;
+	powerColor[3] = 1.0f;
+	maxColor[0] = maxColor[1] = maxColor[2] = 0.3f;
+	maxColor[3] = 1.0f;
 	
 	// draw the gauge
 	// CG_DrawHorGauge(x,y,width,height,color,emptyColor,value,maxValue,reversed)
- 	CG_DrawHorGauge(60,465,161,11,hcolor,colors[5],ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
-
 	// draw the selected weapon icon
 	//if (ps->weapon > 0) {
 	//	weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
@@ -672,7 +674,10 @@ static void CG_DrawStatusBar( void ) {
 	//}
 
 	// draw HUD pic
-	healthString = va("%2i",ps->stats[STAT_HEALTH]);
+ 	CG_DrawHorGauge(60,465,161,11,powerColor,colors[5],ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
+ 	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[STAT_MAX_HEALTH],qfalse);
+	healthDisplay = ((float)ps->stats[STAT_HEALTH] / (float)ps->stats[STAT_MAX_HEALTH]) *  2000000000;
+	healthString = va("%i",healthDisplay);
 	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
 	CG_DrawPic(0,427,231,53,cgs.media.LB_HudShader);
 	CG_DrawSmallString(205-healthOffset,467,healthString,1.0F);
