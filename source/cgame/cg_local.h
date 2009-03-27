@@ -68,17 +68,17 @@
 #define TEAM_OVERLAY_MAXNAME_WIDTH	12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH	16
 
-#define	DEFAULT_MODEL			"sarge"
+#define	DEFAULT_MODEL			"goku"
 #ifdef MISSIONPACK
 #define	DEFAULT_TEAM_MODEL		"james"
 #define	DEFAULT_TEAM_HEAD		"*james"
 #else
-#define	DEFAULT_TEAM_MODEL		"sarge"
-#define	DEFAULT_TEAM_HEAD		"sarge"
+#define	DEFAULT_TEAM_MODEL		"goku"
+#define	DEFAULT_TEAM_HEAD		"goku"
 #endif
 
-#define DEFAULT_REDTEAM_NAME		"Stroggs"
-#define DEFAULT_BLUETEAM_NAME		"Pagans"
+#define DEFAULT_REDTEAM_NAME		"HFIL Fighters"
+#define DEFAULT_BLUETEAM_NAME		"Z Fighters"
 
 typedef enum {
 	FOOTSTEP_NORMAL,
@@ -456,6 +456,19 @@ typedef struct {
 
 #define MAX_PREDICTED_EVENTS	16
  
+#if EARTHQUAKE_SYSTEM	// JUHOX: definitions
+typedef struct {
+	vec3_t origin;
+	float radius;	// negative for global earthquakes
+	float amplitude;
+	int startTime;
+	int endTime;
+	int fadeInTime;
+	int fadeOutTime;
+} earthquake_t;
+#define MAX_EARTHQUAKES 64
+#endif
+
 typedef struct {
 	int			clientFrame;		// incremented each frame
 
@@ -527,6 +540,19 @@ typedef struct {
 	// view rendering
 	refdef_t	refdef;
 	vec3_t		refdefViewAngles;		// will be converted to refdef.viewaxis
+
+#if EARTHQUAKE_SYSTEM	// JUHOX: earthquake variables
+	int earthquakeStartedTime;
+	int earthquakeEndTime;
+	float earthquakeAmplitude;
+	int earthquakeFadeInTime;
+	int earthquakeFadeOutTime;
+	int earthquakeSoundCounter;
+	int lastEarhquakeSoundStartedTime;
+
+	earthquake_t earthquakes[MAX_EARTHQUAKES];
+	float additionalTremble;
+#endif
 
 	// zoom key
 	qboolean	zoomed;
@@ -1269,6 +1295,14 @@ qboolean CG_WorldCoordToScreenCoordVec( vec3_t world, vec2_t screen );
 
 void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback );
 
+#if EARTHQUAKE_SYSTEM	// JUHOX: prototypes
+void CG_AddEarthquake(
+	const vec3_t origin, float radius,
+	float duration, float fadeIn, float fadeOut,	// in seconds
+	float amplitude
+);
+void CG_AdjustEarthquakes(const vec3_t delta);
+#endif
 
 //
 // cg_drawtools.c

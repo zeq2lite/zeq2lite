@@ -1090,6 +1090,20 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			break;
 		}
 
+#if EARTHQUAKE_SYSTEM	// JUHOX: earthquake event
+	case EV_EARTHQUAKE:
+		CG_AddEarthquake(
+			es->origin, es->angles2[1],
+			es->angles[0], es->angles[1], es->angles[2],
+			es->angles2[0]
+		);
+		if (!es->time) {
+			cg.earthquakeSoundCounter = (cg.earthquakeEndTime - cg.earthquakeStartedTime) / 200;
+			cg.lastEarhquakeSoundStartedTime = cg.time - 1000;
+		}
+		break;
+#endif
+
 	case EV_PAIN:
 		// local player sounds are triggered in CG_CheckLocalSounds,
 		// so ignore events on the player
@@ -1164,6 +1178,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 
 	case EV_TIERUP:
+//		CG_AddEarthquake(NULL,-1, 1, 0, 1, 400);
+		break;
 	case EV_TIERDOWN:
 		// These don't do anything at all
 		break;

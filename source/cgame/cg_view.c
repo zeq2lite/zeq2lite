@@ -741,6 +741,127 @@ static void CG_DamageBlendBlob( void ) {
 	trap_R_AddRefEntityToScene( &ent );
 }
 
+/*
+===============
+JUHOX: CG_AddEarthquake
+===============
+*/
+#if EARTHQUAKE_SYSTEM
+void CG_AddEarthquake(
+	const vec3_t origin, float radius,
+	float duration, float fadeIn, float fadeOut,	// in seconds
+	float amplitude
+) {
+	int i;
+
+	if (duration <= 0) {
+		float a;
+
+		a = amplitude / 100;
+
+		if (radius > 0) {
+			float distance;
+			
+			distance = Distance(cg.refdef.vieworg, origin);
+			if (distance >= radius) return;
+
+			a *= 1 - (distance / radius);
+		}
+
+		cg.additionalTremble += a;
+		return;
+	}
+
+	for (i = 0; i < MAX_EARTHQUAKES; i++) {
+		earthquake_t* quake;
+
+		quake = &cg.earthquakes[i];
+		if (quake->startTime) continue;
+
+		quake->startTime = cg.time;
+		quake->endTime = (int) floor(cg.time + 1000 * duration + 0.5);
+		quake->fadeInTime = (int) floor(1000 * fadeIn + 0.5);
+		quake->fadeOutTime = (int) floor(1000 * fadeOut + 0.5);
+		quake->amplitude = amplitude;
+		VectorCopy(origin, quake->origin);
+		quake->radius = radius;
+		break;
+	}
+}
+#endif
+
+/*
+===============
+JUHOX: CG_AdjustEarthquakes
+===============
+*/
+#if EARTHQUAKE_SYSTEM
+void CG_AdjustEarthquakes(const vec3_t delta) {
+	int i;
+
+	for (i = 0; i < MAX_EARTHQUAKES; i++) {
+		earthquake_t* quake;
+
+		quake = &cg.earthquakes[i];
+		if (!quake->startTime) continue;
+		if (quake->radius <= 0) continue;
+
+		VectorAdd(quake->origin, delta, quake->origin);
+	}
+}
+#endif
+
+/*
+===============
+JUHOX: AddEarthquakeTremble
+===============
+*/
+#if EARTHQUAKE_SYSTEM
+static void AddEarthquakeTremble(earthquake_t* quake) {
+	int time;
+	float a;
+	const float offsetAmplitude = 0.2;
+	const float angleAmplitude = 0.2;
+
+	if (quake) {
+		if (cg.time >= quake->endTime) {
+			memset(quake, 0, sizeof(*quake));
+			return;
+		}
+
+		if (quake->radius > 0) {
+			float distance;
+			
+			distance = Distance(cg.refdef.vieworg, quake->origin);
+			if (distance >= quake->radius) return;
+
+			a = 1 - (distance / quake->radius);
+		}
+		else {
+			a = 1;
+		}
+
+		time = cg.time - quake->startTime;
+		a *= quake->amplitude / 100;
+		if (time < quake->fadeInTime) {
+			a *= (float)time / (float)(quake->fadeInTime);
+		}
+		else if (cg.time > quake->endTime - quake->fadeOutTime) {
+			a *= (float)(quake->endTime - cg.time) / (float)(quake->fadeOutTime);
+		}
+	}
+	else {
+		a = cg.additionalTremble;
+	}
+
+	cg.refdef.vieworg[0] += offsetAmplitude * a * crandom();
+	cg.refdef.vieworg[1] += offsetAmplitude * a * crandom();
+	cg.refdef.vieworg[2] += offsetAmplitude * a * crandom();
+	cg.refdefViewAngles[YAW] += angleAmplitude * a * crandom();
+	cg.refdefViewAngles[PITCH] += angleAmplitude * a * crandom();
+	cg.refdefViewAngles[ROLL] += angleAmplitude * a * crandom();
+}
+#endif
 
 /*
 ===============
@@ -820,6 +941,22 @@ static int CG_CalcViewValues( void ) {
 		// offset for local bobbing and kicks
 		CG_OffsetFirstPersonView();
 	}
+
+#if EARTHQUAKE_SYSTEM	// JUHOX: add earthquakes
+	{
+		int i;
+
+		for (i = 0; i < MAX_EARTHQUAKES; i++) {
+			earthquake_t* quake;
+
+			quake = &cg.earthquakes[i];
+			if (!quake->startTime) continue;
+
+			AddEarthquakeTremble(quake);
+		}
+		AddEarthquakeTremble(NULL);	// additional tremble
+	}
+#endif
 
 	// position eye reletive to origin
 	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
@@ -956,6 +1093,10 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// build cg.refdef
 	inwater = CG_CalcViewValues();
+
+#if EARTHQUAKE_SYSTEM
+	cg.additionalTremble = 0;	// JUHOX
+#endif
 
 	// first person blend blobs, done after AnglesToAxis
 	if ( !cg.renderingThirdPerson ) {
