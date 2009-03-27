@@ -754,6 +754,11 @@ void CG_AddEarthquake(
 ) {
 	int i;
 
+	// So camera dosn't make your head explode from too much shaking ...
+	if ( amplitude > 1500 ) {
+		amplitude = 1500;
+	}
+
 	if (duration <= 0) {
 		float a;
 
