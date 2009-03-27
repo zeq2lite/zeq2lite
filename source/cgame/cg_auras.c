@@ -866,6 +866,9 @@ void CG_AuraStart( centity_t *player ) {
 		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->startSound );
 	}
 
+	// create a small camerashake
+	CG_AddEarthquake( player->lerpOrigin, 1000, 1, 0, 1, 200 );
+
 	// We don't want smoke jets if this is a boost aura instead of a charge aura.
 	if ( !(player->currentState.powerups & ( 1 << PW_BOOST )) ) {
 		// Check if we're on, or near ground level
