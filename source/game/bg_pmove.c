@@ -436,7 +436,11 @@ PM_CheckPowerLevel
 ==================
 */
 static qboolean PM_CheckPowerLevel( void ) {
-	int plSpeed;
+	int plSpeed, tier, lowBreak, highBreak;
+
+	tier = pm->ps->stats[STAT_TIER];
+	lowBreak = 1000;
+	highBreak = (32000 / 9) * (tier + 1);
 
 	// Adjust the PL cap
 	pm->ps->stats[STAT_CAPTIMER] += pml.msec;
@@ -466,7 +470,13 @@ static qboolean PM_CheckPowerLevel( void ) {
 		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 		pm->ps->eFlags |= EF_AURA;
-		PM_ContinueLegsAnim( LEGS_PL_UP );
+		
+		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
+			PM_ContinueTorsoAnim( TORSO_TRANS_UP );
+			PM_ContinueLegsAnim( LEGS_TRANS_UP );
+		} else {
+			PM_ContinueLegsAnim( LEGS_PL_UP );
+		}
 
 		// Increment the hold down timer
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] < 0 ) pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
@@ -486,8 +496,8 @@ static qboolean PM_CheckPowerLevel( void ) {
 			pm->ps->stats[STAT_PLTIMER] -= 50;
 
 			// Raise health if possible
-			if ( pm->ps->stats[STAT_HEALTH] + 30 < pm->ps->stats[STAT_MAX_HEALTH] ) {
-				pm->ps->stats[STAT_HEALTH] += 30;
+			if ( pm->ps->stats[STAT_HEALTH] + pm->ps->powerlevelChargeScale < pm->ps->stats[STAT_MAX_HEALTH] ) {
+				pm->ps->stats[STAT_HEALTH] += pm->ps->powerlevelChargeScale;
 			}
 			else{
 				pm->ps->stats[STAT_HEALTH] = pm->ps->stats[STAT_MAX_HEALTH];
@@ -503,7 +513,13 @@ static qboolean PM_CheckPowerLevel( void ) {
 		// set representations for powering down
 		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
-		PM_ContinueLegsAnim( LEGS_PL_DOWN );
+
+		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
+			PM_ContinueTorsoAnim( TORSO_TRANS_UP );
+			PM_ContinueLegsAnim( LEGS_TRANS_UP );
+		} else {
+			PM_ContinueLegsAnim( LEGS_PL_DOWN );
+		}
 
 		// Decrement the hold down timer
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] > 0 ) pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;

@@ -7,6 +7,8 @@
 
 #define	GAME_VERSION		"zeq2-1"
 
+#define EARTHQUAKE_SYSTEM	1	// JUHOX
+
 #define	DEFAULT_GRAVITY		800
 #define	GIB_HEALTH			-40
 #define	ARMOR_PROTECTION	0.66
@@ -491,7 +493,8 @@ typedef enum {
 	EV_TAUNT_GUARDBASE,
 	EV_TAUNT_PATROL,
 	// ADDING FOR ZEQ2
-	EV_BEAM_FADE
+	EV_BEAM_FADE,
+	EV_EARTHQUAKE
 	// END ADDING
 
 } entity_event_t;

@@ -1190,6 +1190,8 @@ typedef struct playerState_s {
 	// <-- RiO
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
+	int			powerlevel;
+	int			powerlevelChargeScale;
 	// RiO -->
 
 	// damage feedback

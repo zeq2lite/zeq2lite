@@ -830,6 +830,8 @@ extern	vmCvar_t	g_singlePlayer;
 extern	vmCvar_t	g_proxMineTimeout;
 // ADDING FOR ZEQ2
 extern	vmCvar_t	g_verboseParse;
+extern	vmCvar_t	g_powerlevel;
+extern	vmCvar_t	g_powerlevelChargeScale;
 // END ADDING
 
 void	trap_Printf( const char *fmt );
