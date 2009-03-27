@@ -719,7 +719,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 
 	// skew the time a bit so they aren't all in sync
 	offset = rand() & 63;	
-	
+
 	if ( !(weaponGraphics->explosionModel && weaponGraphics->explosionSkin) ) {
 		if (weaponGraphics->explosionShader) {
 			// allocate the entity as a sprite explosion
@@ -745,6 +745,9 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 			expShell->startTime = cg.time - offset;
 			expShell->endTime = expShell->startTime + weaponGraphics->explosionTime;
 			expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
+
+			// create a camera shake
+
 
 			// bias the time so all shader effects start correctly
 			expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
@@ -793,6 +796,15 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		expShell->startTime = cg.time - offset;
 		expShell->endTime = expShell->startTime + weaponGraphics->explosionTime;
 		expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
+
+		// create a camera shake
+//		CG_AddEarthquake( origin, 1000, expShell->lifeRate, expShell->startTime, expShell->endTime, 1000 );
+		CG_AddEarthquake( origin, 
+			weaponGraphics->explosionSize * 100 
+			, weaponGraphics->explosionTime / 1000
+			, ( weaponGraphics->explosionTime / 1000 ) / 2
+			, ( weaponGraphics->explosionTime / 1000 ) * 2
+			, weaponGraphics->explosionSize * 100 );
 
 		// bias the time so all shader effects start correctly
 		expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
