@@ -747,7 +747,12 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 			expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
 
 			// create a camera shake
-
+			CG_AddEarthquake( origin, 
+				weaponGraphics->explosionSize / 2 
+				, weaponGraphics->explosionTime / 1000
+				, ( weaponGraphics->explosionTime / 1000 ) / 2
+				, ( weaponGraphics->explosionTime / 1000 ) * 2
+				, weaponGraphics->explosionSize / 2 );
 
 			// bias the time so all shader effects start correctly
 			expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
@@ -798,7 +803,6 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
 
 		// create a camera shake
-//		CG_AddEarthquake( origin, 1000, expShell->lifeRate, expShell->startTime, expShell->endTime, 1000 );
 		CG_AddEarthquake( origin, 
 			weaponGraphics->explosionSize * 100 
 			, weaponGraphics->explosionTime / 1000
@@ -858,6 +862,16 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		expShock->endTime = expShock->startTime + (weaponGraphics->explosionTime / 1.5);
 		expShock->lifeRate = 1.0 / ( expShock->endTime - expShock->startTime );
 
+/*
+		// NOTE: camera shakes for shockwaves?
+		// create a camera shake
+		CG_AddEarthquake( origin, 
+			weaponGraphics->explosionSize * 100 
+			, weaponGraphics->explosionTime / 1000
+			, ( weaponGraphics->explosionTime / 1000 ) / 2
+			, ( weaponGraphics->explosionTime / 1000 ) * 2
+			, weaponGraphics->explosionSize * 100 );
+*/
 		// bias the time so all shader effects start correctly
 		expShock->refEntity.shaderTime = expShock->startTime / 1000.0f;
 
