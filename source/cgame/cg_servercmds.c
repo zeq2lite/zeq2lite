@@ -459,7 +459,7 @@ static void CG_MapRestart( void ) {
 		}
 	}
 #endif
-	trap_Cvar_Set("cg_thirdPerson", "0");
+	trap_Cvar_Set("cg_thirdPerson", "1"); // ZEQ2 Stays in third person
 }
 
 #define MAX_VOICEFILESIZE	16384
