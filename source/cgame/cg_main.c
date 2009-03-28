@@ -517,7 +517,7 @@ static void CG_RegisterItemSounds( int itemNum ) {
 			s++;
 		}
 
-		if ( !strcmp(data+len-3, "wav" )) {
+		if ( !strcmp(data+len-3, "ogg" )) {
 			trap_S_RegisterSound( data, qfalse );
 		}
 	}
