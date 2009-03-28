@@ -14,7 +14,7 @@
     	style 1
     	border 1
 	onOpen { setitemcolor fadebox backcolor 0 0 0 1 ; 
-	playlooped "music/fla_mp03.wav" ;
+	playlooped "music/fla_mp03.ogg" ;
 	fadeout fadebox ; 
 	uiScript UpdateFilter ;
 	hide lightning ; 
@@ -104,7 +104,7 @@ itemDef {
 	textscale .32     
       	forecolor 1 1 1 1
      	visible 1 
-	action { play "sound/misc/kcaction.wav" }
+	action { play "sound/misc/kcaction.ogg" }
 	mouseEnter { show message_source }
       	mouseExit { hide message_source }
     	}
@@ -121,7 +121,7 @@ itemDef {
 	textscale .32     
     	forecolor 1 1 1 1
     	visible 1 
-	action { play "sound/misc/kcaction.wav" }
+	action { play "sound/misc/kcaction.ogg" }
 	mouseEnter { show message_gamefilter }
 	mouseExit { hide message_gamefilter }
   	}
@@ -141,7 +141,7 @@ itemDef {
       	border 0
       	bordercolor 0 0 0 0
       	visible 1 
-	action { play "sound/misc/kcaction.wav" }
+	action { play "sound/misc/kcaction.ogg" }
 	mouseEnter { show message_typefilter }
       	mouseExit { hide message_typefilter }
     }
@@ -334,7 +334,7 @@ itemDef {
       	forecolor 1 1 1 1
 	backcolor .1 .1 .37 1
       	visible 1 
-      	action { play "sound/misc/nomenu.wav" ; 
+      	action { play "sound/misc/nomenu.ogg" ; 
 		uiScript ServerSort 0 ; 
 		setitemcolor grpTabs backcolor .1 .1 .37 1 ; 
 		setitemcolor server backcolor .1 .37 .1 1 ; 
@@ -361,7 +361,7 @@ itemDef {
 	backcolor .1 .1 .37 1
       	forecolor 1 1 1 1
       	visible 1 
-      	action { play "sound/misc/nomenu.wav" ; 
+      	action { play "sound/misc/nomenu.ogg" ; 
 		uiScript ServerSort 1 ; 
 		setitemcolor grpTabs backcolor .1 .1 .37 1 ; 
 		setitemcolor map backcolor .1 .37 .1 1 ; 
@@ -388,7 +388,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .1 .1 .37 1
 	visible 1 
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 		uiScript ServerSort 2 ;
 		setitemcolor grpTabs backcolor .1 .1 .37 1 ; 
 		setitemcolor Players backcolor .1 .37 .1 1 ;  
@@ -414,7 +414,7 @@ itemDef {
 	backcolor .1 .1 .37 1
 	forecolor 1 1 1 1
 	visible 1 
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 		uiScript ServerSort 3 ;
 		setitemcolor grpTabs backcolor .1 .1 .37 1 ; 
 		setitemcolor Type backcolor .1 .37 .1 1 ;  
@@ -440,7 +440,7 @@ itemDef {
 	backcolor .1 .1 .37 1
 	forecolor 1 1 1 1
 	visible 1 
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 		uiScript ServerSort 4 ;
 		setitemcolor grpTabs backcolor .1 .1 .37 1 ; 
 		setitemcolor Ping backcolor .1 .37 .1 1 ;  
@@ -473,7 +473,7 @@ itemDef {
       	visible 1 
 	mouseEnter { show message_refreshSOurce ; setitemcolor refreshSource backcolor .1 .37 .1 1 }
       	mouseExit { hide message_refreshSource ; setitemcolor refreshSource backcolor .37 .1 .1 1 }
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	uiScript RefreshServers }	  	  
     	}
 
@@ -524,7 +524,7 @@ itemDef {
       	visible 1 
 	mouseEnter { show message_refreshFilter ; setitemcolor refreshFilter backcolor .1 .37 .1 1 }
       	mouseExit { hide message_refreshFilter ; setitemcolor refreshFilter backcolor .37 .1 .1 1 }	  	  
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	uiScript RefreshFilter }	  	  
     	}
 
@@ -580,7 +580,7 @@ itemDef {
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
       	visible 1 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	open password_popmenu }
 	mouseEnter { show message_password ; setitemcolor password backcolor .1 .37 .1 1 }
       	mouseExit { hide message_password ; setitemcolor password backcolor .37 .1 .1 1 }	  	  
@@ -628,7 +628,7 @@ itemDef {
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
       	visible 1 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	open createfavorite_popmenu }
 	mouseEnter { show message_createFavorite ; setitemcolor createFavorite backcolor .1 .37 .1 1 }
       	mouseExit { hide message_createFavorite ; setitemcolor createFavorite backcolor .37 .1 .1 1 }	  	    	  
@@ -679,7 +679,7 @@ itemDef {
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
       	visible 1 
-      	action { play "sound/misc/nomenu.wav" ; 
+      	action { play "sound/misc/nomenu.ogg" ; 
 	uiScript addFavorite }
 	mouseEnter { show message_addFavorite ; setitemcolor addFavorite backcolor .1 .37 .1 1 }
       	mouseExit { hide message_addFavorite ; setitemcolor addFavorite backcolor .37 .1 .1 1 }	  	  
@@ -729,7 +729,7 @@ itemDef {
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
       	visible 1 
-      	action { play "sound/misc/nomenu.wav" ; 
+      	action { play "sound/misc/nomenu.ogg" ; 
 	uiScript DeleteFavorite ; uiScript UpdateFilter }
 	mouseEnter { show message_delFavorite ; setitemcolor delfavorite backcolor .1 .37 .1 1 }
       	mouseExit { hide message_delFavorite ; setitemcolor delfavorite backcolor .37 .1 .1 1 }	  	  
@@ -782,7 +782,7 @@ itemDef {
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
       	visible 1 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	open serverinfo_popmenu }
 	mouseEnter { show message_serverinfo ; setitemcolor serverinfo backcolor .1 .37 .1 1 }
       	mouseExit { hide message_serverinfo ; setitemcolor serverinfo backcolor .37 .1 .1 1 }	  	  
@@ -828,7 +828,7 @@ itemDef {
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
       	visible 1 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	open findplayer_popmenu }
 	mouseEnter { show message_findplayer ; setitemcolor findplayer backcolor .1 .37 .1 1 }
       	mouseExit { hide message_findplayer ; setitemcolor findplayer backcolor .37 .1 .1 1 }	  	  
@@ -882,7 +882,7 @@ itemDef {
       	textaligny 17
       	forecolor 1 1 1 1
       	visible 1 
-	    action { play "sound/misc/nomenu.wav" ;
+	    action { play "sound/misc/nomenu.ogg" ;
 		uiScript RefreshFilter }
 	mouseEnter { show message_viewEmpty }
       	mouseExit { hide message_viewEmpty }	  	  
@@ -900,7 +900,7 @@ itemDef {
       	forecolor 1 1 1 1
       	visible 1 
 	    action { uiScript RefreshFilter ; 
-		play "sound/misc/nomenu.wav" }
+		play "sound/misc/nomenu.ogg" }
 	mouseEnter { show message_viewFull }
       	mouseExit { hide message_viewFull }	  	  
     }
@@ -967,7 +967,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1
       	visible 1 
-		mouseEnter { show lightning ; hide accept ; show accept_alt ; show message_accept ; playlooped "sound/misc/loop_electricity_05.wav" }
+		mouseEnter { show lightning ; hide accept ; show accept_alt ; show message_accept ; playlooped "sound/misc/loop_electricity_05.ogg" }
       	action { uiScript JoinServer }
   }
 
@@ -981,7 +981,7 @@ itemDef {
       	forecolor 1 1 1 1
       	visible 0  
 	type ITEM_TYPE_BUTTON 
-      	mouseExit { hide lightning ; hide accept_alt ; show accept ; hide message_accept ; playlooped "music/fla_mp03.wav" }	
+      	mouseExit { hide lightning ; hide accept_alt ; show accept ; hide message_accept ; playlooped "music/fla_mp03.ogg" }	
       	action { uiScript JoinServer }
  
   }

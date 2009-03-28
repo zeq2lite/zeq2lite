@@ -17,7 +17,7 @@
 	onEsc { close skirmish ; open main }
 	onOpen { 
 		setitemcolor fadebox backcolor 0 0 0 1 ; 
-		playlooped "music/fla_mp03.wav" ;
+		playlooped "music/fla_mp03.ogg" ;
 		fadeout fadebox ;
 		uiScript loadGameInfo ;
 		uiScript updateSPMenu ;
@@ -82,7 +82,7 @@ itemDef {
       	border 0
       	bordercolor 0 0 0 0
       	visible 1
-	action { play "sound/misc/kcaction.wav" }
+	action { play "sound/misc/kcaction.ogg" }
 	mouseEnter { fadein message_type } 
 	mouseExit { fadeout message_type } 
     	}
@@ -101,7 +101,7 @@ itemDef {
 	visible 1 
 	cvarTest "ui_gametype"
 	hideCvar { "1" }
-	action { play "sound/misc/kcaction.wav" }
+	action { play "sound/misc/kcaction.ogg" }
 	mouseenter { show message_opponent }
 	mouseexit { hide message_opponent }
     	}
@@ -122,7 +122,7 @@ itemDef {
       	border 0
       	bordercolor 0 0 0 0
       	visible 1
-	action { play "sound/misc/kcaction.wav" }
+	action { play "sound/misc/kcaction.ogg" }
 	mouseEnter { fadein message_skill } 
 	mouseExit { fadeout message_skill }  
     	}
@@ -676,7 +676,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_assist_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_assist_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_assist.wav" } 
+	action { exec "play sound/feedback/voc_menu_assist.ogg" } 
 	}
 
 itemdef {
@@ -693,7 +693,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_accuracy_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_accuracy_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_accuracy.wav" } 
+	action { exec "play sound/feedback/voc_menu_accuracy.ogg" } 
 	}
 itemdef {
 	name medal_excellent_window
@@ -709,7 +709,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_excellent_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_excellent_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_excellent.wav" } 
+	action { exec "play sound/feedback/voc_menu_excellent.ogg" } 
 	}
 itemdef {
 	name medal_gauntlet_window
@@ -725,7 +725,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_gauntlet_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_gauntlet_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_gauntlet.wav" } 
+	action { exec "play sound/feedback/voc_menu_gauntlet.ogg" } 
 	}
 itemdef {
 	name medal_impressive_window
@@ -741,7 +741,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_impressive_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_impressive_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_impressive.wav" } 
+	action { exec "play sound/feedback/voc_menu_impressive.ogg" } 
 	}
 itemdef {
 	name medal_defend_window
@@ -757,7 +757,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_defend_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_defend_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_defense.wav" } 
+	action { exec "play sound/feedback/voc_menu_defense.ogg" } 
 	}
 itemdef {
 	name medal_capture_window
@@ -773,7 +773,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_capture_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_capture_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_captures.wav" } 
+	action { exec "play sound/feedback/voc_menu_captures.ogg" } 
 	}
 
 
@@ -797,7 +797,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_perfect_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_perfect_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/perfect.wav" } 
+	action { exec "play sound/feedback/perfect.ogg" } 
 	}
 
 itemdef {
@@ -814,7 +814,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_accuracy_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_accuracy_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_accuracy.wav" } 
+	action { exec "play sound/feedback/voc_menu_accuracy.ogg" } 
 	}
 
 
@@ -833,7 +833,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_excellent_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_excellent_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_excellent.wav" } 
+	action { exec "play sound/feedback/voc_menu_excellent.ogg" } 
 	}
 
 
@@ -851,7 +851,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_gauntlet_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_gauntlet_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_gauntlet.wav" } 
+	action { exec "play sound/feedback/voc_menu_gauntlet.ogg" } 
 	}
 
 
@@ -869,7 +869,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_impressive_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_impressive_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_impressive.wav" } 
+	action { exec "play sound/feedback/voc_menu_impressive.ogg" } 
 	}
 
 
@@ -1088,7 +1088,7 @@ itemDef {
 	forecolor 1 1 1 1
       	forecolor 1 1 1 1
       	visible 1 
-	action { play "sound/misc/nomenu.wav" }
+	action { play "sound/misc/nomenu.ogg" }
 	mouseEnter { show message_recordDemo }
       	mouseExit { hide message_recordDemo}	  	  
     }
@@ -1230,7 +1230,7 @@ itemDef {
 	backcolor .37 .1 .1 1
       	visible 1
 	ownerdrawflag UI_SHOW_DEMOAVAILABLE 
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grphelptext ; uiScript RunSPDemo } 
 	mouseEnter { setitemcolor playDemobttn backcolor .1 .37 .1 1 ; show demo_message } 
 	mouseExit { setitemcolor playDemobttn backcolor .37 .1 .1 1 ; hide demo_message } 
@@ -1328,7 +1328,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1
       	visible 1 
-	mouseEnter { show lightning ; hide accept ; show accept_alt ; fadein message_accept ; playlooped "sound/misc/loop_electricity_05.wav" }
+	mouseEnter { show lightning ; hide accept ; show accept_alt ; fadein message_accept ; playlooped "sound/misc/loop_electricity_05.ogg" }
       	action { uiScript skirmishStart }
 /*	
 	//	demo_only
@@ -1347,7 +1347,7 @@ itemDef {
       	visible 0
 	type ITEM_TYPE_BUTTON   
       	action { uiScript skirmishStart }
-      	mouseExit { hide lightning ; hide accept_alt ; show accept ; fadeout message_accept ; playlooped "music/fla_mp03.wav" }	
+      	mouseExit { hide lightning ; hide accept_alt ; show accept ; fadeout message_accept ; playlooped "music/fla_mp03.ogg" }	
 /*	
 	//	demo_only
 	cvarTest "ui_gametype"

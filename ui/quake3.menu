@@ -127,7 +127,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ;
+	action { play "sound/misc/nomenu.ogg" ;
 	uiScript "Quake3" }
 	mouseEnter { setitemcolor yes backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor yes backcolor .37 .1 .1 1 } 	
@@ -178,7 +178,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ;
+	action { play "sound/misc/nomenu.ogg" ;
 	close quake3_popmenu ; open main }
 	mouseEnter { setitemcolor no backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor no backcolor .37 .1 .1 1 } 		

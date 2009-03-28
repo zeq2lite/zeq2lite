@@ -229,7 +229,7 @@ itemDef {
       	visible 0
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
-	action { play "sound/misc/kcaction.wav" ;  
+	action { play "sound/misc/kcaction.ogg" ;  
 	hide grpidcredit ; 
 	show grpoutcredit }
 	mouseEnter { setitemcolor outcreditbttn backcolor .1 .37 .1 1 }
@@ -325,7 +325,7 @@ itemDef {
       	visible 0
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpoutcredit ; 
 	show grpidcredit }
 	mouseEnter { setitemcolor idcreditbttn backcolor .1 .37 .1 1 }

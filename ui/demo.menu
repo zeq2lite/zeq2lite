@@ -13,7 +13,7 @@
     	style 1
     	border 1
 	onOpen { setitemcolor fadebox backcolor 0 0 0 1 ; 
-	playlooped "music/fla_mp03.wav" ;
+	playlooped "music/fla_mp03.ogg" ;
 	fadeout fadebox ; uiScript LoadDemos ;
 	hide lightning ; 
 	hide accept_alt ; 
@@ -160,7 +160,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1
       	visible 1 
-	mouseEnter { show lightning ; hide accept ; show accept_alt ; show message_accept ; playlooped "sound/misc/loop_electricity_05.wav" }
+	mouseEnter { show lightning ; hide accept ; show accept_alt ; show message_accept ; playlooped "sound/misc/loop_electricity_05.ogg" }
       	action { close demo  }
   	}
 
@@ -174,7 +174,7 @@ itemDef {
       	visible 0
 	type ITEM_TYPE_BUTTON   
       	action { close demo ; uiScript RunDemo }
-	mouseExit { hide lightning ; hide accept_alt ; show accept ; hide message_accept ; playlooped "music/fla_mp03.wav" }	 
+	mouseExit { hide lightning ; hide accept_alt ; show accept ; hide message_accept ; playlooped "music/fla_mp03.ogg" }	 
   	}
 
  itemDef {

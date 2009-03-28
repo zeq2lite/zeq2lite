@@ -48,7 +48,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpSystem ; show graphics }
 	mouseEnter { show message_graphics ; setitemcolor ctr_graphics backcolor .1 .37 .1 1 } 
 	mouseExit { hide message_graphics ; setitemcolor ctr_graphics backcolor .37 .1 .1 1 } 
@@ -295,7 +295,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	open vid_restart_popmenu }
 	mouseEnter { setitemcolor graphics backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor graphics backcolor .37 .1 .1 1 } 
@@ -350,7 +350,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpSystem ; show driver }
 	mouseEnter { show message_driver ; setitemcolor ctr_driver backcolor .1 .37 .1 1 } 
 	mouseExit { hide message_driver ; setitemcolor ctr_driver backcolor .37 .1 .1 1 } 
@@ -430,7 +430,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpSystem ; show other }
 	mouseEnter { show message_other ; setitemcolor ctr_other backcolor .1 .37 .1 1 } 
 	mouseExit { hide message_other ; setitemcolor ctr_other backcolor .37 .1 .1 1} 	

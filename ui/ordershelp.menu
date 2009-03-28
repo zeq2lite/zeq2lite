@@ -11,7 +11,7 @@
     	focusColor 1 .67 0 1
     	border 1
 	style 1
-	soundLoop "music/fla_mp03.wav"
+	soundLoop "music/fla_mp03.ogg"
 	onEsc { close help_menu ; close powerup_menu ; close ordersHelp_menu ; open main }
 	onOpen { setitemcolor fadebox backcolor 0 0 0 1 ; 
 		fadeout fadebox ;
@@ -209,7 +209,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show helptext ; play "sound/misc/kcaction.wav" }
+	action { hide grphelptext ; show helptext ; play "sound/misc/kcaction.ogg" }
 	mouseEnter { setitemcolor help backcolor .1 .37 .1 1 ; hide helpIcon ; show helpIconAlt ; hide grpVoiceHead } 
 	mouseExit { setitemcolor help backcolor .37 .1 .1 1 ; hide helpIconAlt ; show helpIcon } 
 	}
@@ -265,7 +265,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show attacktext ; exec "play sound/voices/male1/or_03.wav" ; show grpVoiceHead }
+	action { hide grphelptext ; show attacktext ; exec "play sound/voices/male1/or_03.ogg" ; show grpVoiceHead }
 	mouseEnter { setitemcolor attack backcolor .1 .37 .1 1 ; hide attackIcon ; show attackIconAlt ; hide grpVoiceHead } 
 	mouseExit { setitemcolor attack backcolor .37 .1 .1 1 ; hide attackIconAlt ; show attackIcon } 
 	}
@@ -320,7 +320,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show camptext ; exec "play sound/voices/male1/voc_01.wav" ; show grpVoiceHead }
+	action { hide grphelptext ; show camptext ; exec "play sound/voices/male1/voc_01.ogg" ; show grpVoiceHead }
 	mouseEnter { setitemcolor camp backcolor .1 .37 .1 1 ; hide campIcon ; show campIconAlt ; hide grpVoiceHead } 
 	mouseExit { setitemcolor camp backcolor .37 .1 .1 1 ; hide campIconAlt ; show campIcon } 
 	}
@@ -375,7 +375,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show defendtext ; exec "play sound/voices/male1/or_05.wav" ; show grpVoiceHead }
+	action { hide grphelptext ; show defendtext ; exec "play sound/voices/male1/or_05.ogg" ; show grpVoiceHead }
 	mouseEnter { setitemcolor defend backcolor .1 .37 .1 1 ; hide defendIcon ; show defendIconAlt ; hide grpVoiceHead } 
 	mouseExit { setitemcolor defend backcolor .37 .1 .1 1 ; hide defendIconAlt ; show defendIcon } 
 	}
@@ -429,7 +429,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show followtext ; exec "play sound/voices/male1/or_11.wav" ; show grpVoiceHead }
+	action { hide grphelptext ; show followtext ; exec "play sound/voices/male1/or_11.ogg" ; show grpVoiceHead }
 	mouseEnter { setitemcolor follow backcolor .1 .37 .1 1 ; hide followIcon ; show followIconAlt ; hide grpVoiceHead } 
 	mouseExit { setitemcolor follow backcolor .37 .1 .1 1 ; hide followIconAlt ; show followIcon } 
 	}
@@ -484,7 +484,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show patroltext ; exec "play sound/voices/male1/or_10.wav" ; show grpVoiceHead }
+	action { hide grphelptext ; show patroltext ; exec "play sound/voices/male1/or_10.ogg" ; show grpVoiceHead }
 	mouseEnter { setitemcolor patrol backcolor .1 .37 .1 1 ; hide patrolIcon ; show patrolIconAlt ; hide grpVoiceHead } 
 	mouseExit { setitemcolor patrol backcolor .37 .1 .1 1 ; hide patrolIconAlt ; show patrolIcon } 
 	}
@@ -538,7 +538,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show retrievetext ; exec "play sound/voices/male1/voc_05.wav" ; show grpVoiceHead }
+	action { hide grphelptext ; show retrievetext ; exec "play sound/voices/male1/voc_05.ogg" ; show grpVoiceHead }
 	mouseEnter { setitemcolor retrieve backcolor .1 .37 .1 1 ; hide retrieveIcon ; show retrieveIconAlt ; hide grpVoiceHead } 
 	mouseExit { setitemcolor retrieve backcolor .37 .1 .1 1 ; hide retrieveIconAlt ; show retrieveIcon } 
 	}
@@ -590,7 +590,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show escorttext ; exec "play sound/voices/male1/voc_11.wav" ; show grpVoiceHead }
+	action { hide grphelptext ; show escorttext ; exec "play sound/voices/male1/voc_11.ogg" ; show grpVoiceHead }
 	mouseEnter { setitemcolor escort backcolor .1 .37 .1 1 ; hide escortIcon ; show escortIconAlt ; hide grpVoiceHead } 
 	mouseExit { setitemcolor escort backcolor .37 .1 .1 1 ; hide escortIconAlt ; show escortIcon } 
 	}

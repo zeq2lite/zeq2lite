@@ -542,69 +542,69 @@ static void CG_RegisterSounds( void ) {
 	CG_LoadVoiceChats();
 #endif
 
-	cgs.media.teleInSound = trap_S_RegisterSound( "sound/world/telein.wav", qfalse );
-	cgs.media.teleOutSound = trap_S_RegisterSound( "sound/world/teleout.wav", qfalse );
-	cgs.media.respawnSound = trap_S_RegisterSound( "sound/items/respawn1.wav", qfalse );
+	cgs.media.teleInSound = trap_S_RegisterSound( "sound/world/telein.ogg", qfalse );
+	cgs.media.teleOutSound = trap_S_RegisterSound( "sound/world/teleout.ogg", qfalse );
+	cgs.media.respawnSound = trap_S_RegisterSound( "sound/items/respawn1.ogg", qfalse );
 
-	cgs.media.noAmmoSound = trap_S_RegisterSound( "sound/weapons/noammo.wav", qfalse );
+	cgs.media.noAmmoSound = trap_S_RegisterSound( "sound/weapons/noammo.ogg", qfalse );
 
-	cgs.media.talkSound = trap_S_RegisterSound( "sound/player/talk.wav", qfalse );
-	cgs.media.landSound = trap_S_RegisterSound( "sound/player/land1.wav", qfalse);
+	cgs.media.talkSound = trap_S_RegisterSound( "sound/player/talk.ogg", qfalse );
+	cgs.media.landSound = trap_S_RegisterSound( "sound/player/land1.ogg", qfalse);
 
-	cgs.media.hitSound = trap_S_RegisterSound( "sound/feedback/hit.wav", qfalse );
+	cgs.media.hitSound = trap_S_RegisterSound( "sound/feedback/hit.ogg", qfalse );
 #ifdef MISSIONPACK
-	cgs.media.hitSoundHighArmor = trap_S_RegisterSound( "sound/feedback/hithi.wav", qfalse );
-	cgs.media.hitSoundLowArmor = trap_S_RegisterSound( "sound/feedback/hitlo.wav", qfalse );
+	cgs.media.hitSoundHighArmor = trap_S_RegisterSound( "sound/feedback/hithi.ogg", qfalse );
+	cgs.media.hitSoundLowArmor = trap_S_RegisterSound( "sound/feedback/hitlo.ogg", qfalse );
 #endif
 
-	cgs.media.impressiveSound = trap_S_RegisterSound( "sound/feedback/impressive.wav", qtrue );
-	cgs.media.excellentSound = trap_S_RegisterSound( "sound/feedback/excellent.wav", qtrue );
-	cgs.media.deniedSound = trap_S_RegisterSound( "sound/feedback/denied.wav", qtrue );
-	cgs.media.humiliationSound = trap_S_RegisterSound( "sound/feedback/humiliation.wav", qtrue );
-	cgs.media.assistSound = trap_S_RegisterSound( "sound/feedback/assist.wav", qtrue );
-	cgs.media.defendSound = trap_S_RegisterSound( "sound/feedback/defense.wav", qtrue );
+	cgs.media.impressiveSound = trap_S_RegisterSound( "sound/feedback/impressive.ogg", qtrue );
+	cgs.media.excellentSound = trap_S_RegisterSound( "sound/feedback/excellent.ogg", qtrue );
+	cgs.media.deniedSound = trap_S_RegisterSound( "sound/feedback/denied.ogg", qtrue );
+	cgs.media.humiliationSound = trap_S_RegisterSound( "sound/feedback/humiliation.ogg", qtrue );
+	cgs.media.assistSound = trap_S_RegisterSound( "sound/feedback/assist.ogg", qtrue );
+	cgs.media.defendSound = trap_S_RegisterSound( "sound/feedback/defense.ogg", qtrue );
 #ifdef MISSIONPACK
-	cgs.media.firstImpressiveSound = trap_S_RegisterSound( "sound/feedback/first_impressive.wav", qtrue );
-	cgs.media.firstExcellentSound = trap_S_RegisterSound( "sound/feedback/first_excellent.wav", qtrue );
-	cgs.media.firstHumiliationSound = trap_S_RegisterSound( "sound/feedback/first_gauntlet.wav", qtrue );
+	cgs.media.firstImpressiveSound = trap_S_RegisterSound( "sound/feedback/first_impressive.ogg", qtrue );
+	cgs.media.firstExcellentSound = trap_S_RegisterSound( "sound/feedback/first_excellent.ogg", qtrue );
+	cgs.media.firstHumiliationSound = trap_S_RegisterSound( "sound/feedback/first_gauntlet.ogg", qtrue );
 #endif
 
-	cgs.media.takenLeadSound = trap_S_RegisterSound( "sound/feedback/takenlead.wav", qtrue);
-	cgs.media.tiedLeadSound = trap_S_RegisterSound( "sound/feedback/tiedlead.wav", qtrue);
-	cgs.media.lostLeadSound = trap_S_RegisterSound( "sound/feedback/lostlead.wav", qtrue);
+	cgs.media.takenLeadSound = trap_S_RegisterSound( "sound/feedback/takenlead.ogg", qtrue);
+	cgs.media.tiedLeadSound = trap_S_RegisterSound( "sound/feedback/tiedlead.ogg", qtrue);
+	cgs.media.lostLeadSound = trap_S_RegisterSound( "sound/feedback/lostlead.ogg", qtrue);
 
 #ifdef MISSIONPACK
-	cgs.media.voteNow = trap_S_RegisterSound( "sound/feedback/vote_now.wav", qtrue);
-	cgs.media.votePassed = trap_S_RegisterSound( "sound/feedback/vote_passed.wav", qtrue);
-	cgs.media.voteFailed = trap_S_RegisterSound( "sound/feedback/vote_failed.wav", qtrue);
+	cgs.media.voteNow = trap_S_RegisterSound( "sound/feedback/vote_now.ogg", qtrue);
+	cgs.media.votePassed = trap_S_RegisterSound( "sound/feedback/vote_passed.ogg", qtrue);
+	cgs.media.voteFailed = trap_S_RegisterSound( "sound/feedback/vote_failed.ogg", qtrue);
 #endif
 
-	cgs.media.watrInSound = trap_S_RegisterSound( "sound/player/watr_in.wav", qfalse);
-	cgs.media.watrOutSound = trap_S_RegisterSound( "sound/player/watr_out.wav", qfalse);
-	cgs.media.watrUnSound = trap_S_RegisterSound( "sound/player/watr_un.wav", qfalse);
+	cgs.media.watrInSound = trap_S_RegisterSound( "sound/player/watr_in.ogg", qfalse);
+	cgs.media.watrOutSound = trap_S_RegisterSound( "sound/player/watr_out.ogg", qfalse);
+	cgs.media.watrUnSound = trap_S_RegisterSound( "sound/player/watr_un.ogg", qfalse);
 
-	cgs.media.jumpPadSound = trap_S_RegisterSound ("sound/world/jumppad.wav", qfalse );
+	cgs.media.jumpPadSound = trap_S_RegisterSound ("sound/world/jumppad.ogg", qfalse );
 
 	for (i=0 ; i<4 ; i++) {
-		Com_sprintf (name, sizeof(name), "sound/player/footsteps/step%i.wav", i+1);
+		Com_sprintf (name, sizeof(name), "sound/player/footsteps/step%i.ogg", i+1);
 		cgs.media.footsteps[FOOTSTEP_NORMAL][i] = trap_S_RegisterSound (name, qfalse);
 
-		Com_sprintf (name, sizeof(name), "sound/player/footsteps/boot%i.wav", i+1);
+		Com_sprintf (name, sizeof(name), "sound/player/footsteps/boot%i.ogg", i+1);
 		cgs.media.footsteps[FOOTSTEP_BOOT][i] = trap_S_RegisterSound (name, qfalse);
 
-		Com_sprintf (name, sizeof(name), "sound/player/footsteps/flesh%i.wav", i+1);
+		Com_sprintf (name, sizeof(name), "sound/player/footsteps/flesh%i.ogg", i+1);
 		cgs.media.footsteps[FOOTSTEP_FLESH][i] = trap_S_RegisterSound (name, qfalse);
 
-		Com_sprintf (name, sizeof(name), "sound/player/footsteps/mech%i.wav", i+1);
+		Com_sprintf (name, sizeof(name), "sound/player/footsteps/mech%i.ogg", i+1);
 		cgs.media.footsteps[FOOTSTEP_MECH][i] = trap_S_RegisterSound (name, qfalse);
 
-		Com_sprintf (name, sizeof(name), "sound/player/footsteps/energy%i.wav", i+1);
+		Com_sprintf (name, sizeof(name), "sound/player/footsteps/energy%i.ogg", i+1);
 		cgs.media.footsteps[FOOTSTEP_ENERGY][i] = trap_S_RegisterSound (name, qfalse);
 
-		Com_sprintf (name, sizeof(name), "sound/player/footsteps/splash%i.wav", i+1);
+		Com_sprintf (name, sizeof(name), "sound/player/footsteps/splash%i.ogg", i+1);
 		cgs.media.footsteps[FOOTSTEP_SPLASH][i] = trap_S_RegisterSound (name, qfalse);
 
-		Com_sprintf (name, sizeof(name), "sound/player/footsteps/clank%i.wav", i+1);
+		Com_sprintf (name, sizeof(name), "sound/player/footsteps/clank%i.ogg", i+1);
 		cgs.media.footsteps[FOOTSTEP_METAL][i] = trap_S_RegisterSound (name, qfalse);
 	}
 
@@ -629,8 +629,8 @@ static void CG_RegisterSounds( void ) {
 	}
 	// ADDING FOR ZEQ2
 
-	cgs.media.radarwarningSound = trap_S_RegisterSound( "sound/feedback/radar_warning.wav", qfalse );
-	cgs.media.lightspeedSound = trap_S_RegisterSound( "sound/effects/lightspeed.wav", qfalse );
+	cgs.media.radarwarningSound = trap_S_RegisterSound( "sound/feedback/radar_warning.ogg", qfalse );
+	cgs.media.lightspeedSound = trap_S_RegisterSound( "sound/effects/lightspeed.ogg", qfalse );
 
 	// END ADDING
 

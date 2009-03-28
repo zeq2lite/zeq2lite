@@ -17,8 +17,8 @@ menuDef {
 	onClose { uiScript updateSPMenu }
 	onESC { close endOfGame ; open skirmish }	
 	onOpen { close ingame ; 
-		play "sound/misc/kcswish.wav" ; 
-		playlooped "music/win.wav" ;
+		play "sound/misc/kcswish.ogg" ; 
+		playlooped "music/win.ogg" ;
 		setitemcolor fadebox backcolor 0 0 0 1 ;
 		transition mappreview 0 0 640 480 120 111 400 300 20 10 ;  
 		transition playerlogo 250 160 160 160 110 30 80 80 20 10 ; 
@@ -599,7 +599,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_assist_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_assist_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_assist.wav" } 
+	action { exec "play sound/feedback/voc_menu_assist.ogg" } 
 	}
 
 itemdef {
@@ -616,7 +616,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_accuracy_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_accuracy_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_accuracy.wav" } 
+	action { exec "play sound/feedback/voc_menu_accuracy.ogg" } 
 	}
 itemdef {
 	name medal_excellent_window
@@ -632,7 +632,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_excellent_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_excellent_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_excellent.wav" } 
+	action { exec "play sound/feedback/voc_menu_excellent.ogg" } 
 	}
 itemdef {
 	name medal_gauntlet_window
@@ -648,7 +648,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_gauntlet_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_gauntlet_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_gauntlet.wav" } 
+	action { exec "play sound/feedback/voc_menu_gauntlet.ogg" } 
 	}
 itemdef {
 	name medal_impressive_window
@@ -664,7 +664,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_impressive_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_impressive_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_impressive.wav" } 
+	action { exec "play sound/feedback/voc_menu_impressive.ogg" } 
 	}
 itemdef {
 	name medal_defend_window
@@ -680,7 +680,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_defend_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_defend_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_defense.wav" } 
+	action { exec "play sound/feedback/voc_menu_defense.ogg" } 
 	}
 itemdef {
 	name medal_capture_window
@@ -696,7 +696,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_capture_team forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_capture_team forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_captures.wav" } 
+	action { exec "play sound/feedback/voc_menu_captures.ogg" } 
 	}
 
 
@@ -720,7 +720,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_perfect_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_perfect_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/perfect.wav" } 
+	action { exec "play sound/feedback/perfect.ogg" } 
 	}
 
 itemdef {
@@ -737,7 +737,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_accuracy_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_accuracy_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_accuracy.wav" } 
+	action { exec "play sound/feedback/voc_menu_accuracy.ogg" } 
 	}
 
 
@@ -756,7 +756,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_excellent_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_excellent_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_excellent.wav" } 
+	action { exec "play sound/feedback/voc_menu_excellent.ogg" } 
 	}
 
 
@@ -774,7 +774,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_gauntlet_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_gauntlet_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_gauntlet.wav" } 
+	action { exec "play sound/feedback/voc_menu_gauntlet.ogg" } 
 	}
 
 
@@ -792,7 +792,7 @@ itemdef {
 	visible 1
 	mouseenter { setitemcolor medal_impressive_nonteam forecolor 0 0 0 0 ; setcolor forecolor 1 1 1 1 }
 	mouseexit { setitemcolor medal_impressive_nonteam forecolor 1 1 1 1 ; setcolor forecolor 1 1 1 0 }
-	action { exec "play sound/feedback/voc_menu_impressive.wav" } 
+	action { exec "play sound/feedback/voc_menu_impressive.ogg" } 
 	}
 
 
@@ -1081,7 +1081,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
 	visible 1
-	action { play "sound/misc/nomenu.wav" ;
+	action { play "sound/misc/nomenu.ogg" ;
 	close endofgame ; 
 	close skirmish ;  
 	uiScript skirmishStart }
@@ -1156,7 +1156,7 @@ itemDef {
 	backcolor .37 .1 .1 1
 	visible 1
 	ownerdrawflag UI_SHOW_DEMOAVAILABLE 
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	close endofgame ; 
 	uiScript RunSPDemo } 
 	mouseEnter { setitemcolor demo backcolor .1 .37 .1 1  } 
@@ -1212,7 +1212,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	close endofgame ; 
 	open skirmish }
 	mouseEnter { setitemcolor main backcolor .1 .37 .1 1 } 
@@ -1268,7 +1268,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	uiScript nextSkirmish ;
 	close endofgame }
 	mouseEnter { setitemcolor next backcolor .1 .37 .1 1 } 

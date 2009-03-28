@@ -100,7 +100,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	close vid_restart_popmenu ; 
 	exec "vid_restart" }
 	mouseEnter { setitemcolor yes backcolor .1 .37 .1 1 } 
@@ -152,7 +152,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ;
+	action { play "sound/misc/nomenu.ogg" ;
 	close vid_restart_popmenu ;  
 	open setup_menu ; 
 	open system_menu }

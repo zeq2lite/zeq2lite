@@ -12,8 +12,8 @@ menuDef {
     	style 1
 	focusColor 1 .75 0 1
 	
-		onOpen { play "sound/misc/kcswish.wav" ;
-		playlooped "music/fla_mp03.wav" ;
+		onOpen { play "sound/misc/kcswish.ogg" ;
+		playlooped "music/fla_mp03.ogg" ;
 		setitemcolor fadebox backcolor 0 0 0 1 ; 
 		fadeout fadebox ; 
 		uiScript update "ui_GetName" ; 
@@ -68,7 +68,7 @@ itemDef {
       	visible 1
 	mouseEnter { show message_type } 
 	mouseExit { hide message_type } 
-	action { play "sound/misc/kcaction.wav" } 
+	action { play "sound/misc/kcaction.ogg" } 
     	}
 
 itemDef {
@@ -340,7 +340,7 @@ itemDef {
 	cvarTest "ui_q3model"
 	showCVar { "0" }	
       	visible 1 
-	action { play "sound/misc/nomenu.wav" }
+	action { play "sound/misc/nomenu.ogg" }
 	mouseEnter { show message_clan } 
 	mouseExit { hide message_clan } 
     	}

@@ -143,11 +143,11 @@ void P_WorldEffects( gentity_t *ent ) {
 
 				// play a gurp sound instead of a normal pain sound
 				if (ent->health <= ent->damage) {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("*drown.wav"));
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("*drown.ogg"));
 				} else if (rand()&1) {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp1.wav"));
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp1.ogg"));
 				} else {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp2.wav"));
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp2.ogg"));
 				}
 
 				// don't play a normal pain sound
@@ -200,7 +200,7 @@ G_SetClientSound
 void G_SetClientSound( gentity_t *ent ) {
 #ifdef MISSIONPACK
 	if( ent->s.eFlags & EF_TICKING ) {
-		ent->client->ps.loopSound = G_SoundIndex( "sound/weapons/proxmine/wstbtick.wav");
+		ent->client->ps.loopSound = G_SoundIndex( "sound/weapons/proxmine/wstbtick.ogg");
 	}
 	else
 #endif

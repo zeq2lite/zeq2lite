@@ -287,7 +287,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
 	visible 1
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	close serverinfo_popmenu ; 
 	open joinserver }
 	mouseEnter { setitemcolor exit backcolor .1 .37 .1 1 } 

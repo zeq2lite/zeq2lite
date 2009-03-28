@@ -53,7 +53,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
       	visible 1
-	action { hide grphelptext ; show scouttext ; exec "play sound/items/cl_scout.wav"  }
+	action { hide grphelptext ; show scouttext ; exec "play sound/items/cl_scout.ogg"  }
 	mouseEnter { setitemcolor scout backcolor .1 .37 .1 1 ; hide scoutIcon ; show scoutIconAlt } 
 	mouseExit { setitemcolor scout backcolor .37 .1 .1 1 ; hide scoutIconAlt ; show scoutIcon } 
 	}
@@ -120,7 +120,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
       	visible 1
-	action { hide grphelptext ; show guardtext ; exec "play sound/items/cl_guard.wav" }
+	action { hide grphelptext ; show guardtext ; exec "play sound/items/cl_guard.ogg" }
 	mouseEnter { setitemcolor guard backcolor .1 .37 .1 1 ; hide guardIcon ; show guardIconAlt } 
 	mouseExit { setitemcolor guard backcolor .37 .1 .1 1 ; hide guardIconAlt ; show guardIcon } 
 	}
@@ -188,7 +188,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show doublertext ; exec "play sound/items/cl_doubler.wav" }
+	action { hide grphelptext ; show doublertext ; exec "play sound/items/cl_doubler.ogg" }
 	mouseEnter { setitemcolor doubler backcolor .1 .37 .1 1 ; hide doublerIcon ; show doublerIconAlt } 
 	mouseExit { setitemcolor doubler backcolor .37 .1 .1 1 ; hide doublerIconAlt ; show doublerIcon } 	
 	}
@@ -255,7 +255,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show ammo_regentext ; exec "play sound/items/cl_ammoregen.wav" }
+	action { hide grphelptext ; show ammo_regentext ; exec "play sound/items/cl_ammoregen.ogg" }
 	mouseEnter { setitemcolor ammo_regen backcolor .1 .37 .1 1 ; hide ammo_regenIcon ; show ammo_regenIconAlt } 
 	mouseExit { setitemcolor ammo_regen backcolor .37 .1 .1 1 ; hide ammo_regenIconAlt ; show ammo_regenIcon } 
 	}
@@ -322,7 +322,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show kamikazetext ; exec "play sound/items/kamikaze_full.wav" }
+	action { hide grphelptext ; show kamikazetext ; exec "play sound/items/kamikaze_full.ogg" }
 	mouseEnter { setitemcolor kamikaze backcolor .1 .37 .1 1 ; hide kamikazeIcon ; show kamikazeIconAlt } 
 	mouseExit { setitemcolor kamikaze backcolor .37 .1 .1 1 ; hide kamikazeIconAlt ; show kamikazeIcon } 
 	}
@@ -390,7 +390,7 @@ itemDef {
       	visible 1
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
-	action { hide grphelptext ; show invulnerabilitytext ; exec "play sound/items/invul_activate.wav"  }
+	action { hide grphelptext ; show invulnerabilitytext ; exec "play sound/items/invul_activate.ogg"  }
 	mouseEnter { setitemcolor invulnerability backcolor .1 .37 .1 1 ; hide invulnerabilityIcon ; show invulnerabilityIconAlt } 
 	mouseExit { setitemcolor invulnerability backcolor .37 .1 .1 1 ; hide invulnerabilityIconAlt ; show invulnerabilityIcon } 
 	}

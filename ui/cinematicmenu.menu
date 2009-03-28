@@ -14,8 +14,8 @@
     	border 1
 	onEsc { close cinematicMenu ; open main }
 	onOpen { setitemcolor fadebox backcolor 0 0 0 1 ; 
-	play "sound/misc/kcswish.wav" ; 
-	playlooped "music/fla_mp03.wav" ;
+	play "sound/misc/kcswish.ogg" ; 
+	playlooped "music/fla_mp03.ogg" ;
 	fadeout fadebox ; 
 	transition mappreview 0 0 640 480 54 144 256 192 20 10 ; 
 	uiScript loadMovies ;
@@ -182,7 +182,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1
       	visible 1 
-	mouseEnter { playlooped "sound/misc/loop_electricity_05.wav" ; show lightning ; hide accept ; show accept_alt ; fadein message_accept }
+	mouseEnter { playlooped "sound/misc/loop_electricity_05.ogg" ; show lightning ; hide accept ; show accept_alt ; fadein message_accept }
       	action { close cinematicMenu ; uiScript playMovie }
   	}
 
@@ -196,7 +196,7 @@ itemDef {
       	visible 0
 	type ITEM_TYPE_BUTTON   
       	action { close cinematicMenu ; uiScript playMovie }
-	mouseExit { hide lightning ; hide accept_alt ; show accept ; fadeout message_accept ; playlooped "music/fla_mp03.wav" }	
+	mouseExit { hide lightning ; hide accept_alt ; show accept ; fadeout message_accept ; playlooped "music/fla_mp03.ogg" }	
   	}
 itemDef {
       	name lightning

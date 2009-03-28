@@ -27,7 +27,7 @@ itemDef {
 	rect 0 0 640 480
 	type 1
       	visible 1 
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	close quitCredit ;
 	uiScript "quit"  }
     	}
@@ -188,7 +188,7 @@ itemDef {
 	decoration
 	backcolor .37 .1 .1 1
       	forecolor 1 1 1 1
-	action { play "sound/misc/nomenu.wav" }
+	action { play "sound/misc/nomenu.ogg" }
 	mouseEnter { setitemcolor exitbttn backcolor .1 .37 .1 1 }
       	mouseExit { setitemcolor exitbttn backcolor .37 .1 .1 1 }	
 	}

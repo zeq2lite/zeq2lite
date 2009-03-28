@@ -1041,8 +1041,8 @@ void CG_InitAuras() {
 		playerAura[i].burstTimer = cg.time - (AURA_BURSTTIME + 50); // <-- Makes sure the burst isn't active
 		playerAura[i].scale = 1.5f;
 
-		playerAura[i].startSound = trap_S_RegisterSound( "sound/aura/AuraStart.wav", qfalse );
-		playerAura[i].loopBoostSound  = trap_S_RegisterSound( "sound/aura/AuraLoop.wav",  qfalse );
-		playerAura[i].loopChargeSound = trap_S_RegisterSound( "sound/aura/AuraLoop.wav",  qfalse );
+		playerAura[i].startSound = trap_S_RegisterSound( "sound/aura/AuraStart.ogg", qfalse );
+		playerAura[i].loopBoostSound  = trap_S_RegisterSound( "sound/aura/AuraLoop.ogg",  qfalse );
+		playerAura[i].loopChargeSound = trap_S_RegisterSound( "sound/aura/AuraLoop.ogg",  qfalse );
 	}
 }

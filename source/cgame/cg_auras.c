@@ -946,9 +946,9 @@ void CG_RegisterClientAura( int clientNum, char *modelName, char *skinName ) {
 	auraSpikeShader = trap_R_RegisterShader( "Aura_Spike" );
 	auraTrailShader = trap_R_RegisterShader( "Aura_Trail" );
 
-	auraStartSound  = trap_S_RegisterSound( "sound/aura/AuraStart.wav", qfalse );
-	auraBoostSound  = trap_S_RegisterSound( "sound/aura/AuraLoop.wav", qfalse );
-	auraChargeSound = trap_S_RegisterSound( "sound/aura/AuraLoop.wav", qfalse );
+	auraStartSound  = trap_S_RegisterSound( "sound/aura/AuraStart.ogg", qfalse );
+	auraBoostSound  = trap_S_RegisterSound( "sound/aura/AuraLoop.ogg", qfalse );
+	auraChargeSound = trap_S_RegisterSound( "sound/aura/AuraLoop.ogg", qfalse );
 
 	// Register 8 different tiers worth of auras
 	for ( j = 0; j < 8; j++ ) { 

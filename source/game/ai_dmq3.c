@@ -4823,25 +4823,25 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 			}
 			trap_GetConfigstring(CS_SOUNDS + state->eventParm, buf, sizeof(buf));
 			/*
-			if (!strcmp(buf, "sound/teamplay/flagret_red.wav")) {
+			if (!strcmp(buf, "sound/teamplay/flagret_red.ogg")) {
 				//red flag is returned
 				bs->redflagstatus = 0;
 				bs->flagstatuschanged = qtrue;
 			}
-			else if (!strcmp(buf, "sound/teamplay/flagret_blu.wav")) {
+			else if (!strcmp(buf, "sound/teamplay/flagret_blu.ogg")) {
 				//blue flag is returned
 				bs->blueflagstatus = 0;
 				bs->flagstatuschanged = qtrue;
 			}
 			else*/
 #ifdef MISSIONPACK
-			if (!strcmp(buf, "sound/items/kamikazerespawn.wav" )) {
+			if (!strcmp(buf, "sound/items/kamikazerespawn.ogg" )) {
 				//the kamikaze respawned so dont avoid it
 				BotDontAvoid(bs, "Kamikaze");
 			}
 			else
 #endif
-				if (!strcmp(buf, "sound/items/poweruprespawn.wav")) {
+				if (!strcmp(buf, "sound/items/poweruprespawn.ogg")) {
 				//powerup respawned... go get it
 				BotGoForPowerups(bs);
 			}
@@ -4934,7 +4934,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 				//check out the sound
 				trap_GetConfigstring(CS_SOUNDS + state->eventParm, buf, sizeof(buf));
 				//if falling into a death pit
-				if (!strcmp(buf, "*falling1.wav")) {
+				if (!strcmp(buf, "*falling1.ogg")) {
 					//if the bot has a personal teleporter
 					if (bs->inventory[INVENTORY_TELEPORTER] > 0) {
 						//use the holdable item

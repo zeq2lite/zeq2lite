@@ -7,7 +7,7 @@
     	bigFont "fonts/bigfont" 20				// font
 	cursor "ui/assets/3_cursor3"			// cursor	
 	gradientBar "ui/assets/gradientbar2.tga"	// gradient bar
-	itemFocusSound "sound/misc/menu2.wav"		// sound for item getting focus (via keyboard or mouse )
+	itemFocusSound "sound/misc/menu2.ogg"		// sound for item getting focus (via keyboard or mouse )
 	
     	fadeClamp 1.0					// sets the fadeup alpha
 	fadeCycle 1					// how often fade happens in milliseconds
@@ -31,7 +31,7 @@ menuDef {
 						
 	onOpen { 
 		setitemcolor fadebox backcolor 0 0 0 1 ; 
-		playlooped "music/sonic1.wav" ;
+		playlooped "music/sonic1.ogg" ;
 		fadeout fadebox ;
 		transition cinematic 390 198 250 1 390 163 250 155 20 12 ; 
 		transition menuback_d 0 198 250 1 0 163 255 155 20 12 ;
@@ -40,7 +40,7 @@ menuDef {
 		transition singlebar 0 95 640 1 0 80 640 30 20 10 ;
 		transition optionbar 0 375 640 1 0 360 640 30 20 10 ; 
 		transition quitbar 0 419 640 1 0 404 640 30 20 10 ;
-      	play "sound/misc/tim_pump.wav" ; 
+      	play "sound/misc/tim_pump.ogg" ; 
 		uiScript stopRefresh ;
 		}
 		
@@ -192,7 +192,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1
 	visible 0 
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	open quake3_popmenu  }
 }
 
@@ -210,7 +210,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1 
 	visible 0
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open help_menu } 
 	}
@@ -229,7 +229,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1
 	visible 0
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open credit } 
 	}
@@ -249,7 +249,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1
 	visible 0 
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open mod }
      	}
@@ -267,7 +267,7 @@ itemDef {
       	backcolor 0 0 0 0
       	forecolor 1 1 1 1
 	visible 0 
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open cinematicMenu }
      	}
@@ -322,7 +322,7 @@ itemDef {
       	textalign 1		
    	forecolor 1 1 1 1
       	visible 0 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open Skirmish }
     	}
@@ -341,7 +341,7 @@ itemDef {
 	textscale .333
    	forecolor 1 1 1 1 
 	visible 0 
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open joinserver }
     	}
@@ -361,7 +361,7 @@ itemDef {
 	textscale .333
    	forecolor 1 1 1 1  
 	visible 0 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open createserver }
     	}
@@ -412,7 +412,7 @@ itemDef {
       	textalign 1		
    	forecolor 1 1 1 1
       	visible 0 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open player_menu }
     	}
@@ -431,7 +431,7 @@ itemDef {
       	textalign 1		
    	forecolor 1 1 1 1
       	visible 0 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open setup_menu ; 
 	open control_menu }
@@ -450,7 +450,7 @@ itemDef {
      	textalign 1	
    	forecolor 1 1 1 1
       	visible 0 
-      	action { play "sound/misc/kcaction.wav" ; 
+      	action { play "sound/misc/kcaction.ogg" ; 
 	close main ; 
 	open demo }
     	}
@@ -486,7 +486,7 @@ itemDef {
       	textalign 1	   
    	forecolor 1 1 1 1
       	visible 1 
-  	action { play "sound/misc/kcaction.wav" ;
+  	action { play "sound/misc/kcaction.ogg" ;
 	open quit_popmenu }
 	mouseEnter { setitemcolor quitbar backcolor .75 0 0 .25 }
       	mouseExit { setitemcolor quitbar backcolor 0 0 .75 .25 }

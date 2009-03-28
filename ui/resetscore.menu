@@ -94,7 +94,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	uiScript resetScores ; 
 	show grpfinish ; 
 	hide grpdefault }
@@ -147,7 +147,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	close resetscore_menu ; open control_menu }
 	mouseEnter { setitemcolor no backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor no backcolor .37 .1 .1 1 } 	

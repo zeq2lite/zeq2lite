@@ -70,7 +70,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav"; 
+	action { play "sound/misc/nomenu.ogg"; 
 	close main ;
 	close quit_popmenu ; 
 	open quitCredit  }
@@ -123,7 +123,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/nomenu.wav" ; 
+	action { play "sound/misc/nomenu.ogg" ; 
 	close quit_popmenu ; open main }
 	mouseEnter { setitemcolor no backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor no backcolor .37 .1 .1 1 } 		

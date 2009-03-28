@@ -192,8 +192,8 @@ void SP_target_speaker( gentity_t *ent ) {
 		ent->spawnflags |= 8;
 	}
 
-	if (!strstr( s, ".wav" )) {
-		Com_sprintf (buffer, sizeof(buffer), "%s.wav", s );
+	if (!strstr( s, ".ogg" )) {
+		Com_sprintf (buffer, sizeof(buffer), "%s.ogg", s );
 	} else {
 		Q_strncpyz( buffer, s, sizeof(buffer) );
 	}

@@ -4,20 +4,20 @@
 #include "cg_local.h"
 
 char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
-	"*death1.wav",
-	"*death2.wav",
-	"*death3.wav",
-	"*jump1.wav",
-	"*highjump1.wav",
-	"*pain25_1.wav",
-	"*pain50_1.wav",
-	"*pain75_1.wav",
-	"*pain100_1.wav",
-	"*falling1.wav",
-	"*gasp.wav",
-	"*drown.wav",
-	"*fall1.wav",
-	"*taunt.wav"
+	"*death1.ogg",
+	"*death2.ogg",
+	"*death3.ogg",
+	"*jump1.ogg",
+	"*highjump1.ogg",
+	"*pain25_1.ogg",
+	"*pain50_1.ogg",
+	"*pain75_1.ogg",
+	"*pain100_1.ogg",
+	"*falling1.ogg",
+	"*gasp.ogg",
+	"*drown.ogg",
+	"*fall1.ogg",
+	"*taunt.ogg"
 };
 
 // HACK: We have to copy the entire playerEntity_t information

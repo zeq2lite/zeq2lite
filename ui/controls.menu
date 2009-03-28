@@ -76,7 +76,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpControls ; show look }
 	mouseEnter { show message_look ; setitemcolor ctr_look backcolor .1 .37 .1 1 } 
 	mouseExit { hide message_look ; setitemcolor ctr_look backcolor .37 .1 .1 1 } 
@@ -228,7 +228,7 @@ itemDef {
 	forecolor 1 1 1 1 
 	backcolor .37 .1 .1 1
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpControls ; show move }
 	mouseEnter { show message_move ; setitemcolor ctr_move backcolor .1 .37 .1 1  } 
 	mouseExit { hide message_move ; setitemcolor ctr_move backcolor .37 .1 .1 1 } 
@@ -466,7 +466,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpControls ; show shoot }
 	mouseEnter { show message_shoot ; setitemcolor ctr_shoot backcolor .1 .37 .1 1 } 
 	mouseExit { hide message_shoot ; setitemcolor ctr_shoot backcolor .37 .1 .1 1 }
@@ -785,7 +785,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpControls ; show misc }
 	mouseEnter { show message_misc ; setitemcolor ctr_miscellaneous backcolor .1 .37 .1 1 } 
 	mouseExit { hide message_misc ; setitemcolor ctr_miscellaneous backcolor .37 .1 .1 1 } 
@@ -957,7 +957,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpControls ; show orders}
 	mouseEnter { show message_misc ; setitemcolor ctr_orders backcolor .1 .37 .1 1 } 
 	mouseExit { hide message_misc ; setitemcolor ctr_orders backcolor .37 .1 .1 1 } 
@@ -1222,7 +1222,7 @@ itemDef {
 	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1 
 	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grpControls ; show chat}
 	mouseEnter { show message_misc ; setitemcolor ctr_chat backcolor .1 .37 .1 1 } 
 	mouseExit { hide message_misc ; setitemcolor ctr_chat backcolor .37 .1 .1 1 } 

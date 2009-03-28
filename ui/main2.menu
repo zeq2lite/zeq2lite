@@ -7,10 +7,10 @@
     bigFont "fonts/impact.ttf" 20				// font
 	cursor "menu/art/3_cursor3"			// cursor	
 	gradientBar "ui/assets/gradientbar2.tga"	// gradient bar
-	//menuEnterSound "sound/misc/menu1.wav"		// sound for menu loading
-	//menuExitSound "sound/misc/menu3.wav"		// sound for menu exiting 
-	itemFocusSound "sound/misc/menu2.wav"		// sound for item getting focus (via keyboard or mouse )
-	//menuBuzzSound "sound/misc/menu4.wav"		// sound for menu buzzing
+	//menuEnterSound "sound/misc/menu1.ogg"		// sound for menu loading
+	//menuExitSound "sound/misc/menu3.ogg"		// sound for menu exiting 
+	itemFocusSound "sound/misc/menu2.ogg"		// sound for item getting focus (via keyboard or mouse )
+	//menuBuzzSound "sound/misc/menu4.ogg"		// sound for menu buzzing
 
     fadeClamp 1.0					// sets the fadeup alpha
 	fadeCycle 1					// how often fade happens in milliseconds
@@ -32,7 +32,7 @@ menuDef {
 	rect 0 0 640 480
     	visible MENU_TRUE
 	focusColor 1 .75 0 1
-	soundLoop "music/fla_mp03.wav" 
+	soundLoop "music/fla_mp03.ogg" 
 	onESC { open quit_popmenu }
 
 

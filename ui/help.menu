@@ -14,7 +14,7 @@
     	border 1
 	onEsc { close help_menu ; close powerup_menu ; close ordersHelp_menu ; open main }
 	onOpen { setitemcolor fadebox backcolor 0 0 0 1 ; 
-	playlooped "music/fla_mp03.wav" ;
+	playlooped "music/fla_mp03.ogg" ;
 	fadeout fadebox ; 
  	hide grphelptext ; 
 	show grpbttn ; 
@@ -65,7 +65,7 @@ itemDef {
       	border 0
       	bordercolor 0 0 0 0
       	visible 1
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grphelptext ; 
 	show grpbttn ;
 	close powerup_menu ;
@@ -87,7 +87,7 @@ itemDef {
       	border 0
       	bordercolor 0 0 0 0
       	visible 1 
-	action { play "sound/misc/kcaction.wav" ; 
+	action { play "sound/misc/kcaction.ogg" ; 
 	hide grphelptext ; 
 	hide grpbttn ;
 	close powerup_menu ; 
@@ -109,7 +109,7 @@ itemDef {
       	border 0
       	bordercolor 0 0 0 0
       	visible 1 
-	action { play "sound/misc/kcaction.wav" ;
+	action { play "sound/misc/kcaction.ogg" ;
 	hide grphelptext ; 
 	hide grpbttn ; 
 	close powerup_menu ; 
@@ -134,7 +134,7 @@ itemDef {
       	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
       	visible 0
-	action { hide grphelptext ; show ctf ; play "sound/misc/kcaction.wav" } 
+	action { hide grphelptext ; show ctf ; play "sound/misc/kcaction.ogg" } 
 	mouseEnter { setitemcolor ctfbttn backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor ctfbttn backcolor .37 .1 .1 1 } 
 	}
@@ -184,7 +184,7 @@ itemDef {
       	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
       	visible 0
-	action { hide grphelptext ; show oneflag ; play "sound/misc/kcaction.wav" } 
+	action { hide grphelptext ; show oneflag ; play "sound/misc/kcaction.ogg" } 
 	mouseEnter { setitemcolor oneflagbttn backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor oneflagbttn backcolor .37 .1 .1 1 } 
 	}
@@ -234,7 +234,7 @@ itemDef {
       	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
       	visible 0
-	action { hide grphelptext ; show overload ; play "sound/misc/kcaction.wav"  } 
+	action { hide grphelptext ; show overload ; play "sound/misc/kcaction.ogg"  } 
 	mouseEnter { setitemcolor overloadbttn backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor overloadbttn backcolor .37 .1 .1 1 } 
 	}
@@ -285,7 +285,7 @@ itemDef {
       	forecolor 1 1 1 1
 	backcolor .37 .1 .1 1
       	visible 0
-	action { hide grphelptext ; show harvester ; play "sound/misc/kcaction.wav"} 
+	action { hide grphelptext ; show harvester ; play "sound/misc/kcaction.ogg"} 
 	mouseEnter { setitemcolor harvesterbttn backcolor .1 .37 .1 1 } 
 	mouseExit { setitemcolor harvesterbttn backcolor .37 .1 .1 1 } 
 	}
@@ -597,7 +597,7 @@ itemDef {
       	action { close help_menu ; 
 	close powerup_menu ; 
 	close ordersHelp_menu ;
-	//play "sound/misc/tim_pump.wav" ;  
+	//play "sound/misc/tim_pump.ogg" ;  
 	open main }	  
 	}
 
