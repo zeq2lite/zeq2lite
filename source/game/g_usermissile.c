@@ -1600,7 +1600,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 	G_SetOrigin( self, trace->endpos );
 	
 
-	if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->damageRadius, self->methodOfDeath, self->extraKnockback )) {
+	if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
 		if( !hitClient ) {
 			g_entities[self->s.clientNum].client->accuracy_hits++;
 		}
