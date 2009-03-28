@@ -3061,9 +3061,10 @@ void CG_ResetPlayerEntity( centity_t *cent ) {
 
 void CG_SpawnLightSpeedGhost( centity_t *cent ) {
 	
-	//trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound );
-	trap_S_StartSound( NULL, cent->currentState.number, CHAN_BODY, cgs.media.lightspeedSound );
+	// Play the lightspeed sound at the teleport effect's position for other players
+	trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound );
 
-	// TODO -RiO: Add static copy of player model, fading out
+	// But play the lightspeed sound effect for the local client too
+	trap_S_StartSound( NULL, cent->currentState.number, CHAN_LOCAL, cgs.media.lightspeedSound );
 }
 

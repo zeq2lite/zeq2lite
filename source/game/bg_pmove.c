@@ -472,7 +472,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 		pm->ps->eFlags |= EF_AURA;
 		
 		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
-			PM_ContinueTorsoAnim( TORSO_TRANS_UP );
+//			PM_ContinueTorsoAnim( TORSO_TRANS_UP );
 			PM_ContinueLegsAnim( LEGS_TRANS_UP );
 		} else {
 			PM_ContinueLegsAnim( LEGS_PL_UP );
@@ -515,7 +515,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 
 		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
-			PM_ContinueTorsoAnim( TORSO_TRANS_UP );
+//			PM_ContinueTorsoAnim( TORSO_TRANS_UP );
 			PM_ContinueLegsAnim( LEGS_TRANS_UP );
 		} else {
 			PM_ContinueLegsAnim( LEGS_PL_DOWN );

@@ -1041,6 +1041,7 @@ Generates and draws a game scene and status information at the given time.
 */
 void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback ) {
 	int		inwater;
+	float	attenuation;
 
 	cg.time = serverTime;
 	cg.demoPlayback = demoPlayback;
@@ -1137,8 +1138,10 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// warning sounds when powerup is wearing off
 	CG_PowerupTimerSounds();
 
+	attenuation = cg_soundAttenuation.value; // 0.0001f; // Quake 3 default was 0.0008f;
+
 	// update audio positions
-	trap_S_Respatialize( cg.snap->ps.clientNum, cg.refdef.vieworg, cg.refdef.viewaxis, inwater );
+	trap_S_Respatialize( cg.snap->ps.clientNum, cg.refdef.vieworg, cg.refdef.viewaxis, inwater, attenuation );
 
 	// make sure the lagometerSample and frame timing isn't done twice when in stereo
 	if ( stereoView != STEREO_RIGHT ) {

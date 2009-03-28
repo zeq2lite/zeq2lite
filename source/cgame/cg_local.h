@@ -1248,6 +1248,7 @@ extern	vmCvar_t		cg_obeliskRespawnDelay;
 extern	vmCvar_t		cg_tailDetail;
 extern	vmCvar_t		cg_verboseParse;
 extern  vmCvar_t		r_beamDetail;
+extern	vmCvar_t		cg_soundAttenuation;
 // END ADDING
 
 
@@ -1647,7 +1648,7 @@ void		trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 
 // repatialize recalculates the volumes of sound as they should be heard by the
 // given entityNum and position
-void		trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
+void		trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater, float attenuation );
 sfxHandle_t	trap_S_RegisterSound( const char *sample, qboolean compressed );		// returns buzz if not found
 void		trap_S_StartBackgroundTrack( const char *intro, const char *loop );	// empty name stops music
 void	trap_S_StopBackgroundTrack( void );
