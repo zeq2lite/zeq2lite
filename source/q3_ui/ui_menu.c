@@ -229,7 +229,7 @@ void UI_MainMenu( void ) {
 	qboolean teamArena = qfalse;
 	int		style = UI_LEFT | UI_DROPSHADOW | UI_SMALLFONT;
 	
-//	trap_S_StartBackgroundTrack("music/zeq2_menumusic.ogg", "music/zeq2_menumusic.ogg");
+	trap_S_StartBackgroundTrack("music/zeq2_menumusic.ogg", "music/zeq2_menumusic.ogg");
 //	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/zeq2_menumusic\n" );
 	trap_Cvar_Set( "sv_killserver", "1" );
 /*
