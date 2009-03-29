@@ -2395,6 +2395,7 @@ void CG_Player( centity_t *cent ) {
 			ci->activeTier = tier;
 			
 			// NOTE: Add 'tier up' cinematic calls here
+			CG_AddEarthquake(NULL,-1, 1, 0, 1, 400);
 		}
 	}
 	// -->

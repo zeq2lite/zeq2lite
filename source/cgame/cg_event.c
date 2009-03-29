@@ -1178,7 +1178,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 
 	case EV_TIERUP:
-		CG_AddEarthquake(NULL,-1, 1, 0, 1, 400);
 		break;
 	case EV_TIERDOWN:
 		// These don't do anything at all
