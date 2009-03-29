@@ -585,6 +585,7 @@ static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
 	vec4_t		powerColor;
+	vec4_t		dullColor;
 	vec4_t		maxColor;
 	vec3_t		angles;
 	const char	*healthString;
@@ -658,9 +659,13 @@ static void CG_DrawStatusBar( void ) {
 	//
 	// health
 	//
-	powerColor[0] = 0.03f;
-	powerColor[1] = 0.51f;
-	powerColor[2] = 0.92f;
+	dullColor[0] = 0.188f;
+	dullColor[1] = 0.278f;
+	dullColor[2] = 0.345f;
+	dullColor[3] = 1.0f;
+	powerColor[0] = 0.0f;
+	powerColor[1] = 0.588f;
+	powerColor[2] = 1.0f;
 	powerColor[3] = 1.0f;
 	maxColor[0] = maxColor[1] = maxColor[2] = 0.3f;
 	maxColor[3] = 1.0f;
@@ -674,13 +679,13 @@ static void CG_DrawStatusBar( void ) {
 	//}
 
 	// draw HUD pic
- 	CG_DrawHorGauge(60,465,161,11,powerColor,colors[5],ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
+ 	CG_DrawHorGauge(53,459,200,25,powerColor,dullColor,ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
  	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[STAT_MAX_HEALTH],qfalse);
 	healthDisplay = ((float)ps->stats[STAT_HEALTH] / (float)ps->stats[STAT_MAX_HEALTH]) *  2000000000;
 	healthString = va("%i",healthDisplay);
 	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
-	CG_DrawPic(0,427,231,53,cgs.media.LB_HudShader);
-	CG_DrawSmallString(205-healthOffset,467,healthString,1.0F);
+	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
+	CG_DrawSmallString(225-healthOffset,463,healthString,1.0F);
 }
 #endif
 
