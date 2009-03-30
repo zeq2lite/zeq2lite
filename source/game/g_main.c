@@ -78,6 +78,7 @@ vmCvar_t	g_proxMineTimeout;
 vmCvar_t	g_verboseParse;
 vmCvar_t	g_powerlevel;
 vmCvar_t	g_powerlevelChargeScale;
+vmCvar_t	g_rolling;
 
 // bk001129 - made static to avoid aliasing
 static cvarTable_t		gameCvarTable[] = {
@@ -165,8 +166,9 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse },
 	// ADDING FOR ZEQ2
 	{ &g_verboseParse, "g_verboseParse", "0", CVAR_ARCHIVE, 0, qfalse },
-	{ &g_powerlevel, "g_powerlevel", "3000", 0, 1, qtrue  },
-	{ &g_powerlevelChargeScale, "g_powerlevelChargeScale", "30", 0, 1, qtrue  }
+	{ &g_powerlevel, "g_powerlevel", "3000", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
+	{ &g_powerlevelChargeScale, "g_powerlevelChargeScale", "30", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
+	{ &g_rolling, "g_rolling", "1", CVAR_ARCHIVE, 0, qtrue }
 	// END ADDING
 
 };

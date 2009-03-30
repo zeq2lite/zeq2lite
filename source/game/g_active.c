@@ -860,6 +860,9 @@ void ClientThink_real( gentity_t *ent ) {
 	// set the power level charge speed
 	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 
+	// set player rolling
+	client->ps.rolling = g_rolling.value;
+
 	// set speed
 	client->ps.speed = g_speed.value;
 

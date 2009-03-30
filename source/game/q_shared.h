@@ -1192,6 +1192,7 @@ typedef struct playerState_s {
 	vec3_t		dashDir;	// Direction in which the player is dashing
 	int			powerlevel;
 	int			powerlevelChargeScale;
+	int			rolling;
 	// RiO -->
 
 	// damage feedback
