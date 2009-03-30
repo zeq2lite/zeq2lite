@@ -153,7 +153,7 @@ static void StartServer_Update( void ) {
 		if (top+i >= s_startserver.nummaps)
 			break;
 
-		Com_sprintf( picname[i], sizeof(picname[i]), "levelshots/%s", s_startserver.maplist[top+i] );
+		Com_sprintf( picname[i], sizeof(picname[i]), "maps/%s", s_startserver.maplist[top+i] );
 
 		s_startserver.mappics[i].generic.flags &= ~QMF_HIGHLIGHT;
 		s_startserver.mappics[i].generic.name   = picname[i];

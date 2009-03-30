@@ -211,7 +211,7 @@ static void UI_SPLevelMenu_SetMenuArena( int n, int level, const char *arenaInfo
 		levelMenuInfo.levelScores[n] = 8;
 	}
 
-	strcpy( levelMenuInfo.levelPicNames[n], va( "levelshots/%s.tga", map ) );
+	strcpy( levelMenuInfo.levelPicNames[n], va( "maps/%s.tga", map ) );
 	if( !trap_R_RegisterShaderNoMip( levelMenuInfo.levelPicNames[n] ) ) {
 		strcpy( levelMenuInfo.levelPicNames[n], ART_MAP_UNKNOWN );
 	}

@@ -1364,7 +1364,7 @@ static void UI_DrawTierMap(rectDef_t *rect, int index) {
   }
 
 	if (uiInfo.tierList[i].mapHandles[index] == -1) {
-		uiInfo.tierList[i].mapHandles[index] = trap_R_RegisterShaderNoMip(va("levelshots/%s", uiInfo.tierList[i].maps[index]));
+		uiInfo.tierList[i].mapHandles[index] = trap_R_RegisterShaderNoMip(va("maps/%s", uiInfo.tierList[i].maps[index]));
 	}
 												 
 	UI_DrawHandlePic( rect->x, rect->y, rect->w, rect->h, uiInfo.tierList[i].mapHandles[index]);

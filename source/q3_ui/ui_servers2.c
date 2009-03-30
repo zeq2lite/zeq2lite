@@ -320,7 +320,7 @@ static void ArenaServers_UpdatePicture( void ) {
 	}
 	else {
 		servernodeptr = g_arenaservers.table[g_arenaservers.list.curvalue].servernode;
-		Com_sprintf( picname, sizeof(picname), "levelshots/%s.tga", servernodeptr->mapname );
+		Com_sprintf( picname, sizeof(picname), "maps/%s.tga", servernodeptr->mapname );
 		g_arenaservers.mappic.generic.name = picname;
 	
 	}

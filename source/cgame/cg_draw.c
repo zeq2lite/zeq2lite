@@ -679,7 +679,7 @@ static void CG_DrawStatusBar( void ) {
 	//}
 
 	// draw HUD pic
- 	CG_DrawHorGauge(53,459,200,25,powerColor,dullColor,ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
+ 	CG_DrawHorGauge(53,459,200,18,powerColor,dullColor,ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
  	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[STAT_MAX_HEALTH],qfalse);
 	healthDisplay = ((float)ps->stats[STAT_HEALTH] / (float)ps->stats[STAT_MAX_HEALTH]) *  2000000000;
 	healthString = va("%i",healthDisplay);

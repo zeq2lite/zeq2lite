@@ -139,9 +139,9 @@ void CG_DrawInformation( void ) {
 	sysInfo = CG_ConfigString( CS_SYSTEMINFO );
 
 	s = Info_ValueForKey( info, "mapname" );
-	levelshot = trap_R_RegisterShaderNoMip( va( "levelshots/%s.tga", s ) );
+	levelshot = trap_R_RegisterShaderNoMip( va( "maps/%s.jpg", s ) );
 	if ( !levelshot ) {
-		levelshot = trap_R_RegisterShaderNoMip( "menu/art/unknownmap" );
+		levelshot = trap_R_RegisterShaderNoMip( "maps/unknown" );
 	}
 	trap_R_SetColor( NULL );
 	CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, levelshot );

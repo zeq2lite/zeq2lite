@@ -158,7 +158,6 @@ void CG_ImpactMark( qhandle_t markShader, const vec3_t origin, const vec3_t dir,
 	colors[1] = green * 255;
 	colors[2] = blue * 255;
 	colors[3] = alpha * 255;
-	CG_Printf("Before fragments");
 	for ( i = 0, mf = markFragments ; i < numFragments ; i++, mf++ ) {
 		polyVert_t	*v;
 		polyVert_t	verts[MAX_VERTS_ON_POLY];
@@ -181,15 +180,12 @@ void CG_ImpactMark( qhandle_t markShader, const vec3_t origin, const vec3_t dir,
 		}
 
 		// if it is a temporary (shadow) mark, add it immediately and forget about it
-		CG_Printf("Maybe...");
 		if ( temporary ) {
-			CG_Printf("Shadow?");
 			trap_R_AddPolyToScene( markShader, mf->numPoints, verts );
 			continue;
 		}
 
 		// otherwise save it persistantly
-		CG_Printf("I live forever!");
 		mark = CG_AllocMark();
 		mark->time = cg.time;
 		mark->alphaFade = alphaFade;
