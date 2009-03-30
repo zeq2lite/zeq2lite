@@ -1249,6 +1249,7 @@ extern	vmCvar_t		cg_tailDetail;
 extern	vmCvar_t		cg_verboseParse;
 extern  vmCvar_t		r_beamDetail;
 extern	vmCvar_t		cg_soundAttenuation;
+extern	vmCvar_t		cg_thirdPersonCamera;
 // END ADDING
 
 

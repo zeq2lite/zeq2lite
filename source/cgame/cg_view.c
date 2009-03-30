@@ -360,19 +360,61 @@ static void CG_OffsetThirdPersonView( void ) {
 	
 
 	// ADDING FOR ZEQ2
+	if (cg_thirdPersonCamera.value == 0) {
 
-	// If we're flying (and 90 degree pitch angles are allowed!) use a totally different
-	// method, which will basically set the camera to rotate on the surface of a sphere
-	// around the player model.
-	if ( cg.snap->ps.powerups[PW_FLYING] ) {
-		VectorCopy( overrideAngles, cg.refdefViewAngles );
-		
-		// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
-		if ( cg_thirdPersonAngle.value != 0 ) {
-			rotationOffsetAngles[PITCH] = 0;
-			rotationOffsetAngles[YAW] = -cg_thirdPersonAngle.value;
+		// If we're flying (and 90 degree pitch angles are allowed!) use a totally different
+		// method, which will basically set the camera to rotate on the surface of a sphere
+		// around the player model.
+		if ( cg.snap->ps.powerups[PW_FLYING] ) {
+			VectorCopy( overrideAngles, cg.refdefViewAngles );
+			
+			// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
+			if ( cg_thirdPersonAngle.value != 0 ) {
+				rotationOffsetAngles[PITCH] = 0;
+				rotationOffsetAngles[YAW] = -cg_thirdPersonAngle.value;
+				rotationOffsetAngles[ROLL] = 0;
+
+				AnglesToQuat(cg.refdefViewAngles, quatOrient);
+				AnglesToQuat(rotationOffsetAngles, quatRot);
+				QuatMul(quatOrient, quatRot, quatResult);
+				QuatToAngles(quatResult, cg.refdefViewAngles);
+
+				AngleNormalize180(cg.refdefViewAngles[0]);
+				AngleNormalize180(cg.refdefViewAngles[1]);
+				AngleNormalize180(cg.refdefViewAngles[2]);
+			}
+
+			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
+			VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
+			VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
+			VectorMA( overrideOrg, 8 + cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
+			VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
+
+			// trace a ray from the origin to the viewpoint to make sure the view isn't
+			// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
+
+			if (!cg_cameraMode.integer) {
+				CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
+
+				if ( trace.fraction != 1.0f ) {
+					VectorCopy( trace.endpos, cg.refdef.vieworg );
+					VectorMA(cg.refdef.vieworg, (1.0f - trace.fraction) * 32, up, cg.refdef.vieworg);
+					// try another trace to this position, because a tunnel may have the ceiling
+					// close enough that this is poking out
+
+					CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
+					VectorCopy( trace.endpos, cg.refdef.vieworg );
+				}
+			}
+
+			// Get the required pitch rotation for the LOCAL(!) coordinate system of the player
+			VectorSubtract(focusPoint, cg.refdef.vieworg, focusDirCam);
+			VectorSubtract(focusPoint, overrideOrg, focusDirOrig);
+			rotationOffsetAngles[PITCH] = RAD2DEG( hack_acos( DotProduct( focusDirCam, focusDirOrig ) ) );
+			rotationOffsetAngles[YAW] = 0;
 			rotationOffsetAngles[ROLL] = 0;
-
+			
+			// Use quaternions to correctly alter the angles in the local coordinate system
 			AnglesToQuat(cg.refdefViewAngles, quatOrient);
 			AnglesToQuat(rotationOffsetAngles, quatRot);
 			QuatMul(quatOrient, quatRot, quatResult);
@@ -381,51 +423,9 @@ static void CG_OffsetThirdPersonView( void ) {
 			AngleNormalize180(cg.refdefViewAngles[0]);
 			AngleNormalize180(cg.refdefViewAngles[1]);
 			AngleNormalize180(cg.refdefViewAngles[2]);
-		}
-
-		AngleVectors( cg.refdefViewAngles, forward, NULL, up );
-		VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
-		VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
-		VectorMA( overrideOrg, 8 + cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
-		VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
-
-		// trace a ray from the origin to the viewpoint to make sure the view isn't
-		// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
-
-		if (!cg_cameraMode.integer) {
-			CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
-
-			if ( trace.fraction != 1.0f ) {
-				VectorCopy( trace.endpos, cg.refdef.vieworg );
-				VectorMA(cg.refdef.vieworg, (1.0f - trace.fraction) * 32, up, cg.refdef.vieworg);
-				// try another trace to this position, because a tunnel may have the ceiling
-				// close enough that this is poking out
-
-				CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
-				VectorCopy( trace.endpos, cg.refdef.vieworg );
-			}
-		}
-
-		// Get the required pitch rotation for the LOCAL(!) coordinate system of the player
-		VectorSubtract(focusPoint, cg.refdef.vieworg, focusDirCam);
-		VectorSubtract(focusPoint, overrideOrg, focusDirOrig);
-		rotationOffsetAngles[PITCH] = RAD2DEG( hack_acos( DotProduct( focusDirCam, focusDirOrig ) ) );
-		rotationOffsetAngles[YAW] = 0;
-		rotationOffsetAngles[ROLL] = 0;
-		
-		// Use quaternions to correctly alter the angles in the local coordinate system
-		AnglesToQuat(cg.refdefViewAngles, quatOrient);
-		AnglesToQuat(rotationOffsetAngles, quatRot);
-		QuatMul(quatOrient, quatRot, quatResult);
-		QuatToAngles(quatResult, cg.refdefViewAngles);
-
-		AngleNormalize180(cg.refdefViewAngles[0]);
-		AngleNormalize180(cg.refdefViewAngles[1]);
-		AngleNormalize180(cg.refdefViewAngles[2]);
-
-	}	
+		}	
+	}
 	// END ADDING
-
 	
 }
 

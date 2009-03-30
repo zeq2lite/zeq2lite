@@ -1178,8 +1178,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 
 	case EV_TIERUP:
+		DEBUGNAME("EV_TIERUP");
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*powerup.ogg" ) );
 		break;
 	case EV_TIERDOWN:
+		DEBUGNAME("EV_TIERDOWN");
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*powerdown.ogg" ) );
 		// These don't do anything at all
 		break;
 

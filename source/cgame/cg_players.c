@@ -17,7 +17,9 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*gasp.ogg",
 	"*drown.ogg",
 	"*fall1.ogg",
-	"*taunt.ogg"
+	"*taunt.ogg",
+	"*powerup.ogg",
+	"*powerdown.ogg"
 };
 
 // HACK: We have to copy the entire playerEntity_t information
@@ -2341,6 +2343,11 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 	return qtrue;
 }
 
+void CG_PlayerTierTransformation (void) {
+
+	PM_ContinueLegsAnim( LEGS_TRANS_UP );
+}
+
 /*
 ===============
 CG_Player
@@ -2395,7 +2402,7 @@ void CG_Player( centity_t *cent ) {
 			ci->activeTier = tier;
 			
 			// NOTE: Add 'tier up' cinematic calls here
-			CG_AddEarthquake(NULL,-1, 1, 0, 1, 400);
+			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);
 		}
 	}
 	// -->
