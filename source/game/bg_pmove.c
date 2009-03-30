@@ -23,8 +23,8 @@ float	pm_dashaccelerate = 15.0f; // 8.0f
 
 float	pm_friction = 6.0f;
 float	pm_waterfriction = 1.0f;
-float	pm_flightfriction = 3.0f;
-float	pm_spectatorfriction = 5.0f;
+float	pm_flightfriction = 6.0f; // 3.0f
+float	pm_spectatorfriction = 7.0f;
 
 int		c_pmove = 0;
 
@@ -407,7 +407,6 @@ static void PM_StopDash( void ) {
 	PM_StopBoost();
 }
 
-
 /*
 ============
 PM_CheckTier
@@ -421,11 +420,11 @@ static void PM_CheckTier( void ) {
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
 
-	if ( (pm->ps->stats[STAT_HEALTH] < lowBreak) && tier > 0 ) {
+	if ( (pm->ps->stats[STAT_HEALTH] < lowBreak ) && tier > 0 ) {
 		PM_AddEvent( EV_TIERDOWN );
 	}
 
-	if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
+	if ( (pm->ps->stats[STAT_HEALTH] > highBreak ) && tier < 7) {
 		PM_AddEvent( EV_TIERUP );
 	}
 }
@@ -470,9 +469,8 @@ static qboolean PM_CheckPowerLevel( void ) {
 		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 		pm->ps->eFlags |= EF_AURA;
-		
+
 		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
-//			PM_ContinueTorsoAnim( TORSO_TRANS_UP );
 			PM_ContinueLegsAnim( LEGS_TRANS_UP );
 		} else {
 			PM_ContinueLegsAnim( LEGS_PL_UP );
@@ -515,7 +513,6 @@ static qboolean PM_CheckPowerLevel( void ) {
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 
 		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
-//			PM_ContinueTorsoAnim( TORSO_TRANS_UP );
 			PM_ContinueLegsAnim( LEGS_TRANS_UP );
 		} else {
 			PM_ContinueLegsAnim( LEGS_PL_DOWN );
@@ -1830,7 +1827,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 
 	PM_AddEvent( EV_CHANGE_WEAPON );
 	pm->ps->weaponstate = WEAPON_DROPPING;
-	pm->ps->weaponTime += 200;
+	pm->ps->weaponTime += 10;
 	//PM_StartTorsoAnim( TORSO_DROP );
 }
 
@@ -2563,7 +2560,17 @@ void PmoveSingle (pmove_t *pmove) {
 		// disable dashing, boosting and lightspeed
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 	}
+/*
+	// if we're moving up a tier, don't allow movement until the transformation is complete
+	if (   ) {
+		pmove->cmd.forwardmove = 0;
+		pmove->cmd.rightmove = 0;
+		pmove->cmd.upmove = 0;
 
+		// disable dashing, boosting and lightspeed
+		PM_StopDash(); // implicitly stops boost and lightspeed as well
+	}
+*/
 
 	// clear all pmove local vars
 	memset (&pml, 0, sizeof(pml));
