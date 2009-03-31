@@ -425,6 +425,7 @@ static void PM_CheckTier( void ) {
 	}
 
 	if ( (pm->ps->stats[STAT_HEALTH] > highBreak ) && tier < 7) {
+		pm->ps->powerups[PW_TRANSFORM] = 6000;
 		PM_AddEvent( EV_TIERUP );
 	}
 }
@@ -512,11 +513,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 
-		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
-			PM_ContinueLegsAnim( LEGS_TRANS_UP );
-		} else {
-			PM_ContinueLegsAnim( LEGS_PL_DOWN );
-		}
+		PM_ContinueLegsAnim( LEGS_PL_DOWN );
 
 		// Decrement the hold down timer
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] > 0 ) pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
@@ -671,6 +668,34 @@ static qboolean PM_CheckJump( void ) {
 
 //============================================================================
 
+/*
+===================
+PM_Transform
+
+===================
+*/
+static void PM_Transform( void ) {
+
+	Com_Printf("Transformation time: %i\n", pm->ps->powerups[PW_TRANSFORM]);
+
+	// implicitly stops boost and lightspeed as well
+	PM_StopDash();
+
+	pm->ps->powerups[PW_LIGHTSPEED] = 0;
+	if ( pm->ps->powerups[PW_LIGHTSPEED] < 0 )
+		pm->ps->powerups[PW_LIGHTSPEED] = 0;
+
+	PM_ContinueLegsAnim( LEGS_TRANS_UP );
+	pm->ps->eFlags |= EF_AURA;
+
+	// drop transform
+	if ( pm->ps->powerups[PW_TRANSFORM] > 0 ) {
+		pm->ps->powerups[PW_TRANSFORM] -= pml.msec;
+		if ( pm->ps->powerups[PW_TRANSFORM] < 0 ) {
+			pm->ps->powerups[PW_TRANSFORM] = 0;
+		}
+	}
+}
 
 /*
 ===================
@@ -689,6 +714,9 @@ static void PM_FlyMove( void ) {
 
 	// normal slowdown
 	PM_Friction ();
+
+	if ( pm->ps->powerups[PW_TRANSFORM] )
+		return;
 
 	if ( PM_CheckPowerLevel() ) {
 		return;
@@ -833,6 +861,11 @@ static void PM_WalkMove( void ) {
 	float		accelerate;
 	float		vel;
 
+	if ( pm->ps->powerups[PW_TRANSFORM] ) {
+		PM_Friction();
+		return;
+	}
+
 	if ( PM_CheckPowerLevel() ) {
 		PM_Friction();
 		return;
@@ -942,6 +975,10 @@ static void PM_DashMove( void ) {
 		return;
 	}
 
+	if ( pm->ps->powerups[PW_TRANSFORM] ) {
+		PM_Friction();
+		return;
+	}
 
 	if ( PM_CheckPowerLevel() ) {
 		PM_Friction();
@@ -1052,6 +1089,11 @@ static void PM_DashMove( void ) {
 
 void PM_LightSpeedMove( void ) {
 	vec3_t pre_vel, post_vel;
+
+	// no light speed movement if transforming
+	if ( pm->ps->powerups[PW_TRANSFORM] ) {
+		return;
+	}
 
 	pm->ps->powerups[PW_LIGHTSPEED] -= pml.msec;
 	if ( pm->ps->powerups[PW_LIGHTSPEED] < 0 )
@@ -1604,6 +1646,11 @@ static void PM_Footsteps( void ) {
 		return;
 	}
 
+	// If transforming, don't change any animations at all.
+	if ( pm->ps->powerups[PW_TRANSFORM] ) {
+		return;
+	}
+
 	//
 	// calculate speed and cycle to be used for
 	// all cyclic walking effects
@@ -1851,7 +1898,7 @@ static void PM_FinishWeaponChange( void ) {
 
 	pm->ps->weapon = weapon;
 	pm->ps->weaponstate = WEAPON_RAISING;
-	pm->ps->weaponTime += 250;
+	pm->ps->weaponTime += 10;
 	//PM_StartTorsoAnim( TORSO_RAISE );
 }
 
@@ -1961,6 +2008,17 @@ static void PM_Weapon( void ) {
 
 	// ignore if spectator
 	if ( pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+		return;
+	}
+
+	// ignore if charging, or transforming
+	if ( pm->cmd.buttons & BUTTON_POWER_UP || pm->ps->powerups[PW_TRANSFORM] > 0 ) {
+		if ( pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING ) {
+			PM_AddEvent( EV_DETONATE_WEAPON );
+		}
+		pm->ps->weaponstate = WEAPON_READY;
+		pm->ps->stats[STAT_CHARGELVL_PRI] = 0;
+		pm->ps->stats[STAT_CHARGELVL_SEC] = 0;
 		return;
 	}
 
@@ -2328,16 +2386,6 @@ static void PM_DropTimers( void ) {
 			pm->ps->torsoTimer = 0;
 		}
 	}
-
-	// drop boost
-	if ( pm->ps->powerups[PW_BOOST] > 0 ) {
-		pm->ps->powerups[PW_BOOST] -= pml.msec;
-		if ( pm->ps->powerups[PW_BOOST] < 0 ) {
-			pm->ps->powerups[PW_BOOST] = 0;
-			// FIXME: Should this remain commented? Think so, but not sure.
-			//pm->ps->stats[STAT_BITFLAGS] &= ~STATBIT_BOOSTING;
-		}
-	}
 }
 
 
@@ -2374,7 +2422,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	// ADDING FOR ZEQ2
 	// If we're flying, use quaternion multiplication to work on player's
 	// local axes.
-	if ( pm->ps->powerups[PW_FLYING] ) {
+	if ( pm->ps->powerups[PW_FLYING]) {
 		// See if we need to add degrees for rolling.
 		if (cmd->buttons & BUTTON_ROLL_LEFT) {
 			roll -= 28 * (pml.msec / 200.0f);
@@ -2470,6 +2518,43 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	}
 }
 
+/*
+================
+PM_UpdateViewAngles2
+
+This can be used as another entry point when only the viewangles
+are being updated instead of a full move
+================
+*/
+void PM_UpdateViewAngles2( playerState_t *ps, const usercmd_t *cmd ) {
+	short		temp;
+	int			i;
+
+	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
+		return;		// no view changes at all
+	}
+
+	if ( ps->pm_type != PM_SPECTATOR && ps->stats[STAT_HEALTH] <= 0 ) {
+		return;		// no view changes at all
+	}
+
+	// circularly clamp the angles with deltas
+	for (i=0 ; i<3 ; i++) {
+		temp = cmd->angles[i] + ps->delta_angles[i];
+		if ( i == PITCH ) {
+			// don't let the player look up or down more than 90 degrees
+			if ( temp > 16000 ) {
+				ps->delta_angles[i] = 16000 - cmd->angles[i];
+				temp = 16000;
+			} else if ( temp < -16000 ) {
+				ps->delta_angles[i] = -16000 - cmd->angles[i];
+				temp = -16000;
+			}
+		}
+
+		ps->viewangles[i] = SHORT2ANGLE(temp);
+	}
+}
 
 
 /*
@@ -2560,9 +2645,9 @@ void PmoveSingle (pmove_t *pmove) {
 		// disable dashing, boosting and lightspeed
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 	}
-/*
+
 	// if we're moving up a tier, don't allow movement until the transformation is complete
-	if (   ) {
+	if ( pm->ps->powerups[PW_TRANSFORM] > 0 ) {
 		pmove->cmd.forwardmove = 0;
 		pmove->cmd.rightmove = 0;
 		pmove->cmd.upmove = 0;
@@ -2570,7 +2655,7 @@ void PmoveSingle (pmove_t *pmove) {
 		// disable dashing, boosting and lightspeed
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 	}
-*/
+
 
 	// clear all pmove local vars
 	memset (&pml, 0, sizeof(pml));
@@ -2597,7 +2682,11 @@ void PmoveSingle (pmove_t *pmove) {
 	// -->
 
 	// update the viewangles
-	PM_UpdateViewAngles( pm->ps, &pm->cmd );
+//	if ( pmove->ps->rolling ) {
+		PM_UpdateViewAngles( pm->ps, &pm->cmd );
+//	} else {
+//		PM_UpdateViewAngles2( pm->ps, &pm->cmd );
+//	}
 	AngleVectors (pm->ps->viewangles, pml.forward, pml.right, pml.up);
 
 
@@ -2669,7 +2758,11 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	// Activate lightspeed if necessary
-	if ( (pm->cmd.buttons & BUTTON_LIGHTSPEED) && !(pm->ps->pm_flags & PMF_LIGHTSPEED_HELD)) {
+	if ( (pm->cmd.buttons & BUTTON_LIGHTSPEED) && 
+		!(pm->ps->pm_flags & PMF_LIGHTSPEED_HELD) && 
+		!(pm->ps->powerups[PW_TRANSFORM]) &&
+		!(pm->ps->weaponstate == WEAPON_GUIDING) && 
+		!(pm->ps->weaponstate == WEAPON_ALTGUIDING)) {
 		if ( PM_DeductFromHealth( 100 )) {
 
 			// Disable any dashing
@@ -2683,7 +2776,19 @@ void PmoveSingle (pmove_t *pmove) {
 		}
 	}
 
-	if ( pm->ps->powerups[PW_LIGHTSPEED] ) {
+	// Activate transform if necessary
+	if ( pm->ps->powerups[PW_TRANSFORM] == 6000 ) {
+		// Disable any dashing
+		if ( VectorLength( pm->ps->dashDir ) > 0.0f ) {
+			PM_StopDash();
+		}
+		pm->ps->powerups[PW_TRANSFORM] = 6000; // 5 seconds
+	}
+
+	if ( pm->ps->powerups[PW_TRANSFORM] ) {
+		PM_Transform();
+
+	} else	if ( pm->ps->powerups[PW_LIGHTSPEED] ) {
 		PM_LightSpeedMove();
 
 	} else	if ( pm->ps->powerups[PW_FLYING] ) {
