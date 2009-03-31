@@ -2343,9 +2343,19 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 	return qtrue;
 }
 
-void CG_PlayerTierTransformation (void) {
-
-	PM_ContinueLegsAnim( LEGS_TRANS_UP );
+void CG_PlayerTransformation ( centity_t *cent ) {
+	clientInfo_t	*ci;
+	
+	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 100 ) {
+		cg_thirdPersonAngle.value = 0;
+		trap_Cvar_Set ("cg_thirdPersonHeight", "30");
+		trap_Cvar_Set ("cg_thirdPersonRange", "110");
+		trap_Cvar_Set ("cg_cameraOrbit", "0");
+	} else if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
+		trap_Cvar_Set ("cg_thirdPersonHeight", "-10");
+		trap_Cvar_Set ("cg_thirdPersonRange", "50");
+		trap_Cvar_Set ("cg_cameraOrbit", "1");
+	}
 }
 
 /*
@@ -2405,6 +2415,8 @@ void CG_Player( centity_t *cent ) {
 			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);
 		}
 	}
+
+	CG_PlayerTransformation ( cent );
 	// -->
 
 	// Don't display anything if the player is moving at lightspeed
