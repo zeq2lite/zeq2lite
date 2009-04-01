@@ -2345,17 +2345,28 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 
 void CG_PlayerTransformation ( centity_t *cent ) {
 	clientInfo_t	*ci;
-	
+/*
+	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 0 ) {
+		return;
+	}
+*/
 	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 100 ) {
+//		trap_SendConsoleCommand ("cg_thirdPersonAngle 0\ncg_thirdPersonHeight 30\ncg_thirdPersonRange 110\ncg_cameraOrbit 0");
+//		/*
 		cg_thirdPersonAngle.value = 0;
 		trap_Cvar_Set ("cg_thirdPersonHeight", "30");
 		trap_Cvar_Set ("cg_thirdPersonRange", "110");
 		trap_Cvar_Set ("cg_cameraOrbit", "0");
+//		*/
 	} else if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
+//		trap_SendConsoleCommand ("cg_thirdPersonHeight -10\ncg_thirdPersonRange 50\ncg_cameraOrbit 1");
+//		/*
 		trap_Cvar_Set ("cg_thirdPersonHeight", "-10");
 		trap_Cvar_Set ("cg_thirdPersonRange", "50");
 		trap_Cvar_Set ("cg_cameraOrbit", "1");
+//		*/
 	}
+
 }
 
 /*
