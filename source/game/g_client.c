@@ -1194,6 +1194,7 @@ void ClientSpawn(gentity_t *ent) {
 	ent->health = client->ps.stats[STAT_HEALTH] = g_powerlevel.value ; //client->ps.stats[STAT_MAX_HEALTH];
 	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 	client->ps.rolling = g_rolling.value;
+	client->ps.running = g_running.value;
 
 	// ADDING FOR ZEQ2
 	client->ps.stats[STAT_TIER] = 0;

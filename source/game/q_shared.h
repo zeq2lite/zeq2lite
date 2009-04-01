@@ -1193,6 +1193,7 @@ typedef struct playerState_s {
 	int			powerlevel;
 	int			powerlevelChargeScale;
 	int			rolling;
+	int			running;
 	// RiO -->
 
 	// damage feedback

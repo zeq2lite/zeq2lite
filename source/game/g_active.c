@@ -863,6 +863,9 @@ void ClientThink_real( gentity_t *ent ) {
 	// set player rolling
 	client->ps.rolling = g_rolling.value;
 
+	// set player running value
+	client->ps.running = g_running.value;
+
 	// set speed
 	client->ps.speed = g_speed.value;
 

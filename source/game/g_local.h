@@ -833,6 +833,7 @@ extern	vmCvar_t	g_verboseParse;
 extern	vmCvar_t	g_powerlevel;
 extern	vmCvar_t	g_powerlevelChargeScale;
 extern	vmCvar_t	g_rolling;
+extern	vmCvar_t	g_running;
 // END ADDING
 
 void	trap_Printf( const char *fmt );
