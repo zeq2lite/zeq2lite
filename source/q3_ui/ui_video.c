@@ -544,11 +544,11 @@ static void GraphicsOptions_Event( void* ptr, int event ) {
 		s_graphicsoptions.filter.curvalue      = ivo->filter;
 		s_graphicsoptions.fs.curvalue          = ivo->fullscreen;
 		break;
-
+/*
 	case ID_DRIVERINFO:
 		UI_DriverInfo_Menu();
 		break;
-
+*/
 	case ID_BACK2:
 		UI_PopMenu();
 		break;
@@ -956,7 +956,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.filter.generic.y	    = y;
 	s_graphicsoptions.filter.itemnames      = filter_names;
 	y += 2*BIGCHAR_HEIGHT;
-
+/*
 	s_graphicsoptions.driverinfo.generic.type     = MTYPE_PTEXT;
 	s_graphicsoptions.driverinfo.generic.flags    = QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_graphicsoptions.driverinfo.generic.callback = GraphicsOptions_Event;
@@ -964,10 +964,10 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.driverinfo.generic.x        = 320;
 	s_graphicsoptions.driverinfo.generic.y        = y;
 	s_graphicsoptions.driverinfo.string           = "Driver Info";
-	s_graphicsoptions.driverinfo.style            = UI_CENTER|UI_SMALLFONT;
+	s_graphicsoptions.driverinfo.style            = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	s_graphicsoptions.driverinfo.color            = color_white;
 	y += BIGCHAR_HEIGHT+2;
-
+*/
 	s_graphicsoptions.back.generic.type	    = MTYPE_BITMAP;
 	s_graphicsoptions.back.generic.name     = GRAPHICSOPTIONS_BACK0;
 	s_graphicsoptions.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -1009,7 +1009,7 @@ void GraphicsOptions_MenuInit( void )
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.tq );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.texturebits );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.filter );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.driverinfo );
+//	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.driverinfo );
 
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.back );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.apply );

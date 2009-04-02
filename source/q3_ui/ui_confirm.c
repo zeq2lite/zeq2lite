@@ -165,7 +165,7 @@ void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)(
 	s_confirm.yes.generic.y			= 264;
 	s_confirm.yes.string			= "YES";
 	s_confirm.yes.color				= color_white;
-	s_confirm.yes.style				= UI_LEFT;
+	s_confirm.yes.style				= UI_LEFT|UI_DROPSHADOW;
 
 	s_confirm.no.generic.type		= MTYPE_PTEXT;      
 	s_confirm.no.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS; 
@@ -175,7 +175,7 @@ void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)(
 	s_confirm.no.generic.y		    = 264;
 	s_confirm.no.string				= "NO";
 	s_confirm.no.color			    = color_white;
-	s_confirm.no.style			    = UI_LEFT;
+	s_confirm.no.style			    = UI_LEFT|UI_DROPSHADOW;
 
 	Menu_AddItem( &s_confirm.menu,	&s_confirm.yes );             
 	Menu_AddItem( &s_confirm.menu,	&s_confirm.no );

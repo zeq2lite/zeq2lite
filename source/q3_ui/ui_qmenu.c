@@ -399,12 +399,12 @@ static void Action_Draw( menuaction_s *a )
 	x = a->generic.x;
 	y = a->generic.y;
 
-	UI_DrawString( x, y, a->generic.name, UI_LEFT|style, color );
+	UI_DrawString( x, y, a->generic.name, UI_LEFT|style|UI_DROPSHADOW, color );
 
 	if ( a->generic.parent->cursor == a->generic.menuPosition )
 	{
 		// draw cursor
-		UI_DrawChar( x - BIGCHAR_WIDTH, y, 13, UI_LEFT|UI_BLINK, color);
+		UI_DrawChar( x - BIGCHAR_WIDTH, y, 13, UI_LEFT|UI_BLINK|UI_DROPSHADOW, color);
 	}
 }
 
@@ -484,17 +484,17 @@ static void RadioButton_Draw( menuradiobutton_s *rb )
 	if ( rb->generic.flags & QMF_GRAYED )
 	{
 		color = text_color_disabled;
-		style = UI_LEFT|UI_SMALLFONT;
+		style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	}
 	else if ( focus )
 	{
 		color = text_color_highlight;
-		style = UI_LEFT|UI_PULSE|UI_SMALLFONT;
+		style = UI_LEFT|UI_PULSE|UI_SMALLFONT|UI_DROPSHADOW;
 	}
 	else
 	{
 		color = text_color_normal;
-		style = UI_LEFT|UI_SMALLFONT;
+		style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	}
 
 	if ( focus )
@@ -626,7 +626,7 @@ static void Slider_Draw( menuslider_s *s ) {
 	}
 	else if( focus ) {
 		color  = text_color_highlight;
-		style = UI_SMALLFONT | UI_PULSE;
+		style = UI_SMALLFONT | UI_PULSE | UI_DROPSHADOW;
 	}
 	else {
 		color = text_color_normal;
@@ -856,8 +856,8 @@ static void SpinControl_Draw( menulist_s *s )
 		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
-	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
-	UI_DrawString( x + SMALLCHAR_WIDTH, y, s->itemnames[s->curvalue], style|UI_LEFT, color );
+	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT|UI_DROPSHADOW, color );
+	UI_DrawString( x + SMALLCHAR_WIDTH, y, s->itemnames[s->curvalue], style|UI_LEFT|UI_DROPSHADOW, color );
 }
 
 /*

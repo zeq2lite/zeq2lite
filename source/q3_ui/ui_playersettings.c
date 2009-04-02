@@ -165,7 +165,7 @@ static void PlayerSettings_DrawHandicap( void *self ) {
 	item = (menulist_s *)self;
 	focus = (item->generic.parent->cursor == item->generic.menuPosition);
 
-	style = UI_LEFT|UI_SMALLFONT;
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	color = text_color_normal;
 	if( focus ) {
 		style |= UI_PULSE;
@@ -191,7 +191,7 @@ static void PlayerSettings_DrawEffects( void *self ) {
 	item = (menulist_s *)self;
 	focus = (item->generic.parent->cursor == item->generic.menuPosition);
 
-	style = UI_LEFT|UI_SMALLFONT;
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	color = text_color_normal;
 	if( focus ) {
 		style |= UI_PULSE;

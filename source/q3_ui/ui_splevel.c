@@ -572,7 +572,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 				Com_sprintf( string, sizeof(string), "%i", level );
 			}
 
-			UI_DrawString( x + 24, y + 48, string, UI_CENTER, color_yellow );
+			UI_DrawString( x + 24, y + 48, string, UI_CENTER|UI_DROPSHADOW, color_lightBlue );
 		}
 	}
 
@@ -585,7 +585,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 	}
 
 	if ( selectedArenaSet > currentSet ) {
-		UI_DrawProportionalString( 320, 216, "ACCESS DENIED", UI_CENTER|UI_BIGFONT, color_red );
+		UI_DrawProportionalString( 320, 216, "ACCESS DENIED", UI_CENTER|UI_BIGFONT|UI_DROPSHADOW, color_red );
 		return;
 	}
 
@@ -636,7 +636,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 		}
 		else {
 			UI_FillRect( x, y, 64, 64, color_black );
-			UI_DrawProportionalString( x+22, y+18, "?", UI_BIGFONT, color_lightBlue );
+			UI_DrawProportionalString( x+22, y+18, "?", UI_BIGFONT|UI_DROPSHADOW, color_lightBlue );
 		}
 		UI_DrawString( x, y + 64, levelMenuInfo.botNames[n], UI_SMALLFONT|UI_LEFT|UI_DROPSHADOW, color_lightBlue );
 	}

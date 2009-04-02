@@ -121,7 +121,7 @@ void RankStatus_MenuInit( void ) {
 	s_rankstatus.ok.generic.x					= 320;
 	s_rankstatus.ok.generic.y					= y;
 	s_rankstatus.ok.string						= "OK";
-	s_rankstatus.ok.style						= UI_CENTER|UI_SMALLFONT;
+	s_rankstatus.ok.style						= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	s_rankstatus.ok.color						= colorWhite;
 
 	Menu_AddItem( &s_rankstatus.menu, (void*) &s_rankstatus.frame );

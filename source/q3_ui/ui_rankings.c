@@ -60,7 +60,7 @@ void Rankings_DrawText( void* self )
 	y = f->generic.y + 4;
 	focus = (f->generic.parent->cursor == f->generic.menuPosition);
 
-	style = UI_LEFT|UI_SMALLFONT;
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	color = text_color_normal;
 	if( focus ) {
 		style |= UI_PULSE;

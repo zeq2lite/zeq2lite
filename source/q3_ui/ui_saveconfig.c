@@ -84,12 +84,12 @@ static void UI_SaveConfigMenu_SavenameDraw( void *self ) {
 	f = (menufield_s *)self;
 
 	if( f == Menu_ItemAtCursor( &saveConfig.menu ) ) {
-		style = UI_LEFT|UI_PULSE|UI_SMALLFONT;
+		style = UI_LEFT|UI_PULSE|UI_SMALLFONT|UI_DROPSHADOW;
 		color = text_color_highlight;
 	}
 	else {
-		style = UI_LEFT|UI_SMALLFONT;
-		color = colorRed;
+		style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
+		color = colorWhite;
 	}
 
 	UI_DrawProportionalString( 320, 192, "Enter filename:", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );

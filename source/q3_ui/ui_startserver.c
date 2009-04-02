@@ -1187,8 +1187,8 @@ static void PlayerName_Draw( void *item ) {
 		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
-	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
-	UI_DrawString( x + SMALLCHAR_WIDTH, y, s->string, style|UI_LEFT, color );
+	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT|UI_DROPSHADOW, color );
+	UI_DrawString( x + SMALLCHAR_WIDTH, y, s->string, style|UI_LEFT|UI_DROPSHADOW, color );
 }
 
 
@@ -1322,7 +1322,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.player0.generic.x				= 32 + SMALLCHAR_WIDTH;
 	s_serveroptions.player0.generic.y				= y;
 	s_serveroptions.player0.color					= color_lightBlue;
-	s_serveroptions.player0.style					= UI_LEFT|UI_SMALLFONT;
+	s_serveroptions.player0.style					= UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 
 	for( n = 0; n < PLAYER_SLOTS; n++ ) {
 		s_serveroptions.playerType[n].generic.type		= MTYPE_SPINCONTROL;
