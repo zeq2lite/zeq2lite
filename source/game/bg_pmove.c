@@ -2654,7 +2654,7 @@ void PmoveSingle (pmove_t *pmove) {
 		pmove->cmd.upmove = 0;
 
 		// disable dashing, boosting and lightspeed
-		PM_StopDash(); // implicitly stops boost and lightspeed as well
+		PM_StopDash();
 	}
 
 	// if we're moving up a tier, don't allow movement until the transformation is complete
@@ -2664,7 +2664,7 @@ void PmoveSingle (pmove_t *pmove) {
 		pmove->cmd.upmove = 0;
 
 		// disable dashing, boosting and lightspeed
-		PM_StopDash(); // implicitly stops boost and lightspeed as well
+		PM_StopDash();
 	}
 
 

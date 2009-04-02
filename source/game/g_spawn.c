@@ -559,8 +559,8 @@ void SP_worldspawn( void ) {
 
 	trap_SetConfigstring( CS_LEVEL_START_TIME, va("%i", level.startTime ) );
 
-	G_SpawnString( "music", "", &s );
-	trap_SetConfigstring( CS_MUSIC, s );
+//	G_SpawnString( "music", "", &s );
+//	trap_SetConfigstring( CS_MUSIC, s );
 
 	G_SpawnString( "message", "", &s );
 	trap_SetConfigstring( CS_MESSAGE, s );				// map specific message
