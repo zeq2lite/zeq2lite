@@ -1374,7 +1374,31 @@ static void CG_PlayerAnimation( centity_t *cent,
 		// NOTE: Torso animations take precedence over leg animations when deciding which
 		//       head animation to play.
 		torsoAnimNum = cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT;
-		if ( TORSO_KI_CHARGE == torsoAnimNum ) {
+		if ( TORSO_WALK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_WALK, speedScale );
+		} else if ( TORSO_RUN == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_RUN, speedScale );
+		} else if ( TORSO_BACK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BACK, speedScale );
+		} else if ( TORSO_JUMP == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_JUMP, speedScale );
+		} else if ( TORSO_LAND == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_LAND, speedScale );
+		} else if ( TORSO_JUMPB == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_JUMPB, speedScale );
+		} else if ( TORSO_LANDB == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_LANDB, speedScale );
+		} else if ( TORSO_SWIM == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_SWIM, speedScale );
+		} else if ( TORSO_DASH_RIGHT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DASH_RIGHT, speedScale );
+		} else if ( TORSO_DASH_LEFT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DASH_LEFT, speedScale );
+		} else if ( TORSO_DASH_FORWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DASH_FORWARD, speedScale );
+		} else if ( TORSO_DASH_BACKWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DASH_BACKWARD, speedScale );
+		} else if ( TORSO_KI_CHARGE == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
 		} else if ( TORSO_PL_DOWN == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_PL_DOWN, speedScale );
@@ -1384,6 +1408,12 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_TRANS_UP, speedScale );
 		} else if ( TORSO_TRANS_BACK == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_TRANS_BACK, speedScale );
+		} else if ( TORSO_FLY_IDLE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_IDLE, speedScale );
+		} else if ( TORSO_FLY_FORWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_FORWARD, speedScale );
+		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_BACKWARD, speedScale );
 		} else if ( TORSO_KI_ATTACK1_PREPARE <= torsoAnimNum && TORSO_KI_ATTACK6_ALT_FIRE >= torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, torsoAnimNum - TORSO_KI_ATTACK1_PREPARE + HEAD_KI_ATTACK1_PREPARE, speedScale );
 		} else {
@@ -2345,6 +2375,7 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 
 void CG_PlayerTransformation ( centity_t *cent ) {
 	clientInfo_t	*ci;
+
 /*
 	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 0 ) {
 		return;
@@ -2354,8 +2385,8 @@ void CG_PlayerTransformation ( centity_t *cent ) {
 //		trap_SendConsoleCommand ("cg_thirdPersonAngle 0\ncg_thirdPersonHeight 30\ncg_thirdPersonRange 110\ncg_cameraOrbit 0");
 //		/*
 		cg_thirdPersonAngle.value = 0;
-		trap_Cvar_Set ("cg_thirdPersonHeight", "30");
-		trap_Cvar_Set ("cg_thirdPersonRange", "110");
+		trap_Cvar_Set ("cg_thirdPersonHeight", "40");
+		trap_Cvar_Set ("cg_thirdPersonRange", "150");
 		trap_Cvar_Set ("cg_cameraOrbit", "0");
 //		*/
 	} else if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
@@ -2427,7 +2458,7 @@ void CG_Player( centity_t *cent ) {
 		}
 	}
 
-	CG_PlayerTransformation ( cent );
+//	CG_PlayerTransformation ( cent );
 	// -->
 
 	// Don't display anything if the player is moving at lightspeed

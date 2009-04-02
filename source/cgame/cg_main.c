@@ -247,9 +247,9 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_tracerChance, "cg_tracerchance", "0.4", CVAR_CHEAT },
 	{ &cg_tracerWidth, "cg_tracerwidth", "1", CVAR_CHEAT },
 	{ &cg_tracerLength, "cg_tracerlength", "100", CVAR_CHEAT },
-	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "110", CVAR_ARCHIVE },
+	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "150", CVAR_ARCHIVE },
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
-	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "0", CVAR_ARCHIVE },
+	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "40", CVAR_ARCHIVE },
 	{ &cg_thirdPerson, "cg_thirdPerson", "0", CVAR_ARCHIVE },
 	{ &cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE  },
 	{ &cg_teamChatHeight, "cg_teamChatHeight", "0", CVAR_ARCHIVE  },
@@ -1032,6 +1032,19 @@ const char *CG_ConfigString( int index ) {
 
 //==================================================================
 
+char	*cg_backgroundMusic[10] = {
+	"*battle01.ogg",
+	"*battle02.ogg",
+	"*battle03.ogg",
+	"*battle04.ogg",
+	"*battle05.ogg",
+	"*battle06.ogg",
+	"*battle07.ogg",
+	"*battle08.ogg",
+	"*battle09.ogg",
+	"*battle10.ogg"
+};
+
 /*
 ======================
 CG_StartMusic
@@ -1039,6 +1052,7 @@ CG_StartMusic
 ======================
 */
 void CG_StartMusic( void ) {
+	/*
 	char	*s;
 	char	parm1[MAX_QPATH], parm2[MAX_QPATH];
 
@@ -1048,6 +1062,16 @@ void CG_StartMusic( void ) {
 	Q_strncpyz( parm2, COM_Parse( &s ), sizeof( parm2 ) );
 
 	trap_S_StartBackgroundTrack( parm1, parm2 );
+	*/
+	char	*s;
+	char	*t;
+	int	r;
+
+	r = random() * 10;
+	s = cg_backgroundMusic[r];
+	t = va("music/%s", s + 1);
+
+	trap_S_StartBackgroundTrack( t, t );
 }
 #ifdef MISSIONPACK
 char *CG_GetMenuBuffer(const char *filename) {
