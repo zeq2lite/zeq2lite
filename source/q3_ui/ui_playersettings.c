@@ -100,7 +100,7 @@ static void PlayerSettings_DrawName( void *self ) {
 	y = f->generic.y;
 	focus = (f->generic.parent->cursor == f->generic.menuPosition);
 
-	style = UI_LEFT|UI_SMALLFONT;
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	color = text_color_normal;
 	if( focus ) {
 		style |= UI_PULSE;
@@ -147,7 +147,7 @@ static void PlayerSettings_DrawName( void *self ) {
 	// draw at bottom also using proportional font
 	Q_strncpyz( name, f->field.buffer, sizeof(name) );
 	Q_CleanStr( name );
-	UI_DrawProportionalString( 320, 440, name, UI_CENTER|UI_BIGFONT, text_color_normal );
+	UI_DrawProportionalString( 320, 440, name, UI_CENTER|UI_BIGFONT|UI_DROPSHADOW, text_color_normal );
 }
 
 
@@ -346,7 +346,7 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.banner.generic.y     = 16;
 	s_playersettings.banner.string        = "PLAYER SETTINGS";
 	s_playersettings.banner.color         = color_white;
-	s_playersettings.banner.style         = UI_CENTER;
+	s_playersettings.banner.style         = UI_CENTER|UI_DROPSHADOW;
 
 	s_playersettings.framel.generic.type  = MTYPE_BITMAP;
 	s_playersettings.framel.generic.name  = ART_FRAMEL;

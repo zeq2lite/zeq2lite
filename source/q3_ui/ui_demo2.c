@@ -127,7 +127,7 @@ static void Demos_MenuInit( void ) {
 	s_demos.banner.generic.y		= 16;
 	s_demos.banner.string			= "DEMOS";
 	s_demos.banner.color			= color_white;
-	s_demos.banner.style			= UI_CENTER;
+	s_demos.banner.style			= UI_CENTER|UI_DROPSHADOW;
 
 	s_demos.framel.generic.type		= MTYPE_BITMAP;
 	s_demos.framel.generic.name		= ART_FRAMEL;

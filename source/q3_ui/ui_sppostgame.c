@@ -211,7 +211,7 @@ static void UI_SPPostgameMenu_DrawAwardsMedals( int max ) {
 			Com_sprintf( buf, sizeof(buf), "%i", amount );
 		}
 
-		UI_DrawString( x + 24, y + 52, buf, UI_CENTER, color_yellow );
+		UI_DrawString( x + 24, y + 52, buf, UI_CENTER|UI_DROPSHADOW, color_yellow );
 	}
 }
 
@@ -226,7 +226,7 @@ static void UI_SPPostgameMenu_DrawAwardsPresentation( int timer ) {
 
 	color[0] = color[1] = color[2] = 1.0f;
 	color[3] = (float)( AWARD_PRESENTATION_TIME - atimer ) / (float)AWARD_PRESENTATION_TIME;
-	UI_DrawProportionalString( 320, 64, ui_medalNames[postgameMenuInfo.awardsEarned[awardNum]], UI_CENTER, color );
+	UI_DrawProportionalString( 320, 64, ui_medalNames[postgameMenuInfo.awardsEarned[awardNum]], UI_CENTER|UI_DROPSHADOW, color );
 
 	UI_SPPostgameMenu_DrawAwardsMedals( awardNum + 1 );
 
@@ -288,10 +288,10 @@ static void UI_SPPostgameMenu_MenuDraw( void ) {
 
 	// phase 1
 	if ( postgameMenuInfo.numClients > 2 ) {
-		UI_DrawProportionalString( 510, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[2], UI_CENTER, color_white );
+		UI_DrawProportionalString( 510, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[2], UI_CENTER|UI_DROPSHADOW, color_white );
 	}
-	UI_DrawProportionalString( 130, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[1], UI_CENTER, color_white );
-	UI_DrawProportionalString( 320, 480 - 64 - 2 * PROP_HEIGHT, postgameMenuInfo.placeNames[0], UI_CENTER, color_white );
+	UI_DrawProportionalString( 130, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[1], UI_CENTER|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, 480 - 64 - 2 * PROP_HEIGHT, postgameMenuInfo.placeNames[0], UI_CENTER|UI_DROPSHADOW, color_white );
 
 	if( postgameMenuInfo.phase == 1 ) {
 		timer = uis.realtime - postgameMenuInfo.starttime;

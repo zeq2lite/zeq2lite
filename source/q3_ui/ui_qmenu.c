@@ -24,6 +24,7 @@ vec4_t color_black	    = {0.00f, 0.00f, 0.00f, 1.00f};
 vec4_t color_white	    = {1.00f, 1.00f, 1.00f, 1.00f};
 vec4_t color_yellow	    = {1.00f, 1.00f, 0.00f, 1.00f};
 vec4_t color_blue	    = {0.00f, 0.00f, 1.00f, 1.00f};
+vec4_t color_lightBlue	    = {0.75f, 0.75f, 1.00f, 1.00f };
 vec4_t color_lightOrange    = {1.00f, 0.68f, 0.00f, 1.00f };
 vec4_t color_orange	    = {1.00f, 0.43f, 0.00f, 1.00f};
 vec4_t color_red	    = {1.00f, 0.00f, 0.00f, 1.00f};
@@ -32,9 +33,9 @@ vec4_t color_dim	    = {0.00f, 0.00f, 0.00f, 0.25f};
 // current color scheme
 vec4_t pulse_color          = {1.00f, 1.00f, 1.00f, 1.00f};
 vec4_t text_color_disabled  = {0.50f, 0.50f, 0.50f, 1.00f};	// light gray
-vec4_t text_color_normal    = {1.00f, 0.43f, 0.00f, 1.00f};	// light orange
-vec4_t text_color_highlight = {1.00f, 1.00f, 0.00f, 1.00f};	// bright yellow
-vec4_t listbar_color        = {1.00f, 0.43f, 0.00f, 0.30f};	// transluscent orange
+vec4_t text_color_normal    = {0.750f, 0.75f, 1.00f, 1.00f};	// light blue
+vec4_t text_color_highlight = {0.90f, 0.90f, 1.00f, 1.00f};	// bright blue
+vec4_t listbar_color        = {0.75f, 0.75f, 1.00f, 0.30f};	// transluscent blue
 vec4_t text_color_status    = {1.00f, 1.00f, 1.00f, 1.00f};	// bright white	
 
 // action widget
@@ -500,11 +501,11 @@ static void RadioButton_Draw( menuradiobutton_s *rb )
 	{
 		// draw cursor
 		UI_FillRect( rb->generic.left, rb->generic.top, rb->generic.right-rb->generic.left+1, rb->generic.bottom-rb->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
 	if ( rb->generic.name )
-		UI_DrawString( x - SMALLCHAR_WIDTH, y, rb->generic.name, UI_RIGHT|UI_SMALLFONT, color );
+		UI_DrawString( x - SMALLCHAR_WIDTH, y, rb->generic.name, UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW, color );
 
 	if ( !rb->curvalue )
 	{
@@ -621,7 +622,7 @@ static void Slider_Draw( menuslider_s *s ) {
 
 	if( s->generic.flags & QMF_GRAYED ) {
 		color = text_color_disabled;
-		style = UI_SMALLFONT;
+		style = UI_SMALLFONT | UI_DROPSHADOW;
 	}
 	else if( focus ) {
 		color  = text_color_highlight;
@@ -629,7 +630,7 @@ static void Slider_Draw( menuslider_s *s ) {
 	}
 	else {
 		color = text_color_normal;
-		style = UI_SMALLFONT;
+		style = UI_SMALLFONT | UI_DROPSHADOW;
 	}
 
 	// draw label
@@ -683,7 +684,7 @@ static void Slider_Draw( menuslider_s *s )
 	y = s->generic.y;
 	focus = (s->generic.parent->cursor == s->generic.menuPosition);
 
-	style = UI_SMALLFONT;
+	style = UI_SMALLFONT|UI_DROPSHADOW;
 	if ( s->generic.flags & QMF_GRAYED )
 	{
 		color = text_color_disabled;
@@ -702,7 +703,7 @@ static void Slider_Draw( menuslider_s *s )
 	{
 		// draw cursor
 		UI_FillRect( s->generic.left, s->generic.top, s->generic.right-s->generic.left+1, s->generic.bottom-s->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
 	// draw label
@@ -830,7 +831,7 @@ static void SpinControl_Draw( menulist_s *s )
 	x = s->generic.x;
 	y =	s->generic.y;
 
-	style = UI_SMALLFONT;
+	style = UI_SMALLFONT|UI_DROPSHADOW;
 	focus = (s->generic.parent->cursor == s->generic.menuPosition);
 
 	if ( s->generic.flags & QMF_GRAYED )
@@ -852,7 +853,7 @@ static void SpinControl_Draw( menulist_s *s )
 	{
 		// draw cursor
 		UI_FillRect( s->generic.left, s->generic.top, s->generic.right-s->generic.left+1, s->generic.bottom-s->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
 	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
@@ -1212,17 +1213,17 @@ void ScrollList_Draw( menulist_s *l )
 				color = text_color_highlight;
 
 				if (hasfocus)
-					style = UI_PULSE|UI_LEFT|UI_SMALLFONT;
+					style = UI_PULSE|UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 				else
-					style = UI_LEFT|UI_SMALLFONT;
+					style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 			}
 			else
 			{
 				color = text_color_normal;
-				style = UI_LEFT|UI_SMALLFONT;
+				style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 			}
 			if( l->generic.flags & QMF_CENTER_JUSTIFY ) {
-				style |= UI_CENTER;
+				style |= UI_CENTER|UI_DROPSHADOW;
 			}
 
 			UI_DrawString(

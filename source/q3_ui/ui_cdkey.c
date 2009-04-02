@@ -126,7 +126,7 @@ static void UI_CDKeyMenu_DrawKey( void *self ) {
 		color = color_yellow;
 	}
 	else {
-		color = color_orange;
+		color = color_lightBlue;
 	}
 
 	x = 320 - 8 * BIGCHAR_WIDTH;
@@ -150,13 +150,13 @@ static void UI_CDKeyMenu_DrawKey( void *self ) {
 
 	val = UI_CDKeyMenu_PreValidateKey( f->field.buffer );
 	if( val == 1 ) {
-		UI_DrawProportionalString( 320, 376, "Please enter your CD Key", UI_CENTER|UI_SMALLFONT, color_yellow );
+		UI_DrawProportionalString( 320, 376, "Please enter your CD Key", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
 	}
 	else if ( val == 0 ) {
-		UI_DrawProportionalString( 320, 376, "The CD Key appears to be valid, thank you", UI_CENTER|UI_SMALLFONT, color_white );
+		UI_DrawProportionalString( 320, 376, "The CD Key appears to be valid, thank you", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	}
 	else {
-		UI_DrawProportionalString( 320, 376, "The CD Key is not valid", UI_CENTER|UI_SMALLFONT, color_red );
+		UI_DrawProportionalString( 320, 376, "The CD Key is not valid", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_red );
 	}
 }
 
@@ -180,7 +180,7 @@ static void UI_CDKeyMenu_Init( void ) {
 	cdkeyMenuInfo.banner.generic.y					= 16;
 	cdkeyMenuInfo.banner.string						= "CD KEY";
 	cdkeyMenuInfo.banner.color						= color_white;
-	cdkeyMenuInfo.banner.style						= UI_CENTER;
+	cdkeyMenuInfo.banner.style						= UI_CENTER|UI_DROPSHADOW;
 
 	cdkeyMenuInfo.frame.generic.type				= MTYPE_BITMAP;
 	cdkeyMenuInfo.frame.generic.name				= ART_FRAME;

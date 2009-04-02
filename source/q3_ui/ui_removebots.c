@@ -101,9 +101,9 @@ static void UI_RemoveBotsMenu_BotEvent( void* ptr, int event ) {
 		return;
 	}
 
-	removeBotsMenuInfo.bots[removeBotsMenuInfo.selectedBotNum].color = color_orange;
+	removeBotsMenuInfo.bots[removeBotsMenuInfo.selectedBotNum].color = color_lightBlue;
 	removeBotsMenuInfo.selectedBotNum = ((menucommon_s*)ptr)->id - ID_BOTNAME0;
-	removeBotsMenuInfo.bots[removeBotsMenuInfo.selectedBotNum].color = color_white;
+	removeBotsMenuInfo.bots[removeBotsMenuInfo.selectedBotNum].color = color_lightBlue;
 }
 
 
@@ -268,8 +268,8 @@ static void UI_RemoveBotsMenu_Init( void ) {
 		removeBotsMenuInfo.bots[n].generic.y		= y;
 		removeBotsMenuInfo.bots[n].generic.callback	= UI_RemoveBotsMenu_BotEvent;
 		removeBotsMenuInfo.bots[n].string			= removeBotsMenuInfo.botnames[n];
-		removeBotsMenuInfo.bots[n].color			= color_orange;
-		removeBotsMenuInfo.bots[n].style			= UI_LEFT|UI_SMALLFONT;
+		removeBotsMenuInfo.bots[n].color			= color_lightBlue;
+		removeBotsMenuInfo.bots[n].style			= UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	}
 
 	removeBotsMenuInfo.delete.generic.type		= MTYPE_BITMAP;

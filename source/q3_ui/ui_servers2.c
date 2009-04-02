@@ -1272,7 +1272,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.banner.generic.x	    = 320;
 	g_arenaservers.banner.generic.y	    = 16;
 	g_arenaservers.banner.string  		= "ARENA SERVERS";
-	g_arenaservers.banner.style  	    = UI_CENTER;
+	g_arenaservers.banner.style  	    = UI_CENTER|UI_DROPSHADOW;
 	g_arenaservers.banner.color  	    = color_white;
 
 	y = 80;
@@ -1379,7 +1379,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.status.generic.x			= 320;
 	g_arenaservers.status.generic.y			= y;
 	g_arenaservers.status.string			= statusbuffer;
-	g_arenaservers.status.style				= UI_CENTER|UI_SMALLFONT;
+	g_arenaservers.status.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	g_arenaservers.status.color				= menu_text_color;
 
 	y += SMALLCHAR_HEIGHT;
@@ -1387,7 +1387,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.statusbar.generic.x	    = 320;
 	g_arenaservers.statusbar.generic.y	    = y;
 	g_arenaservers.statusbar.string	        = "";
-	g_arenaservers.statusbar.style	        = UI_CENTER|UI_SMALLFONT;
+	g_arenaservers.statusbar.style	        = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	g_arenaservers.statusbar.color	        = text_color_normal;
 
 	g_arenaservers.remove.generic.type		= MTYPE_BITMAP;

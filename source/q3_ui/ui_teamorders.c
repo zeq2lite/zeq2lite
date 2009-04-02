@@ -209,7 +209,7 @@ static void UI_TeamOrdersMenu_ListDraw( void *self ) {
 	x =	320;//l->generic.x;
 	y =	l->generic.y;
 	for( i = 0; i < l->numitems; i++ ) {
-		style = UI_LEFT|UI_SMALLFONT|UI_CENTER;
+		style = UI_LEFT|UI_SMALLFONT|UI_CENTER|UI_DROPSHADOW;
 		if( i == l->curvalue ) {
 			color = color_yellow;
 			if( hasfocus ) {
@@ -217,7 +217,7 @@ static void UI_TeamOrdersMenu_ListDraw( void *self ) {
 			}
 		}
 		else {
-			color = color_orange;
+			color = color_lightBlue;
 		}
 
 		UI_DrawProportionalString( x, y, l->itemnames[i], style, color );
@@ -338,7 +338,7 @@ static void UI_TeamOrdersMenu_Init( void ) {
 	teamOrdersMenuInfo.banner.generic.y			= 16;
 	teamOrdersMenuInfo.banner.string			= "TEAM ORDERS";
 	teamOrdersMenuInfo.banner.color				= color_white;
-	teamOrdersMenuInfo.banner.style				= UI_CENTER;
+	teamOrdersMenuInfo.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	teamOrdersMenuInfo.frame.generic.type		= MTYPE_BITMAP;
 	teamOrdersMenuInfo.frame.generic.flags		= QMF_INACTIVE;

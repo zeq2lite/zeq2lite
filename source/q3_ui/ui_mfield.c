@@ -85,7 +85,7 @@ void MField_Draw( mfield_t *edit, int x, int y, int style, vec4_t color ) {
 		x = x - len*charw;
 	}
 	
-	UI_DrawChar( x + ( edit->cursor - prestep ) * charw, y, cursorChar, style & ~(UI_CENTER|UI_RIGHT), color );
+	UI_DrawChar( x + ( edit->cursor - prestep ) * charw, y, cursorChar, style & ~(UI_CENTER|UI_RIGHT|UI_DROPSHADOW), color );
 }
 
 /*
@@ -326,13 +326,13 @@ void MenuField_Draw( menufield_s *f )
 	{
 		w = SMALLCHAR_WIDTH;
 		h = SMALLCHAR_HEIGHT;
-		style = UI_SMALLFONT;
+		style = UI_SMALLFONT|UI_DROPSHADOW;
 	}
 	else
 	{
 		w = BIGCHAR_WIDTH;
 		h = BIGCHAR_HEIGHT;
-		style = UI_BIGFONT;
+		style = UI_BIGFONT|UI_DROPSHADOW;
 	}	
 
 	if (Menu_ItemAtCursor( f->generic.parent ) == f) {
@@ -354,7 +354,7 @@ void MenuField_Draw( menufield_s *f )
 	{
 		// draw cursor
 		UI_FillRect( f->generic.left, f->generic.top, f->generic.right-f->generic.left+1, f->generic.bottom-f->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|style, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|style|UI_DROPSHADOW, color);
 	}
 
 	if ( f->generic.name ) {

@@ -110,7 +110,7 @@ void RankStatus_MenuInit( void ) {
 	s_rankstatus.message.generic.x				= 320;
 	s_rankstatus.message.generic.y				= y;
 	s_rankstatus.message.string					= s_rankstatus_message;
-	s_rankstatus.message.style					= UI_CENTER|UI_SMALLFONT;
+	s_rankstatus.message.style					= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	s_rankstatus.message.color					= s_rankingstatus_color_prompt;
 	y += 40;
 
@@ -122,7 +122,7 @@ void RankStatus_MenuInit( void ) {
 	s_rankstatus.ok.generic.y					= y;
 	s_rankstatus.ok.string						= "OK";
 	s_rankstatus.ok.style						= UI_CENTER|UI_SMALLFONT;
-	s_rankstatus.ok.color						= colorRed;
+	s_rankstatus.ok.color						= colorWhite;
 
 	Menu_AddItem( &s_rankstatus.menu, (void*) &s_rankstatus.frame );
 	Menu_AddItem( &s_rankstatus.menu, (void*) &s_rankstatus.message );

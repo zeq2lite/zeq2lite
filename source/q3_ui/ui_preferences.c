@@ -164,7 +164,7 @@ static void Crosshair_Draw( void *self ) {
 	x = s->generic.x;
 	y =	s->generic.y;
 
-	style = UI_SMALLFONT;
+	style = UI_SMALLFONT|UI_DROPSHADOW;
 	focus = (s->generic.parent->cursor == s->generic.menuPosition);
 
 	if ( s->generic.flags & QMF_GRAYED )
@@ -186,7 +186,7 @@ static void Crosshair_Draw( void *self ) {
 	{
 		// draw cursor
 		UI_FillRect( s->generic.left, s->generic.top, s->generic.right-s->generic.left+1, s->generic.bottom-s->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
 	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
@@ -212,7 +212,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.banner.generic.y	   = 16;
 	s_preferences.banner.string		   = "GAME OPTIONS";
 	s_preferences.banner.color         = color_white;
-	s_preferences.banner.style         = UI_CENTER;
+	s_preferences.banner.style         = UI_CENTER|UI_DROPSHADOW;
 
 	s_preferences.framel.generic.type  = MTYPE_BITMAP;
 	s_preferences.framel.generic.name  = ART_FRAMEL;

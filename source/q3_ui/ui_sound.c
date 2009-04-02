@@ -141,7 +141,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.banner.generic.y			= 16;
 	soundOptionsInfo.banner.string				= "SYSTEM SETUP";
 	soundOptionsInfo.banner.color				= color_white;
-	soundOptionsInfo.banner.style				= UI_CENTER;
+	soundOptionsInfo.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	soundOptionsInfo.framel.generic.type		= MTYPE_BITMAP;
 	soundOptionsInfo.framel.generic.name		= ART_FRAMEL;
@@ -166,8 +166,8 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.graphics.generic.x			= 216;
 	soundOptionsInfo.graphics.generic.y			= 240 - 2 * PROP_HEIGHT;
 	soundOptionsInfo.graphics.string			= "GRAPHICS";
-	soundOptionsInfo.graphics.style				= UI_RIGHT;
-	soundOptionsInfo.graphics.color				= color_red;
+	soundOptionsInfo.graphics.style				= UI_RIGHT|UI_DROPSHADOW;
+	soundOptionsInfo.graphics.color				= color_white;
 
 	soundOptionsInfo.display.generic.type		= MTYPE_PTEXT;
 	soundOptionsInfo.display.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -176,8 +176,8 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.display.generic.x			= 216;
 	soundOptionsInfo.display.generic.y			= 240 - PROP_HEIGHT;
 	soundOptionsInfo.display.string				= "DISPLAY";
-	soundOptionsInfo.display.style				= UI_RIGHT;
-	soundOptionsInfo.display.color				= color_red;
+	soundOptionsInfo.display.style				= UI_RIGHT|UI_DROPSHADOW;
+	soundOptionsInfo.display.color				= color_white;
 
 	soundOptionsInfo.sound.generic.type			= MTYPE_PTEXT;
 	soundOptionsInfo.sound.generic.flags		= QMF_RIGHT_JUSTIFY;
@@ -186,8 +186,8 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.sound.generic.x			= 216;
 	soundOptionsInfo.sound.generic.y			= 240;
 	soundOptionsInfo.sound.string				= "SOUND";
-	soundOptionsInfo.sound.style				= UI_RIGHT;
-	soundOptionsInfo.sound.color				= color_red;
+	soundOptionsInfo.sound.style				= UI_RIGHT|UI_DROPSHADOW;
+	soundOptionsInfo.sound.color				= color_white;
 
 	soundOptionsInfo.network.generic.type		= MTYPE_PTEXT;
 	soundOptionsInfo.network.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -196,8 +196,8 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.network.generic.x			= 216;
 	soundOptionsInfo.network.generic.y			= 240 + PROP_HEIGHT;
 	soundOptionsInfo.network.string				= "NETWORK";
-	soundOptionsInfo.network.style				= UI_RIGHT;
-	soundOptionsInfo.network.color				= color_red;
+	soundOptionsInfo.network.style				= UI_RIGHT|UI_DROPSHADOW;
+	soundOptionsInfo.network.color				= color_white;
 
 	y = 240 - 1.5 * (BIGCHAR_HEIGHT + 2);
 	soundOptionsInfo.sfxvolume.generic.type		= MTYPE_SLIDER;

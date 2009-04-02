@@ -108,7 +108,7 @@ static void LoadConfig_MenuInit( void ) {
 	s_configs.banner.generic.y		= 16;
 	s_configs.banner.string			= "LOAD CONFIG";
 	s_configs.banner.color			= color_white;
-	s_configs.banner.style			= UI_CENTER;
+	s_configs.banner.style			= UI_CENTER|UI_DROPSHADOW;
 
 	s_configs.framel.generic.type	= MTYPE_BITMAP;
 	s_configs.framel.generic.name	= ART_FRAMEL;

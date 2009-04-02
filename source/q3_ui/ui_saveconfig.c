@@ -92,7 +92,7 @@ static void UI_SaveConfigMenu_SavenameDraw( void *self ) {
 		color = colorRed;
 	}
 
-	UI_DrawProportionalString( 320, 192, "Enter filename:", UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawProportionalString( 320, 192, "Enter filename:", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	UI_FillRect( f->generic.x, f->generic.y, f->field.widthInChars*SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, colorBlack );
 	MField_Draw( &f->field, f->generic.x, f->generic.y, style, color );
 }
@@ -115,7 +115,7 @@ static void UI_SaveConfigMenu_Init( void ) {
 	saveConfig.banner.generic.y			= 16;
 	saveConfig.banner.string			= "SAVE CONFIG";
 	saveConfig.banner.color				= color_white;
-	saveConfig.banner.style				= UI_CENTER;
+	saveConfig.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	saveConfig.background.generic.type		= MTYPE_BITMAP;
 	saveConfig.background.generic.name		= ART_BACKGROUND;

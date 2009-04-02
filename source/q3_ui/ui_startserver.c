@@ -341,7 +341,7 @@ static void StartServer_LevelshotDraw( void *self ) {
 	x += b->width / 2;
 	y += 4;
 	n = s_startserver.page * MAX_MAPSPERPAGE + b->generic.id - ID_PICTURES;
-	UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 
 	x = b->generic.x;
 	y = b->generic.y;
@@ -377,7 +377,7 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.banner.generic.y	   = 16;
 	s_startserver.banner.string        = "GAME SERVER";
 	s_startserver.banner.color         = color_white;
-	s_startserver.banner.style         = UI_CENTER;
+	s_startserver.banner.style         = UI_CENTER|UI_DROPSHADOW;
 
 	s_startserver.framel.generic.type  = MTYPE_BITMAP;
 	s_startserver.framel.generic.name  = GAMESERVER_FRAMEL;
@@ -468,7 +468,7 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.mapname.generic.x	    = 320;
 	s_startserver.mapname.generic.y	    = 440;
 	s_startserver.mapname.string        = mapnamebuffer;
-	s_startserver.mapname.style         = UI_CENTER|UI_BIGFONT;
+	s_startserver.mapname.style         = UI_CENTER|UI_BIGFONT|UI_DROPSHADOW;
 	s_startserver.mapname.color         = text_color_normal;
 
 	s_startserver.back.generic.type	    = MTYPE_BITMAP;
@@ -963,7 +963,7 @@ ServerOptions_StatusBar
 static void ServerOptions_StatusBar( void* ptr ) {
 	switch( ((menucommon_s*)ptr)->id ) {
 	default:
-		UI_DrawString( 320, 440, "0 = NO LIMIT", UI_CENTER|UI_SMALLFONT, colorWhite );
+		UI_DrawString( 320, 440, "0 = NO LIMIT", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
 		break;
 	}
 }
@@ -988,17 +988,17 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 	b = (menubitmap_s *)self;
 
 	Bitmap_Draw( b );
-
+/*
 	x = b->generic.x;
 	y = b->generic.y + b->height;
 	UI_FillRect( x, y, b->width, 40, colorBlack );
-
+*/
 	x += b->width / 2;
 	y += 4;
-	UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 
 	y += SMALLCHAR_HEIGHT;
-	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 }
 
 
@@ -1129,7 +1129,7 @@ static void ServerOptions_SetMenuItems( void ) {
 	s_serveroptions.pure.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "sv_pure" ) );
 
 	// set the map pic
-	Com_sprintf( picname, 64, "levelshots/%s", s_startserver.maplist[s_startserver.currentmap] );
+	Com_sprintf( picname, 64, "maps/%s", s_startserver.maplist[s_startserver.currentmap] );
 	s_serveroptions.mappic.generic.name = picname;
 
 	// set the map name
@@ -1162,7 +1162,7 @@ static void PlayerName_Draw( void *item ) {
 	x = s->generic.x;
 	y =	s->generic.y;
 
-	style = UI_SMALLFONT;
+	style = UI_SMALLFONT|UI_DROPSHADOW;
 	focus = (s->generic.parent->cursor == s->generic.menuPosition);
 
 	if ( s->generic.flags & QMF_GRAYED )
@@ -1184,7 +1184,7 @@ static void PlayerName_Draw( void *item ) {
 	{
 		// draw cursor
 		UI_FillRect( s->generic.left, s->generic.top, s->generic.right-s->generic.left+1, s->generic.bottom-s->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
 	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
@@ -1217,7 +1217,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.banner.generic.y			= 16;
 	s_serveroptions.banner.string  				= "GAME SERVER";
 	s_serveroptions.banner.color  				= color_white;
-	s_serveroptions.banner.style  				= UI_CENTER;
+	s_serveroptions.banner.style  				= UI_CENTER|UI_DROPSHADOW;
 
 	s_serveroptions.mappic.generic.type			= MTYPE_BITMAP;
 	s_serveroptions.mappic.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
@@ -1321,7 +1321,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.player0.generic.flags			= QMF_SMALLFONT;
 	s_serveroptions.player0.generic.x				= 32 + SMALLCHAR_WIDTH;
 	s_serveroptions.player0.generic.y				= y;
-	s_serveroptions.player0.color					= color_orange;
+	s_serveroptions.player0.color					= color_lightBlue;
 	s_serveroptions.player0.style					= UI_LEFT|UI_SMALLFONT;
 
 	for( n = 0; n < PLAYER_SLOTS; n++ ) {
@@ -1340,8 +1340,8 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.playerName[n].generic.callback	= ServerOptions_PlayerNameEvent;
 		s_serveroptions.playerName[n].generic.id		= n;
 		s_serveroptions.playerName[n].generic.ownerdraw	= PlayerName_Draw;
-		s_serveroptions.playerName[n].color				= color_orange;
-		s_serveroptions.playerName[n].style				= UI_SMALLFONT;
+		s_serveroptions.playerName[n].color				= color_lightBlue;
+		s_serveroptions.playerName[n].style				= UI_SMALLFONT|UI_DROPSHADOW;
 		s_serveroptions.playerName[n].string			= s_serveroptions.playerNameBuffers[n];
 		s_serveroptions.playerName[n].generic.top		= s_serveroptions.playerName[n].generic.y;
 		s_serveroptions.playerName[n].generic.bottom	= s_serveroptions.playerName[n].generic.y + SMALLCHAR_HEIGHT;
@@ -1608,7 +1608,7 @@ static void UI_BotSelectMenu_UpdateGrid( void ) {
 				botSelectInfo.picnames[i].color = color_red;
 			}
 			else {
-				botSelectInfo.picnames[i].color = color_orange;
+				botSelectInfo.picnames[i].color = color_lightBlue;
 			}
 			botSelectInfo.picbuttons[i].generic.flags &= ~QMF_INACTIVE;
 		}
@@ -1810,7 +1810,7 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.banner.generic.y		= 16;
 	botSelectInfo.banner.string			= "SELECT BOT";
 	botSelectInfo.banner.color			= color_white;
-	botSelectInfo.banner.style			= UI_CENTER;
+	botSelectInfo.banner.style			= UI_CENTER|UI_DROPSHADOW;
 
 	y =	80;
 	for( i = 0, k = 0; i < PLAYERGRID_ROWS; i++) {
@@ -1846,8 +1846,8 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 			botSelectInfo.picnames[k].generic.x				= x + 32;
 			botSelectInfo.picnames[k].generic.y				= y + 64;
 			botSelectInfo.picnames[k].string				= botSelectInfo.botnames[k];
-			botSelectInfo.picnames[k].color					= color_orange;
-			botSelectInfo.picnames[k].style					= UI_CENTER|UI_SMALLFONT;
+			botSelectInfo.picnames[k].color					= color_lightBlue;
+			botSelectInfo.picnames[k].style					= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 
 			x += (64 + 6);
 		}

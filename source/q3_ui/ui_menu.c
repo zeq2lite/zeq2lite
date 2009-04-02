@@ -126,7 +126,7 @@ static void Main_MenuDraw( void ) {
 	vec3_t			angles;
 	float			adjust;
 	float			x, y, w, h;
-	vec4_t			color = {0.5, 0, 0, 1};
+//	vec4_t			color = {0.5, 0, 0, 1};
 
 	// setup the refdef
 
@@ -159,7 +159,7 @@ static void Main_MenuDraw( void ) {
 	trap_R_ClearScene();
 
 	// add the model
-
+/*
 	memset( &ent, 0, sizeof(ent) );
 
 	adjust = 0.0 * sin( (float)uis.realtime / 5000 );
@@ -176,14 +176,14 @@ static void Main_MenuDraw( void ) {
 	trap_R_RenderScene( &refdef );
 
 	// standard menu drawing
-
+*/
 	Menu_Draw( &s_main.menu );
 
 	if (uis.demoversion) {
 //		UI_DrawProportionalString( 320, 372, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, color );
-		UI_DrawString( 320, 400, "ZEQ II (C) 2002-2004, www.zeq2.com  All Rights Reserved. Teaser Build", UI_CENTER|UI_SMALLFONT, color );
+		UI_DrawString( 320, 400, "ZEQ II (C) 2002-2004, www.zeq2.com  All Rights Reserved. Teaser Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	} else {
-		UI_DrawString( 320, 450, "ZEQ II (C) 2002-2004, www.zeq2.com  All Rights Reserved. Pre-Alpha Build", UI_CENTER|UI_SMALLFONT, color );
+		UI_DrawString( 320, 450, "ZEQ II (C) 2002-2004, www.zeq2.com  All Rights Reserved. Pre-Alpha Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	}
 }
 
@@ -229,7 +229,7 @@ void UI_MainMenu( void ) {
 	qboolean teamArena = qfalse;
 	int		style = UI_LEFT | UI_DROPSHADOW | UI_SMALLFONT;
 	
-	trap_S_StartBackgroundTrack("music/zeq2_menumusic.ogg", "music/zeq2_menumusic.ogg");
+	trap_S_StartBackgroundTrack("music/general01.ogg", "music/general01.ogg");
 //	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/zeq2_menumusic\n" );
 	trap_Cvar_Set( "sv_killserver", "1" );
 /*

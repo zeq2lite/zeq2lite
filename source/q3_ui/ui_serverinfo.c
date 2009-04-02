@@ -120,8 +120,8 @@ static void ServerInfo_MenuDraw( void )
 
 		Q_strcat( key, MAX_INFO_KEY, ":" ); 
 
-		UI_DrawString(SCREEN_WIDTH*0.50 - 8,y,key,UI_RIGHT|UI_SMALLFONT,color_red);
-		UI_DrawString(SCREEN_WIDTH*0.50 + 8,y,value,UI_LEFT|UI_SMALLFONT,text_color_normal);
+		UI_DrawString(SCREEN_WIDTH*0.50 - 8,y,key,UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW,color_white);
+		UI_DrawString(SCREEN_WIDTH*0.50 + 8,y,value,UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW,text_color_normal);
 
 		y += SMALLCHAR_HEIGHT;
 	}
@@ -183,7 +183,7 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.banner.generic.y	  = 16;
 	s_serverinfo.banner.string		  = "SERVER INFO";
 	s_serverinfo.banner.color	      = color_white;
-	s_serverinfo.banner.style	      = UI_CENTER;
+	s_serverinfo.banner.style	      = UI_CENTER|UI_DROPSHADOW;
 
 	s_serverinfo.framel.generic.type  = MTYPE_BITMAP;
 	s_serverinfo.framel.generic.name  = SERVERINFO_FRAMEL;
@@ -208,8 +208,8 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.add.generic.x		  = 320;
 	s_serverinfo.add.generic.y		  = 371;
 	s_serverinfo.add.string  		  = "ADD TO FAVORITES";
-	s_serverinfo.add.style  		  = UI_CENTER|UI_SMALLFONT;
-	s_serverinfo.add.color			  =	color_red;
+	s_serverinfo.add.style  		  = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_serverinfo.add.color			  =	color_white;
 	if( trap_Cvar_VariableValue( "sv_running" ) ) {
 		s_serverinfo.add.generic.flags |= QMF_GRAYED;
 	}

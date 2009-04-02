@@ -425,7 +425,7 @@ void UI_DrawBannerString( int x, int y, const char* str, int style, vec4_t color
 	if ( style & UI_DROPSHADOW ) {
 		drawcolor[0] = drawcolor[1] = drawcolor[2] = 0;
 		drawcolor[3] = color[3];
-		UI_DrawBannerString2( x+2, y+2, str, drawcolor );
+		UI_DrawBannerString2( x+1, y+1, str, drawcolor );
 	}
 
 	UI_DrawBannerString2( x, y, str, color );
@@ -563,7 +563,7 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 	if ( style & UI_DROPSHADOW ) {
 		drawcolor[0] = drawcolor[1] = drawcolor[2] = 0;
 		drawcolor[3] = color[3];
-		UI_DrawProportionalString2( x+2, y+2, str, drawcolor, sizeScale, uis.charsetProp );
+		UI_DrawProportionalString2( x+1, y+1, str, drawcolor, sizeScale, uis.charsetProp );
 	}
 
 	if ( style & UI_INVERSE ) {
@@ -768,7 +768,7 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 	{
 		dropcolor[0] = dropcolor[1] = dropcolor[2] = 0;
 		dropcolor[3] = drawcolor[3];
-		UI_DrawString2(x+2,y+2,str,dropcolor,charw,charh);
+		UI_DrawString2(x+1,y+1,str,dropcolor,charw,charh);
 	}
 
 	UI_DrawString2(x,y,str,drawcolor,charw,charh);

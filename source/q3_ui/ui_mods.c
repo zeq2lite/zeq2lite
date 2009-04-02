@@ -177,7 +177,7 @@ static void UI_Mods_MenuInit( void ) {
 	s_mods.banner.generic.y			= 16;
 	s_mods.banner.string			= "MODS";
 	s_mods.banner.color				= color_white;
-	s_mods.banner.style				= UI_CENTER;
+	s_mods.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	s_mods.framel.generic.type		= MTYPE_BITMAP;
 	s_mods.framel.generic.name		= ART_FRAMEL;
