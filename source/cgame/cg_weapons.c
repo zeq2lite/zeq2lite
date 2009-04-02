@@ -1922,7 +1922,7 @@ void CG_UserMissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir
 
 		if (weaponGraphics->markSize && weaponGraphics->markShader) {
 			// Draw Impactmark
-			CG_ImpactMark( weaponGraphics->markShader, origin, dir, random()*360, 1,1,1,1, qfalse,weaponGraphics->markSize, qfalse );
+			CG_ImpactMark( weaponGraphics->markShader, origin, dir, random()*360, 1,1,1,1, qfalse,60, qfalse );
 		}
 	}
 
