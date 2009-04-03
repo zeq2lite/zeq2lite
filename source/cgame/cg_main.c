@@ -183,6 +183,7 @@ vmCvar_t	cg_verboseParse;
 vmCvar_t	r_beamDetail;
 vmCvar_t	cg_soundAttenuation;
 vmCvar_t	cg_thirdPersonCamera;
+vmCvar_t	cg_beamControl;
 //END ADDING
 
 
@@ -311,7 +312,8 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_verboseParse, "cg_verboseParse", "0", CVAR_ARCHIVE},
 	{ &r_beamDetail,	"r_beamDetail", "30", CVAR_ARCHIVE},
 	{ &cg_soundAttenuation, "cg_soundAttenuation", "0.0001", CVAR_CHEAT},
-	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "0", CVAR_ARCHIVE}
+	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "0", CVAR_ARCHIVE},
+	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE}
 	// END ADDING
 //	{ &cg_pmove_fixed, "cg_pmove_fixed", "0", CVAR_USERINFO | CVAR_ARCHIVE }
 };

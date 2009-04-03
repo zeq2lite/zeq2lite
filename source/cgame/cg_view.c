@@ -275,28 +275,28 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	ps = &cg.predictedPlayerState;
 
+	if (cg_beamControl.value == 0) {
 
-	// We're guiding a weapon, so let's also keep an eye on that
-	if (((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
-		float oldRoll;
+		// We're guiding a weapon, so let's also keep an eye on that
+		if (((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
+			float oldRoll;
 
-		VectorSubtract( cg.guide_target, ps->origin, forward );
-		VectorNormalize( forward );
-		oldRoll = cg.refdefViewAngles[ROLL];
-		vectoangles( forward, cg.refdefViewAngles );
-		cg.refdefViewAngles[ROLL] = oldRoll;
-		// cg.guide_target is updated every guided frame by prediction,
-		// so disabling it can be done every frame (if necessary it will
-		// automagically be re-enabled.
-		VectorCopy( ps->origin, cg.guide_target);
-		cg.guide_view = qfalse;
-	}	
-	
-	
-	// backup for when flying
-	VectorCopy( cg.refdefViewAngles, overrideAngles );
-	VectorCopy( cg.refdef.vieworg, overrideOrg );
+			VectorSubtract( cg.guide_target, ps->origin, forward );
+			VectorNormalize( forward );
+			oldRoll = cg.refdefViewAngles[ROLL];
+			vectoangles( forward, cg.refdefViewAngles );
+			cg.refdefViewAngles[ROLL] = oldRoll;
+			// cg.guide_target is updated every guided frame by prediction,
+			// so disabling it can be done every frame (if necessary it will
+			// automagically be re-enabled.
+			VectorCopy( ps->origin, cg.guide_target);
+			cg.guide_view = qfalse;
+		}	
 
+		// backup for when flying
+		VectorCopy( cg.refdefViewAngles, overrideAngles );
+		VectorCopy( cg.refdef.vieworg, overrideOrg );
+	}
 	// END ADDING
 
 
@@ -356,8 +356,6 @@ static void CG_OffsetThirdPersonView( void ) {
 	}
 	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
 	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
-
-	
 
 	// ADDING FOR ZEQ2
 	if (cg_thirdPersonCamera.value == 0) {
