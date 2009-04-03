@@ -382,6 +382,11 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 
 	ci = &cgs.clientinfo[ clientNum ];
 
+// 2D player icons for ZEQ2 only!
+
+	CG_DrawPic( x, y, w, h, ci->modelIcon );
+
+/*
 	if ( cg_draw3dIcons.integer ) {
 		cm = ci->headModel[ci->activeTier];
 		if ( !cm ) {
@@ -405,7 +410,7 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	} else if ( cg_drawIcons.integer ) {
 		CG_DrawPic( x, y, w, h, ci->modelIcon );
 	}
-
+*/
 	// if they are deferred, draw a cross out
 	if ( ci->deferred ) {
 		CG_DrawPic( x, y, w, h, cgs.media.deferShader );
@@ -615,6 +620,7 @@ static void CG_DrawStatusBar( void ) {
 	ps = &cg.snap->ps;
 
 	VectorClear( angles );
+	angles[YAW] = 180;
 
 	if( cg.predictedPlayerState.powerups[PW_REDFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_RED );
@@ -648,14 +654,14 @@ static void CG_DrawStatusBar( void ) {
 	//}
 
 	// draw HUD pic
- 	CG_DrawHorGauge(53,459,200,18,powerColor,dullColor,ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
+ 	CG_DrawHorGauge(80,459,200,18,powerColor,dullColor,ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
  	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[STAT_MAX_HEALTH],qfalse);
 	healthDisplay = ((float)ps->stats[STAT_HEALTH] / (float)ps->stats[STAT_MAX_HEALTH]) *  2000000000;
 	healthString = va("%i",healthDisplay);
 	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
 	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
 	CG_DrawSmallStringHalfHeight(225-healthOffset,463,healthString,1.0F);
-	CG_DrawHead(0,0,100,100,cg.snap->ps.clientNum,angles);
+	CG_DrawHead(0,408,72,72,cg.snap->ps.clientNum,angles);
 }
 #endif
 
