@@ -292,11 +292,12 @@ static void CG_OffsetThirdPersonView( void ) {
 			VectorCopy( ps->origin, cg.guide_target);
 			cg.guide_view = qfalse;
 		}	
-
-		// backup for when flying
-		VectorCopy( cg.refdefViewAngles, overrideAngles );
-		VectorCopy( cg.refdef.vieworg, overrideOrg );
 	}
+
+	// backup for when flying
+	VectorCopy( cg.refdefViewAngles, overrideAngles );
+	VectorCopy( cg.refdef.vieworg, overrideOrg );
+
 	// END ADDING
 
 
