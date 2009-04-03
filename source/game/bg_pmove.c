@@ -1669,7 +1669,7 @@ static void PM_Footsteps( void ) {
 	if ( VectorLength(pm->ps->dashDir ) > 0.0f && pm->xyspeed >= 500 ) {
 
 		if ( pm->ps->running ) {
-			return;
+		 	return;
 		}
 
 		if ( pm->ps->dashDir[0] > 0 ) {
