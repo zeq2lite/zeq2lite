@@ -100,6 +100,9 @@ UI_CreditMenu
 ===============
 */
 void UI_CreditMenu( void ) {
+
+	trap_S_StartBackgroundTrack("music/credits.ogg", "music/credits.ogg");
+
 	memset( &s_credits, 0 ,sizeof(s_credits) );
 
 	s_credits.menu.draw = UI_CreditMenu_Draw;
