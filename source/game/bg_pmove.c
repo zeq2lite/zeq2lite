@@ -1666,7 +1666,12 @@ static void PM_Footsteps( void ) {
 	// ADDING FOR ZEQ2
 	// If we're dashing, fill in correct leg animations.
 	// Leave cycle intact, but don't advance.
-	if ( VectorLength(pm->ps->dashDir ) > 0.0f && pm->xyspeed >= 500 && pm->ps->running == 1 ) {
+	if ( VectorLength(pm->ps->dashDir ) > 0.0f && pm->xyspeed >= 500 ) {
+
+		if ( pm->ps->running ) {
+			return;
+		}
+
 		if ( pm->ps->dashDir[0] > 0 ) {
 			PM_ContinueLegsAnim( LEGS_DASH_FORWARD );
 		} else if ( pm->ps->dashDir[0] < 0 ) {
@@ -1772,25 +1777,29 @@ static void PM_Footsteps( void ) {
 			PM_ContinueLegsAnim( LEGS_WALKCR );
 		}
 	} else {
-		if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) {
+		if ( !(pm->cmd.buttons & BUTTON_WALKING) ) {
 			bobmove = 0.4f;	// faster speeds bob faster
-			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN && pm->cmd.forwardmove < 0) {
-				if ( pm->ps->running == 1 ) {
-					PM_ContinueLegsAnim( LEGS_BACK );
-				} else {
+			if ( !pm->ps->running ) { 
+				if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN && pm->cmd.forwardmove < 0) {
 					PM_ContinueLegsAnim( LEGS_DASH_BACKWARD );
-				}
-			} else if ( pm->cmd.forwardmove > 0 ) {
-				if ( pm->ps->running == 1 ) {
-					PM_ContinueLegsAnim( LEGS_RUN );
-				} else {
+				} else if ( pm->cmd.forwardmove > 0 ) {
 					PM_ContinueLegsAnim( LEGS_DASH_FORWARD );
+				} else if ( pm->cmd.rightmove > 0 ) {
+					PM_ContinueLegsAnim( LEGS_DASH_RIGHT );
+				} else if ( pm->cmd.rightmove < 0 ) {
+					PM_ContinueLegsAnim( LEGS_DASH_LEFT );
 				}
-			} else if ( pm->cmd.rightmove > 0 ) {
-				PM_ContinueLegsAnim( LEGS_DASH_RIGHT );
-			} else if ( pm->cmd.rightmove < 0 ) {
-				PM_ContinueLegsAnim( LEGS_DASH_LEFT );
-		}
+			} else {
+				if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN && pm->cmd.forwardmove < 0) {
+					PM_ContinueLegsAnim( LEGS_BACK );
+				} else if ( pm->cmd.forwardmove > 0 ) {
+					PM_ContinueLegsAnim( LEGS_RUN );
+				} else if ( pm->cmd.rightmove > 0 ) {
+					PM_ContinueLegsAnim( LEGS_DASH_RIGHT );
+				} else if ( pm->cmd.rightmove < 0 ) {
+					PM_ContinueLegsAnim( LEGS_DASH_LEFT );
+				}
+			}
 			footstep = qtrue;
 		} else {
 			bobmove = 0.3f;	// walking bobs slow
