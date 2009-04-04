@@ -660,7 +660,7 @@ static void CG_DrawStatusBar( void ) {
 	healthString = va("%i",healthDisplay);
 	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
 	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
-	CG_DrawSmallStringHalfHeight(225-healthOffset,463,healthString,1.0F);
+	CG_DrawSmallStringHalfHeight(260-healthOffset,463,healthString,1.0F);
 	CG_DrawHead(0,408,72,72,cg.snap->ps.clientNum,angles);
 }
 #endif

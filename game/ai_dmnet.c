@@ -38,7 +38,7 @@
 #include "match.h"			//string matching types and vars
 
 // for the voice chats
-#include "../ui/menudef.h"
+#include "../../ui/menudef.h"
 
 //goal flag, see be_ai_goal.h for the other GFL_*
 #define GFL_AIR			128

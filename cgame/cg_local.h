@@ -684,6 +684,8 @@ typedef struct {
 
 	qboolean	guide_view;
 	vec3_t		guide_target;	// where to look for guided missiles
+
+	int			tierTime;
 	// END ADDING
 
 } cg_t;
