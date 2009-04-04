@@ -2373,31 +2373,20 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 	return qtrue;
 }
 
-void CG_PlayerTransformation ( centity_t *cent ) {
+void CG_PlayerTransformationLong ( centity_t *cent ) {
 	clientInfo_t	*ci;
 
-/*
-	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 0 ) {
-		return;
+	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
+		trap_SendConsoleCommand ("cg_thirdPersonHeight -10\ncg_thirdPersonRange 50\ncg_cameraOrbit 1");
 	}
-*/
-	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 100 ) {
-//		trap_SendConsoleCommand ("cg_thirdPersonAngle 0\ncg_thirdPersonHeight 30\ncg_thirdPersonRange 110\ncg_cameraOrbit 0");
-//		/*
-		cg_thirdPersonAngle.value = 0;
-		trap_Cvar_Set ("cg_thirdPersonHeight", "40");
-		trap_Cvar_Set ("cg_thirdPersonRange", "150");
-		trap_Cvar_Set ("cg_cameraOrbit", "0");
-//		*/
-	} else if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
-//		trap_SendConsoleCommand ("cg_thirdPersonHeight -10\ncg_thirdPersonRange 50\ncg_cameraOrbit 1");
-//		/*
-		trap_Cvar_Set ("cg_thirdPersonHeight", "-10");
-		trap_Cvar_Set ("cg_thirdPersonRange", "50");
-		trap_Cvar_Set ("cg_cameraOrbit", "1");
-//		*/
-	}
+}
 
+void CG_PlayerTransformationLongEnd ( centity_t *cent ) {
+	clientInfo_t	*ci;
+
+	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 100 ) {
+		trap_SendConsoleCommand ("cg_thirdPersonAngle 0\ncg_thirdPersonHeight 40\ncg_thirdPersonRange 150\ncg_cameraOrbit 0");
+	}
 }
 
 /*
@@ -2424,6 +2413,7 @@ void CG_Player( centity_t *cent ) {
 #endif
 	qboolean		onBodyQue;
 	int				tier;
+	int				tierEnd;
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -2448,17 +2438,23 @@ void CG_Player( centity_t *cent ) {
 	// <-- RiO: Check the tier
 	if (onBodyQue) {
 		tier = 0;
+		tierEnd = 1;
 	} else {
 		tier = cent->currentState.tier;
 		if ( ci->activeTier != tier ) {
 			ci->activeTier = tier;
-			
+			tierEnd = 0;
 			// NOTE: Add 'tier up' cinematic calls here
 			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);
+			CG_PlayerTransformationLong ( cent );
+		}
+		if ( tierEnd == 0 ) {
+			CG_PlayerTransformationLongEnd ( cent );
+			tierEnd = 1;
 		}
 	}
 
-//	CG_PlayerTransformation ( cent );
+
 	// -->
 
 	// Don't display anything if the player is moving at lightspeed
