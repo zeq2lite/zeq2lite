@@ -425,7 +425,7 @@ static void PM_CheckTier( void ) {
 	}
 
 	if ( (pm->ps->stats[STAT_HEALTH] > highBreak ) && tier < 7) {
-		pm->ps->powerups[PW_TRANSFORM] = 6000;
+		pm->ps->powerups[PW_TRANSFORM] = 5000;
 		PM_AddEvent( EV_TIERUP );
 	}
 }
@@ -2797,12 +2797,12 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	// Activate transform if necessary
-	if ( pm->ps->powerups[PW_TRANSFORM] == 6000 ) {
+	if ( pm->ps->powerups[PW_TRANSFORM] == 5000 ) {
 		// Disable any dashing
 		if ( VectorLength( pm->ps->dashDir ) > 0.0f ) {
 			PM_StopDash();
 		}
-		pm->ps->powerups[PW_TRANSFORM] = 6000; // 5 seconds
+		pm->ps->powerups[PW_TRANSFORM] = 5000; // 5 seconds
 	}
 
 	if ( pm->ps->powerups[PW_TRANSFORM] ) {
