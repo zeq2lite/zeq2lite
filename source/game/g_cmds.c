@@ -2,7 +2,7 @@
 //
 #include "g_local.h"
 
-#include "../../ui/menudef.h"			// for the voice chats
+#include "../ui/menudef.h"			// for the voice chats
 
 /*
 ==================

@@ -5,7 +5,7 @@
 // be a valid snapshot this frame
 
 #include "cg_local.h"
-#include "../../ui/menudef.h" // bk001205 - for Q3_ui as well
+#include "../ui/menudef.h" // bk001205 - for Q3_ui as well
 
 typedef struct {
 	const char *order;

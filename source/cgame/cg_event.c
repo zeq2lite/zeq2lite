@@ -6,7 +6,7 @@
 
 // for the voice chats
 #ifdef MISSIONPACK // bk001205
-#include "../../ui/menudef.h"
+#include "../ui/menudef.h"
 #endif
 //==========================================================================
 
