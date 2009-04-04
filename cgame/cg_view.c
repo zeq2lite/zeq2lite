@@ -273,20 +273,15 @@ static void CG_OffsetThirdPersonView( void ) {
 	vec4_t		quatRot;
 	vec4_t		quatResult;
 
+	int			newAngle;
+	int			newRange;
+	int			newHeight;
+
 	ps = &cg.predictedPlayerState;
 	
-	// Transformation sequence here ... it's no good in CG_Players, where its supposed to be.
-	if ( ps->powerups[PW_TRANSFORM] > 100 ) {
-		cg_thirdPersonAngle.value = 180;
-		cg_thirdPersonHeight.value = -10;
-		cg_thirdPersonRange.value = 50;
-	}
-
-	if ( cg.time >= cg.tierTime ) {
-		cg_thirdPersonAngle.value = 0;
-		cg_thirdPersonHeight.value = 40;
-		cg_thirdPersonRange.value = 150;
-	}
+	newAngle = 180;
+	newRange = 50;
+	newHeight = -10;
 
 	if (cg_beamControl.value == 0) {
 
@@ -313,17 +308,16 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	// END ADDING
 
-
 	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 
 	VectorCopy( cg.refdefViewAngles, focusAngles );
-
+/*
 	// if dead, look at killer
 	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {
 		focusAngles[YAW] = cg.predictedPlayerState.stats[STAT_DEAD_YAW];
 		cg.refdefViewAngles[YAW] = cg.predictedPlayerState.stats[STAT_DEAD_YAW];
 	}
-
+*/
 	if ( focusAngles[PITCH] > 45 ) {
 		focusAngles[PITCH] = 45;		// don't go too far overhead
 	}
@@ -333,15 +327,28 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	VectorCopy( cg.refdef.vieworg, view );
 	
-	view[2] += 8 + cg_thirdPersonHeight.value;
+	// Transform camera or not.
+	if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
+		view[2] += 8 + newHeight;
+	} else {
+		view[2] += 8 + cg_thirdPersonHeight.value;
+	}
 
 	cg.refdefViewAngles[PITCH] *= 0.5;
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 
-	forwardScale = cos( cg_thirdPersonAngle.value / 180 * M_PI );	
-	sideScale = sin( cg_thirdPersonAngle.value / 180 * M_PI );
-	VectorMA( view, -cg_thirdPersonRange.value * forwardScale, forward, view );
-	VectorMA( view, -cg_thirdPersonRange.value * sideScale, right, view );
+	// Transform camera or not.
+	if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
+		forwardScale = cos( newAngle / 180 * M_PI );	
+		sideScale = sin( newAngle / 180 * M_PI );
+		VectorMA( view, -newRange * forwardScale, forward, view );
+		VectorMA( view, -newRange * sideScale, right, view );
+	} else {
+		forwardScale = cos( cg_thirdPersonAngle.value / 180 * M_PI );	
+		sideScale = sin( cg_thirdPersonAngle.value / 180 * M_PI );
+		VectorMA( view, -cg_thirdPersonRange.value * forwardScale, forward, view );
+		VectorMA( view, -cg_thirdPersonRange.value * sideScale, right, view );
+	}
 
 	// trace a ray from the origin to the viewpoint to make sure the view isn't
 	// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
@@ -369,7 +376,13 @@ static void CG_OffsetThirdPersonView( void ) {
 		focusDist = 1;	// should never happen
 	}
 	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
-	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
+
+	// Transform camera or not.
+	if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
+		cg.refdefViewAngles[YAW] -= newAngle;
+	} else {
+		cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
+	}
 
 	// ADDING FOR ZEQ2
 	if (cg_thirdPersonCamera.value == 0) {
@@ -383,7 +396,13 @@ static void CG_OffsetThirdPersonView( void ) {
 			// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
 			if ( cg_thirdPersonAngle.value != 0 ) {
 				rotationOffsetAngles[PITCH] = 0;
-				rotationOffsetAngles[YAW] = -cg_thirdPersonAngle.value;
+
+				// Transform camera or not.
+				if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
+					rotationOffsetAngles[YAW] = -newAngle;
+				} else {
+					rotationOffsetAngles[YAW] = -cg_thirdPersonAngle.value;
+				}
 				rotationOffsetAngles[ROLL] = 0;
 
 				AnglesToQuat(cg.refdefViewAngles, quatOrient);
@@ -399,9 +418,15 @@ static void CG_OffsetThirdPersonView( void ) {
 			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
 			VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
 			VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
-			VectorMA( overrideOrg, 8 + cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
-			VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
 
+			// Transform camera or not.
+			if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
+				VectorMA( overrideOrg, 8 + newHeight, up, cg.refdef.vieworg );
+				VectorMA( cg.refdef.vieworg, -newRange, forward, cg.refdef.vieworg );
+			} else {
+				VectorMA( overrideOrg, 8 + cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
+				VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
+			}
 			// trace a ray from the origin to the viewpoint to make sure the view isn't
 			// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
 
@@ -477,7 +502,7 @@ static void CG_OffsetFirstPersonView( void ) {
 
 	origin = cg.refdef.vieworg;
 	angles = cg.refdefViewAngles;
-
+/*
 	// if dead, fix the angle and don't add any kick
 	if ( cg.snap->ps.stats[STAT_HEALTH] <= 0 ) {
 		angles[ROLL] = 40;
@@ -486,7 +511,7 @@ static void CG_OffsetFirstPersonView( void ) {
 		origin[2] += cg.predictedPlayerState.viewheight;
 		return;
 	}
-
+*/
 	// add angles based on weapon kick
 	VectorAdd (angles, cg.kick_angles, angles);
 

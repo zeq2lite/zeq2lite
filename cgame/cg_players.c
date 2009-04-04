@@ -2376,7 +2376,7 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 void CG_PlayerTransformation ( centity_t *cent ) {
 	// Don't show sequence when powering down!
 	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
-		cg.tierTime = cg.time + 6000;
+		cg.tierTime = cg.time + 5000;
 	}
 }
 
@@ -2440,7 +2440,7 @@ void CG_Player( centity_t *cent ) {
 	}
 
 	if ( cg.time >= cg.tierTime ) {
-		cg.tierTime = cg.time + 6000;
+		cg.tierTime = 999999999 + cg.tierTime;
 	}
 
 	// -->
