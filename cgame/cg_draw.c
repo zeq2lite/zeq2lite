@@ -645,23 +645,20 @@ static void CG_DrawStatusBar( void ) {
 	maxColor[3] = 1.0f;
 
 
-	// draw the gauge
 	// CG_DrawHorGauge(x,y,width,height,color,emptyColor,value,maxValue,reversed)
 	// draw the selected weapon icon
 	//if (ps->weapon > 0) {
 	//	weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
 	//	CG_DrawPic( 32, 388, 68, 68, weaponGraphics->weaponIcon );
 	//}
-
-	// draw HUD pic
- 	CG_DrawHorGauge(80,459,200,18,powerColor,dullColor,ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
+ 	CG_DrawHorGauge(60,448,200,18,powerColor,dullColor,ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
  	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[STAT_MAX_HEALTH],qfalse);
 	healthDisplay = ((float)ps->stats[STAT_HEALTH] / (float)ps->stats[STAT_MAX_HEALTH]) *  2000000000;
 	healthString = va("%i",healthDisplay);
 	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
 	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
-	CG_DrawSmallStringHalfHeight(260-healthOffset,463,healthString,1.0F);
-	CG_DrawHead(0,408,72,72,cg.snap->ps.clientNum,angles);
+	CG_DrawSmallStringHalfHeight(239-healthOffset,452,healthString,1.0F);
+	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
 }
 #endif
 
