@@ -1559,8 +1559,8 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 		}
 	}
 
-	x = 320 - count * 20;
-	y = 380;
+	x = 182 - count * 15;
+	y = 420;
 
 	for ( i = 1 ; i < 16 ; i++ ) {
 		if ( !( bits & ( 1 << i ) ) ) {
@@ -1573,11 +1573,11 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 
 		// draw weapon icon
 		//CG_DrawPic( x, y, 32, 32, cg_weapons[i].weaponIcon );
-		CG_DrawPic( x, y, 32, 32, weaponInfo->weaponIcon );
+		CG_DrawPic( x, y, 24, 24, weaponInfo->weaponIcon );
 
 		// draw selection marker
 		if ( i == cg.weaponSelect ) {
-			CG_DrawPic( x-4, y-4, 40, 40, cgs.media.selectShader );
+			CG_DrawPic( x-4, y-4, 32, 32, cgs.media.selectShader );
 		}
 
 		// ADDING FOR ZEQ2
@@ -1592,7 +1592,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 		*/
 		// END ADDING
 
-		x += 40;
+		x += 30;
 	}
 
 	weaponInfo = CG_FindUserWeaponGraphics( cg.snap->ps.clientNum, cg.weaponSelect );
@@ -1607,10 +1607,10 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 			Com_sprintf( name, sizeof(name), "%s", weaponInfo->weaponName );
 		}
 
-		w = CG_DrawStrlen( name ) * MEDIUMCHAR_WIDTH; //BIGCHAR_WIDTH;
-		x = ( SCREEN_WIDTH - w ) / 2;
+//		w = CG_DrawStrlen( name ) * MEDIUMCHAR_WIDTH; //BIGCHAR_WIDTH;
+//		x = ( SCREEN_WIDTH - w ) / 2;
 		//CG_DrawBigStringColor(x, y - 22, name, color);
-		CG_DrawMediumStringColor(x, y - 22, name, color);
+		CG_DrawSmallStringColor(6, y - 30, name, color);
 	}
 
 	trap_R_SetColor( NULL );
@@ -1626,8 +1626,8 @@ void CG_DrawWeaponSelect( void ) {
 	// showing weapon select clears pickup item display, but not the blend blob
 	cg.itemPickupTime = 0;
 
-	//CD_DrawWeaponSelectHorCenterBar();
-	CG_DrawWeaponSelectQuarterFan();
+	CG_DrawWeaponSelectHorCenterBar();
+	//CG_DrawWeaponSelectQuarterFan();
 }
 
 

@@ -2374,30 +2374,10 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 }
 
 void CG_PlayerTransformation ( centity_t *cent ) {
-	clientInfo_t	*ci;
-
-/*
-	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 0 ) {
-		return;
+	// Don't show sequence when powering down!
+	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
+		cg.tierTime = cg.time + 6000;
 	}
-*/
-	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 100 ) {
-//		trap_SendConsoleCommand ("cg_thirdPersonAngle 0\ncg_thirdPersonHeight 30\ncg_thirdPersonRange 110\ncg_cameraOrbit 0");
-//		/*
-		cg_thirdPersonAngle.value = 0;
-		trap_Cvar_Set ("cg_thirdPersonHeight", "40");
-		trap_Cvar_Set ("cg_thirdPersonRange", "150");
-		trap_Cvar_Set ("cg_cameraOrbit", "0");
-//		*/
-	} else if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
-//		trap_SendConsoleCommand ("cg_thirdPersonHeight -10\ncg_thirdPersonRange 50\ncg_cameraOrbit 1");
-//		/*
-		trap_Cvar_Set ("cg_thirdPersonHeight", "-10");
-		trap_Cvar_Set ("cg_thirdPersonRange", "50");
-		trap_Cvar_Set ("cg_cameraOrbit", "1");
-//		*/
-	}
-
 }
 
 /*
@@ -2452,13 +2432,17 @@ void CG_Player( centity_t *cent ) {
 		tier = cent->currentState.tier;
 		if ( ci->activeTier != tier ) {
 			ci->activeTier = tier;
-			
+
 			// NOTE: Add 'tier up' cinematic calls here
 			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);
+			CG_PlayerTransformation ( cent );
 		}
 	}
 
-//	CG_PlayerTransformation ( cent );
+	if ( cg.time >= cg.tierTime ) {
+		cg.tierTime = cg.time + 6000;
+	}
+
 	// -->
 
 	// Don't display anything if the player is moving at lightspeed

@@ -274,6 +274,19 @@ static void CG_OffsetThirdPersonView( void ) {
 	vec4_t		quatResult;
 
 	ps = &cg.predictedPlayerState;
+	
+	// Transformation sequence here ... it's no good in CG_Players, where its supposed to be.
+	if ( ps->powerups[PW_TRANSFORM] > 100 ) {
+		cg_thirdPersonAngle.value = 180;
+		cg_thirdPersonHeight.value = -10;
+		cg_thirdPersonRange.value = 50;
+	}
+
+	if ( cg.time >= cg.tierTime ) {
+		cg_thirdPersonAngle.value = 0;
+		cg_thirdPersonHeight.value = 40;
+		cg_thirdPersonRange.value = 150;
+	}
 
 	if (cg_beamControl.value == 0) {
 
