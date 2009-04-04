@@ -2374,19 +2374,18 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 }
 
 void CG_PlayerTransformationLong ( centity_t *cent ) {
-	clientInfo_t	*ci;
 
+	// Don't show sequence when powering down!
 	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
+		cg.tierTime = cg.time + 6000;
 		trap_SendConsoleCommand ("cg_thirdPersonHeight -10\ncg_thirdPersonRange 50\ncg_cameraOrbit 1");
 	}
 }
 
 void CG_PlayerTransformationLongEnd ( centity_t *cent ) {
-	clientInfo_t	*ci;
 
-	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) <= 100 ) {
-		trap_SendConsoleCommand ("cg_thirdPersonAngle 0\ncg_thirdPersonHeight 40\ncg_thirdPersonRange 150\ncg_cameraOrbit 0");
-	}
+	cg.tierTime = cg.time + 6000;
+	trap_SendConsoleCommand ("cg_thirdPersonAngle 0\ncg_thirdPersonHeight 40\ncg_thirdPersonRange 150\ncg_cameraOrbit 0");
 }
 
 /*
@@ -2413,7 +2412,6 @@ void CG_Player( centity_t *cent ) {
 #endif
 	qboolean		onBodyQue;
 	int				tier;
-	int				tierEnd;
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -2438,22 +2436,20 @@ void CG_Player( centity_t *cent ) {
 	// <-- RiO: Check the tier
 	if (onBodyQue) {
 		tier = 0;
-		tierEnd = 1;
 	} else {
 		tier = cent->currentState.tier;
 		if ( ci->activeTier != tier ) {
 			ci->activeTier = tier;
-			tierEnd = 0;
+
 			// NOTE: Add 'tier up' cinematic calls here
 			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);
 			CG_PlayerTransformationLong ( cent );
 		}
-		if ( tierEnd == 0 ) {
-			CG_PlayerTransformationLongEnd ( cent );
-			tierEnd = 1;
-		}
 	}
 
+	if ( cg.time >= cg.tierTime ) {
+		CG_PlayerTransformationLongEnd ( cent );
+	}
 
 	// -->
 
