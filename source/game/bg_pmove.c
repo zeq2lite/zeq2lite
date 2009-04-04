@@ -676,7 +676,7 @@ PM_Transform
 */
 static void PM_Transform( void ) {
 
-	Com_Printf("Transformation time: %i\n", pm->ps->powerups[PW_TRANSFORM]);
+//	Com_Printf("Transformation time: %i\n", pm->ps->powerups[PW_TRANSFORM]);
 
 	// implicitly stops boost and lightspeed as well
 	PM_StopDash();
