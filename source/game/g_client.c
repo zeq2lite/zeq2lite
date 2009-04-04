@@ -771,7 +771,7 @@ void ClientUserinfoChanged( int clientNum ) {
 		Q_strncpyz( skinName, skin, sizeof( skinName ) );
 		Q_strncpyz( modelName, modelStr, sizeof( modelName ) );
 		
-		Com_sprintf( filename, sizeof( filename ), "models/players/%s/%s.phys", modelName, skinName );
+		Com_sprintf( filename, sizeof( filename ), "players//%s/%s.phys", modelName, skinName );
 		G_weapPhys_Parse( filename, clientNum );
 
 		// Set the weapon mask here, incase we changed models on the fly.

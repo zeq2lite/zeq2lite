@@ -3559,12 +3559,12 @@ static int UI_MapCountByGameType(qboolean singlePlayer) {
 qboolean UI_hasSkinForBase(const char *base, const char *team) {
 	char	test[1024];
 	
-	Com_sprintf( test, sizeof( test ), "models/players/%s/%s/lower_default.skin", base, team );
+	Com_sprintf( test, sizeof( test ), "players//%s/%s/lower_default.skin", base, team );
 
 	if (trap_FS_FOpenFile(test, 0, FS_READ)) {
 		return qtrue;
 	}
-	Com_sprintf( test, sizeof( test ), "models/players/characters/%s/%s/lower_default.skin", base, team );
+	Com_sprintf( test, sizeof( test ), "players//characters/%s/%s/lower_default.skin", base, team );
 
 	if (trap_FS_FOpenFile(test, 0, FS_READ)) {
 		return qtrue;
@@ -4573,7 +4573,7 @@ static qboolean Character_Parse(char **p) {
       }
     
       uiInfo.characterList[uiInfo.characterCount].headImage = -1;
-			uiInfo.characterList[uiInfo.characterCount].imageName = String_Alloc(va("models/players/heads/%s/icon_default.tga", uiInfo.characterList[uiInfo.characterCount].name));
+			uiInfo.characterList[uiInfo.characterCount].imageName = String_Alloc(va("players//heads/%s/icon_default.tga", uiInfo.characterList[uiInfo.characterCount].name));
 
 	  if (tempStr && (!Q_stricmp(tempStr, "female"))) {
         uiInfo.characterList[uiInfo.characterCount].base = String_Alloc(va("Janet"));
@@ -4954,7 +4954,7 @@ static void UI_BuildQ3Model_List( void )
 	uiInfo.q3HeadCount = 0;
 
 	// iterate directory of all player models
-	numdirs = trap_FS_GetFileList("models/players", "/", dirlist, 2048 );
+	numdirs = trap_FS_GetFileList("players/", "/", dirlist, 2048 );
 	dirptr  = dirlist;
 	for (i=0; i<numdirs && uiInfo.q3HeadCount < MAX_PLAYERMODELS; i++,dirptr+=dirlen+1)
 	{
@@ -4966,7 +4966,7 @@ static void UI_BuildQ3Model_List( void )
 			continue;
 			
 		// iterate all skin files in directory
-		numfiles = trap_FS_GetFileList( va("models/players/%s",dirptr), "tga", filelist, 2048 );
+		numfiles = trap_FS_GetFileList( va("players//%s",dirptr), "tga", filelist, 2048 );
 		fileptr  = filelist;
 		for (j=0; j<numfiles && uiInfo.q3HeadCount < MAX_PLAYERMODELS;j++,fileptr+=filelen+1)
 		{
@@ -4991,7 +4991,7 @@ static void UI_BuildQ3Model_List( void )
 				}
 				if (!dirty) {
 					Com_sprintf( uiInfo.q3HeadNames[uiInfo.q3HeadCount], sizeof(uiInfo.q3HeadNames[uiInfo.q3HeadCount]), scratch);
-					uiInfo.q3HeadIcons[uiInfo.q3HeadCount++] = trap_R_RegisterShaderNoMip(va("models/players/%s/%s",dirptr,skinname));
+					uiInfo.q3HeadIcons[uiInfo.q3HeadCount++] = trap_R_RegisterShaderNoMip(va("players//%s/%s",dirptr,skinname));
 				}
 			}
 

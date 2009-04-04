@@ -961,7 +961,7 @@ void CG_RegisterClientAura( int clientNum, char *modelName, char *skinName ) {
 		config = &(auraStates[clientNum].configurations[j]);
 
 		// Compose filename to load
-		Com_sprintf( filename, sizeof(filename), "models/players/%s/tier%i/%s.aura", modelName, j+1, skinName );
+		Com_sprintf( filename, sizeof(filename), "players//%s/tier%i/%s.aura", modelName, j+1, skinName );
 
 		// Try to open the file
 		len = trap_FS_FOpenFile( filename, &file, FS_READ );
