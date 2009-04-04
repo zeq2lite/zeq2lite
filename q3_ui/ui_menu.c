@@ -230,8 +230,11 @@ void UI_MainMenu( void ) {
 	int		style = UI_LEFT | UI_DROPSHADOW | UI_SMALLFONT;
 	
 	trap_S_StartBackgroundTrack("music/general01.ogg", "music/general01.ogg");
-//	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/zeq2_menumusic\n" );
 	trap_Cvar_Set( "sv_killserver", "1" );
+
+	// set menu cursor to a nice location
+	uis.cursorx = 320;
+	uis.cursory = 240;
 /*
 	if( !uis.demoversion && !ui_cdkeychecked.integer ) {
 		char	key[17];
