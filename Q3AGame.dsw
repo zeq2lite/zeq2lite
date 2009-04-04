@@ -1,0 +1,65 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "cgame"=.\cgame\cgame.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/source/code/cgame", NPAAAAAA
+    .\cgame
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "game"=.\game\game.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/source/code/game", CYAAAAAA
+    .\game
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ui"=.\ui\ui.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/source/code/ui", AOBAAAAA
+    .\ui
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+
