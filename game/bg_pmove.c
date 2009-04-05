@@ -404,7 +404,7 @@ static void PM_StopBoost( void ) {
 
 static void PM_StopDash( void ) {
 	VectorClear( pm->ps->dashDir );
-	PM_StopBoost();
+//	PM_StopBoost();
 }
 
 /*
@@ -469,6 +469,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 		// set representations for powering up
 		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
+		PM_StopBoost();
 		pm->ps->eFlags |= EF_AURA;
 
 		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
@@ -512,6 +513,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 		// set representations for powering down
 		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
+		PM_StopBoost();
 
 		PM_ContinueLegsAnim( LEGS_PL_DOWN );
 
@@ -565,13 +567,13 @@ static qboolean PM_CheckBoost( void ) {
 		PM_StopBoost();
 		return qfalse;
 	}
-
+/*
 	// Still holding down the charge/boost key from a previous boosting round
 	if ( !(pm->ps->stats[STAT_BITFLAGS] & STATBIT_BOOSTING) && (pm->ps->pm_flags & PMF_BOOST_HELD)) {
 		PM_StopBoost();
 		return qfalse;
 	}
-
+*/
 	if ( !pm->ps->powerups[PW_BOOST] && PM_DeductFromHealth( 1 )) {
 		pm->ps->powerups[PW_BOOST] = 100; // gives you a 100 msec boost
 		pm->ps->pm_flags |= PMF_BOOST_HELD;
@@ -637,15 +639,15 @@ static qboolean PM_CheckJump( void ) {
 		}
 		VectorScale( pm->ps->velocity, JUMP_VELOCITY, pm->ps->velocity );
 
-		pm->ps->velocity[0] *= 1.8f;
-		pm->ps->velocity[1] *= 1.8f;
+//		pm->ps->velocity[0] *= 1.8f;
+//		pm->ps->velocity[1] *= 1.8f;
 		pm->ps->velocity[2] = JUMP_VELOCITY * 1.75f;
 
 		PM_AddEvent( EV_HIGHJUMP );
 
 	} else {
-		pm->ps->velocity[0] *= 2.0f;
-		pm->ps->velocity[1] *= 2.0f;
+//		pm->ps->velocity[0] *= 2.0f;
+//		pm->ps->velocity[1] *= 2.0f;
 		pm->ps->velocity[2] = JUMP_VELOCITY * 1.25f;
 
 		PM_AddEvent( EV_JUMP );
@@ -680,6 +682,7 @@ static void PM_Transform( void ) {
 
 	// implicitly stops boost and lightspeed as well
 	PM_StopDash();
+	PM_StopBoost();
 
 	pm->ps->powerups[PW_LIGHTSPEED] = 0;
 	if ( pm->ps->powerups[PW_LIGHTSPEED] < 0 )
@@ -721,7 +724,25 @@ static void PM_FlyMove( void ) {
 	if ( PM_CheckPowerLevel() ) {
 		return;
 	} else if ( PM_CheckBoost() ) {
-		boostFactor = 3.75f;
+		if ( pm->ps->stats[STAT_TIER] == 8 ) {
+			boostFactor = 7.0f;
+		} else if ( pm->ps->stats[STAT_TIER] == 7) {
+			boostFactor = 6.5f;
+		} else if ( pm->ps->stats[STAT_TIER] == 6) {
+			boostFactor = 6.0f;
+		} else if ( pm->ps->stats[STAT_TIER] == 5) {
+			boostFactor = 5.5f;
+		} else if ( pm->ps->stats[STAT_TIER] == 4) {
+			boostFactor = 5.0f;
+		} else if ( pm->ps->stats[STAT_TIER] == 3) {
+			boostFactor = 4.5f;
+		} else if ( pm->ps->stats[STAT_TIER] == 2) {
+			boostFactor = 4.0f;
+		} else if ( pm->ps->stats[STAT_TIER] == 1) {
+			boostFactor = 3.0f;
+		} else {
+			boostFactor = 3.5f;
+		}
 	} else if ( pm->cmd.buttons & BUTTON_WALKING ) {
 		boostFactor = 1.25f;
 	} else {
@@ -997,7 +1018,25 @@ static void PM_DashMove( void ) {
 
 	if ( PM_CheckBoost()) {
 		pm->ps->pm_flags |= PMF_BOOST_HELD;
-		boostFactor = 3.5f;
+		if ( pm->ps->stats[STAT_TIER] == 8 ) {
+			boostFactor = 7.0f;
+		} else if ( pm->ps->stats[STAT_TIER] == 7) {
+			boostFactor = 6.5f;
+		} else if ( pm->ps->stats[STAT_TIER] == 6) {
+			boostFactor = 6.0f;
+		} else if ( pm->ps->stats[STAT_TIER] == 5) {
+			boostFactor = 5.5f;
+		} else if ( pm->ps->stats[STAT_TIER] == 4) {
+			boostFactor = 5.0f;
+		} else if ( pm->ps->stats[STAT_TIER] == 3) {
+			boostFactor = 4.5f;
+		} else if ( pm->ps->stats[STAT_TIER] == 2) {
+			boostFactor = 4.0f;
+		} else if ( pm->ps->stats[STAT_TIER] == 1) {
+			boostFactor = 3.0f;
+		} else {
+			boostFactor = 3.5f;
+		}
 	} else {
 		boostFactor = 1.5f;
 	}
@@ -1483,7 +1522,7 @@ static void PM_GroundTrace( void ) {
 
 		VectorNormalize2(pml.up, testVec);
 		// Keep flying if not upright enough, not moving down, or are using boost
-		if ( (testVec[2] < 0.9f) || (pm->cmd.upmove >= 0) || pm->ps->powerups[PW_BOOST] ) {
+		if ( (testVec[2] < 0.9f) || (pm->cmd.upmove >= 0) /*|| pm->ps->powerups[PW_BOOST]*/ ) {
 
 			pm->ps->groundEntityNum = ENTITYNUM_NONE;
 			pml.groundPlane = qfalse;
@@ -1491,9 +1530,9 @@ static void PM_GroundTrace( void ) {
 			return;
 		} else {
 			pm->ps->powerups[PW_FLYING] = 0;
-			pm->ps->powerups[PW_BOOST] = 0;
+//			pm->ps->powerups[PW_BOOST] = 0;
 			pm->ps->powerups[PW_LIGHTSPEED] = 0;
-			pm->ps->stats[STAT_BITFLAGS] &= ~STATBIT_BOOSTING;
+//			pm->ps->stats[STAT_BITFLAGS] &= ~STATBIT_BOOSTING;
 		}
 	}
 	// END ADDING
@@ -2674,6 +2713,7 @@ void PmoveSingle (pmove_t *pmove) {
 
 		// disable dashing, boosting and lightspeed
 		PM_StopDash();
+		PM_StopBoost();
 	}
 
 
@@ -2726,6 +2766,7 @@ void PmoveSingle (pmove_t *pmove) {
 		pmove->ps->powerups[PW_FLYING] = 0;
 
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
+		PM_StopBoost();
 	}
 
 	if ( pm->ps->pm_type == PM_SPECTATOR ) {
@@ -2801,6 +2842,7 @@ void PmoveSingle (pmove_t *pmove) {
 		// Disable any dashing
 		if ( VectorLength( pm->ps->dashDir ) > 0.0f ) {
 			PM_StopDash();
+			PM_StopBoost();
 		}
 		pm->ps->powerups[PW_TRANSFORM] = 5000; // 5 seconds
 	}
