@@ -739,7 +739,7 @@ void ClientUserinfoChanged( int clientNum ) {
 		client->pers.maxHealth = 100;
 	}
 	//client->ps.stats[powerLevelTotal] = client->pers.maxHealth;
-	client->ps.stats[powerLevelTotal] = 1000;
+	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
 
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
@@ -1026,7 +1026,7 @@ void ClientBegin( int clientNum ) {
 
 	// ADDING FOR ZEQ2
 	// Set the starting cap
-	client->ps.persistant[powerLevelMaximum] = 1000;
+	client->ps.persistant[powerLevelMaximum] = g_powerlevel.value;//1000;
 	// END ADDING
 
 	// locate ent at a spawn point
@@ -1165,7 +1165,7 @@ void ClientSpawn(gentity_t *ent) {
 	}
 	// clear entity values
 	//client->ps.stats[powerLevelTotal] = client->pers.maxHealth;
-	client->ps.stats[powerLevelTotal] = 1000;
+	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
