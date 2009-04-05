@@ -210,31 +210,25 @@ void Pmove (pmove_t *pmove);
 // player_state->stats[] indexes
 // NOTE: may not have more than 16
 typedef enum {
-	STAT_HEALTH,					// player health
-	STAT_WEAPONS,					// 16 bit bitmask
-	STAT_DEAD_YAW,					// look this direction when dead (FIXME: get rid of?)
-	STAT_MAX_HEALTH,				// health limit
+	currentPowerLevel,		// player health
+	maximumPowerLevel,		// health limit
+	powerLevelCounter,		// Used to calculate the remainder time for PL changing
+	powerLevelTimer,		// Used to calculate the time between updating of the health cap
+	powerLevelTimer2,		// Used to calculate the time between decrementing health over the cap
+	skills,					// 16 bit bitmask
+	deathCameraAngle		// look this direction when dead (FIXME: get rid of?)
 	// ADDING FOR ZEQ2
-	STAT_TIER,						// Current powertier; integer; range [0..8]
-	STAT_PLTIMER,					// Used to calculate the remainder time for PL changing
-	STAT_DEDUCTHP,					// Workaround for deducting HP for attack
-
-	STAT_CHARGELVL_PRI,				// % of primary attack charged
-	STAT_CHARGELVL_SEC,				// % of secondary attack charged
-
-	STAT_BITFLAGS,					// Set of bitflags for player
-
-	STAT_CAPTIMER,					// Used to calculate the time between updating of the health cap
-	STAT_CAPTIMER2,					// Used to calculate the time between decrementing health over the cap
-	STAT_POWERBUTTONS_TIMER			// Used to store how long BUTTON_POWER_UP and BUTTON_POWER_DOWN
-									// have been held down in one go. Throttles power up / down speed.
-
+	currentTier,			// Current powertier; integer; range [0..8]
+	damageDealt,			// Workaround for deducting HP for attack
+	chargePercentPrimary,	// % of primary attack charged
+	chargePercentSecondary,	// % of secondary attack charged
+	bitFlags,				// Set of bitflags for player
+	STAT_POWERBUTTONS_TIMER	// Used to store how long BUTTON_POWER_UP and BUTTON_POWER_DOWN
+							// have been held down in one go. Throttles power up / down speed.
 	// END ADDING
 } statIndex_t;
 
-
 // ADDING FOR ZEQ2
-
 // Player stat bits
 // NOTE: These can not be body states, since their return state is ambiguous.
 //       For instance; Would we return to BODY_WALKING or BODY_FLYING from

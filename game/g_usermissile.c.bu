@@ -541,13 +541,13 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->damage = weaponInfo->damage_damage;
 		bolt->splashRadius = weaponInfo->damage_radius;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		bolt->methodOfDeath = weaponInfo->damage_meansOfDeath;
 		
@@ -679,13 +679,13 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->damage = weaponInfo->damage_damage;
 		bolt->splashRadius = weaponInfo->damage_radius;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		bolt->methodOfDeath = weaponInfo->damage_meansOfDeath;
 		//bolt->continuousExplosion = weaponInfo->contExplsn;
@@ -793,13 +793,13 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->damage = weaponInfo->damage_damage;
 		bolt->splashRadius = weaponInfo->damage_radius;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		bolt->methodOfDeath = weaponInfo->damage_meansOfDeath;
 		

@@ -570,7 +570,7 @@ static void CG_DrawPlayerHealth(rectDef_t *rect, float scale, vec4_t color, qhan
 
 	ps = &cg.snap->ps;
 
-	value = ps->stats[STAT_HEALTH];
+	value = ps->stats[currentPowerLevel];
 
 	if (shader) {
 		trap_R_SetColor( color );
@@ -828,7 +828,7 @@ static void CG_DrawAreaPowerUp(rectDef_t *rect, int align, float special, float 
 
 	ps = &cg.snap->ps;
 
-	if ( ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( ps->stats[currentPowerLevel] <= 0 ) {
 		return;
 	}
 
@@ -919,7 +919,7 @@ float CG_GetValue(int ownerDraw) {
 	  return cg.snap->ps.persistant[PERS_SCORE];
     break;
   case CG_PLAYER_HEALTH:
-		return ps->stats[STAT_HEALTH];
+		return ps->stats[currentPowerLevel];
     break;
   case CG_RED_SCORE:
 		return cgs.scores1;
@@ -1053,13 +1053,13 @@ qboolean CG_OwnerDrawVisible(int flags) {
 	}
 
 	if (flags & CG_SHOW_HEALTHCRITICAL) {
-		if (cg.snap->ps.stats[STAT_HEALTH] < 25) {
+		if (cg.snap->ps.stats[currentPowerLevel] < 25) {
 			return qtrue;
 		}
 	}
 
 	if (flags & CG_SHOW_HEALTHOK) {
-		if (cg.snap->ps.stats[STAT_HEALTH] >= 25) {
+		if (cg.snap->ps.stats[currentPowerLevel] >= 25) {
 			return qtrue;
 		}
 	}

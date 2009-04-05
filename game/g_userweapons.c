@@ -77,33 +77,33 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 	ps->ammo[WPSTAT_STAMCOST] = weaponSettings->costs_stamina;
 	ps->ammo[WPSTAT_CHRGTIME] = weaponSettings->costs_chargeTime;
 	ps->ammo[WPSTAT_COOLTIME] = weaponSettings->costs_cooldownTime;
-	ps->ammo[WPSTAT_BITFLAGS] = weaponSettings->general_bitflags;
+	ps->ammo[WPbitFlags] = weaponSettings->general_bitflags;
 	// Ensures this is set if the flag isn't taken into the general_bitflags field
 	// during initialization, but is only present as costs_transKi2HP
 	if (weaponSettings->costs_transKi2HP) {
-		ps->ammo[WPSTAT_BITFLAGS] |= WPF_KI2HP;
+		ps->ammo[WPbitFlags] |= WPF_KI2HP;
 	}
 
 	// Set the ready state of a charged weapon
-	if ( ( ps->stats[STAT_CHARGELVL_PRI] >= weaponSettings->costs_chargeReady ) && ( ps->ammo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE ) ) {
-		ps->ammo[WPSTAT_BITFLAGS] |= WPF_READY;
+	if ( ( ps->stats[chargePercentPrimary] >= weaponSettings->costs_chargeReady ) && ( ps->ammo[WPbitFlags] & WPF_NEEDSCHARGE ) ) {
+		ps->ammo[WPbitFlags] |= WPF_READY;
 	} else {
-		ps->ammo[WPSTAT_BITFLAGS] &= ~WPF_READY;
+		ps->ammo[WPbitFlags] &= ~WPF_READY;
 	}
 
 	// Torch attacks are implicitly continuous and can't be charged.
 	if ( weaponSettings->general_type == WPT_TORCH ) {
-		ps->ammo[WPSTAT_BITFLAGS] |= WPF_CONTINUOUS;
-		ps->ammo[WPSTAT_BITFLAGS] &= ~WPF_NEEDSCHARGE;
+		ps->ammo[WPbitFlags] |= WPF_CONTINUOUS;
+		ps->ammo[WPbitFlags] &= ~WPF_NEEDSCHARGE;
 	}
 
 	// Guided trajectories and beams should use WEAPON_GUIDING state
 	if ( weaponSettings->homing_type == HOM_GUIDED || weaponSettings->general_type == WPT_BEAM ) {
-		ps->ammo[WPSTAT_BITFLAGS] |= WPF_GUIDED;
+		ps->ammo[WPbitFlags] |= WPF_GUIDED;
 	}
 
 	// Only attempt to link altfire weapon when it exists.
-	if (ps->ammo[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT) {
+	if (ps->ammo[WPbitFlags] & WPF_ALTWEAPONPRESENT) {
 		alt_weaponSettings = G_FindUserAltWeaponData( ps->clientNum, ps->weapon );
 	
 		ps->ammo[WPSTAT_ALT_KICOST] = alt_weaponSettings->costs_ki;
@@ -130,7 +130,7 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 		}
 
 		// Set the ready state of a charged altfire weapon
-		if ( ( ps->stats[STAT_CHARGELVL_SEC] >= alt_weaponSettings->costs_chargeReady ) && ( ps->ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) ) {
+		if ( ( ps->stats[chargePercentSecondary] >= alt_weaponSettings->costs_chargeReady ) && ( ps->ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) ) {
 			ps->ammo[WPSTAT_ALT_BITFLAGS] |= WPF_READY;
 		} else {
 			ps->ammo[WPSTAT_ALT_BITFLAGS] &= ~WPF_READY;

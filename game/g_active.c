@@ -12,19 +12,19 @@ void P_DeductFromHealth( gentity_t *player ) {
 	}
 
 	// doing the damage
-	player->health -= client->ps.stats[STAT_DEDUCTHP];
+	player->health -= client->ps.stats[damageDealt];
 	// clear hp cost
-	client->ps.stats[STAT_DEDUCTHP] = 0;
+	client->ps.stats[damageDealt] = 0;
 }
 
 void P_TierUp( playerState_t *ps ) {
-	if (ps->stats[STAT_TIER] < 7)
-		ps->stats[STAT_TIER]++;
+	if (ps->stats[currentTier] < 7)
+		ps->stats[currentTier]++;
 }
 
 void P_TierDown( playerState_t *ps ) {
-	if (ps->stats[STAT_TIER] > 0)
-		ps->stats[STAT_TIER] = 0;
+	if (ps->stats[currentTier] > 0)
+		ps->stats[currentTier] = 0;
 }
 
 
@@ -271,7 +271,7 @@ void	G_TouchTriggers( gentity_t *ent ) {
 	}
 
 	// dead clients don't activate triggers!
-	if ( ent->client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( ent->client->ps.stats[currentPowerLevel] <= 0 ) {
 		return;
 	}
 
@@ -364,7 +364,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 
 		// ADDING FOR ZEQ2
 		// Update altered health value
-		ent->health = client->ps.stats[STAT_HEALTH];
+		ent->health = client->ps.stats[currentPowerLevel];
 		// END ADDING
 
 		G_TouchTriggers( ent );
@@ -445,7 +445,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		client->timeResidual -= 1000;
 
 		// count down health when over max
-		if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
+		if ( ent->health > client->ps.stats[maximumPowerLevel] ) {
 			ent->health--;
 		}
 	}
@@ -455,11 +455,11 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 		if ( client->ps.weaponstate == WEAPON_CHARGING ) {
 
-			if ( (client->ps.stats[STAT_HEALTH] > weaponInfo->costs_ki) && (client->ps.stats[STAT_CHARGELVL_PRI] < 100)) {
-				client->ps.stats[STAT_HEALTH] -= weaponInfo->costs_ki;
-				client->ps.stats[STAT_CHARGELVL_PRI] += 1; //weaponInfo->chargeRatio;
-				if (client->ps.stats[STAT_CHARGELVL_PRI] > 100) {
-					client->ps.stats[STAT_CHARGELVL_PRI] = 100;
+			if ( (client->ps.stats[currentPowerLevel] > weaponInfo->costs_ki) && (client->ps.stats[chargePercentPrimary] < 100)) {
+				client->ps.stats[currentPowerLevel] -= weaponInfo->costs_ki;
+				client->ps.stats[chargePercentPrimary] += 1; //weaponInfo->chargeRatio;
+				if (client->ps.stats[chargePercentPrimary] > 100) {
+					client->ps.stats[chargePercentPrimary] = 100;
 				}
 			}
 		}
@@ -475,11 +475,11 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		
 		if ( client->ps.weaponstate == WEAPON_ALTCHARGING ) {
 
-			if ((client->ps.stats[STAT_HEALTH] > alt_weaponInfo->costs_ki) && (client->ps.stats[STAT_CHARGELVL_SEC] < 100)) {
-				client->ps.stats[STAT_HEALTH] -= alt_weaponInfo->costs_ki;
-				client->ps.stats[STAT_CHARGELVL_SEC] += 1; //alt_weaponInfo->chargeRatio;
-				if (client->ps.stats[STAT_CHARGELVL_SEC] > 100) {
-					client->ps.stats[STAT_CHARGELVL_SEC] = 100;
+			if ((client->ps.stats[currentPowerLevel] > alt_weaponInfo->costs_ki) && (client->ps.stats[chargePercentSecondary] < 100)) {
+				client->ps.stats[currentPowerLevel] -= alt_weaponInfo->costs_ki;
+				client->ps.stats[chargePercentSecondary] += 1; //alt_weaponInfo->chargeRatio;
+				if (client->ps.stats[chargePercentSecondary] > 100) {
+					client->ps.stats[chargePercentSecondary] = 100;
 				}
 			}
 		}
@@ -645,7 +645,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 
 		case EV_USE_ITEM2:		// medkit
-			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] + 25;
+			ent->health = ent->client->ps.stats[maximumPowerLevel] + 25;
 
 			break;
 
@@ -846,7 +846,7 @@ void ClientThink_real( gentity_t *ent ) {
 
 	if ( client->noclip ) {
 		client->ps.pm_type = PM_NOCLIP;
-	} else if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+	} else if ( client->ps.stats[currentPowerLevel] <= 0 ) {
 		client->ps.pm_type = PM_DEAD;
 	} else {
 		client->ps.pm_type = PM_NORMAL;
@@ -964,7 +964,7 @@ void ClientThink_real( gentity_t *ent ) {
 	Pmove (&pm);
 	
 	// <-- RiO; Update altered health value
-	ent->health = client->ps.stats[STAT_HEALTH];
+	ent->health = client->ps.stats[currentPowerLevel];
 	// -->
 
 	// save results of pmove
@@ -1021,7 +1021,7 @@ void ClientThink_real( gentity_t *ent ) {
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
 
 	// check for respawning
-	if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( client->ps.stats[currentPowerLevel] <= 0 ) {
 		// wait for the attack button to be pressed
 		if ( level.time > client->respawnTime ) {
 			// forcerespawn is to prevent users from waiting out powerups
@@ -1181,7 +1181,7 @@ void ClientEndFrame( gentity_t *ent ) {
 		ent->s.eFlags &= ~EF_CONNECTION;
 	}
 
-	ent->client->ps.stats[STAT_HEALTH] = ent->health;	// FIXME: get rid of ent->health...
+	ent->client->ps.stats[currentPowerLevel] = ent->health;	// FIXME: get rid of ent->health...
 
 	G_SetClientSound (ent);
 

@@ -229,14 +229,14 @@ void Cmd_Give_f (gentity_t *ent)
 
 	if (give_all || Q_stricmp( name, "health") == 0)
 	{
-		ent->health = ent->client->ps.stats[STAT_MAX_HEALTH];
+		ent->health = ent->client->ps.stats[maximumPowerLevel];
 		if (!give_all)
 			return;
 	}
 
 	if (give_all || Q_stricmp(name, "weapons") == 0)
 	{
-		ent->client->ps.stats[STAT_WEAPONS] = (1 << WP_NUM_WEAPONS) - 1 - 
+		ent->client->ps.stats[skills] = (1 << WP_NUM_WEAPONS) - 1 - 
 			( 1 << WP_GRAPPLING_HOOK ) - ( 1 << WP_NONE );
 		if (!give_all)
 			return;
@@ -449,7 +449,7 @@ void Cmd_Kill_f( gentity_t *ent ) {
 		return;
 	}
 	ent->flags &= ~FL_GODMODE;
-	ent->client->ps.stats[STAT_HEALTH] = ent->health = -999;
+	ent->client->ps.stats[currentPowerLevel] = ent->health = -999;
 	player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 }
 
@@ -572,7 +572,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	//
 
 	// if the player was dead leave the body
-	if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( client->ps.stats[currentPowerLevel] <= 0 ) {
 		CopyToBodyQue(ent);
 	}
 
@@ -581,7 +581,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	if ( oldTeam != TEAM_SPECTATOR ) {
 		// Kill him (makes sure he loses flags, etc)
 		ent->flags &= ~FL_GODMODE;
-		ent->client->ps.stats[STAT_HEALTH] = ent->health = 0;
+		ent->client->ps.stats[currentPowerLevel] = ent->health = 0;
 		player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 
 	}

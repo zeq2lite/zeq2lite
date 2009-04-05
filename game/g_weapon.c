@@ -758,7 +758,7 @@ qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker ) {
 		return qfalse;
 	}
 
-	if( target->client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if( target->client->ps.stats[currentPowerLevel] <= 0 ) {
 		return qfalse;
 	}
 
@@ -832,7 +832,7 @@ void FireWeapon( gentity_t *ent, qboolean altfire ) {
 	CalcMuzzlePointOrigin ( ent, ent->client->oldOrigin, forward, right, up, muzzle );
 
 	Fire_UserWeapon ( ent, muzzle, forward, altfire );
-	ent->client->ps.stats[STAT_BITFLAGS] ^= STATBIT_FLIPOFFSET;
+	ent->client->ps.stats[bitFlags] ^= STATBIT_FLIPOFFSET;
 	return;
 }
 

@@ -1483,7 +1483,7 @@ static void CG_DrawWeaponSelectQuarterFan( void ) {
 		angleUnit = 0;
 	}
 	
-	bits = cg.snap->ps.stats[ STAT_WEAPONS ];
+	bits = cg.snap->ps.stats[ skills ];
 	count = 0;
 	for ( i = 1 ; i < 16 ; i++ ) {
 		if ( !( bits & ( 1 << i ) ) ) {
@@ -1551,7 +1551,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 	trap_R_SetColor( color );
 
 	// count the number of weapons owned
-	bits = cg.snap->ps.stats[ STAT_WEAPONS ];
+	bits = cg.snap->ps.stats[ skills ];
 	count = 0;
 	for ( i = 1 ; i < 16 ; i++ ) {
 		if ( bits & ( 1 << i ) ) {
@@ -1619,7 +1619,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 void CG_DrawWeaponSelect( void ) {
 
 	// don't display if dead
-	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[currentPowerLevel] <= 0 ) {
 		return;
 	}
 
@@ -1640,7 +1640,7 @@ static qboolean CG_WeaponSelectable( int i ) {
 //	if ( !cg.snap->ps.ammo[i] ) {
 //		return qfalse;
 //	}
-	if ( ! (cg.snap->ps.stats[ STAT_WEAPONS ] & ( 1 << i ) ) ) {
+	if ( ! (cg.snap->ps.stats[ skills ] & ( 1 << i ) ) ) {
 		return qfalse;
 	}
 
@@ -1742,7 +1742,7 @@ void CG_Weapon_f( void ) {
 
 	cg.weaponSelectTime = cg.time;
 
-	if ( ! ( cg.snap->ps.stats[STAT_WEAPONS] & ( 1 << num ) ) ) {
+	if ( ! ( cg.snap->ps.stats[skills] & ( 1 << num ) ) ) {
 		return;		// don't have the weapon
 	}
 

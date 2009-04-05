@@ -38,11 +38,11 @@ void G_RadarUpdateCS(void) {
 				//get and store the client position and information
 				VectorCopy( ps->origin, g_playerOrigins[i].pos );
 
-				g_playerOrigins[i].pl = ps->stats[STAT_HEALTH];
+				g_playerOrigins[i].pl = ps->stats[currentPowerLevel];
 				g_playerOrigins[i].clientNum = ps->clientNum;
 
 				g_playerOrigins[i].properties = 0;
-				if ( ( ps->stats[STAT_CHARGELVL_PRI] >= 60 ) || ( ps->stats[STAT_CHARGELVL_SEC] >= 60 ) ) {
+				if ( ( ps->stats[chargePercentPrimary] >= 60 ) || ( ps->stats[chargePercentSecondary] >= 60 ) ) {
 					g_playerOrigins[i].properties |= RADAR_WARN;
 				}
 				if ( ( ps->eFlags & EF_AURA ) || ps->powerups[PW_BOOST] ) {

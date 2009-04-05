@@ -183,7 +183,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		return qtrue;
 
 	case IT_ARMOR:
-		// if ( ps->stats[STAT_ARMOR] >= ps->stats[STAT_MAX_HEALTH] * 2 ) {
+		// if ( ps->stats[STAT_ARMOR] >= ps->stats[maximumPowerLevel] * 2 ) {
 			return qfalse;
 		//}
 		//return qtrue;
@@ -193,13 +193,13 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		// don't pick up if already at max
 
 		if ( item->quantity == 5 || item->quantity == 100 ) {
-			if ( ps->stats[STAT_HEALTH] >= ps->stats[STAT_MAX_HEALTH] * 2 ) {
+			if ( ps->stats[currentPowerLevel] >= ps->stats[maximumPowerLevel] * 2 ) {
 				return qfalse;
 			}
 			return qtrue;
 		}
 
-		if ( ps->stats[STAT_HEALTH] >= ps->stats[STAT_MAX_HEALTH] ) {
+		if ( ps->stats[currentPowerLevel] >= ps->stats[maximumPowerLevel] ) {
 			return qfalse;
 		}
 		return qtrue;
@@ -666,7 +666,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 
 	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR ) {
 		s->eType = ET_INVISIBLE;
-	} else if ( ps->stats[STAT_HEALTH] <= GIB_HEALTH ) {
+	} else if ( ps->stats[currentPowerLevel] <= GIB_HEALTH ) {
 		s->eType = ET_INVISIBLE;
 	} else {
 		s->eType = ET_PLAYER;
@@ -711,7 +711,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 	s->clientNum = ps->clientNum;		// ET_PLAYER looks here instead of at number
 										// so corpses can also reference the proper config
 	s->eFlags = ps->eFlags;
-	if ( ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( ps->stats[currentPowerLevel] <= 0 ) {
 		s->eFlags |= EF_DEAD;
 	} else {
 		s->eFlags &= ~EF_DEAD;
@@ -735,8 +735,8 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 	s->weapon = ps->weapon;
 	s->weaponstate = ps->weaponstate;
 
-	s->charge1.chBase = ps->stats[STAT_CHARGELVL_PRI];
-	s->charge2.chBase = ps->stats[STAT_CHARGELVL_SEC];
+	s->charge1.chBase = ps->stats[chargePercentPrimary];
+	s->charge2.chBase = ps->stats[chargePercentSecondary];
 
 	s->groundEntityNum = ps->groundEntityNum;
 
@@ -747,7 +747,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 		}
 	}
 
-	s->tier = ps->stats[STAT_TIER];
+	s->tier = ps->stats[currentTier];
 
 	s->loopSound = ps->loopSound;
 	s->generic1 = ps->generic1;
@@ -766,7 +766,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 
 	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR ) {
 		s->eType = ET_INVISIBLE;
-	} else if ( ps->stats[STAT_HEALTH] <= GIB_HEALTH ) {
+	} else if ( ps->stats[currentPowerLevel] <= GIB_HEALTH ) {
 		s->eType = ET_INVISIBLE;
 	} else {
 		s->eType = ET_PLAYER;
@@ -816,7 +816,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 	s->clientNum = ps->clientNum;		// ET_PLAYER looks here instead of at number
 										// so corpses can also reference the proper config
 	s->eFlags = ps->eFlags;
-	if ( ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( ps->stats[currentPowerLevel] <= 0 ) {
 		s->eFlags |= EF_DEAD;
 	} else {
 		s->eFlags &= ~EF_DEAD;
@@ -840,8 +840,8 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 	s->weapon = ps->weapon;
 	s->weaponstate = ps->weaponstate;
 
-	s->charge1.chBase = ps->stats[STAT_CHARGELVL_PRI];
-	s->charge2.chBase = ps->stats[STAT_CHARGELVL_SEC];
+	s->charge1.chBase = ps->stats[chargePercentPrimary];
+	s->charge2.chBase = ps->stats[chargePercentSecondary];
 
 	s->groundEntityNum = ps->groundEntityNum;
 
@@ -852,7 +852,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 		}
 	}
 
-	s->tier = ps->stats[STAT_TIER];
+	s->tier = ps->stats[currentTier];
 
 	s->loopSound = ps->loopSound;
 	s->generic1 = ps->generic1;

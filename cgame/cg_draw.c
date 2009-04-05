@@ -651,9 +651,9 @@ static void CG_DrawStatusBar( void ) {
 	//	weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
 	//	CG_DrawPic( 32, 388, 68, 68, weaponGraphics->weaponIcon );
 	//}
- 	CG_DrawHorGauge(60,448,200,18,powerColor,dullColor,ps->stats[STAT_HEALTH],ps->stats[STAT_MAX_HEALTH],qfalse);
- 	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[STAT_MAX_HEALTH],qfalse);
-	healthDisplay = ((float)ps->stats[STAT_HEALTH] / (float)ps->stats[STAT_MAX_HEALTH]) *  2000000000;
+ 	CG_DrawHorGauge(60,448,200,18,powerColor,dullColor,ps->stats[currentPowerLevel],ps->stats[maximumPowerLevel],qfalse);
+ 	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[maximumPowerLevel],qfalse);
+	healthDisplay = ((float)ps->stats[currentPowerLevel] / (float)ps->stats[maximumPowerLevel]) *  2000000000;
 	healthString = va("%i",healthDisplay);
 	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
 	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
@@ -684,7 +684,7 @@ static float CG_DrawAttacker( float y ) {
 	const char	*name;
 	int			clientNum;
 
-	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[currentPowerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -1212,7 +1212,7 @@ static float CG_DrawPowerups( float y ) {
 
 	ps = &cg.snap->ps;
 
-	if ( ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( ps->stats[currentPowerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -1319,7 +1319,7 @@ static int CG_DrawPickupItem( int y ) {
 	int		value;
 	float	*fadeColor;
 
-	if ( cg.snap->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( cg.snap->ps.stats[currentPowerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -2114,21 +2114,21 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 	y = y_cross - h; 
 
 	// If the primary weapon can be charged, display atleast the bar outline.
-	if (cg.snap->ps.ammo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE ) {
+	if (cg.snap->ps.ammo[WPbitFlags] & WPF_NEEDSCHARGE ) {
 
 		// If atleast 1% is charged, draw the bar and (possibly) charge glow
-		if (cg.snap->ps.stats[STAT_CHARGELVL_PRI] > 0 ) {
+		if (cg.snap->ps.stats[chargePercentPrimary] > 0 ) {
 
 			// If the primary weapon is charged far enough to be fire-able,
 			// display the ready glow.
-			if ( cg.snap->ps.ammo[WPSTAT_BITFLAGS] & WPF_READY ) {
+			if ( cg.snap->ps.ammo[WPbitFlags] & WPF_READY ) {
 
 				// draw ready glow
 				CG_DrawPic( x_pri, y, w_bar, h_bar, cgs.media.CrHr_ChargeGlowShader );
 			}
 		
 			// draw bar
-			value = cg.snap->ps.stats[STAT_CHARGELVL_PRI];
+			value = cg.snap->ps.stats[chargePercentPrimary];
 			CG_DrawVertGauge( x_pri + 14, y + 15, 4, 34, color_bar, color_empty, value, 100, qfalse );		
 		}
 	
@@ -2144,13 +2144,13 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 
 	// If the secondary weapon exists, display either the charge bar or the presence dot,
 	// depending on whether it is chargeable or not.
-	if ( cg.snap->ps.ammo[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT ) {
+	if ( cg.snap->ps.ammo[WPbitFlags] & WPF_ALTWEAPONPRESENT ) {
 
 		// If the secondary weapon can be charged, display atleast the bar outline
 		if ( ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE )  ) {
 
 			// If atleast 1% is charged, draw the bar and (possibly) charge glow
-			if (cg.snap->ps.stats[STAT_CHARGELVL_SEC] > 0 ) {
+			if (cg.snap->ps.stats[chargePercentSecondary] > 0 ) {
 
 				// If the secondary weapon is charged far enough to be fire-able,
 				// display the ready glow.
@@ -2161,7 +2161,7 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 				}
 		
 				// draw bar
-				value = cg.snap->ps.stats[STAT_CHARGELVL_SEC];
+				value = cg.snap->ps.stats[chargePercentSecondary];
 				CG_DrawVertGauge( x_sec + 14, y + 15, 4, 34, color_bar, color_empty, value, 100, qfalse );		
 			}
 	
@@ -2655,7 +2655,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawCrosshairNames();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if ( !cg.showScores && cg.snap->ps.stats[STAT_HEALTH] > 0 ) {
+		if ( !cg.showScores && cg.snap->ps.stats[currentPowerLevel] > 0 ) {
 
 #ifdef MISSIONPACK
 			if ( cg_drawStatus.integer ) {

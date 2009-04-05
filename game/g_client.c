@@ -70,7 +70,7 @@ qboolean SpotWouldTelefrag( gentity_t *spot ) {
 
 	for (i=0 ; i<num ; i++) {
 		hit = &g_entities[touch[i]];
-		//if ( hit->client && hit->client->ps.stats[STAT_HEALTH] > 0 ) {
+		//if ( hit->client && hit->client->ps.stats[currentPowerLevel] > 0 ) {
 		if ( hit->client) {
 			return qtrue;
 		}
@@ -738,8 +738,8 @@ void ClientUserinfoChanged( int clientNum ) {
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
 		client->pers.maxHealth = 100;
 	}
-	//client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
-	client->ps.stats[STAT_MAX_HEALTH] = 32767;
+	//client->ps.stats[maximumPowerLevel] = client->pers.maxHealth;
+	client->ps.stats[maximumPowerLevel] = 32767;
 
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
@@ -777,13 +777,13 @@ void ClientUserinfoChanged( int clientNum ) {
 		// Set the weapon mask here, incase we changed models on the fly.
 		// FIXME: Can be removed eventually, when we will disallow on the fly
 		//        switching.
-		client->ps.stats[STAT_WEAPONS] = *G_FindUserWeaponMask( clientNum );
+		client->ps.stats[skills] = *G_FindUserWeaponMask( clientNum );
 
 		// force a new weapon up if the current one is unavailable now.
 		// Search downward
 		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
 			// We found a valid weapon
-			if ( client->ps.stats[STAT_WEAPONS] & (1 << i) ) {
+			if ( client->ps.stats[skills] & (1 << i) ) {
 				break;
 			}
 		}
@@ -1164,8 +1164,8 @@ void ClientSpawn(gentity_t *ent) {
 		client->pers.maxHealth = 100;
 	}
 	// clear entity values
-	//client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
-	client->ps.stats[STAT_MAX_HEALTH] = 32767;
+	//client->ps.stats[maximumPowerLevel] = client->pers.maxHealth;
+	client->ps.stats[maximumPowerLevel] = 32767;
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1186,22 +1186,22 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.clientNum = index;
 
 	// ADDING FOR ZEQ2
-	client->ps.stats[STAT_WEAPONS] = *G_FindUserWeaponMask( index );
-	client->ps.stats[STAT_CHARGELVL_PRI] = 0;
-	client->ps.stats[STAT_CHARGELVL_SEC] = 0;
+	client->ps.stats[skills] = *G_FindUserWeaponMask( index );
+	client->ps.stats[chargePercentPrimary] = 0;
+	client->ps.stats[chargePercentSecondary] = 0;
 	// END ADDING
 
-	ent->health = client->ps.stats[STAT_HEALTH] = g_powerlevel.value ; //client->ps.stats[STAT_MAX_HEALTH];
+	ent->health = client->ps.stats[currentPowerLevel] = g_powerlevel.value ; //client->ps.stats[maximumPowerLevel];
 	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
 
 	// ADDING FOR ZEQ2
-	client->ps.stats[STAT_TIER] = 0;
-	client->ps.stats[STAT_DEDUCTHP] = 0;
+	client->ps.stats[currentTier] = 0;
+	client->ps.stats[damageDealt] = 0;
 
-	// make sure all stat_bitflags are OFF, and explicitly turn off the aura
-	client->ps.stats[STAT_BITFLAGS] = 0;
+	// make sure all bitFlags are OFF, and explicitly turn off the aura
+	client->ps.stats[bitFlags] = 0;
 	client->ps.eFlags &= ~EF_AURA;
 	// END ADDING
 
@@ -1225,7 +1225,7 @@ void ClientSpawn(gentity_t *ent) {
 		// force the best weapon up
 		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
 			// We found a valid weapon
-			if ( client->ps.stats[STAT_WEAPONS] & (1 << i) ) {
+			if ( client->ps.stats[skills] & (1 << i) ) {
 				break;
 			}
 		}
@@ -1259,7 +1259,7 @@ void ClientSpawn(gentity_t *ent) {
 		// spawn given items have fired
 		client->ps.weapon = 1;
 		for ( i = WP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
-			if ( client->ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
+			if ( client->ps.stats[skills] & ( 1 << i ) ) {
 				client->ps.weapon = i;
 				// ADDING FOR ZEQ2
 				client->ps.weaponstate = WEAPON_READY;

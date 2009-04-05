@@ -1706,20 +1706,20 @@ void BotUpdateInventory(bot_state_t *bs) {
 	//armor
 	bs->inventory[INVENTORY_ARMOR] = 0; //bs->cur_ps.stats[STAT_ARMOR];
 	//weapons
-	bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GAUNTLET)) != 0;
-	bs->inventory[INVENTORY_SHOTGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_SHOTGUN)) != 0;
-	bs->inventory[INVENTORY_MACHINEGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_MACHINEGUN)) != 0;
-	bs->inventory[INVENTORY_GRENADELAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRENADE_LAUNCHER)) != 0;
-	bs->inventory[INVENTORY_ROCKETLAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_ROCKET_LAUNCHER)) != 0;
-	bs->inventory[INVENTORY_LIGHTNING] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_LIGHTNING)) != 0;
-	bs->inventory[INVENTORY_RAILGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_RAILGUN)) != 0;
-	bs->inventory[INVENTORY_PLASMAGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_PLASMAGUN)) != 0;
-	bs->inventory[INVENTORY_BFG10K] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_BFG)) != 0;
-	bs->inventory[INVENTORY_GRAPPLINGHOOK] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRAPPLING_HOOK)) != 0;
+	bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[skills] & (1 << WP_GAUNTLET)) != 0;
+	bs->inventory[INVENTORY_SHOTGUN] = (bs->cur_ps.stats[skills] & (1 << WP_SHOTGUN)) != 0;
+	bs->inventory[INVENTORY_MACHINEGUN] = (bs->cur_ps.stats[skills] & (1 << WP_MACHINEGUN)) != 0;
+	bs->inventory[INVENTORY_GRENADELAUNCHER] = (bs->cur_ps.stats[skills] & (1 << WP_GRENADE_LAUNCHER)) != 0;
+	bs->inventory[INVENTORY_ROCKETLAUNCHER] = (bs->cur_ps.stats[skills] & (1 << WP_ROCKET_LAUNCHER)) != 0;
+	bs->inventory[INVENTORY_LIGHTNING] = (bs->cur_ps.stats[skills] & (1 << WP_LIGHTNING)) != 0;
+	bs->inventory[INVENTORY_RAILGUN] = (bs->cur_ps.stats[skills] & (1 << WP_RAILGUN)) != 0;
+	bs->inventory[INVENTORY_PLASMAGUN] = (bs->cur_ps.stats[skills] & (1 << WP_PLASMAGUN)) != 0;
+	bs->inventory[INVENTORY_BFG10K] = (bs->cur_ps.stats[skills] & (1 << WP_BFG)) != 0;
+	bs->inventory[INVENTORY_GRAPPLINGHOOK] = (bs->cur_ps.stats[skills] & (1 << WP_GRAPPLING_HOOK)) != 0;
 #ifdef MISSIONPACK
-	bs->inventory[INVENTORY_NAILGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_NAILGUN)) != 0;;
-	bs->inventory[INVENTORY_PROXLAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_PROX_LAUNCHER)) != 0;;
-	bs->inventory[INVENTORY_CHAINGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_CHAINGUN)) != 0;;
+	bs->inventory[INVENTORY_NAILGUN] = (bs->cur_ps.stats[skills] & (1 << WP_NAILGUN)) != 0;;
+	bs->inventory[INVENTORY_PROXLAUNCHER] = (bs->cur_ps.stats[skills] & (1 << WP_PROX_LAUNCHER)) != 0;;
+	bs->inventory[INVENTORY_CHAINGUN] = (bs->cur_ps.stats[skills] & (1 << WP_CHAINGUN)) != 0;;
 #endif
 	//ammo
 	bs->inventory[INVENTORY_SHELLS] = bs->cur_ps.ammo[WP_SHOTGUN];
@@ -1736,7 +1736,7 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_BELT] = bs->cur_ps.ammo[WP_CHAINGUN];
 #endif
 	//powerups
-	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[STAT_HEALTH];
+	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[currentPowerLevel];
 	bs->inventory[INVENTORY_TELEPORTER] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
 	bs->inventory[INVENTORY_MEDKIT] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_MEDKIT;
 #ifdef MISSIONPACK

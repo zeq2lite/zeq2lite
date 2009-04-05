@@ -298,7 +298,7 @@ static void CG_TouchItem( centity_t *cent ) {
 
 	// if its a weapon, give them some predicted ammo so the autoswitch will work
 	if ( item->giType == IT_WEAPON ) {
-		cg.predictedPlayerState.stats[ STAT_WEAPONS ] |= 1 << item->giTag;
+		cg.predictedPlayerState.stats[ skills ] |= 1 << item->giTag;
 		if ( !cg.predictedPlayerState.ammo[ item->giTag ] ) {
 			cg.predictedPlayerState.ammo[ item->giTag ] = 1;
 		}
@@ -323,7 +323,7 @@ static void CG_TouchTriggerPrediction( void ) {
 	qboolean	spectator;
 
 	// dead clients don't activate triggers
-	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[currentPowerLevel] <= 0 ) {
 		return;
 	}
 

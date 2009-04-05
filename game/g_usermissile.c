@@ -617,7 +617,7 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 	if (take) {
 		target->health = target->health - take;
 		if ( tgClient ) {
-			tgClient->ps.stats[STAT_HEALTH] = target->health;
+			tgClient->ps.stats[currentPowerLevel] = target->health;
 		}
 			
 		if ( target->health <= 0 ) {
@@ -889,7 +889,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_angleW = ( 1.0f - rnd ) * weaponInfo->firing_angleW_min + rnd * weaponInfo->firing_angleW_max;
 
-		if ( ( self->client->ps.stats[STAT_BITFLAGS] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetWFlip ) {
+		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetWFlip ) {
 			RotatePointAroundVector( temp, up, firingDir, firing_angleW );
 		} else {
 			RotatePointAroundVector( temp, up, firingDir, -firing_angleW );
@@ -904,7 +904,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_angleH = ( 1.0f - rnd ) * weaponInfo->firing_angleH_min + rnd * weaponInfo->firing_angleH_max;
 
-		if ( ( self->client->ps.stats[STAT_BITFLAGS] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetHFlip ) {
+		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetHFlip ) {
 			RotatePointAroundVector( temp, right, firingDir, firing_angleH );
 		} else {
 			RotatePointAroundVector( temp, right, firingDir, -firing_angleH );
@@ -921,7 +921,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_offsetW = ( 1.0f - rnd ) * weaponInfo->firing_offsetW_min + rnd * weaponInfo->firing_offsetW_max;
 
-		if ( ( self->client->ps.stats[STAT_BITFLAGS] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetWFlip ) {
+		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetWFlip ) {
 			VectorMA( firingStart, -firing_offsetW, right, firingStart );
 		} else {
 			VectorMA( firingStart, firing_offsetW, right, firingStart );
@@ -934,7 +934,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_offsetH = ( 1.0f - rnd ) * weaponInfo->firing_offsetH_min + rnd * weaponInfo->firing_offsetH_max;
 
-		if ( ( self->client->ps.stats[STAT_BITFLAGS] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetHFlip ) {
+		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetHFlip ) {
 			VectorMA( firingStart, -firing_offsetH, up, firingStart );
 		} else {
 			VectorMA( firingStart, firing_offsetH, up, firingStart );
@@ -970,13 +970,13 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
@@ -1158,13 +1158,13 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
@@ -1236,10 +1236,10 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 		if ( !altfire ) {
 			UserHitscan_Fire( self, weaponInfo, self->s.weapon, firingStart, firingDir );
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		} else {
 			UserHitscan_Fire( self, weaponInfo, self->s.weapon + ALTWEAPON_OFFSET, firingStart, firingDir );
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		}
 		break;
 
@@ -1270,13 +1270,13 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now

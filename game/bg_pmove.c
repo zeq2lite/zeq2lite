@@ -48,8 +48,10 @@ qboolean PM_DeductFromHealth( int wanted ) {
 		// See if we can deduct what is left after using up
 		// the buffer from the health directly.
 		if ( (pm->ps->stats[STAT_HEALTH] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
+		if ( (pm->ps->stats[currentPowerLevel] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
 			pml.bufferHealth = 0;
 			pm->ps->stats[STAT_HEALTH] += newBuf; // NOTE: again, since newBuf is negative here.
+			pm->ps->stats[currentPowerLevel] += newBuf; // NOTE: again, since newBuf is negative here.
 			return qtrue;
 		}
 	}
@@ -71,6 +73,7 @@ void PM_BuildBufferHealth( void ) {
 
 	// If current health exceeds the cap, give no buffer at all.
 	if ( pm->ps->stats[STAT_HEALTH] > pm->ps->persistant[PERS_HEALTH_CAP] ) {
+	if ( pm->ps->stats[currentPowerLevel] > pm->ps->persistant[PERS_HEALTH_CAP] ) {
 		pml.bufferHealth = 0;
 		return;
 	}
@@ -78,6 +81,8 @@ void PM_BuildBufferHealth( void ) {
 	// Get the ratios between cap and current, and cap and max.
 	capRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[STAT_HEALTH];
 	maxRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[STAT_MAX_HEALTH];
+	capRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[currentPowerLevel];
+	maxRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[maximumPowerLevel];
 
 	// Calculate the buffer depending on both ratios, together with pml.frametime to
 	// make it framerate independant.
@@ -399,6 +404,7 @@ static void PM_SetMovementDir( void ) {
 
 static void PM_StopBoost( void ) {
 	pm->ps->stats[STAT_BITFLAGS] &= ~STATBIT_BOOSTING;
+	pm->ps->stats[bitFlags] &= ~STATBIT_BOOSTING;
 	pm->ps->powerups[PW_BOOST] = 0;
 }
 
@@ -416,15 +422,15 @@ HACK: Currently just a quick hack routine that instantly raises tier when exceed
 static void PM_CheckTier( void ) {
 	int tier, lowBreak, highBreak;
 
-	tier = pm->ps->stats[STAT_TIER];
+	tier = pm->ps->stats[currentTier];
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
 
-	if ( (pm->ps->stats[STAT_HEALTH] < lowBreak ) && tier > 0 ) {
+	if ( (pm->ps->stats[currentPowerLevel] < lowBreak ) && tier > 0 ) {
 		PM_AddEvent( EV_TIERDOWN );
 	}
 
-	if ( (pm->ps->stats[STAT_HEALTH] > highBreak ) && tier < 7) {
+	if ( (pm->ps->stats[currentPowerLevel] > highBreak ) && tier < 7) {
 		pm->ps->powerups[PW_TRANSFORM] = 5000;
 		PM_AddEvent( EV_TIERUP );
 	}
@@ -438,28 +444,28 @@ PM_CheckPowerLevel
 static qboolean PM_CheckPowerLevel( void ) {
 	int plSpeed, tier, lowBreak, highBreak;
 
-	tier = pm->ps->stats[STAT_TIER];
+	tier = pm->ps->stats[currentTier];
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
 
 	// Adjust the PL cap
-	pm->ps->stats[STAT_CAPTIMER] += pml.msec;
-	while ( pm->ps->stats[STAT_CAPTIMER] >= 2000 ) {
-		pm->ps->stats[STAT_CAPTIMER] -= 2000;
+	pm->ps->stats[powerLevelTimer] += pml.msec;
+	while ( pm->ps->stats[powerLevelTimer] >= 2000 ) {
+		pm->ps->stats[powerLevelTimer] -= 2000;
 
-		if (( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[STAT_MAX_HEALTH] ) &&
-			( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[STAT_HEALTH] )) {
+		if (( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[maximumPowerLevel] ) &&
+			( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[currentPowerLevel] )) {
 			pm->ps->persistant[PERS_HEALTH_CAP]++;
 		}
 	}
 
 	// Adjust health according to the cap
-	pm->ps->stats[STAT_CAPTIMER2] += pml.msec;
-	while ( pm->ps->stats[STAT_CAPTIMER2] >= 400 ) {
-		pm->ps->stats[STAT_CAPTIMER2] -= 400;
+	pm->ps->stats[powerLevelTimer2] += pml.msec;
+	while ( pm->ps->stats[powerLevelTimer2] >= 400 ) {
+		pm->ps->stats[powerLevelTimer2] -= 400;
 
-		if ( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[STAT_HEALTH] ) {
-			pm->ps->stats[STAT_HEALTH]--;
+		if ( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[currentPowerLevel] ) {
+			pm->ps->stats[currentPowerLevel]--;
 		}
 	}
 
@@ -467,12 +473,12 @@ static qboolean PM_CheckPowerLevel( void ) {
 	if ( pm->cmd.buttons & BUTTON_POWER_UP ) {
 
 		// set representations for powering up
-		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_ALTER_PL;
+		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 		PM_StopBoost();
 		pm->ps->eFlags |= EF_AURA;
 
-		if ( (pm->ps->stats[STAT_HEALTH] > highBreak )) {
+		if ( (pm->ps->stats[currentPowerLevel] > highBreak )) {
 			PM_ContinueLegsAnim( LEGS_TRANS_UP );
 		} else {
 			PM_ContinueLegsAnim( LEGS_PL_UP );
@@ -489,18 +495,18 @@ static qboolean PM_CheckPowerLevel( void ) {
 
 		// Increment the power level timer scaled by hold down time
 		plSpeed = (pm->ps->stats[STAT_POWERBUTTONS_TIMER] / 500.0f) + 1;
-		pm->ps->stats[STAT_PLTIMER] += pml.msec * plSpeed;
+		pm->ps->stats[powerLevelCounter] += pml.msec * plSpeed;
 
 		// Use up stored timer value
-		while ( pm->ps->stats[STAT_PLTIMER] >= 50 ) {
-			pm->ps->stats[STAT_PLTIMER] -= 50;
+		while ( pm->ps->stats[powerLevelTimer] >= 50 ) {
+			pm->ps->stats[powerLevelTimer] -= 50;
 
 			// Raise health if possible
-			if ( pm->ps->stats[STAT_HEALTH] + pm->ps->powerlevelChargeScale < pm->ps->stats[STAT_MAX_HEALTH] ) {
-				pm->ps->stats[STAT_HEALTH] += pm->ps->powerlevelChargeScale;
+			if ( pm->ps->stats[currentPowerLevel] + pm->ps->powerlevelChargeScale < pm->ps->stats[maximumPowerLevel] ) {
+				pm->ps->stats[currentPowerLevel] += pm->ps->powerlevelChargeScale;
 			}
 			else{
-				pm->ps->stats[STAT_HEALTH] = pm->ps->stats[STAT_MAX_HEALTH];
+				pm->ps->stats[currentPowerLevel] = pm->ps->stats[maximumPowerLevel];
 			}
 		}
 
@@ -511,7 +517,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 	if ( pm->cmd.buttons & BUTTON_POWER_DOWN ) {
 
 		// set representations for powering down
-		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_ALTER_PL;
+		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 		PM_StopBoost();
 
@@ -528,15 +534,15 @@ static qboolean PM_CheckPowerLevel( void ) {
 
 		// Decrement the power level timer scaled by hold down time
 		plSpeed = (-pm->ps->stats[STAT_POWERBUTTONS_TIMER] / 500.0f) + 1;
-		pm->ps->stats[STAT_PLTIMER] -= pml.msec * plSpeed;
+		pm->ps->stats[powerLevelTimer] -= pml.msec * plSpeed;
 
 		// Use up stored timer value
-		while ( pm->ps->stats[STAT_PLTIMER] <= -50 ) {
-			pm->ps->stats[STAT_PLTIMER] += 50;
+		while ( pm->ps->stats[powerLevelTimer] <= -50 ) {
+			pm->ps->stats[powerLevelTimer] += 50;
 
 			// Lower health if possible
-			if ( pm->ps->stats[STAT_HEALTH] > 50 ) {
-				pm->ps->stats[STAT_HEALTH] -= 30;
+			if ( pm->ps->stats[currentPowerLevel] > 50 ) {
+				pm->ps->stats[currentPowerLevel] -= 30;
 			}
 		}
 
@@ -544,7 +550,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 	}
 
 	// Reset the hold down timer
-	pm->ps->stats[STAT_BITFLAGS] &= ~STATBIT_ALTER_PL;
+	pm->ps->stats[bitFlags] &= ~STATBIT_ALTER_PL;
 	pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
 	return qfalse;
 }
@@ -569,7 +575,7 @@ static qboolean PM_CheckBoost( void ) {
 	}
 /*
 	// Still holding down the charge/boost key from a previous boosting round
-	if ( !(pm->ps->stats[STAT_BITFLAGS] & STATBIT_BOOSTING) && (pm->ps->pm_flags & PMF_BOOST_HELD)) {
+	if ( !(pm->ps->stats[bitFlags] & STATBIT_BOOSTING) && (pm->ps->pm_flags & PMF_BOOST_HELD)) {
 		PM_StopBoost();
 		return qfalse;
 	}
@@ -577,7 +583,7 @@ static qboolean PM_CheckBoost( void ) {
 	if ( !pm->ps->powerups[PW_BOOST] && PM_DeductFromHealth( 1 )) {
 		pm->ps->powerups[PW_BOOST] = 100; // gives you a 100 msec boost
 		pm->ps->pm_flags |= PMF_BOOST_HELD;
-		pm->ps->stats[STAT_BITFLAGS] |= STATBIT_BOOSTING;
+		pm->ps->stats[bitFlags] |= STATBIT_BOOSTING;
 	}
 
 	if ( pm->ps->powerups[PW_BOOST] ) {
@@ -1342,7 +1348,7 @@ static void PM_CrashLand( void ) {
 			PM_AddEvent( EV_FALL_FAR );
 		} else if ( delta > 40 ) {
 			// this is a pain grunt, so don't play it if dead
-			if ( pm->ps->stats[STAT_HEALTH] > 0 ) {
+			if ( pm->ps->stats[currentPowerLevel] > 0 ) {
 				PM_AddEvent( EV_FALL_MEDIUM );
 			}
 		} else if ( delta > 7 ) {
@@ -1532,7 +1538,7 @@ static void PM_GroundTrace( void ) {
 			pm->ps->powerups[PW_FLYING] = 0;
 //			pm->ps->powerups[PW_BOOST] = 0;
 			pm->ps->powerups[PW_LIGHTSPEED] = 0;
-//			pm->ps->stats[STAT_BITFLAGS] &= ~STATBIT_BOOSTING;
+//			pm->ps->stats[bitFlags] &= ~STATBIT_BOOSTING;
 		}
 	}
 	// END ADDING
@@ -1698,7 +1704,7 @@ static void PM_Footsteps( void ) {
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
 	// If changing PL, the legs' animation has already been set.
-	if ( pm->ps->stats[STAT_BITFLAGS] & STATBIT_ALTER_PL ) {
+	if ( pm->ps->stats[bitFlags] & STATBIT_ALTER_PL ) {
 		return;
 	}
 
@@ -1923,7 +1929,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 		return;
 	}
 
-	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+	if ( !( pm->ps->stats[skills] & ( 1 << weapon ) ) ) {
 		return;
 	}
 
@@ -1951,7 +1957,7 @@ static void PM_FinishWeaponChange( void ) {
 		weapon = WP_NONE;
 	}
 
-	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+	if ( !( pm->ps->stats[skills] & ( 1 << weapon ) ) ) {
 		weapon = WP_NONE;
 	}
 
@@ -2076,19 +2082,19 @@ static void PM_Weapon( void ) {
 			PM_AddEvent( EV_DETONATE_WEAPON );
 		}
 		pm->ps->weaponstate = WEAPON_READY;
-		pm->ps->stats[STAT_CHARGELVL_PRI] = 0;
-		pm->ps->stats[STAT_CHARGELVL_SEC] = 0;
+		pm->ps->stats[chargePercentPrimary] = 0;
+		pm->ps->stats[chargePercentSecondary] = 0;
 		return;
 	}
 
 	// check for dead player
-	if ( pm->ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( pm->ps->stats[currentPowerLevel] <= 0 ) {
 		if ( pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING ) {
 			PM_AddEvent( EV_DETONATE_WEAPON );
 		}
 		pm->ps->weaponstate = WEAPON_READY;
-		pm->ps->stats[STAT_CHARGELVL_PRI] = 0;
-		pm->ps->stats[STAT_CHARGELVL_SEC] = 0;
+		pm->ps->stats[chargePercentPrimary] = 0;
+		pm->ps->stats[chargePercentSecondary] = 0;
 		pm->ps->weapon = WP_NONE;
 		return;
 	}
@@ -2100,7 +2106,7 @@ static void PM_Weapon( void ) {
 
 	// Retrieve our weapon's settings
 	weaponInfo = pm->ps->ammo;
-	if ( weaponInfo[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT ) {
+	if ( weaponInfo[WPbitFlags] & WPF_ALTWEAPONPRESENT ) {
 		alt_weaponInfo = &weaponInfo[WPSTAT_ALT_KICOST];
 		// Offset the array to map the WPSTAT set onto the WPSTAT_ALT set.
 	} else {
@@ -2162,7 +2168,7 @@ static void PM_Weapon( void ) {
 			// Starting a primary attack
 			if (pm->cmd.buttons & BUTTON_ATTACK) {
 				// Does the weapon require a charge?
-				if ( weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE ) {
+				if ( weaponInfo[WPbitFlags] & WPF_NEEDSCHARGE ) {
 					pm->ps->weaponstate = WEAPON_CHARGING;
 
 					// Adding the weapon number like this should give us the correct animation
@@ -2176,7 +2182,7 @@ static void PM_Weapon( void ) {
 				}
 
 				// Is the weapon a continuous fire weapon?
-				if ( weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS ) {
+				if ( weaponInfo[WPbitFlags] & WPF_CONTINUOUS ) {
 					PM_AddEvent( EV_FIRE_WEAPON );
 					pm->ps->weaponstate = WEAPON_FIRING;
 				} else {
@@ -2196,7 +2202,7 @@ static void PM_Weapon( void ) {
 			// Starting an alternate attack
 			if (pm->cmd.buttons & BUTTON_ALT_ATTACK) {
 				// Does the weapon require a charge?
-				if ( alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE ) {
+				if ( alt_weaponInfo[WPbitFlags] & WPF_NEEDSCHARGE ) {
 					pm->ps->weaponstate = WEAPON_ALTCHARGING;
 
 					// Adding the weapon number like this should give us the correct animation
@@ -2210,7 +2216,7 @@ static void PM_Weapon( void ) {
 				}
 
 				// Is the weapon a continuous fire weapon?
-				if ( alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS ) {
+				if ( alt_weaponInfo[WPbitFlags] & WPF_CONTINUOUS ) {
 					pm->ps->weaponstate = WEAPON_ALTFIRING;
 					PM_AddEvent( EV_ALTFIRE_WEAPON );
 				} else {
@@ -2249,19 +2255,19 @@ static void PM_Weapon( void ) {
 		{
 			if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
 
-				if ( weaponInfo[WPSTAT_BITFLAGS] & WPF_READY ) {
-					weaponInfo[WPSTAT_BITFLAGS] &= ~WPF_READY;
+				if ( weaponInfo[WPbitFlags] & WPF_READY ) {
+					weaponInfo[WPbitFlags] &= ~WPF_READY;
 
 					// If the weapon is meant to be guided, use WEAPON_GUIDING
 					// and don't set the cooldown time yet.
-					if ( weaponInfo[WPSTAT_BITFLAGS] & WPF_GUIDED ) {
+					if ( weaponInfo[WPbitFlags] & WPF_GUIDED ) {
 						pm->ps->weaponstate = WEAPON_GUIDING;
 					} else {
 						pm->ps->weaponstate = WEAPON_COOLING;
 						pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 					}
 
-					// NOTE: STAT_CHARGELVL_PRI is still used in this event's handler,
+					// NOTE: chargePercentPrimary is still used in this event's handler,
 					// so don't reset it yet.
 					PM_AddEvent( EV_FIRE_WEAPON );
 
@@ -2271,7 +2277,7 @@ static void PM_Weapon( void ) {
 				} else {
 					pm->ps->weaponTime = 0;
 					pm->ps->weaponstate = WEAPON_READY;
-					pm->ps->stats[STAT_CHARGELVL_PRI] = 0;
+					pm->ps->stats[chargePercentPrimary] = 0;
 
 					PM_StartTorsoAnim( TORSO_STAND );
 				}
@@ -2282,19 +2288,19 @@ static void PM_Weapon( void ) {
 		{
 			if ( !( pm->cmd.buttons & BUTTON_ALT_ATTACK ) ) {
 
-				if ( alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_READY ) {
-					alt_weaponInfo[WPSTAT_BITFLAGS] &= ~WPF_READY;
+				if ( alt_weaponInfo[WPbitFlags] & WPF_READY ) {
+					alt_weaponInfo[WPbitFlags] &= ~WPF_READY;
 
 					// If the weapon is meant to be guided, use WEAPON_ALTGUIDING
 					// and don't set the cooldown time yet.
-					if ( alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_GUIDED ) {
+					if ( alt_weaponInfo[WPbitFlags] & WPF_GUIDED ) {
 						pm->ps->weaponstate = WEAPON_ALTGUIDING;
 					} else {
 						pm->ps->weaponstate = WEAPON_COOLING;
 						pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
 					}
 
-					// NOTE: STAT_CHARGELVL_SEC is still used in this event's handler,
+					// NOTE: chargePercentSecondary is still used in this event's handler,
 					// so don't reset it yet.
 					PM_AddEvent( EV_ALTFIRE_WEAPON );
 
@@ -2304,7 +2310,7 @@ static void PM_Weapon( void ) {
 				} else {
 					pm->ps->weaponTime = 0;
 					pm->ps->weaponstate = WEAPON_READY;
-					pm->ps->stats[STAT_CHARGELVL_SEC] = 0;
+					pm->ps->stats[chargePercentSecondary] = 0;
 
 					PM_StartTorsoAnim( TORSO_STAND );
 				}
@@ -2474,7 +2480,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
-	if ( ps->pm_type != PM_SPECTATOR && ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( ps->pm_type != PM_SPECTATOR && ps->stats[currentPowerLevel] <= 0 ) {
 		return;		// no view changes at all
 	}
 
@@ -2593,7 +2599,7 @@ void PM_UpdateViewAngles2( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
-	if ( ps->pm_type != PM_SPECTATOR && ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( ps->pm_type != PM_SPECTATOR && ps->stats[currentPowerLevel] <= 0 ) {
 		return;		// no view changes at all
 	}
 
@@ -2637,7 +2643,7 @@ void PmoveSingle (pmove_t *pmove) {
 	pm->watertype = 0;
 	pm->waterlevel = 0;
 
-	if ( pm->ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( pm->ps->stats[currentPowerLevel] <= 0 ) {
 		pm->tracemask &= ~CONTENTS_BODY;	// corpses can fly through bodies
 	}
 
@@ -2678,7 +2684,7 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	// clear the respawned flag if attack, alt attack and ki recharge are cleared
-	if ( pm->ps->stats[STAT_HEALTH] > 0 &&
+	if ( pm->ps->stats[currentPowerLevel] > 0 &&
 		!( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_ALT_ATTACK | BUTTON_BOOST ))) {
 		pm->ps->pm_flags &= ~PMF_RESPAWNED;
 	}
@@ -2865,7 +2871,7 @@ void PmoveSingle (pmove_t *pmove) {
 
 		if ( !(pm->cmd.buttons & BUTTON_WALKING) &&
 			  (pm->cmd.forwardmove || pm->cmd.rightmove) &&
-			 !(pm->ps->stats[STAT_BITFLAGS] & STATBIT_ALTER_PL) ) {
+			 !(pm->ps->stats[bitFlags] & STATBIT_ALTER_PL) ) {
 			PM_DashMove();
 		} else {
 			PM_WalkMove();

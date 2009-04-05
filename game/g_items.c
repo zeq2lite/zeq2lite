@@ -60,7 +60,7 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 		if ( client->pers.connected == CON_DISCONNECTED ) {
 			continue;
 		}
-		if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+		if ( client->ps.stats[currentPowerLevel] <= 0 ) {
 			continue;
 		}
 
@@ -118,8 +118,8 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 		max = (int)(2 *  handicap);
 
 		other->health = max;
-		other->client->ps.stats[STAT_HEALTH] = max;
-		other->client->ps.stats[STAT_MAX_HEALTH] = max;
+		other->client->ps.stats[currentPowerLevel] = max;
+		other->client->ps.stats[maximumPowerLevel] = max;
 		//other->client->ps.stats[STAT_ARMOR] = max;
 		other->client->pers.maxHealth = max;
 
@@ -237,7 +237,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 	}
 
 	// add the weapon
-	other->client->ps.stats[STAT_WEAPONS] |= ( 1 << ent->item->giTag );
+	other->client->ps.stats[skills] |= ( 1 << ent->item->giTag );
 
 	Add_Ammo( other, ent->item->giTag, quantity );
 
@@ -260,9 +260,9 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	int			quantity;
 
 	if ( ent->item->quantity != 5 && ent->item->quantity != 100 ) {
-		max = other->client->ps.stats[STAT_MAX_HEALTH];
+		max = other->client->ps.stats[maximumPowerLevel];
 	} else {
-		max = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+		max = other->client->ps.stats[maximumPowerLevel] * 2;
 	}
 
 	if ( ent->count ) {
@@ -276,7 +276,7 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	if (other->health > max ) {
 		other->health = max;
 	}
-	other->client->ps.stats[STAT_HEALTH] = other->health;
+	other->client->ps.stats[currentPowerLevel] = other->health;
 
 	if ( ent->item->quantity == 100 ) {		// mega health respawns slow
 		return RESPAWN_MEGAHEALTH;
@@ -289,8 +289,8 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 /*	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
-		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[maximumPowerLevel] * 2 ) {
+		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[maximumPowerLevel] * 2;
 	}
 
 	return RESPAWN_ARMOR;

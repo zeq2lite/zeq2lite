@@ -77,7 +77,7 @@ void TossClientItems( gentity_t *self ) {
 		if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
 			weapon = self->client->pers.cmd.weapon;
 		}
-		if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+		if ( !( self->client->ps.stats[skills] & ( 1 << weapon ) ) ) {
 			weapon = WP_NONE;
 		}
 	}
@@ -210,11 +210,11 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) 
 	} else if ( inflictor && inflictor != self ) {
 		VectorSubtract (inflictor->s.pos.trBase, self->s.pos.trBase, dir);
 	} else {
-		self->client->ps.stats[STAT_DEAD_YAW] = self->s.angles[YAW];
+		self->client->ps.stats[deathCameraAngle] = self->s.angles[YAW];
 		return;
 	}
 
-	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
+	self->client->ps.stats[deathCameraAngle] = vectoyaw ( dir );
 
 	angles[YAW] = vectoyaw ( dir );
 	angles[PITCH] = 0; 
@@ -862,7 +862,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
-		max = attacker->client->ps.stats[STAT_MAX_HEALTH];
+		max = attacker->client->ps.stats[maximumPowerLevel];
 		damage = damage * max / 100;
 	}
 
@@ -1033,7 +1033,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if (take) {
 		targ->health = targ->health - take;
 		if ( targ->client ) {
-			targ->client->ps.stats[STAT_HEALTH] = targ->health;
+			targ->client->ps.stats[currentPowerLevel] = targ->health;
 		}
 			
 		if ( targ->health <= 0 ) {
