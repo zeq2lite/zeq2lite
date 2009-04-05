@@ -713,9 +713,9 @@ static void PM_FlyMove( void ) {
 		} else if ( pm->ps->stats[currentTier] == 2) {
 			boostFactor = 4.0f;
 		} else if ( pm->ps->stats[currentTier] == 1) {
-			boostFactor = 3.0f;
-		} else {
 			boostFactor = 3.5f;
+		} else {
+			boostFactor = 3.0f;
 		}
 	} else if ( pm->cmd.buttons & BUTTON_WALKING ) {
 		boostFactor = 1.25f;
@@ -1007,9 +1007,9 @@ static void PM_DashMove( void ) {
 		} else if ( pm->ps->stats[currentTier] == 2) {
 			boostFactor = 4.0f;
 		} else if ( pm->ps->stats[currentTier] == 1) {
-			boostFactor = 3.0f;
-		} else {
 			boostFactor = 3.5f;
+		} else {
+			boostFactor = 3.0f;
 		}
 	} else {
 		boostFactor = 1.5f;
