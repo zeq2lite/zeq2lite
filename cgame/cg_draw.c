@@ -651,9 +651,9 @@ static void CG_DrawStatusBar( void ) {
 	//	weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
 	//	CG_DrawPic( 32, 388, 68, 68, weaponGraphics->weaponIcon );
 	//}
- 	CG_DrawHorGauge(60,448,200,18,powerColor,dullColor,ps->stats[currentPowerLevel],ps->stats[maximumPowerLevel],qfalse);
- 	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[maximumPowerLevel],qfalse);
-	healthDisplay = ((float)ps->stats[currentPowerLevel] / (float)ps->stats[maximumPowerLevel]) *  2000000000;
+ 	CG_DrawHorGauge(60,448,200,18,powerColor,dullColor,ps->stats[powerLevelCurrent],ps->stats[powerLevelMaximum],qfalse);
+ 	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[powerLevelMaximum],qfalse);
+	healthDisplay = ((float)ps->stats[powerLevelCurrent] / (float)ps->stats[powerLevelMaximum]) *  2000000000;
 	healthString = va("%i",healthDisplay);
 	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
 	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
@@ -684,7 +684,7 @@ static float CG_DrawAttacker( float y ) {
 	const char	*name;
 	int			clientNum;
 
-	if ( cg.predictedPlayerState.stats[currentPowerLevel] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[powerLevelCurrent] <= 0 ) {
 		return y;
 	}
 
@@ -1212,7 +1212,7 @@ static float CG_DrawPowerups( float y ) {
 
 	ps = &cg.snap->ps;
 
-	if ( ps->stats[currentPowerLevel] <= 0 ) {
+	if ( ps->stats[powerLevelCurrent] <= 0 ) {
 		return y;
 	}
 
@@ -1319,7 +1319,7 @@ static int CG_DrawPickupItem( int y ) {
 	int		value;
 	float	*fadeColor;
 
-	if ( cg.snap->ps.stats[currentPowerLevel] <= 0 ) {
+	if ( cg.snap->ps.stats[powerLevelCurrent] <= 0 ) {
 		return y;
 	}
 
@@ -2655,7 +2655,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawCrosshairNames();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if ( !cg.showScores && cg.snap->ps.stats[currentPowerLevel] > 0 ) {
+		if ( !cg.showScores && cg.snap->ps.stats[powerLevelCurrent] > 0 ) {
 
 #ifdef MISSIONPACK
 			if ( cg_drawStatus.integer ) {

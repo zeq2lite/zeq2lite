@@ -1736,7 +1736,7 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_BELT] = bs->cur_ps.ammo[WP_CHAINGUN];
 #endif
 	//powerups
-	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[currentPowerLevel];
+	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[powerLevelCurrent];
 	bs->inventory[INVENTORY_TELEPORTER] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
 	bs->inventory[INVENTORY_MEDKIT] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_MEDKIT;
 #ifdef MISSIONPACK

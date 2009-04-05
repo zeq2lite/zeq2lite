@@ -229,7 +229,7 @@ void Cmd_Give_f (gentity_t *ent)
 
 	if (give_all || Q_stricmp( name, "health") == 0)
 	{
-		ent->health = ent->client->ps.stats[maximumPowerLevel];
+		ent->health = ent->client->ps.stats[powerLevelMaximum];
 		if (!give_all)
 			return;
 	}
@@ -449,7 +449,7 @@ void Cmd_Kill_f( gentity_t *ent ) {
 		return;
 	}
 	ent->flags &= ~FL_GODMODE;
-	ent->client->ps.stats[currentPowerLevel] = ent->health = -999;
+	ent->client->ps.stats[powerLevelCurrent] = ent->health = -999;
 	player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 }
 
@@ -572,7 +572,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	//
 
 	// if the player was dead leave the body
-	if ( client->ps.stats[currentPowerLevel] <= 0 ) {
+	if ( client->ps.stats[powerLevelCurrent] <= 0 ) {
 		CopyToBodyQue(ent);
 	}
 
@@ -581,7 +581,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	if ( oldTeam != TEAM_SPECTATOR ) {
 		// Kill him (makes sure he loses flags, etc)
 		ent->flags &= ~FL_GODMODE;
-		ent->client->ps.stats[currentPowerLevel] = ent->health = 0;
+		ent->client->ps.stats[powerLevelCurrent] = ent->health = 0;
 		player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 
 	}

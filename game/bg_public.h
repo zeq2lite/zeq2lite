@@ -210,19 +210,19 @@ void Pmove (pmove_t *pmove);
 // player_state->stats[] indexes
 // NOTE: may not have more than 16
 typedef enum {
-	currentPowerLevel,		// player health
+	powerLevelCurrent,		// player health
+	powerLevelMaximum,		// health limit
+	powerLevelCounter,		// Used to calculate the remainder time for PL changing
+	powerLevelTimer,		// Used to calculate the time between updating of the health cap
+	powerLevelTimer2,		// Used to calculate the time between decrementing health over the cap
 	skills,					// 16 bit bitmask
 	deathCameraAngle,		// look this direction when dead (FIXME: get rid of?)
-	maximumPowerLevel,		// health limit
 	// ADDING FOR ZEQ2
 	currentTier,			// Current powertier; integer; range [0..8]
-	powerLevelCounter,		// Used to calculate the remainder time for PL changing
 	damageDealt,			// Workaround for deducting HP for attack
 	chargePercentPrimary,	// % of primary attack charged
 	chargePercentSecondary,	// % of secondary attack charged
 	bitFlags,				// Set of bitflags for player
-	powerLevelTimer,		// Used to calculate the time between updating of the health cap
-	powerLevelTimer2,		// Used to calculate the time between decrementing health over the cap
 	STAT_POWERBUTTONS_TIMER	// Used to store how long BUTTON_POWER_UP and BUTTON_POWER_DOWN
 							// have been held down in one go. Throttles power up / down speed.
 	// END ADDING

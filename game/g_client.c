@@ -70,7 +70,7 @@ qboolean SpotWouldTelefrag( gentity_t *spot ) {
 
 	for (i=0 ; i<num ; i++) {
 		hit = &g_entities[touch[i]];
-		//if ( hit->client && hit->client->ps.stats[currentPowerLevel] > 0 ) {
+		//if ( hit->client && hit->client->ps.stats[powerLevelCurrent] > 0 ) {
 		if ( hit->client) {
 			return qtrue;
 		}
@@ -738,8 +738,8 @@ void ClientUserinfoChanged( int clientNum ) {
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
 		client->pers.maxHealth = 100;
 	}
-	//client->ps.stats[maximumPowerLevel] = client->pers.maxHealth;
-	client->ps.stats[maximumPowerLevel] = 32767;
+	//client->ps.stats[powerLevelMaximum] = client->pers.maxHealth;
+	client->ps.stats[powerLevelMaximum] = 32767;
 
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
@@ -1164,8 +1164,8 @@ void ClientSpawn(gentity_t *ent) {
 		client->pers.maxHealth = 100;
 	}
 	// clear entity values
-	//client->ps.stats[maximumPowerLevel] = client->pers.maxHealth;
-	client->ps.stats[maximumPowerLevel] = 32767;
+	//client->ps.stats[powerLevelMaximum] = client->pers.maxHealth;
+	client->ps.stats[powerLevelMaximum] = 32767;
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1191,7 +1191,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.stats[chargePercentSecondary] = 0;
 	// END ADDING
 
-	ent->health = client->ps.stats[currentPowerLevel] = g_powerlevel.value ; //client->ps.stats[maximumPowerLevel];
+	ent->health = client->ps.stats[powerLevelCurrent] = g_powerlevel.value ; //client->ps.stats[powerLevelMaximum];
 	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;

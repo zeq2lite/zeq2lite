@@ -1619,7 +1619,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 void CG_DrawWeaponSelect( void ) {
 
 	// don't display if dead
-	if ( cg.predictedPlayerState.stats[currentPowerLevel] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[powerLevelCurrent] <= 0 ) {
 		return;
 	}
 

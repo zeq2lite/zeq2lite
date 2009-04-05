@@ -47,9 +47,9 @@ qboolean PM_DeductFromHealth( int wanted ) {
 	} else {
 		// See if we can deduct what is left after using up
 		// the buffer from the health directly.
-		if ( (pm->ps->stats[currentPowerLevel] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
+		if ( (pm->ps->stats[powerLevelCurrent] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
 			pml.bufferHealth = 0;
-			pm->ps->stats[currentPowerLevel] += newBuf; // NOTE: again, since newBuf is negative here.
+			pm->ps->stats[powerLevelCurrent] += newBuf; // NOTE: again, since newBuf is negative here.
 			return qtrue;
 		}
 	}
@@ -70,14 +70,14 @@ void PM_BuildBufferHealth( void ) {
 	float capRatio, maxRatio;
 
 	// If current health exceeds the cap, give no buffer at all.
-	if ( pm->ps->stats[currentPowerLevel] > pm->ps->persistant[PERS_HEALTH_CAP] ) {
+	if ( pm->ps->stats[powerLevelCurrent] > pm->ps->persistant[PERS_HEALTH_CAP] ) {
 		pml.bufferHealth = 0;
 		return;
 	}
 
 	// Get the ratios between cap and current, and cap and max.
-	capRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[currentPowerLevel];
-	maxRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[maximumPowerLevel];
+	capRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[powerLevelCurrent];
+	maxRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[powerLevelMaximum];
 
 	// Calculate the buffer depending on both ratios, together with pml.frametime to
 	// make it framerate independant.
@@ -420,11 +420,11 @@ static void PM_CheckTier( void ) {
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
 
-	if ( (pm->ps->stats[currentPowerLevel] < lowBreak ) && tier > 0 ) {
+	if ( (pm->ps->stats[powerLevelCurrent] < lowBreak ) && tier > 0 ) {
 		PM_AddEvent( EV_TIERDOWN );
 	}
 
-	if ( (pm->ps->stats[currentPowerLevel] > highBreak ) && tier < 7) {
+	if ( (pm->ps->stats[powerLevelCurrent] > highBreak ) && tier < 7) {
 		pm->ps->powerups[PW_TRANSFORM] = 5000;
 		PM_AddEvent( EV_TIERUP );
 	}
@@ -447,8 +447,8 @@ static qboolean PM_CheckPowerLevel( void ) {
 	while ( pm->ps->stats[powerLevelTimer] >= 2000 ) {
 		pm->ps->stats[powerLevelTimer] -= 2000;
 
-		if (( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[maximumPowerLevel] ) &&
-			( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[currentPowerLevel] )) {
+		if (( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[powerLevelMaximum] ) &&
+			( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[powerLevelCurrent] )) {
 			pm->ps->persistant[PERS_HEALTH_CAP]++;
 		}
 	}
@@ -458,8 +458,8 @@ static qboolean PM_CheckPowerLevel( void ) {
 	while ( pm->ps->stats[powerLevelTimer2] >= 400 ) {
 		pm->ps->stats[powerLevelTimer2] -= 400;
 
-		if ( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[currentPowerLevel] ) {
-			pm->ps->stats[currentPowerLevel]--;
+		if ( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[powerLevelCurrent] ) {
+			pm->ps->stats[powerLevelCurrent]--;
 		}
 	}
 
@@ -472,7 +472,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 		PM_StopBoost();
 		pm->ps->eFlags |= EF_AURA;
 
-		if ( (pm->ps->stats[currentPowerLevel] > highBreak )) {
+		if ( (pm->ps->stats[powerLevelCurrent] > highBreak )) {
 			PM_ContinueLegsAnim( LEGS_TRANS_UP );
 		} else {
 			PM_ContinueLegsAnim( LEGS_PL_UP );
@@ -496,11 +496,11 @@ static qboolean PM_CheckPowerLevel( void ) {
 			pm->ps->stats[powerLevelTimer] -= 50;
 
 			// Raise health if possible
-			if ( pm->ps->stats[currentPowerLevel] + pm->ps->powerlevelChargeScale < pm->ps->stats[maximumPowerLevel] ) {
-				pm->ps->stats[currentPowerLevel] += pm->ps->powerlevelChargeScale;
+			if ( pm->ps->stats[powerLevelCurrent] + pm->ps->powerlevelChargeScale < pm->ps->stats[powerLevelMaximum] ) {
+				pm->ps->stats[powerLevelCurrent] += pm->ps->powerlevelChargeScale;
 			}
 			else{
-				pm->ps->stats[currentPowerLevel] = pm->ps->stats[maximumPowerLevel];
+				pm->ps->stats[powerLevelCurrent] = pm->ps->stats[powerLevelMaximum];
 			}
 		}
 
@@ -535,8 +535,8 @@ static qboolean PM_CheckPowerLevel( void ) {
 			pm->ps->stats[powerLevelTimer] += 50;
 
 			// Lower health if possible
-			if ( pm->ps->stats[currentPowerLevel] > 50 ) {
-				pm->ps->stats[currentPowerLevel] -= 30;
+			if ( pm->ps->stats[powerLevelCurrent] > 50 ) {
+				pm->ps->stats[powerLevelCurrent] -= 30;
 			}
 		}
 
@@ -1342,7 +1342,7 @@ static void PM_CrashLand( void ) {
 			PM_AddEvent( EV_FALL_FAR );
 		} else if ( delta > 40 ) {
 			// this is a pain grunt, so don't play it if dead
-			if ( pm->ps->stats[currentPowerLevel] > 0 ) {
+			if ( pm->ps->stats[powerLevelCurrent] > 0 ) {
 				PM_AddEvent( EV_FALL_MEDIUM );
 			}
 		} else if ( delta > 7 ) {
@@ -2082,7 +2082,7 @@ static void PM_Weapon( void ) {
 	}
 
 	// check for dead player
-	if ( pm->ps->stats[currentPowerLevel] <= 0 ) {
+	if ( pm->ps->stats[powerLevelCurrent] <= 0 ) {
 		if ( pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING ) {
 			PM_AddEvent( EV_DETONATE_WEAPON );
 		}
@@ -2474,7 +2474,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
-	if ( ps->pm_type != PM_SPECTATOR && ps->stats[currentPowerLevel] <= 0 ) {
+	if ( ps->pm_type != PM_SPECTATOR && ps->stats[powerLevelCurrent] <= 0 ) {
 		return;		// no view changes at all
 	}
 
@@ -2593,7 +2593,7 @@ void PM_UpdateViewAngles2( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
-	if ( ps->pm_type != PM_SPECTATOR && ps->stats[currentPowerLevel] <= 0 ) {
+	if ( ps->pm_type != PM_SPECTATOR && ps->stats[powerLevelCurrent] <= 0 ) {
 		return;		// no view changes at all
 	}
 
@@ -2637,7 +2637,7 @@ void PmoveSingle (pmove_t *pmove) {
 	pm->watertype = 0;
 	pm->waterlevel = 0;
 
-	if ( pm->ps->stats[currentPowerLevel] <= 0 ) {
+	if ( pm->ps->stats[powerLevelCurrent] <= 0 ) {
 		pm->tracemask &= ~CONTENTS_BODY;	// corpses can fly through bodies
 	}
 
@@ -2678,7 +2678,7 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	// clear the respawned flag if attack, alt attack and ki recharge are cleared
-	if ( pm->ps->stats[currentPowerLevel] > 0 &&
+	if ( pm->ps->stats[powerLevelCurrent] > 0 &&
 		!( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_ALT_ATTACK | BUTTON_BOOST ))) {
 		pm->ps->pm_flags &= ~PMF_RESPAWNED;
 	}

@@ -418,9 +418,9 @@ CG_ColorForHealth
 */
 void CG_ColorForHealth( vec4_t hcolor ) {
 
-//	CG_GetColorForHealth( cg.snap->ps.stats[currentPowerLevel], 
+//	CG_GetColorForHealth( cg.snap->ps.stats[powerLevelCurrent], 
 //		cg.snap->ps.stats[STAT_ARMOR], hcolor );
-	CG_GetColorForHealth( cg.snap->ps.stats[currentPowerLevel], 
+	CG_GetColorForHealth( cg.snap->ps.stats[powerLevelCurrent], 
 		0, hcolor );
 }
 

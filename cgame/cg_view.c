@@ -313,7 +313,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	VectorCopy( cg.refdefViewAngles, focusAngles );
 /*
 	// if dead, look at killer
-	if ( cg.predictedPlayerState.stats[currentPowerLevel] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[powerLevelCurrent] <= 0 ) {
 		focusAngles[YAW] = cg.predictedPlayerState.stats[deathCameraAngle];
 		cg.refdefViewAngles[YAW] = cg.predictedPlayerState.stats[deathCameraAngle];
 	}
@@ -504,7 +504,7 @@ static void CG_OffsetFirstPersonView( void ) {
 	angles = cg.refdefViewAngles;
 /*
 	// if dead, fix the angle and don't add any kick
-	if ( cg.snap->ps.stats[currentPowerLevel] <= 0 ) {
+	if ( cg.snap->ps.stats[powerLevelCurrent] <= 0 ) {
 		angles[ROLL] = 40;
 		angles[PITCH] = -15;
 		angles[YAW] = cg.snap->ps.stats[deathCameraAngle];
@@ -1124,12 +1124,12 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer ||
-							 (cg.snap->ps.stats[currentPowerLevel] <= 0) ||
+							 (cg.snap->ps.stats[powerLevelCurrent] <= 0) ||
 							 (cg.snap->ps.weaponstate == WEAPON_GUIDING) ||
 							 (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING);
 /*
 	// decide on third person view
-	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.stats[currentPowerLevel] <= 0);
+	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.stats[powerLevelCurrent] <= 0);
 */
 
 	// END ADDING
@@ -1213,7 +1213,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	}
 
 	
-	//CG_Printf( "PL     : %i / %i\n", cg.snap->ps.stats[currentPowerLevel], cg.snap->ps.stats[maximumPowerLevel] );
+	//CG_Printf( "PL     : %i / %i\n", cg.snap->ps.stats[powerLevelCurrent], cg.snap->ps.stats[powerLevelMaximum] );
 	//CG_Printf( "PL cap : %i\n", cg.snap->ps.persistant[PERS_HEALTH_CAP] );
 	//CG_Printf( "Tier   : %i\n", cg.snap->ps.stats[currentTier] );
 }

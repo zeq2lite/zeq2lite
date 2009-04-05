@@ -617,7 +617,7 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 	if (take) {
 		target->health = target->health - take;
 		if ( tgClient ) {
-			tgClient->ps.stats[currentPowerLevel] = target->health;
+			tgClient->ps.stats[powerLevelCurrent] = target->health;
 		}
 			
 		if ( target->health <= 0 ) {

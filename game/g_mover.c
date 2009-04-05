@@ -1009,7 +1009,7 @@ Don't allow decent if a living player is on it
 ===============
 */
 void Touch_Plat( gentity_t *ent, gentity_t *other, trace_t *trace ) {
-	if ( !other->client || other->client->ps.stats[currentPowerLevel] <= 0 ) {
+	if ( !other->client || other->client->ps.stats[powerLevelCurrent] <= 0 ) {
 		return;
 	}
 

@@ -862,7 +862,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
-		max = attacker->client->ps.stats[maximumPowerLevel];
+		max = attacker->client->ps.stats[powerLevelMaximum];
 		damage = damage * max / 100;
 	}
 
@@ -1033,7 +1033,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if (take) {
 		targ->health = targ->health - take;
 		if ( targ->client ) {
-			targ->client->ps.stats[currentPowerLevel] = targ->health;
+			targ->client->ps.stats[powerLevelCurrent] = targ->health;
 		}
 			
 		if ( targ->health <= 0 ) {
