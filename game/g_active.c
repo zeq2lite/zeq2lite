@@ -445,7 +445,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		client->timeResidual -= 1000;
 
 		// count down health when over max
-		if ( ent->health > client->ps.stats[powerLevelMaximum] ) {
+		if ( ent->health > client->ps.stats[powerLevelTotal] ) {
 			ent->health--;
 		}
 	}
@@ -645,7 +645,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 
 		case EV_USE_ITEM2:		// medkit
-			ent->health = ent->client->ps.stats[powerLevelMaximum] + 25;
+			ent->health = ent->client->ps.stats[powerLevelTotal] + 25;
 
 			break;
 

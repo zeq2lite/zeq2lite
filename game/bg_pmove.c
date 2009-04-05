@@ -47,9 +47,9 @@ qboolean PM_DeductFromHealth( int wanted ) {
 	} else {
 		// See if we can deduct what is left after using up
 		// the buffer from the health directly.
-		if ( (pm->ps->stats[powerLevelCurrent] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
+		if ( (pm->ps->stats[powerLevelTotal] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
 			pml.bufferHealth = 0;
-			pm->ps->stats[powerLevelCurrent] += newBuf; // NOTE: again, since newBuf is negative here.
+			pm->ps->stats[powerLevelTotal] += newBuf; // NOTE: again, since newBuf is negative here.
 			return qtrue;
 		}
 	}
@@ -70,18 +70,18 @@ void PM_BuildBufferHealth( void ) {
 	float capRatio, maxRatio;
 
 	// If current health exceeds the cap, give no buffer at all.
-	if ( pm->ps->stats[powerLevelCurrent] > pm->ps->persistant[PERS_HEALTH_CAP] ) {
+	if ( pm->ps->stats[powerLevelTotal] > pm->ps->persistant[powerLevelMaximum] ) {
 		pml.bufferHealth = 0;
 		return;
 	}
 
 	// Get the ratios between cap and current, and cap and max.
-	capRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[powerLevelCurrent];
-	maxRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[powerLevelMaximum];
+	//capRatio = (float)pm->ps->persistant[powerLevelMaximum] / (float)pm->ps->stats[powerLevelCurrent];
+	//maxRatio = (float)pm->ps->persistant[powerLevelMaximum] / (float)pm->ps->stats[powerLevelTotal];
 
 	// Calculate the buffer depending on both ratios, together with pml.frametime to
 	// make it framerate independant.
-	pml.bufferHealth = (int)ceil(MAX_BUFFERHEALTH_PER_MSEC * capRatio * maxRatio * pml.msec);
+	//pml.bufferHealth = (int)ceil(MAX_BUFFERHEALTH_PER_MSEC * pml.msec);
 }
 
 
@@ -419,12 +419,10 @@ static void PM_CheckTier( void ) {
 	tier = pm->ps->stats[currentTier];
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
-
-	if ( (pm->ps->stats[powerLevelCurrent] < lowBreak ) && tier > 0 ) {
+	if ( (pm->ps->stats[powerLevelTotal] < lowBreak ) && tier > 0 ) {
 		PM_AddEvent( EV_TIERDOWN );
 	}
-
-	if ( (pm->ps->stats[powerLevelCurrent] > highBreak ) && tier < 7) {
+	if ( (pm->ps->stats[powerLevelTotal] > highBreak ) && tier < 7) {
 		pm->ps->powerups[PW_TRANSFORM] = 5000;
 		PM_AddEvent( EV_TIERUP );
 	}
@@ -437,47 +435,29 @@ PM_CheckPowerLevel
 */
 static qboolean PM_CheckPowerLevel( void ) {
 	int plSpeed, tier, lowBreak, highBreak;
-
 	tier = pm->ps->stats[currentTier];
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
-
-	// Adjust the PL cap
-	pm->ps->stats[powerLevelTimer] += pml.msec;
-	while ( pm->ps->stats[powerLevelTimer] >= 2000 ) {
-		pm->ps->stats[powerLevelTimer] -= 2000;
-
-		if (( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[powerLevelMaximum] ) &&
-			( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[powerLevelCurrent] )) {
-			pm->ps->persistant[PERS_HEALTH_CAP]++;
-		}
-	}
-
-	// Adjust health according to the cap
-	pm->ps->stats[powerLevelTimer2] += pml.msec;
-	while ( pm->ps->stats[powerLevelTimer2] >= 400 ) {
-		pm->ps->stats[powerLevelTimer2] -= 400;
-
-		if ( pm->ps->persistant[PERS_HEALTH_CAP] < pm->ps->stats[powerLevelCurrent] ) {
-			pm->ps->stats[powerLevelCurrent]--;
-		}
-	}
-
 	// If the player wants to power up
-	if ( pm->cmd.buttons & BUTTON_POWER_UP ) {
-
+	pm->ps->stats[powerLevelTimer2] += pml.msec;
+	while(pm->ps->stats[powerLevelTimer2] >= 50){
+		pm->ps->stats[powerLevelTimer2] -= 50;
+		if(pm->ps->stats[powerLevelCurrent] > pm->ps->stats[powerLevelTotal]){
+			pm->ps->stats[powerLevelCurrent] -= 6 * (pm->ps->stats[currentTier] + 1);
+		}
+	}
+	if(pm->cmd.buttons & BUTTON_POWER_UP){
 		// set representations for powering up
 		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 		PM_StopBoost();
 		pm->ps->eFlags |= EF_AURA;
-
-		if ( (pm->ps->stats[powerLevelCurrent] > highBreak )) {
+		if((pm->ps->stats[powerLevelCurrent] > highBreak)){
 			PM_ContinueLegsAnim( LEGS_TRANS_UP );
-		} else {
+		}
+		else{
 			PM_ContinueLegsAnim( LEGS_PL_UP );
 		}
-
 		// Increment the hold down timer
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] < 0 ) pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] < 16000 ) {
@@ -486,37 +466,32 @@ static qboolean PM_CheckPowerLevel( void ) {
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] > 16000 ) {
 			pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 16000;
 		}
-
 		// Increment the power level timer scaled by hold down time
 		plSpeed = (pm->ps->stats[STAT_POWERBUTTONS_TIMER] / 500.0f) + 1;
 		pm->ps->stats[powerLevelCounter] += pml.msec * plSpeed;
 
-		// Use up stored timer value
-		while ( pm->ps->stats[powerLevelTimer] >= 50 ) {
-			pm->ps->stats[powerLevelTimer] -= 50;
-
-			// Raise health if possible
-			if ( pm->ps->stats[powerLevelCurrent] + pm->ps->powerlevelChargeScale < pm->ps->stats[powerLevelMaximum] ) {
-				pm->ps->stats[powerLevelCurrent] += pm->ps->powerlevelChargeScale;
+		pm->ps->stats[powerLevelTimer] += pml.msec;
+		while(pm->ps->stats[powerLevelTimer] >= 12){
+			pm->ps->stats[powerLevelTimer] -= 10;
+			if(pm->ps->stats[powerLevelCurrent] < pm->ps->stats[powerLevelTotal]){
+				pm->ps->stats[powerLevelCurrent] += pm->ps->powerlevelChargeScale / 3;
 			}
 			else{
-				pm->ps->stats[powerLevelCurrent] = pm->ps->stats[powerLevelMaximum];
+				pm->ps->stats[powerLevelTotal] += pm->ps->powerlevelChargeScale / 8;
+				if(pm->ps->stats[powerLevelTotal] >= pm->ps->persistant[powerLevelMaximum]){
+					pm->ps->persistant[powerLevelMaximum] = pm->ps->stats[powerLevelTotal];
+				}
 			}
 		}
-
 		return qtrue;
 	}
-
 	// If the player wants to power down
 	if ( pm->cmd.buttons & BUTTON_POWER_DOWN ) {
-
 		// set representations for powering down
 		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 		PM_StopBoost();
-
 		PM_ContinueLegsAnim( LEGS_PL_DOWN );
-
 		// Decrement the hold down timer
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] > 0 ) pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] > -16000 ) {
@@ -533,10 +508,9 @@ static qboolean PM_CheckPowerLevel( void ) {
 		// Use up stored timer value
 		while ( pm->ps->stats[powerLevelTimer] <= -50 ) {
 			pm->ps->stats[powerLevelTimer] += 50;
-
 			// Lower health if possible
 			if ( pm->ps->stats[powerLevelCurrent] > 50 ) {
-				pm->ps->stats[powerLevelCurrent] -= 30;
+				pm->ps->stats[powerLevelCurrent] -= 12 * (pm->ps->stats[currentTier] + 1);
 			}
 		}
 

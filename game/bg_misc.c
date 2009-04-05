@@ -183,7 +183,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		return qtrue;
 
 	case IT_ARMOR:
-		// if ( ps->stats[STAT_ARMOR] >= ps->stats[powerLevelMaximum] * 2 ) {
+		// if ( ps->stats[STAT_ARMOR] >= ps->stats[powerLevelTotal] * 2 ) {
 			return qfalse;
 		//}
 		//return qtrue;
@@ -193,13 +193,13 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		// don't pick up if already at max
 
 		if ( item->quantity == 5 || item->quantity == 100 ) {
-			if ( ps->stats[powerLevelCurrent] >= ps->stats[powerLevelMaximum] * 2 ) {
+			if ( ps->stats[powerLevelCurrent] >= ps->stats[powerLevelTotal] * 2 ) {
 				return qfalse;
 			}
 			return qtrue;
 		}
 
-		if ( ps->stats[powerLevelCurrent] >= ps->stats[powerLevelMaximum] ) {
+		if ( ps->stats[powerLevelCurrent] >= ps->stats[powerLevelTotal] ) {
 			return qfalse;
 		}
 		return qtrue;

@@ -119,7 +119,7 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 
 		other->health = max;
 		other->client->ps.stats[powerLevelCurrent] = max;
-		other->client->ps.stats[powerLevelMaximum] = max;
+		other->client->ps.stats[powerLevelTotal] = max;
 		//other->client->ps.stats[STAT_ARMOR] = max;
 		other->client->pers.maxHealth = max;
 
@@ -260,9 +260,9 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	int			quantity;
 
 	if ( ent->item->quantity != 5 && ent->item->quantity != 100 ) {
-		max = other->client->ps.stats[powerLevelMaximum];
+		max = other->client->ps.stats[powerLevelTotal];
 	} else {
-		max = other->client->ps.stats[powerLevelMaximum] * 2;
+		max = other->client->ps.stats[powerLevelTotal] * 2;
 	}
 
 	if ( ent->count ) {
@@ -289,8 +289,8 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 /*	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[powerLevelMaximum] * 2 ) {
-		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[powerLevelMaximum] * 2;
+	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[powerLevelTotal] * 2 ) {
+		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[powerLevelTotal] * 2;
 	}
 
 	return RESPAWN_ARMOR;

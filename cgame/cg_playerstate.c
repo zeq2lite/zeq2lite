@@ -18,7 +18,7 @@ void CG_CheckAmmo( void ) {
 	int		total;
 	int		previous;
 
-	total = cg.snap->ps.stats[powerLevelCurrent];
+	total = cg.snap->ps.stats[powerLevelTotal];
 	if ( total >= 500 ) {
 		cg.lowAmmoWarning = 0;
 		return;
@@ -58,7 +58,7 @@ void CG_DamageFeedback( int yawByte, int pitchByte, int damage ) {
 	cg.attackerTime = cg.time;
 
 	// the lower on health you are, the greater the view kick will be
-	health = cg.snap->ps.stats[powerLevelCurrent];
+	health = cg.snap->ps.stats[powerLevelTotal];
 	if ( health < 40 ) {
 		scale = 1;
 	} else {
@@ -281,15 +281,11 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	}
 
 	// health changes of more than -1 should make pain sounds
-	if ( ps->stats[powerLevelCurrent] < ops->stats[powerLevelCurrent] - 1 ) {
-		// ADDING FOR ZEQ2
-
+	if ( ps->stats[powerLevelTotal] < ops->stats[powerLevelTotal] - 1 ) {
 		// but only if actual damage is there; not if deducting health for an attack!
 		if (ps->damageCount) {
-
-		// END ADDING
-			if ( ps->stats[powerLevelCurrent] > 0 ) {
-				CG_PainEvent( &cg.predictedPlayerEntity, ps->stats[powerLevelCurrent] );
+			if ( ps->stats[powerLevelTotal] > 0 ) {
+				CG_PainEvent( &cg.predictedPlayerEntity, ps->stats[powerLevelTotal] );
 			}
 		}
 	}

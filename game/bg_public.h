@@ -211,7 +211,7 @@ void Pmove (pmove_t *pmove);
 // NOTE: may not have more than 16
 typedef enum {
 	powerLevelCurrent,		// player health
-	powerLevelMaximum,		// health limit
+	powerLevelTotal,		// health limit
 	powerLevelCounter,		// Used to calculate the remainder time for PL changing
 	powerLevelTimer,		// Used to calculate the time between updating of the health cap
 	powerLevelTimer2,		// Used to calculate the time between decrementing health over the cap
@@ -265,7 +265,7 @@ typedef enum {
 	PERS_ASSIST_COUNT,				// assist awards
 	PERS_GAUNTLET_FRAG_COUNT,		// kills with the gauntlet
 	PERS_CAPTURES,					// captures
-	PERS_HEALTH_CAP					// current health cap should be saved across spawns
+	powerLevelMaximum					// current health cap should be saved across spawns
 } persEnum_t;
 
 

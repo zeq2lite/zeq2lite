@@ -590,11 +590,13 @@ static void CG_DrawStatusBar( void ) {
 	playerState_t	*ps;
 	vec4_t		powerColor;
 	vec4_t		dullColor;
-	vec4_t		maxColor;
+	vec4_t		limitColor;
 	vec3_t		angles;
 	const char	*healthString;
 	int healthOffset;
 	long healthDisplay;
+	float maxPercent;
+	float tier;
 	cg_userWeapon_t	*weaponGraphics;
 #ifdef MISSIONPACK
 	qhandle_t	handle;	
@@ -641,8 +643,10 @@ static void CG_DrawStatusBar( void ) {
 	powerColor[1] = 0.588f;
 	powerColor[2] = 1.0f;
 	powerColor[3] = 1.0f;
-	maxColor[0] = maxColor[1] = maxColor[2] = 0.3f;
-	maxColor[3] = 1.0f;
+	limitColor[0] = 0.5f;
+	limitColor[1] = 0.16f;
+	limitColor[2] = 0.16f;
+	limitColor[3] = 1.0f;
 
 
 	// CG_DrawHorGauge(x,y,width,height,color,emptyColor,value,maxValue,reversed)
@@ -651,11 +655,13 @@ static void CG_DrawStatusBar( void ) {
 	//	weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
 	//	CG_DrawPic( 32, 388, 68, 68, weaponGraphics->weaponIcon );
 	//}
- 	CG_DrawHorGauge(60,448,200,18,powerColor,dullColor,ps->stats[powerLevelCurrent],ps->stats[powerLevelMaximum],qfalse);
- 	//CG_DrawHorGauge(60,465,161,11,maxColor,colors[5],ps->stats[PERS_HEALTH_CAP],ps->stats[powerLevelMaximum],qfalse);
-	healthDisplay = ((float)ps->stats[powerLevelCurrent] / (float)ps->stats[powerLevelMaximum]) *  2000000000;
+	tier = (float)ps->stats[currentTier];
+	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
+	healthDisplay = (float)ps->stats[powerLevelCurrent] * ((tier*tier*tier*tier)+1.0);
 	healthString = va("%i",healthDisplay);
 	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
+ 	CG_DrawHorGauge(60,448,200,18,limitColor,colors[5],1,1,qfalse);
+ 	CG_DrawHorGauge(60,448,(float)200*maxPercent,18,powerColor,dullColor,ps->stats[powerLevelCurrent],ps->stats[powerLevelTotal],qfalse);
 	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
 	CG_DrawSmallStringHalfHeight(239-healthOffset,452,healthString,1.0F);
 	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);

@@ -323,7 +323,7 @@ static void CG_TouchTriggerPrediction( void ) {
 	qboolean	spectator;
 
 	// dead clients don't activate triggers
-	if ( cg.predictedPlayerState.stats[powerLevelCurrent] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[powerLevelTotal] <= 0 ) {
 		return;
 	}
 
