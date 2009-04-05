@@ -325,7 +325,7 @@ typedef struct {
 
 	int				score;			// updated by score servercmds
 	int				location;		// location index for team mode
-	int				health;			// you only get this info about your teammates
+	int				powerLevel;			// you only get this info about your teammates
 	int				armor;
 	int				curWeapon;
 
@@ -1026,7 +1026,7 @@ typedef struct {
 
 	sfxHandle_t	regenSound;
 	sfxHandle_t	protectSound;
-	sfxHandle_t	n_healthSound;
+	sfxHandle_t	n_powerLevelSound;
 	sfxHandle_t	hgrenb1aSound;
 	sfxHandle_t	hgrenb2aSound;
 	sfxHandle_t	wstbimplSound;
@@ -1334,7 +1334,7 @@ float	*CG_FadeColor( int startMsec, int totalMsec );
 float *CG_TeamColor( int team );
 void CG_TileClear( void );
 void CG_ColorForHealth( vec4_t hcolor );
-void CG_GetColorForHealth( int health, int armor, vec4_t hcolor );
+void CG_GetColorForHealth( int powerLevel, int armor, vec4_t hcolor );
 
 void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color );
 void CG_DrawRect( float x, float y, float width, float height, float size, const float *color );
@@ -1416,7 +1416,7 @@ void CG_LoadDeferredPlayers( void );
 void CG_CheckEvents( centity_t *cent );
 const char	*CG_PlaceString( int rank );
 void CG_EntityEvent( centity_t *cent, vec3_t position );
-void CG_PainEvent( centity_t *cent, int health );
+void CG_PainEvent( centity_t *cent, int powerLevel );
 
 
 //

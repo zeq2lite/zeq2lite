@@ -851,7 +851,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.invulnerabilityImpactModel = trap_R_RegisterModel( "models/powerups/shield/impact.md3" );
 	cgs.media.invulnerabilityJuicedModel = trap_R_RegisterModel( "models/powerups/shield/juicer.md3" );
 	cgs.media.medkitUsageModel = trap_R_RegisterModel( "models/powerups/regen.md3" );
-	cgs.media.heartShader = trap_R_RegisterShaderNoMip( "ui/assets/statusbar/selectedhealth.tga" );
+	cgs.media.heartShader = trap_R_RegisterShaderNoMip( "ui/assets/statusbar/selectedpowerLevel.tga" );
 
 #endif
 

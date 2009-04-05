@@ -210,11 +210,11 @@ void Pmove (pmove_t *pmove);
 // player_state->stats[] indexes
 // NOTE: may not have more than 16
 typedef enum {
-	powerLevelCurrent,		// player health
-	powerLevelTotal,		// health limit
+	powerLevel,		// player powerLevel
+	powerLevelTotal,		// powerLevel limit
 	powerLevelCounter,		// Used to calculate the remainder time for PL changing
-	powerLevelTimer,		// Used to calculate the time between updating of the health cap
-	powerLevelTimer2,		// Used to calculate the time between decrementing health over the cap
+	powerLevelTimer,		// Used to calculate the time between updating of the powerLevel cap
+	powerLevelTimer2,		// Used to calculate the time between decrementing powerLevel over the cap
 	skills,					// 16 bit bitmask
 	deathCameraAngle,		// look this direction when dead (FIXME: get rid of?)
 	// ADDING FOR ZEQ2
@@ -256,7 +256,7 @@ typedef enum {
 	PERS_SPAWN_COUNT,				// incremented every respawn
 	PERS_PLAYEREVENTS,				// 16 bits that can be flipped for events
 	PERS_ATTACKER,					// clientnum of last damage inflicter
-	PERS_ATTACKEE_ARMOR,			// health/armor of last person we attacked
+	PERS_ATTACKEE_ARMOR,			// powerLevel/armor of last person we attacked
 	PERS_KILLED,					// count of the number of times you died
 	// player awards tracking
 	PERS_IMPRESSIVE_COUNT,			// two railgun hits in a row
@@ -265,7 +265,7 @@ typedef enum {
 	PERS_ASSIST_COUNT,				// assist awards
 	PERS_GAUNTLET_FRAG_COUNT,		// kills with the gauntlet
 	PERS_CAPTURES,					// captures
-	powerLevelMaximum					// current health cap should be saved across spawns
+	powerLevelMaximum					// current powerLevel cap should be saved across spawns
 } persEnum_t;
 
 

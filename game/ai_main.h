@@ -126,7 +126,7 @@ typedef struct bot_state_s
 	int tfl;										//the travel flags the bot uses
 	int flags;										//several flags
 	int respawn_wait;								//wait until respawned
-	int lasthealth;									//health value previous frame
+	int lastpowerLevel;									//powerLevel value previous frame
 	int lastkilledplayer;							//last killed player
 	int lastkilledby;								//player that last killed this bot
 	int botdeathtype;								//the death type of the bot
@@ -140,7 +140,7 @@ typedef struct bot_state_s
 	int num_kills;									//number of kills of this bot
 	int revenge_enemy;								//the revenge enemy
 	int revenge_kills;								//number of kills the enemy made
-	int lastframe_health;							//health value the last frame
+	int lastframe_powerLevel;							//powerLevel value the last frame
 	int lasthitcount;								//number of hits last frame
 	int chatto;										//chat to all or team
 	float walker;									//walker charactertic

@@ -29,7 +29,7 @@ Key digits:
 			01 = session
 			02 = weapon
 			03 = ammo
-			04 = health
+			04 = powerLevel
 			05 = armor
 			06 = powerup
 			07 = holdable
@@ -287,7 +287,7 @@ Key digits:
 #define QGR_KEY_ROUNDS_CHAINGUN_AMMO 	1111031101
 #endif /* MISSIONPACK */
 
-// health keys
+// powerLevel keys
 #define QGR_KEY_HEALTH					1111040000
 #define QGR_KEY_HEALTH_TOTAL			1111040001
 

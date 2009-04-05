@@ -70,7 +70,7 @@ qboolean SpotWouldTelefrag( gentity_t *spot ) {
 
 	for (i=0 ; i<num ; i++) {
 		hit = &g_entities[touch[i]];
-		//if ( hit->client && hit->client->ps.stats[powerLevelCurrent] > 0 ) {
+		//if ( hit->client && hit->client->ps.stats[powerLevel] > 0 ) {
 		if ( hit->client) {
 			return qtrue;
 		}
@@ -437,7 +437,7 @@ void CopyToBodyQue( gentity_t *ent ) {
 	body->die = body_die;
 
 	// don't take more damage if already gibbed
-	if ( ent->health <= GIB_HEALTH ) {
+	if ( ent->powerLevel <= GIB_HEALTH ) {
 		body->takedamage = qfalse;
 	} else {
 		body->takedamage = qtrue;
@@ -678,7 +678,7 @@ if desired.
 */
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
-	int		teamTask, teamLeader, team, health;
+	int		teamTask, teamLeader, team, powerLevel;
 	char	*s;
 	char	model[MAX_QPATH];
 	char	headModel[MAX_QPATH];
@@ -732,9 +732,9 @@ void ClientUserinfoChanged( int clientNum ) {
 		}
 	}
 
-	// set max health
-	health = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-	client->pers.maxHealth = health;
+	// set max powerLevel
+	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
+	client->pers.maxHealth = powerLevel;
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
 		client->pers.maxHealth = 100;
 	}
@@ -1076,7 +1076,7 @@ void ClientSpawn(gentity_t *ent) {
 	client = ent->client;
 
 	// find a spawn point
-	// do it before setting health back up, so farthest
+	// do it before setting powerLevel back up, so farthest
 	// ranging doesn't count this client
 	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		spawnPoint = SelectSpectatorSpawnPoint ( 
@@ -1158,7 +1158,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->airOutTime = level.time + 12000;
 
 	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
-	// set max health
+	// set max powerLevel
 	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
 		client->pers.maxHealth = 100;
@@ -1191,7 +1191,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.stats[chargePercentSecondary] = 0;
 	// END ADDING
 
-	ent->health = client->ps.stats[powerLevelCurrent] = g_powerlevel.value ; //client->ps.stats[powerLevelTotal];
+	ent->powerLevel = client->ps.stats[powerLevel] = g_powerlevel.value ; //client->ps.stats[powerLevelTotal];
 	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;

@@ -33,8 +33,8 @@ typedef struct {
 	vec3_t		previous_velocity;
 	int			previous_waterlevel;
 
-	// <-- RiO: Buffered health that is used up first for firing/charging weapons
-	//          Only after it runs out, is actual health deducted.
+	// <-- RiO: Buffered powerLevel that is used up first for firing/charging weapons
+	//          Only after it runs out, is actual powerLevel deducted.
 	int			bufferHealth;
 	// -->
 } pml_t;

@@ -1120,7 +1120,7 @@ static void CG_TeamBase( centity_t *cent ) {
 		// if hit
 		if ( cent->currentState.frame == 1) {
 			// show hit model
-			// modelindex2 is the health value of the obelisk
+			// modelindex2 is the powerLevel value of the obelisk
 			c = cent->currentState.modelindex2;
 			model.shaderRGBA[0] = 0xff;
 			model.shaderRGBA[1] = c;
@@ -1186,7 +1186,7 @@ static void CG_TeamBase( centity_t *cent ) {
 		else {
 			cent->miscTime = 0;
 			cent->muzzleFlashTime = 0;
-			// modelindex2 is the health value of the obelisk
+			// modelindex2 is the powerLevel value of the obelisk
 			c = cent->currentState.modelindex2;
 			model.shaderRGBA[0] = 0xff;
 			model.shaderRGBA[1] = c;

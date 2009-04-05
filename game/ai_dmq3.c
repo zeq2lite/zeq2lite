@@ -1736,7 +1736,7 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_BELT] = bs->cur_ps.ammo[WP_CHAINGUN];
 #endif
 	//powerups
-	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[powerLevelCurrent];
+	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[powerLevel];
 	bs->inventory[INVENTORY_TELEPORTER] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
 	bs->inventory[INVENTORY_MEDKIT] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_MEDKIT;
 #ifdef MISSIONPACK
@@ -2191,9 +2191,9 @@ float BotAggression(bot_state_t *bs) {
 	}
 	//if the enemy is located way higher than the bot
 	if (bs->inventory[ENEMY_HEIGHT] > 200) return 0;
-	//if the bot is very low on health
+	//if the bot is very low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 60) return 0;
-	//if the bot is low on health
+	//if the bot is low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 80) {
 		//if the bot has insufficient armor
 		if (bs->inventory[INVENTORY_ARMOR] < 40) return 0;
@@ -2373,9 +2373,9 @@ int BotCanAndWantsToRocketJump(bot_state_t *bs) {
 	if (bs->inventory[INVENTORY_ROCKETS] < 3) return qfalse;
 	//never rocket jump with the Quad
 	if (bs->inventory[INVENTORY_QUAD]) return qfalse;
-	//if low on health
+	//if low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 60) return qfalse;
-	//if not full health
+	//if not full powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 90) {
 		//if the bot has insufficient armor
 		if (bs->inventory[INVENTORY_ARMOR] < 40) return qfalse;
@@ -2400,9 +2400,9 @@ int BotHasPersistantPowerupAndWeapon(bot_state_t *bs) {
 		return qfalse;
 	}
 #endif
-	//if the bot is very low on health
+	//if the bot is very low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 60) return qfalse;
-	//if the bot is low on health
+	//if the bot is low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 80) {
 		//if the bot has insufficient armor
 		if (bs->inventory[INVENTORY_ARMOR] < 40) return qfalse;
@@ -2491,7 +2491,7 @@ int BotWantsToCamp(bot_state_t *bs) {
 		bs->camp_time = FloatTime();
 		return qfalse;
 	}
-	//if the bot isn't healthy anough
+	//if the bot isn't powerLevely anough
 	if (BotAggression(bs) < 50) return qfalse;
 	//the bot should have at least have the rocket launcher, the railgun or the bfg10k with some ammo
 	if ((bs->inventory[INVENTORY_ROCKETLAUNCHER] <= 0 || bs->inventory[INVENTORY_ROCKETS < 10]) &&
@@ -2911,7 +2911,7 @@ BotFindEnemy
 ==================
 */
 int BotFindEnemy(bot_state_t *bs, int curenemy) {
-	int i, healthdecrease;
+	int i, powerLeveldecrease;
 	float f, alertness, easyfragger, vis;
 	float squaredist, cursquaredist;
 	aas_entityinfo_t entinfo, curenemyinfo;
@@ -2919,10 +2919,10 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 
 	alertness = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_ALERTNESS, 0, 1);
 	easyfragger = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_EASY_FRAGGER, 0, 1);
-	//check if the health decreased
-	healthdecrease = bs->lasthealth > bs->inventory[INVENTORY_HEALTH];
-	//remember the current health value
-	bs->lasthealth = bs->inventory[INVENTORY_HEALTH];
+	//check if the powerLevel decreased
+	powerLeveldecrease = bs->lastpowerLevel > bs->inventory[INVENTORY_HEALTH];
+	//remember the current powerLevel value
+	bs->lastpowerLevel = bs->inventory[INVENTORY_HEALTH];
 	//
 	if (curenemy >= 0) {
 		BotEntityInfo(curenemy, &curenemyinfo);
@@ -2996,8 +2996,8 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		if (squaredist > Square(900.0 + alertness * 4000.0)) continue;
 		//if on the same team
 		if (BotSameTeam(bs, i)) continue;
-		//if the bot's health decreased or the enemy is shooting
-		if (curenemy < 0 && (healthdecrease || EntityIsShooting(&entinfo)))
+		//if the bot's powerLevel decreased or the enemy is shooting
+		if (curenemy < 0 && (powerLeveldecrease || EntityIsShooting(&entinfo)))
 			f = 360;
 		else
 			f = 90 + 90 - (90 - (squaredist > Square(810) ? Square(810) : squaredist) / (810 * 9));
@@ -3005,7 +3005,7 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		vis = BotEntityVisible(bs->entitynum, bs->eye, bs->viewangles, f, i);
 		if (vis <= 0) continue;
 		//if the enemy is quite far away, not shooting and the bot is not damaged
-		if (curenemy < 0 && squaredist > Square(100) && !healthdecrease && !EntityIsShooting(&entinfo))
+		if (curenemy < 0 && squaredist > Square(100) && !powerLeveldecrease && !EntityIsShooting(&entinfo))
 		{
 			//check if we can avoid this enemy
 			VectorSubtract(bs->origin, entinfo.origin, dir);
@@ -3798,7 +3798,7 @@ BotFuncButtonGoal
 int BotFuncButtonActivateGoal(bot_state_t *bs, int bspent, bot_activategoal_t *activategoal) {
 	int i, areas[10], numareas, modelindex, entitynum;
 	char model[128];
-	float lip, dist, health, angle;
+	float lip, dist, powerLevel, angle;
 	vec3_t size, start, end, mins, maxs, angles, points[10];
 	vec3_t movedir, origin, goalorigin, bboxmins, bboxmaxs;
 	vec3_t extramins = {1, 1, 1}, extramaxs = {-1, -1, -1};
@@ -3831,9 +3831,9 @@ int BotFuncButtonActivateGoal(bot_state_t *bs, int bspent, bot_activategoal_t *a
 	dist = fabs(movedir[0]) * size[0] + fabs(movedir[1]) * size[1] + fabs(movedir[2]) * size[2];
 	dist *= 0.5;
 	//
-	trap_AAS_FloatForBSPEpairKey(bspent, "health", &health);
+	trap_AAS_FloatForBSPEpairKey(bspent, "powerLevel", &powerLevel);
 	//if the button is shootable
-	if (health) {
+	if (powerLevel) {
 		//calculate the shoot target
 		VectorMA(origin, -dist, movedir, goalorigin);
 		//
@@ -4142,7 +4142,7 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 	int i, ent, cur_entities[10], spawnflags, modelindex, areas[MAX_ACTIVATEAREAS*2], numareas, t;
 	char model[MAX_INFO_STRING], tmpmodel[128];
 	char target[128], classname[128];
-	float health;
+	float powerLevel;
 	char targetname[10][128];
 	aas_entityinfo_t entinfo;
 	aas_areainfo_t areainfo;
@@ -4166,9 +4166,9 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 	}
 	//if it is a door
 	if (!strcmp(classname, "func_door")) {
-		if (trap_AAS_FloatForBSPEpairKey(ent, "health", &health)) {
-			//if the door has health then the door must be shot to open
-			if (health) {
+		if (trap_AAS_FloatForBSPEpairKey(ent, "powerLevel", &powerLevel)) {
+			//if the door has powerLevel then the door must be shot to open
+			if (powerLevel) {
 				BotFuncDoorActivateGoal(bs, ent, activategoal);
 				return ent;
 			}
@@ -5220,7 +5220,7 @@ void BotDeathmatchAI(bot_state_t *bs, float thinktime) {
 		ClientName(bs->client, name, sizeof(name));
 		trap_BotSetChatName(bs->cs, name, bs->client);
 		//
-		bs->lastframe_health = bs->inventory[INVENTORY_HEALTH];
+		bs->lastframe_powerLevel = bs->inventory[INVENTORY_HEALTH];
 		bs->lasthitcount = bs->cur_ps.persistant[PERS_HITS];
 		//
 		bs->setupcount = 0;
@@ -5276,7 +5276,7 @@ void BotDeathmatchAI(bot_state_t *bs, float thinktime) {
 		BotAI_Print(PRT_ERROR, "%s at %1.1f switched more than %d AI nodes\n", name, FloatTime(), MAX_NODESWITCHES);
 	}
 	//
-	bs->lastframe_health = bs->inventory[INVENTORY_HEALTH];
+	bs->lastframe_powerLevel = bs->inventory[INVENTORY_HEALTH];
 	bs->lasthitcount = bs->cur_ps.persistant[PERS_HITS];
 }
 

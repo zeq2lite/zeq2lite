@@ -140,7 +140,7 @@ struct gentity_s {
 	int			fly_sound_debounce_time;	// wind tunnel
 	int			last_move_time;
 
-	int			health;
+	int			powerLevel;
 
 	qboolean	takedamage;
 
@@ -299,7 +299,7 @@ struct gclient_s {
 	// sum up damage over an entire frame, so
 	// shotgun blasts give a single big kick
 	//int			damage_armor;		// damage absorbed by armor
-	int			damage_blood;		// damage taken out of health
+	int			damage_blood;		// damage taken out of powerLevel
 	int			damage_knockback;	// impact damage
 	vec3_t		damage_from;		// origin for vector calculation
 	qboolean	damage_fromWorld;	// if true, don't use the damage_from vector
@@ -334,7 +334,7 @@ struct gclient_s {
 	int			switchTeamTime;		// time the player switched teams
 
 	// timeResidual is used to handle events that happen every second
-	// like health / armor countdowns and regeneration
+	// like powerLevel / armor countdowns and regeneration
 	int			timeResidual;
 	int			timeResidualPriCharge;
 	int			timeResidualSecCharge;

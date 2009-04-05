@@ -60,7 +60,7 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 		if ( client->pers.connected == CON_DISCONNECTED ) {
 			continue;
 		}
-		if ( client->ps.stats[powerLevelCurrent] <= 0 ) {
+		if ( client->ps.stats[powerLevel] <= 0 ) {
 			continue;
 		}
 
@@ -117,8 +117,8 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 		}
 		max = (int)(2 *  handicap);
 
-		other->health = max;
-		other->client->ps.stats[powerLevelCurrent] = max;
+		other->powerLevel = max;
+		other->client->ps.stats[powerLevel] = max;
 		other->client->ps.stats[powerLevelTotal] = max;
 		//other->client->ps.stats[STAT_ARMOR] = max;
 		other->client->pers.maxHealth = max;
@@ -271,14 +271,14 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 		quantity = ent->item->quantity;
 	}
 
-	other->health += quantity;
+	other->powerLevel += quantity;
 
-	if (other->health > max ) {
-		other->health = max;
+	if (other->powerLevel > max ) {
+		other->powerLevel = max;
 	}
-	other->client->ps.stats[powerLevelCurrent] = other->health;
+	other->client->ps.stats[powerLevel] = other->powerLevel;
 
-	if ( ent->item->quantity == 100 ) {		// mega health respawns slow
+	if ( ent->item->quantity == 100 ) {		// mega powerLevel respawns slow
 		return RESPAWN_MEGAHEALTH;
 	}
 
@@ -381,7 +381,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 
 	if (!other->client)
 		return;
-	if (other->health < 1)
+	if (other->powerLevel < 1)
 		return;		// dead people can't pickup
 
 	// the same pickup rules are used for client side and server side

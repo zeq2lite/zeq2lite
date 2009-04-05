@@ -1184,8 +1184,8 @@ AINode_Stand
 */
 int AINode_Stand(bot_state_t *bs) {
 
-	//if the bot's health decreased
-	if (bs->lastframe_health > bs->inventory[INVENTORY_HEALTH]) {
+	//if the bot's powerLevel decreased
+	if (bs->lastframe_powerLevel > bs->inventory[INVENTORY_HEALTH]) {
 		if (BotChat_HitTalking(bs)) {
 			bs->standfindenemy_time = FloatTime() + BotChatTime(bs) + 0.1;
 			bs->stand_time = FloatTime() + BotChatTime(bs) + 0.1;
@@ -2051,11 +2051,11 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 	}
 	//update the attack inventory values
 	BotUpdateBattleInventory(bs, bs->enemy);
-	//if the bot's health decreased
-	if (bs->lastframe_health > bs->inventory[INVENTORY_HEALTH]) {
+	//if the bot's powerLevel decreased
+	if (bs->lastframe_powerLevel > bs->inventory[INVENTORY_HEALTH]) {
 		if (BotChat_HitNoDeath(bs)) {
 			bs->stand_time = FloatTime() + BotChatTime(bs);
-			AIEnter_Stand(bs, "battle fight: chat health decreased");
+			AIEnter_Stand(bs, "battle fight: chat powerLevel decreased");
 			return qfalse;
 		}
 	}

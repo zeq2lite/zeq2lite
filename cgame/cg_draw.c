@@ -592,9 +592,9 @@ static void CG_DrawStatusBar( void ) {
 	vec4_t		dullColor;
 	vec4_t		limitColor;
 	vec3_t		angles;
-	const char	*healthString;
-	int healthOffset;
-	long healthDisplay;
+	const char	*powerLevelString;
+	int powerLevelOffset;
+	long powerLevelDisplay;
 	float maxPercent;
 	float tier;
 	cg_userWeapon_t	*weaponGraphics;
@@ -633,7 +633,7 @@ static void CG_DrawStatusBar( void ) {
 	}
 
 	//
-	// health
+	// powerLevel
 	//
 	dullColor[0] = 0.188f;
 	dullColor[1] = 0.278f;
@@ -657,13 +657,13 @@ static void CG_DrawStatusBar( void ) {
 	//}
 	tier = (float)ps->stats[currentTier];
 	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
-	healthDisplay = (float)ps->stats[powerLevelCurrent] * ((tier*tier*tier*tier)+1.0);
-	healthString = va("%i",healthDisplay);
-	healthOffset = (Q_PrintStrlen(healthString)-2)*8;
+	powerLevelDisplay = (float)ps->stats[powerLevel] * ((tier*tier*tier*tier)+1.0);
+	powerLevelString = va("%i",powerLevelDisplay);
+	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
  	CG_DrawHorGauge(60,448,200,18,limitColor,colors[5],1,1,qfalse);
- 	CG_DrawHorGauge(60,448,(float)200*maxPercent,18,powerColor,dullColor,ps->stats[powerLevelCurrent],ps->stats[powerLevelTotal],qfalse);
+ 	CG_DrawHorGauge(60,448,(float)200*maxPercent,18,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);
 	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
-	CG_DrawSmallStringHalfHeight(239-healthOffset,452,healthString,1.0F);
+	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
 	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
 }
 #endif
@@ -690,7 +690,7 @@ static float CG_DrawAttacker( float y ) {
 	const char	*name;
 	int			clientNum;
 
-	if ( cg.predictedPlayerState.stats[powerLevelCurrent] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[powerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -934,9 +934,9 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 					TEAM_OVERLAY_MAXLOCATION_WIDTH);
 			}
 
-			CG_GetColorForHealth( ci->health, ci->armor, hcolor );
+			CG_GetColorForHealth( ci->powerLevel, ci->armor, hcolor );
 
-			Com_sprintf (st, sizeof(st), "%3i %3i", ci->health,	ci->armor);
+			Com_sprintf (st, sizeof(st), "%3i %3i", ci->powerLevel,	ci->armor);
 
 			xx = x + TINYCHAR_WIDTH * 3 + 
 				TINYCHAR_WIDTH * pwidth + TINYCHAR_WIDTH * lwidth;
@@ -1218,7 +1218,7 @@ static float CG_DrawPowerups( float y ) {
 
 	ps = &cg.snap->ps;
 
-	if ( ps->stats[powerLevelCurrent] <= 0 ) {
+	if ( ps->stats[powerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -1325,7 +1325,7 @@ static int CG_DrawPickupItem( int y ) {
 	int		value;
 	float	*fadeColor;
 
-	if ( cg.snap->ps.stats[powerLevelCurrent] <= 0 ) {
+	if ( cg.snap->ps.stats[powerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -2661,7 +2661,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawCrosshairNames();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if ( !cg.showScores && cg.snap->ps.stats[powerLevelCurrent] > 0 ) {
+		if ( !cg.showScores && cg.snap->ps.stats[powerLevel] > 0 ) {
 
 #ifdef MISSIONPACK
 			if ( cg_drawStatus.integer ) {

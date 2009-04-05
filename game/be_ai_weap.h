@@ -34,7 +34,7 @@ typedef struct projectileinfo_s
 	float radius;
 	int visdamage;
 	int damagetype;
-	int healthinc;
+	int powerLevelinc;
 	float push;
 	float detonation;
 	float bounce;

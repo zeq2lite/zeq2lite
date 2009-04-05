@@ -189,17 +189,17 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		//return qtrue;
 
 	case IT_HEALTH:
-		// small and mega healths will go over the max, otherwise
+		// small and mega powerLevels will go over the max, otherwise
 		// don't pick up if already at max
 
 		if ( item->quantity == 5 || item->quantity == 100 ) {
-			if ( ps->stats[powerLevelCurrent] >= ps->stats[powerLevelTotal] * 2 ) {
+			if ( ps->stats[powerLevel] >= ps->stats[powerLevelTotal] * 2 ) {
 				return qfalse;
 			}
 			return qtrue;
 		}
 
-		if ( ps->stats[powerLevelCurrent] >= ps->stats[powerLevelTotal] ) {
+		if ( ps->stats[powerLevel] >= ps->stats[powerLevelTotal] ) {
 			return qfalse;
 		}
 		return qtrue;
@@ -666,7 +666,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 
 	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR ) {
 		s->eType = ET_INVISIBLE;
-	} else if ( ps->stats[powerLevelCurrent] <= GIB_HEALTH ) {
+	} else if ( ps->stats[powerLevel] <= GIB_HEALTH ) {
 		s->eType = ET_INVISIBLE;
 	} else {
 		s->eType = ET_PLAYER;
@@ -711,7 +711,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 	s->clientNum = ps->clientNum;		// ET_PLAYER looks here instead of at number
 										// so corpses can also reference the proper config
 	s->eFlags = ps->eFlags;
-	if ( ps->stats[powerLevelCurrent] <= 0 ) {
+	if ( ps->stats[powerLevel] <= 0 ) {
 		s->eFlags |= EF_DEAD;
 	} else {
 		s->eFlags &= ~EF_DEAD;
@@ -766,7 +766,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 
 	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR ) {
 		s->eType = ET_INVISIBLE;
-	} else if ( ps->stats[powerLevelCurrent] <= GIB_HEALTH ) {
+	} else if ( ps->stats[powerLevel] <= GIB_HEALTH ) {
 		s->eType = ET_INVISIBLE;
 	} else {
 		s->eType = ET_PLAYER;
@@ -816,7 +816,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 	s->clientNum = ps->clientNum;		// ET_PLAYER looks here instead of at number
 										// so corpses can also reference the proper config
 	s->eFlags = ps->eFlags;
-	if ( ps->stats[powerLevelCurrent] <= 0 ) {
+	if ( ps->stats[powerLevel] <= 0 ) {
 		s->eFlags |= EF_DEAD;
 	} else {
 		s->eFlags &= ~EF_DEAD;

@@ -388,7 +388,7 @@ CG_PainEvent
 Also called by playerstate transition
 ================
 */
-void CG_PainEvent( centity_t *cent, int health ) {
+void CG_PainEvent( centity_t *cent, int powerLevel ) {
 	char	*snd;
 
 	// don't do more than two pain sounds a second
@@ -396,11 +396,11 @@ void CG_PainEvent( centity_t *cent, int health ) {
 		return;
 	}
 
-	if ( health < 25 ) {
+	if ( powerLevel < 25 ) {
 		snd = "*pain25_1.ogg";
-	} else if ( health < 50 ) {
+	} else if ( powerLevel < 50 ) {
 		snd = "*pain50_1.ogg";
-	} else if ( health < 75 ) {
+	} else if ( powerLevel < 75 ) {
 		snd = "*pain75_1.ogg";
 	} else {
 		snd = "*pain100_1.ogg";
@@ -650,7 +650,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			// powerups and team items will have a separate global sound, this one
 			// will be played at prediction time
 			if ( item->giType == IT_POWERUP || item->giType == IT_TEAM) {
-				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.n_healthSound );
+				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.n_powerLevelSound );
 			} else if (item->giType == IT_PERSISTANT_POWERUP) {
 #ifdef MISSIONPACK
 				switch (item->giTag ) {

@@ -458,7 +458,7 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 		attacker = &g_entities[ENTITYNUM_WORLD];
 	}
 
-	// shootable doors / buttons don't actually have any health
+	// shootable doors / buttons don't actually have any powerLevel
 	// FIXME: Eventually disable for ZEQ2, or have to keep for func_breakable?
 	if ( target->s.eType == ET_MOVER ) {
 		if ( target->use && target->moverState == MOVER_POS1 ) {
@@ -553,7 +553,7 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 
 
 	// add to the attacker's hit counter (if the targetet isn't a general entity like a prox mine)
-	if ( attacker->client && target != attacker && target->health > 0
+	if ( attacker->client && target != attacker && target->powerLevel > 0
 			&& target->s.eType != ET_MISSILE
 			&& target->s.eType != ET_GENERAL) {
 		if ( OnSameTeam( target, attacker ) ) {
@@ -561,8 +561,8 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 		} else {
 			attacker->client->ps.persistant[PERS_HITS]++;
 		}
-		//attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->health<<8)|(client->ps.stats[STAT_ARMOR]);
-		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->health<<8)|0;
+		//attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->powerLevel<<8)|(client->ps.stats[STAT_ARMOR]);
+		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->powerLevel<<8)|0;
 	}
 
 	// always give half damage if hurting self
@@ -615,17 +615,17 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 
 	// do the damage
 	if (take) {
-		target->health = target->health - take;
+		target->powerLevel = target->powerLevel - take;
 		if ( tgClient ) {
-			tgClient->ps.stats[powerLevelCurrent] = target->health;
+			tgClient->ps.stats[powerLevel] = target->powerLevel;
 		}
 			
-		if ( target->health <= 0 ) {
+		if ( target->powerLevel <= 0 ) {
 			if ( tgClient )
 				target->flags |= FL_NO_KNOCKBACK;
 
-			if (target->health < -999)
-				target->health = -999;
+			if (target->powerLevel < -999)
+				target->powerLevel = -999;
 
 			target->enemy = attacker;
 			target->die (target, inflictor, attacker, take, methodOfDeath);
@@ -987,7 +987,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->target_ent = NULL;
 
 		bolt->takedamage = qtrue;
-		bolt->health = 1; // <-- We need to enter _something_ here, or the missile will die
+		bolt->powerLevel = 1; // <-- We need to enter _something_ here, or the missile will die
 						  //     instantly.
 
 		{

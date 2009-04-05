@@ -257,11 +257,11 @@ body_die
 ==================
 */
 void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
-	if ( self->health > GIB_HEALTH ) {
+	if ( self->powerLevel > GIB_HEALTH ) {
 		return;
 	}
 	if ( !g_blood.integer ) {
-		self->health = GIB_HEALTH+1;
+		self->powerLevel = GIB_HEALTH+1;
 		return;
 	}
 
@@ -615,7 +615,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	memset( self->client->ps.powerups, 0, sizeof(self->client->ps.powerups) );
 
 	// never gib in a nodrop
-	if ( (self->health <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || meansOfDeath == MOD_SUICIDE) {
+	if ( (self->powerLevel <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || meansOfDeath == MOD_SUICIDE) {
 		// gib death
 		GibEntity( self, killer );
 	} else {
@@ -635,10 +635,10 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			break;
 		}
 
-		// for the no-blood option, we need to prevent the health
+		// for the no-blood option, we need to prevent the powerLevel
 		// from going to gib level
-		if ( self->health <= GIB_HEALTH ) {
-			self->health = GIB_HEALTH+1;
+		if ( self->powerLevel <= GIB_HEALTH ) {
+			self->powerLevel = GIB_HEALTH+1;
 		}
 
 		self->client->ps.legsAnim = 
@@ -664,51 +664,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	trap_LinkEntity (self);
 
 }
-
-
-/*
-================
-CheckArmor
-================
-*/
-int CheckArmor (gentity_t *ent, int damage, int dflags)
-{
-	gclient_t	*client;
-	int			save;
-	int			count;
-
-	if (!damage)
-		return 0;
-
-	client = ent->client;
-
-	if (!client)
-		return 0;
-
-	if (dflags & DAMAGE_NO_ARMOR)
-		return 0;
-
-/*
-	// armor
-	count = client->ps.stats[STAT_ARMOR];
-	save = ceil( damage * ARMOR_PROTECTION );
-	if (save >= count)
-		save = count;
-
-	if (!save)
-		return 0;
-
-	client->ps.stats[STAT_ARMOR] -= save;
-*/
-
-	// FIXME: Powerlevel should determine fortitude
-	count = 0;
-	// Amount saved will be 2/3 of the PL-determined percentage of the damage.
-	save = ceil( damage * ARMOR_PROTECTION * ((double)count / 100) );
-
-	return save;
-}
-
 /*
 ================
 RaySphereIntersections
@@ -820,26 +775,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 #ifdef MISSIONPACK
 	vec3_t		bouncedir, impactpoint;
 #endif
-
-	if (!targ->takedamage) {
+	if (!targ->takedamage){
 		return;
 	}
-
 	// the intermission has allready been qualified for, so don't
 	// allow any extra scoring
 	if ( level.intermissionQueued ) {
 		return;
 	}
-#ifdef MISSIONPACK
-	if ( targ->client && mod != MOD_JUICED) {
-		if ( targ->client->invulnerabilityTime > level.time) {
-			if ( dir && point ) {
-				G_InvulnerabilityEffect( targ, dir, point, impactpoint, bouncedir );
-			}
-			return;
-		}
-	}
-#endif
 	if ( !inflictor ) {
 		inflictor = &g_entities[ENTITYNUM_WORLD];
 	}
@@ -847,18 +790,13 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		attacker = &g_entities[ENTITYNUM_WORLD];
 	}
 
-	// shootable doors / buttons don't actually have any health
+	// shootable doors / buttons don't actually have any powerLevel
 	if ( targ->s.eType == ET_MOVER ) {
 		if ( targ->use && targ->moverState == MOVER_POS1 ) {
 			targ->use( targ, inflictor, attacker );
 		}
 		return;
 	}
-#ifdef MISSIONPACK
-	if( g_gametype.integer == GT_OBELISK && CheckObeliskAttack( targ, attacker ) ) {
-		return;
-	}
-#endif
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
@@ -898,8 +836,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 		mass = 200;
 
-		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
-		VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
+		//VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
+		//VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
 
 		// set the timer so that the other client can't cancel
 		// out the movement immediately
@@ -932,125 +870,68 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 				return;
 			}
 		}
-#ifdef MISSIONPACK
-		if (mod == MOD_PROXIMITY_MINE) {
-			if (inflictor && inflictor->parent && OnSameTeam(targ, inflictor->parent)) {
-				return;
-			}
-			if (targ == attacker) {
-				return;
-			}
-		}
-#endif
-
 		// check for godmode
 		if ( targ->flags & FL_GODMODE ) {
 			return;
 		}
 	}
-
-	// battlesuit protects from all radius damage (but takes knockback)
-	// and protects 50% against all damage
-//	if ( client && client->ps.powerups[PW_BATTLESUIT] ) {
-//		G_AddEvent( targ, EV_POWERUP_BATTLESUIT, 0 );
-//		if ( ( dflags & DAMAGE_RADIUS ) || ( mod == MOD_FALLING ) ) {
-//			return;
-//		}
-//		damage *= 0.5;
-//	}
-
 	// add to the attacker's hit counter (if the target isn't a general entity like a prox mine)
-	if ( attacker->client && targ != attacker && targ->health > 0
-			&& targ->s.eType != ET_MISSILE
-			&& targ->s.eType != ET_GENERAL) {
-		if ( OnSameTeam( targ, attacker ) ) {
+	if(attacker->client && targ != attacker && targ->powerLevel > 0 && targ->s.eType != ET_MISSILE && targ->s.eType != ET_GENERAL){
+		if(OnSameTeam(targ,attacker)){
 			attacker->client->ps.persistant[PERS_HITS]--;
-		} else {
+		}
+		else{
 			attacker->client->ps.persistant[PERS_HITS]++;
 		}
-		//attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (targ->health<<8)|(client->ps.stats[STAT_ARMOR]);
-		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (targ->health<<8)|0;
+		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (targ->powerLevel<<8)|0;
 	}
-
-	// always give half damage if hurting self
 	// calculated after knockback, so rocket jumping works
-	if ( targ == attacker) {
-		damage *= 0.5;
-	}
-
-	if ( damage < 1 ) {
-		damage = 1;
-	}
+	if(targ == attacker){damage *= 0.25;}
+	if (damage < 1){damage = 1;}
 	take = damage;
-	save = 0;
-
-	// save some from armor
-	asave = CheckArmor (targ, take, dflags);
-	take -= asave;
-
-	if ( g_debugDamage.integer ) {
-		G_Printf( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,
-			targ->health, take, asave );
-	}
-
 	// add to the damage inflicted on a player this frame
-	// the total will be turned into screen blends and view angle kicks
-	// at the end of the frame
-	if ( client ) {
-		if ( attacker ) {
+	if(client){
+		if(attacker){
 			client->ps.persistant[PERS_ATTACKER] = attacker->s.number;
-		} else {
+		}
+		else{
 			client->ps.persistant[PERS_ATTACKER] = ENTITYNUM_WORLD;
 		}
-		//client->damage_armor += asave;
-		client->damage_blood += take;
-		client->damage_knockback += knockback;
-		if ( dir ) {
+		//client->damage_blood += take;
+		//client->damage_knockback += knockback;
+		if(dir){
 			VectorCopy ( dir, client->damage_from );
 			client->damage_fromWorld = qfalse;
-		} else {
-			VectorCopy ( targ->r.currentOrigin, client->damage_from );
+		}
+		else{
+			VectorCopy(targ->r.currentOrigin,client->damage_from);
 			client->damage_fromWorld = qtrue;
 		}
 	}
-
-	// See if it's the player hurting the emeny flag carrier
-#ifdef MISSIONPACK
-	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_1FCTF ) {
-#else	
-	if( g_gametype.integer == GT_CTF) {
-#endif
-		Team_CheckHurtCarrier(targ, attacker);
-	}
-
 	if (targ->client) {
 		// set the last client who damaged the target
 		targ->client->lasthurt_client = attacker->s.number;
 		targ->client->lasthurt_mod = mod;
 	}
-
 	// do the damage
-	if (take) {
-		targ->health = targ->health - take;
-		if ( targ->client ) {
-			targ->client->ps.stats[powerLevelCurrent] = targ->health;
+	if(take){
+		//targ->powerLevel -= take;
+		if(targ->client){
+			targ->client->ps.stats[powerLevelTotal] -= take;
+			targ->client->ps.persistant[powerLevelMaximum] += take;
 		}
-			
-		if ( targ->health <= 0 ) {
-			if ( client )
+		if(targ->powerLevel<= 0) {
+			if (client){
 				targ->flags |= FL_NO_KNOCKBACK;
-
-			if (targ->health < -999)
-				targ->health = -999;
-
+			}
 			targ->enemy = attacker;
-			targ->die (targ, inflictor, attacker, take, mod);
+			targ->die(targ,inflictor,attacker,take,mod);
 			return;
-		} else if ( targ->pain ) {
-			targ->pain (targ, attacker, take);
+		}
+		else if(targ->pain){
+			targ->pain(targ,attacker,take);
 		}
 	}
-
 }
 
 

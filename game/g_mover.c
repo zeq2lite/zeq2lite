@@ -921,7 +921,7 @@ NOMONSTER	monsters will not trigger this door
 "dmg"		damage to inflict when blocked (2 default)
 "color"		constantLight color
 "light"		constantLight radius
-"health"	if set, the door must be shot open
+"powerLevel"	if set, the door must be shot open
 */
 void SP_func_door (gentity_t *ent) {
 	vec3_t	abs_movedir;
@@ -976,13 +976,13 @@ void SP_func_door (gentity_t *ent) {
 	ent->nextthink = level.time + FRAMETIME;
 
 	if ( ! (ent->flags & FL_TEAMSLAVE ) ) {
-		int health;
+		int powerLevel;
 
-		G_SpawnInt( "health", "0", &health );
-		if ( health ) {
+		G_SpawnInt( "powerLevel", "0", &powerLevel );
+		if ( powerLevel ) {
 			ent->takedamage = qtrue;
 		}
-		if ( ent->targetname || health ) {
+		if ( ent->targetname || powerLevel ) {
 			// non touch/shoot doors
 			ent->think = Think_MatchTeam;
 		} else {
@@ -1009,7 +1009,7 @@ Don't allow decent if a living player is on it
 ===============
 */
 void Touch_Plat( gentity_t *ent, gentity_t *other, trace_t *trace ) {
-	if ( !other->client || other->client->ps.stats[powerLevelCurrent] <= 0 ) {
+	if ( !other->client || other->client->ps.stats[powerLevel] <= 0 ) {
 		return;
 	}
 
@@ -1171,7 +1171,7 @@ When a button is touched, it moves some distance in the direction of it's angle,
 "speed"		override the default 40 speed
 "wait"		override the default 1 second wait (-1 = never return)
 "lip"		override the default 4 pixel lip remaining at end of move
-"health"	if set, the button must be killed instead of touched
+"powerLevel"	if set, the button must be killed instead of touched
 "color"		constantLight color
 "light"		constantLight radius
 */
@@ -1208,7 +1208,7 @@ void SP_func_button( gentity_t *ent ) {
 	distance = abs_movedir[0] * size[0] + abs_movedir[1] * size[1] + abs_movedir[2] * size[2] - lip;
 	VectorMA (ent->pos1, distance, ent->movedir, ent->pos2);
 
-	if (ent->health) {
+	if (ent->powerLevel) {
 		// shootable button
 		ent->takedamage = qtrue;
 	} else {

@@ -12,7 +12,7 @@ void P_DeductFromHealth( gentity_t *player ) {
 	}
 
 	// doing the damage
-	player->health -= client->ps.stats[damageDealt];
+	player->powerLevel -= client->ps.stats[damageDealt];
 	// clear hp cost
 	client->ps.stats[damageDealt] = 0;
 }
@@ -79,7 +79,7 @@ void P_DamageFeedback( gentity_t *player ) {
 	// play an apropriate pain sound
 	if ( (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) ) {
 		player->pain_debounce_time = level.time + 700;
-		G_AddEvent( player, EV_PAIN, player->health );
+		G_AddEvent( player, EV_PAIN, player->powerLevel );
 		client->ps.damageEvent++;
 	}
 
@@ -135,14 +135,14 @@ void P_WorldEffects( gentity_t *ent ) {
 		if ( ent->client->airOutTime < level.time) {
 			// drown!
 			ent->client->airOutTime += 1000;
-			if ( ent->health > 0 ) {
+			if ( ent->powerLevel > 0 ) {
 				// take more damage the longer underwater
 				ent->damage += 2;
 				if (ent->damage > 15)
 					ent->damage = 15;
 
 				// play a gurp sound instead of a normal pain sound
-				if (ent->health <= ent->damage) {
+				if (ent->powerLevel <= ent->damage) {
 					G_Sound(ent, CHAN_VOICE, G_SoundIndex("*drown.ogg"));
 				} else if (rand()&1) {
 					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp1.ogg"));
@@ -170,7 +170,7 @@ void P_WorldEffects( gentity_t *ent ) {
 	//
 	if (waterlevel && 
 		(ent->watertype&(CONTENTS_LAVA|CONTENTS_SLIME)) ) {
-		if (ent->health > 0
+		if (ent->powerLevel > 0
 			&& ent->pain_debounce_time <= level.time	) {
 
 			if ( envirosuit ) {
@@ -271,7 +271,7 @@ void	G_TouchTriggers( gentity_t *ent ) {
 	}
 
 	// dead clients don't activate triggers!
-	if ( ent->client->ps.stats[powerLevelCurrent] <= 0 ) {
+	if ( ent->client->ps.stats[powerLevel] <= 0 ) {
 		return;
 	}
 
@@ -363,8 +363,8 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 		VectorCopy( client->ps.origin, ent->s.origin );
 
 		// ADDING FOR ZEQ2
-		// Update altered health value
-		ent->health = client->ps.stats[powerLevelCurrent];
+		// Update altered powerLevel value
+		ent->powerLevel = client->ps.stats[powerLevel];
 		// END ADDING
 
 		G_TouchTriggers( ent );
@@ -444,9 +444,9 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	while ( client->timeResidual >= 1000 ) {
 		client->timeResidual -= 1000;
 
-		// count down health when over max
-		if ( ent->health > client->ps.stats[powerLevelTotal] ) {
-			ent->health--;
+		// count down powerLevel when over max
+		if ( ent->powerLevel > client->ps.stats[powerLevelTotal] ) {
+			ent->powerLevel--;
 		}
 	}
 	
@@ -455,8 +455,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 		if ( client->ps.weaponstate == WEAPON_CHARGING ) {
 
-			if ( (client->ps.stats[powerLevelCurrent] > weaponInfo->costs_ki) && (client->ps.stats[chargePercentPrimary] < 100)) {
-				client->ps.stats[powerLevelCurrent] -= weaponInfo->costs_ki;
+			if ( (client->ps.stats[powerLevel] > weaponInfo->costs_ki) && (client->ps.stats[chargePercentPrimary] < 100)) {
+				client->ps.stats[powerLevel] -= weaponInfo->costs_ki;
 				client->ps.stats[chargePercentPrimary] += 1; //weaponInfo->chargeRatio;
 				if (client->ps.stats[chargePercentPrimary] > 100) {
 					client->ps.stats[chargePercentPrimary] = 100;
@@ -475,8 +475,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		
 		if ( client->ps.weaponstate == WEAPON_ALTCHARGING ) {
 
-			if ((client->ps.stats[powerLevelCurrent] > alt_weaponInfo->costs_ki) && (client->ps.stats[chargePercentSecondary] < 100)) {
-				client->ps.stats[powerLevelCurrent] -= alt_weaponInfo->costs_ki;
+			if ((client->ps.stats[powerLevel] > alt_weaponInfo->costs_ki) && (client->ps.stats[chargePercentSecondary] < 100)) {
+				client->ps.stats[powerLevel] -= alt_weaponInfo->costs_ki;
 				client->ps.stats[chargePercentSecondary] += 1; //alt_weaponInfo->chargeRatio;
 				if (client->ps.stats[chargePercentSecondary] > 100) {
 					client->ps.stats[chargePercentSecondary] = 100;
@@ -645,7 +645,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 
 		case EV_USE_ITEM2:		// medkit
-			ent->health = ent->client->ps.stats[powerLevelTotal] + 25;
+			ent->powerLevel = ent->client->ps.stats[powerLevelTotal] + 25;
 
 			break;
 
@@ -698,7 +698,7 @@ static int StuckInOtherClient(gentity_t *ent) {
 		if ( !ent2->client ) {
 			continue;
 		}
-		if ( ent2->health <= 0 ) {
+		if ( ent2->powerLevel <= 0 ) {
 			continue;
 		}
 		//
@@ -846,7 +846,7 @@ void ClientThink_real( gentity_t *ent ) {
 
 	if ( client->noclip ) {
 		client->ps.pm_type = PM_NOCLIP;
-	} else if ( client->ps.stats[powerLevelCurrent] <= 0 ) {
+	} else if ( client->ps.stats[powerLevel] <= 0 ) {
 		client->ps.pm_type = PM_DEAD;
 	} else {
 		client->ps.pm_type = PM_NORMAL;
@@ -963,8 +963,8 @@ void ClientThink_real( gentity_t *ent ) {
 
 	Pmove (&pm);
 	
-	// <-- RiO; Update altered health value
-	ent->health = client->ps.stats[powerLevelCurrent];
+	// <-- RiO; Update altered powerLevel value
+	ent->powerLevel = client->ps.stats[powerLevel];
 	// -->
 
 	// save results of pmove
@@ -1021,7 +1021,7 @@ void ClientThink_real( gentity_t *ent ) {
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
 
 	// check for respawning
-	if ( client->ps.stats[powerLevelCurrent] <= 0 ) {
+	if ( client->ps.stats[powerLevel] <= 0 ) {
 		// wait for the attack button to be pressed
 		if ( level.time > client->respawnTime ) {
 			// forcerespawn is to prevent users from waiting out powerups
@@ -1181,7 +1181,7 @@ void ClientEndFrame( gentity_t *ent ) {
 		ent->s.eFlags &= ~EF_CONNECTION;
 	}
 
-	ent->client->ps.stats[powerLevelCurrent] = ent->health;	// FIXME: get rid of ent->health...
+	ent->client->ps.stats[powerLevel] = ent->powerLevel;	// FIXME: get rid of ent->powerLevel...
 
 	G_SetClientSound (ent);
 

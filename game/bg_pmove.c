@@ -38,7 +38,7 @@ PM_DeductFromHealth
 qboolean PM_DeductFromHealth( int wanted ) {
 	int newBuf;
 
-	// See if we can deduct this from the health buffer
+	// See if we can deduct this from the powerLevel buffer
 	newBuf = pml.bufferHealth - wanted;
 	if ( newBuf >= 0 ) {
 		pml.bufferHealth = newBuf;
@@ -46,7 +46,7 @@ qboolean PM_DeductFromHealth( int wanted ) {
 
 	} else {
 		// See if we can deduct what is left after using up
-		// the buffer from the health directly.
+		// the buffer from the powerLevel directly.
 		if ( (pm->ps->stats[powerLevelTotal] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
 			pml.bufferHealth = 0;
 			pm->ps->stats[powerLevelTotal] += newBuf; // NOTE: again, since newBuf is negative here.
@@ -54,7 +54,7 @@ qboolean PM_DeductFromHealth( int wanted ) {
 		}
 	}
 
-	// Couldn't deduct from buffer or health.
+	// Couldn't deduct from buffer or powerLevel.
 	return qfalse;
 }
 
@@ -69,14 +69,14 @@ PM_BuildBufferHealth
 void PM_BuildBufferHealth( void ) {
 	float capRatio, maxRatio;
 
-	// If current health exceeds the cap, give no buffer at all.
+	// If current powerLevel exceeds the cap, give no buffer at all.
 	if ( pm->ps->stats[powerLevelTotal] > pm->ps->persistant[powerLevelMaximum] ) {
 		pml.bufferHealth = 0;
 		return;
 	}
 
 	// Get the ratios between cap and current, and cap and max.
-	//capRatio = (float)pm->ps->persistant[powerLevelMaximum] / (float)pm->ps->stats[powerLevelCurrent];
+	//capRatio = (float)pm->ps->persistant[powerLevelMaximum] / (float)pm->ps->stats[powerLevel];
 	//maxRatio = (float)pm->ps->persistant[powerLevelMaximum] / (float)pm->ps->stats[powerLevelTotal];
 
 	// Calculate the buffer depending on both ratios, together with pml.frametime to
@@ -411,7 +411,7 @@ static void PM_StopDash( void ) {
 ============
 PM_CheckTier
 ============
-HACK: Currently just a quick hack routine that instantly raises tier when exceeding certain health
+HACK: Currently just a quick hack routine that instantly raises tier when exceeding certain powerLevel
 */
 static void PM_CheckTier( void ) {
 	int tier, lowBreak, highBreak;
@@ -442,8 +442,8 @@ static qboolean PM_CheckPowerLevel( void ) {
 	pm->ps->stats[powerLevelTimer2] += pml.msec;
 	while(pm->ps->stats[powerLevelTimer2] >= 50){
 		pm->ps->stats[powerLevelTimer2] -= 50;
-		if(pm->ps->stats[powerLevelCurrent] > pm->ps->stats[powerLevelTotal]){
-			pm->ps->stats[powerLevelCurrent] -= 6 * (pm->ps->stats[currentTier] + 1);
+		if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
+			pm->ps->stats[powerLevel] -= 6 * (pm->ps->stats[currentTier] + 1);
 		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_UP){
@@ -452,7 +452,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 		PM_StopDash(); // implicitly stops boost and lightspeed as well
 		PM_StopBoost();
 		pm->ps->eFlags |= EF_AURA;
-		if((pm->ps->stats[powerLevelCurrent] > highBreak)){
+		if((pm->ps->stats[powerLevel] > highBreak)){
 			PM_ContinueLegsAnim( LEGS_TRANS_UP );
 		}
 		else{
@@ -473,8 +473,8 @@ static qboolean PM_CheckPowerLevel( void ) {
 		pm->ps->stats[powerLevelTimer] += pml.msec;
 		while(pm->ps->stats[powerLevelTimer] >= 12){
 			pm->ps->stats[powerLevelTimer] -= 10;
-			if(pm->ps->stats[powerLevelCurrent] < pm->ps->stats[powerLevelTotal]){
-				pm->ps->stats[powerLevelCurrent] += pm->ps->powerlevelChargeScale / 3;
+			if(pm->ps->stats[powerLevel] < pm->ps->stats[powerLevelTotal]){
+				pm->ps->stats[powerLevel] += pm->ps->powerlevelChargeScale / 3;
 			}
 			else{
 				pm->ps->stats[powerLevelTotal] += pm->ps->powerlevelChargeScale / 8;
@@ -508,9 +508,9 @@ static qboolean PM_CheckPowerLevel( void ) {
 		// Use up stored timer value
 		while ( pm->ps->stats[powerLevelTimer] <= -50 ) {
 			pm->ps->stats[powerLevelTimer] += 50;
-			// Lower health if possible
-			if ( pm->ps->stats[powerLevelCurrent] > 50 ) {
-				pm->ps->stats[powerLevelCurrent] -= 12 * (pm->ps->stats[currentTier] + 1);
+			// Lower powerLevel if possible
+			if ( pm->ps->stats[powerLevel] > 50 ) {
+				pm->ps->stats[powerLevel] -= 12 * (pm->ps->stats[currentTier] + 1);
 			}
 		}
 
@@ -1316,7 +1316,7 @@ static void PM_CrashLand( void ) {
 			PM_AddEvent( EV_FALL_FAR );
 		} else if ( delta > 40 ) {
 			// this is a pain grunt, so don't play it if dead
-			if ( pm->ps->stats[powerLevelCurrent] > 0 ) {
+			if ( pm->ps->stats[powerLevel] > 0 ) {
 				PM_AddEvent( EV_FALL_MEDIUM );
 			}
 		} else if ( delta > 7 ) {
@@ -2056,7 +2056,7 @@ static void PM_Weapon( void ) {
 	}
 
 	// check for dead player
-	if ( pm->ps->stats[powerLevelCurrent] <= 0 ) {
+	if ( pm->ps->stats[powerLevel] <= 0 ) {
 		if ( pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING ) {
 			PM_AddEvent( EV_DETONATE_WEAPON );
 		}
@@ -2448,7 +2448,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
-	if ( ps->pm_type != PM_SPECTATOR && ps->stats[powerLevelCurrent] <= 0 ) {
+	if ( ps->pm_type != PM_SPECTATOR && ps->stats[powerLevel] <= 0 ) {
 		return;		// no view changes at all
 	}
 
@@ -2567,7 +2567,7 @@ void PM_UpdateViewAngles2( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
-	if ( ps->pm_type != PM_SPECTATOR && ps->stats[powerLevelCurrent] <= 0 ) {
+	if ( ps->pm_type != PM_SPECTATOR && ps->stats[powerLevel] <= 0 ) {
 		return;		// no view changes at all
 	}
 
@@ -2611,7 +2611,7 @@ void PmoveSingle (pmove_t *pmove) {
 	pm->watertype = 0;
 	pm->waterlevel = 0;
 
-	if ( pm->ps->stats[powerLevelCurrent] <= 0 ) {
+	if ( pm->ps->stats[powerLevel] <= 0 ) {
 		pm->tracemask &= ~CONTENTS_BODY;	// corpses can fly through bodies
 	}
 
@@ -2652,7 +2652,7 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	// clear the respawned flag if attack, alt attack and ki recharge are cleared
-	if ( pm->ps->stats[powerLevelCurrent] > 0 &&
+	if ( pm->ps->stats[powerLevel] > 0 &&
 		!( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_ALT_ATTACK | BUTTON_BOOST ))) {
 		pm->ps->pm_flags &= ~PMF_RESPAWNED;
 	}
@@ -2711,7 +2711,7 @@ void PmoveSingle (pmove_t *pmove) {
 
 	pml.frametime = pml.msec * 0.001;
 
-	// <-- RiO; Build the health buffer representing regen rate
+	// <-- RiO; Build the powerLevel buffer representing regen rate
 	PM_BuildBufferHealth();
 	// -->
 

@@ -172,7 +172,7 @@ static void ProximityMine_Activate( gentity_t *ent ) {
 	ent->nextthink = level.time + g_proxMineTimeout.integer;
 
 	ent->takedamage = qtrue;
-	ent->health = 1;
+	ent->powerLevel = 1;
 	ent->die = ProximityMine_Die;
 
 	ent->s.loopSound = G_SoundIndex( "sound/weapons/proxmine/wstbtick.ogg" );
@@ -332,7 +332,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 		}
 
 		// if it's a player, stick it on to them (flag them and remove this entity)
-		if( other->s.eType == ET_PLAYER && other->health > 0 ) {
+		if( other->s.eType == ET_PLAYER && other->powerLevel > 0 ) {
 			ProximityMine_Player( ent, other );
 			return;
 		}

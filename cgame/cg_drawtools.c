@@ -373,41 +373,41 @@ float *CG_TeamColor( int team ) {
 CG_GetColorForHealth
 =================
 */
-void CG_GetColorForHealth( int health, int armor, vec4_t hcolor ) {
+void CG_GetColorForHealth( int powerLevel, int armor, vec4_t hcolor ) {
 	int		count;
 	int		max;
 
 	// calculate the total points of damage that can
-	// be sustained at the current health / armor level
-	if ( health <= 0 ) {
+	// be sustained at the current powerLevel / armor level
+	if ( powerLevel <= 0 ) {
 		VectorClear( hcolor );	// black
 		hcolor[3] = 1;
 		return;
 	}
 	count = armor;
-	max = health * ARMOR_PROTECTION / ( 1.0 - ARMOR_PROTECTION );
+	max = powerLevel * ARMOR_PROTECTION / ( 1.0 - ARMOR_PROTECTION );
 	if ( max < count ) {
 		count = max;
 	}
-	health += count;
+	powerLevel += count;
 
-	// set the color based on health
+	// set the color based on powerLevel
 	hcolor[0] = 1.0;
 	hcolor[3] = 1.0;
-	if ( health >= 100 ) {
+	if ( powerLevel >= 100 ) {
 		hcolor[2] = 1.0;
-	} else if ( health < 66 ) {
+	} else if ( powerLevel < 66 ) {
 		hcolor[2] = 0;
 	} else {
-		hcolor[2] = ( health - 66 ) / 33.0;
+		hcolor[2] = ( powerLevel - 66 ) / 33.0;
 	}
 
-	if ( health > 60 ) {
+	if ( powerLevel > 60 ) {
 		hcolor[1] = 1.0;
-	} else if ( health < 30 ) {
+	} else if ( powerLevel < 30 ) {
 		hcolor[1] = 0;
 	} else {
-		hcolor[1] = ( health - 30 ) / 30.0;
+		hcolor[1] = ( powerLevel - 30 ) / 30.0;
 	}
 }
 
@@ -418,9 +418,9 @@ CG_ColorForHealth
 */
 void CG_ColorForHealth( vec4_t hcolor ) {
 
-//	CG_GetColorForHealth( cg.snap->ps.stats[powerLevelCurrent], 
+//	CG_GetColorForHealth( cg.snap->ps.stats[powerLevel], 
 //		cg.snap->ps.stats[STAT_ARMOR], hcolor );
-	CG_GetColorForHealth( cg.snap->ps.stats[powerLevelCurrent], 
+	CG_GetColorForHealth( cg.snap->ps.stats[powerLevel], 
 		0, hcolor );
 }
 
