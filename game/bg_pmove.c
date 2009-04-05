@@ -47,10 +47,8 @@ qboolean PM_DeductFromHealth( int wanted ) {
 	} else {
 		// See if we can deduct what is left after using up
 		// the buffer from the health directly.
-		if ( (pm->ps->stats[STAT_HEALTH] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
 		if ( (pm->ps->stats[currentPowerLevel] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
 			pml.bufferHealth = 0;
-			pm->ps->stats[STAT_HEALTH] += newBuf; // NOTE: again, since newBuf is negative here.
 			pm->ps->stats[currentPowerLevel] += newBuf; // NOTE: again, since newBuf is negative here.
 			return qtrue;
 		}
@@ -72,15 +70,12 @@ void PM_BuildBufferHealth( void ) {
 	float capRatio, maxRatio;
 
 	// If current health exceeds the cap, give no buffer at all.
-	if ( pm->ps->stats[STAT_HEALTH] > pm->ps->persistant[PERS_HEALTH_CAP] ) {
 	if ( pm->ps->stats[currentPowerLevel] > pm->ps->persistant[PERS_HEALTH_CAP] ) {
 		pml.bufferHealth = 0;
 		return;
 	}
 
 	// Get the ratios between cap and current, and cap and max.
-	capRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[STAT_HEALTH];
-	maxRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[STAT_MAX_HEALTH];
 	capRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[currentPowerLevel];
 	maxRatio = (float)pm->ps->persistant[PERS_HEALTH_CAP] / (float)pm->ps->stats[maximumPowerLevel];
 
@@ -403,7 +398,6 @@ static void PM_SetMovementDir( void ) {
 }
 
 static void PM_StopBoost( void ) {
-	pm->ps->stats[STAT_BITFLAGS] &= ~STATBIT_BOOSTING;
 	pm->ps->stats[bitFlags] &= ~STATBIT_BOOSTING;
 	pm->ps->powerups[PW_BOOST] = 0;
 }
@@ -730,21 +724,21 @@ static void PM_FlyMove( void ) {
 	if ( PM_CheckPowerLevel() ) {
 		return;
 	} else if ( PM_CheckBoost() ) {
-		if ( pm->ps->stats[STAT_TIER] == 8 ) {
+		if ( pm->ps->stats[currentTier] == 8 ) {
 			boostFactor = 7.0f;
-		} else if ( pm->ps->stats[STAT_TIER] == 7) {
+		} else if ( pm->ps->stats[currentTier] == 7) {
 			boostFactor = 6.5f;
-		} else if ( pm->ps->stats[STAT_TIER] == 6) {
+		} else if ( pm->ps->stats[currentTier] == 6) {
 			boostFactor = 6.0f;
-		} else if ( pm->ps->stats[STAT_TIER] == 5) {
+		} else if ( pm->ps->stats[currentTier] == 5) {
 			boostFactor = 5.5f;
-		} else if ( pm->ps->stats[STAT_TIER] == 4) {
+		} else if ( pm->ps->stats[currentTier] == 4) {
 			boostFactor = 5.0f;
-		} else if ( pm->ps->stats[STAT_TIER] == 3) {
+		} else if ( pm->ps->stats[currentTier] == 3) {
 			boostFactor = 4.5f;
-		} else if ( pm->ps->stats[STAT_TIER] == 2) {
+		} else if ( pm->ps->stats[currentTier] == 2) {
 			boostFactor = 4.0f;
-		} else if ( pm->ps->stats[STAT_TIER] == 1) {
+		} else if ( pm->ps->stats[currentTier] == 1) {
 			boostFactor = 3.0f;
 		} else {
 			boostFactor = 3.5f;
@@ -1024,21 +1018,21 @@ static void PM_DashMove( void ) {
 
 	if ( PM_CheckBoost()) {
 		pm->ps->pm_flags |= PMF_BOOST_HELD;
-		if ( pm->ps->stats[STAT_TIER] == 8 ) {
+		if ( pm->ps->stats[currentTier] == 8 ) {
 			boostFactor = 7.0f;
-		} else if ( pm->ps->stats[STAT_TIER] == 7) {
+		} else if ( pm->ps->stats[currentTier] == 7) {
 			boostFactor = 6.5f;
-		} else if ( pm->ps->stats[STAT_TIER] == 6) {
+		} else if ( pm->ps->stats[currentTier] == 6) {
 			boostFactor = 6.0f;
-		} else if ( pm->ps->stats[STAT_TIER] == 5) {
+		} else if ( pm->ps->stats[currentTier] == 5) {
 			boostFactor = 5.5f;
-		} else if ( pm->ps->stats[STAT_TIER] == 4) {
+		} else if ( pm->ps->stats[currentTier] == 4) {
 			boostFactor = 5.0f;
-		} else if ( pm->ps->stats[STAT_TIER] == 3) {
+		} else if ( pm->ps->stats[currentTier] == 3) {
 			boostFactor = 4.5f;
-		} else if ( pm->ps->stats[STAT_TIER] == 2) {
+		} else if ( pm->ps->stats[currentTier] == 2) {
 			boostFactor = 4.0f;
-		} else if ( pm->ps->stats[STAT_TIER] == 1) {
+		} else if ( pm->ps->stats[currentTier] == 1) {
 			boostFactor = 3.0f;
 		} else {
 			boostFactor = 3.5f;
