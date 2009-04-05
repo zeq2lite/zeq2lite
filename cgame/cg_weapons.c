@@ -1559,8 +1559,8 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 		}
 	}
 
-	x = 182 - count * 15;
-	y = 420;
+	x = 164 - count * 15;
+	y = 418;
 
 	for ( i = 1 ; i < 16 ; i++ ) {
 		if ( !( bits & ( 1 << i ) ) ) {
