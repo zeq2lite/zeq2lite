@@ -445,6 +445,9 @@ static qboolean PM_CheckPowerLevel( void ) {
 		if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
 			pm->ps->stats[powerLevel] -= 6 * (pm->ps->stats[currentTier] + 1);
 		}
+		if(pm->ps->stats[powerLevelTotal] >= 32600) {
+			pm->ps->stats[powerLevelTotal] = 32600;
+		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_UP){
 		// set representations for powering up
