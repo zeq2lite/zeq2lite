@@ -24,11 +24,11 @@ MUSIC MENU
 #define MAX_MUSIC			128
 #define NAMEBUFSIZE			( MAX_MUSIC * 16 )
 
-#define ID_BACK				10
-#define ID_GO				11
-#define ID_LIST				12
-#define ID_RIGHT			13
-#define ID_LEFT				14
+#define ID_BACK				29
+#define ID_GO				30
+#define ID_LIST				31
+#define ID_RIGHT			32
+#define ID_LEFT				33
 
 #define ARROWS_WIDTH		128
 #define ARROWS_HEIGHT		48
@@ -140,22 +140,22 @@ static void Music_MenuInit( void ) {
 	s_music.framer.generic.name		= ART_FRAMER;
 	s_music.framer.generic.flags	= QMF_INACTIVE;
 	s_music.framer.generic.x		= 376;
-	s_music.framer.generic.y		= 76;
+	s_music.framer.generic.y		= 46;
 	s_music.framer.width			= 256;
 	s_music.framer.height			= 334;
 
 	s_music.arrows.generic.type		= MTYPE_BITMAP;
 	s_music.arrows.generic.name		= ART_ARROWS;
 	s_music.arrows.generic.flags	= QMF_INACTIVE;
-	s_music.arrows.generic.x		= 320-ARROWS_WIDTH/2;
-	s_music.arrows.generic.y		= 400;
+	s_music.arrows.generic.x		= 315-ARROWS_WIDTH/2;
+	s_music.arrows.generic.y		= 343;
 	s_music.arrows.width			= ARROWS_WIDTH;
 	s_music.arrows.height			= ARROWS_HEIGHT;
 
 	s_music.left.generic.type		= MTYPE_BITMAP;
 	s_music.left.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_MOUSEONLY;
-	s_music.left.generic.x			= 320-ARROWS_WIDTH/2;
-	s_music.left.generic.y			= 400;
+	s_music.left.generic.x			= 315-ARROWS_WIDTH/2;
+	s_music.left.generic.y			= 343;
 	s_music.left.generic.id			= ID_LEFT;
 	s_music.left.generic.callback	= Music_MenuEvent;
 	s_music.left.width				= ARROWS_WIDTH/2;
@@ -164,8 +164,8 @@ static void Music_MenuInit( void ) {
 
 	s_music.right.generic.type		= MTYPE_BITMAP;
 	s_music.right.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_MOUSEONLY;
-	s_music.right.generic.x			= 320;
-	s_music.right.generic.y			= 400;
+	s_music.right.generic.x			= 315;
+	s_music.right.generic.y			= 343;
 	s_music.right.generic.id		= ID_RIGHT;
 	s_music.right.generic.callback	= Music_MenuEvent;
 	s_music.right.width				= ARROWS_WIDTH/2;
@@ -177,8 +177,8 @@ static void Music_MenuInit( void ) {
 	s_music.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_music.back.generic.id			= ID_BACK;
 	s_music.back.generic.callback	= Music_MenuEvent;
-	s_music.back.generic.x			= 0;
-	s_music.back.generic.y			= 480-64;
+	s_music.back.generic.x			= 103;
+	s_music.back.generic.y			= 330;
 	s_music.back.width				= 128;
 	s_music.back.height				= 64;
 	s_music.back.focuspic			= ART_BACK1;
@@ -188,8 +188,8 @@ static void Music_MenuInit( void ) {
 	s_music.go.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_music.go.generic.id			= ID_GO;
 	s_music.go.generic.callback		= Music_MenuEvent;
-	s_music.go.generic.x			= 640;
-	s_music.go.generic.y			= 480-64;
+	s_music.go.generic.x			= 541;
+	s_music.go.generic.y			= 330;
 	s_music.go.width				= 128;
 	s_music.go.height				= 64;
 	s_music.go.focuspic				= ART_GO1;
@@ -198,13 +198,13 @@ static void Music_MenuInit( void ) {
 	s_music.list.generic.flags		= QMF_PULSEIFFOCUS;
 	s_music.list.generic.callback	= Music_MenuEvent;
 	s_music.list.generic.id			= ID_LIST;
-	s_music.list.generic.x			= 118;
-	s_music.list.generic.y			= 130;
+	s_music.list.generic.x			= 10;//118;
+	s_music.list.generic.y			= 100;
 	s_music.list.width				= 16;
 	s_music.list.height				= 14;
 	s_music.list.numitems			= trap_FS_GetFileList( "music", "ogg", s_music.names, NAMEBUFSIZE );
 	s_music.list.itemnames			= (const char **)s_music.musiclist;
-	s_music.list.columns			= 3;
+	s_music.list.columns			= 4;//3;
 
 	if (!s_music.list.numitems) {
 		strcpy( s_music.names, "No Music Found." );
@@ -231,8 +231,8 @@ static void Music_MenuInit( void ) {
 	}
 
 	Menu_AddItem( &s_music.menu, &s_music.banner );
-//	Menu_AddItem( &s_music.menu, &s_music.framel );
-//	Menu_AddItem( &s_music.menu, &s_music.framer );
+	Menu_AddItem( &s_music.menu, &s_music.framel );
+	Menu_AddItem( &s_music.menu, &s_music.framer );
 	Menu_AddItem( &s_music.menu, &s_music.list );
 	Menu_AddItem( &s_music.menu, &s_music.arrows );
 	Menu_AddItem( &s_music.menu, &s_music.left );
@@ -427,8 +427,8 @@ void InGame_MenuInit( void ) {
 	s_ingame.frame.generic.name			= INGAME_FRAME;
 	s_ingame.frame.generic.x			= 320-233;//142;
 	s_ingame.frame.generic.y			= 240-166;//118;
-	s_ingame.frame.width				= 466;//359;
-	s_ingame.frame.height				= 332;//256;
+	s_ingame.frame.width				= 470;//359;
+	s_ingame.frame.height				= 350;//256;
 
 	//y = 96;
 	y = 88;
