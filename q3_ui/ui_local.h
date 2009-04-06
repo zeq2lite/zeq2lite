@@ -450,6 +450,9 @@ typedef struct {
 
 typedef struct {
 	// model info
+	qboolean		fixedlegs;		// true if legs yaw is always the same as torso yaw
+	qboolean		fixedtorso;		// true if torso never changes yaw
+
 	qhandle_t		legsModel;
 	qhandle_t		legsSkin;
 	lerpFrame_t		legs;
@@ -460,6 +463,7 @@ typedef struct {
 
 	qhandle_t		headModel;
 	qhandle_t		headSkin;
+	lerpFrame_t		head;
 
 	animation_t		animations[MAX_ANIMATIONS];
 
@@ -486,6 +490,9 @@ typedef struct {
 
 	int				pendingTorsoAnim;
 	int				legsAnimationTimer;
+
+	int				pendingHeadAnim;
+	int				headAnimationTimer;
 
 	qboolean		chat;
 	qboolean		newModel;

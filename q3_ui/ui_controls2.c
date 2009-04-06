@@ -139,6 +139,18 @@ typedef struct
 #define ANIM_GESTURE	23
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
+// Added for ZEQ2
+#define ANIM_DASH_LEFT	26
+#define ANIM_DASH_RIGHT	27
+#define ANIM_DASH_FORWARD	28
+#define ANIM_DASH_BACKWARD	29
+#define ANIM_KI_CHARGE	30
+#define ANIM_PL_UP		31
+#define ANIM_PL_DOWN	32
+#define ANIM_FLY_IDLE	33
+#define ANIM_FLY_FORWARD	34
+#define ANIM_FLY_BACKWARD	35
+// End adding
 
 typedef struct
 {
@@ -209,7 +221,6 @@ typedef struct
 	qboolean			playerChat;
 
 	// Added for ZEQ2
-
 	menuaction_s		attack2;
 	menuaction_s		jump;
 	menuaction_s		zanzoken;
@@ -218,6 +229,7 @@ typedef struct
 	menuaction_s		rollright;
 	menuaction_s		chargepl;
 	menuaction_s		drainpl;
+	// End added
 
 	menubitmap_s		back;
 	menutext_s			name;
@@ -229,49 +241,49 @@ static vec4_t controls_binding_color  = {0.75f, 0.75f, 1.00f, 1.00f}; // bk: Win
 
 static bind_t g_bindings[] = 
 {
-	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
-	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
-	{"+speed", 			"dash / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
-	{"+forward", 		"move forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
-	{"+back", 			"move backward",	ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
-	{"+moveleft", 		"move left",		ID_MOVELEFT,	ANIM_STEPLEFT,	',',			-1,		-1, -1},
-	{"+moveright", 		"move right",		ID_MOVERIGHT,	ANIM_STEPRIGHT,	'.',			-1,		-1, -1},
-	{"+moveup",			"fly up",			ID_MOVEUP,		ANIM_JUMP,		K_SPACE,		-1,		-1, -1},
-	{"+movedown",		"fly down",			ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
-	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
-	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
-	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
-	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
-	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
-	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
-	{"centerview", 		"center view",		ID_CENTERVIEW,	ANIM_IDLE,		K_END,			-1,		-1, -1},
-	{"+zoom", 			"zoom view",		ID_ZOOMVIEW,	ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"weapon 1",		"ki attack 1",		ID_WEAPON1,		ANIM_WEAPON1,	'1',			-1,		-1, -1},
-	{"weapon 2",		"ki attack 2",		ID_WEAPON2,		ANIM_WEAPON2,	'2',			-1,		-1, -1},
-	{"weapon 3",		"ki attack 3",		ID_WEAPON3,		ANIM_WEAPON3,	'3',			-1,		-1, -1},
-	{"weapon 4",		"ki attack 4",		ID_WEAPON4,		ANIM_WEAPON4,	'4',			-1,		-1, -1},
-	{"weapon 5",		"ki attack 5",		ID_WEAPON5,		ANIM_WEAPON5,	'5',			-1,		-1, -1},
-	{"weapon 6",		"ki attack 6",		ID_WEAPON6,		ANIM_WEAPON6,	'6',			-1,		-1, -1},
-	{"weapon 7",		"melee fast",		ID_WEAPON7,		ANIM_WEAPON7,	'7',			-1,		-1, -1},
-	{"weapon 8",		"melee strong",		ID_WEAPON8,		ANIM_WEAPON8,	'8',			-1,		-1, -1},
-	{"weapon 9",		"melee heavy",		ID_WEAPON9,		ANIM_WEAPON9,	'9',			-1,		-1, -1},
-	{"+attack", 		"attack primary",	ID_ATTACK,		ANIM_ATTACK,	K_CTRL,			-1,		-1, -1},
-	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[',			-1,		-1, -1},
-	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']',			-1,		-1, -1},
-	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
-	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,		't',			-1,		-1, -1},
-	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"+button10",		"attack secondary",	ID_ATTACK2,		ANIM_IDLE,		K_MOUSE2,		-1,		-1, -1},
-	{"+button5",		"roll left",		ID_ROLLLEFT,	ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"+button6",		"roll right",		ID_ROLLRIGHT,	ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"+button7",		"ki boost",			ID_BOOST,		ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"+button12",		"charge power",		ID_CHARGEPL,	ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"+button13",		"lower power",		ID_DRAINPL,		ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"+button9",		"zanzoken",			ID_ZANZOKEN,	ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"+button14",		"jump",				ID_JUMP,		ANIM_IDLE,		-1,				-1,		-1, -1},
-	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
+	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,			K_TAB,			-1,		-1, -1},
+	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,			K_ENTER,		-1,		-1, -1},
+	{"+speed", 			"dash / walk",		ID_SPEED,		ANIM_WALK,			K_SHIFT,		-1,		-1,	-1},
+	{"+forward", 		"move forward",		ID_FORWARD,		ANIM_DASH_FORWARD,	K_UPARROW,		-1,		-1, -1},
+	{"+back", 			"move backward",	ID_BACKPEDAL,	ANIM_DASH_BACKWARD,	K_DOWNARROW,	-1,		-1, -1},
+	{"+moveleft", 		"move left",		ID_MOVELEFT,	ANIM_DASH_LEFT,		',',			-1,		-1, -1},
+	{"+moveright", 		"move right",		ID_MOVERIGHT,	ANIM_DASH_RIGHT,	'.',			-1,		-1, -1},
+	{"+moveup",			"fly up",			ID_MOVEUP,		ANIM_FLY_IDLE,		K_SPACE,		-1,		-1, -1},
+	{"+movedown",		"fly down",			ID_MOVEDOWN,	ANIM_FLY_IDLE,		'c',			-1,		-1, -1},
+	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,		K_LEFTARROW,	-1,		-1, -1},
+	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,		K_RIGHTARROW,	-1,		-1, -1},
+	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,			K_ALT,			-1,		-1, -1},
+	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,		K_PGDN,			-1,		-1, -1},
+	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,		K_DEL,			-1,		-1, -1},
+	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,			'/',			-1,		-1, -1},
+	{"centerview", 		"center view",		ID_CENTERVIEW,	ANIM_IDLE,			K_END,			-1,		-1, -1},
+	{"+zoom", 			"zoom view",		ID_ZOOMVIEW,	ANIM_IDLE,			-1,				-1,		-1, -1},
+	{"weapon 1",		"ki attack 1",		ID_WEAPON1,		ANIM_WEAPON1,		'1',			-1,		-1, -1},
+	{"weapon 2",		"ki attack 2",		ID_WEAPON2,		ANIM_WEAPON2,		'2',			-1,		-1, -1},
+	{"weapon 3",		"ki attack 3",		ID_WEAPON3,		ANIM_WEAPON3,		'3',			-1,		-1, -1},
+	{"weapon 4",		"ki attack 4",		ID_WEAPON4,		ANIM_WEAPON4,		'4',			-1,		-1, -1},
+	{"weapon 5",		"ki attack 5",		ID_WEAPON5,		ANIM_WEAPON5,		'5',			-1,		-1, -1},
+	{"weapon 6",		"ki attack 6",		ID_WEAPON6,		ANIM_WEAPON6,		'6',			-1,		-1, -1},
+	{"weapon 7",		"melee fast",		ID_WEAPON7,		ANIM_IDLE,			'7',			-1,		-1, -1},
+	{"weapon 8",		"melee strong",		ID_WEAPON8,		ANIM_IDLE,			'8',			-1,		-1, -1},
+	{"weapon 9",		"melee heavy",		ID_WEAPON9,		ANIM_IDLE,			'9',			-1,		-1, -1},
+	{"+attack", 		"attack primary",	ID_ATTACK,		ANIM_ATTACK,		K_CTRL,			-1,		-1, -1},
+	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,			'[',			-1,		-1, -1},
+	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,			']',			-1,		-1, -1},
+	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,		K_MOUSE3,		-1,		-1, -1},
+	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,			't',			-1,		-1, -1},
+	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,			-1,				-1,		-1, -1},
+	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,			-1,				-1,		-1, -1},
+	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,			-1,				-1,		-1, -1},
+	{"+button10",		"attack secondary",	ID_ATTACK2,		ANIM_ATTACK,		K_MOUSE2,		-1,		-1, -1},
+	{"+button5",		"roll left",		ID_ROLLLEFT,	ANIM_IDLE,			-1,				-1,		-1, -1},
+	{"+button6",		"roll right",		ID_ROLLRIGHT,	ANIM_IDLE,			-1,				-1,		-1, -1},
+	{"+button7",		"ki boost",			ID_BOOST,		ANIM_KI_CHARGE,		-1,				-1,		-1, -1},
+	{"+button12",		"charge power",		ID_CHARGEPL,	ANIM_PL_UP,			-1,				-1,		-1, -1},
+	{"+button13",		"lower power",		ID_DRAINPL,		ANIM_PL_DOWN,		-1,				-1,		-1, -1},
+	{"+button9",		"zanzoken",			ID_ZANZOKEN,	ANIM_IDLE,			-1,				-1,		-1, -1},
+	{"+button14",		"jump",				ID_JUMP,		ANIM_JUMP,			-1,				-1,		-1, -1},
+	{(char*)NULL,		(char*)NULL,		0,				0,					-1,				-1,		-1,	-1},
 };
 
 static configcvar_t g_configcvars[] =
@@ -444,7 +456,7 @@ Controls_UpdateModel
 static void Controls_UpdateModel( int anim ) {
 	VectorClear( s_controls.playerViewangles );
 	VectorClear( s_controls.playerMoveangles );
-	s_controls.playerViewangles[YAW] = 180 - 30;
+	s_controls.playerViewangles[YAW] = 180 /*- 30*/;
 	s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW];
 	s_controls.playerLegs		     = LEGS_IDLE;
 	s_controls.playerTorso			 = TORSO_STAND;
@@ -452,20 +464,44 @@ static void Controls_UpdateModel( int anim ) {
 	s_controls.playerChat			 = qfalse;
 
 	switch( anim ) {
+	case ANIM_DASH_LEFT:	
+		s_controls.playerLegs = LEGS_DASH_LEFT;
+		s_controls.playerTorso = TORSO_DASH_LEFT;
+		break;
+
+	case ANIM_DASH_RIGHT:	
+		s_controls.playerLegs = LEGS_DASH_RIGHT;
+		s_controls.playerTorso = TORSO_DASH_RIGHT;
+		break;
+
+	case ANIM_DASH_FORWARD:	
+		s_controls.playerLegs = LEGS_DASH_FORWARD;
+		s_controls.playerTorso = TORSO_DASH_FORWARD;
+		break;
+
+	case ANIM_DASH_BACKWARD:	
+		s_controls.playerLegs = LEGS_DASH_BACKWARD;
+		s_controls.playerTorso = TORSO_DASH_BACKWARD;
+		break;
+
 	case ANIM_RUN:	
 		s_controls.playerLegs = LEGS_RUN;
+		s_controls.playerTorso = TORSO_RUN;
 		break;
 
 	case ANIM_WALK:	
 		s_controls.playerLegs = LEGS_WALK;
+		s_controls.playerTorso = TORSO_WALK;
 		break;
 
 	case ANIM_BACK:	
 		s_controls.playerLegs = LEGS_BACK;
+		s_controls.playerTorso = TORSO_BACK;
 		break;
 
 	case ANIM_JUMP:	
 		s_controls.playerLegs = LEGS_JUMP;
+		s_controls.playerTorso = TORSO_JUMP;
 		break;
 
 	case ANIM_CROUCH:	
@@ -482,64 +518,103 @@ static void Controls_UpdateModel( int anim ) {
 
 	case ANIM_STEPLEFT:
 		s_controls.playerLegs = LEGS_WALK;
+		s_controls.playerTorso = TORSO_WALK;
 		s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW] + 90;
 		break;
 
 	case ANIM_STEPRIGHT:
 		s_controls.playerLegs = LEGS_WALK;
+		s_controls.playerTorso = TORSO_WALK;
 		s_controls.playerMoveangles[YAW] = s_controls.playerViewangles[YAW] - 90;
 		break;
 
 	case ANIM_LOOKUP:
-		s_controls.playerViewangles[PITCH] = -45;
+		s_controls.playerViewangles[PITCH] = -15;
 		break;
 
 	case ANIM_LOOKDOWN:
-		s_controls.playerViewangles[PITCH] = 45;
+		s_controls.playerViewangles[PITCH] = 15;
 		break;
 
 	case ANIM_WEAPON1:
-		s_controls.playerWeapon = WP_GAUNTLET;
+		s_controls.playerLegs = LEGS_KI_ATTACK1_PREPARE;
+		s_controls.playerTorso = TORSO_KI_ATTACK1_PREPARE;
 		break;
 
 	case ANIM_WEAPON2:
-		s_controls.playerWeapon = WP_MACHINEGUN;
+		s_controls.playerLegs = LEGS_KI_ATTACK2_PREPARE;
+		s_controls.playerTorso = TORSO_KI_ATTACK2_PREPARE;
 		break;
 
 	case ANIM_WEAPON3:
-		s_controls.playerWeapon = WP_SHOTGUN;
+		s_controls.playerLegs = LEGS_KI_ATTACK3_PREPARE;
+		s_controls.playerTorso = TORSO_KI_ATTACK3_PREPARE;
 		break;
 
 	case ANIM_WEAPON4:
-		s_controls.playerWeapon = WP_GRENADE_LAUNCHER;
+		s_controls.playerLegs = LEGS_KI_ATTACK4_PREPARE;
+		s_controls.playerTorso = TORSO_KI_ATTACK4_PREPARE;
 		break;
 
 	case ANIM_WEAPON5:
-		s_controls.playerWeapon = WP_ROCKET_LAUNCHER;
+		s_controls.playerLegs = LEGS_KI_ATTACK5_PREPARE;
+		s_controls.playerTorso = TORSO_KI_ATTACK5_PREPARE;
 		break;
 
 	case ANIM_WEAPON6:
-		s_controls.playerWeapon = WP_LIGHTNING;
+		s_controls.playerLegs = LEGS_KI_ATTACK6_PREPARE;
+		s_controls.playerTorso = TORSO_KI_ATTACK6_PREPARE;
 		break;
 
 	case ANIM_WEAPON7:
-		s_controls.playerWeapon = WP_RAILGUN;
+//		s_controls.playerWeapon = WP_RAILGUN;
 		break;
 
 	case ANIM_WEAPON8:
-		s_controls.playerWeapon = WP_PLASMAGUN;
+//		s_controls.playerWeapon = WP_PLASMAGUN;
 		break;
 
 	case ANIM_WEAPON9:
-		s_controls.playerWeapon = WP_BFG;
+//		s_controls.playerWeapon = WP_BFG;
 		break;
 
 	case ANIM_WEAPON10:
-		s_controls.playerWeapon = WP_GRAPPLING_HOOK;
+//		s_controls.playerWeapon = WP_GRAPPLING_HOOK;
 		break;
 
 	case ANIM_ATTACK:
-		s_controls.playerTorso = TORSO_ATTACK;
+		s_controls.playerLegs = LEGS_KI_ATTACK1_FIRE;
+		s_controls.playerTorso = TORSO_KI_ATTACK1_FIRE;
+		break;
+
+	case ANIM_KI_CHARGE:
+		s_controls.playerLegs = LEGS_KI_CHARGE;
+		s_controls.playerTorso = TORSO_KI_CHARGE;
+		break;
+
+	case ANIM_PL_UP:
+		s_controls.playerLegs = LEGS_PL_UP;
+		s_controls.playerTorso = TORSO_PL_UP;
+		break;
+
+	case ANIM_PL_DOWN:
+		s_controls.playerLegs = LEGS_PL_DOWN;
+		s_controls.playerTorso = TORSO_PL_DOWN;
+		break;
+
+	case ANIM_FLY_IDLE:
+		s_controls.playerLegs = LEGS_FLY_IDLE;
+		s_controls.playerTorso = TORSO_FLY_IDLE;
+		break;
+
+	case ANIM_FLY_FORWARD:
+		s_controls.playerLegs = LEGS_FLY_FORWARD;
+		s_controls.playerTorso = TORSO_FLY_FORWARD;
+		break;
+
+	case ANIM_FLY_BACKWARD:
+		s_controls.playerLegs = LEGS_FLY_BACKWARD;
+		s_controls.playerTorso = TORSO_FLY_BACKWARD;
 		break;
 
 	case ANIM_GESTURE:
