@@ -303,6 +303,14 @@ extern void UI_UpdateCvars( void );
 //
 extern void UI_CreditMenu( void );
 
+/*
+//
+// ui_music.c
+//
+extern void UI_MusicMenu( void );
+extern void UI_MusicMenu_Cache( void );
+*/
+
 //
 // ui_ingame.c
 //

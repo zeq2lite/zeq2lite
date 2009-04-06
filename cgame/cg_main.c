@@ -184,6 +184,7 @@ vmCvar_t	r_beamDetail;
 vmCvar_t	cg_soundAttenuation;
 vmCvar_t	cg_thirdPersonCamera;
 vmCvar_t	cg_beamControl;
+vmCvar_t	cg_music;
 //END ADDING
 
 
@@ -313,7 +314,8 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &r_beamDetail,	"r_beamDetail", "30", CVAR_ARCHIVE},
 	{ &cg_soundAttenuation, "cg_soundAttenuation", "0.0001", CVAR_CHEAT},
 	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "0", CVAR_ARCHIVE},
-	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE}
+	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE},
+	{ &cg_music, "cg_music", "1", CVAR_ARCHIVE}
 	// END ADDING
 //	{ &cg_pmove_fixed, "cg_pmove_fixed", "0", CVAR_USERINFO | CVAR_ARCHIVE }
 };
@@ -1054,6 +1056,7 @@ CG_StartMusic
 ======================
 */
 void CG_StartMusic( void ) {
+	// Save this incase we need it later for reading map specifc music in special cases?
 	/*
 	char	*s;
 	char	parm1[MAX_QPATH], parm2[MAX_QPATH];
@@ -1069,11 +1072,16 @@ void CG_StartMusic( void ) {
 	char	*t;
 	int	r;
 
-	r = random() * 10;
+	if ( cg_music.value > 0 && cg_music.value < 11 ) {
+		r = cg_music.value - 1;
+	} else {
+		r = random() * 10;
+	}
 	s = cg_backgroundMusic[r];
 	t = va("music/%s", s + 1);
 
 	trap_S_StartBackgroundTrack( t, t );
+
 }
 #ifdef MISSIONPACK
 char *CG_GetMenuBuffer(const char *filename) {
