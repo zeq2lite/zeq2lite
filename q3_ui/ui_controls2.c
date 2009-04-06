@@ -92,26 +92,26 @@ typedef struct
 #define ID_CHAT3		32
 #define ID_CHAT4		33
 
-// all others
-#define ID_FREELOOK		34
-#define ID_INVERTMOUSE	35
-#define ID_ALWAYSRUN	36
-#define ID_AUTOSWITCH	37
-#define ID_MOUSESPEED	38
-#define ID_JOYENABLE	39
-#define ID_JOYTHRESHOLD	40
-#define ID_SMOOTHMOUSE	41
-
 // zeq2 specific
 
-#define ID_ATTACK2		42
-#define ID_ROLLLEFT		43
-#define ID_ROLLRIGHT	44
-#define ID_BOOST		45
-#define ID_CHARGEPL		46
-#define ID_DRAINPL		47
-#define ID_ZANZOKEN		48
-#define ID_JUMP			49
+#define ID_ATTACK2		34
+#define ID_ROLLLEFT		35
+#define ID_ROLLRIGHT	36
+#define ID_BOOST		37
+#define ID_CHARGEPL		38
+#define ID_DRAINPL		39
+#define ID_ZANZOKEN		40
+#define ID_JUMP			41
+
+// all others
+#define ID_FREELOOK		42
+#define ID_INVERTMOUSE	43
+#define ID_ALWAYSRUN	44
+#define ID_AUTOSWITCH	45
+#define ID_MOUSESPEED	46
+#define ID_JOYENABLE	47
+#define ID_JOYTHRESHOLD	48
+#define ID_SMOOTHMOUSE	49
 
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
@@ -312,17 +312,17 @@ static menucommon_s *g_movement_controls[] =
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,     
 	(menucommon_s *)&s_controls.sidestep,
-//	(menucommon_s *)&s_controls.jump,
-//	(menucommon_s *)&s_controls.zanzoken,
-//	(menucommon_s *)&s_controls.rollleft,
-//	(menucommon_s *)&s_controls.rollright,
-//	(menucommon_s *)&s_controls.boost,
+	(menucommon_s *)&s_controls.jump,
+	(menucommon_s *)&s_controls.zanzoken,
+	(menucommon_s *)&s_controls.rollleft,
+	(menucommon_s *)&s_controls.rollright,
+	(menucommon_s *)&s_controls.boost,
 	NULL
 };
 
 static menucommon_s *g_weapons_controls[] = {
 	(menucommon_s *)&s_controls.attack,
-//	(menucommon_s *)&s_controls.attack2,
+	(menucommon_s *)&s_controls.attack2,
 	(menucommon_s *)&s_controls.nextweapon,
 	(menucommon_s *)&s_controls.prevweapon,
 	(menucommon_s *)&s_controls.autoswitch,
@@ -332,9 +332,9 @@ static menucommon_s *g_weapons_controls[] = {
 	(menucommon_s *)&s_controls.grenadelauncher,
 	(menucommon_s *)&s_controls.rocketlauncher,
 	(menucommon_s *)&s_controls.lightning,
-	(menucommon_s *)&s_controls.railgun,
-	(menucommon_s *)&s_controls.plasma,
-	(menucommon_s *)&s_controls.bfg,
+//	(menucommon_s *)&s_controls.railgun,
+//	(menucommon_s *)&s_controls.plasma,
+//	(menucommon_s *)&s_controls.bfg,
 	NULL,
 };
 
@@ -355,8 +355,8 @@ static menucommon_s *g_looking_controls[] = {
 
 static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores, 
-//	(menucommon_s *)&s_controls.chargepl,
-//	(menucommon_s *)&s_controls.drainpl,
+	(menucommon_s *)&s_controls.chargepl,
+	(menucommon_s *)&s_controls.drainpl,
 	(menucommon_s *)&s_controls.useitem,
 	(menucommon_s *)&s_controls.gesture,
 	(menucommon_s *)&s_controls.chat,
@@ -1433,7 +1433,7 @@ static void Controls_MenuInit( void )
 	s_controls.run.generic.callback  = Controls_ActionEvent;
 	s_controls.run.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.run.generic.id        = ID_SPEED;
-/*
+
 	s_controls.jump.generic.type	    = MTYPE_ACTION;
 	s_controls.jump.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.jump.generic.callback	= Controls_ActionEvent;
@@ -1463,7 +1463,7 @@ static void Controls_MenuInit( void )
 	s_controls.boost.generic.callback	= Controls_ActionEvent;
 	s_controls.boost.generic.ownerdraw	= Controls_DrawKeyBinding;
 	s_controls.boost.generic.id			= ID_BOOST;
-*/
+
 	s_controls.chainsaw.generic.type	  = MTYPE_ACTION;
 	s_controls.chainsaw.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.chainsaw.generic.callback  = Controls_ActionEvent;
@@ -1523,13 +1523,13 @@ static void Controls_MenuInit( void )
 	s_controls.attack.generic.callback  = Controls_ActionEvent;
 	s_controls.attack.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.attack.generic.id        = ID_ATTACK;
-/*
+
 	s_controls.attack2.generic.type	    = MTYPE_ACTION;
 	s_controls.attack2.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.attack2.generic.callback  = Controls_ActionEvent;
 	s_controls.attack2.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.attack2.generic.id        = ID_ATTACK2;
-*/
+
 	s_controls.prevweapon.generic.type	    = MTYPE_ACTION;
 	s_controls.prevweapon.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.prevweapon.generic.callback  = Controls_ActionEvent;
@@ -1639,7 +1639,7 @@ static void Controls_MenuInit( void )
 	s_controls.gesture.generic.callback  = Controls_ActionEvent;
 	s_controls.gesture.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.gesture.generic.id        = ID_GESTURE;
-/*
+
 	s_controls.chargepl.generic.type	    = MTYPE_ACTION;
 	s_controls.chargepl.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.chargepl.generic.callback	= Controls_ActionEvent;
@@ -1651,7 +1651,7 @@ static void Controls_MenuInit( void )
 	s_controls.drainpl.generic.callback		= Controls_ActionEvent;
 	s_controls.drainpl.generic.ownerdraw	= Controls_DrawKeyBinding;
 	s_controls.drainpl.generic.id			= ID_DRAINPL;
-*/
+
 	s_controls.chat.generic.type	  = MTYPE_ACTION;
 	s_controls.chat.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.chat.generic.callback  = Controls_ActionEvent;
@@ -1727,21 +1727,23 @@ static void Controls_MenuInit( void )
 
 	Menu_AddItem( &s_controls.menu, &s_controls.alwaysrun );
 	Menu_AddItem( &s_controls.menu, &s_controls.run );
-//	Menu_AddItem( &s_controls.menu, &s_controls.boost );
-//	Menu_AddItem( &s_controls.menu, &s_controls.zanzoken );
+	Menu_AddItem( &s_controls.menu, &s_controls.boost );
+	Menu_AddItem( &s_controls.menu, &s_controls.zanzoken );
 	Menu_AddItem( &s_controls.menu, &s_controls.walkforward );
 	Menu_AddItem( &s_controls.menu, &s_controls.backpedal );
 	Menu_AddItem( &s_controls.menu, &s_controls.stepleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.stepright );
 	Menu_AddItem( &s_controls.menu, &s_controls.moveup );
 	Menu_AddItem( &s_controls.menu, &s_controls.movedown );
-//	Menu_AddItem( &s_controls.menu, &s_controls.jump );
+	Menu_AddItem( &s_controls.menu, &s_controls.jump );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnright );
+	Menu_AddItem( &s_controls.menu, &s_controls.rollleft );
+	Menu_AddItem( &s_controls.menu, &s_controls.rollright );
 	Menu_AddItem( &s_controls.menu, &s_controls.sidestep );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.attack );
-//	Menu_AddItem( &s_controls.menu, &s_controls.attack2 );
+	Menu_AddItem( &s_controls.menu, &s_controls.attack2 );
 	Menu_AddItem( &s_controls.menu, &s_controls.nextweapon );
 	Menu_AddItem( &s_controls.menu, &s_controls.prevweapon );
 	Menu_AddItem( &s_controls.menu, &s_controls.autoswitch );
@@ -1757,8 +1759,8 @@ static void Controls_MenuInit( void )
 
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
-//	Menu_AddItem( &s_controls.menu, &s_controls.chargepl );
-//	Menu_AddItem( &s_controls.menu, &s_controls.drainpl );
+	Menu_AddItem( &s_controls.menu, &s_controls.chargepl );
+	Menu_AddItem( &s_controls.menu, &s_controls.drainpl );
 	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat2 );
