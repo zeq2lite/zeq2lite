@@ -398,7 +398,7 @@ static void PlayerModel_BuildList( void )
 			continue;
 			
 		// iterate all skin files in directory
-		numfiles = trap_FS_GetFileList( va("players//%s",dirptr), "tga", filelist, 2048 );
+		numfiles = trap_FS_GetFileList( va("players//%s",dirptr), "png", filelist, 2048 );
 		fileptr  = filelist;
 		for (j=0; j<numfiles && s_playermodel.nummodels < MAX_PLAYERMODELS;j++,fileptr+=filelen+1)
 		{
