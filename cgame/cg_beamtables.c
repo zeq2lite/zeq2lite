@@ -353,15 +353,30 @@ static int CG_TessCount( const beamTableElem_t *startElem, const beamTableElem_t
 	if ( detail < 0 ) {
 		detail = 0;
 	}
-	if ( detail > 40 ) {
+
+	if ( detail >= 40 ) {
 		detail = 40;
+		if ( tangentRatio < 1 ) {
+			tangentRatio = 1;
+		}
+	} else if ( detail <= 30 ) {
+		if ( tangentRatio < 0.5 ) {
+			tangentRatio = 0.5;
+		}
+	} else if ( detail <= 20 ) {
+		if ( tangentRatio < 0.25 ) {
+			tangentRatio = 0.25;
+		}
+	} else if ( detail <= 10 ) {
+		if ( tangentRatio < 0.1 ) {
+			tangentRatio = 0.1;
+		}
 	}
 
 	// On small distances always use the maximum tangent ratio
 	if ( dist < 100 ) {
 		tangentRatio = 2;
 	}
-	
 
 	return 1 + floor( tangentRatio * detail );
 }

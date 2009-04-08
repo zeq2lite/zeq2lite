@@ -584,7 +584,6 @@ CG_DrawStatusBar
 
 ================
 */
-#ifndef MISSIONPACK
 static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
@@ -596,15 +595,12 @@ static void CG_DrawStatusBar( void ) {
 	const char	*powerLevelString;
 	int powerLevelOffset;
 	long powerLevelDisplay;
-	float currentPercent;
-	float maxPercent;
-	float tierLast;
-	float tierNext;
-	float tier;
+	float currentPercent;	float maxPercent;
+	float tierLast;	float tierNext;	float tier;
 	cg_userWeapon_t	*weaponGraphics;
-#ifdef MISSIONPACK
-	qhandle_t	handle;	
-#endif
+//	const char *PLStats1;
+//	const char *PLStats2;
+
 	static float colors[8][4] = { 
 //		{ 0.2, 1.0, 0.2, 1.0 } , { 1.0, 0.2, 0.2, 1.0 }, {0.5, 0.5, 0.5, 1} };
 		{ 1.0f, 0.69f, 0.0f, 1.0f },    // yellow
@@ -651,10 +647,15 @@ static void CG_DrawStatusBar( void ) {
 	limitColor[1] = 0.16f;
 	limitColor[2] = 0.16f;
 	limitColor[3] = 1.0f;
-	excessColor[0] = 0.9f;
-	excessColor[1] = 0.5f;
-	excessColor[2] = 0.0f;
-	excessColor[3] = 1.0f;
+	excessColor[0] = 0.9f;	excessColor[1] = 0.5f;	excessColor[2] = 0.0f;	excessColor[3] = 1.0f;
+
+	/*
+	PLStats1 = va("PL Current : %i PL Total : %i", cg.snap->ps.stats[powerLevel], cg.snap->ps.stats[powerLevelTotal]);
+	PLStats2 = va("PL Cap	    : %i Tier     : %i", cg.snap->ps.persistant[powerLevelMaximum], cg.snap->ps.stats[tierCurrent]);
+
+	CG_DrawSmallStringHalfHeight(2,56,PLStats1,1.0F);
+	CG_DrawSmallStringHalfHeight(2,64,PLStats2,1.0F);
+	*/
 
 	// CG_DrawHorGauge(x,y,width,height,color,emptyColor,value,maxValue,reversed)
 	// draw the selected weapon icon
@@ -662,29 +663,14 @@ static void CG_DrawStatusBar( void ) {
 	//	weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
 	//	CG_DrawPic( 32, 388, 68, 68, weaponGraphics->weaponIcon );
 	//}
-	tier = (float)ps->stats[tierCurrent];
-	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
-	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];
-	powerLevelDisplay = (float)ps->stats[powerLevel] * ((tier*tier*tier*tier)+1.0);
+	tier = (float)ps->stats[tierCurrent];	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
+	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];	powerLevelDisplay = (float)ps->stats[powerLevel] * ((tier*tier*tier*tier)+1.0);
 	powerLevelString = va("%i",powerLevelDisplay);
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
-	if(currentPercent > 1.0){currentPercent = 1.0;}
- 	CG_DrawHorGauge(60,449,200,16,limitColor,colors[5],1,1,qfalse);
- 	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse);
- 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);
-	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
-	if(tier){
-		tierLast = (3640 * tier) / (float)ps->persistant[powerLevelMaximum];
-		CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
-	}
-	if(tier < ps->stats[tierTotal]){
-		tierNext = (3640 * (tier + 1)) / (float)ps->persistant[powerLevelMaximum];
-		CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
-	}
-	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
+	if(currentPercent > 1.0){currentPercent = 1.0;} 	CG_DrawHorGauge(60,449,200,16,limitColor,colors[5],1,1,qfalse); 	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
+	if(tier){		tierLast = (3640 * tier) / (float)ps->persistant[powerLevelMaximum];		CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);	}	if(tier < ps->stats[tierTotal]){		tierNext = (3640 * (tier + 1)) / (float)ps->persistant[powerLevelMaximum];		CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);	}	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
 	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
 }
-#endif
 
 /*
 ===========================================================================================
