@@ -394,17 +394,11 @@ HACK: Currently just a quick hack routine that instantly raises tier when exceed
 */
 static void PM_CheckTier( void ) {
 	int tier, lowBreak, highBreak;
-
 	tier = pm->ps->stats[tierCurrent];
 	lowBreak = (32000 / 9) * (tier);
 	highBreak = (32000 / 9) * (tier + 1);
-	if((pm->ps->stats[powerLevel] < lowBreak) && tier > 0){
-		PM_AddEvent(EV_TIERDOWN);
-	}
-	else if((pm->ps->stats[powerLevel] > highBreak ) && tier < 7){
-		//pm->ps->powerups[PW_TRANSFORM] = 5000;
-		PM_AddEvent( EV_TIERUP );
-	}
+	if((pm->ps->stats[powerLevel] < lowBreak) && tier > 0){PM_AddEvent(EV_TIERDOWN);}
+	else if((pm->ps->stats[powerLevel] > highBreak ) && tier < 7){PM_AddEvent( EV_TIERUP );}
 }
 
 /*
@@ -413,7 +407,7 @@ PM_CheckPowerLevel
 ==================
 */
 static qboolean PM_CheckPowerLevel( void ) {
-	int plSpeed,tier,lowBreak,highBreak,chargeScale;
+	int plSpeed,tier,lowBreak,highBreak,chargeScale,amount;
 	tier = pm->ps->stats[tierCurrent];
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
@@ -425,8 +419,8 @@ static qboolean PM_CheckPowerLevel( void ) {
 		if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
 			pm->ps->stats[powerLevel] -= 6 * (pm->ps->stats[tierCurrent] + 1);
 		}
-		if(pm->ps->stats[powerLevelTotal] >= 32600) {
-			pm->ps->stats[powerLevelTotal] = 32600;
+		if(pm->ps->stats[powerLevelTotal] >= 32768) {
+			pm->ps->stats[powerLevelTotal] = 32768;
 		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_UP){
@@ -491,17 +485,16 @@ static qboolean PM_CheckPowerLevel( void ) {
 		if ( pm->ps->stats[STAT_POWERBUTTONS_TIMER] < -16000 ) {
 			pm->ps->stats[STAT_POWERBUTTONS_TIMER] = -16000;
 		}
-
-		// Decrement the power level timer scaled by hold down time
 		plSpeed = (-pm->ps->stats[STAT_POWERBUTTONS_TIMER] / 500.0f) + 1;
 		pm->ps->stats[powerLevelTimer] -= pml.msec * plSpeed;
-
-		// Use up stored timer value
 		while ( pm->ps->stats[powerLevelTimer] <= -50 ) {
 			pm->ps->stats[powerLevelTimer] += 50;
-			// Lower powerLevel if possible
-			if ( pm->ps->stats[powerLevel] > 50 ) {
-				pm->ps->stats[powerLevel] -= chargeScale * (pm->ps->stats[tierCurrent] + 1);
+			amount = chargeScale * (pm->ps->stats[tierCurrent] + 1);
+			if ( pm->ps->stats[powerLevel] - amount > 50 ) {
+				pm->ps->stats[powerLevel] -= amount;
+			}
+			else{
+				pm->ps->stats[powerLevel] = 50;
 			}
 		}
 
@@ -2803,13 +2796,12 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	// Activate transform if necessary
-	if ( pm->ps->powerups[PW_TRANSFORM] == 5000 ) {
+	if (pm->ps->powerups[PW_TRANSFORM]){
 		// Disable any dashing
 		if ( VectorLength( pm->ps->dashDir ) > 0.0f ) {
 			PM_StopDash();
 			PM_StopBoost();
 		}
-		pm->ps->powerups[PW_TRANSFORM] = 5000; // 5 seconds
 	}
 
 	if ( pm->ps->powerups[PW_TRANSFORM] ) {

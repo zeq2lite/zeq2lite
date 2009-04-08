@@ -18,8 +18,6 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*drown.ogg",
 	"*fall1.ogg",
 	"*taunt.ogg",
-	"*powerup.ogg",
-	"*powerdown.ogg"
 };
 
 // HACK: We have to copy the entire playerEntity_t information

@@ -7,7 +7,12 @@ void P_TierUp( playerState_t *ps ) {
 	if (ps->stats[tierCurrent] < 7){
 		ps->stats[tierCurrent]++;
 		if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
+			ps->powerups[PW_TRANSFORM] = 2700 + (ps->stats[tierCurrent] * 800);
+			//trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*powerup.ogg" ) );
 			ps->stats[tierTotal] = ps->stats[tierCurrent];
+		}
+		else{
+
 		}
 	}
 }
