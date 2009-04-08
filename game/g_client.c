@@ -1197,7 +1197,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.running = g_running.value;
 
 	// ADDING FOR ZEQ2
-	client->ps.stats[currentTier] = 0;
+	client->ps.stats[tierCurrent] = 0;
 	client->ps.stats[damageDealt] = 0;
 
 	// make sure all bitFlags are OFF, and explicitly turn off the aura

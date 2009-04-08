@@ -143,6 +143,7 @@ struct gentity_s {
 	int			powerLevel;
 
 	qboolean	takedamage;
+	qboolean	struggling;
 
 	int			damage;
 	int			damageRadius;
@@ -183,7 +184,7 @@ struct gentity_s {
 	int			sectionSpawnTime; // Servertime at which the last drop of a waypoint for a beam took place.
 	int			newSectionTime;  // Time to pass before a new waypoint drop;
 
-	int			chargelvl;	// [0..100]; Percentage of charge up used by attack
+	int			chargelvl;			// [0..100]; Percentage of charge up used by attack
 	qboolean	explodeOnMaxLifetime; // does the attack explode when max lifetime is reached, or just disappear?
 	qboolean	continuousExplosion; // Should the explosion be continuous?
 	qboolean	guided;				// is the attack guided?

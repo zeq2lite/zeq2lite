@@ -2,68 +2,47 @@
 //
 // bg_pmove.c -- both games player movement code
 // takes a playerstate and a usercmd as input and returns a modifed playerstate
-
 #include "q_shared.h"
 #include "bg_public.h"
 #include "bg_local.h"
 #include "bg_userweapons.h"
-
 pmove_t		*pm;
 pml_t		pml;
-
 // movement parameters
 float	pm_stopspeed = 100.0f;
 float	pm_swimScale = 0.80f;
-
 float	pm_accelerate = 10.0f;
 float	pm_airaccelerate = 1.0f;
 float	pm_wateraccelerate = 4.0f;
 float	pm_flyaccelerate = 15.0f;
-float	pm_dashaccelerate = 15.0f; // 8.0f
-
+float	pm_dashaccelerate = 15.0f; // 8.0
 float	pm_friction = 6.0f;
 float	pm_waterfriction = 1.0f;
 float	pm_flightfriction = 6.0f; // 3.0f
 float	pm_spectatorfriction = 7.0f;
-
 int		c_pmove = 0;
-
-
-/*
-=====================
-PM_DeductFromHealth
-
-=====================
-*/
+//=====================
+//  PM_DeductFromHealth
+//=====================
 qboolean PM_DeductFromHealth( int wanted ) {
 	int newBuf;
-
-	// See if we can deduct this from the powerLevel buffer
 	newBuf = pml.bufferHealth - wanted;
-	if ( newBuf >= 0 ) {
+	if(newBuf >= 0){
 		pml.bufferHealth = newBuf;
 		return qtrue;
-
-	} else {
-		// See if we can deduct what is left after using up
-		// the buffer from the powerLevel directly.
-		if ( (pm->ps->stats[powerLevelTotal] + newBuf) > 50 ) { // NOTE; since newBuf is now negative!
+	}
+	else{
+		if((pm->ps->stats[powerLevelTotal] + newBuf) > 50){
 			pml.bufferHealth = 0;
-			pm->ps->stats[powerLevelTotal] += newBuf; // NOTE: again, since newBuf is negative here.
+			pm->ps->stats[powerLevelTotal] += newBuf;
 			return qtrue;
 		}
 	}
-
-	// Couldn't deduct from buffer or powerLevel.
 	return qfalse;
 }
-
-/*
-=====================
-PM_BuildBufferHealth
-
-=====================
-*/
+//=====================
+//  PM_BuildBufferHealth
+//=====================
 #define MAX_BUFFERHEALTH_PER_MSEC 2
 // FIXME: MAX_BUFFERHEALTH_PER_MSEC will go into a per-player configuration statistic called 'regen rate' later on.
 void PM_BuildBufferHealth( void ) {
@@ -416,14 +395,14 @@ HACK: Currently just a quick hack routine that instantly raises tier when exceed
 static void PM_CheckTier( void ) {
 	int tier, lowBreak, highBreak;
 
-	tier = pm->ps->stats[currentTier];
-	lowBreak = 1000;
+	tier = pm->ps->stats[tierCurrent];
+	lowBreak = (32000 / 9) * (tier);
 	highBreak = (32000 / 9) * (tier + 1);
-	if ( (pm->ps->stats[powerLevelTotal] < lowBreak ) && tier > 0 ) {
-		PM_AddEvent( EV_TIERDOWN );
+	if((pm->ps->stats[powerLevel] < lowBreak) && tier > 0){
+		PM_AddEvent(EV_TIERDOWN);
 	}
-	if ( (pm->ps->stats[powerLevelTotal] > highBreak ) && tier < 7) {
-		pm->ps->powerups[PW_TRANSFORM] = 5000;
+	else if((pm->ps->stats[powerLevel] > highBreak ) && tier < 7){
+		//pm->ps->powerups[PW_TRANSFORM] = 5000;
 		PM_AddEvent( EV_TIERUP );
 	}
 }
@@ -434,16 +413,17 @@ PM_CheckPowerLevel
 ==================
 */
 static qboolean PM_CheckPowerLevel( void ) {
-	int plSpeed, tier, lowBreak, highBreak;
-	tier = pm->ps->stats[currentTier];
+	int plSpeed,tier,lowBreak,highBreak,chargeScale;
+	tier = pm->ps->stats[tierCurrent];
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
+	chargeScale = pm->ps->powerlevelChargeScale * 10;
 	// If the player wants to power up
 	pm->ps->stats[powerLevelTimer2] += pml.msec;
 	while(pm->ps->stats[powerLevelTimer2] >= 50){
 		pm->ps->stats[powerLevelTimer2] -= 50;
 		if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
-			pm->ps->stats[powerLevel] -= 6 * (pm->ps->stats[currentTier] + 1);
+			pm->ps->stats[powerLevel] -= 6 * (pm->ps->stats[tierCurrent] + 1);
 		}
 		if(pm->ps->stats[powerLevelTotal] >= 32600) {
 			pm->ps->stats[powerLevelTotal] = 32600;
@@ -477,10 +457,18 @@ static qboolean PM_CheckPowerLevel( void ) {
 		while(pm->ps->stats[powerLevelTimer] >= 12){
 			pm->ps->stats[powerLevelTimer] -= 10;
 			if(pm->ps->stats[powerLevel] < pm->ps->stats[powerLevelTotal]){
-				pm->ps->stats[powerLevel] += pm->ps->powerlevelChargeScale / 3;
+				pm->ps->stats[powerLevel] += chargeScale;
 			}
 			else{
-				pm->ps->stats[powerLevelTotal] += pm->ps->powerlevelChargeScale / 8;
+				if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
+					pm->ps->stats[powerLevelTotal] += chargeScale * 0.5;
+				}
+				else if(pm->ps->stats[powerLevelTotal] <= pm->ps->persistant[powerLevelMaximum]){
+					pm->ps->stats[powerLevelTotal] += chargeScale * 0.2;
+				}
+				else{
+					pm->ps->stats[powerLevelTotal] += chargeScale * 0.4;
+				}
 				if(pm->ps->stats[powerLevelTotal] >= pm->ps->persistant[powerLevelMaximum]){
 					pm->ps->persistant[powerLevelMaximum] = pm->ps->stats[powerLevelTotal];
 				}
@@ -513,7 +501,7 @@ static qboolean PM_CheckPowerLevel( void ) {
 			pm->ps->stats[powerLevelTimer] += 50;
 			// Lower powerLevel if possible
 			if ( pm->ps->stats[powerLevel] > 50 ) {
-				pm->ps->stats[powerLevel] -= 12 * (pm->ps->stats[currentTier] + 1);
+				pm->ps->stats[powerLevel] -= chargeScale * (pm->ps->stats[tierCurrent] + 1);
 			}
 		}
 
@@ -701,21 +689,21 @@ static void PM_FlyMove( void ) {
 	if ( PM_CheckPowerLevel() ) {
 		return;
 	} else if ( PM_CheckBoost() ) {
-		if ( pm->ps->stats[currentTier] == 8 ) {
+		if ( pm->ps->stats[tierCurrent] == 8 ) {
 			boostFactor = 7.0f;
-		} else if ( pm->ps->stats[currentTier] == 7) {
+		} else if ( pm->ps->stats[tierCurrent] == 7) {
 			boostFactor = 6.5f;
-		} else if ( pm->ps->stats[currentTier] == 6) {
+		} else if ( pm->ps->stats[tierCurrent] == 6) {
 			boostFactor = 6.0f;
-		} else if ( pm->ps->stats[currentTier] == 5) {
+		} else if ( pm->ps->stats[tierCurrent] == 5) {
 			boostFactor = 5.5f;
-		} else if ( pm->ps->stats[currentTier] == 4) {
+		} else if ( pm->ps->stats[tierCurrent] == 4) {
 			boostFactor = 5.0f;
-		} else if ( pm->ps->stats[currentTier] == 3) {
+		} else if ( pm->ps->stats[tierCurrent] == 3) {
 			boostFactor = 4.5f;
-		} else if ( pm->ps->stats[currentTier] == 2) {
+		} else if ( pm->ps->stats[tierCurrent] == 2) {
 			boostFactor = 4.0f;
-		} else if ( pm->ps->stats[currentTier] == 1) {
+		} else if ( pm->ps->stats[tierCurrent] == 1) {
 			boostFactor = 3.5f;
 		} else {
 			boostFactor = 3.0f;
@@ -995,21 +983,21 @@ static void PM_DashMove( void ) {
 
 	if ( PM_CheckBoost()) {
 		pm->ps->pm_flags |= PMF_BOOST_HELD;
-		if ( pm->ps->stats[currentTier] == 8 ) {
+		if ( pm->ps->stats[tierCurrent] == 8 ) {
 			boostFactor = 7.0f;
-		} else if ( pm->ps->stats[currentTier] == 7) {
+		} else if ( pm->ps->stats[tierCurrent] == 7) {
 			boostFactor = 6.5f;
-		} else if ( pm->ps->stats[currentTier] == 6) {
+		} else if ( pm->ps->stats[tierCurrent] == 6) {
 			boostFactor = 6.0f;
-		} else if ( pm->ps->stats[currentTier] == 5) {
+		} else if ( pm->ps->stats[tierCurrent] == 5) {
 			boostFactor = 5.5f;
-		} else if ( pm->ps->stats[currentTier] == 4) {
+		} else if ( pm->ps->stats[tierCurrent] == 4) {
 			boostFactor = 5.0f;
-		} else if ( pm->ps->stats[currentTier] == 3) {
+		} else if ( pm->ps->stats[tierCurrent] == 3) {
 			boostFactor = 4.5f;
-		} else if ( pm->ps->stats[currentTier] == 2) {
+		} else if ( pm->ps->stats[tierCurrent] == 2) {
 			boostFactor = 4.0f;
-		} else if ( pm->ps->stats[currentTier] == 1) {
+		} else if ( pm->ps->stats[tierCurrent] == 1) {
 			boostFactor = 3.5f;
 		} else {
 			boostFactor = 3.0f;

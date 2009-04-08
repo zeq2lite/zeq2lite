@@ -81,7 +81,7 @@ extern vmCvar_t	ui_serverFilterType;
 extern vmCvar_t	ui_dedicated;
 extern vmCvar_t	ui_opponentName;
 extern vmCvar_t	ui_menuFiles;
-extern vmCvar_t	ui_currentTier;
+extern vmCvar_t	ui_tierCurrent;
 extern vmCvar_t	ui_currentMap;
 extern vmCvar_t	ui_currentNetMap;
 extern vmCvar_t	ui_mapIndex;

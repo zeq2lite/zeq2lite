@@ -1204,17 +1204,11 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 			trap_Cvar_Set("timescale", va("%f", cg_timescale.value));
 		}
 	}
-
 	// actually issue the rendering calls
 	CG_DrawActive( stereoView );
-
 	if ( cg_stats.integer ) {
 		CG_Printf( "cg.clientFrame:%i\n", cg.clientFrame );
 	}
 
-	
-	CG_Printf( "PL     : %i / %i\n", cg.snap->ps.stats[powerLevel], cg.snap->ps.stats[powerLevelTotal] );
-	CG_Printf( "PL cap : %i\n", cg.snap->ps.persistant[powerLevelMaximum] );
-	CG_Printf( "Tier   : %i\n", cg.snap->ps.stats[currentTier] );
 }
 

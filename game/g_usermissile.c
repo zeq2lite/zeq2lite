@@ -1,23 +1,15 @@
 #include "g_local.h"
-
 #define	MIN_SKIM_NORMAL	0.5f
-
 #define	MISSILE_PRESTEP_TIME	 50
 #define SOLID_ADD				400  // Add extra to guide line to go behind solids with weapon
 #define BEAM_SECTION_TIME		520  // Timeframe to spawn a new beam section
-
 #define SKIM_MIN_GROUNDCLEARANCE	 5	// Amount the attack will 'hover' above ground
 #define	SKIM_MAX_GROUNDCLEARANCE	25	// How much distance are we allowed to take to reach ground level again.
 										// Used in a check for passing steep cliffs, etc. while skimming.
 
-#define DEF_FORTITUDE	0.66
-
-
-/*
-   -------------------------------
-     M I S C   F U N C T I O N S
-   -------------------------------
-*/
+/*-------------------------------
+ M I S C   F U N C T I O N S
+-------------------------------*/
 
 
 /*
@@ -376,49 +368,16 @@ Think_NormalMissile
 =====================
 */
 void Think_NormalMissile (gentity_t *self) {
-	// This is just a normal missile, so we only have to check if it's
-	// existed too long or not.
-
-	// If the weapon has existed too long, make the next think detonate it.
-	if ( ( self->missileSpawnTime + self->maxMissileTime ) <= level.time ) {
-	  self->think = G_ExplodeUserWeapon;
-	}
+	//if ( ( self->missileSpawnTime + self->maxMissileTime ) <= level.time ) {
+	//  self->think = G_ExplodeUserWeapon;
+	//}
 	self->nextthink = level.time + FRAMETIME;
 }
-
-
-
-/*
-   -----------------------------------
-     D A M A G E   F U N C T I O N S
-   -----------------------------------
-*/
-
-int CheckFortitude (gentity_t *ent, int damage, int dflags) {
-	gclient_t	*client;
-	int			save;
-	int			count;
-
-	if (!damage)
-		return 0;
-
+int CheckFortitude (gentity_t *ent, int damage, int dflags){
+	gclient_t *client;
 	client = ent->client;
-
-	if (!client) {
-		return 0;
-	}
-
-	if (dflags & DAMAGE_NO_ARMOR) {
-		return 0;
-	}
-
-
-	// PL will determine your fortitude
-	count = 0;
-	// Amount saved will be 2/3 of the PL-determined percentage of the damage
-	save = ceil( damage * DEF_FORTITUDE * count / 100.0f );
-
-	return save;
+	if(!client || !client->ps.stats[tierTotal]) {return 0;}
+	return (client->ps.stats[tierTotal] * 0.1) * damage;
 }
 
 /*
@@ -432,155 +391,64 @@ attacker = entity the inflictor belongs to
 dir = direction for knockback
 point = origin of attack
 */
-void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *attacker,
-			   vec3_t dir, vec3_t point, int damage, int dflags, int methodOfDeath, int extraKnockback ) {
-	gclient_t	*tgClient;
-	int			take;
-	int			save;
-	int			asave;
-	int			knockback;
-
-
-	if (!target->takedamage) {
-		return;
-	}
-
-	// the intermission has already been qualified for, so don't
-	// allow any extra scoring
-	if ( level.intermissionQueued ) {
-		return;
-	}
-
-	if ( !inflictor ) {
-		inflictor = &g_entities[ENTITYNUM_WORLD];
-	}
-	if ( !attacker ) {
-		attacker = &g_entities[ENTITYNUM_WORLD];
-	}
-
-	// shootable doors / buttons don't actually have any powerLevel
-	// FIXME: Eventually disable for ZEQ2, or have to keep for func_breakable?
-	if ( target->s.eType == ET_MOVER ) {
-		if ( target->use && target->moverState == MOVER_POS1 ) {
-			target->use( target, inflictor, attacker );
-		}
-		return;
-	}
-
-	
+void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int extraKnockback){
+	gclient_t *tgClient;
+	int	asave;
+	int	knockback;
+	int newPower;
+	if(!target->takedamage){return;}
+	if(level.intermissionQueued){return;}
+	if(!inflictor){inflictor = &g_entities[ENTITYNUM_WORLD];}
+	if(!attacker){attacker = &g_entities[ENTITYNUM_WORLD];}
 	tgClient = target->client;
-
-	if ( tgClient ) {
-		if ( tgClient->noclip ) {
-			return;
-		}
-	}
-
-	if ( !dir ) {
-		dflags |= DAMAGE_NO_KNOCKBACK;
-	} else {
-		VectorNormalize( dir );
-	}
-
-	
-	if ( inflictor == &g_entities[ENTITYNUM_WORLD] ) {
+	if(tgClient && tgClient->noclip){return;}
+	if(!dir){dflags |= DAMAGE_NO_KNOCKBACK;}
+	else{
+		VectorNormalize(dir);
+	}	
+	if(inflictor == &g_entities[ENTITYNUM_WORLD]){
 		knockback = damage;
-	} else {
+	}
+	else{
 		knockback = damage + extraKnockback;
 	}
-	/*
-	if ( knockback > 200 ) {
-		knockback = 200;
-	}
-	*/
-	// Don't allow more knockback than this (though it's already very high)
-	if ( knockback > 5000 ) {
-		knockback = 5000;
-	}
-	if ( knockback < 0 ) {
+	if((target->flags & FL_NO_KNOCKBACK) || (dflags & DAMAGE_NO_KNOCKBACK)){
 		knockback = 0;
 	}
-	if ( target->flags & FL_NO_KNOCKBACK ) {
-		knockback = 0;
-	}
-	if ( dflags & DAMAGE_NO_KNOCKBACK ) {
-		knockback = 0;
-	}
-
-	// figure momentum add, even if the damage won't be taken
-	if ( knockback && tgClient ) {
+	
+	if(knockback && tgClient){
 		vec3_t	kvel;
 		float	mass;
-
 		mass = 200;
-
 		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
-		VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
-
+		//VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
 		// set the timer so that the other client can't cancel
 		// out the movement immediately
-		if ( !tgClient->ps.pm_time ) {
-			int		t;
-
+		if(!tgClient->ps.pm_time){
+			int	t;
 			t = knockback * 2;
-			if ( t < 50 ) {
+			if(t < 50){
 				t = 50;
 			}
-			if ( t > 200 ) {
+			if(t > 200 ) {
 				t = 200;
 			}
 			tgClient->ps.pm_time = t;
 			tgClient->ps.pm_flags |= PMF_TIME_KNOCKBACK;
 		}
 	}
-
-	// check for completely getting out of the damage
-	if ( !(dflags & DAMAGE_NO_PROTECTION) ) {
-
-		// if TF_NO_FRIENDLY_FIRE is set, don't do damage to the targetet
-		// if the attacker was on the same team
-		if ( target != attacker && OnSameTeam (target, attacker)  ) {
-			if ( !g_friendlyFire.integer ) {
-				return;
-			}
-		}
-
-		// check for godmode
-		if ( target->flags & FL_GODMODE ) {
-			return;
-		}
+	if(!(dflags & DAMAGE_NO_PROTECTION)){
+		if(((target != attacker && OnSameTeam(target, attacker)) && !g_friendlyFire.integer) || (target->flags & FL_GODMODE)){return;}
 	}
-
-
-	// add to the attacker's hit counter (if the targetet isn't a general entity like a prox mine)
-	if ( attacker->client && target != attacker && target->powerLevel > 0
-			&& target->s.eType != ET_MISSILE
-			&& target->s.eType != ET_GENERAL) {
-		if ( OnSameTeam( target, attacker ) ) {
-			attacker->client->ps.persistant[PERS_HITS]--;
-		} else {
-			attacker->client->ps.persistant[PERS_HITS]++;
-		}
-		//attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->powerLevel<<8)|(client->ps.stats[STAT_ARMOR]);
+	if(attacker->client && target != attacker && target->powerLevel > 0	&& target->s.eType != ET_MISSILE && target->s.eType != ET_GENERAL){
+		attacker->client->ps.persistant[PERS_HITS] += OnSameTeam(target,attacker) ? -1 : 1;
 		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->powerLevel<<8)|0;
 	}
-
-	// always give half damage if hurting self
-	// calculated after knockback, so rocket jumping works
-	if ( target == attacker) {
-		damage *= 0.5;
+	if(target == attacker){
+		damage *= 0.2;
 	}
-
-	if ( damage < 1 ) {
-		damage = 1;
-	}
-	take = damage;
-	save = 0;
-
-	// save some from armor
-	asave = CheckFortitude (target, take, dflags);
-	take -= asave;
-
+	asave = CheckFortitude(target,damage,dflags);
+	damage -= asave;
 	// add to the damage inflicted on a player this frame
 	// the total will be turned into screen blends and view angle kicks
 	// at the end of the frame
@@ -590,8 +458,7 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 		} else {
 			tgClient->ps.persistant[PERS_ATTACKER] = ENTITYNUM_WORLD;
 		}
-		//tgClient->damage_armor += asave;
-		tgClient->damage_blood += take;
+		tgClient->damage_blood += damage;
 		tgClient->damage_knockback += knockback;
 		if ( dir ) {
 			VectorCopy ( dir, tgClient->damage_from );
@@ -601,37 +468,31 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 			tgClient->damage_fromWorld = qtrue;
 		}
 	}
-
-	// See if it's the player hurting the emeny flag carrier
-	if( g_gametype.integer == GT_CTF) {
-		Team_CheckHurtCarrier(target, attacker);
-	}
-
-	if (tgClient) {
-		// set the last client who damaged the target
+	if(tgClient){
 		tgClient->lasthurt_client = attacker->s.number;
 		tgClient->lasthurt_mod = methodOfDeath;
 	}
-
-	// do the damage
-	if (take) {
-		target->powerLevel = target->powerLevel - take;
-		if ( tgClient ) {
-			tgClient->ps.stats[powerLevel] = target->powerLevel;
-		}
-			
-		if ( target->powerLevel <= 0 ) {
-			if ( tgClient )
+	if(damage){
+		if(tgClient){
+			tgClient->ps.stats[powerLevelTotal] = tgClient->ps.stats[powerLevelTotal] - damage;
+			newPower = tgClient->ps.persistant[powerLevelMaximum] + (damage*0.5);
+			if(newPower < 32768){
+				tgClient->ps.persistant[powerLevelMaximum] = newPower;
+			}
+			if(target->powerLevel <= 0 && tgClient->ps.stats[powerLevelTotal] <= 0){
+				target->enemy = attacker;
 				target->flags |= FL_NO_KNOCKBACK;
-
-			if (target->powerLevel < -999)
-				target->powerLevel = -999;
-
-			target->enemy = attacker;
-			target->die (target, inflictor, attacker, take, methodOfDeath);
-			return;
-		} else if ( target->pain ) {
-			target->pain (target, attacker, take);
+				target->die(target,inflictor,attacker,damage,methodOfDeath);
+			}
+			if(target->pain){
+				target->pain(target,attacker,damage);
+			}
+		}
+		else{
+			target->powerLevel = target->powerLevel - damage;
+			if(target->powerLevel <= 0){
+				target->die(target,inflictor,attacker,damage,methodOfDeath);
+			}
 		}
 	}
 

@@ -687,20 +687,20 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.numberShaders[i] = trap_R_RegisterShader( sb_nums[i] );
 	}
 
-	cgs.media.botSkillShaders[0] = trap_R_RegisterShader( "menu/art/skill1.tga" );
-	cgs.media.botSkillShaders[1] = trap_R_RegisterShader( "menu/art/skill2.tga" );
-	cgs.media.botSkillShaders[2] = trap_R_RegisterShader( "menu/art/skill3.tga" );
-	cgs.media.botSkillShaders[3] = trap_R_RegisterShader( "menu/art/skill4.tga" );
-	cgs.media.botSkillShaders[4] = trap_R_RegisterShader( "menu/art/skill5.tga" );
+	cgs.media.botSkillShaders[0] = trap_R_RegisterShader( "menu/art/skill1.png" );
+	cgs.media.botSkillShaders[1] = trap_R_RegisterShader( "menu/art/skill2.png" );
+	cgs.media.botSkillShaders[2] = trap_R_RegisterShader( "menu/art/skill3.png" );
+	cgs.media.botSkillShaders[3] = trap_R_RegisterShader( "menu/art/skill4.png" );
+	cgs.media.botSkillShaders[4] = trap_R_RegisterShader( "menu/art/skill5.png" );
 
 	cgs.media.viewBloodShader = trap_R_RegisterShader( "viewBloodBlend" );
 
-	cgs.media.deferShader = trap_R_RegisterShaderNoMip( "gfx/2d/defer.tga" );
+	cgs.media.deferShader = trap_R_RegisterShaderNoMip( "gfx/2d/defer.png" );
 
-	cgs.media.scoreboardName = trap_R_RegisterShaderNoMip( "menu/tab/name.tga" );
-	cgs.media.scoreboardPing = trap_R_RegisterShaderNoMip( "menu/tab/ping.tga" );
-	cgs.media.scoreboardScore = trap_R_RegisterShaderNoMip( "menu/tab/score.tga" );
-	cgs.media.scoreboardTime = trap_R_RegisterShaderNoMip( "menu/tab/time.tga" );
+	cgs.media.scoreboardName = trap_R_RegisterShaderNoMip( "menu/tab/name.png" );
+	cgs.media.scoreboardPing = trap_R_RegisterShaderNoMip( "menu/tab/ping.png" );
+	cgs.media.scoreboardScore = trap_R_RegisterShaderNoMip( "menu/tab/score.png" );
+	cgs.media.scoreboardTime = trap_R_RegisterShaderNoMip( "menu/tab/time.png" );
 
 	cgs.media.smokePuffShader = trap_R_RegisterShader( "smokePuff" );
 	cgs.media.smokePuffRageProShader = trap_R_RegisterShader( "smokePuffRagePro" );
@@ -803,7 +803,7 @@ static void CG_RegisterGraphics( void ) {
 	if ( cgs.gametype >= GT_TEAM || cg_buildScript.integer ) {
 		cgs.media.friendShader = trap_R_RegisterShader( "sprites/foe" );
 		cgs.media.redQuadShader = trap_R_RegisterShader("powerups/blueflag" );
-		cgs.media.teamStatusBar = trap_R_RegisterShader( "gfx/2d/colorbar.tga" );
+		cgs.media.teamStatusBar = trap_R_RegisterShader( "gfx/2d/colorbar.png" );
 #ifdef MISSIONPACK
 		cgs.media.blueKamikazeShader = trap_R_RegisterShader( "models/weaphits/kamikblu" );
 #endif
@@ -853,7 +853,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.invulnerabilityImpactModel = trap_R_RegisterModel( "models/powerups/shield/impact.md3" );
 	cgs.media.invulnerabilityJuicedModel = trap_R_RegisterModel( "models/powerups/shield/juicer.md3" );
 	cgs.media.medkitUsageModel = trap_R_RegisterModel( "models/powerups/regen.md3" );
-	cgs.media.heartShader = trap_R_RegisterShaderNoMip( "ui/assets/statusbar/selectedpowerLevel.tga" );
+	cgs.media.heartShader = trap_R_RegisterShaderNoMip( "ui/assets/statusbar/selectedpowerLevel.png" );
 
 #endif
 
@@ -891,14 +891,16 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.railCoreShader = trap_R_RegisterShader( "railCore" );
 
 	// ADDING FOR ZEQ2
-	cgs.media.LB_HudShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/LB_Hud.tga" );
-	cgs.media.CrHr_ChargeOutlineShader = trap_R_RegisterShaderNoMip ( "gfx/2d/hud/CrHr_ChargeOutline.tga" );
+	cgs.media.LB_HudShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/LB_Hud.png" );
+	cgs.media.markerAscendShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/markerAscend.png" );
+	cgs.media.markerDescendShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/markerDescend.png" );
+	cgs.media.CrHr_ChargeOutlineShader = trap_R_RegisterShaderNoMip ( "gfx/2d/hud/CrHr_ChargeOutline.png" );
 	cgs.media.CrHr_ChargeGlowShader = trap_R_RegisterShaderNoMip ( "gfx/2d/hud/CrHr_ChargeGlow" );
-	cgs.media.CrHr_NoChargeWeaponShader = trap_R_RegisterShaderNoMip ( "gfx/2d/hud/CrHr_NoChargeWeapon.tga" );
-	cgs.media.RadarBlipShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_blip.tga" );
-	cgs.media.RadarBurstShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_burst.tga" );
-	cgs.media.RadarWarningShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_warning.tga" );
-	cgs.media.RadarMidpointShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_midpoint.tga" );
+	cgs.media.CrHr_NoChargeWeaponShader = trap_R_RegisterShaderNoMip ( "gfx/2d/hud/CrHr_NoChargeWeapon.png" );
+	cgs.media.RadarBlipShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_blip.png" );
+	cgs.media.RadarBurstShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_burst.png" );
+	cgs.media.RadarWarningShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_warning.png" );
+	cgs.media.RadarMidpointShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_midpoint.png" );
 	// END ADDING
 
 	// register the inline models
@@ -929,20 +931,20 @@ static void CG_RegisterGraphics( void ) {
 
 #ifdef MISSIONPACK
 	// new stuff
-	cgs.media.patrolShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/patrol.tga");
-	cgs.media.assaultShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/assault.tga");
-	cgs.media.campShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/camp.tga");
-	cgs.media.followShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/follow.tga");
-	cgs.media.defendShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/defend.tga");
-	cgs.media.teamLeaderShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/team_leader.tga");
-	cgs.media.retrieveShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/retrieve.tga");
-	cgs.media.escortShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/escort.tga");
+	cgs.media.patrolShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/patrol.png");
+	cgs.media.assaultShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/assault.png");
+	cgs.media.campShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/camp.png");
+	cgs.media.followShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/follow.png");
+	cgs.media.defendShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/defend.png");
+	cgs.media.teamLeaderShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/team_leader.png");
+	cgs.media.retrieveShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/retrieve.png");
+	cgs.media.escortShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/escort.png");
 	cgs.media.cursor = trap_R_RegisterShaderNoMip( "menu/art/3_cursor2" );
-	cgs.media.sizeCursor = trap_R_RegisterShaderNoMip( "ui/assets/sizecursor.tga" );
-	cgs.media.selectCursor = trap_R_RegisterShaderNoMip( "ui/assets/selectcursor.tga" );
-	cgs.media.flagShaders[0] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_in_base.tga");
-	cgs.media.flagShaders[1] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_capture.tga");
-	cgs.media.flagShaders[2] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_missing.tga");
+	cgs.media.sizeCursor = trap_R_RegisterShaderNoMip( "ui/assets/sizecursor.png" );
+	cgs.media.selectCursor = trap_R_RegisterShaderNoMip( "ui/assets/selectcursor.png" );
+	cgs.media.flagShaders[0] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_in_base.png");
+	cgs.media.flagShaders[1] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_capture.png");
+	cgs.media.flagShaders[2] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_missing.png");
 
 	trap_R_RegisterModel( "players//james/lower.md3" );
 	trap_R_RegisterModel( "players//james/upper.md3" );
@@ -1767,9 +1769,9 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	// load a few needed things before we do any screen updates
 	cgs.media.charsetShader		= trap_R_RegisterShader( "gfx/2d/bigchars" );
 	cgs.media.whiteShader		= trap_R_RegisterShader( "white" );
-	cgs.media.charsetProp		= trap_R_RegisterShaderNoMip( "menu/art/font1_prop.tga" );
-	cgs.media.charsetPropGlow	= trap_R_RegisterShaderNoMip( "menu/art/font1_prop_glo.tga" );
-	cgs.media.charsetPropB		= trap_R_RegisterShaderNoMip( "menu/art/font2_prop.tga" );
+	cgs.media.charsetProp		= trap_R_RegisterShaderNoMip( "menu/art/font1_prop.png" );
+	cgs.media.charsetPropGlow	= trap_R_RegisterShaderNoMip( "menu/art/font1_prop_glo.png" );
+	cgs.media.charsetPropB		= trap_R_RegisterShaderNoMip( "menu/art/font2_prop.png" );
 
 	CG_RegisterCvars();
 

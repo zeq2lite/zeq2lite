@@ -747,7 +747,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 		}
 	}
 
-	s->tier = ps->stats[currentTier];
+	s->tier = ps->stats[tierCurrent];
 
 	s->loopSound = ps->loopSound;
 	s->generic1 = ps->generic1;
@@ -852,7 +852,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 		}
 	}
 
-	s->tier = ps->stats[currentTier];
+	s->tier = ps->stats[tierCurrent];
 
 	s->loopSound = ps->loopSound;
 	s->generic1 = ps->generic1;

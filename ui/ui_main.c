@@ -1349,7 +1349,7 @@ static void UI_DrawNetFilter(rectDef_t *rect, float scale, vec4_t color, int tex
 
 static void UI_DrawTier(rectDef_t *rect, float scale, vec4_t color, int textStyle) {
   int i;
-	i = trap_Cvar_VariableValue( "ui_currentTier" );
+	i = trap_Cvar_VariableValue( "ui_tierCurrent" );
   if (i < 0 || i >= uiInfo.tierCount) {
     i = 0;
   }
@@ -1358,7 +1358,7 @@ static void UI_DrawTier(rectDef_t *rect, float scale, vec4_t color, int textStyl
 
 static void UI_DrawTierMap(rectDef_t *rect, int index) {
   int i;
-	i = trap_Cvar_VariableValue( "ui_currentTier" );
+	i = trap_Cvar_VariableValue( "ui_tierCurrent" );
   if (i < 0 || i >= uiInfo.tierCount) {
     i = 0;
   }
@@ -1382,7 +1382,7 @@ static const char *UI_EnglishMapName(const char *map) {
 
 static void UI_DrawTierMapName(rectDef_t *rect, float scale, vec4_t color, int textStyle) {
   int i, j;
-	i = trap_Cvar_VariableValue( "ui_currentTier" );
+	i = trap_Cvar_VariableValue( "ui_tierCurrent" );
   if (i < 0 || i >= uiInfo.tierCount) {
     i = 0;
   }
@@ -1396,7 +1396,7 @@ static void UI_DrawTierMapName(rectDef_t *rect, float scale, vec4_t color, int t
 
 static void UI_DrawTierGameType(rectDef_t *rect, float scale, vec4_t color, int textStyle) {
   int i, j;
-	i = trap_Cvar_VariableValue( "ui_currentTier" );
+	i = trap_Cvar_VariableValue( "ui_tierCurrent" );
   if (i < 0 || i >= uiInfo.tierCount) {
     i = 0;
   }
@@ -2761,7 +2761,7 @@ void UI_ServersSort(int column, qboolean force) {
 static void UI_StartSinglePlayer() {
 	int i,j, k, skill;
 	char buff[1024];
-	i = trap_Cvar_VariableValue( "ui_currentTier" );
+	i = trap_Cvar_VariableValue( "ui_tierCurrent" );
   if (i < 0 || i >= tierCount) {
     i = 0;
   }
@@ -5590,7 +5590,7 @@ vmCvar_t	ui_netSource;
 vmCvar_t	ui_serverFilterType;
 vmCvar_t	ui_opponentName;
 vmCvar_t	ui_menuFiles;
-vmCvar_t	ui_currentTier;
+vmCvar_t	ui_tierCurrent;
 vmCvar_t	ui_currentMap;
 vmCvar_t	ui_currentNetMap;
 vmCvar_t	ui_mapIndex;
@@ -5711,7 +5711,7 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_blueteam5, "ui_blueteam5", "0", CVAR_ARCHIVE },
 	{ &ui_netSource, "ui_netSource", "0", CVAR_ARCHIVE },
 	{ &ui_menuFiles, "ui_menuFiles", "ui/menus.txt", CVAR_ARCHIVE },
-	{ &ui_currentTier, "ui_currentTier", "0", CVAR_ARCHIVE },
+	{ &ui_tierCurrent, "ui_tierCurrent", "0", CVAR_ARCHIVE },
 	{ &ui_currentMap, "ui_currentMap", "0", CVAR_ARCHIVE },
 	{ &ui_currentNetMap, "ui_currentNetMap", "0", CVAR_ARCHIVE },
 	{ &ui_mapIndex, "ui_mapIndex", "0", CVAR_ARCHIVE },

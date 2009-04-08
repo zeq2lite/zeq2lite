@@ -218,7 +218,8 @@ typedef enum {
 	skills,					// 16 bit bitmask
 	deathCameraAngle,		// look this direction when dead (FIXME: get rid of?)
 	// ADDING FOR ZEQ2
-	currentTier,			// Current powertier; integer; range [0..8]
+	tierCurrent,			// Current powertier; integer; range [0..8]
+	tierTotal,
 	damageDealt,			// Workaround for deducting HP for attack
 	chargePercentPrimary,	// % of primary attack charged
 	chargePercentSecondary,	// % of secondary attack charged

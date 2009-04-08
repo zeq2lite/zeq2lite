@@ -3,28 +3,19 @@
 
 #include "g_local.h"
 
-void P_DeductFromHealth( gentity_t *player ) {
-	gclient_t	*client;
-
-	client = player->client;
-	if ( client->ps.pm_type == PM_DEAD ) {
-		return;
-	}
-
-	// doing the damage
-	player->powerLevel -= client->ps.stats[damageDealt];
-	// clear hp cost
-	client->ps.stats[damageDealt] = 0;
-}
-
 void P_TierUp( playerState_t *ps ) {
-	if (ps->stats[currentTier] < 7)
-		ps->stats[currentTier]++;
+	if (ps->stats[tierCurrent] < 7){
+		ps->stats[tierCurrent]++;
+		if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
+			ps->stats[tierTotal] = ps->stats[tierCurrent];
+		}
+	}
 }
 
 void P_TierDown( playerState_t *ps ) {
-	if (ps->stats[currentTier] > 0)
-		ps->stats[currentTier] = 0;
+	if (ps->stats[tierCurrent] > 0){
+		ps->stats[tierCurrent]--;
+	}
 }
 
 

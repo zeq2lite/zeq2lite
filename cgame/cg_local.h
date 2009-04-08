@@ -767,6 +767,8 @@ typedef struct {
 
 	// ADDING FOR ZEQ2
 	qhandle_t	LB_HudShader;
+	qhandle_t	markerAscendShader;
+	qhandle_t	markerDescendShader;
 
 	qhandle_t	CrHr_ChargeOutlineShader;
 	qhandle_t	CrHr_ChargeGlowShader;
