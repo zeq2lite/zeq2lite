@@ -1977,6 +1977,7 @@ static void CG_ScanForCrosshairEntity( void ) {
 	vec3_t			muzzle, forward, up;
 	playerState_t	*ps;
 	int				content;
+	vec3_t			oldLock;
 
 	/*
 	VectorCopy( cg.refdef.vieworg, start );
@@ -2015,6 +2016,9 @@ static void CG_ScanForCrosshairEntity( void ) {
 	// update the fade timer
 	cg.crosshairClientNum = trace.entityNum;
 	cg.crosshairClientTime = cg.time;
+
+	cg.lockReady = qtrue;
+	VectorCopy(cg_entities[trace.entityNum].lerpOrigin, cg.lockedTarget);
 }
 
 

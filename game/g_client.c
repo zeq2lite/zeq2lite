@@ -738,6 +738,11 @@ void ClientUserinfoChanged( int clientNum ) {
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
 		client->pers.maxHealth = 100;
 	}
+
+	if ( g_powerlevel.value > 32768 ) {
+		g_powerlevel.value = 32768;
+	}
+
 	//client->ps.stats[powerLevelTotal] = client->pers.maxHealth;
 	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
 
@@ -1026,7 +1031,12 @@ void ClientBegin( int clientNum ) {
 
 	// ADDING FOR ZEQ2
 	// Set the starting cap
-	client->ps.persistant[powerLevelMaximum] = g_powerlevel.value;//1000;
+
+	if ( g_powerlevel.value > 32768 ) {
+		g_powerlevel.value = 32768;
+	}
+
+	client->ps.persistant[powerLevelMaximum] = g_powerlevel.value;
 	// END ADDING
 
 	// locate ent at a spawn point
@@ -1165,6 +1175,19 @@ void ClientSpawn(gentity_t *ent) {
 	}
 	// clear entity values
 	//client->ps.stats[powerLevelTotal] = client->pers.maxHealth;
+
+	if ( g_powerlevel.value > 32768 ) {
+		g_powerlevel.value = 32768;
+	}
+
+	if ( g_powerlevelChargeScale.value < 0 ) {
+		g_powerlevelChargeScale.value = 0;
+	}
+
+	if ( g_powerlevelChargeScale.value > 5 ) {
+		g_powerlevelChargeScale.value = 5;
+	}
+
 	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
 	client->ps.eFlags = flags;
 

@@ -42,7 +42,7 @@ typedef struct{
 static preferences_t s_preferences;
 static const char *beamdetail_names[] = {"Low","Medium","High","Very High",	0};
 static const char *beamcontrol_names[] = {"Beam Head Focus","Crosshair Focus",0};
-static const char *camerastyle_names[] = {"Locked behind head","Locked behind character",0};
+static const char *camerastyle_names[] = {"Locked Behind Head","Locked Behind Character",0};
 static void Preferences_SetMenuItems( void ) {
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
 	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
@@ -53,7 +53,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.beamcontrol.curvalue		= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_beamControl" ) );
 	s_preferences.synceveryframe.curvalue	= trap_Cvar_VariableValue( "r_finish" ) != 0;
 	s_preferences.motionblur.curvalue		= trap_Cvar_VariableValue( "r_motionBlur" ) != 0;
-	s_preferences.useRunAnimation.curvalue		= trap_Cvar_VariableValue( "g_running" ) != 0;
+	s_preferences.useRunAnimation.curvalue	= trap_Cvar_VariableValue( "g_running" ) != 0;
 	s_preferences.allowdownload.curvalue	= trap_Cvar_VariableValue( "cl_allowDownload" ) != 0;
 }
 static void Preferences_Event( void* ptr, int notification ) {

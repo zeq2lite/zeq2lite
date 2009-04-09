@@ -681,6 +681,9 @@ typedef struct {
 	qboolean	testGun;
 
 	// ADDING FOR ZEQ2
+	qboolean	lockReady;
+	qboolean	lockedView;
+	vec3_t		lockedTarget;
 
 	qboolean	guide_view;
 	vec3_t		guide_target;	// where to look for guided missiles

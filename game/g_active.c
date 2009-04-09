@@ -850,9 +850,21 @@ void ClientThink_real( gentity_t *ent ) {
 
 	client->ps.gravity = g_gravity.value;
 
+	if ( g_powerlevel.value > 32768 ) {
+		g_powerlevel.value = 32768;
+	}
+
 	// set the initial power level
 	client->ps.powerlevel = g_powerlevel.value;
 	
+	if ( g_powerlevelChargeScale.value < 0 ) {
+		g_powerlevelChargeScale.value = 0;
+	}
+
+	if ( g_powerlevelChargeScale.value > 5 ) {
+		g_powerlevelChargeScale.value = 5;
+	}
+
 	// set the power level charge speed
 	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 
