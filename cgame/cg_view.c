@@ -284,17 +284,17 @@ static void CG_OffsetThirdPersonView( void ) {
 	newHeight = -10;
 
 	if (cg.lockedView == qtrue) {
-			float oldRoll;
+		float oldRoll;
 
-			VectorSubtract( cg.lockedTarget, ps->origin, forward );
-			VectorNormalize( forward );
-			oldRoll = cg.refdefViewAngles[ROLL];
-			vectoangles( forward, cg.refdefViewAngles );
-			cg.refdefViewAngles[ROLL] = oldRoll;
-			VectorCopy( ps->origin, cg.lockedTarget);
-//			AngleVectors(cg.lockedTarget, forward, right, up);
-			Com_Printf("Target locked!\n");
-			return;
+		VectorSubtract( cg.lockedTarget, ps->origin, forward );
+		VectorNormalize( forward );
+		oldRoll = cg.refdefViewAngles[ROLL];
+		vectoangles( forward, cg.refdefViewAngles );
+		cg.refdefViewAngles[ROLL] = oldRoll;
+		VectorCopy( ps->origin, cg.lockedTarget);
+		Com_Printf("Target locked!\n");
+
+		return;
 	}
 
 	if (cg_beamControl.value == 0) {
@@ -1017,6 +1017,35 @@ static int CG_CalcViewValues( void ) {
 	// position eye reletive to origin
 	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
 
+	// JUHOX: offset vieworg for lens flare editor fine move mode
+#if MAPLENSFLARES
+	/*
+	if (
+		cgs.editMode == EM_mlf &&
+		cg.lfEditor.selectedLFEnt &&
+		cg.lfEditor.editMode > LFEEM_none &&
+		cg.lfEditor.selectedLFEnt->lock
+	) {
+		VectorAdd(cg.lfEditor.selectedLFEnt->lock->lerpOrigin, cg.lfEditorMoverOffset, cg.refdef.vieworg);
+	}
+	*/
+	if (
+		cgs.editMode == EM_mlf &&
+		cg.lfEditor.selectedLFEnt &&
+		cg.lfEditor.editMode > LFEEM_none &&
+		cg.lfEditor.moveMode == LFEMM_fine
+	) {
+		vec3_t cursor;
+
+		CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, cursor);
+		if (cg.lfEditor.editMode == LFEEM_pos) {
+			VectorAdd(cg.refdef.vieworg, cg.lfEditor.fmm_offset, cursor);
+			CG_SetLFEntOrigin(cg.lfEditor.selectedLFEnt, cursor);
+		}
+		VectorMA(cursor, -cg.lfEditor.fmm_distance, cg.refdef.viewaxis[0], cg.refdef.vieworg);
+	}
+#endif
+
 	if ( cg.hyperspace ) {
 		cg.refdef.rdflags |= RDF_NOWORLDMODEL | RDF_HYPERSPACE;
 	}
@@ -1080,6 +1109,698 @@ static void CG_PlayBufferedSounds( void ) {
 		}
 	}
 }
+
+
+/*
+===============
+JUHOX: CG_DrawMapLensFlare
+===============
+*/
+#if MAPLENSFLARES
+static void CG_DrawMapLensFlare(
+	const lensFlare_t* lf,
+	float distance,
+	vec3_t center, vec3_t dir, vec3_t angles,
+	float alpha, float visibleLight
+) {
+	refEntity_t ent;
+	float radius;
+
+	memset(&ent, 0, sizeof(ent));
+
+	radius = lf->size;
+
+	switch (lf->mode) {
+	case LFM_reflexion:
+		alpha *= 0.2 * lf->rgba[3];
+
+		radius *= cg.refdef.fov_x / 90;	// lens flares do not change size through zooming
+		//alpha /= radius;
+		break;
+	case LFM_glare:
+		alpha *= 0.14 * lf->rgba[3];
+		radius *= visibleLight * 1000000.0 / Square(distance);
+		break;
+	case LFM_star:
+		/*
+		alpha *= lf->rgba[3];
+		radius *= 40000.0 / (distance * sqrt(distance) * sqrt(sqrt(sqrt(distance))));
+
+		radius *= cg.refdef.fov_x / 90;	// lens flares do not change size through zooming
+		alpha /= radius;
+		*/
+		alpha *= lf->rgba[3];
+		radius *= visibleLight * 40000.0 / (distance * sqrt(distance) * sqrt(sqrt(sqrt(distance))));
+		break;
+	}
+
+	alpha *= visibleLight;
+	if (alpha > 255) alpha = 255;
+
+	ent.reType = RT_SPRITE;
+	ent.customShader = lf->shader;
+	ent.shaderRGBA[0] = lf->rgba[0];
+	ent.shaderRGBA[1] = lf->rgba[1];
+	ent.shaderRGBA[2] = lf->rgba[2];
+	ent.shaderRGBA[3] = alpha;
+	ent.radius = radius;
+
+	ent.rotation =
+		lf->rotationOffset +
+		lf->rotationYawFactor * angles[YAW] +
+		lf->rotationPitchFactor * angles[PITCH] +
+		lf->rotationRollFactor * angles[ROLL];
+
+	VectorMA(center, lf->pos, dir, ent.origin);
+	trap_R_AddRefEntityToScene(&ent);
+}
+#endif
+
+/*
+=====================
+JUHOX: CG_AddLensFlareMarker
+=====================
+*/
+#if MAPLENSFLARES
+static void CG_AddLensFlareMarker(int lfe) {
+	const lensFlareEntity_t* lfent;
+	float radius;
+	refEntity_t ent;
+	vec3_t origin;
+
+	lfent = &cgs.lensFlareEntities[lfe];
+	
+	memset(&ent, 0, sizeof(ent));
+	ent.reType = RT_MODEL;
+	ent.hModel = trap_R_RegisterModel("models/powerups/health/small_sphere.md3");
+	ent.customShader = trap_R_RegisterShader("lfeditorcursor");
+	radius = lfent->radius;
+	ent.shaderRGBA[0] = 0x00;
+	ent.shaderRGBA[1] = 0x80;
+	ent.shaderRGBA[2] = 0x00;
+	if (lfent->angle >= 0) {
+		ent.shaderRGBA[0] = 0x00;
+		ent.shaderRGBA[1] = 0x00;
+		ent.shaderRGBA[2] = 0x80;
+	}
+	if (
+		!cg.lfEditor.selectedLFEnt &&
+		lfe == cg.lfEditor.markedLFEnt
+	) {
+		int c;
+
+		c = 0x40 * (1 + sin(0.01 * cg.time));
+		ent.shaderRGBA[0] += c;
+		ent.shaderRGBA[1] += c;
+		ent.shaderRGBA[2] += c;
+	}
+	else if (cg.lfEditor.selectedLFEnt == lfent) {
+		ent.shaderRGBA[0] = 0xff;
+		ent.shaderRGBA[1] >>= 1;
+		ent.shaderRGBA[2] >>= 1;
+		if (cg.lfEditor.editMode == LFEEM_radius) {
+			radius = cg.lfEditor.selectedLFEnt->lightRadius;
+		}
+		else if (cg.lfEditor.cursorSize == LFECS_small) {
+			radius = 2;
+		}
+		else if (cg.lfEditor.cursorSize == LFECS_lightRadius) {
+			radius = cg.lfEditor.selectedLFEnt->lightRadius;
+		}
+		else {
+			radius = cg.lfEditor.selectedLFEnt->radius;
+		}
+	}
+	CG_LFEntOrigin(lfent, origin);
+	VectorCopy(origin, ent.origin);
+
+	ent.origin[2] -= 0.5 * radius;
+
+	ent.axis[0][0] = 0.1 * radius;
+	ent.axis[1][1] = 0.1 * radius;
+	ent.axis[2][2] = 0.1 * radius;
+	ent.nonNormalizedAxes = qtrue;
+	trap_R_AddRefEntityToScene(&ent);
+
+	if (lfent->angle >= 0) {
+		float len;
+		vec3_t end;
+
+		len = 2 * lfent->radius + 10;
+		VectorMA(origin, len, lfent->dir, end);
+		CG_Draw3DLine(origin, end, trap_R_RegisterShader("dischargeFlash"));
+
+		if (lfent->angle < 70) {
+			float size;
+			vec3_t right, up;
+			vec3_t p1, p2;
+
+			size = len * tan(DEG2RAD(lfent->angle));
+			MakeNormalVectors(lfent->dir, right, up);
+
+			VectorMA(end, size, right, p1);
+			VectorMA(end, -size, right, p2);
+			CG_Draw3DLine(p1, p2, trap_R_RegisterShader("dischargeFlash"));
+
+			VectorMA(end, size, up, p1);
+			VectorMA(end, -size, up, p2);
+			CG_Draw3DLine(p1, p2, trap_R_RegisterShader("dischargeFlash"));
+		}
+	}
+}
+#endif
+
+/*
+=====================
+JUHOX: CG_IsLFVisible
+=====================
+*/
+#if MAPLENSFLARES
+static qboolean CG_IsLFVisible(const vec3_t origin, const vec3_t pos, float lfradius) {
+	trace_t trace;
+
+	CG_SmoothTrace(&trace, cg.refdef.vieworg, NULL, NULL, pos, cg.snap->ps.clientNum, MASK_OPAQUE|CONTENTS_BODY);
+	//return (1.0 - trace.fraction) * distance <= lfradius;
+	return Distance(trace.endpos, origin) <= lfradius;
+}
+#endif
+
+/*
+=====================
+JUHOX: CG_ComputeVisibleLightSample
+=====================
+*/
+#if MAPLENSFLARES
+#define NUMVISSAMPLES 50
+static float CG_ComputeVisibleLightSample(
+	lensFlareEntity_t* lfent,
+	const vec3_t origin,		// redundant, but we have this already
+	float distance,				// ditto
+	vec3_t visOrigin,
+	int quality
+) {
+	/*
+	static const float angleTab[48] = {
+		0, 45, 90, 135, 180, 225, 270, 315,
+		7.5, 15, 22.5, 30, 37.5, 52.5, 60, 67.5,
+		75, 82.5, 97.5, 105, 112.5, 120, 127.5, 142.5,
+		150, 157.5, 165, 172.5, 187.5, 195, 202.5, 210,
+		217.5, 232.5, 240, 247.5, 255, 262.5, 277.5, 285,
+		292.5, 300, 307.5, 322.5, 330, 337.5, 345, 352.5
+	};
+	*/
+	vec3_t vx, vy;
+	int visCount;
+	int i;
+
+	if (lfent->lightRadius <= 1 || quality < 2) {
+		VectorCopy(origin, visOrigin);
+		return CG_IsLFVisible(origin, origin, lfent->radius);
+	}
+
+	visCount = 0;
+	for (i = 0; i < 8; i++) {
+		vec3_t corner;
+
+		VectorCopy(origin, corner);
+		corner[0] += i&1? lfent->lightRadius : -lfent->lightRadius;
+		corner[1] += i&2? lfent->lightRadius : -lfent->lightRadius;
+		corner[2] += i&4? lfent->lightRadius : -lfent->lightRadius;
+		if (!CG_IsLFVisible(origin, corner, 1.8 * lfent->radius)) continue;	// 1.8 = rough approx. of sqrt(3)
+		visCount++;
+	}
+	if (visCount == 0) {
+		VectorClear(visOrigin);
+		return 0;
+	}
+	else if (visCount == 8) {
+		VectorCopy(origin, visOrigin);
+		return 1;
+	}
+
+	{
+		vec3_t vz;
+
+		VectorSubtract(origin, cg.refdef.vieworg, vz);
+		VectorNormalize(vz);
+		CrossProduct(vz, axisDefault[2], vx);
+		VectorNormalize(vx);
+		CrossProduct(vz, vx, vy);
+		// NOTE: the handedness of (vx, vy, vz) is not important
+	}
+	
+	visCount = 0;
+	VectorClear(visOrigin);
+	//offset = 45 * random();
+	for (i = 0; i < NUMVISSAMPLES; i++) {
+		vec3_t end;
+
+		VectorCopy(origin, end);
+		{
+			float angle;
+			float radius;
+			float x, y;
+
+			/*
+			if (i == 8) {
+				if (visCount <= 0) return 0;
+				if (visCount >= 8) {
+					VectorCopy(origin, visOrigin);
+					return 1;
+				}
+			}
+			*/
+			/*
+			angle = (M_PI/180) * (angleTab[i] + offset);
+			x = 0.95 * lfent->lightRadius * cos(angle);
+			y = 0.95 * lfent->lightRadius * sin(angle);
+			*/
+			angle = (2*M_PI) * /*random()*/i / (float)NUMVISSAMPLES;
+			radius = 0.95 * lfent->lightRadius * sqrt(random());
+
+			x = radius * cos(angle);
+			y = radius * sin(angle);
+
+			VectorMA(end, x, vx, end);
+			VectorMA(end, y, vy, end);
+		}
+
+		if (!CG_IsLFVisible(origin, end, lfent->radius)) continue;
+
+		VectorAdd(visOrigin, end, visOrigin);
+		visCount++;
+	}
+
+	if (visCount > 0) {
+		_VectorScale(visOrigin, 1.0 / visCount, visOrigin);
+	}
+
+	return (float)visCount / (float)NUMVISSAMPLES;
+}
+#endif
+
+/*
+=====================
+JUHOX: CG_SetVisibleLightSample
+=====================
+*/
+#if MAPLENSFLARES
+static void CG_SetVisibleLightSample(lensFlareEntity_t* lfent, float visibleLight, const vec3_t visibleOrigin) {
+	vec3_t vorg;
+
+	lfent->lib[lfent->libPos].light = visibleLight;
+	VectorCopy(visibleOrigin, vorg);
+#if ESCAPE_MODE
+	if (cgs.gametype == GT_EFH) {
+		vorg[0] += cg.currentReferenceX;
+		vorg[1] += cg.currentReferenceY;
+		vorg[2] += cg.currentReferenceZ;
+	}
+#endif
+	VectorCopy(vorg, lfent->lib[lfent->libPos].origin);
+	lfent->libPos++;
+	if (lfent->libPos >= LIGHT_INTEGRATION_BUFFER_SIZE) {
+		lfent->libPos = 0;
+	}
+	lfent->libNumEntries++;
+}
+#endif
+
+/*
+=====================
+JUHOX: CG_GetVisibleLight
+=====================
+*/
+#if MAPLENSFLARES
+static float CG_GetVisibleLight(lensFlareEntity_t* lfent, vec3_t visibleOrigin) {
+	int maxLibEntries;
+	int i;
+	float visLight;
+	vec3_t visOrigin;
+	int numVisPoints;
+
+	if (lfent->lightRadius < 1) {
+		maxLibEntries = 1;
+	}
+	else if (cg.viewMovement > 1 || lfent->lock) {
+		maxLibEntries = LIGHT_INTEGRATION_BUFFER_SIZE / 2;
+	}
+	else {
+		maxLibEntries = LIGHT_INTEGRATION_BUFFER_SIZE;
+	}
+
+	if (lfent->libNumEntries > maxLibEntries) {
+		lfent->libNumEntries = maxLibEntries;
+	}
+
+	visLight = 0;
+	VectorClear(visOrigin);
+	numVisPoints = 0;
+	for (i = 1; i <= lfent->libNumEntries; i++) {
+		const lightSample_t* sample;
+
+		sample = &lfent->lib[(lfent->libPos - i) & (LIGHT_INTEGRATION_BUFFER_SIZE - 1)];
+		if (sample->light > 0) {
+			vec3_t sorg;
+
+			visLight += sample->light;
+			VectorCopy(sample->origin, sorg);
+#if ESCAPE_MODE
+			if (cgs.gametype == GT_EFH) {
+				sorg[0] -= cg.currentReferenceX;
+				sorg[1] -= cg.currentReferenceY;
+				sorg[2] -= cg.currentReferenceZ;
+			}
+#endif
+			VectorAdd(visOrigin, sorg, visOrigin);
+			numVisPoints++;
+		}
+	}
+	if (lfent->libNumEntries > 0) visLight /= lfent->libNumEntries;
+	if (numVisPoints > 0) {
+		VectorScale(visOrigin, 1.0 / numVisPoints, visibleOrigin);
+	}
+	else {
+		VectorCopy(visOrigin, visibleOrigin);
+	}
+	return visLight;
+}
+#endif
+
+/*
+=====================
+JUHOX: CG_AddMapLensFlares
+=====================
+*/
+#if MAPLENSFLARES
+#define SPRITE_DISTANCE 8
+static void CG_AddMapLensFlares(void) {
+	int i;
+
+	cg.viewMovement = Distance(cg.refdef.vieworg, cg.lastViewOrigin);
+	if (cg.viewMovement > 0) {
+		cg.numFramesWithoutViewMovement = 0;
+	}
+	else {
+		cg.numFramesWithoutViewMovement++;
+	}
+
+	if (cgs.editMode == EM_mlf) {
+		if (cg.lfEditor.drawMode == LFEDM_none) {
+			if (!cg.lfEditor.selectedLFEnt && cg.lfEditor.markedLFEnt >= 0) {
+				CG_AddLensFlareMarker(cg.lfEditor.markedLFEnt);
+			}
+			return;
+		}
+		if (cg.lfEditor.drawMode == LFEDM_marks) {
+			int selectedLFEntNum;
+
+			selectedLFEntNum = cg.lfEditor.selectedLFEnt - cgs.lensFlareEntities;
+			for (i = 0; i < cgs.numLensFlareEntities; i++) {
+				if (i == selectedLFEntNum) continue;
+
+				CG_AddLensFlareMarker(i);
+			}
+			return;
+		}
+	}
+	else if (
+		!cg_lensFlare.integer ||
+		(
+			!cg_mapFlare.integer &&
+			!cg_sunFlare.integer
+		)
+	) {
+		return;
+	}
+
+//	if (cg.viewMode == VIEW_scanner) return;
+	if (cg.clientFrame < 5) return;
+
+	for (i = -1; i < cgs.numLensFlareEntities; i++) {
+		lensFlareEntity_t* lfent;
+		const lensFlareEffect_t* lfeff;
+		vec3_t origin;
+		int quality;
+		float distanceSqr;
+		float distance;
+		vec3_t dir;
+		vec3_t angles;
+		float cosViewAngle;
+		float viewAngle;
+		float angleToLightSource;
+		vec3_t virtualOrigin;
+		vec3_t visibleOrigin;
+		float visibleLight;
+		float alpha;
+		vec3_t center;
+		int j;
+
+		if (i < 0) {
+			if (!cg_sunFlare.integer && cgs.editMode != EM_mlf) continue;
+
+			lfent = &cgs.sunFlare;
+			lfeff = lfent->lfeff;
+			if (!lfeff) continue;
+
+			VectorAdd(lfent->origin, cg.refdef.vieworg, origin);
+
+			quality = cg_sunFlare.integer;
+		}
+		else {
+			if (!cg_mapFlare.integer && cgs.editMode != EM_mlf) continue;
+
+			lfent = &cgs.lensFlareEntities[i];
+			lfeff = lfent->lfeff;
+			if (!lfeff) continue;
+
+			/*
+			if (cgs.editMode == EM_mlf && !cg.lfEditor.selectedLFEnt && cg.lfEditor.markedLFEnt == i) {
+				CG_AddLensFlareMarker(i);
+			}
+			*/
+
+			CG_LFEntOrigin(lfent, origin);
+
+			quality = cg_mapFlare.integer;
+		}
+
+		distanceSqr = DistanceSquared(origin, cg.refdef.vieworg);
+		if (lfeff->range > 0 && distanceSqr >= lfeff->rangeSqr) {
+			SkipLF:
+			lfent->libNumEntries = 0;
+			continue;
+		}
+		if (distanceSqr < Square(16)) goto SkipLF;
+
+		VectorSubtract(origin, cg.refdef.vieworg, dir);
+
+		distance = VectorNormalize(dir);
+		cosViewAngle = DotProduct(dir, cg.refdef.viewaxis[0]);
+		viewAngle = acos(cosViewAngle) * (180.0 / M_PI);
+		if (viewAngle >= 89.99) goto SkipLF;
+
+		// for spotlights
+		angleToLightSource = acos(-DotProduct(dir, lfent->dir)) * (180.0 / M_PI);
+		if (angleToLightSource > lfent->maxVisAngle) goto SkipLF;
+
+		if (
+			cg.numFramesWithoutViewMovement <= LIGHT_INTEGRATION_BUFFER_SIZE ||
+			lfent->lock ||
+			lfent->libNumEntries <= 0
+		) {
+			float vls;
+
+			vls = CG_ComputeVisibleLightSample(lfent, origin, distance, visibleOrigin, quality);
+			CG_SetVisibleLightSample(lfent, vls, visibleOrigin);
+		}
+
+		VectorCopy(origin, visibleOrigin);
+		visibleLight = CG_GetVisibleLight(lfent, visibleOrigin);
+		if (visibleLight <= 0) continue;
+
+		VectorSubtract(visibleOrigin, cg.refdef.vieworg, dir);
+		VectorNormalize(dir);
+		vectoangles(dir, angles);
+		angles[YAW] = AngleSubtract(angles[YAW], cg.predictedPlayerState.viewangles[YAW]);
+		angles[PITCH] = AngleSubtract(angles[PITCH], cg.predictedPlayerState.viewangles[PITCH]);
+
+		VectorMA(cg.refdef.vieworg, SPRITE_DISTANCE / cosViewAngle, dir, virtualOrigin);
+		if (lfeff->range < 0) {
+			alpha = -lfeff->range / distance;
+		}
+		else {
+			alpha = 1.0 - distance / lfeff->range;
+		}
+
+		/*
+		if (fabs(angles[YAW]) > 0.5 * cg.refdef.fov_x) {
+			alpha *= 1.0 - (fabs(angles[YAW]) - 0.5 * cg.refdef.fov_x) / (90 - 0.5 * cg.refdef.fov_x);
+		}
+		if (fabs(angles[PITCH]) > 0.5 * cg.refdef.fov_y) {
+			alpha *= 1.0 - (fabs(angles[PITCH]) - 0.5 * cg.refdef.fov_y) / (90 - 0.5 * cg.refdef.fov_y);
+		}
+		*/
+		if (viewAngle > 0.5 * cg.refdef.fov_x) {
+			alpha *= 1.0 - (viewAngle - 0.5 * cg.refdef.fov_x) / (90 - 0.5 * cg.refdef.fov_x);
+		}
+
+		VectorMA(cg.refdef.vieworg, SPRITE_DISTANCE, cg.refdef.viewaxis[0], center);
+		VectorSubtract(virtualOrigin, center, dir);
+		
+		{
+			vec3_t v;
+
+			VectorRotate(dir, cg.refdef.viewaxis, v);
+			angles[ROLL] = 90.0 - atan2(v[2], v[1]) * (180.0/M_PI);
+		}
+
+		for (j = 0; j < lfeff->numLensFlares; j++) {
+			float a;
+			float vl;
+			const lensFlare_t* lf;
+
+			a = alpha;
+			vl = visibleLight;
+			lf = &lfeff->lensFlares[j];
+			if (lfent->angle >= 0) {
+				float innerAngle;
+				
+				innerAngle = lfent->angle * lf->entityAngleFactor;
+				if (angleToLightSource > innerAngle) {
+					float fadeAngle;
+
+					fadeAngle = lfeff->fadeAngle * lf->fadeAngleFactor;
+					if (fadeAngle < 0.1) continue;
+					if (angleToLightSource >= innerAngle + fadeAngle) continue;
+
+					vl *= 1.0 - (angleToLightSource - innerAngle) / fadeAngle;
+				}
+			}
+			if (lf->intensityThreshold > 0) {
+				float threshold;
+				float intensity;
+
+				threshold = lf->intensityThreshold;
+				intensity = a * vl;
+				if (intensity < threshold) continue;
+				intensity -= threshold;
+				if (lfeff->range >= 0) intensity /= 1 - threshold;
+				a = intensity / vl;
+			}
+			CG_DrawMapLensFlare(lf, distance, center, dir, angles, a, vl);
+		}
+	}
+
+	VectorCopy(cg.refdef.vieworg, cg.lastViewOrigin);
+}
+#endif
+
+/*
+=====================
+JUHOX: CG_AddLFEditorCursor
+=====================
+*/
+#if MAPLENSFLARES
+void CG_AddLFEditorCursor(void) {
+	trace_t trace;
+	vec3_t end;
+	refEntity_t ent;
+
+	if (cgs.editMode != EM_mlf) return;
+
+	cg.lfEditor.markedLFEnt = -1;
+	if (!cg.lfEditor.selectedLFEnt) {
+		int i;
+		float lowestWeight;
+
+		lowestWeight = 10000000.0;
+		for (i = 0; i < cgs.numLensFlareEntities; i++) {
+			const lensFlareEntity_t* lfent;
+			vec3_t origin;
+			vec3_t dir;
+			float distance;
+			float alpha;
+			float weight;
+
+			lfent = &cgs.lensFlareEntities[i];
+			if (!lfent->lfeff) continue;
+
+			CG_LFEntOrigin(lfent, origin);
+			VectorSubtract(origin, cg.refdef.vieworg, dir);
+			distance = VectorNormalize(dir);
+			if (distance > 2000) continue;
+
+			alpha = acos(DotProduct(dir, cg.refdef.viewaxis[0])) * (180.0 / M_PI);
+			if (alpha > 10.0) continue;
+
+			weight = alpha * distance;
+			if (weight >= lowestWeight) continue;
+
+			/* NOTE: with this trace enabled one would not be able to select entities within solids
+			CG_SmoothTrace(&trace, cg.refdef.vieworg, NULL, NULL, origin, -1, MASK_SOLID);
+			if (trace.fraction < 1.0) continue;
+			*/
+
+			lowestWeight = weight;
+			cg.lfEditor.markedLFEnt = i;
+		}
+		return;
+	}
+
+	if (cg.lfEditor.editMode == LFEEM_pos) {
+		if (cg.lfEditor.moveMode == LFEMM_coarse) {
+			vec3_t cursor;
+
+			VectorMA(cg.refdef.vieworg, 10000, cg.refdef.viewaxis[0], end);
+			CG_SmoothTrace(&trace, cg.refdef.vieworg, NULL, NULL, end, -1, MASK_OPAQUE|CONTENTS_BODY);
+			VectorMA(trace.endpos, -1, cg.refdef.viewaxis[0], cursor);
+			CG_SetLFEntOrigin(cg.lfEditor.selectedLFEnt, cursor);
+		}
+		// NOTE: LFEMM_fine handled in CG_CalcViewValues()
+	}
+
+	CG_AddLensFlareMarker(cg.lfEditor.selectedLFEnt - cgs.lensFlareEntities);
+
+	{
+		int i;
+
+		for (i = 0; i < 50; i++) {
+			vec3_t dir;
+			float len;
+			int grey;
+
+			dir[0] = crandom();
+			dir[1] = crandom();
+			dir[2] = crandom();
+			len = VectorNormalize(dir);
+			if (len > 1 || len < 0.01) continue;
+
+			CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, end);
+			VectorMA(end, cg.lfEditor.selectedLFEnt->radius, dir, end);
+			CG_SmoothTrace(&trace, cg.refdef.vieworg, NULL, NULL, end, -1, MASK_OPAQUE|CONTENTS_BODY);
+			if (trace.fraction < 1) continue;
+
+			VectorSubtract(end, cg.refdef.vieworg, dir);
+			VectorNormalize(dir);
+			VectorMA(cg.refdef.vieworg, 8, dir, end);
+
+			memset(&ent, 0, sizeof(ent));
+			ent.reType = RT_SPRITE;
+			VectorCopy(end, ent.origin);
+			ent.customShader = trap_R_RegisterShader("tssgroupTemporary");
+			grey = rand() & 0xff;
+			ent.shaderRGBA[0] = grey;
+			ent.shaderRGBA[1] = grey;
+			ent.shaderRGBA[2] = grey;
+			ent.shaderRGBA[3] = 0xff;
+			ent.radius = 0.05;
+			trap_R_AddRefEntityToScene(&ent);
+		}
+	}
+}
+#endif
+
 
 //=========================================================================
 
@@ -1170,6 +1891,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		CG_AddParticles ();
 		CG_AddLocalEntities();
 		CG_AddParticleSystems();
+#if MAPLENSFLARES	// JUHOX: add map lens flares
+		CG_AddMapLensFlares();
+#endif
 	}
 	//CG_AddViewWeapon( &cg.predictedPlayerState );
 

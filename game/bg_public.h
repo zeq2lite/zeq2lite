@@ -8,6 +8,7 @@
 #define	GAME_VERSION		"zeq2-1"
 
 #define EARTHQUAKE_SYSTEM	1	// JUHOX
+#define MAPLENSFLARES		1	// JUHOX
 
 #define	DEFAULT_GRAVITY		800
 #define	GIB_HEALTH			-40
@@ -103,6 +104,14 @@ typedef enum {
 	GT_HARVESTER,
 	GT_MAX_GAME_TYPE
 } gametype_t;
+
+// JUHOX: global definitions for map lens flares
+#if MAPLENSFLARES
+typedef enum {
+	EM_none,
+	EM_mlf		// map lens flares
+} editMode_t;
+#endif
 
 typedef enum { GENDER_MALE, GENDER_FEMALE, GENDER_NEUTER } gender_t;
 

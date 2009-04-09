@@ -168,6 +168,16 @@ static void CG_TransitionSnapshot( void ) {
 
 }
 
+/*
+===================
+JUHOX: CG_StopMover
+===================
+*/
+static void CG_StopMover(centity_t* cent) {
+	cent->currentState.pos.trType = TR_STATIONARY;
+	VectorCopy(cent->lerpOrigin, cent->currentState.pos.trBase);
+	VectorClear(cent->currentState.pos.trDelta);
+}
 
 /*
 ===================
@@ -366,6 +376,30 @@ void CG_ProcessSnapshots( void ) {
 		// we have passed the transition from nextFrame to frame
 		CG_TransitionSnapshot();
 	} while ( 1 );
+
+	// JUHOX: stop-movers-mechanism for lens flare editor
+#if MAPLENSFLARES
+	if (cgs.editMode == EM_mlf) {
+		if (cg.lfEditor.moversStopped) {
+			int num;
+
+			for (num = MAX_CLIENTS; num < ENTITYNUM_MAX_NORMAL; num++) {
+				centity_t* cent;
+
+				cent = &cg_entities[num];
+				if (cent->currentState.eType != ET_MOVER) continue;
+
+				CG_StopMover(cent);
+			}
+		}
+		else if (
+			cg.lfEditor.selectedLFEnt &&
+			cg.lfEditor.selectedLFEnt->lock
+		) {
+			CG_StopMover(cg.lfEditor.selectedLFEnt->lock);
+		}
+	}
+#endif
 
 	// assert our valid conditions upon exiting
 	if ( cg.snap == NULL ) {

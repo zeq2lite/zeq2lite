@@ -136,6 +136,24 @@ void	CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec
 
 /*
 ================
+JUHOX: CG_SmoothTrace
+================
+*/
+void CG_SmoothTrace(
+	trace_t *result,
+	const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
+	int skipNumber, int mask
+) {
+	int physicsTime;
+
+	physicsTime = cg.physicsTime;
+	cg.physicsTime = cg.time;
+	CG_Trace(result, start, mins, maxs, end, skipNumber, mask);
+	cg.physicsTime = cg.time;
+}
+
+/*
+================
 CG_PointContents
 ================
 */
@@ -327,6 +345,11 @@ static void CG_TouchTriggerPrediction( void ) {
 		return;
 	}
 
+	// JUHOX: don't touch triggers in lens flare editor
+#if MAPLENSFLARES
+	if (cgs.editMode == EM_mlf) return;
+#endif
+
 	spectator = ( cg.predictedPlayerState.pm_type == PM_SPECTATOR );
 
 	if ( cg.predictedPlayerState.pm_type != PM_NORMAL && !spectator ) {
@@ -444,6 +467,11 @@ void CG_PredictPlayerState( void ) {
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		cg_pmove.tracemask &= ~CONTENTS_BODY;	// spectators can fly through bodies
 	}
+#if MAPLENSFLARES	// JUHOX: set player tracemask for lens flare editor
+	if (cgs.editMode == EM_mlf) {
+		cg_pmove.tracemask = 0;
+	}
+#endif
 	cg_pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
 
 	// save the state before the pmove so we can detect transitions
@@ -570,6 +598,168 @@ void CG_PredictPlayerState( void ) {
 		// don't predict gauntlet firing, which is only supposed to happen
 		// when it actually inflicts damage
 		cg_pmove.gauntletHit = qfalse;
+
+#if MAPLENSFLARES	// JUHOX: lens flare editor movement
+		if (
+			cgs.editMode == EM_mlf &&
+			cg.lfEditor.cmdMode == LFECM_main
+		) {
+			if (
+				!cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.markedLFEnt >= 0 &&
+				cg.lfEditor.lastClick < cg.time - 100 &&
+				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				CG_SelectLFEnt(cg.lfEditor.markedLFEnt);
+			}
+			else if (
+				cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.editMode == LFEEM_none &&
+				cg.lfEditor.lastClick < cg.time - 100 &&
+				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				cg.lfEditor.selectedLFEnt = NULL;
+				CG_SetLFEdMoveMode(LFEMM_coarse);
+			}
+
+			if (
+				cg.lfEditor.editMode == LFEEM_pos &&
+				cg.lfEditor.moveMode == LFEMM_coarse &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				CG_SetLFEdMoveMode(LFEMM_fine);
+			}
+
+			if (
+				cg.lfEditor.editMode == LFEEM_pos &&
+				cg.lfEditor.moveMode == LFEMM_fine &&
+				cg.lfEditor.selectedLFEnt &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				float move;
+
+				move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 2000.0;
+				cg.lfEditor.fmm_distance -= move;
+				if (cg.lfEditor.fmm_distance < 20) cg.lfEditor.fmm_distance = 20;
+				if (cg.lfEditor.fmm_distance > 300) cg.lfEditor.fmm_distance = 300;
+
+				move = cg_pmove.cmd.rightmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 8000.0;
+				cg.lfEditor.selectedLFEnt->radius += move;
+				if (cg.lfEditor.selectedLFEnt->radius < 2.5) cg.lfEditor.selectedLFEnt->radius = 2.5;
+				if (cg.lfEditor.selectedLFEnt->radius > 100) cg.lfEditor.selectedLFEnt->radius = 100;
+
+				cg_pmove.cmd.forwardmove = 0;
+				cg_pmove.cmd.rightmove = 0;
+				cg_pmove.cmd.upmove = 0;
+			}
+
+			if (
+				cg.lfEditor.editMode == LFEEM_target &&
+				cg.lfEditor.moveMode == LFEMM_fine
+			) {
+				float move;
+
+				move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 2000.0;
+				cg.lfEditor.fmm_distance -= move;
+				if (cg.lfEditor.fmm_distance < 20) cg.lfEditor.fmm_distance = 20;
+				if (cg.lfEditor.fmm_distance > 300) cg.lfEditor.fmm_distance = 300;
+
+				cg_pmove.cmd.forwardmove = 0;
+				cg_pmove.cmd.rightmove = 0;
+				cg_pmove.cmd.upmove = 0;
+			}
+
+			if (
+				cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.editMode == LFEEM_target &&
+				cg.lfEditor.editTarget &&
+				cg.lfEditor.lastClick < cg.time - 100 &&
+				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				vec3_t dir;
+
+				CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, dir);
+				VectorSubtract(cg.refdef.vieworg, dir, dir);
+				if (VectorNormalize(dir) > 0.1) {
+					VectorCopy(dir, cg.lfEditor.selectedLFEnt->dir);
+					CG_ComputeMaxVisAngle(cg.lfEditor.selectedLFEnt);
+				}
+				cg.lfEditor.editTarget = qfalse;
+				VectorCopy(cg.refdef.vieworg, cg.lfEditor.targetPosition);
+			}
+			else if (
+				cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.editMode == LFEEM_target &&
+				!cg.lfEditor.editTarget &&
+				cg.lfEditor.lastClick < cg.time - 100 &&
+				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				if (Distance(cg.refdef.vieworg, cg.lfEditor.targetPosition) >= 1) {
+					vec3_t origin;
+					vec3_t dir;
+
+					CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, origin);
+					VectorSubtract(cg.refdef.vieworg, origin, dir);
+					if (VectorNormalize(dir) > 0.1) {
+						cg.lfEditor.selectedLFEnt->angle = acos(DotProduct(dir, cg.lfEditor.selectedLFEnt->dir)) * (180.0 / M_PI);
+					}
+				}
+				else {
+					cg.lfEditor.selectedLFEnt->angle = -1;
+				}
+				CG_ComputeMaxVisAngle(cg.lfEditor.selectedLFEnt);
+				cg.lfEditor.editMode = LFEEM_none;
+				CG_SetLFEdMoveMode(LFEMM_coarse);
+			}
+
+			if (
+				cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.editMode == LFEEM_radius
+			) {
+				float move;
+				
+				if (cg_pmove.cmd.buttons & BUTTON_ATTACK) {
+					move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 2000.0;
+					cg.lfEditor.fmm_distance -= move;
+					if (cg.lfEditor.fmm_distance < 20) cg.lfEditor.fmm_distance = 20;
+					if (cg.lfEditor.fmm_distance > 300) cg.lfEditor.fmm_distance = 300;					
+				}
+				else {
+					move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 8000.0;
+					cg.lfEditor.selectedLFEnt->lightRadius += move;
+					if (cg.lfEditor.selectedLFEnt->lightRadius < 2) {
+						if (move > 0) {
+							cg.lfEditor.selectedLFEnt->lightRadius = 2;
+						}
+						else {
+							cg.lfEditor.selectedLFEnt->lightRadius = 0.5;
+						}
+					}
+					if (cg.lfEditor.selectedLFEnt->lightRadius > cg.lfEditor.selectedLFEnt->radius) {
+						cg.lfEditor.selectedLFEnt->lightRadius = cg.lfEditor.selectedLFEnt->radius;
+					}
+					
+					move = cg_pmove.cmd.rightmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 8000.0;
+					cg.lfEditor.selectedLFEnt->radius += move;
+					if (cg.lfEditor.selectedLFEnt->radius < 2.5) cg.lfEditor.selectedLFEnt->radius = 2.5;
+					if (cg.lfEditor.selectedLFEnt->radius > 100) cg.lfEditor.selectedLFEnt->radius = 100;
+				}
+
+				cg_pmove.cmd.forwardmove = 0;
+				cg_pmove.cmd.rightmove = 0;
+				cg_pmove.cmd.upmove = 0;
+			}
+
+			if (cg.lfEditor.oldButtons != cg_pmove.cmd.buttons) {
+				cg.lfEditor.lastClick = cg.time;
+			}
+			cg.lfEditor.oldButtons = cg_pmove.cmd.buttons;
+		}
+#endif
 
 		if ( cg_pmove.pmove_fixed ) {
 			cg_pmove.cmd.serverTime = ((cg_pmove.cmd.serverTime + pmove_msec.integer-1) / pmove_msec.integer) * pmove_msec.integer;

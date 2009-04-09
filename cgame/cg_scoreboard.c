@@ -253,6 +253,10 @@ qboolean CG_DrawOldScoreboard( void ) {
 	int lineHeight;
 	int topBorderSize, bottomBorderSize;
 
+#if MAPLENSFLARES	// JUHOX: don't draw scoreboard in lens flare editor
+	if (cgs.editMode == EM_mlf) return qfalse;
+#endif
+
 	// don't draw amuthing if the menu or console is up
 	if ( cg_paused.integer ) {
 		cg.deferredPlayerLoading = 0;

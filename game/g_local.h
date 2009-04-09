@@ -436,6 +436,10 @@ typedef struct {
 	int			bodyQueIndex;			// dead bodies
 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
 	int			lastRadarUpdateTime;	// when did the radar last update
+
+	#if MAPLENSFLARES	// JUHOX: level locals for the lens flare editor
+	qboolean	lfeFMM;	// FMM = fine move mode
+#endif
 #ifdef MISSIONPACK
 	int			portalSequence;
 #endif
@@ -836,6 +840,9 @@ extern	vmCvar_t	g_powerlevelChargeScale;
 extern	vmCvar_t	g_rolling;
 extern	vmCvar_t	g_running;
 // END ADDING
+#if MAPLENSFLARES	// JUHOX: cvars for map lens flares
+extern	vmCvar_t	g_editmode;
+#endif
 
 void	trap_Printf( const char *fmt );
 void	trap_Error( const char *fmt );

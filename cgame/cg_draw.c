@@ -1003,6 +1003,13 @@ static void CG_DrawUpperRight( void ) {
 
 	y = 0;
 
+#if MAPLENSFLARES	// JUHOX: draw lens flare editor title
+	if (cgs.editMode == EM_mlf) {
+		CG_DrawBigString(640 - 17 * BIGCHAR_WIDTH, y, "lens flare editor", 1);
+		y += BIGCHAR_HEIGHT;
+	}
+#endif
+
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 1 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qtrue );
 	} 
@@ -1307,6 +1314,11 @@ CG_DrawLowerRight
 #ifndef MISSIONPACK
 static void CG_DrawLowerRight( void ) {
 	float	y;
+
+	// JUHOX: don't draw scores in lens flare editor
+#if MAPLENSFLARES
+	if (cgs.editMode == EM_mlf) return;
+#endif
 
 	y = 480 - ICON_SIZE;
 
@@ -1977,7 +1989,6 @@ static void CG_ScanForCrosshairEntity( void ) {
 	vec3_t			muzzle, forward, up;
 	playerState_t	*ps;
 	int				content;
-	vec3_t			oldLock;
 
 	/*
 	VectorCopy( cg.refdef.vieworg, start );
@@ -2195,12 +2206,279 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 
 //==============================================================================
 
+
+/*
+=================
+JUHOX: CG_DrawLensFlareEffectList
+=================
+*/
+#if MAPLENSFLARES
+static void CG_DrawLensFlareEffectList(void) {
+	int firstEffect;
+	int y;
+	int i;
+
+	y = 480 - 12 * TINYCHAR_HEIGHT;
+
+	firstEffect = cg.lfEditor.selectedEffect - 5;
+	for (i = 0; i < 12; i++) {
+		int effectNum;
+
+		effectNum = firstEffect + i;
+		if (effectNum >= 0 && effectNum < cgs.numLensFlareEffects) {
+			lensFlareEffect_t* lfeff;
+			int width;
+			const float* color;
+
+			lfeff = &cgs.lensFlareEffects[effectNum];
+			width = CG_DrawStrlen(lfeff->name) * TINYCHAR_WIDTH;
+			color = i == 5? colorWhite : colorMdGrey;
+			CG_DrawStringExt(640 - width, y, lfeff->name, color, qtrue, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		y += TINYCHAR_HEIGHT;
+	}
+}
+#endif
+
+/*
+=================
+JUHOX: CG_DrawCopyOptions
+=================
+*/
+#if MAPLENSFLARES
+static void CG_DrawCopyOptions(void) {
+	int y;
+	char buf[256];
+
+	y = 480;
+
+	y -= TINYCHAR_HEIGHT;	// 9
+	y -= TINYCHAR_HEIGHT;	// 8
+	y -= TINYCHAR_HEIGHT;	// 7
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[6] paste entity angle = %s", cg.lfEditor.copyOptions & LFECO_SPOT_ANGLE? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[5] paste direction    = %s", cg.lfEditor.copyOptions & LFECO_SPOT_DIR? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[4] paste light radius = %s", cg.lfEditor.copyOptions & LFECO_LIGHTRADIUS? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[3] paste vis radius   = %s", cg.lfEditor.copyOptions & LFECO_VISRADIUS? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[2] paste effect       = %s", cg.lfEditor.copyOptions & LFECO_EFFECT? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[1] done");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+}
+#endif
+
 /*
 =================
 CG_DrawSpectator
 =================
 */
 static void CG_DrawSpectator(void) {
+
+#if MAPLENSFLARES
+	if (cgs.editMode == EM_mlf) {
+		static const vec4_t backFillColor = {
+			0.0, 0.0, 0.0, 0.6
+		};
+		static const vec4_t colorDkGreen = {
+			0.0, 0.5, 0.0, 1.0
+		};
+		static const vec4_t colorLtGreen = {
+			0.5, 1.0, 0.5, 1.0
+		};
+		static const char* const drawModes[] = {
+			"normal", "marks", "none"
+		};
+		static const char* const cursorSize[] = {
+			"small", "light radius", "vis radius"
+		};
+		static const char* const moveModes[] = {
+			"coarse", "fine"
+		};
+		char buf[256];
+		int y;
+
+		// crosshair
+		if (!cg.lfEditor.selectedLFEnt || cg.lfEditor.editMode != LFEEM_pos) {
+			CG_DrawPic(320 - 12, 240 - 12, 24, 24, cgs.media.crosshairShader[0]);
+		}
+
+		CG_FillRect(0, 480 - 12 * TINYCHAR_HEIGHT, 640, 12 * TINYCHAR_HEIGHT, backFillColor);
+
+		CG_DrawLensFlareEffectList();
+
+		if (cg.lfEditor.cmdMode == LFECM_copyOptions) {
+			CG_DrawCopyOptions();
+			return;
+		}
+
+		y = 480;
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[9] cursor size = %s", cursorSize[cg.lfEditor.cursorSize]);
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[9] draw mode = %s", drawModes[cg.lfEditor.drawMode]);
+			CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[8] copy entity data");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			const char* name;
+
+			name = "";
+			if (cg.lfEditor.selectedLFEnt && cg.lfEditor.selectedLFEnt->lfeff) {
+				name = cg.lfEditor.selectedLFEnt->lfeff->name;
+			}
+			Com_sprintf(buf, sizeof(buf), "[8] note effect %s", name);
+			CG_DrawStringExt(0, y, buf, name[0]? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[7] paste entity data");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[7] assign effect %s", cgs.lensFlareEffects[cg.lfEditor.selectedEffect].name);
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[6] paste options");
+			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[6] %sedit light size f+b / vis radius l+r", cg.lfEditor.editMode == LFEEM_radius? "^3" : "");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[5] find entity using %s", cgs.lensFlareEffects[cg.lfEditor.selectedEffect].name);
+			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[5] %sedit spotlight target", cg.lfEditor.editMode == LFEEM_target? "^3" : "");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			if (cg.lfEditor.selectedLFEnt) {
+				if (cg.lfEditor.selectedLFEnt->lock) {
+					CG_DrawStringExt(0, y, "[4] unlock from mover", colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+				}
+				else {
+					CG_DrawStringExt(0, y, "[4] lock to selected mover", cg.lfEditor.selectedMover? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+				}
+			}
+			else {
+				CG_DrawStringExt(0, y, "[4] lock to selected mover", colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			}
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[4] %sedit position & vis radius", cg.lfEditor.editMode == LFEEM_pos? "^3" : "");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[3] find mover %s", cg.lfEditor.moversStopped? "" : "(need to be stopped)");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.moversStopped? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[3] %sdelete flare entity", cg.lfEditor.delAck? "^1really^7 " : "");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[2] %s movers", cg.lfEditor.moversStopped? "release" : "stop");
+			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[2] %s flare entity", cg.lfEditor.selectedLFEnt? "duplicate" : "create");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.editMode == LFEEM_none? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		Com_sprintf(buf, sizeof(buf), "[1] cancel");
+		CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? NULL : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+		y -= TINYCHAR_HEIGHT;
+		Com_sprintf(buf, sizeof(buf), "[TAB] move mode = %s", moveModes[cg.lfEditor.moveMode]);
+		CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt && cg.lfEditor.editMode > LFEEM_none? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+		y -= TINYCHAR_HEIGHT;
+		Com_sprintf(buf, sizeof(buf), "[WALK] alternate command set");
+		CG_DrawStringExt(0, y, buf, (cg.lfEditor.oldButtons & BUTTON_WALKING)? colorLtGreen : colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+		y -= TINYCHAR_HEIGHT;
+		if (!cg.lfEditor.selectedLFEnt) {
+			if (cg.lfEditor.markedLFEnt >= 0) {
+				Com_sprintf(buf, sizeof(buf), "[ATTACK] select flare entity");
+				CG_DrawStringExt(0, y, buf, NULL, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			}
+		}
+		else {
+			switch (cg.lfEditor.editMode) {
+			case LFEEM_none:
+				Com_sprintf(buf, sizeof(buf), "[ATTACK] accept changes");
+				break;
+			case LFEEM_pos:
+				if (cg.lfEditor.moveMode == LFEMM_coarse) {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] switch to tune mode");
+				}
+				else {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] modify view dist (f+b) or vis radius (l+r)");
+				}
+				break;
+			case LFEEM_target:
+				if (cg.lfEditor.editTarget) {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] set target");
+				}
+				else if (DistanceSquared(cg.refdef.vieworg, cg.lfEditor.targetPosition) < 1) {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] remove target & leave editing mode");
+				}
+				else {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] set angle & leave editing mode");
+				}
+				break;
+			case LFEEM_radius:
+				Com_sprintf(buf, sizeof(buf), "[ATTACK] modify view distance (f+b)");
+				break;
+			default:
+				buf[0] = 0;
+				break;
+			}
+			CG_DrawStringExt(0, y, buf, NULL, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+	}
+	else
+#endif
+
 	CG_DrawBigString(320 - 9 * 8, 440, "SPECTATOR", 1.0F);
 	if ( cgs.gametype == GT_TOURNAMENT ) {
 		CG_DrawBigString(320 - 15 * 8, 460, "waiting to play", 1.0F);
@@ -2793,10 +3071,39 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		VectorMA( cg.refdef.vieworg, -separation, cg.refdef.viewaxis[1], cg.refdef.vieworg );
 	}
 
+#if MAPLENSFLARES	// JUHOX: add lens flare editor cursor
+	if (
+		cgs.editMode == EM_mlf &&
+		!(
+			cg.lfEditor.moversStopped &&
+			cg.lfEditor.selectedMover
+		)
+	) {
+		CG_AddLFEditorCursor();
+	}
+#endif
+
 	CG_MotionBlur();
 
 	// draw 3D view
 	trap_R_RenderScene( &cg.refdef );
+
+#if MAPLENSFLARES	// JUHOX: mark selected mover for lens flare editor
+	if (
+		cgs.editMode == EM_mlf &&
+		cg.lfEditor.moversStopped &&
+		cg.lfEditor.selectedMover
+	) {
+		static const vec4_t darkening = { 0.2, 0, 0, 0.7 };
+
+		CG_FillRect(0, 0, 640, 480, darkening);
+		trap_R_ClearScene();
+		CG_Mover(cg.lfEditor.selectedMover);
+		CG_AddLFEditorCursor();
+		cg.refdef.rdflags |= RDF_NOWORLDMODEL;
+		trap_R_RenderScene(&cg.refdef);
+	}
+#endif
 
 	// restore original viewpoint if running stereo
 	if ( separation != 0 ) {

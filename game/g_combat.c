@@ -202,6 +202,7 @@ LookAtKiller
 ==================
 */
 void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) {
+	/*
 	vec3_t		dir;
 	vec3_t		angles;
 
@@ -219,6 +220,7 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) 
 	angles[YAW] = vectoyaw ( dir );
 	angles[PITCH] = 0; 
 	angles[ROLL] = 0;
+	*/
 }
 
 /*

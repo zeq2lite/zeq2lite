@@ -862,7 +862,7 @@ static void CG_Grapple( centity_t *cent ) {
 CG_Mover
 ===============
 */
-static void CG_Mover( centity_t *cent ) {
+/*static*/ void CG_Mover( centity_t *cent ) {	// JUHOX: also called from cg_draw.c for lens flare editor
 	refEntity_t			ent;
 	entityState_t		*s1;
 
