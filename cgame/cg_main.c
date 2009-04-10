@@ -986,6 +986,26 @@ static const lensFlareEffect_t* CG_FindLensFlareEffect(const char* name) {
 
 /*
 =================
+JUHOX: CG_FindMissileLensFlareEffect
+=================
+*/
+static const lensFlareEffect_t* CG_FindMissileLensFlareEffect(const char* name) {
+	const lensFlareEffect_t* lfeff;
+	int i;
+
+	lfeff = CG_FindLensFlareEffect(name);
+	if (lfeff) return lfeff;
+
+	for (i = 0; i < cgs.numMissileLensFlareEffects; i++) {
+		if (!Q_stricmp(name, cgs.missileLensFlareEffects[i].name)) {
+			return &cgs.missileLensFlareEffects[i];
+		}
+	}
+	return NULL;
+}
+
+/*
+=================
 JUHOX: CG_FinalizeLensFlareEffect
 =================
 */
@@ -1140,6 +1160,45 @@ void CG_LoadLensFlares(void) {
 		cgs.numLensFlareEffects++;
 	}
 	CG_Printf("%d lens flare effects loaded\n", cgs.numLensFlareEffects);
+}
+#endif
+
+/*
+=================
+JUHOX: CG_LoadMissileLensFlares
+=================
+*/
+#if MAPLENSFLARES
+static void CG_LoadMissileLensFlares(void) {
+	char* p;
+
+#if LFDEBUG
+	CG_LoadingString("LF: CG_LoadMissileLensFlares()");
+#endif
+	cgs.numMissileLensFlareEffects = 0;
+	memset(&cgs.missileLensFlareEffects, 0, sizeof(cgs.missileLensFlareEffects));
+
+	CG_PushFile("flares/", "effects.lfs");
+	if (!CG_PopFile()) return;
+	lfNameBase[0] = 0;
+
+	p = lfbuf;
+
+	// parse all lens flare effects
+	while (cgs.numMissileLensFlareEffects < MAX_MISSILE_LENSFLARE_EFFECTS && p) {
+		if (!CG_ParseLensFlareEffect(&p, &cgs.missileLensFlareEffects[cgs.numMissileLensFlareEffects])) {
+			break;
+		}
+		cgs.numMissileLensFlareEffects++;
+	}
+	CG_Printf("%d missile lens flare effects loaded\n", cgs.numMissileLensFlareEffects);
+
+	cgs.lensFlareEffectBeamHead = CG_FindMissileLensFlareEffect("beamHead");
+	cgs.lensFlareEffectSolarFlare = CG_FindMissileLensFlareEffect("solarFlare");
+	cgs.lensFlareEffectExplosion1 = CG_FindMissileLensFlareEffect("explosion1");
+	cgs.lensFlareEffectExplosion2 = CG_FindMissileLensFlareEffect("explosion2");
+	cgs.lensFlareEffectExplosion3 = CG_FindMissileLensFlareEffect("explosion3");
+	cgs.lensFlareEffectExplosion4 = CG_FindMissileLensFlareEffect("explosion4");
 }
 #endif
 

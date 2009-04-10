@@ -452,6 +452,7 @@ typedef struct {
 // JUHOX: definitions used for map lens flares
 #if MAPLENSFLARES
 #define MAX_LENSFLARE_EFFECTS 200
+#define MAX_MISSILE_LENSFLARE_EFFECTS 16
 #define MAX_LENSFLARES_PER_EFFECT 32
 typedef enum {
 	LFM_reflexion,
@@ -924,6 +925,12 @@ typedef struct {
 	qhandle_t	blueProxMine;
 #endif
 
+	qhandle_t	bfgLFGlare;	// JUHOX
+	qhandle_t	bfgLFDisc;	// JUHOX
+	qhandle_t	bfgLFRing;	// JUHOX
+	qhandle_t	bfgLFLine;	// JUHOX
+	qhandle_t	bfgLFStar;	// JUHOX
+
 	qhandle_t	numberShaders[11];
 
 	qhandle_t	shadowMarkShader;
@@ -1264,6 +1271,15 @@ typedef struct {
 	lensFlareEntity_t sunFlare;
 	lensFlareEntity_t lensFlareEntities[MAX_LIGHTS_PER_MAP];
 #endif
+	// JUHOX: variables for missile lens flares
+	int numMissileLensFlareEffects;
+	lensFlareEffect_t missileLensFlareEffects[MAX_MISSILE_LENSFLARE_EFFECTS];
+	const lensFlareEffect_t* lensFlareEffectBeamHead;
+	const lensFlareEffect_t* lensFlareEffectSolarFlare;
+	const lensFlareEffect_t* lensFlareEffectExplosion1;
+	const lensFlareEffect_t* lensFlareEffectExplosion2;
+	const lensFlareEffect_t* lensFlareEffectExplosion3;
+	const lensFlareEffect_t* lensFlareEffectExplosion4;
 
 	// media
 	cgMedia_t		media;
@@ -1465,6 +1481,7 @@ void CG_AdjustEarthquakes(const vec3_t delta);
 
 #if MAPLENSFLARES	// JUHOX: prototypes
 void CG_AddLFEditorCursor(void);
+void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality);	// JUHOX
 #endif
 
 //

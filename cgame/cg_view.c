@@ -1489,6 +1489,135 @@ static float CG_GetVisibleLight(lensFlareEntity_t* lfent, vec3_t visibleOrigin) 
 
 /*
 =====================
+JUHOX: CG_AddLensFlare
+=====================
+*/
+#if MAPLENSFLARES
+#define SPRITE_DISTANCE 8
+void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality) {
+	const lensFlareEffect_t* lfeff;
+	vec3_t origin;
+	float distanceSqr;
+	float distance;
+	vec3_t dir;
+	vec3_t angles;
+	float cosViewAngle;
+	float viewAngle;
+	float angleToLightSource;
+	vec3_t virtualOrigin;
+	vec3_t visibleOrigin;
+	float visibleLight;
+	float alpha;
+	vec3_t center;
+	int j;
+
+	lfeff = lfent->lfeff;
+	if (!lfeff) return;
+
+	CG_LFEntOrigin(lfent, origin);
+
+	distanceSqr = DistanceSquared(origin, cg.refdef.vieworg);
+	if (lfeff->range > 0 && distanceSqr >= lfeff->rangeSqr) {
+		SkipLF:
+		lfent->libNumEntries = 0;
+		return;
+	}
+	if (distanceSqr < Square(16)) goto SkipLF;
+
+	VectorSubtract(origin, cg.refdef.vieworg, dir);
+
+	distance = VectorNormalize(dir);
+	cosViewAngle = DotProduct(dir, cg.refdef.viewaxis[0]);
+	viewAngle = acos(cosViewAngle) * (180.0 / M_PI);
+	if (viewAngle >= 89.99) goto SkipLF;
+
+	// for spotlights
+	angleToLightSource = acos(-DotProduct(dir, lfent->dir)) * (180.0 / M_PI);
+	if (angleToLightSource > lfent->maxVisAngle) goto SkipLF;
+
+	if (
+		cg.numFramesWithoutViewMovement <= LIGHT_INTEGRATION_BUFFER_SIZE ||
+		lfent->lock ||
+		lfent->libNumEntries <= 0
+	) {
+		float vls;
+
+		vls = CG_ComputeVisibleLightSample(lfent, origin, distance, visibleOrigin, quality);
+		CG_SetVisibleLightSample(lfent, vls, visibleOrigin);
+	}
+
+	VectorCopy(origin, visibleOrigin);
+	visibleLight = CG_GetVisibleLight(lfent, visibleOrigin);
+	if (visibleLight <= 0) return;
+
+	VectorSubtract(visibleOrigin, cg.refdef.vieworg, dir);
+	VectorNormalize(dir);
+	vectoangles(dir, angles);
+	angles[YAW] = AngleSubtract(angles[YAW], cg.predictedPlayerState.viewangles[YAW]);
+	angles[PITCH] = AngleSubtract(angles[PITCH], cg.predictedPlayerState.viewangles[PITCH]);
+
+	VectorMA(cg.refdef.vieworg, SPRITE_DISTANCE / cosViewAngle, dir, virtualOrigin);
+	if (lfeff->range < 0) {
+		alpha = -lfeff->range / distance;
+	}
+	else {
+		alpha = 1.0 - distance / lfeff->range;
+	}
+
+	if (viewAngle > 0.5 * cg.refdef.fov_x) {
+		alpha *= 1.0 - (viewAngle - 0.5 * cg.refdef.fov_x) / (90 - 0.5 * cg.refdef.fov_x);
+	}
+
+	VectorMA(cg.refdef.vieworg, SPRITE_DISTANCE, cg.refdef.viewaxis[0], center);
+	VectorSubtract(virtualOrigin, center, dir);
+	
+	{
+		vec3_t v;
+
+		VectorRotate(dir, cg.refdef.viewaxis, v);
+		angles[ROLL] = 90.0 - atan2(v[2], v[1]) * (180.0/M_PI);
+	}
+
+	for (j = 0; j < lfeff->numLensFlares; j++) {
+		float a;
+		float vl;
+		const lensFlare_t* lf;
+
+		a = alpha;
+		vl = visibleLight;
+		lf = &lfeff->lensFlares[j];
+		if (lfent->angle >= 0) {
+			float innerAngle;
+			
+			innerAngle = lfent->angle * lf->entityAngleFactor;
+			if (angleToLightSource > innerAngle) {
+				float fadeAngle;
+
+				fadeAngle = lfeff->fadeAngle * lf->fadeAngleFactor;
+				if (fadeAngle < 0.1) continue;
+				if (angleToLightSource >= innerAngle + fadeAngle) continue;
+
+				vl *= 1.0 - (angleToLightSource - innerAngle) / fadeAngle;
+			}
+		}
+		if (lf->intensityThreshold > 0) {
+			float threshold;
+			float intensity;
+
+			threshold = lf->intensityThreshold;
+			intensity = a * vl;
+			if (intensity < threshold) continue;
+			intensity -= threshold;
+			if (lfeff->range >= 0) intensity /= 1 - threshold;
+			a = intensity / vl;
+		}
+		CG_DrawMapLensFlare(lf, distance, center, dir, angles, a, vl);
+	}
+}
+#endif
+
+/*
+=====================
 JUHOX: CG_AddMapLensFlares
 =====================
 */

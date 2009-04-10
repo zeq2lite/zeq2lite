@@ -384,6 +384,38 @@ static void CG_Item( centity_t *cent ) {
 
 //============================================================================
 
+
+/*
+===============
+JUHOX: CG_AddMissileLensFlare
+===============
+*/
+static void CG_AddMissileLensFlare(centity_t* cent) {
+	lensFlareEntity_t lfent;
+
+	if (!cg_lensFlare.integer) return;
+
+	switch (cent->currentState.weapon) {
+	case WP_ROCKET_LAUNCHER:
+		memset(&lfent, 0, sizeof(lfent));
+		lfent.lfeff = cgs.lensFlareEffectBeamHead;
+		lfent.angle = 90;
+		VectorNegate(cent->currentState.pos.trDelta, lfent.dir);
+		VectorNormalize(lfent.dir);
+		break;
+	default:
+		return;
+	}
+
+	if (!lfent.lfeff) return;
+
+	VectorCopy(cent->lerpOrigin, lfent.origin);
+
+	CG_ComputeMaxVisAngle(&lfent);
+
+	CG_AddLensFlare(&lfent, 1);
+}
+
 /*
 ===========================
 CG_TrailFunc_StraightBeam
@@ -717,12 +749,13 @@ static void CG_Missile( centity_t *cent ) {
 		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, velocity, weaponGraphics->missileSound );
 	}
 
-	
 	// create the render entity
 	memset (&ent, 0, sizeof(ent));
 	VectorCopy( cent->lerpOrigin, ent.origin);
 	VectorCopy( cent->lerpOrigin, ent.oldorigin);
 
+	// JUHOX: draw BeamHead missile lens flare effects
+	CG_AddMissileLensFlare(cent);
 
 	if ( ! (weaponGraphics->missileModel && weaponGraphics->missileSkin) ) {
 		ent.reType = RT_SPRITE;
@@ -735,8 +768,6 @@ static void CG_Missile( centity_t *cent ) {
 		ent.hModel = weaponGraphics->missileModel;
 		ent.customSkin = weaponGraphics->missileSkin;
 		ent.renderfx = RF_NOSHADOW;
-		
-		
 		
 		// We want something simple for simple roll-spinning missiles,
 		// but will use quaternions to get a correct yaw rotation for
