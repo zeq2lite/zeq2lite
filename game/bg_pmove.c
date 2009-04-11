@@ -2441,6 +2441,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	// local axes.
 	if ( pm->ps->powerups[PW_FLYING]) {
 		// See if we need to add degrees for rolling.
+			
 		if (cmd->buttons & BUTTON_ROLL_LEFT) {
 			roll -= 28 * (pml.msec / 200.0f);
 		}
@@ -2511,6 +2512,21 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 
 	// END ADDING
 
+	if (cmd->buttons & BUTTON_GESTURE &&
+		ps->stats[target] >= 0) { // && ps->stats[target] >= 0) {
+		vec3_t dir;
+		vec3_t angles;
+
+		VectorSubtract(pm->target, ps->origin, dir);
+		//dir[2] -= ps->viewheight;	// viewers viewheight
+		vectoangles(dir, angles);
+		if (angles[PITCH] > 180) angles[PITCH] -= 360;
+		else if (angles[PITCH] < -180) angles[PITCH] += 360;
+		for (i = 0; i < 3; i++) {
+			if (i == YAW && (angles[PITCH] > 65 || angles[PITCH] < -65)) continue;
+			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
+		}
+	}
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
 		temp = cmd->angles[i] + ps->delta_angles[i];

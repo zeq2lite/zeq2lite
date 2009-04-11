@@ -676,6 +676,7 @@ void ClientCommand( int clientNum );
 //
 // g_active.c
 //
+void SetTargetPos(gentity_t* ent);
 void ClientThink( int clientNum );
 void ClientEndFrame( gentity_t *ent );
 void G_RunClient( gentity_t *ent );

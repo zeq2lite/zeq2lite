@@ -283,7 +283,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	newRange = 50;
 	newHeight = -10;
 
-	if (cg.lockedView == qtrue) {
+	/*if (cg.lockedView == qtrue) {
 		float oldRoll;
 
 		VectorSubtract( cg.lockedTarget, ps->origin, forward );
@@ -295,7 +295,7 @@ static void CG_OffsetThirdPersonView( void ) {
 		Com_Printf("Target locked!\n");
 
 		return;
-	}
+	}*/
 
 	if (cg_beamControl.value == 0) {
 

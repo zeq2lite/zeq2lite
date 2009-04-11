@@ -1203,6 +1203,7 @@ typedef struct playerState_s {
 	int			damageCount;
 
 	int			stats[MAX_STATS];
+	//qboolean	lockedOn;
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
 	int			ammo[MAX_WEAPONS];

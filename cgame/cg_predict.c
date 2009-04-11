@@ -599,6 +599,18 @@ void CG_PredictPlayerState( void ) {
 		// when it actually inflicts damage
 		cg_pmove.gauntletHit = qfalse;
 
+		if (
+			cg.predictedPlayerState.stats[target] >= 0 &&
+			cg.predictedPlayerState.stats[target] < ENTITYNUM_MAX_NORMAL
+		) {
+			centity_t* theTarget;
+			float pos;
+
+			theTarget = &cg_entities[cg.predictedPlayerState.stats[target]];
+			BG_EvaluateTrajectory(&theTarget->currentState,&theTarget->currentState.pos, cg.time, cg_pmove.target);
+			//cg_pmove.target[2] += BG_PlayerTargetOffset(&theTarget->currentState, pos);
+		}
+
 #if MAPLENSFLARES	// JUHOX: lens flare editor movement
 		if (
 			cgs.editMode == EM_mlf &&

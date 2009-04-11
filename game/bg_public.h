@@ -186,6 +186,7 @@ typedef struct {
 	qboolean	gauntletHit;		// true if a gauntlet attack would actually hit something
 
 	int			framecount;
+	vec3_t		target;
 
 	// results (out)
 	int			numtouch;
@@ -225,7 +226,7 @@ typedef enum {
 	powerLevelTimer,		// Used to calculate the time between updating of the powerLevel cap
 	powerLevelTimer2,		// Used to calculate the time between decrementing powerLevel over the cap
 	skills,					// 16 bit bitmask
-	deathCameraAngle,		// look this direction when dead (FIXME: get rid of?)
+	target,					// used to hold currect locked on target
 	// ADDING FOR ZEQ2
 	tierCurrent,			// Current powertier; integer; range [0..8]
 	tierTotal,

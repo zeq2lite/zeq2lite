@@ -734,6 +734,72 @@ static int StuckInOtherClient(gentity_t *ent) {
 	return qfalse;
 }
 #endif
+void SetTargetPos(gentity_t* ent) {
+	gentity_t* theTarget;
+	int targetNum;
+	float pos;
+	vec3_t dest;
+	
+	targetNum = ent->client->ps.stats[target];
+	if (targetNum < 0 || targetNum >= ENTITYNUM_MAX_NORMAL) return;
+	theTarget = &g_entities[targetNum];
+	if (!theTarget->inuse) return;
+
+	VectorCopy(theTarget->s.pos.trBase, dest);
+	//dest[2] += BG_PlayerTargetOffset(&target->s, pos);
+	VectorCopy(dest, ent->s.origin2);
+}
+static void GetTarget(gentity_t* ent) {
+	trace_t tr;
+	vec3_t forward, right, up, muzzle, end;
+	gentity_t* theTarget;
+
+	if (ent->client->ps.stats[powerLevel] <= 0) {
+		ent->client->ps.stats[target] = -1;
+		return;
+	}
+
+	// set aiming directions
+	AngleVectors(ent->client->ps.viewangles, forward, right, up);
+
+	CalcMuzzlePoint(ent, forward, right, up, muzzle);
+
+	VectorMA(muzzle, 10000, forward, end);
+
+	trap_Trace(&tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT);
+	if (tr.fraction >= 1) goto NoTarget;
+	if (tr.surfaceFlags & SURF_NOIMPACT) goto NoTarget;
+
+	theTarget = &g_entities[tr.entityNum];
+	if (
+			theTarget->client &&
+			!OnSameTeam(ent, theTarget) &&
+			theTarget->client->sess.sessionTeam != TEAM_SPECTATOR &&
+			theTarget->client->ps.pm_type != PM_SPECTATOR &&
+			theTarget->client->ps.stats[powerLevel] > 0
+		)
+	{
+		ent->client->ps.stats[target] = tr.entityNum;
+		SetTargetPos(ent);
+		//ent->client->looseTargetTime = 0;
+		return;
+	}
+
+	NoTarget:
+	if (ent->client->ps.stats[target] < 0) return;
+	//if (!ent->client->looseTargetTime) {
+		//ent->client->looseTargetTime = level.time + 200;
+	//}
+	else if (
+		//level.time > ent->client->looseTargetTime ||
+		g_entities[ent->client->ps.stats[target]].powerLevel <= 0
+	) {
+		ent->client->ps.stats[target] = -1;
+		//ent->client->looseTargetTime = 0;
+		return;
+	}
+	SetTargetPos(ent);
+}
 
 void BotTestSolid(vec3_t origin);
 
@@ -993,6 +1059,7 @@ void ClientThink_real( gentity_t *ent ) {
 	// <-- RiO; Update altered powerLevel value
 	ent->powerLevel = client->ps.stats[powerLevel];
 	// -->
+	GetTarget(ent);
 
 	// save results of pmove
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
