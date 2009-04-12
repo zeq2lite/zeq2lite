@@ -17,11 +17,14 @@ MAIN MENU
 #define ID_SETUP				12
 #define ID_DEMOS				13
 #define ID_CINEMATICS			14
-#define ID_TEAMARENA		15
+#define ID_TEAMARENA			15
 #define ID_MODS					16
 #define ID_EXIT					17
 
-#define MAIN_BANNER_MODEL				"models/mapobjects/banner/banner5.md3"
+#define	ID_MODEL				18
+#define MAX_NAMELENGTH			20
+
+//#define MAIN_BANNER_MODEL				"models/mapobjects/banner/banner5.md3"
 #define MAIN_MENU_VERTICAL_SPACING		34
 
 typedef struct {
@@ -36,11 +39,69 @@ typedef struct {
 	menutext_s		mods;
 	menutext_s		exit;
 	qhandle_t		bannerModel;
-} mainmenu_t;
 
+	menubitmap_s	player1;
+	playerInfo_t	playerinfo1;
+	char			playerModel1[MAX_QPATH];
+
+	menubitmap_s	player2;
+	playerInfo_t	playerinfo2;
+	char			playerModel2[MAX_QPATH];
+} mainmenu_t;
 
 static mainmenu_t s_main;
 
+/*
+=================
+MainMenu_DrawPlayer1
+=================
+*/
+static void MainMenu_DrawPlayer1( void *self ) {
+	menubitmap_s	*b;
+	vec3_t			viewangles;
+	int				r;
+
+	if ( strcmp( "goku", s_main.playerModel1 ) != 0 ) {
+		UI_PlayerInfo_SetModel( &s_main.playerinfo1, "goku");
+		strcpy( s_main.playerModel1, "goku");
+
+		r = random() * 4;
+
+		viewangles[YAW]   = 90;
+		viewangles[PITCH] = 0;
+		viewangles[ROLL]  = 0;
+		UI_PlayerInfo_SetInfo( &s_main.playerinfo1, LEGS_SPEED_MELEE_ATTACK + r, TORSO_SPEED_MELEE_ATTACK + r, viewangles, vec3_origin, WP_NONE, qfalse );
+	}
+
+	b = (menubitmap_s*) self;
+	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo1, uis.realtime/2 );
+}
+
+/*
+=================
+MainMenu_DrawPlayer2
+=================
+*/
+static void MainMenu_DrawPlayer2( void *self ) {
+	menubitmap_s	*b;
+	vec3_t			viewangles;
+	int				r;
+
+	if ( strcmp( "goku", s_main.playerModel2 ) != 0 ) {
+		UI_PlayerInfo_SetModel( &s_main.playerinfo2, "goku");
+		strcpy( s_main.playerModel2, "goku");
+
+		r = random() * 4;
+
+		viewangles[YAW]   = -90;
+		viewangles[PITCH] = 0;
+		viewangles[ROLL]  = 0;
+		UI_PlayerInfo_SetInfo( &s_main.playerinfo2, LEGS_SPEED_MELEE_ATTACK + r, TORSO_SPEED_MELEE_ATTACK + r, viewangles, vec3_origin, WP_NONE, qfalse );
+	}
+
+	b = (menubitmap_s*) self;
+	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo2, uis.realtime/2 );
+}
 
 /*
 =================
@@ -110,7 +171,7 @@ MainMenu_Cache
 ===============
 */
 void MainMenu_Cache( void ) {
-	s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
+//	s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
 }
 
 
@@ -345,6 +406,22 @@ void UI_MainMenu( void ) {
 	s_main.exit.color						= color_white;
 	s_main.exit.style						= style;
 
+	s_main.player1.generic.type				= MTYPE_BITMAP;
+	s_main.player1.generic.flags			= QMF_INACTIVE;
+	s_main.player1.generic.ownerdraw		= MainMenu_DrawPlayer1;
+	s_main.player1.generic.x				= 225;
+	s_main.player1.generic.y				= 0;
+	s_main.player1.width					= 32*10;
+	s_main.player1.height					= 56*10;
+
+	s_main.player2.generic.type				= MTYPE_BITMAP;
+	s_main.player2.generic.flags			= QMF_INACTIVE;
+	s_main.player2.generic.ownerdraw		= MainMenu_DrawPlayer2;
+	s_main.player2.generic.x				= 75;
+	s_main.player2.generic.y				= 0;
+	s_main.player2.width					= 32*10;
+	s_main.player2.height					= 56*10;
+
 	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
@@ -355,6 +432,9 @@ void UI_MainMenu( void ) {
 //	}
 	Menu_AddItem( &s_main.menu,	&s_main.mods );
 	Menu_AddItem( &s_main.menu,	&s_main.exit );
+
+	Menu_AddItem( &s_main.menu, &s_main.player1 );
+	Menu_AddItem( &s_main.menu, &s_main.player2 );
 
 	trap_Key_SetCatcher( KEYCATCH_UI );
 	uis.menusp = 0;
