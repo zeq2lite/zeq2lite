@@ -61,9 +61,9 @@ static void MainMenu_DrawPlayer1( void *self ) {
 	vec3_t			viewangles;
 	int				r;
 
-	if ( strcmp( "goku", s_main.playerModel1 ) != 0 ) {
-		UI_PlayerInfo_SetModel( &s_main.playerinfo1, "goku");
-		strcpy( s_main.playerModel1, "goku");
+	if ( strcmp( "vegeta", s_main.playerModel1 ) != 0 ) {
+		UI_PlayerInfo_SetModel( &s_main.playerinfo1, "vegeta");
+		strcpy( s_main.playerModel1, "vegeta");
 
 		r = random() * 4;
 
