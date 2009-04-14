@@ -5,7 +5,7 @@
 // because games can change separately from the main system version, we need a
 // second version that must match between game and cgame
 
-#define	GAME_VERSION		"zeq2-1"
+#define	GAME_VERSION		"zeq2"
 
 #define EARTHQUAKE_SYSTEM	1	// JUHOX
 #define MAPLENSFLARES		1	// JUHOX
@@ -276,7 +276,7 @@ typedef enum {
 	PERS_ASSIST_COUNT,				// assist awards
 	PERS_GAUNTLET_FRAG_COUNT,		// kills with the gauntlet
 	PERS_CAPTURES,					// captures
-	powerLevelMaximum					// current powerLevel cap should be saved across spawns
+	powerLevelMaximum				// current powerLevel cap should be saved across spawns
 } persEnum_t;
 
 

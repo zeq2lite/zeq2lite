@@ -168,11 +168,11 @@ static void UI_LoadArenas( void ) {
 	}
 
 	// get all arenas from .arena files
-	numdirs = trap_FS_GetFileList("scripts", ".arena", dirlist, 1024 );
+	numdirs = trap_FS_GetFileList("maps", ".arena", dirlist, 1024 );
 	dirptr  = dirlist;
 	for (i = 0; i < numdirs; i++, dirptr += dirlen+1) {
 		dirlen = strlen(dirptr);
-		strcpy(filename, "scripts/");
+		strcpy(filename, "maps/");
 		strcat(filename, dirptr);
 		UI_LoadArenasFromFile(filename);
 	}

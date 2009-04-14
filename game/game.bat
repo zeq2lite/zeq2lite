@@ -86,6 +86,7 @@ if "%1"=="TA" goto TA
 %cc%  ../g_weapPhysAttributes.c
 @if errorlevel 1 goto quit
 
+
 ..\..\q3asm -f ../game
 goto quit
 

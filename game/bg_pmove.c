@@ -635,21 +635,12 @@ PM_Transform
 ===================
 */
 static void PM_Transform( void ) {
-
-//	Com_Printf("Transformation time: %i\n", pm->ps->powerups[PW_TRANSFORM]);
-
 	// implicitly stops boost and lightspeed as well
 	PM_StopDash();
 	PM_StopBoost();
-
 	pm->ps->powerups[PW_LIGHTSPEED] = 0;
-	if ( pm->ps->powerups[PW_LIGHTSPEED] < 0 )
-		pm->ps->powerups[PW_LIGHTSPEED] = 0;
-
 	PM_ContinueLegsAnim( LEGS_TRANS_UP );
 	pm->ps->eFlags |= EF_AURA;
-
-	// drop transform
 	if ( pm->ps->powerups[PW_TRANSFORM] > 0 ) {
 		pm->ps->powerups[PW_TRANSFORM] -= pml.msec;
 		if ( pm->ps->powerups[PW_TRANSFORM] < 0 ) {
@@ -2353,38 +2344,6 @@ static void PM_Animate( void ) {
 			pm->ps->torsoTimer = TIMER_GESTURE;
 			PM_AddEvent( EV_TAUNT );
 		}
-#ifdef MISSIONPACK
-	} else if ( pm->cmd.buttons & BUTTON_GETFLAG ) {
-		if ( pm->ps->torsoTimer == 0 ) {
-			PM_StartTorsoAnim( TORSO_GETFLAG );
-			pm->ps->torsoTimer = 600;	//TIMER_GESTURE;
-		}
-	} else if ( pm->cmd.buttons & BUTTON_GUARDBASE ) {
-		if ( pm->ps->torsoTimer == 0 ) {
-			PM_StartTorsoAnim( TORSO_GUARDBASE );
-			pm->ps->torsoTimer = 600;	//TIMER_GESTURE;
-		}
-	} else if ( pm->cmd.buttons & BUTTON_PATROL ) {
-		if ( pm->ps->torsoTimer == 0 ) {
-			PM_StartTorsoAnim( TORSO_PATROL );
-			pm->ps->torsoTimer = 600;	//TIMER_GESTURE;
-		}
-	} else if ( pm->cmd.buttons & BUTTON_FOLLOWME ) {
-		if ( pm->ps->torsoTimer == 0 ) {
-			PM_StartTorsoAnim( TORSO_FOLLOWME );
-			pm->ps->torsoTimer = 600;	//TIMER_GESTURE;
-		}
-	} else if ( pm->cmd.buttons & BUTTON_AFFIRMATIVE ) {
-		if ( pm->ps->torsoTimer == 0 ) {
-			PM_StartTorsoAnim( TORSO_AFFIRMATIVE);
-			pm->ps->torsoTimer = 600;	//TIMER_GESTURE;
-		}
-	} else if ( pm->cmd.buttons & BUTTON_NEGATIVE ) {
-		if ( pm->ps->torsoTimer == 0 ) {
-			PM_StartTorsoAnim( TORSO_NEGATIVE );
-			pm->ps->torsoTimer = 600;	//TIMER_GESTURE;
-		}
-#endif
 	}
 }
 
@@ -2829,29 +2788,19 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// Activate transform if necessary
 	if (pm->ps->powerups[PW_TRANSFORM]){
-		// Disable any dashing
 		if ( VectorLength( pm->ps->dashDir ) > 0.0f ) {
 			PM_StopDash();
 			PM_StopBoost();
 		}
-	}
-
-	if ( pm->ps->powerups[PW_TRANSFORM] ) {
 		PM_Transform();
-
-	} else	if ( pm->ps->powerups[PW_LIGHTSPEED] ) {
+	} else if ( pm->ps->powerups[PW_LIGHTSPEED] ) {
 		PM_LightSpeedMove();
-
-	} else	if ( pm->ps->powerups[PW_FLYING] ) {
+	} else if ( pm->ps->powerups[PW_FLYING] ) {
 		PM_FlyMove();
-
 	} else if ( VectorLength( pm->ps->dashDir ) > 0.0f ) {
 		PM_DashMove();
-
 	} else if ( pml.walking ) {
-		// walking on ground
 		pmove->ps->powerups[PW_FLYING] = 0;
-
 		if ( !(pm->cmd.buttons & BUTTON_WALKING) &&
 			  (pm->cmd.forwardmove || pm->cmd.rightmove) &&
 			 !(pm->ps->stats[bitFlags] & STATBIT_ALTER_PL) ) {
@@ -2859,7 +2808,6 @@ void PmoveSingle (pmove_t *pmove) {
 		} else {
 			PM_WalkMove();
 		}
-
 	} else {
 		// airborne
 		PM_AirMove();

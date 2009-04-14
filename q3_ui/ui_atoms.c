@@ -1279,12 +1279,7 @@ void UI_Refresh( int realtime )
 		if (uis.activemenu->fullscreen)
 		{
 			// draw the background
-			if( uis.activemenu->showlogo ) {
-				UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
-			}
-			else {
-				UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackNoLogoShader );
-			}
+			UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
 		}
 
 		if (uis.activemenu->draw)

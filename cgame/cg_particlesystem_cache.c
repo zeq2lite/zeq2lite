@@ -1118,12 +1118,12 @@ void PSys_InitCache( void ) {
 	memset(PSys_Cache, 0, sizeof(PSys_Cache));
 	PSys_CurCacheSize = 0;
 	
-	// Parse all files fitting the /scripts/*.psys pattern
-	numdirs = trap_FS_GetFileList("scripts", ".psys", dirlist, 1024 );
+	// Parse all files fitting the /effects/*.psys pattern
+	numdirs = trap_FS_GetFileList("effects", ".psys", dirlist, 1024 );
 	dirptr  = dirlist;
 	for ( i = 0; i < numdirs; i++, dirptr += dirlen+1 ) {
 		dirlen = strlen(dirptr);
-		strcpy(filename, "scripts/");
+		strcpy(filename, "effects/");
 		strcat(filename, dirptr);
 
 		PSys_ParseFile(filename, &PSys_CurCacheSize );

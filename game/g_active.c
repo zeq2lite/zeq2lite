@@ -3,16 +3,18 @@
 
 #include "g_local.h"
 
-void P_TierUp( playerState_t *ps ) {
-	if (ps->stats[tierCurrent] < 7){
+void P_TierUp( gclient_t *client ) {
+	playerState_t *ps;
+	ps = &client->ps;
+	if(ps->stats[tierCurrent] < 7){
 		ps->stats[tierCurrent]++;
 		if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
 			ps->powerups[PW_TRANSFORM] = 2700 + (ps->stats[tierCurrent] * 800);
-			//trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*powerup.ogg" ) );
 			ps->stats[tierTotal] = ps->stats[tierCurrent];
+			//trap_S_StartSound(client->playerEntity->pos1,ENTITYNUM_NONE,CHAN_BODY,client->tiers[tierCurrent].soundTransformFirst);
 		}
 		else{
-
+			//G_Sound(client->playerEntity,CHAN_VOICE,G_SoundIndex(strcat(tierPath,"transform.ogg")));
 		}
 	}
 }
@@ -599,7 +601,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 
 		case EV_TIERUP:
-			P_TierUp( &client->ps );
+			P_TierUp( client );
 			break;
 
 		case EV_TIERDOWN:
@@ -935,21 +937,9 @@ void ClientThink_real( gentity_t *ent ) {
 
 	client->ps.gravity = g_gravity.value;
 
-	if ( g_powerlevel.value > 32768 ) {
-		g_powerlevel.value = 32768;
-	}
-
 	// set the initial power level
 	client->ps.powerlevel = g_powerlevel.value;
 	
-	if ( g_powerlevelChargeScale.value < 0 ) {
-		g_powerlevelChargeScale.value = 0;
-	}
-
-	if ( g_powerlevelChargeScale.value > 5 ) {
-		g_powerlevelChargeScale.value = 5;
-	}
-
 	// set the power level charge speed
 	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 

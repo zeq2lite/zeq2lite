@@ -2,8 +2,6 @@
 //
 #include "g_local.h"
 
-// g_client.c -- client functions that don't happen every frame
-
 static vec3_t	playerMins = {-15, -15, -24};
 static vec3_t	playerMaxs = {15, 15, 32};
 
@@ -724,27 +722,12 @@ void ClientUserinfoChanged( int clientNum ) {
 			Q_strncpyz( client->pers.netname, "scoreboard", sizeof(client->pers.netname) );
 		}
 	}
-
 	if ( client->pers.connected == CON_CONNECTED ) {
 		if ( strcmp( oldname, client->pers.netname ) ) {
 			trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " renamed to %s\n\"", oldname, 
 				client->pers.netname) );
 		}
 	}
-
-	// set max powerLevel
-	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-	client->pers.maxHealth = powerLevel;
-	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
-		client->pers.maxHealth = 100;
-	}
-
-	if ( g_powerlevel.value > 32768 ) {
-		g_powerlevel.value = 32768;
-	}
-
-	//client->ps.stats[powerLevelTotal] = client->pers.maxHealth;
-	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
 
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
@@ -754,6 +737,15 @@ void ClientUserinfoChanged( int clientNum ) {
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
 		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "headmodel"), sizeof( headModel ) );
 	}
+
+	// set max powerLevel
+	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
+	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
+	client->playerEntity = ent;
+
+	// setup tier information
+	client->modelName = model;
+	// setupTiers(client);
 
 	// ADDING FOR ZEQ2
 	// REFPOINT: Loading the serverside weaponscripts here.
@@ -776,7 +768,7 @@ void ClientUserinfoChanged( int clientNum ) {
 		Q_strncpyz( skinName, skin, sizeof( skinName ) );
 		Q_strncpyz( modelName, modelStr, sizeof( modelName ) );
 		
-		Com_sprintf( filename, sizeof( filename ), "players//%s/%s.phys", modelName, skinName );
+		Com_sprintf( filename, sizeof( filename ), "players/%s/%s.phys", modelName, skinName );
 		G_weapPhys_Parse( filename, clientNum );
 
 		// Set the weapon mask here, incase we changed models on the fly.
@@ -812,47 +804,6 @@ void ClientUserinfoChanged( int clientNum ) {
 		team = client->sess.sessionTeam;
 	}
 
-/*	NOTE: all client side now
-
-	// team
-	switch( team ) {
-	case TEAM_RED:
-		ForceClientSkin(client, model, "red");
-//		ForceClientSkin(client, headModel, "red");
-		break;
-	case TEAM_BLUE:
-		ForceClientSkin(client, model, "blue");
-//		ForceClientSkin(client, headModel, "blue");
-		break;
-	}
-	// don't ever use a default skin in teamplay, it would just waste memory
-	// however bots will always join a team but they spawn in as spectator
-	if ( g_gametype.integer >= GT_TEAM && team == TEAM_SPECTATOR) {
-		ForceClientSkin(client, model, "red");
-//		ForceClientSkin(client, headModel, "red");
-	}
-*/
-
-#ifdef MISSIONPACK
-	if (g_gametype.integer >= GT_TEAM) {
-		client->pers.teamInfo = qtrue;
-	} else {
-		s = Info_ValueForKey( userinfo, "teamoverlay" );
-		if ( ! *s || atoi( s ) != 0 ) {
-			client->pers.teamInfo = qtrue;
-		} else {
-			client->pers.teamInfo = qfalse;
-		}
-	}
-#else
-	// teamInfo
-	s = Info_ValueForKey( userinfo, "teamoverlay" );
-	if ( ! *s || atoi( s ) != 0 ) {
-		client->pers.teamInfo = qtrue;
-	} else {
-		client->pers.teamInfo = qfalse;
-	}
-#endif
 	/*
 	s = Info_ValueForKey( userinfo, "cg_pmove_fixed" );
 	if ( !*s || atoi( s ) == 0 ) {
@@ -1031,12 +982,7 @@ void ClientBegin( int clientNum ) {
 
 	// ADDING FOR ZEQ2
 	// Set the starting cap
-
-	if ( g_powerlevel.value > 32768 ) {
-		g_powerlevel.value = 32768;
-	}
-
-	client->ps.persistant[powerLevelMaximum] = g_powerlevel.value;
+	client->ps.persistant[powerLevelMaximum] = g_powerlevel.value;//1000;
 	// END ADDING
 
 	// locate ent at a spawn point
@@ -1080,11 +1026,11 @@ void ClientSpawn(gentity_t *ent) {
 //	char	*savedAreaBits;
 	int		accuracy_hits, accuracy_shots;
 	int		eventSequence;
+	char	model[MAX_QPATH];
 	char	userinfo[MAX_INFO_STRING];
 
 	index = ent - g_entities;
 	client = ent->client;
-
 	// find a spawn point
 	// do it before setting powerLevel back up, so farthest
 	// ranging doesn't count this client
@@ -1170,12 +1116,12 @@ void ClientSpawn(gentity_t *ent) {
 	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
 	// set max powerLevel
 	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
+	Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
+
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
 		client->pers.maxHealth = 100;
 	}
 	// clear entity values
-	//client->ps.stats[powerLevelTotal] = client->pers.maxHealth;
-
 	if ( g_powerlevel.value > 32768 ) {
 		g_powerlevel.value = 32768;
 	}
@@ -1209,6 +1155,8 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.clientNum = index;
 
 	// ADDING FOR ZEQ2
+	client->modelName = model;
+	//setupTiers(client);
 	client->ps.stats[skills] = *G_FindUserWeaponMask( index );
 	client->ps.stats[chargePercentPrimary] = 0;
 	client->ps.stats[chargePercentSecondary] = 0;

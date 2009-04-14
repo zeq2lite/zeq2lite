@@ -806,7 +806,7 @@ void CG_AddAuraToScene( centity_t *player ) {
 		return;
 	}
 	state = &auraStates[ clientNum ];
-	tier = cgs.clientinfo[clientNum].activeTier;
+	tier = cgs.clientinfo[clientNum].tierCurrent;
 	config = &(state->configurations[tier]);	
 	
 	
@@ -848,7 +848,7 @@ void CG_AuraStart( centity_t *player ) {
 		return;
 	}
 	state = &auraStates[ clientNum ];
-	tier = cgs.clientinfo[clientNum].activeTier;
+	tier = cgs.clientinfo[clientNum].tierCurrent;
 	config = &(state->configurations[tier]);	
 	
 
@@ -946,9 +946,9 @@ void CG_RegisterClientAura( int clientNum, char *modelName, char *skinName ) {
 	auraSpikeShader = trap_R_RegisterShader( "Aura_Spike" );
 	auraTrailShader = trap_R_RegisterShader( "Aura_Trail" );
 
-	auraStartSound  = trap_S_RegisterSound( "sound/aura/AuraStart.ogg", qfalse );
-	auraBoostSound  = trap_S_RegisterSound( "sound/aura/AuraLoop.ogg", qfalse );
-	auraChargeSound = trap_S_RegisterSound( "sound/aura/AuraLoop.ogg", qfalse );
+	auraStartSound  = trap_S_RegisterSound( "effects/aura/start.ogg", qfalse );
+	auraBoostSound  = trap_S_RegisterSound( "effects/aura/boost.ogg", qfalse );
+	auraChargeSound = trap_S_RegisterSound( "effects/aura/charge.ogg", qfalse );
 
 	// Register 8 different tiers worth of auras
 	for ( j = 0; j < 8; j++ ) { 

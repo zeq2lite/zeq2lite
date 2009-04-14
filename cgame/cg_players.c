@@ -344,7 +344,6 @@ CG_FindClientModelFile
 static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t *ci, const char *teamName, const char *modelName, const char *skinName, const char *base, const char *ext ) {
 	char *team, *charactersFolder;
 	int i;
-
 	if ( cgs.gametype >= GT_TEAM ) {
 		switch ( ci->team ) {
 			case TEAM_BLUE: {
@@ -749,10 +748,10 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 		ci->sounds[i] = 0;
 		// if the model didn't load use the sounds of the default model
 		if (modelloaded) {
-			ci->sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", dir, s + 1), qfalse );
+			ci->sounds[i] = trap_S_RegisterSound( va("players/%s/%s", dir, s + 1), qfalse );
 		}
 		if ( !ci->sounds[i] ) {
-			ci->sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", fallback, s + 1), qfalse );
+			ci->sounds[i] = trap_S_RegisterSound( va("players/%s/%s", fallback, s + 1), qfalse );
 		}
 	}
 
@@ -2417,7 +2416,7 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 void CG_PlayerTransformation ( centity_t *cent ) {
 	// Don't show sequence when powering down!
 	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
-		cg.tierTime = cg.time + 5000;
+		cg.tierTime = cg.time + PW_TRANSFORM;
 	}
 }
 
@@ -2471,8 +2470,8 @@ void CG_Player( centity_t *cent ) {
 		tier = 0;
 	} else {
 		tier = cent->currentState.tier;
-		if ( ci->activeTier != tier ) {
-			ci->activeTier = tier;
+		if ( ci->tierCurrent != tier ) {
+			ci->tierCurrent = tier;
 
 			// NOTE: Add 'tier up' cinematic calls here
 			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);

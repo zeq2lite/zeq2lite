@@ -648,8 +648,8 @@ static void CG_RegisterSounds( void ) {
 	}
 	// ADDING FOR ZEQ2
 
-	cgs.media.radarwarningSound = trap_S_RegisterSound( "sound/feedback/radar_warning.ogg", qfalse );
-	cgs.media.lightspeedSound = trap_S_RegisterSound( "sound/effects/lightspeed.ogg", qfalse );
+	cgs.media.radarwarningSound = trap_S_RegisterSound( "interface/radar/warning.ogg", qfalse );
+	cgs.media.lightspeedSound = trap_S_RegisterSound( "effects/zanzoken/zanzoken.ogg", qfalse );
 
 	// END ADDING
 
@@ -1052,7 +1052,7 @@ static qboolean CG_ParseLensFlareEffect(char** p, lensFlareEffect_t* lfe) {
 	}
 
 	if (!Q_stricmp(token, "import")) {
-		CG_PushFile("flares/import/", COM_Parse(p));
+		CG_PushFile("maps/import/", COM_Parse(p));
 		goto ParseEffect;
 	}
 
@@ -1146,7 +1146,7 @@ void CG_LoadLensFlares(void) {
 	cgs.numLensFlareEffects = 0;
 	memset(&cgs.lensFlareEffects, 0, sizeof(cgs.lensFlareEffects));
 
-	CG_PushFile("flares/", va("%s.lfs", Info_ValueForKey(CG_ConfigString(CS_SERVERINFO), "mapname")));
+	CG_PushFile("maps/", va("%s.lfs", Info_ValueForKey(CG_ConfigString(CS_SERVERINFO), "mapname")));
 	if (!CG_PopFile()) return;
 	lfNameBase[0] = 0;
 
@@ -1178,7 +1178,7 @@ static void CG_LoadMissileLensFlares(void) {
 	cgs.numMissileLensFlareEffects = 0;
 	memset(&cgs.missileLensFlareEffects, 0, sizeof(cgs.missileLensFlareEffects));
 
-	CG_PushFile("flares/", "effects.lfs");
+	CG_PushFile("maps/", "effects.lfs");
 	if (!CG_PopFile()) return;
 	lfNameBase[0] = 0;
 
@@ -1364,7 +1364,7 @@ void CG_LoadLensFlareEntities(void) {
 		CG_Printf("sun flare entity created\n");
 	}
 
-	Com_sprintf(name, sizeof(name), "flares/%s.lfe", Info_ValueForKey(CG_ConfigString(CS_SERVERINFO), "mapname"));
+	Com_sprintf(name, sizeof(name), "maps/%s.lfe", Info_ValueForKey(CG_ConfigString(CS_SERVERINFO), "mapname"));
 
 	len = trap_FS_FOpenFile(name, &f, FS_READ);
 	if (!f) {
@@ -1414,17 +1414,17 @@ static void CG_RegisterGraphics( void ) {
 	int			i;
 	char		items[MAX_ITEMS+1];
 	static char		*sb_nums[11] = {
-		"gfx/2d/numbers/zero_32b",
-		"gfx/2d/numbers/one_32b",
-		"gfx/2d/numbers/two_32b",
-		"gfx/2d/numbers/three_32b",
-		"gfx/2d/numbers/four_32b",
-		"gfx/2d/numbers/five_32b",
-		"gfx/2d/numbers/six_32b",
-		"gfx/2d/numbers/seven_32b",
-		"gfx/2d/numbers/eight_32b",
-		"gfx/2d/numbers/nine_32b",
-		"gfx/2d/numbers/minus_32b",
+		"interface/fonts/numbers/0",
+		"interface/fonts/numbers/1",
+		"interface/fonts/numbers/2",
+		"interface/fonts/numbers/3",
+		"interface/fonts/numbers/4",
+		"interface/fonts/numbers/5",
+		"interface/fonts/numbers/6",
+		"interface/fonts/numbers/7",
+		"interface/fonts/numbers/8",
+		"interface/fonts/numbers/9",
+		"interface/fonts/numbers/-",
 	};
 
 	// clear any references to old media
@@ -1480,17 +1480,17 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.waterBubbleShader = trap_R_RegisterShader( "waterBubble" );
 
 	cgs.media.tracerShader = trap_R_RegisterShader( "gfx/misc/tracer" );
-	cgs.media.selectShader = trap_R_RegisterShader( "gfx/2d/select" );
+	cgs.media.selectShader = trap_R_RegisterShader( "interface/hud/select.png" );
 
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
-		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("gfx/2d/crosshair%c", 'a'+i) );
+		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("interface/hud/crosshair%c", 'a'+i) );
 	}
 
 	cgs.media.backTileShader = trap_R_RegisterShader( "gfx/2d/backtile" );
 	cgs.media.noammoShader = trap_R_RegisterShader( "icons/noammo" );
 
 	// powerup shaders
-	cgs.media.quadShader = trap_R_RegisterShader("powerups/quad" );
+	cgs.media.quadShader = trap_R_RegisterShader("powerups/quad");
 	cgs.media.quadWeaponShader = trap_R_RegisterShader("powerups/quadWeapon" );
 	cgs.media.battleSuitShader = trap_R_RegisterShader("powerups/battleSuit" );
 	cgs.media.battleWeaponShader = trap_R_RegisterShader("powerups/battleWeapon" );
@@ -1654,16 +1654,13 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.railCoreShader = trap_R_RegisterShader( "railCore" );
 
 	// ADDING FOR ZEQ2
-	cgs.media.LB_HudShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/LB_Hud.png" );
-	cgs.media.markerAscendShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/markerAscend.png" );
-	cgs.media.markerDescendShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/markerDescend.png" );
-	cgs.media.CrHr_ChargeOutlineShader = trap_R_RegisterShaderNoMip ( "gfx/2d/hud/CrHr_ChargeOutline.png" );
-	cgs.media.CrHr_ChargeGlowShader = trap_R_RegisterShaderNoMip ( "gfx/2d/hud/CrHr_ChargeGlow" );
-	cgs.media.CrHr_NoChargeWeaponShader = trap_R_RegisterShaderNoMip ( "gfx/2d/hud/CrHr_NoChargeWeapon.png" );
-	cgs.media.RadarBlipShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_blip.png" );
-	cgs.media.RadarBurstShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_burst.png" );
-	cgs.media.RadarWarningShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_warning.png" );
-	cgs.media.RadarMidpointShader = trap_R_RegisterShaderNoMip( "gfx/2d/hud/radar_midpoint.png" );
+	cgs.media.hudShader = trap_R_RegisterShaderNoMip( "interface/hud/main.png" );
+	cgs.media.markerAscendShader = trap_R_RegisterShaderNoMip( "interface/hud/markerAscend.png" );
+	cgs.media.markerDescendShader = trap_R_RegisterShaderNoMip( "interface/hud/markerDescend.png" );
+	cgs.media.RadarBlipShader = trap_R_RegisterShaderNoMip( "interface/radar/blip.png" );
+	cgs.media.RadarBurstShader = trap_R_RegisterShaderNoMip( "interface/radar/burst.png" );
+	cgs.media.RadarWarningShader = trap_R_RegisterShaderNoMip( "interface/radar/warning.png" );
+	cgs.media.RadarMidpointShader = trap_R_RegisterShaderNoMip( "interface/radar/midpoint.png" );
 	// END ADDING
 
 	// register the inline models
@@ -1702,7 +1699,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.teamLeaderShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/team_leader.png");
 	cgs.media.retrieveShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/retrieve.png");
 	cgs.media.escortShader = trap_R_RegisterShaderNoMip("ui/assets/statusbar/escort.png");
-	cgs.media.cursor = trap_R_RegisterShaderNoMip( "menu/art/3_cursor2" );
+	cgs.media.cursor = trap_R_RegisterShaderNoMip( "interface/menu/cursor.png" );
 	cgs.media.sizeCursor = trap_R_RegisterShaderNoMip( "ui/assets/sizecursor.png" );
 	cgs.media.selectCursor = trap_R_RegisterShaderNoMip( "ui/assets/selectcursor.png" );
 	cgs.media.flagShaders[0] = trap_R_RegisterShaderNoMip("ui/assets/statusbar/flag_in_base.png");
@@ -2535,11 +2532,11 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	cgs.serverCommandSequence = serverCommandSequence;
 
 	// load a few needed things before we do any screen updates
-	cgs.media.charsetShader		= trap_R_RegisterShader( "gfx/2d/bigchars" );
+	cgs.media.charsetShader		= trap_R_RegisterShader( "interface/fonts/font0.png" );
 	cgs.media.whiteShader		= trap_R_RegisterShader( "white" );
-	cgs.media.charsetProp		= trap_R_RegisterShaderNoMip( "menu/art/font1_prop.png" );
-	cgs.media.charsetPropGlow	= trap_R_RegisterShaderNoMip( "menu/art/font1_prop_glo.png" );
-	cgs.media.charsetPropB		= trap_R_RegisterShaderNoMip( "menu/art/font2_prop.png" );
+	cgs.media.charsetProp		= trap_R_RegisterShaderNoMip( "interface/fonts/font1.png" );
+	cgs.media.charsetPropGlow	= trap_R_RegisterShaderNoMip( "interface/fonts/font1Glow.png" );
+	cgs.media.charsetPropB		= trap_R_RegisterShaderNoMip( "interface/fonts/font2.png" );
 
 	CG_RegisterCvars();
 

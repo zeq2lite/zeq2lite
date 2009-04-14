@@ -126,7 +126,7 @@ void Think_Guided (gentity_t *self) {
 	// If our weapon's owner can't be found, skip anything related to guiding.
 	if ( !owner )
 	{
-		G_Printf( S_COLOR_YELLOW "WARNING: Think_Guided reports unowned fired weapon!\n" );
+		G_Printf( S_COLOR_YELLOW "WARNING: Think_Guided reports unknown fired weapon!\n" );
 	} else {
 		// Calculate where we are now aiming.
 		AngleVectors( owner->client->ps.viewangles, forward, right, up );

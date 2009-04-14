@@ -3,6 +3,7 @@
 #include "../game/q_shared.h"
 #include "tr_types.h"
 #include "../game/bg_public.h"
+#include "../shared/tier.h"
 // ADDING FOR ZEQ2
 #include "../game/bg_userweapons.h"
 #include "cg_userweapons.h"
@@ -314,38 +315,25 @@ typedef struct {
 
 typedef struct {
 	qboolean		infoValid;
-
 	char			name[MAX_QPATH];
 	team_t			team;
-
 	int				botSkill;		// 0 = not bot, 1-5 = bot
-
 	vec3_t			color1;
 	vec3_t			color2;
-
 	int				score;			// updated by score servercmds
 	int				location;		// location index for team mode
 	int				powerLevel;			// you only get this info about your teammates
 	int				armor;
 	int				curWeapon;
-
 	int				handicap;
 	int				wins, losses;	// in tourney mode
-
 	int				teamTask;		// task in teamplay (offence/defence)
 	qboolean		teamLeader;		// true when this is a team leader
-
 	int				powerups;		// so can display quad/flag status
-
 	int				medkitUsageTime;
 	int				invulnerabilityStartTime;
 	int				invulnerabilityStopTime;
-
 	int				breathPuffTime;
-
-	// when clientinfo is changed, the loading of models/skins/sounds
-	// can be deferred until you are dead, to prevent hitches in
-	// gameplay
 	char			modelName[MAX_QPATH];
 	char			skinName[MAX_QPATH];
 	char			headModelName[MAX_QPATH];
@@ -353,32 +341,24 @@ typedef struct {
 	char			redTeam[MAX_TEAMNAME];
 	char			blueTeam[MAX_TEAMNAME];
 	qboolean		deferred;
-
 	qboolean		newAnims;		// true if using the new mission pack animations
 	qboolean		fixedlegs;		// true if legs yaw is always the same as torso yaw
 	qboolean		fixedtorso;		// true if torso never changes yaw
-
 	vec3_t			headOffset;		// move head in icon views
 	footstep_t		footsteps;
 	gender_t		gender;			// from model
-
 	qhandle_t		legsModel[8];
 	qhandle_t		legsSkin[8];
-
 	qhandle_t		torsoModel[8];
 	qhandle_t		torsoSkin[8];
-
 	qhandle_t		headModel[8];
 	qhandle_t		headSkin[8];
-
 	qhandle_t		modelIcon;
-
 	animation_t		animations[MAX_TOTALANIMATIONS];
-
 	sfxHandle_t		sounds[MAX_CUSTOM_SOUNDS];
-
 	//ADDING FOR ZEQ2
-	int				activeTier;
+	int				tierCurrent;
+	tier			tiers[7];
 } clientInfo_t;
 
 
@@ -887,13 +867,9 @@ typedef struct {
 	qhandle_t	lightningShader;
 
 	// ADDING FOR ZEQ2
-	qhandle_t	LB_HudShader;
+	qhandle_t	hudShader;
 	qhandle_t	markerAscendShader;
 	qhandle_t	markerDescendShader;
-
-	qhandle_t	CrHr_ChargeOutlineShader;
-	qhandle_t	CrHr_ChargeGlowShader;
-	qhandle_t	CrHr_NoChargeWeaponShader;
 
 	qhandle_t	RadarBlipShader;
 	qhandle_t	RadarBurstShader;
@@ -2038,5 +2014,4 @@ int CG_FrameHist_WasWeaponNr( int num );
 //
 void CG_MotionBlur( void );
 //END ADDING
-
 

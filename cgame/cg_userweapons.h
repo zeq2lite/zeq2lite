@@ -2,8 +2,6 @@
 #define MAX_TAGNAME			20
 #define MAX_WEAPONNAME		40
 #define MAX_CHARGE_VOICES	 6
-
-
 typedef struct {
 	sfxHandle_t		voice;
 	float			startPct;
@@ -15,7 +13,7 @@ typedef struct {
 //       at this point.) So, we pass the clientside entity number to the function,
 //       then retrieve a pointer to work with in there.
 typedef struct {
-
+	//lerpFrame		chargeAnimation,flashAnimation,missileAnimation,explosionAnimation,shockwaveAnimation;
 //	lerpFrame_t		chargeAnimation,flashAnimation,missileAnimation,explosionAnimation,shockwaveAnimation;
 
 	// CHARGING

@@ -388,7 +388,7 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 
 /*
 	if ( cg_draw3dIcons.integer ) {
-		cm = ci->headModel[ci->activeTier];
+		cm = ci->headModel[ci->tierCurrent];
 		if ( !cm ) {
 			return;
 		}
@@ -406,7 +406,7 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 		// allow per-model tweaking
 		VectorAdd( origin, ci->headOffset, origin );
 
-		CG_Draw3DModel( x, y, w, h, ci->headModel[ci->activeTier], ci->headSkin[ci->activeTier], origin, headAngles );
+		CG_Draw3DModel( x, y, w, h, ci->headModel[ci->tierCurrent], ci->headSkin[ci->tierCurrent], origin, headAngles );
 	} else if ( cg_drawIcons.integer ) {
 		CG_DrawPic( x, y, w, h, ci->modelIcon );
 	}
@@ -633,7 +633,7 @@ static void CG_DrawStatusBar( void ) {
 	}
 
 	//
-	// powerLevel
+	// Draw That Hud!
 	//
 	dullColor[0] = 0.188f;
 	dullColor[1] = 0.278f;
@@ -649,26 +649,25 @@ static void CG_DrawStatusBar( void ) {
 	limitColor[3] = 1.0f;
 	excessColor[0] = 0.9f;	excessColor[1] = 0.5f;	excessColor[2] = 0.0f;	excessColor[3] = 1.0f;
 
-	/*
-	PLStats1 = va("PL Current : %i PL Total : %i", cg.snap->ps.stats[powerLevel], cg.snap->ps.stats[powerLevelTotal]);
-	PLStats2 = va("PL Cap	    : %i Tier     : %i", cg.snap->ps.persistant[powerLevelMaximum], cg.snap->ps.stats[tierCurrent]);
-
-	CG_DrawSmallStringHalfHeight(2,56,PLStats1,1.0F);
-	CG_DrawSmallStringHalfHeight(2,64,PLStats2,1.0F);
-	*/
-
-	// CG_DrawHorGauge(x,y,width,height,color,emptyColor,value,maxValue,reversed)
-	// draw the selected weapon icon
-	//if (ps->weapon > 0) {
-	//	weaponGraphics = CG_FindUserWeaponGraphics( ps->clientNum, ps->weapon );
-	//	CG_DrawPic( 32, 388, 68, 68, weaponGraphics->weaponIcon );
-	//}
 	tier = (float)ps->stats[tierCurrent];	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
-	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];	powerLevelDisplay = (float)ps->stats[powerLevel] * ((tier*tier*tier*tier)+1.0);
+	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];
+	powerLevelDisplay = (float)ps->stats[powerLevel] * ((tier*tier*tier*tier)+1.0);
 	powerLevelString = va("%i",powerLevelDisplay);
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
-	if(currentPercent > 1.0){currentPercent = 1.0;} 	CG_DrawHorGauge(60,449,200,16,limitColor,colors[5],1,1,qfalse); 	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	CG_DrawPic(0,408,288,72,cgs.media.LB_HudShader);
-	if(tier){		tierLast = (3640 * tier) / (float)ps->persistant[powerLevelMaximum];		CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);	}	if(tier < ps->stats[tierTotal]){		tierNext = (3640 * (tier + 1)) / (float)ps->persistant[powerLevelMaximum];		CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);	}	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
+	if(currentPercent > 1.0){currentPercent = 1.0;}
+	CG_DrawHorGauge(60,449,200,16,limitColor,colors[5],1,1,qfalse); 
+	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 
+	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	
+	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
+	if(tier){	
+		tierLast = (3640 * tier) / (float)ps->persistant[powerLevelMaximum];
+		CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
+	}
+	if(tier < ps->stats[tierTotal]){
+		tierNext = (3640 * (tier + 1)) / (float)ps->persistant[powerLevelMaximum];
+		CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
+	}
+	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
 	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
 }
 
@@ -2092,115 +2091,7 @@ CG_DrawCrosshairChargeBars
 ==========================
 */
 static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
-	float		w, h;
-	float		x_pri, x_sec, y;
-	float		w_bar;
-	float		h_bar;
-
-	vec4_t		color_bar = {1, 1, 1, 1};
-	vec4_t		color_empty = {0, 0, 0, 0};
-	int			value;
-
-	// No bars possible at all if spectating
-	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
-		return;
-	}
-	w_bar = 32;
-	h_bar = 64;
-
-	/*
-	// Since the bars are 'glued' to the crosshair, we need to get the
-	// coordinates this way.
-	x = cg_crosshairX.integer;
-	y = cg_crosshairY.integer;
-	
-
-	h = h_bar;
-	w = cg_crosshairSize.value + cg_crosshairMargin.value; // A few pixels margin between bar and crosshair.
-
-	
-	x_pri = x + cg.refdef.x + 0.5 * (cg.refdef.width - w);
-	x_sec = x + cg.refdef.x + 0.5 * (cg.refdef.width + w);
-	y = y + cg.refdef.y + 0.5 * (cg.refdef.height - h);
-	
-	
-	// Need to convert back to 640 screen. Divides aren't totally accurate, but they'll
-	// have to do.
-	x_pri /= cgs.screenXScale;
-	x_pri -= w_bar; // for primary, we still need to subtract width of bar, since it's to the left.
-	x_sec /= cgs.screenXScale;
-	y     /= cgs.screenYScale;
-	*/
-
-	h = 0.5f * h_bar;
-	w = 0.5f * cg_crosshairSize.value + cg_crosshairMargin.value;
-	x_pri = x_cross - w - w_bar;
-	x_sec = x_cross + w;
-	y = y_cross - h; 
-
-	// If the primary weapon can be charged, display atleast the bar outline.
-	if (cg.snap->ps.ammo[WPbitFlags] & WPF_NEEDSCHARGE ) {
-
-		// If atleast 1% is charged, draw the bar and (possibly) charge glow
-		if (cg.snap->ps.stats[chargePercentPrimary] > 0 ) {
-
-			// If the primary weapon is charged far enough to be fire-able,
-			// display the ready glow.
-			if ( cg.snap->ps.ammo[WPbitFlags] & WPF_READY ) {
-
-				// draw ready glow
-				CG_DrawPic( x_pri, y, w_bar, h_bar, cgs.media.CrHr_ChargeGlowShader );
-			}
-		
-			// draw bar
-			value = cg.snap->ps.stats[chargePercentPrimary];
-			CG_DrawVertGauge( x_pri + 14, y + 15, 4, 34, color_bar, color_empty, value, 100, qfalse );		
-		}
-	
-		// draw outline
-		CG_DrawPic( x_pri, y, w_bar, h_bar, cgs.media.CrHr_ChargeOutlineShader );
-	}
-	// If the primary weapon can not be charged, it is always present so display a presence dot
-	else {
-
-		// draw presence dot
-		CG_DrawPic( x_pri, y, w_bar, h_bar, cgs.media.CrHr_NoChargeWeaponShader );
-	}
-
-	// If the secondary weapon exists, display either the charge bar or the presence dot,
-	// depending on whether it is chargeable or not.
-	if ( cg.snap->ps.ammo[WPbitFlags] & WPF_ALTWEAPONPRESENT ) {
-
-		// If the secondary weapon can be charged, display atleast the bar outline
-		if ( ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE )  ) {
-
-			// If atleast 1% is charged, draw the bar and (possibly) charge glow
-			if (cg.snap->ps.stats[chargePercentSecondary] > 0 ) {
-
-				// If the secondary weapon is charged far enough to be fire-able,
-				// display the ready glow.
-				if ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_READY ) {
-
-					// draw ready glow
-					CG_DrawPic( x_sec, y, w_bar, h_bar, cgs.media.CrHr_ChargeGlowShader );
-				}
-		
-				// draw bar
-				value = cg.snap->ps.stats[chargePercentSecondary];
-				CG_DrawVertGauge( x_sec + 14, y + 15, 4, 34, color_bar, color_empty, value, 100, qfalse );		
-			}
-	
-			// draw outline
-			CG_DrawPic( x_sec, y, w_bar, h_bar, cgs.media.CrHr_ChargeOutlineShader );
-		}
-		// If the secondary weapon can not be charged, but is confirmed present at this point
-		// display a presence dot
-		else {
-
-			// draw presence dot
-			CG_DrawPic( x_sec, y, w_bar, h_bar, cgs.media.CrHr_NoChargeWeaponShader );
-		}
-	}
+	return;
 }
 
 

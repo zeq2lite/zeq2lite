@@ -7,9 +7,9 @@
 // ADDING FOR ZEQ2
 #include "bg_userweapons.h"
 #include "g_userweapons.h"
+#include "../shared/tier.h"
 // END ADDING
 #include "g_public.h"
-
 //==================================================================
 
 // the "gameversion" client command will print this plus compile date
@@ -276,7 +276,7 @@ typedef struct {
 
 // this structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'
-struct gclient_s {
+extern struct gclient_s {
 	// ps MUST be the first element, because the server expects it
 	playerState_t	ps;				// communicated by server to clients
 
@@ -330,6 +330,9 @@ struct gclient_s {
 
 	// ADDING FOR ZEQ2
 	gentity_t	*guidetarget;		// guided weapon when firing one
+	gentity_t	*playerEntity;
+	char		*modelName;
+	tier 		*tiers[7];
 	// END ADDING
 
 	int			switchTeamTime;		// time the player switched teams
@@ -339,13 +342,6 @@ struct gclient_s {
 	int			timeResidual;
 	int			timeResidualPriCharge;
 	int			timeResidualSecCharge;
-
-#ifdef MISSIONPACK
-	gentity_t	*persistantPowerup;
-	int			portalID;
-	int			ammoTimes[WP_NUM_WEAPONS];
-	int			invulnerabilityTime;
-#endif
 
 	char		*areabits;
 };

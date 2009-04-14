@@ -126,7 +126,7 @@ static void CG_SaveLensFlareEntities_f(void) {
 	if (cgs.editMode != EM_mlf) return;
 
 	trap_Cvar_VariableStringBuffer("mapname", mapname, sizeof(mapname));
-	Com_sprintf(name, sizeof(name), "flares/%s.lfe", mapname);
+	Com_sprintf(name, sizeof(name), "maps/%s.lfe", mapname);
 
 	trap_FS_FOpenFile(name, &f, FS_WRITE);
 	if (!f) {
