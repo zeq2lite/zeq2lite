@@ -162,7 +162,7 @@ UI_ForceTorsoAnim
 */
 static void UI_ForceTorsoAnim( playerInfo_t *pi, int anim ) {
 	pi->torsoAnim = ( ( pi->torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
-
+/*
 	if ( anim == TORSO_GESTURE ) {
 		pi->torsoAnimationTimer = UI_TIMER_GESTURE;
 	}
@@ -170,6 +170,7 @@ static void UI_ForceTorsoAnim( playerInfo_t *pi, int anim ) {
 	if ( anim == TORSO_ATTACK || anim == TORSO_ATTACK2 ) {
 		pi->torsoAnimationTimer = UI_TIMER_ATTACK;
 	}
+*/
 }
 
 
@@ -197,18 +198,18 @@ static void UI_TorsoSequencing( playerInfo_t *pi ) {
 	int		currentAnim;
 
 	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
-
+/*
 	if ( pi->weapon != pi->currentWeapon ) {
 		if ( currentAnim != TORSO_DROP ) {
 			pi->torsoAnimationTimer = UI_TIMER_WEAPON_SWITCH;
 			UI_ForceTorsoAnim( pi, TORSO_DROP );
 		}
 	}
-
+*/
 	if ( pi->torsoAnimationTimer > 0 ) {
 		return;
 	}
-
+/*
 	if( currentAnim == TORSO_GESTURE ) {
 		UI_SetTorsoAnim( pi, TORSO_STAND );
 		return;
@@ -230,6 +231,7 @@ static void UI_TorsoSequencing( playerInfo_t *pi ) {
 		UI_SetTorsoAnim( pi, TORSO_STAND );
 		return;
 	}
+*/
 }
 
 
@@ -489,6 +491,40 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_FORWARD );
 		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_BACKWARD );
+		} else if ( TORSO_STUNNED == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_STUNNED );
+		} else if ( TORSO_PUSH == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_PUSH );
+		} else if ( TORSO_DEFLECT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_DEFLECT );
+		} else if ( TORSO_BLOCK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BLOCK );
+		} else if ( TORSO_SPEED_MELEE_ATTACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_ATTACK );
+		} else if ( TORSO_SPEED_MELEE_DODGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_DODGE );
+		} else if ( TORSO_SPEED_MELEE_BLOCK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_BLOCK );
+		} else if ( TORSO_SPEED_MELEE_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_HIT );
+		} else if ( TORSO_POWER_MELEE_1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_1 );
+		} else if ( TORSO_POWER_MELEE_2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_2 );
+		} else if ( TORSO_POWER_MELEE_3 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_3 );
+		} else if ( TORSO_POWER_MELEE_4 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_4 );
+		} else if ( TORSO_POWER_MELEE_5 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_5 );
+		} else if ( TORSO_POWER_MELEE_6 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_6 );
+		} else if ( TORSO_KNOCKBACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK );
+		} else if ( TORSO_KNOCKBACK_RECOVER_1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK_RECOVER_1 );
+		} else if ( TORSO_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK_RECOVER_2 );
 		} else if ( TORSO_KI_ATTACK1_PREPARE <= torsoAnimNum && TORSO_KI_ATTACK6_ALT_FIRE >= torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, torsoAnimNum - TORSO_KI_ATTACK1_PREPARE + HEAD_KI_ATTACK1_PREPARE );
 		} else {
@@ -722,7 +758,7 @@ float	UI_MachinegunSpinAngle( playerInfo_t *pi ) {
 	float	angle;
 	float	speed;
 	int		torsoAnim;
-
+/*
 	delta = dp_realtime - pi->barrelTime;
 	if ( pi->barrelSpinning ) {
 		angle = pi->barrelAngle + delta * SPIN_SPEED;
@@ -736,6 +772,7 @@ float	UI_MachinegunSpinAngle( playerInfo_t *pi ) {
 	}
 
 	torsoAnim = pi->torsoAnim  & ~ANIM_TOGGLEBIT;
+
 	if( torsoAnim == TORSO_ATTACK2 ) {
 		torsoAnim = TORSO_ATTACK;
 	}
@@ -744,7 +781,7 @@ float	UI_MachinegunSpinAngle( playerInfo_t *pi ) {
 		pi->barrelAngle = AngleMod( angle );
 		pi->barrelSpinning = !!(torsoAnim == TORSO_ATTACK);
 	}
-
+*/
 	return angle;
 }
 
@@ -1311,15 +1348,15 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	}
 
 	// torso animation
-	if ( torsoAnim == TORSO_STAND || torsoAnim == TORSO_STAND2 ) {
+	if ( torsoAnim == TORSO_STAND || torsoAnim == TORSO_CROUCH ) {
 		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
-			torsoAnim = TORSO_STAND2;
+			torsoAnim = TORSO_CROUCH;
 		}
 		else {
 			torsoAnim = TORSO_STAND;
 		}
 	}
-
+/*
 	if ( torsoAnim == TORSO_ATTACK || torsoAnim == TORSO_ATTACK2 ) {
 		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
 			torsoAnim = TORSO_ATTACK2;
@@ -1330,17 +1367,18 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 		pi->muzzleFlashTime = dp_realtime + UI_TIMER_MUZZLE_FLASH;
 		//FIXME play firing sound here
 	}
-
+*/
 	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
-
+/*
 	if ( weaponNum != pi->currentWeapon || currentAnim == TORSO_RAISE || currentAnim == TORSO_DROP ) {
 		pi->pendingTorsoAnim = torsoAnim;
 	}
 	else if ( ( currentAnim == TORSO_GESTURE || currentAnim == TORSO_ATTACK ) && ( torsoAnim != currentAnim ) ) {
 		pi->pendingTorsoAnim = torsoAnim;
 	}
-	else if ( torsoAnim != currentAnim ) {
+	else */if ( torsoAnim != currentAnim ) {
 		pi->pendingTorsoAnim = 0;
 		UI_ForceTorsoAnim( pi, torsoAnim );
 	}
+
 }

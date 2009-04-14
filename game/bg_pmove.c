@@ -117,9 +117,9 @@ static void PM_StartLegsAnim( int anim ) {
 	if ( pm->ps->pm_type >= PM_DEAD ) {
 		return;
 	}
-	if ( pm->ps->legsTimer > 0 ) {
-		return;		// a high priority animation is running
-	}
+//	if ( pm->ps->legsTimer > 0 ) {
+//		return;		// a high priority animation is running
+//	}
 	pm->ps->legsAnim = ( ( pm->ps->legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT )
 		| anim;
 }
@@ -128,9 +128,9 @@ static void PM_ContinueLegsAnim( int anim ) {
 	if ( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == anim ) {
 		return;
 	}
-	if ( pm->ps->legsTimer > 0 ) {
-		return;		// a high priority animation is running
-	}
+//	if ( pm->ps->legsTimer > 0 ) {
+//		return;		// a high priority animation is running
+//	}
 	PM_StartLegsAnim( anim );
 }
 
@@ -138,9 +138,9 @@ static void PM_ContinueTorsoAnim( int anim ) {
 	if ( ( pm->ps->torsoAnim & ~ANIM_TOGGLEBIT ) == anim ) {
 		return;
 	}
-	if ( pm->ps->torsoTimer > 0 ) {
-		return;		// a high priority animation is running
-	}
+//	if ( pm->ps->torsoTimer > 0 ) {
+//		return;		// a high priority animation is running
+//	}
 	PM_StartTorsoAnim( anim );
 }
 
@@ -1697,7 +1697,11 @@ static void PM_Footsteps( void ) {
 				tempAnimIndex = LEGS_AIR_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim( tempAnimIndex );
 			} else {
-				PM_ContinueLegsAnim( LEGS_FLY_IDLE );
+				if ( pm->ps->stats[target] >= 0 ) {
+					PM_ContinueLegsAnim( LEGS_IDLE_LOCKED );
+				} else {
+					PM_ContinueLegsAnim( LEGS_FLY_IDLE );
+				}
 			}
 
 			return;
@@ -1754,7 +1758,11 @@ static void PM_Footsteps( void ) {
 					tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
 					PM_ContinueLegsAnim( tempAnimIndex );
 				} else {
-					PM_ContinueLegsAnim( LEGS_IDLE );
+					if ( pm->ps->stats[target] >= 0 ) {
+						PM_ContinueLegsAnim( LEGS_IDLE_LOCKED );
+					} else {
+						PM_ContinueLegsAnim( LEGS_IDLE );
+					}
 				}
 			}
 
@@ -1932,6 +1940,9 @@ static void PM_TorsoAnimation( void ) {
 	}
 
 	switch ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) {
+	case LEGS_IDLE_LOCKED:
+		PM_ContinueTorsoAnim( TORSO_STAND_LOCKED );
+		break;
 	case LEGS_DASH_FORWARD:
 		PM_ContinueTorsoAnim( TORSO_DASH_FORWARD );
 		break;
@@ -2001,7 +2012,11 @@ static void PM_TorsoAnimation( void ) {
 	default:
 		// if we're not doing anything special with the legs, then
 		// we default to the stand still animation
-		PM_ContinueTorsoAnim( TORSO_STAND );
+		if ( pm->ps->stats[target] >= 0 ) {
+			PM_ContinueTorsoAnim( TORSO_STAND_LOCKED );
+		} else {
+			PM_ContinueTorsoAnim( TORSO_STAND );
+		}
 		break;
 	}
 }
@@ -2331,9 +2346,10 @@ PM_Animate
 */
 
 static void PM_Animate( void ) {
-	if ( pm->cmd.buttons & BUTTON_GESTURE ) {
+
+	if ( pm->cmd.buttons & BUTTON_GESTURE ) { 
 		if ( pm->ps->torsoTimer == 0 ) {
-			PM_StartTorsoAnim( TORSO_GESTURE );
+//			PM_StartTorsoAnim( TORSO_GESTURE );
 			pm->ps->torsoTimer = TIMER_GESTURE;
 			PM_AddEvent( EV_TAUNT );
 		}

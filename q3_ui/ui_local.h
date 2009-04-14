@@ -72,6 +72,8 @@ extern vmCvar_t	ui_cdkey;
 extern vmCvar_t	ui_cdkeychecked;
 extern vmCvar_t s_mastermusicvolume;
 
+// Speed scale for UI character animations.
+#define PLAYER_MODEL_SPEED	1.25
 
 //
 // ui_qmenu.c

@@ -136,7 +136,8 @@ typedef struct
 #define ANIM_WEAPON9	20
 #define ANIM_WEAPON10	21
 #define ANIM_ATTACK		22
-#define ANIM_GESTURE	23
+//#define ANIM_GESTURE	23
+#define ANIM_LOCKON		23
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
 // Added for ZEQ2
@@ -270,7 +271,7 @@ static bind_t g_bindings[] =
 	{"+attack", 		"attack primary",	ID_ATTACK,		ANIM_ATTACK,		K_CTRL,			-1,		-1, -1},
 	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,			'[',			-1,		-1, -1},
 	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,			']',			-1,		-1, -1},
-	{"+button3", 		"lock on",			ID_GESTURE,		ANIM_GESTURE,		K_MOUSE3,		-1,		-1, -1},
+	{"+button3", 		"lock on",			ID_GESTURE,		ANIM_LOCKON,		K_MOUSE3,		-1,		-1, -1},
 	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,			't',			-1,		-1, -1},
 	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,			-1,				-1,		-1, -1},
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,			-1,				-1,		-1, -1},
@@ -616,9 +617,14 @@ static void Controls_UpdateModel( int anim ) {
 		s_controls.playerLegs = LEGS_FLY_BACKWARD;
 		s_controls.playerTorso = TORSO_FLY_BACKWARD;
 		break;
-
+/*
 	case ANIM_GESTURE:
 		s_controls.playerTorso = TORSO_GESTURE;
+		break;
+*/
+	case ANIM_LOCKON:
+		s_controls.playerTorso = TORSO_STAND_LOCKED;
+		s_controls.playerLegs = LEGS_IDLE_LOCKED;
 		break;
 
 	case ANIM_DIE:
@@ -840,7 +846,7 @@ static void Controls_DrawPlayer( void *self ) {
 	}
 
 	b = (menubitmap_s*) self;
-	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_controls.playerinfo, uis.realtime/2 );
+	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_controls.playerinfo, uis.realtime / PLAYER_MODEL_SPEED );
 }
 
 

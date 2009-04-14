@@ -728,7 +728,7 @@ CG_MapTorsoToWeaponFrame
 =================
 */
 static int CG_MapTorsoToWeaponFrame( clientInfo_t *ci, int frame ) {
-
+/*
 	// change weapon
 	if ( frame >= ci->animations[TORSO_DROP].firstFrame 
 		&& frame < ci->animations[TORSO_DROP].firstFrame + 9 ) {
@@ -746,7 +746,7 @@ static int CG_MapTorsoToWeaponFrame( clientInfo_t *ci, int frame ) {
 		&& frame < ci->animations[TORSO_ATTACK2].firstFrame + 6 ) {
 		return 1 + frame - ci->animations[TORSO_ATTACK2].firstFrame;
 	}
-	
+*/
 	return 0;
 }
 

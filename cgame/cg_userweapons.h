@@ -16,6 +16,8 @@ typedef struct {
 //       then retrieve a pointer to work with in there.
 typedef struct {
 
+//	lerpFrame_t		chargeAnimation,flashAnimation,missileAnimation,explosionAnimation,shockwaveAnimation;
+
 	// CHARGING
 	qhandle_t		chargeModel;			// charge model's .md3 file
 	qhandle_t		chargeSkin;				// charge model's .skin file

@@ -195,7 +195,7 @@ static void CelebrateStop( gentity_t *player ) {
 
 #define	TIMER_GESTURE	(34*66+50)
 static void CelebrateStart( gentity_t *player ) {
-	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | TORSO_GESTURE;
+	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) ;//| TORSO_GESTURE;
 	player->nextthink = level.time + TIMER_GESTURE;
 	player->think = CelebrateStop;
 

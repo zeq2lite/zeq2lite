@@ -74,7 +74,7 @@ static void MainMenu_DrawPlayer1( void *self ) {
 	}
 
 	b = (menubitmap_s*) self;
-	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo1, uis.realtime/2 );
+	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo1, uis.realtime / PLAYER_MODEL_SPEED );
 }
 
 /*
@@ -100,7 +100,7 @@ static void MainMenu_DrawPlayer2( void *self ) {
 	}
 
 	b = (menubitmap_s*) self;
-	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo2, uis.realtime/2 );
+	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo2, uis.realtime / PLAYER_MODEL_SPEED );
 }
 
 /*
