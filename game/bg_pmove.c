@@ -2411,6 +2411,45 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
+	if (lockedOn){
+		vec3_t dir;
+		vec3_t angles;
+
+		VectorSubtract(pm->target, ps->origin, dir);
+		vectoangles(dir, angles);
+
+		if (angles[PITCH] > 180) { 
+			angles[PITCH] -= 360;
+		}
+
+		else if (angles[PITCH] < -180) {
+			angles[PITCH] += 360;
+		}
+
+		for (i = 0; i < 3; i++) {
+			if (i == YAW && (angles[PITCH] > 65 || angles[PITCH] < -65)) 
+				continue;
+			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
+		}
+
+		// circularly clamp the angles with deltas
+		for (i=0 ; i<3 ; i++) {
+			temp = cmd->angles[i] + ps->delta_angles[i];
+			if ( i == PITCH ) {
+				// don't let the player look up or down more than 90 degrees
+				if ( temp > 16000 ) {
+					ps->delta_angles[i] = 16000 - cmd->angles[i];
+					temp = 16000;
+				} else if ( temp < -16000 ) {
+					ps->delta_angles[i] = -16000 - cmd->angles[i];
+					temp = -16000;
+				}
+			}
+			ps->viewangles[i] = SHORT2ANGLE(temp);
+		}
+		return;
+	}
+
 	// ADDING FOR ZEQ2
 	// If we're flying, use quaternion multiplication to work on player's
 	// local axes.
@@ -2487,20 +2526,6 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 
 	// END ADDING
 
-	if (lockedOn){
-		vec3_t dir;
-		vec3_t angles;
-
-		VectorSubtract(pm->target, ps->origin, dir);
-		//dir[2] -= ps->viewheight;	// viewers viewheight
-		vectoangles(dir, angles);
-		if (angles[PITCH] > 180) angles[PITCH] -= 360;
-		else if (angles[PITCH] < -180) angles[PITCH] += 360;
-		for (i = 0; i < 3; i++) {
-			if (i == YAW && (angles[PITCH] > 65 || angles[PITCH] < -65)) continue;
-			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
-		}
-	}
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
 		temp = cmd->angles[i] + ps->delta_angles[i];
