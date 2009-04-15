@@ -693,7 +693,7 @@ static void PM_FlyMove( void ) {
 			boostFactor = 3.0f;
 		}
 	} else if ( pm->cmd.buttons & BUTTON_WALKING ) {
-		boostFactor = 1.25f;
+		boostFactor = 1.0f;//1.25f;
 	} else {
 		boostFactor = 2.10f;
 	}
@@ -875,7 +875,7 @@ static void PM_WalkMove( void ) {
 
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
-	wishspeed *= scale * 0.80f; // * 0.80f is a fix for ZEQ2's walking speed
+	wishspeed *= scale * 0.30f; // * 0.30f is a fix for ZEQ2's walking speed
 
 	// when a player gets hit, they temporarily lose
 	// full control, which allows them to be moved a bit
@@ -1688,7 +1688,7 @@ static void PM_Footsteps( void ) {
 				tempAnimIndex = LEGS_AIR_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim( tempAnimIndex );
 			} else {
-				if ( pm->ps->stats[target] >= 0 ) {
+				if (lockedOn) {
 					PM_ContinueLegsAnim( LEGS_IDLE_LOCKED );
 				} else {
 					PM_ContinueLegsAnim( LEGS_FLY_IDLE );
@@ -1749,7 +1749,7 @@ static void PM_Footsteps( void ) {
 					tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
 					PM_ContinueLegsAnim( tempAnimIndex );
 				} else {
-					if ( pm->ps->stats[target] >= 0 ) {
+					if (lockedOn) {
 						PM_ContinueLegsAnim( LEGS_IDLE_LOCKED );
 					} else {
 						PM_ContinueLegsAnim( LEGS_IDLE );
@@ -1890,7 +1890,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 
 	PM_AddEvent( EV_CHANGE_WEAPON );
 	pm->ps->weaponstate = WEAPON_DROPPING;
-	pm->ps->weaponTime += 10;
+	//pm->ps->weaponTime += 10;
 	//PM_StartTorsoAnim( TORSO_DROP );
 }
 
@@ -1913,8 +1913,8 @@ static void PM_FinishWeaponChange( void ) {
 	}
 
 	pm->ps->weapon = weapon;
-	pm->ps->weaponstate = WEAPON_RAISING;
-	pm->ps->weaponTime += 10;
+	//pm->ps->weaponstate = WEAPON_RAISING;
+	//pm->ps->weaponTime += 10;
 	//PM_StartTorsoAnim( TORSO_RAISE );
 }
 
@@ -2003,7 +2003,7 @@ static void PM_TorsoAnimation( void ) {
 	default:
 		// if we're not doing anything special with the legs, then
 		// we default to the stand still animation
-		if ( pm->ps->stats[target] >= 0 ) {
+		if (lockedOn) {
 			PM_ContinueTorsoAnim( TORSO_STAND_LOCKED );
 		} else {
 			PM_ContinueTorsoAnim( TORSO_STAND );
@@ -2341,7 +2341,7 @@ static void PM_Animate( void ) {
 	if ( pm->cmd.buttons & BUTTON_GESTURE ) { 
 		if ( pm->ps->torsoTimer == 0 ) {
 //			PM_StartTorsoAnim( TORSO_GESTURE );
-			pm->ps->torsoTimer = TIMER_GESTURE;
+			pm->ps->torsoTimer = 500;
 			PM_AddEvent( EV_TAUNT );
 		}
 	}

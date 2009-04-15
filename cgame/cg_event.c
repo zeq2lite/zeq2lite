@@ -430,6 +430,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	const char		*s;
 	int				clientNum;
 	clientInfo_t	*ci;
+	int	r;
+
+	r = random() * 10;
 
 	es = &cent->currentState;
 	event = es->event & ~EV_EVENT_BITS;
@@ -588,15 +591,15 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TAUNT:
 		DEBUGNAME("EV_TAUNT");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ) );
-		//if (cg.lockReady == qtrue ) {
-			if (lockedOn == qtrue)
-				lockedOn = qfalse;
-			else
-				lockedOn = qtrue;
-		//} 
-		//else
-		//	cg.lockedView = qfalse;
+		if (lockedOn == qtrue) {
+			lockedOn = qfalse;
+		} else {
+			// 1 in 10 chance of playing taunt voice.
+			if ( r < 1 ) {
+				trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ) );
+			}
+			lockedOn = qtrue;
+		}
 		break;
 #ifdef MISSIONPACK
 	case EV_TAUNT_YES:
