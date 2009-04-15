@@ -27,9 +27,10 @@ typedef struct auraConfig_s {
 	float		auraScale;
 	float		tailLength;
 
-	sfxHandle_t	startSound;
-	sfxHandle_t	boostLoopSound;
+	sfxHandle_t	chargeStartSound;
 	sfxHandle_t	chargeLoopSound;
+	sfxHandle_t	boostStartSound;
+	sfxHandle_t	boostLoopSound;
 
 	qboolean	showTrail;
 	vec3_t		trailColor;

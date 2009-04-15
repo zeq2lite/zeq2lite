@@ -1705,11 +1705,11 @@ void Menu_Cache( void )
 	uis.whiteShader = trap_R_RegisterShaderNoMip("white");
 	uis.menuBackShader	= trap_R_RegisterShaderNoMip("menuback");
 
-	menu_in_sound	= trap_S_RegisterSound( "sound/misc/menu1.ogg", qfalse );
-	menu_move_sound	= trap_S_RegisterSound( "sound/misc/menu2.ogg", qfalse );
-	menu_out_sound	= trap_S_RegisterSound( "sound/misc/menu3.ogg", qfalse );
-	menu_buzz_sound	= trap_S_RegisterSound( "sound/misc/menu4.ogg", qfalse );
-	weaponChangeSound	= trap_S_RegisterSound( "sound/weapons/change.ogg", qfalse );
+	menu_in_sound	= trap_S_RegisterSound( "interface/menu/click.ogg", qfalse );
+	menu_move_sound	= trap_S_RegisterSound( "interface/menu/hover.ogg", qfalse );
+	menu_out_sound	= trap_S_RegisterSound( "interface/menu/back.ogg", qfalse );
+	menu_buzz_sound	= trap_S_RegisterSound( "interface/menu/cancel.ogg", qfalse );
+	weaponChangeSound	= trap_S_RegisterSound( "interface/hud/change.ogg", qfalse );
 
 	// need a nonzero sound, make an empty sound for this
 	menu_null_sound = -1;

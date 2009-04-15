@@ -861,16 +861,12 @@ void CG_AuraStart( centity_t *player ) {
 	state->isActive = qtrue;
 	state->lightAmt = config->lightMin;
 
-	// play the burst sound
-	if ( config->startSound ) {
-		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->startSound );
-	}
-
 	// create a small camerashake
 	CG_AddEarthquake( player->lerpOrigin, 1000, 1, 0, 1, 200 );
 
 	// We don't want smoke jets if this is a boost aura instead of a charge aura.
 	if ( !(player->currentState.powerups & ( 1 << PW_BOOST )) ) {
+		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->chargeStartSound );
 		// Check if we're on, or near ground level
 		VectorCopy( player->lerpOrigin, groundPoint );
 		groundPoint[2] -= 48;
@@ -889,7 +885,9 @@ void CG_AuraStart( centity_t *player ) {
 			MakeNormalVectors( tempAxis[0], tempAxis[1], tempAxis[2] );
 			PSys_SpawnCachedSystem( "AuraSmokeBurst", groundPoint, tempAxis, NULL, NULL, qfalse, qfalse );
 		}
-		
+	}
+	else{
+		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->boostStartSound );
 	}
 }
 
@@ -934,9 +932,10 @@ void CG_RegisterClientAura( int clientNum, char *modelName, char *skinName ) {
 
 	qhandle_t	auraSpikeShader;
 	qhandle_t	auraTrailShader;
-	sfxHandle_t	auraStartSound;
-	sfxHandle_t	auraBoostSound;
 	sfxHandle_t	auraChargeSound;
+	sfxHandle_t	auraChargeStartSound;
+	sfxHandle_t	auraBoostSound;
+	sfxHandle_t	auraBoostStartSound;
 
 
 	memset( &(auraStates[clientNum]), 0, sizeof(auraState_t));
@@ -946,9 +945,10 @@ void CG_RegisterClientAura( int clientNum, char *modelName, char *skinName ) {
 	auraSpikeShader = trap_R_RegisterShader( "Aura_Spike" );
 	auraTrailShader = trap_R_RegisterShader( "Aura_Trail" );
 
-	auraStartSound  = trap_S_RegisterSound( "effects/aura/start.ogg", qfalse );
-	auraBoostSound  = trap_S_RegisterSound( "effects/aura/boost.ogg", qfalse );
+	auraChargeStartSound  = trap_S_RegisterSound( "effects/aura/chargeStart.ogg", qfalse );
 	auraChargeSound = trap_S_RegisterSound( "effects/aura/charge.ogg", qfalse );
+	auraBoostStartSound  = trap_S_RegisterSound( "effects/aura/boostStart.ogg", qfalse );
+	auraBoostSound  = trap_S_RegisterSound( "effects/aura/boost.ogg", qfalse );
 
 	// Register 8 different tiers worth of auras
 	for ( j = 0; j < 8; j++ ) { 
@@ -1008,9 +1008,10 @@ void CG_RegisterClientAura( int clientNum, char *modelName, char *skinName ) {
 
 		config->generatesDebris = qtrue;
 		
-		config->startSound = auraStartSound;
-		config->boostLoopSound = auraBoostSound;
 		config->chargeLoopSound = auraChargeSound;
+		config->chargeStartSound = auraChargeStartSound;
+		config->boostLoopSound = auraBoostSound;
+		config->boostStartSound = auraBoostStartSound;
 
 		// parse the file
 		text_p = text;	
