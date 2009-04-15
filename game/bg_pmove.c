@@ -2487,8 +2487,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 
 	// END ADDING
 
-	if (cmd->buttons & BUTTON_GESTURE &&
-		ps->stats[target] >= 0) { // && ps->stats[target] >= 0) {
+	if (lockedOn){
 		vec3_t dir;
 		vec3_t angles;
 

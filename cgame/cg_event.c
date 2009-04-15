@@ -3,13 +3,12 @@
 // cg_event.c -- handle entity events at snapshot or playerstate transitions
 
 #include "cg_local.h"
-
+#include "q_shared.h"
 // for the voice chats
 #ifdef MISSIONPACK // bk001205
 #include "../../ui/menudef.h"
 #endif
 //==========================================================================
-
 /*
 ===================
 CG_PlaceString
@@ -590,15 +589,14 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_TAUNT:
 		DEBUGNAME("EV_TAUNT");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ) );
-		if ( cg.lockReady == qtrue ) {
-			if ( cg.lockedView == qtrue) {
-				cg.lockedView = qfalse;
-			} else {
-				cg.lockedView = qtrue;
-			}
-		} else {
-			cg.lockedView = qfalse;
-		}
+		//if (cg.lockReady == qtrue ) {
+			if (lockedOn == qtrue)
+				lockedOn = qfalse;
+			else
+				lockedOn = qtrue;
+		//} 
+		//else
+		//	cg.lockedView = qfalse;
 		break;
 #ifdef MISSIONPACK
 	case EV_TAUNT_YES:
