@@ -2029,6 +2029,7 @@ static void CG_ScanForCrosshairEntity( void ) {
 
 	cg.lockReady = qtrue;
 	VectorCopy(cg_entities[trace.entityNum].lerpOrigin, cg.lockedTarget);
+	VectorCopy(cg.lockedTarget, ps->lockedTarget);
 }
 
 

@@ -497,7 +497,6 @@ extern	vec4_t		colorWhite;
 extern	vec4_t		colorLtGrey;
 extern	vec4_t		colorMdGrey;
 extern	vec4_t		colorDkGrey;
-extern  qboolean    lockedOn;
 
 #define Q_COLOR_ESCAPE	'^'
 #define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE )
@@ -1195,6 +1194,8 @@ typedef struct playerState_s {
 	int			powerlevelChargeScale;
 	int			rolling;
 	int			running;
+	qboolean	lockedOn;
+	vec3_t		lockedTarget;
 	// RiO -->
 
 	// damage feedback
@@ -1204,7 +1205,7 @@ typedef struct playerState_s {
 	int			damageCount;
 
 	int			stats[MAX_STATS];
-	//qboolean	lockedOn;
+
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
 	int			ammo[MAX_WEAPONS];

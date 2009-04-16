@@ -1688,7 +1688,7 @@ static void PM_Footsteps( void ) {
 				tempAnimIndex = LEGS_AIR_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim( tempAnimIndex );
 			} else {
-				if (lockedOn) {
+				if ( pm->ps->lockedOn ) {
 					PM_ContinueLegsAnim( LEGS_IDLE_LOCKED );
 				} else {
 					PM_ContinueLegsAnim( LEGS_FLY_IDLE );
@@ -1749,7 +1749,7 @@ static void PM_Footsteps( void ) {
 					tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
 					PM_ContinueLegsAnim( tempAnimIndex );
 				} else {
-					if (lockedOn) {
+					if ( pm->ps->lockedOn ) {
 						PM_ContinueLegsAnim( LEGS_IDLE_LOCKED );
 					} else {
 						PM_ContinueLegsAnim( LEGS_IDLE );
@@ -2003,7 +2003,7 @@ static void PM_TorsoAnimation( void ) {
 	default:
 		// if we're not doing anything special with the legs, then
 		// we default to the stand still animation
-		if (lockedOn) {
+		if ( pm->ps->lockedOn ) {
 			PM_ContinueTorsoAnim( TORSO_STAND_LOCKED );
 		} else {
 			PM_ContinueTorsoAnim( TORSO_STAND );
@@ -2340,9 +2340,14 @@ static void PM_Animate( void ) {
 
 	if ( pm->cmd.buttons & BUTTON_GESTURE ) { 
 		if ( pm->ps->torsoTimer == 0 ) {
-//			PM_StartTorsoAnim( TORSO_GESTURE );
 			pm->ps->torsoTimer = 500;
 			PM_AddEvent( EV_TAUNT );
+
+			if ( pm->ps->lockedOn == qtrue) {
+				pm->ps->lockedOn = qfalse;
+			} else {
+				pm->ps->lockedOn = qtrue;
+			}
 		}
 	}
 }
@@ -2411,11 +2416,11 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
-	if (lockedOn){
+	if ( pm->ps->lockedOn ){
 		vec3_t dir;
 		vec3_t angles;
 
-		VectorSubtract(pm->target, ps->origin, dir);
+		VectorSubtract(pm->ps->lockedTarget, ps->origin, dir);
 		vectoangles(dir, angles);
 
 		if (angles[PITCH] > 180) { 
@@ -2431,7 +2436,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 				continue;
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
-
+/*
 		// circularly clamp the angles with deltas
 		for (i=0 ; i<3 ; i++) {
 			temp = cmd->angles[i] + ps->delta_angles[i];
@@ -2448,6 +2453,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 			ps->viewangles[i] = SHORT2ANGLE(temp);
 		}
 		return;
+*/
 	}
 
 	// ADDING FOR ZEQ2
@@ -2568,6 +2574,28 @@ void PM_UpdateViewAngles2( playerState_t *ps, const usercmd_t *cmd ) {
 
 	if ( ps->pm_type != PM_SPECTATOR && ps->stats[powerLevel] <= 0 ) {
 		return;		// no view changes at all
+	}
+
+	if ( pm->ps->lockedOn ){
+		vec3_t dir;
+		vec3_t angles;
+
+		VectorSubtract(pm->ps->lockedTarget, ps->origin, dir);
+		vectoangles(dir, angles);
+
+		if (angles[PITCH] > 180) { 
+			angles[PITCH] -= 360;
+		}
+
+		else if (angles[PITCH] < -180) {
+			angles[PITCH] += 360;
+		}
+
+		for (i = 0; i < 3; i++) {
+			if (i == YAW && (angles[PITCH] > 65 || angles[PITCH] < -65)) 
+				continue;
+			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
+		}
 	}
 
 	// circularly clamp the angles with deltas
