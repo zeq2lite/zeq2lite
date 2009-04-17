@@ -282,20 +282,13 @@ static void CG_OffsetThirdPersonView( void ) {
 	newAngle = 180;
 	newRange = 50;
 	newHeight = -10;
-
-	/*if (cg.lockedView == qtrue) {
-		float oldRoll;
-
-		VectorSubtract( cg.lockedTarget, ps->origin, forward );
-		VectorNormalize( forward );
-		oldRoll = cg.refdefViewAngles[ROLL];
-		vectoangles( forward, cg.refdefViewAngles );
-		cg.refdefViewAngles[ROLL] = oldRoll;
-		VectorCopy( ps->origin, cg.lockedTarget);
-		Com_Printf("Target locked!\n");
-
+	if (cg.predictedPlayerState.lockedOn == qtrue) {
+		CG_Printf("Applesauce!\n");
+	}
+	if (cg.predictedPlayerState.lockedOn) {
+		CG_Printf("Bullseye!\n");
 		return;
-	}*/
+	}
 
 	if (cg_beamControl.value == 0) {
 
@@ -325,13 +318,6 @@ static void CG_OffsetThirdPersonView( void ) {
 	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 
 	VectorCopy( cg.refdefViewAngles, focusAngles );
-/*
-	// if dead, look at killer
-	if ( cg.predictedPlayerState.stats[powerLevel] <= 0 ) {
-		focusAngles[YAW] = cg.predictedPlayerState.stats[deathCameraAngle];
-		cg.refdefViewAngles[YAW] = cg.predictedPlayerState.stats[deathCameraAngle];
-	}
-*/
 	if ( focusAngles[PITCH] > 45 ) {
 		focusAngles[PITCH] = 45;		// don't go too far overhead
 	}
@@ -2043,7 +2029,6 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	CG_PowerupTimerSounds();
 
 	attenuation = cg_soundAttenuation.value; // 0.0001f; // Quake 3 default was 0.0008f;
-	cg.lockReady = qfalse;
 
 	// update audio positions
 	trap_S_Respatialize( cg.snap->ps.clientNum, cg.refdef.vieworg, cg.refdef.viewaxis, inwater, attenuation );

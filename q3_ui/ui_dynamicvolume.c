@@ -3,9 +3,6 @@
 // ui_dynamicvolume.c -- contains management code for crossfading two
 //                       music tracks
 //
-// This unit of code was written for the Quake 3 modification 'ZEQ 2'
-// (Z Enters Quake 2). Nothing in this unit may be taken and used
-// without prior and explicit consent of the ZEQ2 development team.
 
 #include "ui_local.h"
 

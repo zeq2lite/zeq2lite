@@ -724,18 +724,7 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 		}
 		modelloaded = qfalse;
 	}
-
 	ci->newAnims = qfalse;
-	/*
-	if ( ci->torsoModel ) {
-		orientation_t tag;
-		// if the torso model has the "tag_flag"
-		if ( trap_R_LerpTag( &tag, ci->torsoModel, 0, 0, 1, "tag_flag" ) ) {
-			ci->newAnims = qtrue;
-		}
-	}
-	*/
-
 	// sounds
 	dir = ci->modelName;
 	fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
@@ -754,9 +743,7 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 			ci->sounds[i] = trap_S_RegisterSound( va("players/%s/%s", fallback, s + 1), qfalse );
 		}
 	}
-
 	ci->deferred = qfalse;
-
 	// reset any existing players and bodies, because they might be in bad
 	// frames for this new model
 	clientNum = ci - cgs.clientinfo;
@@ -766,21 +753,14 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 			CG_ResetPlayerEntity( &cg_entities[i] );
 		}
 	}
-
-	// ADDING FOR ZEQ2
 	// REFPOINT: Load the additional tiers' clientInfo here
-
-	CG_RegisterClientAura( clientNum, ci->modelName, ci->skinName );
-
-	// REFPOINT: Loading the clientside weaponsettings here.
+	CG_RegisterClientAura(clientNum,ci);
 	{
 		char	filename[MAX_QPATH];
 		
 		Com_sprintf( filename, sizeof( filename ), "players//%s/%s.grfx", ci->modelName, ci->skinName );
 		CG_weapGfx_Parse( filename, clientNum );
 	}
-	// END ADDING
-
 }
 
 /*
@@ -2503,13 +2483,6 @@ void CG_Player( centity_t *cent ) {
 			}
 		}
 	}
-
-	/*
-	if ( cent->currentState.eFlags &  EF_AURA ) {
-		renderfx |= RF_CELDIR_TOVIEW;
-	}
-	*/
-
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
 	memset( &head, 0, sizeof(head) );
@@ -2583,15 +2556,11 @@ void CG_Player( centity_t *cent ) {
 
 #ifdef MISSIONPACK
 	if ( cent->currentState.eFlags & EF_KAMIKAZE ) {
-
 		memset( &skull, 0, sizeof(skull) );
-
 		VectorCopy( cent->lerpOrigin, skull.lightingOrigin );
 		skull.shadowPlane = shadowPlane;
 		skull.renderfx = renderfx;
-
 		if ( cent->currentState.eFlags & EF_DEAD ) {
-			// one skull bobbing above the dead body
 			angle = ((cg.time / 7) & 255) * (M_PI * 2) / 255;
 			if (angle > M_PI * 2)
 				angle -= (float)M_PI * 2;
@@ -2626,23 +2595,12 @@ void CG_Player( centity_t *cent ) {
 				angles[1] -= 360;
 			angles[2] = 0;
 			AnglesToAxis( angles, skull.axis );
-
-			/*
-			dir[2] = 0;
-			VectorInverse(dir);
-			VectorCopy(dir, skull.axis[1]);
-			VectorNormalize(skull.axis[1]);
-			VectorSet(skull.axis[2], 0, 0, 1);
-			CrossProduct(skull.axis[1], skull.axis[2], skull.axis[0]);
-			*/
-
 			skull.hModel = cgs.media.kamikazeHeadModel;
 			trap_R_AddRefEntityToScene( &skull );
 			// flip the trail because this skull is spinning in the other direction
 			VectorInverse(skull.axis[1]);
 			skull.hModel = cgs.media.kamikazeHeadTrail;
 			trap_R_AddRefEntityToScene( &skull );
-
 			angle = ((cg.time / 4) & 255) * (M_PI * 2) / 255 + M_PI;
 			if (angle > M_PI * 2)
 				angle -= (float)M_PI * 2;
@@ -2657,15 +2615,6 @@ void CG_Player( centity_t *cent ) {
 				angles[1] -= 360;
 			angles[2] = 0;
 			AnglesToAxis( angles, skull.axis );
-
-			/*
-			dir[2] = 0;
-			VectorCopy(dir, skull.axis[1]);
-			VectorNormalize(skull.axis[1]);
-			VectorSet(skull.axis[2], 0, 0, 1);
-			CrossProduct(skull.axis[1], skull.axis[2], skull.axis[0]);
-			*/
-
 			skull.hModel = cgs.media.kamikazeHeadModel;
 			trap_R_AddRefEntityToScene( &skull );
 			skull.hModel = cgs.media.kamikazeHeadTrail;
@@ -2690,40 +2639,7 @@ void CG_Player( centity_t *cent ) {
 			trap_R_AddRefEntityToScene( &skull );
 		}
 	}
-
-/*	if ( cent->currentState.powerups & ( 1 << PW_GUARD ) ) {
-		memcpy(&powerup, &torso, sizeof(torso));
-		powerup.hModel = cgs.media.guardPowerupModel;
-		powerup.frame = 0;
-		powerup.oldframe = 0;
-		powerup.customSkin = 0;
-		trap_R_AddRefEntityToScene( &powerup );
-	}
-	if ( cent->currentState.powerups & ( 1 << PW_SCOUT ) ) {
-		memcpy(&powerup, &torso, sizeof(torso));
-		powerup.hModel = cgs.media.scoutPowerupModel;
-		powerup.frame = 0;
-		powerup.oldframe = 0;
-		powerup.customSkin = 0;
-		trap_R_AddRefEntityToScene( &powerup );
-	}
-	if ( cent->currentState.powerups & ( 1 << PW_DOUBLER ) ) {
-		memcpy(&powerup, &torso, sizeof(torso));
-		powerup.hModel = cgs.media.doublerPowerupModel;
-		powerup.frame = 0;
-		powerup.oldframe = 0;
-		powerup.customSkin = 0;
-		trap_R_AddRefEntityToScene( &powerup );
-	}
-	if ( cent->currentState.powerups & ( 1 << PW_AMMOREGEN ) ) {
-		memcpy(&powerup, &torso, sizeof(torso));
-		powerup.hModel = cgs.media.ammoRegenPowerupModel;
-		powerup.frame = 0;
-		powerup.oldframe = 0;
-		powerup.customSkin = 0;
-		trap_R_AddRefEntityToScene( &powerup );
-	}
-*/	if ( cent->currentState.powerups & ( 1 << PW_INVULNERABILITY ) ) {
+	if ( cent->currentState.powerups & ( 1 << PW_INVULNERABILITY ) ) {
 		if ( !ci->invulnerabilityStartTime ) {
 			ci->invulnerabilityStartTime = cg.time;
 		}
@@ -2811,41 +2727,16 @@ void CG_Player( centity_t *cent ) {
 	memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
 
 	memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
-
-
-
-/*
-#ifdef MISSIONPACK
-	CG_BreathPuffs(cent, &head);
-
-	CG_DustTrail(cent);
-#endif
-*/
-
-	// Make sure we don't reference an illegal client, in case this entity came
-	// from the body queue.
-	if ( onBodyQue ) {
-		return;
-	}
-
-	//
-	// add any weapon charges and flashes
-	//
+	if(onBodyQue){return;}
 	CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
-
-	// add powerups floating behind the player
 	CG_PlayerPowerups( cent, &torso );
-	
-	// <-- RiO; Add the aura
-
-	// if indicated by the centity that the aura should exist
-	if ( cent->currentState.eFlags & EF_AURA ) {
-		CG_AuraStart( cent );
-	} else { // if indicated that it shouldn't exist anymore.
-		CG_AuraEnd( cent );
+	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
+		CG_AuraStart(cent);
 	}
-	CG_AddAuraToScene( cent );
-
+	else{
+		CG_AuraEnd(cent);
+	}
+	CG_AddAuraToScene(cent);
 	// -->
 }
 

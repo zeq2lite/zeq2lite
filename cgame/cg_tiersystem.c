@@ -21,8 +21,6 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		// ===================================
 		Com_sprintf(tierPath,MAX_QPATH,"players/%s/tier%s/",modelName,i);
 		ci->tiers[i].index = i;	
-		ci->tiers[i].exists = qfalse;
-		//if(!(trap_FS_FOpenFile(strcat(tierPath,"tier.cfg"),0,FS_READ) > 0)){return qfalse;}
 		ci->tiers[i].exists = qtrue;
 		CG_Printf(tierPath);
 		ci->tiers[i].soundTransform = trap_S_RegisterSound(strcat(tierPath,"transform.ogg"),qfalse);

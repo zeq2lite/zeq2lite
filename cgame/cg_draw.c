@@ -1984,8 +1984,7 @@ CG_ScanForCrosshairEntity
 */
 static void CG_ScanForCrosshairEntity( void ) {
 	trace_t			trace;
-	vec3_t			start, end;
-	vec3_t			muzzle, forward, up;
+	vec3_t			start,end,minSize,maxSize,muzzle,forward,up,targetPosition;
 	playerState_t	*ps;
 	int				content;
 
@@ -2005,31 +2004,24 @@ static void CG_ScanForCrosshairEntity( void ) {
 		
 	VectorCopy( muzzle, start );
 	VectorMA( start, 131072, forward, end );
-
-	CG_Trace( &trace, start, NULL, NULL, end, cg.snap->ps.clientNum, CONTENTS_SOLID|CONTENTS_BODY );
 	
-	if ( trace.entityNum >= MAX_CLIENTS ) {
-		return;
-	}
-
-	// if the player is in fog, don't show it
+	cg.lockReady = qfalse;
+	minSize[0] = -(float)cg_lockonDistance.value;
+	minSize[1] = -(float)cg_lockonDistance.value;
+	minSize[2] = -(float)cg_lockonDistance.value;
+	maxSize[0] = -minSize[0];
+	maxSize[1] = -minSize[1];
+	maxSize[2] = -minSize[2];
+	CG_Trace( &trace, start, minSize, maxSize, end, cg.snap->ps.clientNum, CONTENTS_BODY );
+	if((trace.entityNum >= MAX_CLIENTS) || (ps->lockedOn)){return;}
 	content = trap_CM_PointContents( trace.endpos, 0 );
-	if ( content & CONTENTS_FOG ) {
-		return;
-	}
-
-	// if the player is invisible, don't show it
-	if ( cg_entities[ trace.entityNum ].currentState.powerups & ( 1 << PW_INVIS ) ) {
-		return;
-	}
-
-	// update the fade timer
+	cg.lockReady = qtrue;
 	cg.crosshairClientNum = trace.entityNum;
 	cg.crosshairClientTime = cg.time;
-
-	cg.lockReady = qtrue;
-	VectorCopy(cg_entities[trace.entityNum].lerpOrigin, cg.lockedTarget);
-	VectorCopy(cg.lockedTarget, ps->lockedTarget);
+	VectorCopy(cg_entities[trace.entityNum].lerpOrigin,targetPosition);
+	ps->lockedTarget[0] = targetPosition[0];
+	ps->lockedTarget[1] = targetPosition[1];
+	ps->lockedTarget[2] = targetPosition[2];
 }
 
 

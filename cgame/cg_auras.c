@@ -2,9 +2,6 @@
 //
 // cg_auras.c -- generates and displays auras
 //
-// This unit of code was written for the Quake 3 modification 'ZEQ 2'
-// (Z Enters Quake 2). Nothing in this unit may be taken and used
-// without prior and explicit consent of the ZEQ2 development team.
 
 #include "cg_local.h"
 
@@ -22,17 +19,17 @@ CG_Aura_BuildTailPoint
 ========================
   Builds position of the aura's tail point, dependant on velocity vector of player entity
 */
-static void CG_Aura_BuildTailPoint(centity_t *player, auraState_t *state, auraConfig_t *config) {
+static void CG_Aura_BuildTailPoint(centity_t *player, auraState_t *state, auraConfig_t *config){
 	vec3_t			tailDir;
 
 	// Find the direction the tail should point. Low speeds will have it pointing up.
-	if ( VectorNormalize2( player->currentState.pos.trDelta, tailDir ) < 180 )
-		VectorSet( tailDir, 0, 0, 1 );
+	if(VectorNormalize2( player->currentState.pos.trDelta, tailDir) < 180)
+		VectorSet( tailDir, 0, 0, 1);
 	else
-		VectorInverse( tailDir );
+		VectorInverse( tailDir);
 
 	// Using the established direction, set up the tail's potential hull point.
-	VectorMA( state->origin, config->auraScale * config->tailLength, tailDir, state->tailPos );
+	VectorMA( state->origin, config->auraScale * config->tailLength, tailDir, state->tailPos);
 }
 
 
@@ -43,7 +40,7 @@ CG_Aura_MarkRootPoint
   Marks a point as the aura's root point. The root point is the point that is placed
   furthest away from the tail. It is where the aura 'opens up'.
 */
-void CG_Aura_MarkRootPoint( auraState_t *state ) {
+void CG_Aura_MarkRootPoint( auraState_t *state){
 	vec3_t	prjPoint;
 	float	maxDist, newDist;
 	int		i;
@@ -54,16 +51,16 @@ void CG_Aura_MarkRootPoint( auraState_t *state ) {
 	// onto the tail axis is maximal.
 
 	maxDist = 0;
-	for ( i = 0; i < state->convexHullCount; i++ ) {
+	for(i = 0;i < state->convexHullCount;i++){
 		// Project the point onto the tail axis
-		ProjectPointOnLine( state->convexHull[i].pos_world, state->origin, state->tailPos, prjPoint );
+		ProjectPointOnLine( state->convexHull[i].pos_world, state->origin, state->tailPos, prjPoint);
 
 		// Measure the distance and copy over the projection of the point
 		// as the new root if it's further away.
-		newDist = Distance( prjPoint, state->tailPos );
-		if ( newDist > maxDist ) {
+		newDist = Distance( prjPoint, state->tailPos);
+		if(newDist > maxDist){
 			maxDist = newDist;
-			VectorCopy( prjPoint, state->rootPos );
+			VectorCopy( prjPoint, state->rootPos);
 		}
 	}
 
@@ -73,9 +70,9 @@ void CG_Aura_MarkRootPoint( auraState_t *state ) {
 	{
 		vec3_t tailDir;
 
-		VectorSubtract( state->tailPos, state->origin, tailDir );
-		VectorNormalize( tailDir );
-		VectorMA( state->rootPos, -4.8f, tailDir, state->rootPos );
+		VectorSubtract( state->tailPos, state->origin, tailDir);
+		VectorNormalize( tailDir);
+		VectorMA( state->rootPos, -4.8f, tailDir, state->rootPos);
 	}
 }
 
@@ -87,63 +84,63 @@ CG_Aura_GetHullPoints
   Reads and prepares the positions of the tags for a convex hull aura.
 */
 #define MAX_AURATAGNAME 10
-static void CG_Aura_GetHullPoints( centity_t *player, auraState_t *state, auraConfig_t *config ) {
+static void CG_Aura_GetHullPoints( centity_t *player, auraState_t *state, auraConfig_t *config){
 	char		tagName[MAX_AURATAGNAME];
 	int			i, j;
 	
 	j = 0;
 	
-	for (i = 0; i < config->numTags[0]; i++ ) {
+	for (i = 0;i < config->numTags[0];i++){
 		orientation_t tagOrient;
 		
 		// Lerp the tag's position
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i );
+		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
 		
-		if (!CG_GetTagOrientationFromPlayerEntityHeadModel( player, tagName, &tagOrient )) continue;
-		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world );
+		if (!CG_GetTagOrientationFromPlayerEntityHeadModel( player, tagName, &tagOrient)) continue;
+		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
 
-		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen ) ) {
+		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
 			state->convexHull[j].is_tail = qfalse;
 			j++;
 		}
 	}
 
-	for (i = 0; i < config->numTags[1]; i++ ) {
+	for (i = 0;i < config->numTags[1];i++){
 		orientation_t tagOrient;
 		
 		// Lerp the tag's position
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i );
+		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
 		
-		if ( !CG_GetTagOrientationFromPlayerEntityTorsoModel( player, tagName, &tagOrient )) continue;
-		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world );
+		if(!CG_GetTagOrientationFromPlayerEntityTorsoModel( player, tagName, &tagOrient)) continue;
+		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
 
-		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen ) ) {
+		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
 			state->convexHull[j].is_tail = qfalse;
 			j++;
 		}
 	}
 
-	for (i = 0; i < config->numTags[2]; i++ ) {
+	for (i = 0;i < config->numTags[2];i++){
 		orientation_t tagOrient;
 		
 		// Lerp the tag's position
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i );
+		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
 		
-		if ( !CG_GetTagOrientationFromPlayerEntityLegsModel( player, tagName, &tagOrient )) continue;
-		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world );
+		if(!CG_GetTagOrientationFromPlayerEntityLegsModel( player, tagName, &tagOrient)) continue;
+		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
 
-		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen ) ) {
+		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
 			state->convexHull[j].is_tail = qfalse;
 			j++;
 		}
 	}
 
 	// Find the aura's tail point
-	CG_Aura_BuildTailPoint( player, state, config );
+	CG_Aura_BuildTailPoint( player, state, config);
 
 	// Add the tail tip to the hull points, if it's visible
-	VectorCopy( state->tailPos, state->convexHull[j].pos_world );
-	if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen ) ) {
+	VectorCopy( state->tailPos, state->convexHull[j].pos_world);
+	if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
 		state->convexHull[j].is_tail = qtrue;
 		j++;
 	}
@@ -152,7 +149,7 @@ static void CG_Aura_GetHullPoints( centity_t *player, auraState_t *state, auraCo
 	state->convexHullCount = j;
 
 	// Mark the root point
-	CG_Aura_MarkRootPoint( state );
+	CG_Aura_MarkRootPoint( state);
 }
 
 
@@ -162,7 +159,7 @@ CG_Aura_QSortAngle
 ====================
   Quicksort by ascending angles
 */
-static void CG_Aura_QSortAngle( auraTag_t *points, float* angles, int lowbound, int highbound ) {
+static void CG_Aura_QSortAngle( auraTag_t *points, float* angles, int lowbound, int highbound){
 	int			low, high;
 	float		mid;
 	auraTag_t	tempPoint;
@@ -172,11 +169,11 @@ static void CG_Aura_QSortAngle( auraTag_t *points, float* angles, int lowbound, 
 	high = highbound;
 	mid = angles[(low + high) / 2];
 
-	do {
-		while ( angles[low]  < mid ) low++;
-		while ( angles[high] > mid ) high--;
+	do{
+		while(angles[low]  < mid) low++;
+		while(angles[high] > mid) high--;
 
-		if ( low <= high ) {
+		if(low <= high){
 			// swap points
 			tempPoint = points[low];
 			points[low] = points[high];
@@ -191,10 +188,10 @@ static void CG_Aura_QSortAngle( auraTag_t *points, float* angles, int lowbound, 
 			high--;
 		}
 
-	} while ( !(low > high));
+	} while(!(low > high));
 
-	if ( high > lowbound ) CG_Aura_QSortAngle( points, angles, lowbound, high );
-	if ( low < highbound ) CG_Aura_QSortAngle( points, angles, low, highbound );	
+	if(high > lowbound) CG_Aura_QSortAngle( points, angles, lowbound, high);
+	if(low < highbound) CG_Aura_QSortAngle( points, angles, low, highbound);	
 }
 
 
@@ -204,8 +201,8 @@ CG_Aura_ArrangeConvexHull
 ===========================
   Rearranges *points to contain its convex hull in the first *nr_points points.
 */
-static qboolean CG_Aura_ArrangeConvexHull( auraTag_t *points, int *nr_points ) {
-	float		angles[MAX_AURATAGS + 1]; // +1 for tail
+static qboolean CG_Aura_ArrangeConvexHull( auraTag_t *points, int *nr_points){
+	float		angles[MAX_AURATAGS + 1];// +1 for tail
 	int			amount, index, pivotIndex;
 	auraTag_t	pivot;
 	auraTag_t	behind, infront;
@@ -216,22 +213,22 @@ static qboolean CG_Aura_ArrangeConvexHull( auraTag_t *points, int *nr_points ) {
 
 	amount = *nr_points;	
 
-	if ( amount == 3 ) return qtrue; // Already a convex hull
-	if ( amount <  3 ) {
+	if(amount == 3) return qtrue;// Already a convex hull
+	if(amount <  3){
 		return qfalse;
 	}
 
 	pivotIndex = 0;
 	// Find pivot point, which is known to be on the hull.
 	// Point with lowest y - if there are multiple, point with highest x.
-	for ( index = 1; index < amount; index++ ) {
+	for(index = 1;index < amount;index++){
 
-		if ( points[index].pos_screen[1] < points[pivotIndex].pos_screen[1] ) {
+		if(points[index].pos_screen[1] < points[pivotIndex].pos_screen[1]){
 			pivotIndex = index;
 
-		} else if ( points[index].pos_screen[1] == points[pivotIndex].pos_screen[1] ) {
+		} else if(points[index].pos_screen[1] == points[pivotIndex].pos_screen[1]){
 			
-			if (points[index].pos_screen[0] > points[pivotIndex].pos_screen[0] ) {
+			if (points[index].pos_screen[0] > points[pivotIndex].pos_screen[0]){
 				pivotIndex = index;
 			}
 		}
@@ -243,7 +240,7 @@ static qboolean CG_Aura_ArrangeConvexHull( auraTag_t *points, int *nr_points ) {
 	amount--;
 
 	// Calculate angle to pivot for each point in the array.
-    for ( index = 0; index < amount; index++ ) {
+    for(index = 0;index < amount;index++){
  
 		// point vector
 		vecPoint.pos_screen[0] = pivot.pos_screen[0] - points[index].pos_screen[0];
@@ -256,44 +253,44 @@ static qboolean CG_Aura_ArrangeConvexHull( auraTag_t *points, int *nr_points ) {
 	// Sort the points by angle.
 	CG_Aura_QSortAngle(points, angles, 0, amount - 1);
 
-	// Step through array to remove points that are not part of the convex hull.
+	// Step through array to remove points that are not p of the convex hull.
 	index = 1;
 
-	do {
+	do{
 		 // Assign points behind and in front of current point.
-		if ( index == 0) {
+		if(index == 0){
 			rightTurn = qtrue;
-		} else {
+		} else{
 			behind = points[index - 1];
 
-			if ( index == (amount - 1)) {
+			if(index == (amount - 1)){
 				infront = pivot;
-			} else {
+			} else{
 				infront = points[index + 1];
 			}
 
 			// Work out if we are making a right or left turn using vector product.
-			if ( ( (behind.pos_screen[0]  - points[index].pos_screen[0]) * (infront.pos_screen[1] - points[index].pos_screen[1]) -
-				   (infront.pos_screen[0] - points[index].pos_screen[0]) * (behind.pos_screen[1] - points[index].pos_screen[1]) ) < 0 ) {
+			if(( (behind.pos_screen[0]  - points[index].pos_screen[0]) * (infront.pos_screen[1] - points[index].pos_screen[1]) -
+				   (infront.pos_screen[0] - points[index].pos_screen[0]) * (behind.pos_screen[1] - points[index].pos_screen[1])) < 0){
 				rightTurn = qtrue;
-			}else {
+			}else{
 				rightTurn = qfalse;
 			}
 		}
 
-		if ( rightTurn ) {
+		if(rightTurn){
 			// point is currently considered part of the hull
 			index++;
-		} else {
+		} else{
 			// point is not part of the hull
 
 			// remove point from convex hull
-			if ( index == (amount - 1) ) {
+			if(index == (amount - 1)){
 				amount--;
-			} else {
+			} else{
 				// move everything after the current value one step forward
-				memcpy( buffer, &points[index + 1], sizeof(auraTag_t) * (amount - index - 1) );
-				memcpy( &points[index], buffer, sizeof(auraTag_t) * (amount - index - 1) );
+				memcpy( buffer, &points[index + 1], sizeof(auraTag_t) * (amount - index - 1));
+				memcpy( &points[index], buffer, sizeof(auraTag_t) * (amount - index - 1));
 				amount--;
 			}
 
@@ -301,7 +298,7 @@ static qboolean CG_Aura_ArrangeConvexHull( auraTag_t *points, int *nr_points ) {
 			index--;
 		}
 
-	} while ( !(index == (amount - 1)) );
+	} while(!(index == (amount - 1)));
 	
 	// add pivot back into points array
 	points[amount] = pivot;
@@ -318,7 +315,7 @@ CG_Aura_SetHullAttributes
 ===========================
   Set segment lengths, normals, circumference, etc.
 */
-static void CG_Aura_SetHullAttributes( auraState_t *state ) {
+static void CG_Aura_SetHullAttributes( auraState_t *state){
 	int		index, behind, infront;
 	vec3_t	line_behind, line_infront, viewLine;
 	vec3_t	temp_behind, temp_infront;
@@ -332,47 +329,47 @@ static void CG_Aura_SetHullAttributes( auraState_t *state ) {
 
 	circumference = 0.0f;
 
-	for ( index = 0; index < nr_points; index++ ) {
+	for(index = 0;index < nr_points;index++){
 		
 		// Set successor and predeccessor
-		if ( index == 0 ) {
+		if(index == 0){
 			behind = nr_points - 1;
 			infront = index + 1;
-		} else if ( index == nr_points - 1 ) {
+		} else if(index == nr_points - 1){
 			behind = index - 1;
 			infront = 0;
-		} else {
+		} else{
 			behind = index - 1;
 			infront = index + 1;
 		}
 
-		VectorSubtract( points[index].pos_world, cg.refdef.vieworg, viewLine );
+		VectorSubtract( points[index].pos_world, cg.refdef.vieworg, viewLine);
 
 		// Calculate the normal
-		VectorSubtract( points[index].pos_world, points[behind].pos_world,  line_behind  );
-		VectorSubtract( points[infront].pos_world, points[index].pos_world, line_infront );
+		VectorSubtract( points[index].pos_world, points[behind].pos_world,  line_behind );
+		VectorSubtract( points[infront].pos_world, points[index].pos_world, line_infront);
 
-		VectorNormalize( line_behind  );
-		circumference += (points[index].length = VectorNormalize( line_infront ));
+		VectorNormalize( line_behind );
+		circumference += (points[index].length = VectorNormalize( line_infront));
 
-		CrossProduct( line_behind, viewLine, temp_behind );
-		CrossProduct( line_infront, viewLine, temp_infront );
-		if ( !VectorNormalize ( temp_behind )) {
+		CrossProduct( line_behind, viewLine, temp_behind);
+		CrossProduct( line_infront, viewLine, temp_infront);
+		if(!VectorNormalize(temp_behind)){
 			viewLine[2] += 0.1f;
-			CrossProduct( line_behind, viewLine, temp_behind );
-			VectorNormalize ( temp_behind );
+			CrossProduct( line_behind, viewLine, temp_behind);
+			VectorNormalize(temp_behind);
 			viewLine[2] -= 0.1f;
 		}
 		
-		if ( !VectorNormalize ( temp_infront )) {
+		if(!VectorNormalize(temp_infront)){
 			viewLine[2] += 0.1f;
-			CrossProduct( line_behind, viewLine, temp_behind );
-			VectorNormalize ( temp_behind );
+			CrossProduct( line_behind, viewLine, temp_behind);
+			VectorNormalize(temp_behind);
 			viewLine[2] -= 0.1f;
 		}
 		
-		VectorAdd( temp_behind, temp_infront, points[index].normal );
-		VectorNormalize( points[index].normal );
+		VectorAdd( temp_behind, temp_infront, points[index].normal);
+		VectorNormalize( points[index].normal);
 	}
 
 	state->convexHullCircumference = circumference;
@@ -386,18 +383,18 @@ CG_Aura_BuildConvexHull
   Calls all relevant functions to build up the aura's convex hull.
   Returns false if no hull can be made.
 */
-static qboolean CG_Aura_BuildConvexHull( centity_t *player, auraState_t *state, auraConfig_t *config ) {
+static qboolean CG_Aura_BuildConvexHull( centity_t *player, auraState_t *state, auraConfig_t *config){
 
 	// Retrieve hull points
-	CG_Aura_GetHullPoints( player, state, config );
+	CG_Aura_GetHullPoints( player, state, config);
 
 	// Arrange hull. Don't continue if there aren't enough points to form a hull.
-	if ( !CG_Aura_ArrangeConvexHull( state->convexHull, &state->convexHullCount )) {
+	if(!CG_Aura_ArrangeConvexHull( state->convexHull, &state->convexHullCount)){
 		return qfalse;
 	}
 
 	// Set hull's attributes
-	CG_Aura_SetHullAttributes( state );
+	CG_Aura_SetHullAttributes( state);
 
 	// Hull building completed succesfully
 	return qtrue;
@@ -425,7 +422,7 @@ CG_Aura_DrawSpike
 ===================
   Draws the polygons for one aura spike
 */
-static void CG_Aura_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t shader, vec4_t RGBModulate) {
+static void CG_Aura_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t shader, vec4_t RGBModulate){
 	vec3_t line, offset, viewLine;
 	polyVert_t verts[4];
 	float len;
@@ -436,7 +433,7 @@ static void CG_Aura_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t 
 	CrossProduct (viewLine, line, offset);
 	len = VectorNormalize (offset);
 	
-	if (!len) {
+	if (!len){
 		return;
 	}
 	
@@ -453,8 +450,8 @@ static void CG_Aura_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t 
 	verts[3].st[0] = 1;
 	verts[3].st[1] = 1;
 	
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
+	for (i = 0;i < 4;i++){
+		for (j = 0;j < 4;j++){
 			verts[i].modulate[j] = 255 * RGBModulate[j];
 		}
 	}
@@ -469,20 +466,20 @@ CG_Aura_LerpSpikeSegment
 ==========================
   Lerps the position the aura spike should have along a segment of the convex hull
 */
-static void CG_Aura_LerpSpikeSegment( auraState_t *state, int spikeNr, int *start, int *end, float *progress_pct ) {
+static void CG_Aura_LerpSpikeSegment( auraState_t *state, int spikeNr, int *start, int *end, float *progress_pct){
 	float length_pos, length_sofar;
 	int i, j;
 
 	// Map i onto the circumference of the convex hull.
-	length_pos = state->convexHullCircumference * ( (float)spikeNr / (float)(NR_AURASPIKES - 1) );
+	length_pos = state->convexHullCircumference *((float)spikeNr / (float)(NR_AURASPIKES - 1));
 				
 	// Find the segment we are in right now.
 	length_sofar = 0;
-	for ( i = 0; (( length_sofar + state->convexHull[i].length ) < length_pos ) && ( i < NR_AURASPIKES ); i++ ) {
+	for(i = 0;(( length_sofar + state->convexHull[i].length) < length_pos) &&(i < NR_AURASPIKES);i++){
 		length_sofar += state->convexHull[i].length;
 	}
 	j = i + 1;
-	if ( j == state->convexHullCount ) {
+	if(j == state->convexHullCount){
 		j = 0;
 	}
 
@@ -499,7 +496,7 @@ CG_LerpSpike
 ==============
   Lerps one spike in the aura
 */
-static void CG_LerpSpike( auraState_t *state, auraConfig_t *config, int spikeNr, float alphaModulate ) {
+static void CG_LerpSpike( auraState_t *state, auraConfig_t *config, int spikeNr, float alphaModulate){
 	int start, end;
 	float progress_pct;
 	vec3_t viewLine;
@@ -512,20 +509,20 @@ static void CG_LerpSpike( auraState_t *state, auraConfig_t *config, int spikeNr,
 	vec3_t edge, tailDir, tempVec;
 
 	// Decide on which type of spike to use.
-	if ( !( spikeNr % 3 ) ) {
-		lerpTime = ( cg.time % 400 ) / 400.0f;
+	if(!( spikeNr % 3)){
+		lerpTime =(cg.time % 400) / 400.0f;
 		lerpSize = 14.0f * (1 + lerpTime);
 		lerpBorder = 2.5f * (1.75f + lerpTime);
 		baseBorder = 2.5f * 1.75f;
 
-	} else if ( !( spikeNr % 2 ) ) {
-		lerpTime = (( cg.time + 200 ) % 400) / 400.0f;
+	} else if(!( spikeNr % 2)){
+		lerpTime = (( cg.time + 200) % 400) / 400.0f;
 		lerpSize = 12.0f * (1 + lerpTime);
 		lerpBorder = 3.0f * (1.75f + lerpTime);
 		baseBorder = 3.0f * 1.75f;
 
-	} else {
-		lerpTime = ( cg.time % 500 ) / 500.0f;
+	} else{
+		lerpTime =(cg.time % 500) / 500.0f;
 		lerpSize = 10.0f * (1 + lerpTime);
 		lerpBorder = 2.75f * (1.75f + lerpTime);
 		baseBorder = 2.75f * 1.75f;
@@ -534,12 +531,12 @@ static void CG_LerpSpike( auraState_t *state, auraConfig_t *config, int spikeNr,
 
 	// NOTE: Prepared for a cvar switch between additive and
 	//       blended aura.
-	if ( 0 ) {
+	if(0){
 		lerpColor[0] = config->auraColor[0] * lerpModulate * alphaModulate;
 		lerpColor[1] = config->auraColor[1] * lerpModulate * alphaModulate;
 		lerpColor[2] = config->auraColor[2] * lerpModulate * alphaModulate;
 		lerpColor[3] = 1.0f;
-	} else {
+	} else{
 		lerpColor[0] = config->auraColor[0];
 		lerpColor[1] = config->auraColor[1];
 		lerpColor[2] = config->auraColor[2];
@@ -547,49 +544,49 @@ static void CG_LerpSpike( auraState_t *state, auraConfig_t *config, int spikeNr,
 	}
 
 	// Get our position in the hull
-	CG_Aura_LerpSpikeSegment( state, spikeNr, &start, &end, &progress_pct );
+	CG_Aura_LerpSpikeSegment( state, spikeNr, &start, &end, &progress_pct);
 
 	// Lerp the position using the stored normal to expand the aura a bit
 	VectorSet( lerpNormal, 0.0f, 0.0f, 0.0f);
-	VectorMA( lerpNormal, 1.0f - progress_pct, state->convexHull[start].normal, lerpNormal );
-	VectorMA( lerpNormal, progress_pct, state->convexHull[end].normal, lerpNormal );
-	VectorNormalize ( lerpNormal );
+	VectorMA( lerpNormal, 1.0f - progress_pct, state->convexHull[start].normal, lerpNormal);
+	VectorMA( lerpNormal, progress_pct, state->convexHull[end].normal, lerpNormal);
+	VectorNormalize(lerpNormal);
 
-	VectorSubtract( state->convexHull[end].pos_world, state->convexHull[start].pos_world, edge );
-	VectorMA( state->convexHull[start].pos_world, progress_pct, edge, lerpPos );
-	VectorMA( lerpPos, baseBorder, lerpNormal, basePos );
-	VectorMA( lerpPos, lerpBorder, lerpNormal, lerpPos );
+	VectorSubtract( state->convexHull[end].pos_world, state->convexHull[start].pos_world, edge);
+	VectorMA( state->convexHull[start].pos_world, progress_pct, edge, lerpPos);
+	VectorMA( lerpPos, baseBorder, lerpNormal, basePos);
+	VectorMA( lerpPos, lerpBorder, lerpNormal, lerpPos);
 	
 
 	// Create the direction
-	VectorSubtract( lerpPos, state->rootPos, lerpDir );
+	VectorSubtract( lerpPos, state->rootPos, lerpDir);
 		
 	// Flatten the direction a bit so it doesn't point to the tip too drasticly.
-	VectorSubtract( state->tailPos, state->origin, tailDir );
-	VectorPllComponent( lerpDir, tailDir, edge );
-	VectorScale( edge, AURA_FLATTEN_NORMAL, edge );
-	VectorSubtract( lerpDir, edge, lerpDir );
-	VectorNormalize( lerpDir );
+	VectorSubtract( state->tailPos, state->origin, tailDir);
+	VectorPllComponent( lerpDir, tailDir, edge);
+	VectorScale( edge, AURA_FLATTEN_NORMAL, edge);
+	VectorSubtract( lerpDir, edge, lerpDir);
+	VectorNormalize( lerpDir);
 
 	// Set the viewing direction
 	VectorSubtract( lerpPos, cg.refdef.vieworg, viewLine);
-	VectorNormalize( viewLine );
+	VectorNormalize( viewLine);
 
 	// Don't display this spike if it would be travelling into / out of
 	// the screen too much: It is part of the blank area surrounding the root.
-	CrossProduct( viewLine, lerpDir, tempVec );
-	if ( VectorLength(tempVec) < AURA_ROOTCUTOFF_FRAQ ) {
+	CrossProduct( viewLine, lerpDir, tempVec);
+	if(VectorLength(tempVec) < AURA_ROOTCUTOFF_FRAQ){
 
 		// Only disallow drawing if it's actually a segment originating
 		// from close enough to the root.
-		if ( Distance( basePos, state->rootPos ) < AURA_ROOTCUTOFF_DIST ) {
+		if(Distance( basePos, state->rootPos) < AURA_ROOTCUTOFF_DIST){
 			return;
 		}
 	}
 
-	VectorMA( lerpPos, lerpBorder, lerpDir, lerpPos );
-	VectorMA( lerpPos, lerpSize, lerpDir, endPos );
-	CG_Aura_DrawSpike( lerpPos, endPos, lerpSize / 1.25f, config->auraShader, lerpColor );
+	VectorMA( lerpPos, lerpBorder, lerpDir, lerpPos);
+	VectorMA( lerpPos, lerpSize, lerpDir, endPos);
+	CG_Aura_DrawSpike( lerpPos, endPos, lerpSize / 1.25f, config->auraShader, lerpColor);
 }
 
 
@@ -598,21 +595,21 @@ static void CG_LerpSpike( auraState_t *state, auraConfig_t *config, int spikeNr,
 CG_Aura_ConvexHullRender
 ==========================
 */
-static void CG_Aura_ConvexHullRender( centity_t *player, auraState_t *state, auraConfig_t *config ) {
+static void CG_Aura_ConvexHullRender( centity_t *player, auraState_t *state, auraConfig_t *config){
 	int i;
 
 	// Don't draw the aura if it isn't active and the modulation is zero
-	if ( !( state->isActive || ( state->modulate > 0.0f ))) {
+	if(!( state->isActive ||(state->modulate > 0.0f))){
 		return;
 	}
 
 	// Don't draw the aura if configuration says we shouldn't.
-	if ( !config->showAura ) {
+	if(!config->showAura){
 		return;
 	}
 
 	// Build the hull. Don't continue if it can't be built.
-	if ( !CG_Aura_BuildConvexHull( player, state, config )) {
+	if(!CG_Aura_BuildConvexHull( player, state, config)){
 		return;
 	}
 
@@ -620,39 +617,31 @@ static void CG_Aura_ConvexHullRender( centity_t *player, auraState_t *state, aur
 	
 	// For each spike add it to the poly buffer
 	// FIXME: Uses old style direct adding with trap call until buffer system is built
-	for ( i = 0; i < NR_AURASPIKES; i++ ) {
-		CG_LerpSpike( state, config, i, state->modulate );		
+	for(i = 0;i < NR_AURASPIKES;i++){
+		CG_LerpSpike( state, config, i, state->modulate);		
 	}
 }
-
-
-
-
 // ===================================
 //
 //    A U R A   M A N A G E M E N T
 //
 // ===================================
-
-/*
-==================
+/*==================
 CG_Aura_AddTrail
-==================
-  Add the aura's trail to the scene
-*/
-static void CG_Aura_AddTrail( centity_t *player, auraState_t *state, auraConfig_t *config ) {
+==================*/
+static void CG_Aura_AddTrail( centity_t *player, auraState_t *state, auraConfig_t *config){
 	// Don't draw a trail if the aura isn't active
-	if ( !state->isActive ) {
+	if(!state->isActive){
 		return;
 	}
 
 	// Don't draw a trail if configuration says we shouldn't.
-	if ( !config->showTrail ) {
+	if(!config->showTrail){
 		return;
 	}
 
 	// Update the trail only if we're using the boost aura
-	if ( !(player->currentState.powerups & ( 1 << PW_BOOST )) ) {
+	if(!(player->currentState.powerups &(1 << PW_BOOST))){
 		return;
 	}
 
@@ -660,149 +649,134 @@ static void CG_Aura_AddTrail( centity_t *player, auraState_t *state, auraConfig_
 	// of the entity and we will have to reset the tail positions.
 	// NOTE: Give 1.5 second leeway for 'snapping' the tail
 	//       incase we (almost) immediately restart boosting.
-	if ( player->lastTrailTime < (cg.time - cg.frametime - 1500) ) {		
+	if(player->lastTrailTime < (cg.time - cg.frametime - 1500)){		
 
 		CG_ResetTrail( player->currentState.clientNum, player->lerpOrigin, 1000,
-			config->trailWidth, config->trailShader, config->trailColor );
+			config->trailWidth, config->trailShader, config->trailColor);
 	}
 	
-	CG_UpdateTrailHead( player->currentState.clientNum, player->lerpOrigin );
+	CG_UpdateTrailHead( player->currentState.clientNum, player->lerpOrigin);
 
 	player->lastTrailTime = cg.time;
 }
 
 
-/*
-===================
+/*===================
 CG_Aura_AddDebris
-===================
-  Add the aura's debris particle system to the scene
-*/
-static void CG_Aura_AddDebris( centity_t *player, auraState_t *state, auraConfig_t *config ) {
+===================*/
+static void CG_Aura_AddDebris( centity_t *player, auraState_t *state, auraConfig_t *config){
 	// Don't add debris if the aura isn't active
-	if ( !state->isActive ) {
+	if(!state->isActive){
 		return;
 	}
 
 	// Don't add debris could if configuration says we shouldn't.
-	if ( !config->generatesDebris ) {
+	if(!config->generatesDebris){
 		return;
 	}
 	
 	// Generate the debris cloud only if we aren't using the boost aura (and thus
 	// are using the charge aura).
-	if ( player->currentState.powerups & ( 1 << PW_BOOST ) ) {
+	if(player->currentState.powerups &(1 << PW_BOOST)){
 		return;
 	}
 
 	// Spawn the debris system if the player has just entered PVS
-	if ( !CG_FrameHist_HadAura( player->currentState.number )) {
-		PSys_SpawnCachedSystem( "AuraDebris", player->lerpOrigin, NULL, player, NULL, qtrue, qfalse ); 
+	if(!CG_FrameHist_HadAura( player->currentState.number)){
+		PSys_SpawnCachedSystem( "AuraDebris", player->lerpOrigin, NULL, player, NULL, qtrue, qfalse);
 	}
 
-	CG_FrameHist_SetAura( player->currentState.number );
+	CG_FrameHist_SetAura( player->currentState.number);
 }
 
 
-/*
-===================
+/*===================
 CG_Aura_AddSounds
-===================
-  Add the aura's looping sounds to the scene.
-*/
-static void CG_Aura_AddSounds( centity_t *player, auraState_t *state, auraConfig_t *config ) {
+===================*/
+static void CG_Aura_AddSounds( centity_t *player, auraState_t *state, auraConfig_t *config){
 	// Don't add sounds if the aura isn't active
-	if ( !state->isActive ) {
+	if(!state->isActive){
 		return;
 	}
 
 	// Add looping sounds depending on aura type (boost or charge)
-	if ( player->currentState.powerups & ( 1 << PW_BOOST ) ) {
-		if ( config->boostLoopSound ) {
-			trap_S_AddLoopingSound( player->currentState.number, player->lerpOrigin, vec3_origin, config->boostLoopSound );
+	if(player->currentState.powerups &(1 << PW_BOOST)){
+		if(config->boostLoopSound){
+			trap_S_AddLoopingSound( player->currentState.number, player->lerpOrigin, vec3_origin, config->boostLoopSound);
 		}
-	} else {
-		if ( config->chargeLoopSound ) {
-			trap_S_AddLoopingSound( player->currentState.number, player->lerpOrigin, vec3_origin, config->chargeLoopSound );
+	} else{
+		if(config->chargeLoopSound){
+			trap_S_AddLoopingSound( player->currentState.number, player->lerpOrigin, vec3_origin, config->chargeLoopSound);
 		}
 	}
 }
 
 
-/*
-===================
+/*===================
 CG_Aura_AddDLight
-===================
-  Add the aura's light to the scene.
-*/
-static void CG_Aura_AddDLight( centity_t *player, auraState_t *state, auraConfig_t *config ) {
+===================*/
+static void CG_Aura_AddDLight( centity_t *player, auraState_t *state, auraConfig_t *config){
 	vec3_t	lightPos;
 
 	// add dynamic light when necessary
-	if ( state->isActive || ( state->lightAmt > config->lightMin )) {
+	if(state->isActive ||(state->lightAmt > config->lightMin)){
 
 		// Since lerpOrigin is the lightingOrigin for the player, this will add a backsplash light for the aura.
-		VectorAdd( player->lerpOrigin, cg.refdef.viewaxis[0], lightPos );
+		VectorAdd( player->lerpOrigin, cg.refdef.viewaxis[0], lightPos);
 
-		trap_R_AddLightToScene( lightPos, state->lightAmt, // + ( cos(cg.time / 50.0f) * state->lightDev),
+		trap_R_AddLightToScene( lightPos, state->lightAmt, // +(cos(cg.time / 50.0f) * state->lightDev),
 								config->lightColor[0] * state->modulate,
 								config->lightColor[1] * state->modulate,
-								config->lightColor[2] * state->modulate );
+								config->lightColor[2] * state->modulate);
 	}
 }
 
 
-/*
-==================
+/*==================
 CG_Aura_DimLight
-==================
-  Calculate the dimmed light values for the aura.
-*/
-static void CG_Aura_DimLight( centity_t *player, auraState_t *state, auraConfig_t *config ) {
+==================*/
+static void CG_Aura_DimLight( centity_t *player, auraState_t *state, auraConfig_t *config){
 
-	if ( state->isActive ) {
+	if(state->isActive){
 
-		if (state->lightAmt < config->lightMax) {
+		if (state->lightAmt < config->lightMax){
 
-			state->lightAmt += config->lightGrowthRate * ( cg.frametime / 25.0f);
-			if ( state->lightAmt > config->lightMax) {
+			state->lightAmt += config->lightGrowthRate *(cg.frametime / 25.0f);
+			if(state->lightAmt > config->lightMax){
 				state->lightAmt = config->lightMax;
 			}
 
 			state->lightDev = state->lightAmt / 10;
 		}
 
-	} else {
+	} else{
 
-		if (state->lightAmt > config->lightMin) {
-			state->lightAmt -= config->lightGrowthRate * ( cg.frametime / 50.0f);
-			if ( state->lightAmt < config->lightMin) {
+		if (state->lightAmt > config->lightMin){
+			state->lightAmt -= config->lightGrowthRate *(cg.frametime / 50.0f);
+			if(state->lightAmt < config->lightMin){
 				state->lightAmt = config->lightMin;
 			}
 		}
 	}
 
-	state->modulate = (float)(state->lightAmt - config->lightMin) / (float)(config->lightMax - config->lightMin );
-	if ( state->modulate < 0    ) state->modulate = 0;
-	if ( state->modulate > 1.0f ) state->modulate = 1.0f;
+	state->modulate = (float)(state->lightAmt - config->lightMin) / (float)(config->lightMax - config->lightMin);
+	if(state->modulate < 0   ) state->modulate = 0;
+	if(state->modulate > 1.0f) state->modulate = 1.0f;
 }
 
 
-/*
-========================
+/*========================
 CG_AddAuraToScene
-========================
-  Master function which adds the aura to the scene.
-*/
-void CG_AddAuraToScene( centity_t *player ) {
+========================*/
+void CG_AddAuraToScene( centity_t *player){
 	int				clientNum, tier;
 	auraState_t		*state;
 	auraConfig_t	*config;
 
 	// Get the aura system corresponding to the player
 	clientNum = player->currentState.clientNum;
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){
+		CG_Error( "Bad clientNum on player entity");
 		return;
 	}
 	state = &auraStates[ clientNum ];
@@ -811,29 +785,26 @@ void CG_AddAuraToScene( centity_t *player ) {
 	
 	
 	// Update origin
-	VectorCopy( player->lerpOrigin, state->origin );
+	VectorCopy( player->lerpOrigin, state->origin);
 
 	// Calculate modulation for dimming
-	CG_Aura_DimLight( player, state, config );
+	CG_Aura_DimLight( player, state, config);
 
 	// Add aura effects
-	CG_Aura_AddSounds( player, state, config );
-	CG_Aura_AddTrail( player, state, config );
-	CG_Aura_AddDebris( player, state, config );
-	CG_Aura_AddDLight( player, state, config );
+	CG_Aura_AddSounds( player, state, config);
+	CG_Aura_AddTrail( player, state, config);
+	CG_Aura_AddDebris( player, state, config);
+	CG_Aura_AddDLight( player, state, config);
 
 	// Render the aura
-	CG_Aura_ConvexHullRender( player, state, config );
+	CG_Aura_ConvexHullRender( player, state, config);
 }
 
 
-/*
-==============
+/*==============
 CG_AuraStart
-==============
-  Activates the aura and shows activation effects.
-*/
-void CG_AuraStart( centity_t *player ) {
+==============*/
+void CG_AuraStart( centity_t *player){
 	int				clientNum, tier;
 	auraState_t		*state;
 	auraConfig_t	*config;
@@ -843,8 +814,8 @@ void CG_AuraStart( centity_t *player ) {
 
 	// Get the aura system corresponding to the player
 	clientNum = player->currentState.clientNum;
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){
+		CG_Error( "Bad clientNum on player entity");
 		return;
 	}
 	state = &auraStates[ clientNum ];
@@ -853,7 +824,7 @@ void CG_AuraStart( centity_t *player ) {
 	
 
 	// If the aura is already active, don't continue activating it again.
-	if ( state->isActive ) {
+	if(state->isActive){
 		return;
 	}
 
@@ -862,55 +833,52 @@ void CG_AuraStart( centity_t *player ) {
 	state->lightAmt = config->lightMin;
 
 	// create a small camerashake
-	CG_AddEarthquake( player->lerpOrigin, 1000, 1, 0, 1, 200 );
+	CG_AddEarthquake( player->lerpOrigin, 1000, 1, 0, 1, 200);
 
 	// We don't want smoke jets if this is a boost aura instead of a charge aura.
-	if ( !(player->currentState.powerups & ( 1 << PW_BOOST )) ) {
-		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->chargeStartSound );
+	if(!(player->currentState.powerups &(1 << PW_BOOST))){
+		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->chargeStartSound);
 		// Check if we're on, or near ground level
-		VectorCopy( player->lerpOrigin, groundPoint );
+		VectorCopy( player->lerpOrigin, groundPoint);
 		groundPoint[2] -= 48;
-		CG_Trace( &trace, player->lerpOrigin, NULL, NULL, groundPoint, player->currentState.number, CONTENTS_SOLID );
-		if ( trace.allsolid || trace.startsolid ) {
+		CG_Trace( &trace, player->lerpOrigin, NULL, NULL, groundPoint, player->currentState.number, CONTENTS_SOLID);
+		if(trace.allsolid || trace.startsolid){
 			trace.fraction = 1.0f;
 		}
-		if ( trace.fraction < 1.0f ) {
+		if(trace.fraction < 1.0f){
 			vec3_t tempAxis[3];
 
 			// Place the explosion just a bit off the surface
-			VectorNormalize2(trace.plane.normal, groundPoint );
-			VectorMA( trace.endpos, 5, groundPoint, groundPoint );
+			VectorNormalize2(trace.plane.normal, groundPoint);
+			VectorMA( trace.endpos, 5, groundPoint, groundPoint);
 
-			VectorNormalize2( trace.plane.normal, tempAxis[0] );
-			MakeNormalVectors( tempAxis[0], tempAxis[1], tempAxis[2] );
-			PSys_SpawnCachedSystem( "AuraSmokeBurst", groundPoint, tempAxis, NULL, NULL, qfalse, qfalse );
+			VectorNormalize2( trace.plane.normal, tempAxis[0]);
+			MakeNormalVectors( tempAxis[0], tempAxis[1], tempAxis[2]);
+			PSys_SpawnCachedSystem( "AuraSmokeBurst", groundPoint, tempAxis, NULL, NULL, qfalse, qfalse);
 		}
 	}
 	else{
-		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->boostStartSound );
+		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->boostStartSound);
 	}
 }
 
 
-/*
-============
+/*============
 CG_AuraEnd
-============
-  Deactivates the aura
-*/
-void CG_AuraEnd( centity_t *player ) {
+============*/
+void CG_AuraEnd( centity_t *player){
 	int			clientNum;
 	auraState_t	*state;
 
 	clientNum = player->currentState.clientNum;
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){
+		CG_Error( "Bad clientNum on player entity");
 	}
 
 	state = &auraStates[ clientNum ];
 
 	// If the aura is already deactivated, don't continue deactivating it again.
-	if ( !state->isActive ) {
+	if(!state->isActive){
 		return;
 	}
 
@@ -918,166 +886,195 @@ void CG_AuraEnd( centity_t *player ) {
 }
 
 
-/*
-=======================
+/*=======================
 CG_RegisterClientAura
-=======================
-  Registers client model's aura configuration for all tiers
-*/
+=======================*/
 #define MAX_AURA_FILELEN 32000
-void CG_RegisterClientAura( int clientNum, char *modelName, char *skinName ) {
+void CG_RegisterClientAura(int clientNum,clientInfo_t *ci){
 	auraConfig_t	*prev_config, *config;
-	char			filename[MAX_QPATH * 2];
-	int				i, j;
-
+	char filename[MAX_QPATH * 2];
+	int	 i, j;
 	qhandle_t	auraSpikeShader;
 	qhandle_t	auraTrailShader;
 	sfxHandle_t	auraChargeSound;
 	sfxHandle_t	auraChargeStartSound;
 	sfxHandle_t	auraBoostSound;
 	sfxHandle_t	auraBoostStartSound;
-
-
 	memset( &(auraStates[clientNum]), 0, sizeof(auraState_t));
-
 	config = 0;
-
-	auraSpikeShader = trap_R_RegisterShader( "Aura_Spike" );
-	auraTrailShader = trap_R_RegisterShader( "Aura_Trail" );
-
-	auraChargeStartSound  = trap_S_RegisterSound( "effects/aura/chargeStart.ogg", qfalse );
-	auraChargeSound = trap_S_RegisterSound( "effects/aura/charge.ogg", qfalse );
-	auraBoostStartSound  = trap_S_RegisterSound( "effects/aura/boostStart.ogg", qfalse );
-	auraBoostSound  = trap_S_RegisterSound( "effects/aura/boost.ogg", qfalse );
-
-	// Register 8 different tiers worth of auras
-	for ( j = 0; j < 8; j++ ) { 
+	auraSpikeShader = trap_R_RegisterShader( "Aura_Spike");
+	auraTrailShader = trap_R_RegisterShader( "Aura_Trail");
+	auraChargeStartSound  = trap_S_RegisterSound( "effects/aura/chargeStart.ogg", qfalse);
+	auraChargeSound = trap_S_RegisterSound( "effects/aura/charge.ogg", qfalse);
+	auraBoostStartSound  = trap_S_RegisterSound( "effects/aura/boostStart.ogg", qfalse);
+	auraBoostSound  = trap_S_RegisterSound( "effects/aura/boost.ogg", qfalse);
+	for(j = 0;j < 8;j++){ 
 		fileHandle_t	file;
 		int				len;
 		char			text[MAX_AURA_FILELEN];
 		char			*text_p, *token;
-
 		prev_config = config;
-		config = &(auraStates[clientNum].configurations[j]);
-
-		// Compose filename to load
-		Com_sprintf( filename, sizeof(filename), "players//%s/tier%i/%s.aura", modelName, j+1, skinName );
-
-		// Try to open the file
-		len = trap_FS_FOpenFile( filename, &file, FS_READ );
-		if ( !file ) {
-			// Inherit if file doesn't exist
-			if ( prev_config ) {
+		ci->auraConfig[j] = config = &(auraStates[clientNum].configurations[j]);
+		Com_sprintf( filename, sizeof(filename), "players//%s/tier%i/tier.cfg",ci->modelName,j+1);
+		len = trap_FS_FOpenFile( filename, &file, FS_READ);
+		if(!file){
+			if(prev_config){
 				memcpy( config, prev_config, sizeof(auraConfig_t));
-			} else {
-				CG_Printf( S_COLOR_RED "ERROR: Failed to load aura file %s\n", filename );
+			}
+			else{
+				CG_Printf( S_COLOR_RED "ERROR: Failed to load tier file %s\n", filename);
 				break;
 			}
 			continue;
 		}
-
-		// If the file is too long to fit into the buffer, dump an error and abort reading
-		// the file.
-		if ( len >= sizeof( text ) - 1 ) {
-			CG_Printf( S_COLOR_RED "ERROR: file too large: %s is %i, max allowed is %i", filename, len, MAX_AURA_FILELEN );
-			trap_FS_FCloseFile( file );
+		if(len >= sizeof( text) - 1){
+			CG_Printf( S_COLOR_RED "ERROR: file too large: %s is %i, max allowed is %i", filename, len, MAX_AURA_FILELEN);
+			trap_FS_FCloseFile( file);
 			break;			
 		}
-
-		// Load the file
-		trap_FS_Read( text, len, file );
+		trap_FS_Read( text, len, file);
 		text[len] = 0;
-		trap_FS_FCloseFile( file );
-
-		// Wipe & set the default properties
+		trap_FS_FCloseFile( file);
 		memset( config, 0, sizeof(auraConfig_t));
-
 		config->showAura = qtrue;
+		config->auraAlways = qfalse;
 		config->auraShader = auraSpikeShader;
 		config->auraScale = 1.5f;
 		config->tailLength = 32;
-
 		config->showLight = qtrue;
 		config->lightMin = 40;
 		config->lightMax = 200;
 		config->lightGrowthRate = 6;
-		
 		config->showTrail = qtrue;
 		config->trailShader = auraTrailShader;
 		config->trailWidth = 10;		
-
 		config->generatesDebris = qtrue;
-		
 		config->chargeLoopSound = auraChargeSound;
 		config->chargeStartSound = auraChargeStartSound;
 		config->boostLoopSound = auraBoostSound;
 		config->boostStartSound = auraBoostStartSound;
-
-		// parse the file
 		text_p = text;	
-		while (1) {
-			token = COM_Parse( &text_p );
-
-			if (!token[0]) {
-				break;
-
-			} else if ( !Q_stricmp( token, "auraColor" )) {
-
-				for ( i = 0 ; i < 3 ; i++ ) {
-					token = COM_Parse( &text_p );
-					if ( !token[0] ) {
-						break;
-					}
-					config->auraColor[i] = atof( token );
-
-					// Clamp the color
-					if ( config->auraColor[i] < 0 ) config->auraColor[i] = 0;
-					if ( config->auraColor[i] > 1 ) config->auraColor[i] = 1;
+		while(1){
+			token = COM_Parse( &text_p);
+			if(!token[0]){break;}
+			else if(!Q_stricmp(token,"auraExists")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->showAura = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"auraAlways")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->auraAlways = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"hasAuraLight")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->showLight = token == "True" ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"hasAuraTrail")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->showTrail = token == "True" ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"hasAuraDebris")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->generatesDebris = token == "True" ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp( token, "auraTagCount")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse( &text_p);
+					if(!token[0]){break;}
+					config->numTags[i] = atoi( token);
 				}
-
-			} else if ( !Q_stricmp( token, "auraTagCount" )) {
-
-				for ( i = 0 ; i < 3 ; i++ ) {
-					token = COM_Parse( &text_p );
-					if ( !token[0] ) {
-						break;
-					}
-					config->numTags[i] = atoi( token );
+			}
+			else if(!Q_stricmp( token, "auraShader")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->auraShader = trap_R_RegisterShader(token);
+			}
+			else if(!Q_stricmp( token, "auraTrailShader")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->trailShader = trap_R_RegisterShader(token);
+			}
+			else if(!Q_stricmp( token, "auraChargeLoop")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->chargeLoopSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp( token, "auraChargeStart")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->chargeStartSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp( token, "auraBoostLoop")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->boostLoopSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp( token, "auraBoostStart")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->boostStartSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if (!Q_stricmp( token, "auraColor")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse( &text_p);
+					if(!token[0]){break;}
+					config->auraColor[i] = atof( token);
+					if(config->auraColor[i] < 0) config->auraColor[i] = 0;
+					if(config->auraColor[i] > 1) config->auraColor[i] = 1;
 				}
-
-			} else if ( !Q_stricmp( token, "trailColor" )) {
-
-				for ( i = 0 ; i < 3 ; i++ ) {
-					token = COM_Parse( &text_p );
-					if ( !token[0] ) {
-						break;
-					}
-					config->trailColor[i] = atof( token );
-
-					// Clamp the color
-					if ( config->trailColor[i] < 0 ) config->trailColor[i] = 0;
-					if ( config->trailColor[i] > 1 ) config->trailColor[i] = 1;
+			}
+			else if(!Q_stricmp( token, "auraLightColor")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse( &text_p);
+					if(!token[0]){break;}
+					config->lightColor[i] = atof( token);
+					if(config->lightColor[i] < 0) config->lightColor[i] = 0;
+					if(config->lightColor[i] > 1) config->lightColor[i] = 1;
 				}
-
-			} else if ( !Q_stricmp( token, "lightColor" )) {
-
-				for ( i = 0 ; i < 3 ; i++ ) {
-					token = COM_Parse( &text_p );
-					if ( !token[0] ) {
-						break;
-					}
-					config->lightColor[i] = atof( token );
-
-					// Clamp the color
-					if ( config->lightColor[i] < 0 ) config->lightColor[i] = 0;
-					if ( config->lightColor[i] > 1 ) config->lightColor[i] = 1;
+			}
+			else if(!Q_stricmp( token, "auraTrailColor")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse( &text_p);
+					if(!token[0]){break;}
+					config->trailColor[i] = atof( token);
+					if(config->trailColor[i] < 0) config->trailColor[i] = 0;
+					if(config->trailColor[i] > 1) config->trailColor[i] = 1;
 				}
+			}
+			else if(!Q_stricmp( token, "auraScale")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->auraScale = atof(token);
+			}
+			else if(!Q_stricmp( token, "auraLength")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->tailLength = atoi(token);
+			}
+			else if(!Q_stricmp( token, "auraLightMin")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->lightMin = atoi(token);
+			}
+			else if(!Q_stricmp( token, "auraLightMax")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->lightMax = atoi(token);
+			}
+			else if(!Q_stricmp( token, "auraLightGrowthRate")){
+				token = COM_Parse(&text_p);
+				if(!token[0]){break;}
+				config->lightGrowthRate = atoi(token);
 			}
 		}
 	}
 }
-
-void CG_CopyClientAura( int from, int to ) {
+void CG_CopyClientAura( int from, int to){
 	memcpy(&auraStates[to], &auraStates[from], sizeof(auraState_t));
 }
 

@@ -2342,12 +2342,6 @@ static void PM_Animate( void ) {
 		if ( pm->ps->torsoTimer == 0 ) {
 			pm->ps->torsoTimer = 500;
 			PM_AddEvent( EV_TAUNT );
-
-			if ( pm->ps->lockedOn == qtrue) {
-				pm->ps->lockedOn = qfalse;
-			} else {
-				pm->ps->lockedOn = qtrue;
-			}
 		}
 	}
 }
@@ -2567,7 +2561,6 @@ are being updated instead of a full move
 void PM_UpdateViewAngles2( playerState_t *ps, const usercmd_t *cmd ) {
 	short		temp;
 	int			i;
-
 	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
 		return;		// no view changes at all
 	}
@@ -2579,7 +2572,6 @@ void PM_UpdateViewAngles2( playerState_t *ps, const usercmd_t *cmd ) {
 	if ( pm->ps->lockedOn ){
 		vec3_t dir;
 		vec3_t angles;
-
 		VectorSubtract(pm->ps->lockedTarget, ps->origin, dir);
 		vectoangles(dir, angles);
 

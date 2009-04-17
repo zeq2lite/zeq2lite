@@ -178,6 +178,7 @@ vmCvar_t	cg_recordSPDemoName;
 vmCvar_t	cg_obeliskRespawnDelay;
 #endif
 //ADDING FOR ZEQ2
+vmCvar_t	cg_lockonDistance;
 vmCvar_t	cg_tailDetail;
 vmCvar_t	cg_verboseParse;
 vmCvar_t	r_beamDetail;
@@ -320,6 +321,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_oldPlasma, "cg_oldPlasma", "1", CVAR_ARCHIVE},
 	{ &cg_trueLightning, "cg_trueLightning", "0.0", CVAR_ARCHIVE},
 	// ADDING FOR ZEQ2
+	{ &cg_lockonDistance, "cg_lockonDistance", "150", CVAR_CHEAT },
 	{ &cg_tailDetail,	"cg_tailDetail", "50", CVAR_ARCHIVE},
 	{ &cg_verboseParse, "cg_verboseParse", "0", CVAR_ARCHIVE},
 	{ &r_beamDetail,	"r_beamDetail", "30", CVAR_ARCHIVE},

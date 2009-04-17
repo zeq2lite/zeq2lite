@@ -591,18 +591,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TAUNT:
 		DEBUGNAME("EV_TAUNT");
-		if ( cg.lockReady == qtrue ) {
-			if ( cg.lockedView == qtrue) {
-				cg.lockedView = qfalse;
-			} else {
-				cg.lockedView = qtrue;
-				// 1 in 10 chance of playing taunt voice.
-				//if ( r < 1 ) {
-					trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ) );
-				//}
-			}
-		} else {
-			cg.lockedView = qfalse;
+		cg.predictedPlayerState.lockedOn = qfalse;
+		if(cg.lockReady){
+			cg.predictedPlayerState.lockedOn = qtrue;
+			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
 		}
 		break;
 #ifdef MISSIONPACK

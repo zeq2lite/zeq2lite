@@ -22,6 +22,7 @@ typedef struct auraTag_s {
 
 typedef struct auraConfig_s {
 	qboolean	showAura;
+	qboolean	auraAlways;
 	vec3_t		auraColor;
 	qhandle_t	auraShader;
 	float		auraScale;

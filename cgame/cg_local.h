@@ -359,6 +359,7 @@ typedef struct {
 	//ADDING FOR ZEQ2
 	int				tierCurrent;
 	tier			tiers[7];
+	auraConfig_t	*auraConfig[7];
 } clientInfo_t;
 
 
@@ -780,7 +781,6 @@ typedef struct {
 
 	// ADDING FOR ZEQ2
 	qboolean	lockReady;
-	qboolean	lockedView;
 	vec3_t		lockedTarget;
 
 	qboolean	guide_view;
@@ -1378,6 +1378,7 @@ extern  vmCvar_t		cg_recordSPDemoName;
 extern	vmCvar_t		cg_obeliskRespawnDelay;
 #endif
 //ADDING FOR ZEQ2
+extern	vmCvar_t		cg_lockonDistance;
 extern	vmCvar_t		cg_tailDetail;
 extern	vmCvar_t		cg_verboseParse;
 extern  vmCvar_t		r_beamDetail;
@@ -1940,7 +1941,7 @@ int CG_NewParticleArea ( int num );
 //
 void CG_AuraStart( centity_t *player );
 void CG_AuraEnd( centity_t *player );
-void CG_RegisterClientAura( int clientNum, char *modelName, char *skinName );
+void CG_RegisterClientAura(int clientNum,clientInfo_t *ci);
 void CG_AddAuraToScene( centity_t *player );
 void CG_CopyClientAura( int from, int to );
 
