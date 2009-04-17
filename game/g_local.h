@@ -7,7 +7,6 @@
 // ADDING FOR ZEQ2
 #include "bg_userweapons.h"
 #include "g_userweapons.h"
-#include "../shared/tier.h"
 // END ADDING
 #include "g_public.h"
 //==================================================================
@@ -332,7 +331,7 @@ extern struct gclient_s {
 	gentity_t	*guidetarget;		// guided weapon when firing one
 	gentity_t	*playerEntity;
 	char		*modelName;
-	tier 		*tiers[7];
+	
 	// END ADDING
 
 	int			switchTeamTime;		// time the player switched teams

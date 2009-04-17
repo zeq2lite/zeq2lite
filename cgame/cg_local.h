@@ -3,11 +3,11 @@
 #include "../game/q_shared.h"
 #include "tr_types.h"
 #include "../game/bg_public.h"
-#include "../shared/tier.h"
 // ADDING FOR ZEQ2
 #include "../game/bg_userweapons.h"
 #include "cg_userweapons.h"
 #include "cg_auras.h"
+#include "cg_tiers.h"
 // END ADDING
 #include "cg_public.h"
 
@@ -358,7 +358,8 @@ typedef struct {
 	sfxHandle_t		sounds[MAX_CUSTOM_SOUNDS];
 	//ADDING FOR ZEQ2
 	int				tierCurrent;
-	tier			tiers[7];
+	int				tierMax;
+	tierConfig_t	tierConfig[7];
 	auraConfig_t	*auraConfig[7];
 } clientInfo_t;
 

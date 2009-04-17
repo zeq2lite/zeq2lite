@@ -27,33 +27,26 @@ typedef struct auraConfig_s {
 	qhandle_t	auraShader;
 	float		auraScale;
 	float		tailLength;
-
 	sfxHandle_t	chargeStartSound;
 	sfxHandle_t	chargeLoopSound;
 	sfxHandle_t	boostStartSound;
 	sfxHandle_t	boostLoopSound;
-
 	qboolean	showTrail;
 	vec3_t		trailColor;
 	qhandle_t	trailShader;
 	float		trailWidth;
-
 	qboolean	showLight;
 	vec3_t		lightColor;
 	float		lightMin;
 	float		lightMax;
 	float		lightGrowthRate;
-
 	// NOTE: for future use
 	qboolean	showLightning;
 	vec3_t		lightningColor;
 	qhandle_t	lightningShader;
-
 	int			numTags[3]; // 0 = head, 1 = torso, 2 = legs
 	qboolean	generatesDebris;
-
-} auraConfig_t;
-
+}auraConfig_t;
 typedef struct auraState_s {
 	qboolean		isActive;
 	auraTag_t		convexHull[MAX_AURATAGS + 1]; // Need MAX_AURATAGS + 1 extra for the tail position

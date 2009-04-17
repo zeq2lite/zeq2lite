@@ -78,7 +78,7 @@ players//visor/animation.cfg, etc
 ======================
 */
 // static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
-// FIXME: Needs to lose static to use it in cg_tiersystem.c
+// FIXME: Needs to lose static to use it in cg_tiers.c
 qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	char		*text_p, *prev;
 	int			len;
@@ -2460,7 +2460,9 @@ void CG_Player( centity_t *cent ) {
 			CG_PlayerTransformation ( cent );
 		}
 	}
-
+	if(ci->tierCurrent > ci->tierMax){
+		ci->tierMax = ci->tierCurrent;
+	}
 	if ( cg.time >= cg.tierTime ) {
 		cg.tierTime = 999999999 + cg.tierTime;
 	}

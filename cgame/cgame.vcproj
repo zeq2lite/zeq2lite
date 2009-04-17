@@ -1499,7 +1499,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="cg_tiersystem.c"
+				RelativePath="cg_tiers.c"
 				>
 				<FileConfiguration
 					Name="Release TA|Win32"

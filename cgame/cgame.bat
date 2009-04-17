@@ -74,7 +74,7 @@ if "%1"=="TA" goto TA
 @if errorlevel 1 goto quit
 %cc% ../cg_weapGfxAttributes.c
 @if errorlevel 1 goto quit
-%cc% ../cg_tiersystem.c
+%cc% ../cg_tiers.c
 @if errorlevel 1 goto quit
 %cc% ../cg_frameHist.c
 @if errorlevel 1 goto quit

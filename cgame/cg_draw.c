@@ -384,7 +384,7 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 
 // 2D player icons for ZEQ2 only!
 
-	CG_DrawPic( x, y, w, h, ci->modelIcon );
+	CG_DrawPic( x, y, w, h, ci->tierConfig[ci->tierCurrent].icon);
 
 /*
 	if ( cg_draw3dIcons.integer ) {

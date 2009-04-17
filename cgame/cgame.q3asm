@@ -34,6 +34,6 @@ cg_radar
 cg_weapGfxParser
 cg_weapGfxScanner
 cg_weapGfxAttributes
-cg_tiersystem
+cg_tiers
 cg_frameHist
 cg_motionblur

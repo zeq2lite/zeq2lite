@@ -312,7 +312,7 @@ SOURCE=.\cg_syscalls.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\cg_tiersystem.c
+SOURCE=.\cg_tiers.c
 # End Source File
 # Begin Source File
 
