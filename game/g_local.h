@@ -122,6 +122,8 @@ struct gentity_s {
 	float		homAccel;
 	float		homRange;
 	float		homAngle;
+	int			powerLevel;
+	qboolean	struggling;
 	
 	// END ADDING
 	vec3_t		movedir;
@@ -138,12 +140,7 @@ struct gentity_s {
 	int			pain_debounce_time;
 	int			fly_sound_debounce_time;	// wind tunnel
 	int			last_move_time;
-
-	int			powerLevel;
-
 	qboolean	takedamage;
-	qboolean	struggling;
-
 	int			damage;
 	int			damageRadius;
 	int			splashDamage;	// quad will increase this without increasing radius
@@ -151,20 +148,12 @@ struct gentity_s {
 	int			methodOfDeath;
 	int			splashMethodOfDeath;
 	int			extraKnockback;
-
 	int			count;
-
 	gentity_t	*chain;
 	gentity_t	*enemy;
 	gentity_t	*activator;
 	gentity_t	*teamchain;		// next entity in team
 	gentity_t	*teammaster;	// master of the team
-
-#ifdef MISSIONPACK
-	int			kamikazeTime;
-	int			kamikazeShockTime;
-#endif
-
 	int			watertype;
 	int			waterlevel;
 

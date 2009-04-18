@@ -412,15 +412,11 @@ static qboolean PM_CheckPowerLevel( void ) {
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
 	chargeScale = pm->ps->powerlevelChargeScale * 10;
-	// If the player wants to power up
 	pm->ps->stats[powerLevelTimer2] += pml.msec;
 	while(pm->ps->stats[powerLevelTimer2] >= 50){
 		pm->ps->stats[powerLevelTimer2] -= 50;
 		if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
 			pm->ps->stats[powerLevel] -= 6 * (pm->ps->stats[tierCurrent] + 1);
-		}
-		if(pm->ps->stats[powerLevelTotal] >= 32768) {
-			pm->ps->stats[powerLevelTotal] = 32768;
 		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_UP){
@@ -468,6 +464,9 @@ static qboolean PM_CheckPowerLevel( void ) {
 				}
 			}
 		}
+		if(pm->ps->stats[powerLevel] >= 32768) {pm->ps->stats[powerLevel] = 32768;}
+		if(pm->ps->stats[powerLevelTotal] >= 32768) {pm->ps->stats[powerLevelTotal] = 32768;}
+		if(pm->ps->stats[powerLevelMaximum] >= 32768) {pm->ps->stats[powerLevelMaximum] = 32768;}
 		return qtrue;
 	}
 	// If the player wants to power down
@@ -597,15 +596,15 @@ static qboolean PM_CheckJump( void ) {
 		}
 		VectorScale( pm->ps->velocity, JUMP_VELOCITY, pm->ps->velocity );
 
-//		pm->ps->velocity[0] *= 1.8f;
-//		pm->ps->velocity[1] *= 1.8f;
+		//pm->ps->velocity[0] *= 1.8f;
+		//pm->ps->velocity[1] *= 1.8f;
 		pm->ps->velocity[2] = JUMP_VELOCITY * 1.75f;
 
 		PM_AddEvent( EV_HIGHJUMP );
 
 	} else {
-//		pm->ps->velocity[0] *= 2.0f;
-//		pm->ps->velocity[1] *= 2.0f;
+		//pm->ps->velocity[0] *= 2.0f;
+		//pm->ps->velocity[1] *= 2.0f;
 		pm->ps->velocity[2] = JUMP_VELOCITY * 1.25f;
 
 		PM_AddEvent( EV_JUMP );

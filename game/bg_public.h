@@ -220,17 +220,16 @@ void Pmove (pmove_t *pmove);
 // player_state->stats[] indexes
 // NOTE: may not have more than 16
 typedef enum {
-	powerLevel,		// player powerLevel
-	powerLevelTotal,		// powerLevel limit
+	powerLevel,
+	powerLevelTotal,
 	powerLevelCounter,		// Used to calculate the remainder time for PL changing
 	powerLevelTimer,		// Used to calculate the time between updating of the powerLevel cap
 	powerLevelTimer2,		// Used to calculate the time between decrementing powerLevel over the cap
 	skills,					// 16 bit bitmask
 	target,					// used to hold currect locked on target
 	// ADDING FOR ZEQ2
-	tierCurrent,			// Current powertier; integer; range [0..8]
+	tierCurrent,
 	tierTotal,
-	damageDealt,			// Workaround for deducting HP for attack
 	chargePercentPrimary,	// % of primary attack charged
 	chargePercentSecondary,	// % of secondary attack charged
 	bitFlags,				// Set of bitflags for player

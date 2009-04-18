@@ -890,186 +890,149 @@ void CG_AuraEnd( centity_t *player){
 CG_RegisterClientAura
 =======================*/
 #define MAX_AURA_FILELEN 32000
+void parseAura(char *path,auraConfig_t *aura);
 void CG_RegisterClientAura(int clientNum,clientInfo_t *ci){
-	auraConfig_t	*prev_config, *config;
+	int	i;
 	char filename[MAX_QPATH * 2];
-	int	 i, j;
-	qhandle_t	auraSpikeShader;
-	qhandle_t	auraTrailShader;
-	sfxHandle_t	auraChargeSound;
-	sfxHandle_t	auraChargeStartSound;
-	sfxHandle_t	auraBoostSound;
-	sfxHandle_t	auraBoostStartSound;
-	memset( &(auraStates[clientNum]), 0, sizeof(auraState_t));
-	config = 0;
-	auraSpikeShader = trap_R_RegisterShader( "Aura_Spike");
-	auraTrailShader = trap_R_RegisterShader( "Aura_Trail");
-	auraChargeStartSound  = trap_S_RegisterSound( "effects/aura/chargeStart.ogg", qfalse);
-	auraChargeSound = trap_S_RegisterSound( "effects/aura/charge.ogg", qfalse);
-	auraBoostStartSound  = trap_S_RegisterSound( "effects/aura/boostStart.ogg", qfalse);
-	auraBoostSound  = trap_S_RegisterSound( "effects/aura/boost.ogg", qfalse);
-	for(j = 0;j < 8;j++){ 
-		fileHandle_t	file;
-		int				len;
-		char			text[MAX_AURA_FILELEN];
-		char			*text_p, *token;
-		prev_config = config;
-		ci->auraConfig[j] = config = &(auraStates[clientNum].configurations[j]);
-		Com_sprintf( filename, sizeof(filename), "players//%s/tier%i/tier.cfg",ci->modelName,j+1);
-		len = trap_FS_FOpenFile( filename, &file, FS_READ);
-		if(!file){
-			if(prev_config){
-				memcpy( config, prev_config, sizeof(auraConfig_t));
-			}
-			else{
-				CG_Printf( S_COLOR_RED "ERROR: Failed to load tier file %s\n", filename);
-				break;
-			}
-			continue;
-		}
-		if(len >= sizeof( text) - 1){
-			CG_Printf( S_COLOR_RED "ERROR: file too large: %s is %i, max allowed is %i", filename, len, MAX_AURA_FILELEN);
-			trap_FS_FCloseFile( file);
-			break;			
-		}
-		trap_FS_Read( text, len, file);
-		text[len] = 0;
-		trap_FS_FCloseFile( file);
-		memset( config, 0, sizeof(auraConfig_t));
-		config->showAura = qtrue;
-		config->auraAlways = qfalse;
-		config->auraShader = auraSpikeShader;
-		config->auraScale = 1.5f;
-		config->tailLength = 32;
-		config->showLight = qtrue;
-		config->lightMin = 40;
-		config->lightMax = 200;
-		config->lightGrowthRate = 6;
-		config->showTrail = qtrue;
-		config->trailShader = auraTrailShader;
-		config->trailWidth = 10;		
-		config->generatesDebris = qtrue;
-		config->chargeLoopSound = auraChargeSound;
-		config->chargeStartSound = auraChargeStartSound;
-		config->boostLoopSound = auraBoostSound;
-		config->boostStartSound = auraBoostStartSound;
-		text_p = text;	
+	char auraPath[MAX_QPATH];
+	memset(&(auraStates[clientNum]), 0, sizeof(auraState_t));
+	for(i = 0;i < 8;i++){ 
+		ci->auraConfig[i] = &(auraStates[clientNum].configurations[i]);
+		memset(ci->auraConfig[i],0,sizeof(auraConfig_t));
+		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",ci->modelName,i+1);
+		parseAura(filename,ci->auraConfig[i]);
+		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",ci->modelName,i+1);
+		parseAura(filename,ci->auraConfig[i]);
+	}
+}
+void parseAura(char *path,auraConfig_t *aura){
+	fileHandle_t auraCFG;
+	int i;
+	char *token,*parse;
+	int fileLength;
+	char fileContents[32000];
+	if(trap_FS_FOpenFile(path,0,FS_READ)>0){
+		fileLength = trap_FS_FOpenFile(path,&auraCFG,FS_READ);
+		trap_FS_Read(fileContents,fileLength,auraCFG);
+		fileContents[fileLength] = 0;
+		trap_FS_FCloseFile(auraCFG);
+		parse = fileContents;
 		while(1){
-			token = COM_Parse( &text_p);
+			token = COM_Parse(&parse);
 			if(!token[0]){break;}
 			else if(!Q_stricmp(token,"auraExists")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->showAura = strlen(token) == 4 ? qtrue : qfalse;
+				aura->showAura = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"auraAlways")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->auraAlways = strlen(token) == 4 ? qtrue : qfalse;
+				aura->auraAlways = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"hasAuraLight")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->showLight = token == "True" ? qtrue : qfalse;
+				aura->showLight = token == "True" ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"hasAuraTrail")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->showTrail = token == "True" ? qtrue : qfalse;
+				aura->showTrail = token == "True" ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"hasAuraDebris")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->generatesDebris = token == "True" ? qtrue : qfalse;
+				aura->generatesDebris = token == "True" ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp( token, "auraTagCount")){
 				for(i = 0;i < 3;i++){
-					token = COM_Parse( &text_p);
+					token = COM_Parse(&parse);
 					if(!token[0]){break;}
-					config->numTags[i] = atoi( token);
+					aura->numTags[i] = atoi( token);
 				}
 			}
 			else if(!Q_stricmp( token, "auraShader")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->auraShader = trap_R_RegisterShader(token);
+				aura->auraShader = trap_R_RegisterShader(token);
 			}
 			else if(!Q_stricmp( token, "auraTrailShader")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->trailShader = trap_R_RegisterShader(token);
+				aura->trailShader = trap_R_RegisterShader(token);
 			}
 			else if(!Q_stricmp( token, "auraChargeLoop")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->chargeLoopSound = trap_S_RegisterSound(token,qfalse);
+				aura->chargeLoopSound = trap_S_RegisterSound(token,qfalse);
 			}
 			else if(!Q_stricmp( token, "auraChargeStart")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->chargeStartSound = trap_S_RegisterSound(token,qfalse);
+				aura->chargeStartSound = trap_S_RegisterSound(token,qfalse);
 			}
 			else if(!Q_stricmp( token, "auraBoostLoop")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->boostLoopSound = trap_S_RegisterSound(token,qfalse);
+				aura->boostLoopSound = trap_S_RegisterSound(token,qfalse);
 			}
 			else if(!Q_stricmp( token, "auraBoostStart")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->boostStartSound = trap_S_RegisterSound(token,qfalse);
+				aura->boostStartSound = trap_S_RegisterSound(token,qfalse);
 			}
 			else if (!Q_stricmp( token, "auraColor")){
 				for(i = 0;i < 3;i++){
-					token = COM_Parse( &text_p);
+					token = COM_Parse(&parse);
 					if(!token[0]){break;}
-					config->auraColor[i] = atof( token);
-					if(config->auraColor[i] < 0) config->auraColor[i] = 0;
-					if(config->auraColor[i] > 1) config->auraColor[i] = 1;
+					aura->auraColor[i] = atof( token);
+					if(aura->auraColor[i] < 0) aura->auraColor[i] = 0;
+					if(aura->auraColor[i] > 1) aura->auraColor[i] = 1;
 				}
 			}
 			else if(!Q_stricmp( token, "auraLightColor")){
 				for(i = 0;i < 3;i++){
-					token = COM_Parse( &text_p);
+					token = COM_Parse(&parse);
 					if(!token[0]){break;}
-					config->lightColor[i] = atof( token);
-					if(config->lightColor[i] < 0) config->lightColor[i] = 0;
-					if(config->lightColor[i] > 1) config->lightColor[i] = 1;
+					aura->lightColor[i] = atof( token);
+					if(aura->lightColor[i] < 0) aura->lightColor[i] = 0;
+					if(aura->lightColor[i] > 1) aura->lightColor[i] = 1;
 				}
 			}
 			else if(!Q_stricmp( token, "auraTrailColor")){
 				for(i = 0;i < 3;i++){
-					token = COM_Parse( &text_p);
+					token = COM_Parse(&parse);
 					if(!token[0]){break;}
-					config->trailColor[i] = atof( token);
-					if(config->trailColor[i] < 0) config->trailColor[i] = 0;
-					if(config->trailColor[i] > 1) config->trailColor[i] = 1;
+					aura->trailColor[i] = atof( token);
+					if(aura->trailColor[i] < 0) aura->trailColor[i] = 0;
+					if(aura->trailColor[i] > 1) aura->trailColor[i] = 1;
 				}
 			}
 			else if(!Q_stricmp( token, "auraScale")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->auraScale = atof(token);
+				aura->auraScale = atof(token);
 			}
 			else if(!Q_stricmp( token, "auraLength")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->tailLength = atoi(token);
+				aura->tailLength = atoi(token);
 			}
 			else if(!Q_stricmp( token, "auraLightMin")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->lightMin = atoi(token);
+				aura->lightMin = atoi(token);
 			}
 			else if(!Q_stricmp( token, "auraLightMax")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->lightMax = atoi(token);
+				aura->lightMax = atoi(token);
 			}
 			else if(!Q_stricmp( token, "auraLightGrowthRate")){
-				token = COM_Parse(&text_p);
+				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				config->lightGrowthRate = atoi(token);
+				aura->lightGrowthRate = atoi(token);
 			}
 		}
 	}

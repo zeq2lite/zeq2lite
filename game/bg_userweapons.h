@@ -61,8 +61,3 @@ typedef enum {
 } bg_weaponInfos_t;
 
 
-//NOTE: Don't really belong with 'weapons', but its ridiculous to start a new unit for it
-#define MAX_STAMINA		500
-#define MAX_KI			1000
-#define MAX_JUMPING		8000
-

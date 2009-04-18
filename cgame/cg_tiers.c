@@ -1,11 +1,10 @@
 #include "cg_local.h"
+void parseTier(char *path,tierConfig_t *tier);
 qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *modelName, const char *skinName){
-	int	i,j;
-	tierConfig_t *tier;
+	int	i;
 	char filename[MAX_QPATH * 2];
 	char tierPath[MAX_QPATH];
-	Com_sprintf(filename, sizeof(filename), "players/%s/icon_%s.tga", modelName, skinName);
-	ci->modelIcon = trap_R_RegisterShaderNoMip(filename);
+	char tempPath[MAX_QPATH];
 	Com_sprintf(filename,sizeof(filename),"players/%s/animation.cfg",modelName);
 	if(!CG_ParseAnimationFile(filename,ci)){
 		Com_sprintf(filename,sizeof(filename),"players/characters/%s/animation.cfg",modelName);
@@ -18,90 +17,19 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		// ===================================
 		// Config
 		// ===================================
-		fileHandle_t tierCFG;
-		char fileContents[32000];
-		char *parse,*token;
-		int fileLength;
-		Com_sprintf(tierPath,MAX_QPATH,"players/%s/tier%s/",modelName,i);
-		Com_sprintf(filename,sizeof(filename),"players//%s/tier%i/tier.cfg",modelName,i+1);
-		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
-			tier = &ci->tierConfig[i];
-			fileLength = trap_FS_FOpenFile(filename,&tierCFG,FS_READ);
-			trap_FS_Read(fileContents,fileLength,tierCFG);
-			fileContents[fileLength] = 0;
-			trap_FS_FCloseFile(tierCFG);
-			memset(tier,0,sizeof(tierConfig_t));
-			//tier->name = "Normal";
-			tier->icon = trap_R_RegisterShaderNoMip(strcat(tierPath,"icon.png"));
-			parse = fileContents;
-			while(1){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				else if(!Q_stricmp(token,"tierName")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					//tier->name = token;
-				}
-				else if(!Q_stricmp(token,"transformSoundFirst")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->soundTransformFirst = trap_S_RegisterSound(token,qfalse);
-				}
-				else if(!Q_stricmp(token,"tierIcon")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->icon = trap_R_RegisterShaderNoMip(token);
-				}
-				else if(!Q_stricmp(token,"powerLevelHudMultiplier")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->hudMultiplier = atof(token);
-				}
-				else if(!Q_stricmp(token,"transformSoundFirst")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->soundTransformFirst = trap_S_RegisterSound(token,qfalse);
-				}
-				else if(!Q_stricmp(token,"transformSoundUp")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->soundTransformUp = trap_S_RegisterSound(token,qfalse);
-				}
-				else if(!Q_stricmp(token,"transformSoundDown")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->soundTransformDown = trap_S_RegisterSound(token,qfalse);
-				}
-				else if(!Q_stricmp(token,"transformCameraDefault")){
-					for(j=0;j<3;j++){
-						token = COM_Parse(&parse);
-						if(!token[0]){break;}
-						tier->transformCameraDefault[j] = atoi(token);
-					}
-				}
-				else if(!Q_stricmp(token,"transformCameraOrbit")){
-					for(j=0;j<2;j++){
-						token = COM_Parse(&parse);
-						if(!token[0]){break;}
-						tier->transformCameraOrbit[j] = atoi(token);
-					}
-				}
-				else if(!Q_stricmp(token,"transformCameraZoom")){
-					for(j=0;j<2;j++){
-						token = COM_Parse(&parse);
-						if(!token[0]){break;}
-						tier->transformCameraZoom[j] = atoi(token);
-					}
-				}
-				else if(!Q_stricmp(token,"transformCameraPan")){
-					for(j=0;j<2;j++){
-						token = COM_Parse(&parse);
-						if(!token[0]){break;}
-						tier->transformCameraPan[j] = atoi(token);
-					}
-				}
-			}
-		}
+		memset(&ci->tierConfig[i],0,sizeof(tierConfig_t));
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+		ci->tierConfig[i].icon = trap_R_RegisterShaderNoMip(strcat(tierPath,"icon.png"));
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+		ci->tierConfig[i].soundTransformFirst = trap_S_RegisterSound(strcat(tierPath,"transformFirst.ogg"),qfalse);
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+		ci->tierConfig[i].soundTransformUp = trap_S_RegisterSound(strcat(tierPath,"transformUp.ogg"),qfalse);
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+		ci->tierConfig[i].soundTransformDown = trap_S_RegisterSound(strcat(tierPath,"transformDown.ogg"),qfalse);
+		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",modelName,i+1);
+		parseTier(filename,&ci->tierConfig[i]);
+		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",modelName,i+1);
+		parseTier(filename,&ci->tierConfig[i]);
 		// ===================================
 		// Models
 		// ===================================
@@ -183,4 +111,85 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 	}
 
 	return qtrue;
+}
+void parseTier(char *path,tierConfig_t *tier){
+	fileHandle_t tierCFG;
+	int i;
+	char *token,*parse;
+	int fileLength;
+	char fileContents[32000];
+	if(trap_FS_FOpenFile(path,0,FS_READ)>0){
+		fileLength = trap_FS_FOpenFile(path,&tierCFG,FS_READ);
+		trap_FS_Read(fileContents,fileLength,tierCFG);
+		fileContents[fileLength] = 0;
+		trap_FS_FCloseFile(tierCFG);
+		parse = fileContents;
+		while(1){
+			token = COM_Parse(&parse);
+			if(!token[0]){break;}
+			else if(!Q_stricmp(token,"tierName")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				//tier->name = token;
+			}
+			else if(!Q_stricmp(token,"transformSoundFirst")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformFirst = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"tierIcon")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->icon = trap_R_RegisterShaderNoMip(token);
+			}
+			else if(!Q_stricmp(token,"powerLevelHudMultiplier")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->hudMultiplier = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformSoundFirst")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformFirst = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"transformSoundUp")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformUp = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"transformSoundDown")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformDown = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"transformCameraDefault")){
+				for(i=0;i<3;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					tier->transformCameraDefault[i] = atoi(token);
+				}
+			}
+			else if(!Q_stricmp(token,"transformCameraOrbit")){
+				for(i=0;i<2;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					tier->transformCameraOrbit[i] = atoi(token);
+				}
+			}
+			else if(!Q_stricmp(token,"transformCameraZoom")){
+				for(i=0;i<2;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					tier->transformCameraZoom[i] = atoi(token);
+				}
+			}
+			else if(!Q_stricmp(token,"transformCameraPan")){
+				for(i=0;i<2;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					tier->transformCameraPan[i] = atoi(token);
+				}
+			}
+		}
+	}
 }
