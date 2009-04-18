@@ -1436,7 +1436,7 @@ static void CG_PlayerAnimation( centity_t *cent,
 			legsAnimNum = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
 			if ( 0 ) {
 			} else {
-				if ( cg.predictedPlayerState.stats[target] >= 0 && cg.predictedPlayerState.stats[target] < ENTITYNUM_MAX_NORMAL ) {
+				if ( cg.predictedPlayerState.lockedOn == qtrue ) {
 					CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE_LOCKED, speedScale );
 				} else {
 					CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE, speedScale );
