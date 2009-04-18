@@ -2396,10 +2396,7 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 }
 
 void CG_PlayerTransformation ( centity_t *cent ) {
-	// Don't show sequence when powering down!
-	if ( (cent->currentState.powerups & ( 1 << PW_TRANSFORM )) > 100 ) {
-		cg.tierTime = cg.time + PW_TRANSFORM;
-	}
+	// Nothing is needed!  Comments are evil also! ~Brad
 }
 
 /*
@@ -2462,9 +2459,6 @@ void CG_Player( centity_t *cent ) {
 	}
 	if(ci->tierCurrent > ci->tierMax){
 		ci->tierMax = ci->tierCurrent;
-	}
-	if ( cg.time >= cg.tierTime ) {
-		cg.tierTime = 999999999 + cg.tierTime;
 	}
 
 	// -->

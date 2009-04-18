@@ -272,30 +272,18 @@ static void CG_OffsetThirdPersonView( void ) {
 	vec4_t		quatOrient;
 	vec4_t		quatRot;
 	vec4_t		quatResult;
-
-	int			newAngle;
-	int			newRange;
-	int			newHeight;
-
+	float		transformPercent;
+	float		orbit,pan,zoom;
+	int 		clientNum;
+	float		newAngle,newRange,newHeight;
+	clientInfo_t *ci;
+	tierConfig_t *tier;
 	ps = &cg.predictedPlayerState;
-	
-	newAngle = 180;
-	newRange = 50;
-	newHeight = -10;
-	if (cg.predictedPlayerState.lockedOn == qtrue) {
-		CG_Printf("Applesauce!\n");
-	}
-	if (cg.predictedPlayerState.lockedOn) {
-		CG_Printf("Bullseye!\n");
-		return;
-	}
-
+	clientNum = cg.predictedPlayerState.clientNum;
+	ci = &cgs.clientinfo[clientNum];
 	if (cg_beamControl.value == 0) {
-
-		// We're guiding a weapon, so let's also keep an eye on that
 		if (((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
 			float oldRoll;
-
 			VectorSubtract( cg.guide_target, ps->origin, forward );
 			VectorNormalize( forward );
 			oldRoll = cg.refdefViewAngles[ROLL];
@@ -308,53 +296,57 @@ static void CG_OffsetThirdPersonView( void ) {
 			cg.guide_view = qfalse;
 		}	
 	}
-
 	// backup for when flying
 	VectorCopy( cg.refdefViewAngles, overrideAngles );
 	VectorCopy( cg.refdef.vieworg, overrideOrg );
-
 	// END ADDING
-
 	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
-
 	VectorCopy( cg.refdefViewAngles, focusAngles );
 	if ( focusAngles[PITCH] > 45 ) {
 		focusAngles[PITCH] = 45;		// don't go too far overhead
 	}
 	AngleVectors( focusAngles, forward, NULL, NULL );
-
 	VectorMA( cg.refdef.vieworg, FOCUS_DISTANCE, forward, focusPoint );
-
-	VectorCopy( cg.refdef.vieworg, view );
-	
-	// Transform camera or not.
-	if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
-		view[2] += 8 + newHeight;
-	} else {
-		view[2] += 8 + cg_thirdPersonHeight.value;
-	}
-
+	VectorCopy( cg.refdef.vieworg, view );	
 	cg.refdefViewAngles[PITCH] *= 0.5;
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
-
-	// Transform camera or not.
-	if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
-		forwardScale = cos( newAngle / 180 * M_PI );	
-		sideScale = sin( newAngle / 180 * M_PI );
-		VectorMA( view, -newRange * forwardScale, forward, view );
-		VectorMA( view, -newRange * sideScale, right, view );
-	} else {
-		forwardScale = cos( cg_thirdPersonAngle.value / 180 * M_PI );	
-		sideScale = sin( cg_thirdPersonAngle.value / 180 * M_PI );
-		VectorMA( view, -cg_thirdPersonRange.value * forwardScale, forward, view );
-		VectorMA( view, -cg_thirdPersonRange.value * sideScale, right, view );
+	if(ps->powerups[PW_TRANSFORM] > 1){
+		tier = &ci->tierConfig[ci->tierCurrent];
+		if(!ci->transformStart){
+			tier = &ci->tierConfig[ci->tierCurrent+1];
+			ci->transformStart = qtrue;
+			ci->transformLength = ps->powerups[PW_TRANSFORM];
+			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
+			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
+			ci->cameraBackup[2] = cg_thirdPersonRange.value;
+		}
+		transformPercent = 1.0 - ((float)ps->powerups[PW_TRANSFORM] / (float)ci->transformLength);
+		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
+		pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
+		zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
+		newAngle = (orbit*transformPercent) - abs(tier->transformCameraOrbit[0]);
+		newHeight = (pan*transformPercent) - abs(tier->transformCameraPan[0]);
+		newRange = (zoom*transformPercent) - abs(tier->transformCameraZoom[0]);
+		cg_thirdPersonAngle.value = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
+		cg_thirdPersonHeight.value = pan > 0 ? newHeight : tier->transformCameraDefault[1];
+		cg_thirdPersonRange.value = zoom > 0 ? newRange : tier->transformCameraDefault[2];
 	}
-
+	else if(ci->transformStart){
+		ci->transformStart = qfalse;
+		cg_thirdPersonAngle.value = ci->cameraBackup[0];
+		cg_thirdPersonHeight.value = ci->cameraBackup[1];
+		cg_thirdPersonRange.value = ci->cameraBackup[2];
+	}
+	view[2] += cg_thirdPersonHeight.value;
+	forwardScale = cos( cg_thirdPersonAngle.value / 180 * M_PI );	
+	sideScale = sin( cg_thirdPersonAngle.value / 180 * M_PI );
+	VectorMA( view, -cg_thirdPersonRange.value * forwardScale, forward, view );
+	VectorMA( view, -cg_thirdPersonRange.value * sideScale, right, view );
+	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
 	// trace a ray from the origin to the viewpoint to make sure the view isn't
 	// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
-
 	if (!cg_cameraMode.integer) {
-		CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
+		CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, clientNum, MASK_SOLID );
 
 		if ( trace.fraction != 1.0 ) {
 			VectorCopy( trace.endpos, view );
@@ -362,54 +354,30 @@ static void CG_OffsetThirdPersonView( void ) {
 			// try another trace to this position, because a tunnel may have the ceiling
 			// close enough that this is poking out
 
-			CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
+			CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, clientNum, MASK_SOLID );
 			VectorCopy( trace.endpos, view );
 		}
 	}
-
 	VectorCopy( view, cg.refdef.vieworg );
-
 	// select pitch to look at focus point from vieword
 	VectorSubtract( focusPoint, cg.refdef.vieworg, focusPoint );
 	focusDist = sqrt( focusPoint[0] * focusPoint[0] + focusPoint[1] * focusPoint[1] );
-	if ( focusDist < 1 ) {
+	if(focusDist < 1){
 		focusDist = 1;	// should never happen
 	}
 	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
-
-	// Transform camera or not.
-	if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
-		cg.refdefViewAngles[YAW] -= newAngle;
-	} else {
-		cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
-	}
-
 	// ADDING FOR ZEQ2
 	if (cg_thirdPersonCamera.value == 0) {
-
-		// If we're flying (and 90 degree pitch angles are allowed!) use a totally different
-		// method, which will basically set the camera to rotate on the surface of a sphere
-		// around the player model.
 		if ( cg.snap->ps.powerups[PW_FLYING] ) {
 			VectorCopy( overrideAngles, cg.refdefViewAngles );
-			
 			// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
 			if ( cg_thirdPersonAngle.value != 0 ) {
 				rotationOffsetAngles[PITCH] = 0;
-
-				// Transform camera or not.
-				if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
-					rotationOffsetAngles[YAW] = -newAngle;
-				} else {
-					rotationOffsetAngles[YAW] = -cg_thirdPersonAngle.value;
-				}
 				rotationOffsetAngles[ROLL] = 0;
-
 				AnglesToQuat(cg.refdefViewAngles, quatOrient);
 				AnglesToQuat(rotationOffsetAngles, quatRot);
 				QuatMul(quatOrient, quatRot, quatResult);
 				QuatToAngles(quatResult, cg.refdefViewAngles);
-
 				AngleNormalize180(cg.refdefViewAngles[0]);
 				AngleNormalize180(cg.refdefViewAngles[1]);
 				AngleNormalize180(cg.refdefViewAngles[2]);
@@ -418,45 +386,26 @@ static void CG_OffsetThirdPersonView( void ) {
 			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
 			VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
 			VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
-
-			// Transform camera or not.
-			if ( ps->powerups[PW_TRANSFORM] > 100 && !( cg.time >= cg.tierTime )) {
-				VectorMA( overrideOrg, 8 + newHeight, up, cg.refdef.vieworg );
-				VectorMA( cg.refdef.vieworg, -newRange, forward, cg.refdef.vieworg );
-			} else {
-				VectorMA( overrideOrg, 8 + cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
-				VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
-			}
-			// trace a ray from the origin to the viewpoint to make sure the view isn't
-			// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
-
 			if (!cg_cameraMode.integer) {
-				CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
-
+				CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, clientNum, MASK_SOLID );
 				if ( trace.fraction != 1.0f ) {
 					VectorCopy( trace.endpos, cg.refdef.vieworg );
 					VectorMA(cg.refdef.vieworg, (1.0f - trace.fraction) * 32, up, cg.refdef.vieworg);
-					// try another trace to this position, because a tunnel may have the ceiling
-					// close enough that this is poking out
-
-					CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
+					CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, clientNum, MASK_SOLID );
 					VectorCopy( trace.endpos, cg.refdef.vieworg );
 				}
 			}
-
 			// Get the required pitch rotation for the LOCAL(!) coordinate system of the player
 			VectorSubtract(focusPoint, cg.refdef.vieworg, focusDirCam);
 			VectorSubtract(focusPoint, overrideOrg, focusDirOrig);
 			rotationOffsetAngles[PITCH] = RAD2DEG( hack_acos( DotProduct( focusDirCam, focusDirOrig ) ) );
 			rotationOffsetAngles[YAW] = 0;
 			rotationOffsetAngles[ROLL] = 0;
-			
 			// Use quaternions to correctly alter the angles in the local coordinate system
 			AnglesToQuat(cg.refdefViewAngles, quatOrient);
 			AnglesToQuat(rotationOffsetAngles, quatRot);
 			QuatMul(quatOrient, quatRot, quatResult);
 			QuatToAngles(quatResult, cg.refdefViewAngles);
-
 			AngleNormalize180(cg.refdefViewAngles[0]);
 			AngleNormalize180(cg.refdefViewAngles[1]);
 			AngleNormalize180(cg.refdefViewAngles[2]);

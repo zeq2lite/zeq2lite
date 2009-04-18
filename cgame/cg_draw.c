@@ -379,13 +379,8 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	float			len;
 	vec3_t			origin;
 	vec3_t			mins, maxs;
-
 	ci = &cgs.clientinfo[ clientNum ];
-
-// 2D player icons for ZEQ2 only!
-
 	CG_DrawPic( x, y, w, h, ci->tierConfig[ci->tierCurrent].icon);
-
 /*
 	if ( cg_draw3dIcons.integer ) {
 		cm = ci->headModel[ci->tierCurrent];
@@ -587,43 +582,24 @@ CG_DrawStatusBar
 static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
-	vec4_t		powerColor;
-	vec4_t		dullColor;
-	vec4_t		limitColor;
-	vec4_t		excessColor;
+	vec4_t		powerColor,dullColor,limitColor,excessColor,emptyColor;
 	vec3_t		angles;
 	const char	*powerLevelString;
-	int powerLevelOffset;
-	long powerLevelDisplay;
-	float currentPercent;	float maxPercent;
-	float tierLast;	float tierNext;	float tier;
+	int 		powerLevelOffset;
+	long	 	powerLevelDisplay;
+	float		multiplier;
+	float 		currentPercent,maxPercent;
+	float 		tierLast,tierNext,tier;
+	clientInfo_t *ci;
 	cg_userWeapon_t	*weaponGraphics;
-//	const char *PLStats1;
-//	const char *PLStats2;
-
-	static float colors[8][4] = { 
-//		{ 0.2, 1.0, 0.2, 1.0 } , { 1.0, 0.2, 0.2, 1.0 }, {0.5, 0.5, 0.5, 1} };
-		{ 1.0f, 0.69f, 0.0f, 1.0f },    // yellow
-		{ 1.0f, 0.2f, 0.2f, 1.0f },     // red
-		{ 0.5f, 0.5f, 0.5f, 1.0f },     // weapon firing
-		{ 1.0f, 1.0f, 1.0f, 1.0f },     // white
-		{ 0.0f, 0.0f, 0.0f, 1.0f },		// black
-		{ 0.3f, 0.3f, 0.3f, 0.3f },		// translucent black
-		{ 0.16f, 0.16f, 0.89f, 1.0f },  // blue
-		{ 1.0f, 0.4f, 0.0f, 1.0f } };	// orange
-	if ( cg_drawStatus.integer == 0 ) {
-		return;
-	}
-
+	ci = &cgs.clientinfo[cg.snap->ps.clientNum];
+	if(cg_drawStatus.integer == 0){return;}
 	// draw the team background
 	CG_DrawTeamBackground( 0, 420, 640, 60, 0.33f, cg.snap->ps.persistant[PERS_TEAM] );
-
 	cent = &cg_entities[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
-
 	VectorClear( angles );
 	angles[YAW] = 180;
-
 	if( cg.predictedPlayerState.powerups[PW_REDFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_RED );
 	} else if( cg.predictedPlayerState.powerups[PW_BLUEFLAG] ) {
@@ -631,10 +607,13 @@ static void CG_DrawStatusBar( void ) {
 	} else if( cg.predictedPlayerState.powerups[PW_NEUTRALFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_FREE );
 	}
-
 	//
 	// Draw That Hud!
 	//
+	emptyColor[0] = 0.3f;
+	emptyColor[1] = 0.3f;
+	emptyColor[2] = 0.3f;
+	emptyColor[3] = 0.3f;
 	dullColor[0] = 0.188f;
 	dullColor[1] = 0.278f;
 	dullColor[2] = 0.345f;
@@ -647,15 +626,22 @@ static void CG_DrawStatusBar( void ) {
 	limitColor[1] = 0.16f;
 	limitColor[2] = 0.16f;
 	limitColor[3] = 1.0f;
-	excessColor[0] = 0.9f;	excessColor[1] = 0.5f;	excessColor[2] = 0.0f;	excessColor[3] = 1.0f;
-
-	tier = (float)ps->stats[tierCurrent];	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
+	excessColor[0] = 0.9f;
+	excessColor[1] = 0.5f;
+	excessColor[2] = 0.0f;
+	excessColor[3] = 1.0f;
+	tier = (float)ps->stats[tierCurrent];
+	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
 	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];
-	powerLevelDisplay = (float)ps->stats[powerLevel] * ((tier*tier*tier*tier)+1.0);
+	multiplier = ci->tierConfig[ci->tierCurrent].hudMultiplier;
+	if(multiplier <= 0){
+		multiplier = ((tier*tier*tier*tier)+1.0);
+	}
+	powerLevelDisplay = (float)ps->stats[powerLevel] * multiplier;
 	powerLevelString = va("%i",powerLevelDisplay);
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	if(currentPercent > 1.0){currentPercent = 1.0;}
-	CG_DrawHorGauge(60,449,200,16,limitColor,colors[5],1,1,qfalse); 
+	CG_DrawHorGauge(60,449,200,16,limitColor,emptyColor,1,1,qfalse); 
 	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 
 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);

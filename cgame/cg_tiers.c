@@ -1,6 +1,6 @@
 #include "cg_local.h"
 qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *modelName, const char *skinName){
-	int	i;
+	int	i,j;
 	tierConfig_t *tier;
 	char filename[MAX_QPATH * 2];
 	char tierPath[MAX_QPATH];
@@ -42,10 +42,20 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 					if(!token[0]){break;}
 					//tier->name = token;
 				}
+				else if(!Q_stricmp(token,"transformSoundFirst")){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					tier->soundTransformFirst = trap_S_RegisterSound(token,qfalse);
+				}
 				else if(!Q_stricmp(token,"tierIcon")){
 					token = COM_Parse(&parse);
 					if(!token[0]){break;}
 					tier->icon = trap_R_RegisterShaderNoMip(token);
+				}
+				else if(!Q_stricmp(token,"powerLevelHudMultiplier")){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					tier->hudMultiplier = atof(token);
 				}
 				else if(!Q_stricmp(token,"transformSoundFirst")){
 					token = COM_Parse(&parse);
@@ -62,30 +72,33 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 					if(!token[0]){break;}
 					tier->soundTransformDown = trap_S_RegisterSound(token,qfalse);
 				}
-				else if(!Q_stricmp(token,"transformCameraType")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					//tier->transformCameraType = token;
+				else if(!Q_stricmp(token,"transformCameraDefault")){
+					for(j=0;j<3;j++){
+						token = COM_Parse(&parse);
+						if(!token[0]){break;}
+						tier->transformCameraDefault[j] = atoi(token);
+					}
 				}
-				else if(!Q_stricmp(token,"transformCameraAngle")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->transformCameraAngle = atoi(token);
+				else if(!Q_stricmp(token,"transformCameraOrbit")){
+					for(j=0;j<2;j++){
+						token = COM_Parse(&parse);
+						if(!token[0]){break;}
+						tier->transformCameraOrbit[j] = atoi(token);
+					}
 				}
-				else if(!Q_stricmp(token,"transformCameraHeight")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->transformCameraHeight = atoi(token);
+				else if(!Q_stricmp(token,"transformCameraZoom")){
+					for(j=0;j<2;j++){
+						token = COM_Parse(&parse);
+						if(!token[0]){break;}
+						tier->transformCameraZoom[j] = atoi(token);
+					}
 				}
-				else if(!Q_stricmp(token,"transformCameraRange")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->transformCameraAngle = atoi(token);
-				}
-				else if(!Q_stricmp(token,"transformTime")){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->transformTime = atoi(token);
+				else if(!Q_stricmp(token,"transformCameraPan")){
+					for(j=0;j<2;j++){
+						token = COM_Parse(&parse);
+						if(!token[0]){break;}
+						tier->transformCameraPan[j] = atoi(token);
+					}
 				}
 			}
 		}

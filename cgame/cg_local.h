@@ -357,8 +357,11 @@ typedef struct {
 	animation_t		animations[MAX_TOTALANIMATIONS];
 	sfxHandle_t		sounds[MAX_CUSTOM_SOUNDS];
 	//ADDING FOR ZEQ2
+	qboolean		transformStart;
+	int				transformLength;
 	int				tierCurrent;
 	int				tierMax;
+	int				cameraBackup[3];
 	tierConfig_t	tierConfig[7];
 	auraConfig_t	*auraConfig[7];
 } clientInfo_t;
@@ -563,41 +566,30 @@ typedef struct {
 	int			clientFrame;		// incremented each frame
 
 	int			clientNum;
-	
+
 	qboolean	demoPlayback;
 	qboolean	levelShot;			// taking a level menu screenshot
 	int			deferredPlayerLoading;
 	qboolean	loading;			// don't defer players at initial startup
 	qboolean	intermissionStarted;	// don't play voice rewards, because game will end shortly
-
 	// there are only one or two snapshot_t that are relevent at a time
 	int			latestSnapshotNum;	// the number of snapshots the client system has received
 	int			latestSnapshotTime;	// the time from latestSnapshotNum, so we don't need to read the snapshot yet
-
 	snapshot_t	*snap;				// cg.snap->serverTime <= cg.time
 	snapshot_t	*nextSnap;			// cg.nextSnap->serverTime > cg.time, or NULL
 	snapshot_t	activeSnapshots[2];
-
 	float		frameInterpolation;	// (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)
-
 	qboolean	thisFrameTeleport;
 	qboolean	nextFrameTeleport;
-
 	int			frametime;		// cg.time - cg.oldTime
-
 	int			time;			// this is the time value that the client
 								// is rendering at.
 	int			oldTime;		// time at last frame, used for missile trails and prediction checking
-
 	int			physicsTime;	// either cg.snap->time or cg.nextSnap->time
-
 	int			timelimitWarnings;	// 5 min, 1 min, overtime
 	int			fraglimitWarnings;
-
 	qboolean	mapRestart;			// set on a map restart to set back the weapon
-
 	qboolean	renderingThirdPerson;		// during deaths, chasecams, etc
-
 	// prediction state
 	qboolean	hyperspace;				// true if prediction has hit a trigger_teleport
 	playerState_t	predictedPlayerState;
@@ -605,16 +597,12 @@ typedef struct {
 	qboolean	validPPS;				// clear until the first call to CG_PredictPlayerState
 	int			predictedErrorTime;
 	vec3_t		predictedError;
-
 	int			eventSequence;
 	int			predictableEvents[MAX_PREDICTED_EVENTS];
-
 	float		stepChange;				// for stair up smoothing
 	int			stepTime;
-
 	float		duckChange;				// for duck viewheight smoothing
 	int			duckTime;
-
 	float		landChange;				// for landing hard
 	int			landTime;
 
@@ -649,19 +637,15 @@ typedef struct {
 	int earthquakeFadeOutTime;
 	int earthquakeSoundCounter;
 	int lastEarhquakeSoundStartedTime;
-
 	earthquake_t earthquakes[MAX_EARTHQUAKES];
 	float additionalTremble;
 #endif
-
 	// zoom key
 	qboolean	zoomed;
 	int			zoomTime;
 	float		zoomSensitivity;
-
 	// information screen text during loading
 	char		infoScreenText[MAX_STRING_CHARS];
-
 	// scoreboard
 	int			scoresRequestTime;
 	int			numScores;
@@ -672,14 +656,14 @@ typedef struct {
 	qboolean	scoreBoardShowing;
 	int			scoreFadeTime;
 	char		killerName[MAX_NAME_LENGTH];
-	char			spectatorList[MAX_STRING_CHARS];		// list of names
-	int				spectatorLen;							// length of list
-	float			spectatorWidth;							// width in device units
-	int				spectatorTime;							// next time to offset
-	int				spectatorPaintX;						// current paint x
-	int				spectatorPaintX2;						// current paint x
-	int				spectatorOffset;						// current offset from start
-	int				spectatorPaintLen; 						// current offset from start
+	char		spectatorList[MAX_STRING_CHARS];		// list of names
+	int			spectatorLen;							// length of list
+	float		spectatorWidth;							// width in device units
+	int			spectatorTime;							// next time to offset
+	int			spectatorPaintX;						// current paint x
+	int			spectatorPaintX2;						// current paint x
+	int			spectatorOffset;						// current offset from start
+	int			spectatorPaintLen; 						// current offset from start
 
 	// skull trails
 	skulltrail_t	skulltrails[MAX_CLIENTS];
@@ -787,7 +771,6 @@ typedef struct {
 	qboolean	guide_view;
 	vec3_t		guide_target;	// where to look for guided missiles
 
-	int			tierTime;
 	// END ADDING
 
 } cg_t;
