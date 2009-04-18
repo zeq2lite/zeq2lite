@@ -1,28 +1,6 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "g_local.h"
-
-// g_client.c -- client functions that don't happen every frame
 
 static vec3_t	playerMins = {-15, -15, -24};
 static vec3_t	playerMaxs = {15, 15, 32};
@@ -90,7 +68,7 @@ qboolean SpotWouldTelefrag( gentity_t *spot ) {
 
 	for (i=0 ; i<num ; i++) {
 		hit = &g_entities[touch[i]];
-		//if ( hit->client && hit->client->ps.stats[STAT_HEALTH] > 0 ) {
+		//if ( hit->client && hit->client->ps.stats[powerLevel] > 0 ) {
 		if ( hit->client) {
 			return qtrue;
 		}
@@ -457,7 +435,7 @@ void CopyToBodyQue( gentity_t *ent ) {
 	body->die = body_die;
 
 	// don't take more damage if already gibbed
-	if ( ent->health <= GIB_HEALTH ) {
+	if ( ent->powerLevel <= GIB_HEALTH ) {
 		body->takedamage = qfalse;
 	} else {
 		body->takedamage = qtrue;
@@ -629,7 +607,7 @@ static void ClientCleanName( const char *in, char *out, int outSize ) {
 		}
 
 		// don't allow leading spaces
-		if( colorlessLen == 0 && ch == ' ' ) {
+		if( !*p && ch == ' ' ) {
 			continue;
 		}
 
@@ -658,15 +636,11 @@ static void ClientCleanName( const char *in, char *out, int outSize ) {
 		}
 
 		// don't allow too many consecutive spaces
-		// don't count spaces in colorlessLen
 		if( ch == ' ' ) {
 			spaces++;
 			if( spaces > 3 ) {
 				continue;
 			}
-			*out++ = ch;
-			len++;
-			continue;
 		}
 		else {
 			spaces = 0;
@@ -702,7 +676,7 @@ if desired.
 */
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
-	int		teamTask, teamLeader, team, health;
+	int		teamTask, teamLeader, team, powerLevel;
 	char	*s;
 	char	model[MAX_QPATH];
 	char	headModel[MAX_QPATH];
@@ -748,33 +722,12 @@ void ClientUserinfoChanged( int clientNum ) {
 			Q_strncpyz( client->pers.netname, "scoreboard", sizeof(client->pers.netname) );
 		}
 	}
-
 	if ( client->pers.connected == CON_CONNECTED ) {
 		if ( strcmp( oldname, client->pers.netname ) ) {
 			trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " renamed to %s\n\"", oldname, 
 				client->pers.netname) );
 		}
 	}
-
-	// set max health
-#ifdef MISSIONPACK
-	if (client->ps.powerups[PW_GUARD]) {
-		client->pers.maxHealth = 200;
-	} else {
-		health = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-		client->pers.maxHealth = health;
-		if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
-			client->pers.maxHealth = 100;
-		}
-	}
-#else
-	health = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-	client->pers.maxHealth = health;
-	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
-		client->pers.maxHealth = 100;
-	}
-#endif
-	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
 
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
@@ -784,6 +737,56 @@ void ClientUserinfoChanged( int clientNum ) {
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
 		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "headmodel"), sizeof( headModel ) );
 	}
+
+	// set max powerLevel
+	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
+	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
+	client->playerEntity = ent;
+
+	// setup tier information
+	client->modelName = model;
+	// setupTiers(client);
+
+	// ADDING FOR ZEQ2
+	// REFPOINT: Loading the serverside weaponscripts here.
+	{
+		char	filename[MAX_QPATH];
+		char	modelName[MAX_QPATH];
+		char	skinName[MAX_QPATH];
+		char	modelStr[MAX_QPATH];
+		char	*skin;
+		int		i;
+
+		Q_strncpyz( modelStr, model, sizeof(modelStr));
+
+		if ( ( skin = strchr( modelStr, '/' ) ) == NULL) {
+				skin = "default";
+			} else {
+				*skin++ = 0;
+		}
+
+		Q_strncpyz( skinName, skin, sizeof( skinName ) );
+		Q_strncpyz( modelName, modelStr, sizeof( modelName ) );
+		
+		Com_sprintf( filename, sizeof( filename ), "players/%s/%s.phys", modelName, skinName );
+		G_weapPhys_Parse( filename, clientNum );
+
+		// Set the weapon mask here, incase we changed models on the fly.
+		// FIXME: Can be removed eventually, when we will disallow on the fly
+		//        switching.
+		client->ps.stats[skills] = *G_FindUserWeaponMask( clientNum );
+
+		// force a new weapon up if the current one is unavailable now.
+		// Search downward
+		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
+			// We found a valid weapon
+			if ( client->ps.stats[skills] & (1 << i) ) {
+				break;
+			}
+		}
+		client->ps.weapon = i;
+	}
+	// END ADDING
 
 	// bots set their team a few frames later
 	if (g_gametype.integer >= GT_TEAM && g_entities[clientNum].r.svFlags & SVF_BOT) {
@@ -801,47 +804,6 @@ void ClientUserinfoChanged( int clientNum ) {
 		team = client->sess.sessionTeam;
 	}
 
-/*	NOTE: all client side now
-
-	// team
-	switch( team ) {
-	case TEAM_RED:
-		ForceClientSkin(client, model, "red");
-//		ForceClientSkin(client, headModel, "red");
-		break;
-	case TEAM_BLUE:
-		ForceClientSkin(client, model, "blue");
-//		ForceClientSkin(client, headModel, "blue");
-		break;
-	}
-	// don't ever use a default skin in teamplay, it would just waste memory
-	// however bots will always join a team but they spawn in as spectator
-	if ( g_gametype.integer >= GT_TEAM && team == TEAM_SPECTATOR) {
-		ForceClientSkin(client, model, "red");
-//		ForceClientSkin(client, headModel, "red");
-	}
-*/
-
-#ifdef MISSIONPACK
-	if (g_gametype.integer >= GT_TEAM) {
-		client->pers.teamInfo = qtrue;
-	} else {
-		s = Info_ValueForKey( userinfo, "teamoverlay" );
-		if ( ! *s || atoi( s ) != 0 ) {
-			client->pers.teamInfo = qtrue;
-		} else {
-			client->pers.teamInfo = qfalse;
-		}
-	}
-#else
-	// teamInfo
-	s = Info_ValueForKey( userinfo, "teamoverlay" );
-	if ( ! *s || atoi( s ) != 0 ) {
-		client->pers.teamInfo = qtrue;
-	} else {
-		client->pers.teamInfo = qfalse;
-	}
-#endif
 	/*
 	s = Info_ValueForKey( userinfo, "cg_pmove_fixed" );
 	if ( !*s || atoi( s ) == 0 ) {
@@ -879,7 +841,6 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
 
-	// this is not the userinfo, more like the configstring actually
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
 }
 
@@ -915,19 +876,13 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 
 	trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
 
- 	// IP filtering
- 	// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=500
- 	// recommanding PB based IP / GUID banning, the builtin system is pretty limited
- 	// check to see if they are on the banned IP list
+	// check to see if they are on the banned IP list
 	value = Info_ValueForKey (userinfo, "ip");
 	if ( G_FilterPacket( value ) ) {
-		return "You are banned from this server.";
+		return "Banned.";
 	}
 
-  // we don't check password for bots and local client
-  // NOTE: local client <-> "ip" "localhost"
-  //   this means this client is not running in our current process
-	if ( !isBot && (strcmp(value, "localhost") != 0)) {
+	if ( !( ent->r.svFlags & SVF_BOT ) ) {
 		// check for a password
 		value = Info_ValueForKey (userinfo, "password");
 		if ( g_password.string[0] && Q_stricmp( g_password.string, "none" ) &&
@@ -1025,6 +980,11 @@ void ClientBegin( int clientNum ) {
 	memset( &client->ps, 0, sizeof( client->ps ) );
 	client->ps.eFlags = flags;
 
+	// ADDING FOR ZEQ2
+	// Set the starting cap
+	client->ps.persistant[powerLevelMaximum] = g_powerlevel.value;//1000;
+	// END ADDING
+
 	// locate ent at a spawn point
 	ClientSpawn( ent );
 
@@ -1066,13 +1026,13 @@ void ClientSpawn(gentity_t *ent) {
 //	char	*savedAreaBits;
 	int		accuracy_hits, accuracy_shots;
 	int		eventSequence;
+	char	model[MAX_QPATH];
 	char	userinfo[MAX_INFO_STRING];
 
 	index = ent - g_entities;
 	client = ent->client;
-
 	// find a spawn point
-	// do it before setting health back up, so farthest
+	// do it before setting powerLevel back up, so farthest
 	// ranging doesn't count this client
 	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		spawnPoint = SelectSpectatorSpawnPoint ( 
@@ -1133,7 +1093,7 @@ void ClientSpawn(gentity_t *ent) {
 	}
 	eventSequence = client->ps.eventSequence;
 
-	Com_Memset (client, 0, sizeof(*client));
+	memset (client, 0, sizeof(*client)); // bk FIXME: Com_Memset?
 
 	client->pers = saved;
 	client->sess = savedSess;
@@ -1154,13 +1114,27 @@ void ClientSpawn(gentity_t *ent) {
 	client->airOutTime = level.time + 12000;
 
 	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
-	// set max health
+	// set max powerLevel
 	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
+	Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
+
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
 		client->pers.maxHealth = 100;
 	}
 	// clear entity values
-	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+	if ( g_powerlevel.value > 32768 ) {
+		g_powerlevel.value = 32768;
+	}
+
+	if ( g_powerlevelChargeScale.value < 0 ) {
+		g_powerlevelChargeScale.value = 0;
+	}
+
+	if ( g_powerlevelChargeScale.value > 5 ) {
+		g_powerlevelChargeScale.value = 5;
+	}
+
+	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1180,19 +1154,26 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->ps.clientNum = index;
 
-	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
-	if ( g_gametype.integer == GT_TEAM ) {
-		client->ps.ammo[WP_MACHINEGUN] = 50;
-	} else {
-		client->ps.ammo[WP_MACHINEGUN] = 100;
-	}
+	// ADDING FOR ZEQ2
+	client->modelName = model;
+	//setupTiers(client);
+	client->ps.stats[skills] = *G_FindUserWeaponMask( index );
+	client->ps.stats[chargePercentPrimary] = 0;
+	client->ps.stats[chargePercentSecondary] = 0;
+	// END ADDING
 
-	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
-	client->ps.ammo[WP_GAUNTLET] = -1;
-	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
+	ent->powerLevel = client->ps.stats[powerLevel] = g_powerlevel.value ; //client->ps.stats[powerLevelTotal];
+	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
+	client->ps.rolling = g_rolling.value;
+	client->ps.running = g_running.value;
 
-	// health will count down towards max_health
-	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
+	// ADDING FOR ZEQ2
+	client->ps.stats[tierCurrent] = 0;
+
+	// make sure all bitFlags are OFF, and explicitly turn off the aura
+	client->ps.stats[bitFlags] = 0;
+	client->ps.eFlags &= ~EF_AURA;
+	// END ADDING
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
@@ -1206,13 +1187,23 @@ void ClientSpawn(gentity_t *ent) {
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 
 	} else {
+		int i;
+
 		G_KillBox( ent );
 		trap_LinkEntity (ent);
 
-		// force the base weapon up
-		client->ps.weapon = WP_MACHINEGUN;
-		client->ps.weaponstate = WEAPON_READY;
+		// force the best weapon up
+		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
+			// We found a valid weapon
+			if ( client->ps.stats[skills] & (1 << i) ) {
+				break;
+			}
+		}
 
+		// Either we assign a valid weapon, or we assign 0, which means
+		// no weapon. (baseq3: WP_NONE)
+		client->ps.weapon = i;
+		client->ps.weaponstate = WEAPON_READY;
 	}
 
 	// don't allow full run speed for a bit
@@ -1230,6 +1221,7 @@ void ClientSpawn(gentity_t *ent) {
 	if ( level.intermissiontime ) {
 		MoveClientToIntermission( ent );
 	} else {
+		/*
 		// fire the targets of the spawn point
 		G_UseTargets( spawnPoint, ent );
 
@@ -1237,11 +1229,15 @@ void ClientSpawn(gentity_t *ent) {
 		// spawn given items have fired
 		client->ps.weapon = 1;
 		for ( i = WP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
-			if ( client->ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
+			if ( client->ps.stats[skills] & ( 1 << i ) ) {
 				client->ps.weapon = i;
+				// ADDING FOR ZEQ2
+				client->ps.weaponstate = WEAPON_READY;
+				// END ADDING
 				break;
 			}
 		}
+		*/
 	}
 
 	// run a client frame to drop exactly to the floor,
@@ -1310,7 +1306,7 @@ void ClientDisconnect( int clientNum ) {
 		// Especially important for stuff like CTF flags
 		TossClientItems( ent );
 #ifdef MISSIONPACK
-		TossClientPersistantPowerups( ent );
+		//TossClientPersistantPowerups( ent );
 		if( g_gametype.integer == GT_HARVESTER ) {
 			TossClientCubes( ent );
 		}
@@ -1331,7 +1327,7 @@ void ClientDisconnect( int clientNum ) {
 	if( g_gametype.integer == GT_TOURNAMENT &&
 		ent->client->sess.sessionTeam == TEAM_FREE &&
 		level.intermissiontime ) {
-
+		
 		trap_SendConsoleCommand( EXEC_APPEND, "map_restart 0\n" );
 		level.restarted = qtrue;
 		level.changemap = NULL;

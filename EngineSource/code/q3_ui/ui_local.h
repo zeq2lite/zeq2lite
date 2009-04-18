@@ -1,39 +1,17 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #ifndef __UI_LOCAL_H__
 #define __UI_LOCAL_H__
 
-#include "../qcommon/q_shared.h"
-#include "../renderer/tr_types.h"
+#include "../game/q_shared.h"
+#include "../cgame/tr_types.h"
 //NOTE: include the ui_public.h from the new UI
-#include "../ui/ui_public.h"
+#include "../ui/ui_public.h" // bk001205 - yes, do have to use this
 //redefine to old API version
 #undef UI_API_VERSION
 #define UI_API_VERSION	4
-#include "../client/keycodes.h"
+#include "keycodes.h"
 #include "../game/bg_public.h"
-
-typedef void (*voidfunc_f)(void);
 
 extern vmCvar_t	ui_ffa_fraglimit;
 extern vmCvar_t	ui_ffa_timelimit;
@@ -92,8 +70,10 @@ extern vmCvar_t	ui_server16;
 
 extern vmCvar_t	ui_cdkey;
 extern vmCvar_t	ui_cdkeychecked;
-extern vmCvar_t	ui_ioq3;
+extern vmCvar_t s_mastermusicvolume;
 
+// Speed scale for UI character animations.
+#define PLAYER_MODEL_SPEED	1.25
 
 //
 // ui_qmenu.c
@@ -286,6 +266,7 @@ extern vec4_t		color_black;
 extern vec4_t		color_white;
 extern vec4_t		color_yellow;
 extern vec4_t		color_blue;
+extern vec4_t		color_lightBlue;
 extern vec4_t		color_orange;
 extern vec4_t		color_red;
 extern vec4_t		color_dim;
@@ -324,6 +305,14 @@ extern void UI_UpdateCvars( void );
 //
 extern void UI_CreditMenu( void );
 
+/*
+//
+// ui_music.c
+//
+extern void UI_MusicMenu( void );
+extern void UI_MusicMenu_Cache( void );
+*/
+
 //
 // ui_ingame.c
 //
@@ -335,8 +324,6 @@ extern void UI_InGameMenu(void);
 //
 extern void ConfirmMenu_Cache( void );
 extern void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)( qboolean result ) );
-extern void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void ), void (*action)( qboolean result ) );
-extern void UI_Message( const char **lines );
 
 //
 // ui_setup.c
@@ -473,6 +460,9 @@ typedef struct {
 
 typedef struct {
 	// model info
+	qboolean		fixedlegs;		// true if legs yaw is always the same as torso yaw
+	qboolean		fixedtorso;		// true if torso never changes yaw
+
 	qhandle_t		legsModel;
 	qhandle_t		legsSkin;
 	lerpFrame_t		legs;
@@ -483,6 +473,7 @@ typedef struct {
 
 	qhandle_t		headModel;
 	qhandle_t		headSkin;
+	lerpFrame_t		head;
 
 	animation_t		animations[MAX_ANIMATIONS];
 
@@ -509,6 +500,9 @@ typedef struct {
 
 	int				pendingTorsoAnim;
 	int				legsAnimationTimer;
+
+	int				pendingHeadAnim;
+	int				headAnimationTimer;
 
 	qboolean		chat;
 	qboolean		newModel;
@@ -540,7 +534,6 @@ typedef struct {
 	qboolean			debug;
 	qhandle_t			whiteShader;
 	qhandle_t			menuBackShader;
-	qhandle_t			menuBackNoLogoShader;
 	qhandle_t			charset;
 	qhandle_t			charsetProp;
 	qhandle_t			charsetPropGlow;
@@ -548,9 +541,14 @@ typedef struct {
 	qhandle_t			cursor;
 	qhandle_t			rb_on;
 	qhandle_t			rb_off;
-	float				xscale;
-	float				yscale;
+	// Scale modification from Hunt mod.
+#if 0
+	float				scale;
 	float				bias;
+#else
+	float				scaleX;
+	float				scaleY;
+#endif
 	qboolean			demoversion;
 	qboolean			firstdraw;
 } uiStatic_t;
@@ -572,8 +570,8 @@ extern void			UI_LerpColor(vec4_t a, vec4_t b, vec4_t c, float t);
 extern void			UI_DrawBannerString( int x, int y, const char* str, int style, vec4_t color );
 extern float		UI_ProportionalSizeScale( int style );
 extern void			UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color );
-extern void			UI_DrawProportionalString_AutoWrapped( int x, int ystart, int xmax, int ystep, const char* str, int style, vec4_t color );
 extern int			UI_ProportionalStringWidth( const char* str );
+extern int			UI_DrawStrlen(const char *str);	// JUHOX
 extern void			UI_DrawString( int x, int y, const char* str, int style, vec4_t color );
 extern void			UI_DrawChar( int x, int y, int ch, int style, vec4_t color );
 extern qboolean 	UI_CursorInRect (int x, int y, int width, int height);
@@ -586,6 +584,7 @@ extern void			UI_PopMenu (void);
 extern void			UI_ForceMenuOff (void);
 extern char			*UI_Argv( int arg );
 extern char			*UI_Cvar_VariableString( const char *var_name );
+extern void			UI_DrawBackPic(qboolean drawPic);	// JUHOX
 extern void			UI_Refresh( int time );
 extern void			UI_StartDemoLoop( void );
 extern qboolean		m_entersound;
@@ -676,12 +675,10 @@ void			trap_LAN_ClearPing( int n );
 void			trap_LAN_GetPing( int n, char *buf, int buflen, int *pingtime );
 void			trap_LAN_GetPingInfo( int n, char *buf, int buflen );
 int				trap_MemoryRemaining( void );
-void			trap_GetCDKey( char *buf, int buflen );
-void			trap_SetCDKey( char *buf );
+//void			trap_GetCDKey( char *buf, int buflen );
+//void			trap_SetCDKey( char *buf );
 
-qboolean               trap_VerifyCDKey( const char *key, const char *chksum);
-
-void			trap_SetPbClStatus( int status );
+//qboolean               trap_VerifyCDKey( const char *key, const char *chksum); // bk001208 - RC4
 
 //
 // ui_addbots.c

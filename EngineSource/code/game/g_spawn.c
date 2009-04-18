@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 #include "g_local.h"
@@ -109,7 +89,7 @@ field_t fields[] = {
 	{"wait", FOFS(wait), F_FLOAT},
 	{"random", FOFS(random), F_FLOAT},
 	{"count", FOFS(count), F_INT},
-	{"health", FOFS(health), F_INT},
+	{"powerLevel", FOFS(powerLevel), F_INT},
 	{"light", 0, F_IGNORE},
 	{"dmg", FOFS(damage), F_INT},
 	{"angles", FOFS(s.angles), F_VECTOR},
@@ -191,7 +171,7 @@ void SP_team_blueobelisk( gentity_t *ent );
 void SP_team_redobelisk( gentity_t *ent );
 void SP_team_neutralobelisk( gentity_t *ent );
 #endif
-void SP_item_botroam( gentity_t *ent ) { }
+void SP_item_botroam( gentity_t *ent ) {}
 
 spawn_t	spawns[] = {
 	// info entities don't do anything at all, but provide positional
@@ -249,9 +229,9 @@ spawn_t	spawns[] = {
 	{"misc_portal_surface", SP_misc_portal_surface},
 	{"misc_portal_camera", SP_misc_portal_camera},
 
-	{"shooter_rocket", SP_shooter_rocket},
-	{"shooter_grenade", SP_shooter_grenade},
-	{"shooter_plasma", SP_shooter_plasma},
+//	{"shooter_rocket", SP_shooter_rocket},
+//	{"shooter_grenade", SP_shooter_grenade},
+//	{"shooter_plasma", SP_shooter_plasma},
 
 	{"team_CTF_redplayer", SP_team_CTF_redplayer},
 	{"team_CTF_blueplayer", SP_team_CTF_blueplayer},
@@ -266,7 +246,7 @@ spawn_t	spawns[] = {
 #endif
 	{"item_botroam", SP_item_botroam},
 
-	{NULL, 0}
+	{0, 0}
 };
 
 /*
@@ -289,6 +269,13 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
 		if ( !strcmp(item->classname, ent->classname) ) {
+#if MAPLENSFLARES	// JUHOX: no items in lens flare editor
+			if (g_editmode.integer == EM_mlf) {
+				// don't remove, otherwise movers could change their entity number
+				ent->s.eType = ET_INVISIBLE;
+				return qtrue;
+			}
+#endif
 			G_SpawnItem( ent, item );
 			return qtrue;
 		}
@@ -579,8 +566,8 @@ void SP_worldspawn( void ) {
 
 	trap_SetConfigstring( CS_LEVEL_START_TIME, va("%i", level.startTime ) );
 
-	G_SpawnString( "music", "", &s );
-	trap_SetConfigstring( CS_MUSIC, s );
+//	G_SpawnString( "music", "", &s );
+//	trap_SetConfigstring( CS_MUSIC, s );
 
 	G_SpawnString( "message", "", &s );
 	trap_SetConfigstring( CS_MESSAGE, s );				// map specific message

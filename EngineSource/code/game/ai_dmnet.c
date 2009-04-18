@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 /*****************************************************************************
@@ -27,19 +7,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * desc:		Quake3 bot AI
  *
  * $Archive: /MissionPack/code/game/ai_dmnet.c $
+ * $Author: Ttimo $ 
+ * $Revision: 40 $
+ * $Modtime: 4/21/01 9:18a $
+ * $Date: 4/21/01 9:18a $
  *
  *****************************************************************************/
 
 #include "g_local.h"
-#include "../botlib/botlib.h"
-#include "../botlib/be_aas.h"
-#include "../botlib/be_ea.h"
-#include "../botlib/be_ai_char.h"
-#include "../botlib/be_ai_chat.h"
-#include "../botlib/be_ai_gen.h"
-#include "../botlib/be_ai_goal.h"
-#include "../botlib/be_ai_move.h"
-#include "../botlib/be_ai_weap.h"
+#include "botlib.h"
+#include "be_aas.h"
+#include "be_ea.h"
+#include "be_ai_char.h"
+#include "be_ai_chat.h"
+#include "be_ai_gen.h"
+#include "be_ai_goal.h"
+#include "be_ai_move.h"
+#include "be_ai_weap.h"
 //
 #include "ai_main.h"
 #include "ai_dmq3.h"
@@ -56,7 +40,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // for the voice chats
 #include "../../ui/menudef.h"
 
-//goal flag, see ../botlib/be_ai_goal.h for the other GFL_*
+//goal flag, see be_ai_goal.h for the other GFL_*
 #define GFL_AIR			128
 
 int numnodeswitches;
@@ -85,7 +69,7 @@ void BotDumpNodeSwitches(bot_state_t *bs) {
 	ClientName(bs->client, netname, sizeof(netname));
 	BotAI_Print(PRT_MESSAGE, "%s at %1.1f switched more than %d AI nodes\n", netname, FloatTime(), MAX_NODESWITCHES);
 	for (i = 0; i < numnodeswitches; i++) {
-		BotAI_Print(PRT_MESSAGE, "%s", nodeswitch[i]);
+		BotAI_Print(PRT_MESSAGE, nodeswitch[i]);
 	}
 	BotAI_Print(PRT_FATAL, "");
 }
@@ -102,7 +86,7 @@ void BotRecordNodeSwitch(bot_state_t *bs, char *node, char *str, char *s) {
 	Com_sprintf(nodeswitch[numnodeswitches], 144, "%s at %2.1f entered %s: %s from %s\n", netname, FloatTime(), node, str, s);
 #ifdef DEBUG
 	if (0) {
-		BotAI_Print(PRT_MESSAGE, "%s", nodeswitch[numnodeswitches]);
+		BotAI_Print(PRT_MESSAGE, nodeswitch[numnodeswitches]);
 	}
 #endif //DEBUG
 	numnodeswitches++;
@@ -1200,8 +1184,8 @@ AINode_Stand
 */
 int AINode_Stand(bot_state_t *bs) {
 
-	//if the bot's health decreased
-	if (bs->lastframe_health > bs->inventory[INVENTORY_HEALTH]) {
+	//if the bot's powerLevel decreased
+	if (bs->lastframe_powerLevel > bs->inventory[INVENTORY_HEALTH]) {
 		if (BotChat_HitTalking(bs)) {
 			bs->standfindenemy_time = FloatTime() + BotChatTime(bs) + 0.1;
 			bs->stand_time = FloatTime() + BotChatTime(bs) + 0.1;
@@ -2067,11 +2051,11 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 	}
 	//update the attack inventory values
 	BotUpdateBattleInventory(bs, bs->enemy);
-	//if the bot's health decreased
-	if (bs->lastframe_health > bs->inventory[INVENTORY_HEALTH]) {
+	//if the bot's powerLevel decreased
+	if (bs->lastframe_powerLevel > bs->inventory[INVENTORY_HEALTH]) {
 		if (BotChat_HitNoDeath(bs)) {
 			bs->stand_time = FloatTime() + BotChatTime(bs);
-			AIEnter_Stand(bs, "battle fight: chat health decreased");
+			AIEnter_Stand(bs, "battle fight: chat powerLevel decreased");
 			return qfalse;
 		}
 	}

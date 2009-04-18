@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 // cg_localents.c -- every frame, generate renderer commands for locally
@@ -130,7 +110,7 @@ void CG_BloodTrail( localEntity_t *le ) {
 	t2 = step * ( cg.time / step );
 
 	for ( ; t <= t2; t += step ) {
-		BG_EvaluateTrajectory( &le->pos, t, newOrigin );
+		BG_EvaluateTrajectory( NULL, &le->pos, t, newOrigin );
 
 		blood = CG_SmokePuff( newOrigin, vec3_origin, 
 					  20,		// radius
@@ -217,7 +197,7 @@ void CG_ReflectVelocity( localEntity_t *le, trace_t *trace ) {
 
 	// reflect the velocity on the trace plane
 	hitTime = cg.time - cg.frametime + cg.frametime * trace->fraction;
-	BG_EvaluateTrajectoryDelta( &le->pos, hitTime, velocity );
+	BG_EvaluateTrajectoryDelta( NULL, &le->pos, hitTime, velocity );
 	dot = DotProduct( velocity, trace->plane.normal );
 	VectorMA( velocity, -2*dot, trace->plane.normal, le->pos.trDelta );
 
@@ -270,7 +250,7 @@ void CG_AddFragment( localEntity_t *le ) {
 	}
 
 	// calculate new position
-	BG_EvaluateTrajectory( &le->pos, cg.time, newOrigin );
+	BG_EvaluateTrajectory( NULL, &le->pos, cg.time, newOrigin );
 
 	// trace a line from previous position to new position
 	CG_Trace( &trace, le->refEntity.origin, NULL, NULL, newOrigin, -1, CONTENTS_SOLID );
@@ -281,7 +261,7 @@ void CG_AddFragment( localEntity_t *le ) {
 		if ( le->leFlags & LEF_TUMBLE ) {
 			vec3_t angles;
 
-			BG_EvaluateTrajectory( &le->angles, cg.time, angles );
+			BG_EvaluateTrajectory( NULL, &le->angles, cg.time, angles );
 			AnglesToAxis( angles, le->refEntity.axis );
 		}
 
@@ -374,7 +354,7 @@ static void CG_AddMoveScaleFade( localEntity_t *le ) {
 		re->radius = le->radius * ( 1.0 - c ) + 8;
 	}
 
-	BG_EvaluateTrajectory( &le->pos, cg.time, re->origin );
+	BG_EvaluateTrajectory( NULL, &le->pos, cg.time, re->origin );
 
 	// if the view would be "inside" the sprite, kill the sprite
 	// so it doesn't add too much overdraw
@@ -491,6 +471,111 @@ static void CG_AddExplosion( localEntity_t *ex ) {
 		}
 		light = ex->light * light;
 		trap_R_AddLightToScene(ent->origin, light, ex->lightColor[0], ex->lightColor[1], ex->lightColor[2] );
+	}
+}
+
+
+/*
+========================
+CG_AddStraightBeamFade
+========================
+*/
+static void CG_AddStraightBeamFade( localEntity_t *le ) {
+	refEntity_t	*ent;		// reference entity stored in the local entity
+	float		RGBfade;	// stores the amount of fade to apply to the RGBA values
+	float		scale_l;	// stores the scale factor for the beam's length
+	float		scale_w;	// stores the scale factor for the beam's width
+	vec3_t		start;		// temporary storage for the beam's start point
+	vec3_t		direction;	// vector used in calculating the shortening of the beam
+	
+	// set up for quick reference
+	ent = &le->refEntity;
+
+	// Save the start vector so it can be recovered after having been rendered.
+	VectorCopy( ent->origin, start );
+
+	// calculate RGBfade and scale
+	RGBfade = 1 - (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime );
+	scale_l = RGBfade;
+	scale_w = 1 - (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime );
+	if (scale_w < 0) {
+		scale_w = 0;
+	}
+	
+	// Set the scaled beam
+	VectorSubtract( ent->origin, ent->oldorigin, direction);
+	VectorScale(direction, scale_l, direction);
+	VectorAdd(ent->oldorigin, direction, ent->origin);
+
+	CG_DrawLine (ent->origin, ent->oldorigin, le->radius * scale_w, ent->customShader, RGBfade);
+
+	// Restore the start vector
+	VectorCopy(start, ent->origin);
+}
+
+
+/*
+====================
+CG_AddZEQExplosion
+====================
+*/
+static void CG_AddZEQExplosion( localEntity_t *le ) {
+	refEntity_t	*ent;
+	float		c;
+	float		RGBfade;
+	vec3_t		tmpAxes[3];
+	
+	ent = &le->refEntity;
+
+	
+
+	RGBfade = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime );
+	if ( RGBfade < 0.5 ) {
+		RGBfade = 1.0;
+	} else {
+		RGBfade = 1.0 - ( RGBfade - 0.5 ) * 2;
+	}
+
+	ent->shaderRGBA[0] = 0xff * RGBfade;
+	ent->shaderRGBA[1] = 0xff * RGBfade;
+	ent->shaderRGBA[2] = 0xff * RGBfade;
+	ent->shaderRGBA[3] = 0xff * RGBfade;
+	
+
+	// grow time
+	c = ( le->endTime - cg.time ) * le->lifeRate;
+
+	// preserve the full scale
+	VectorCopy(ent->axis[0], tmpAxes[0]);
+	VectorCopy(ent->axis[1], tmpAxes[1]);
+	VectorCopy(ent->axis[2], tmpAxes[2]);
+
+	// set the current scale
+	VectorScale(ent->axis[0], 1 - c, ent->axis[0]);
+	VectorScale(ent->axis[1], 1 - c, ent->axis[1]);
+	VectorScale(ent->axis[2], 1 - c, ent->axis[2]);
+
+	// add the entity
+	trap_R_AddRefEntityToScene( ent );
+
+	// set the full scale again
+	VectorCopy(tmpAxes[0], ent->axis[0]);
+	VectorCopy(tmpAxes[1], ent->axis[1]);
+	VectorCopy(tmpAxes[2], ent->axis[2]);
+
+	// add a Dlight
+	if ( le->light ) {
+		float light;
+		float lightRad;
+
+		light = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime );
+		if ( light < 0.5 ) {
+			light = light * 2;
+		} else {
+			light = 1.0 - ( light - 0.5 ) * 2;
+		}
+		lightRad = le->light * light;
+		trap_R_AddLightToScene(ent->origin, lightRad, light * le->lightColor[0], light * le->lightColor[1], light * le->lightColor[2] );
 	}
 }
 
@@ -837,6 +922,22 @@ void CG_AddLocalEntities( void ) {
 
 		case LE_EXPLOSION:
 			CG_AddExplosion( le );
+			break;
+
+		case LE_ZEQEXPLOSION:
+			if (cg.time >= le->startTime) {
+				CG_AddZEQExplosion( le );
+			}
+			break;
+
+		case LE_ZEQSMOKE:
+			if (cg.time >= le->startTime) {
+				CG_AddMoveScaleFade( le );
+			}
+			break;
+
+		case LE_STRAIGHTBEAM_FADE:
+			CG_AddStraightBeamFade( le );
 			break;
 
 		case LE_FRAGMENT:			// gibs and brass

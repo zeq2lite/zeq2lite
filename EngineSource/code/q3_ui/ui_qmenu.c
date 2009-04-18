@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /**********************************************************************
 	UI_QMENU.C
@@ -44,6 +24,7 @@ vec4_t color_black	    = {0.00f, 0.00f, 0.00f, 1.00f};
 vec4_t color_white	    = {1.00f, 1.00f, 1.00f, 1.00f};
 vec4_t color_yellow	    = {1.00f, 1.00f, 0.00f, 1.00f};
 vec4_t color_blue	    = {0.00f, 0.00f, 1.00f, 1.00f};
+vec4_t color_lightBlue	    = {0.75f, 0.75f, 1.00f, 1.00f };
 vec4_t color_lightOrange    = {1.00f, 0.68f, 0.00f, 1.00f };
 vec4_t color_orange	    = {1.00f, 0.43f, 0.00f, 1.00f};
 vec4_t color_red	    = {1.00f, 0.00f, 0.00f, 1.00f};
@@ -52,9 +33,9 @@ vec4_t color_dim	    = {0.00f, 0.00f, 0.00f, 0.25f};
 // current color scheme
 vec4_t pulse_color          = {1.00f, 1.00f, 1.00f, 1.00f};
 vec4_t text_color_disabled  = {0.50f, 0.50f, 0.50f, 1.00f};	// light gray
-vec4_t text_color_normal    = {1.00f, 0.43f, 0.00f, 1.00f};	// light orange
-vec4_t text_color_highlight = {1.00f, 1.00f, 0.00f, 1.00f};	// bright yellow
-vec4_t listbar_color        = {1.00f, 0.43f, 0.00f, 0.30f};	// transluscent orange
+vec4_t text_color_normal    = {0.750f, 0.75f, 1.00f, 1.00f};	// light blue
+vec4_t text_color_highlight = {0.90f, 0.90f, 1.00f, 1.00f};	// bright blue
+vec4_t listbar_color        = {0.75f, 0.75f, 1.00f, 0.30f};	// transluscent blue
 vec4_t text_color_status    = {1.00f, 1.00f, 1.00f, 1.00f};	// bright white	
 
 // action widget
@@ -327,6 +308,7 @@ void Bitmap_Draw( menubitmap_s *b )
 		if (b->shader)
 			UI_DrawHandlePic( x, y, w, h, b->shader );
 
+		// bk001204 - parentheses
 		if (  ( (b->generic.flags & QMF_PULSE) 
 			|| (b->generic.flags & QMF_PULSEIFFOCUS) )
 		      && (Menu_ItemAtCursor( b->generic.parent ) == b))
@@ -417,12 +399,12 @@ static void Action_Draw( menuaction_s *a )
 	x = a->generic.x;
 	y = a->generic.y;
 
-	UI_DrawString( x, y, a->generic.name, UI_LEFT|style, color );
+	UI_DrawString( x, y, a->generic.name, UI_LEFT|style|UI_DROPSHADOW, color );
 
 	if ( a->generic.parent->cursor == a->generic.menuPosition )
 	{
 		// draw cursor
-		UI_DrawChar( x - BIGCHAR_WIDTH, y, 13, UI_LEFT|UI_BLINK, color);
+		UI_DrawChar( x - BIGCHAR_WIDTH, y, 13, UI_LEFT|UI_BLINK|UI_DROPSHADOW, color);
 	}
 }
 
@@ -502,28 +484,28 @@ static void RadioButton_Draw( menuradiobutton_s *rb )
 	if ( rb->generic.flags & QMF_GRAYED )
 	{
 		color = text_color_disabled;
-		style = UI_LEFT|UI_SMALLFONT;
+		style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	}
 	else if ( focus )
 	{
 		color = text_color_highlight;
-		style = UI_LEFT|UI_PULSE|UI_SMALLFONT;
+		style = UI_LEFT|UI_PULSE|UI_SMALLFONT|UI_DROPSHADOW;
 	}
 	else
 	{
 		color = text_color_normal;
-		style = UI_LEFT|UI_SMALLFONT;
+		style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	}
 
 	if ( focus )
 	{
 		// draw cursor
 		UI_FillRect( rb->generic.left, rb->generic.top, rb->generic.right-rb->generic.left+1, rb->generic.bottom-rb->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
 	if ( rb->generic.name )
-		UI_DrawString( x - SMALLCHAR_WIDTH, y, rb->generic.name, UI_RIGHT|UI_SMALLFONT, color );
+		UI_DrawString( x - SMALLCHAR_WIDTH, y, rb->generic.name, UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW, color );
 
 	if ( !rb->curvalue )
 	{
@@ -640,15 +622,15 @@ static void Slider_Draw( menuslider_s *s ) {
 
 	if( s->generic.flags & QMF_GRAYED ) {
 		color = text_color_disabled;
-		style = UI_SMALLFONT;
+		style = UI_SMALLFONT | UI_DROPSHADOW;
 	}
 	else if( focus ) {
 		color  = text_color_highlight;
-		style = UI_SMALLFONT | UI_PULSE;
+		style = UI_SMALLFONT | UI_PULSE | UI_DROPSHADOW;
 	}
 	else {
 		color = text_color_normal;
-		style = UI_SMALLFONT;
+		style = UI_SMALLFONT | UI_DROPSHADOW;
 	}
 
 	// draw label
@@ -702,7 +684,7 @@ static void Slider_Draw( menuslider_s *s )
 	y = s->generic.y;
 	focus = (s->generic.parent->cursor == s->generic.menuPosition);
 
-	style = UI_SMALLFONT;
+	style = UI_SMALLFONT|UI_DROPSHADOW;
 	if ( s->generic.flags & QMF_GRAYED )
 	{
 		color = text_color_disabled;
@@ -721,7 +703,7 @@ static void Slider_Draw( menuslider_s *s )
 	{
 		// draw cursor
 		UI_FillRect( s->generic.left, s->generic.top, s->generic.right-s->generic.left+1, s->generic.bottom-s->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
 	// draw label
@@ -849,7 +831,7 @@ static void SpinControl_Draw( menulist_s *s )
 	x = s->generic.x;
 	y =	s->generic.y;
 
-	style = UI_SMALLFONT;
+	style = UI_SMALLFONT|UI_DROPSHADOW;
 	focus = (s->generic.parent->cursor == s->generic.menuPosition);
 
 	if ( s->generic.flags & QMF_GRAYED )
@@ -871,11 +853,11 @@ static void SpinControl_Draw( menulist_s *s )
 	{
 		// draw cursor
 		UI_FillRect( s->generic.left, s->generic.top, s->generic.right-s->generic.left+1, s->generic.bottom-s->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, color);
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
-	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
-	UI_DrawString( x + SMALLCHAR_WIDTH, y, s->itemnames[s->curvalue], style|UI_LEFT, color );
+	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT|UI_DROPSHADOW, color );
+	UI_DrawString( x + SMALLCHAR_WIDTH, y, s->itemnames[s->curvalue], style|UI_LEFT|UI_DROPSHADOW, color );
 }
 
 /*
@@ -1231,17 +1213,17 @@ void ScrollList_Draw( menulist_s *l )
 				color = text_color_highlight;
 
 				if (hasfocus)
-					style = UI_PULSE|UI_LEFT|UI_SMALLFONT;
+					style = UI_PULSE|UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 				else
-					style = UI_LEFT|UI_SMALLFONT;
+					style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 			}
 			else
 			{
 				color = text_color_normal;
-				style = UI_LEFT|UI_SMALLFONT;
+				style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 			}
 			if( l->generic.flags & QMF_CENTER_JUSTIFY ) {
-				style |= UI_CENTER;
+				style |= UI_CENTER|UI_DROPSHADOW;
 			}
 
 			UI_DrawString(
@@ -1553,7 +1535,7 @@ Menu_ItemAtCursor
 void *Menu_ItemAtCursor( menuframework_s *m )
 {
 	if ( m->cursor < 0 || m->cursor >= m->nitems )
-		return NULL;
+		return 0;
 
 	return m->items[m->cursor];
 }
@@ -1712,28 +1694,22 @@ Menu_Cache
 */
 void Menu_Cache( void )
 {
-	uis.charset			= trap_R_RegisterShaderNoMip( "gfx/2d/bigchars" );
-	uis.charsetProp		= trap_R_RegisterShaderNoMip( "menu/art/font1_prop.tga" );
-	uis.charsetPropGlow	= trap_R_RegisterShaderNoMip( "menu/art/font1_prop_glo.tga" );
-	uis.charsetPropB	= trap_R_RegisterShaderNoMip( "menu/art/font2_prop.tga" );
-	uis.cursor          = trap_R_RegisterShaderNoMip( "menu/art/3_cursor2" );
+	uis.charset			= trap_R_RegisterShaderNoMip( "interface/fonts/font0.png" );
+	uis.charsetProp		= trap_R_RegisterShaderNoMip( "interface/fonts/font1.png" );
+	uis.charsetPropGlow	= trap_R_RegisterShaderNoMip( "interface/fonts/font1Glow.png" );
+	uis.charsetPropB	= trap_R_RegisterShaderNoMip( "interface/fonts/font2.png" );
+	uis.cursor          = trap_R_RegisterShaderNoMip( "interface/menu/cursor.png" );
 	uis.rb_on           = trap_R_RegisterShaderNoMip( "menu/art/switch_on" );
 	uis.rb_off          = trap_R_RegisterShaderNoMip( "menu/art/switch_off" );
 
-	uis.whiteShader = trap_R_RegisterShaderNoMip( "white" );
-	if ( uis.glconfig.hardwareType == GLHW_RAGEPRO ) {
-		// the blend effect turns to shit with the normal 
-		uis.menuBackShader	= trap_R_RegisterShaderNoMip( "menubackRagePro" );
-	} else {
-		uis.menuBackShader	= trap_R_RegisterShaderNoMip( "menuback" );
-	}
-	uis.menuBackNoLogoShader = trap_R_RegisterShaderNoMip( "menubacknologo" );
+	uis.whiteShader = trap_R_RegisterShaderNoMip("white");
+	uis.menuBackShader	= trap_R_RegisterShaderNoMip("menuback");
 
-	menu_in_sound	= trap_S_RegisterSound( "sound/misc/menu1.wav", qfalse );
-	menu_move_sound	= trap_S_RegisterSound( "sound/misc/menu2.wav", qfalse );
-	menu_out_sound	= trap_S_RegisterSound( "sound/misc/menu3.wav", qfalse );
-	menu_buzz_sound	= trap_S_RegisterSound( "sound/misc/menu4.wav", qfalse );
-	weaponChangeSound	= trap_S_RegisterSound( "sound/weapons/change.wav", qfalse );
+	menu_in_sound	= trap_S_RegisterSound( "interface/menu/click.ogg", qfalse );
+	menu_move_sound	= trap_S_RegisterSound( "interface/menu/hover.ogg", qfalse );
+	menu_out_sound	= trap_S_RegisterSound( "interface/menu/back.ogg", qfalse );
+	menu_buzz_sound	= trap_S_RegisterSound( "interface/menu/cancel.ogg", qfalse );
+	weaponChangeSound	= trap_S_RegisterSound( "interface/hud/change.ogg", qfalse );
 
 	// need a nonzero sound, make an empty sound for this
 	menu_null_sound = -1;

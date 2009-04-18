@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =============================================================================
@@ -87,12 +67,12 @@ char	*ui_medalPicNames[] = {
 	"menu/medals/medal_victory"
 };
 char	*ui_medalSounds[] = {
-	"sound/feedback/accuracy.wav",
-	"sound/feedback/impressive_a.wav",
-	"sound/feedback/excellent_a.wav",
-	"sound/feedback/gauntlet.wav",
-	"sound/feedback/frags.wav",
-	"sound/feedback/perfect.wav"
+	"sound/feedback/accuracy.ogg",
+	"sound/feedback/impressive_a.ogg",
+	"sound/feedback/excellent_a.ogg",
+	"sound/feedback/gauntlet.ogg",
+	"sound/feedback/frags.ogg",
+	"sound/feedback/perfect.ogg"
 };
 
 
@@ -231,7 +211,7 @@ static void UI_SPPostgameMenu_DrawAwardsMedals( int max ) {
 			Com_sprintf( buf, sizeof(buf), "%i", amount );
 		}
 
-		UI_DrawString( x + 24, y + 52, buf, UI_CENTER, color_yellow );
+		UI_DrawString( x + 24, y + 52, buf, UI_CENTER|UI_DROPSHADOW, color_yellow );
 	}
 }
 
@@ -246,7 +226,7 @@ static void UI_SPPostgameMenu_DrawAwardsPresentation( int timer ) {
 
 	color[0] = color[1] = color[2] = 1.0f;
 	color[3] = (float)( AWARD_PRESENTATION_TIME - atimer ) / (float)AWARD_PRESENTATION_TIME;
-	UI_DrawProportionalString( 320, 64, ui_medalNames[postgameMenuInfo.awardsEarned[awardNum]], UI_CENTER, color );
+	UI_DrawProportionalString( 320, 64, ui_medalNames[postgameMenuInfo.awardsEarned[awardNum]], UI_CENTER|UI_DROPSHADOW, color );
 
 	UI_SPPostgameMenu_DrawAwardsMedals( awardNum + 1 );
 
@@ -277,14 +257,14 @@ static void UI_SPPostgameMenu_MenuDrawScoreLine( int n, int y ) {
 
 	rank = postgameMenuInfo.ranks[n];
 	if( rank & RANK_TIED_FLAG ) {
-		UI_DrawString( 640 - 31 * SMALLCHAR_WIDTH, y, "(tie)", UI_LEFT|UI_SMALLFONT, color_white );
+		UI_DrawString( 640 - 31 * SMALLCHAR_WIDTH, y, "(tie)", UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 		rank &= ~RANK_TIED_FLAG;
 	}
 	trap_GetConfigString( CS_PLAYERS + postgameMenuInfo.clientNums[n], info, MAX_INFO_STRING );
 	Q_strncpyz( name, Info_ValueForKey( info, "n" ), sizeof(name) );
 	Q_CleanStr( name );
 
-	UI_DrawString( 640 - 25 * SMALLCHAR_WIDTH, y, va( "#%i: %-16s %2i", rank + 1, name, postgameMenuInfo.scores[n] ), UI_LEFT|UI_SMALLFONT, color_white );
+	UI_DrawString( 640 - 25 * SMALLCHAR_WIDTH, y, va( "#%i: %-16s %2i", rank + 1, name, postgameMenuInfo.scores[n] ), UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 }
 
 
@@ -308,10 +288,10 @@ static void UI_SPPostgameMenu_MenuDraw( void ) {
 
 	// phase 1
 	if ( postgameMenuInfo.numClients > 2 ) {
-		UI_DrawProportionalString( 510, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[2], UI_CENTER, color_white );
+		UI_DrawProportionalString( 510, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[2], UI_CENTER|UI_DROPSHADOW, color_white );
 	}
-	UI_DrawProportionalString( 130, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[1], UI_CENTER, color_white );
-	UI_DrawProportionalString( 320, 480 - 64 - 2 * PROP_HEIGHT, postgameMenuInfo.placeNames[0], UI_CENTER, color_white );
+	UI_DrawProportionalString( 130, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[1], UI_CENTER|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, 480 - 64 - 2 * PROP_HEIGHT, postgameMenuInfo.placeNames[0], UI_CENTER|UI_DROPSHADOW, color_white );
 
 	if( postgameMenuInfo.phase == 1 ) {
 		timer = uis.realtime - postgameMenuInfo.starttime;
@@ -417,9 +397,9 @@ void UI_SPPostgameMenu_Cache( void ) {
 	}
 
 	if( buildscript ) {
-		trap_S_RegisterSound( "music/loss.wav", qfalse );
-		trap_S_RegisterSound( "music/win.wav", qfalse );
-		trap_S_RegisterSound( "sound/player/announce/youwin.wav", qfalse );
+		trap_S_RegisterSound( "music/loss.ogg", qfalse );
+		trap_S_RegisterSound( "music/win.ogg", qfalse );
+		trap_S_RegisterSound( "sound/player/announce/youwin.ogg", qfalse );
 	}
 }
 
@@ -627,11 +607,11 @@ void UI_SPPostgameMenu_f( void ) {
 	Prepname( 2 );
 
 	if ( playerGameRank != 1 ) {
-		postgameMenuInfo.winnerSound = trap_S_RegisterSound( va( "sound/player/announce/%s_wins.wav", postgameMenuInfo.placeNames[0] ), qfalse );
+		postgameMenuInfo.winnerSound = trap_S_RegisterSound( va( "sound/player/announce/%s_wins.ogg", postgameMenuInfo.placeNames[0] ), qfalse );
 		trap_Cmd_ExecuteText( EXEC_APPEND, "music music/loss\n" );
 	}
 	else {
-		postgameMenuInfo.winnerSound = trap_S_RegisterSound( "sound/player/announce/youwin.wav", qfalse );
+		postgameMenuInfo.winnerSound = trap_S_RegisterSound( "sound/player/announce/youwin.ogg", qfalse );
 		trap_Cmd_ExecuteText( EXEC_APPEND, "music music/win\n" );
 	}
 

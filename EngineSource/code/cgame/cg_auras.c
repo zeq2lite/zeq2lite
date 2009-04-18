@@ -1,81 +1,165 @@
 // Copyright (C) 2003-2004 RiO
 //
 // cg_auras.c -- generates and displays auras
+//
 
 #include "cg_local.h"
 
-#define	AURA_TAILLENGTH		  48
-#define AURA_WIDTH			  36
+static auraState_t	auraStates[MAX_CLIENTS];
 
-#define AURA_BURSTTIME		 300		// 300 ms duration of aura burst
-#define AURA_RUBBLE_DIST	  48		// Distance allowed from ground before debris comes up
+// =================================================
+//
+//    S E T T I N G   U P   C O N V E X   H U L L
+//
+// =================================================
 
-#define AURA_TEXTUREBREAK	0.72f		// Defines where the 'break' between tail and lobe is
-#define AURA_BREAKANGLE		0.58f		// At which angle does the aura break between two lobes and a lobe and tail
+/*
+========================
+CG_Aura_BuildTailPoint
+========================
+  Builds position of the aura's tail point, dependant on velocity vector of player entity
+*/
+static void CG_Aura_BuildTailPoint(centity_t *player, auraState_t *state, auraConfig_t *config){
+	vec3_t			tailDir;
 
-#define	NR_AURASPIKES		  20
-#define AURASPIKE_SIZE		14.0f
-#define AURASPIKE_BORDER	 2.5f
-#define AURASPIKE_TIME		 500
+	// Find the direction the tail should point. Low speeds will have it pointing up.
+	if(VectorNormalize2( player->currentState.pos.trDelta, tailDir) < 180)
+		VectorSet( tailDir, 0, 0, 1);
+	else
+		VectorInverse( tailDir);
 
-
-// What types of aura we are working with
-typedef enum {
-	AURA_FLAME,
-	AURA_CONVEXHULL,
-	AURA_ORB_OUTW,
-	AURA_ORB_INW
-} auraType_t;
-
-typedef struct auraTag_s {
-	vec3_t		pos_world;
-	vec2_t		pos_screen;
-	vec3_t		normal;
-	float		length;
-	qboolean	is_tail;
-} auraTag_t;
-
-// info needed for an aura system
-typedef struct {
-	auraType_t		type;
-	
-	vec3_t			RGBColor;
-	qhandle_t		shader;
-	qhandle_t		trailShader;
-	float			scale;
-
-	sfxHandle_t		startSound;
-	sfxHandle_t		loopSound;
-
-	qboolean		active;				// Is the aura active?
-
-	int				burstTimer;			// Client time when last aura burst was started
-
-	vec3_t			origin;
-	vec3_t			delta;
-
-	// VOLUMETRIC SPRITE AURA
-	vec3_t			tailTip;			// Where the tip of the tail is located
-	vec3_t			leftLobeTip;		// Where the tip of the left 'lobe' is located
-	vec3_t			rightLobeTip;		// Where the tip of the right 'lobe' is located
-	
-	// CONVEX HULL AURA
-	auraTag_t		hullPoints[MAX_AURATAGS + 1]; // +1 for tail point
-	int				nr_hullPoints;
-	float			hullCircumference;
-} auraSystem_t;
-
-// Make this static so it is not removed from memory
-static auraSystem_t	playerAura[MAX_CLIENTS];
+	// Using the established direction, set up the tail's potential hull point.
+	VectorMA( state->origin, config->auraScale * config->tailLength, tailDir, state->tailPos);
+}
 
 
 /*
-===============
-CG_QSortAngle
-===============
-Quicksort by ascending angles
+=======================
+CG_Aura_MarkRootPoint
+=======================
+  Marks a point as the aura's root point. The root point is the point that is placed
+  furthest away from the tail. It is where the aura 'opens up'.
 */
-void CG_QSortAngle( auraTag_t *points, float* angles, int lowbound, int highbound ) {
+void CG_Aura_MarkRootPoint( auraState_t *state){
+	vec3_t	prjPoint;
+	float	maxDist, newDist;
+	int		i;
+
+    // NOTE:
+	// The root point is the point that is placed furthest down the aura.
+	// This means the distance between the tail point and the root point's projection
+	// onto the tail axis is maximal.
+
+	maxDist = 0;
+	for(i = 0;i < state->convexHullCount;i++){
+		// Project the point onto the tail axis
+		ProjectPointOnLine( state->convexHull[i].pos_world, state->origin, state->tailPos, prjPoint);
+
+		// Measure the distance and copy over the projection of the point
+		// as the new root if it's further away.
+		newDist = Distance( prjPoint, state->tailPos);
+		if(newDist > maxDist){
+			maxDist = newDist;
+			VectorCopy( prjPoint, state->rootPos);
+		}
+	}
+
+	// HACK:
+	// Nudge the root away a bit to account for the expansion
+	// of the aura through the hull normals.
+	{
+		vec3_t tailDir;
+
+		VectorSubtract( state->tailPos, state->origin, tailDir);
+		VectorNormalize( tailDir);
+		VectorMA( state->rootPos, -4.8f, tailDir, state->rootPos);
+	}
+}
+
+
+/*
+=======================
+CG_Aura_GetHullPoints
+=======================
+  Reads and prepares the positions of the tags for a convex hull aura.
+*/
+#define MAX_AURATAGNAME 10
+static void CG_Aura_GetHullPoints( centity_t *player, auraState_t *state, auraConfig_t *config){
+	char		tagName[MAX_AURATAGNAME];
+	int			i, j;
+	
+	j = 0;
+	
+	for (i = 0;i < config->numTags[0];i++){
+		orientation_t tagOrient;
+		
+		// Lerp the tag's position
+		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
+		
+		if (!CG_GetTagOrientationFromPlayerEntityHeadModel( player, tagName, &tagOrient)) continue;
+		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
+
+		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
+			state->convexHull[j].is_tail = qfalse;
+			j++;
+		}
+	}
+
+	for (i = 0;i < config->numTags[1];i++){
+		orientation_t tagOrient;
+		
+		// Lerp the tag's position
+		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
+		
+		if(!CG_GetTagOrientationFromPlayerEntityTorsoModel( player, tagName, &tagOrient)) continue;
+		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
+
+		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
+			state->convexHull[j].is_tail = qfalse;
+			j++;
+		}
+	}
+
+	for (i = 0;i < config->numTags[2];i++){
+		orientation_t tagOrient;
+		
+		// Lerp the tag's position
+		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
+		
+		if(!CG_GetTagOrientationFromPlayerEntityLegsModel( player, tagName, &tagOrient)) continue;
+		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
+
+		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
+			state->convexHull[j].is_tail = qfalse;
+			j++;
+		}
+	}
+
+	// Find the aura's tail point
+	CG_Aura_BuildTailPoint( player, state, config);
+
+	// Add the tail tip to the hull points, if it's visible
+	VectorCopy( state->tailPos, state->convexHull[j].pos_world);
+	if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
+		state->convexHull[j].is_tail = qtrue;
+		j++;
+	}
+
+	// Get the total number of possible vertices to account for in the hull
+	state->convexHullCount = j;
+
+	// Mark the root point
+	CG_Aura_MarkRootPoint( state);
+}
+
+
+/*
+====================
+CG_Aura_QSortAngle
+====================
+  Quicksort by ascending angles
+*/
+static void CG_Aura_QSortAngle( auraTag_t *points, float* angles, int lowbound, int highbound){
 	int			low, high;
 	float		mid;
 	auraTag_t	tempPoint;
@@ -85,11 +169,11 @@ void CG_QSortAngle( auraTag_t *points, float* angles, int lowbound, int highboun
 	high = highbound;
 	mid = angles[(low + high) / 2];
 
-	do {
-		while ( angles[low]  < mid ) low++;
-		while ( angles[high] > mid ) high--;
+	do{
+		while(angles[low]  < mid) low++;
+		while(angles[high] > mid) high--;
 
-		if ( low <= high ) {
+		if(low <= high){
 			// swap points
 			tempPoint = points[low];
 			points[low] = points[high];
@@ -104,21 +188,21 @@ void CG_QSortAngle( auraTag_t *points, float* angles, int lowbound, int highboun
 			high--;
 		}
 
-	} while ( !(low > high));
+	} while(!(low > high));
 
-	if ( high > lowbound ) CG_QSortAngle( points, angles, lowbound, high );
-	if ( low < highbound ) CG_QSortAngle( points, angles, low, highbound );	
+	if(high > lowbound) CG_Aura_QSortAngle( points, angles, lowbound, high);
+	if(low < highbound) CG_Aura_QSortAngle( points, angles, low, highbound);	
 }
 
 
 /*
-===================
-CG_FindConvexHull
-===================
-Finds the convex hull of a set of points
+===========================
+CG_Aura_ArrangeConvexHull
+===========================
+  Rearranges *points to contain its convex hull in the first *nr_points points.
 */
-static qboolean CG_FindConvexHull( auraTag_t *points, int *nr_points ) {
-	float		angles[MAX_AURATAGS + 1]; // +1 for tail
+static qboolean CG_Aura_ArrangeConvexHull( auraTag_t *points, int *nr_points){
+	float		angles[MAX_AURATAGS + 1];// +1 for tail
 	int			amount, index, pivotIndex;
 	auraTag_t	pivot;
 	auraTag_t	behind, infront;
@@ -129,22 +213,22 @@ static qboolean CG_FindConvexHull( auraTag_t *points, int *nr_points ) {
 
 	amount = *nr_points;	
 
-	if ( amount == 3 ) return qtrue; // Already a convex hull
-	if ( amount <  3 ) {
+	if(amount == 3) return qtrue;// Already a convex hull
+	if(amount <  3){
 		return qfalse;
 	}
 
 	pivotIndex = 0;
 	// Find pivot point, which is known to be on the hull.
 	// Point with lowest y - if there are multiple, point with highest x.
-	for ( index = 1; index < amount; index++ ) {
+	for(index = 1;index < amount;index++){
 
-		if ( points[index].pos_screen[1] < points[pivotIndex].pos_screen[1] ) {
+		if(points[index].pos_screen[1] < points[pivotIndex].pos_screen[1]){
 			pivotIndex = index;
 
-		} else if ( points[index].pos_screen[1] == points[pivotIndex].pos_screen[1] ) {
+		} else if(points[index].pos_screen[1] == points[pivotIndex].pos_screen[1]){
 			
-			if (points[index].pos_screen[0] > points[pivotIndex].pos_screen[0] ) {
+			if (points[index].pos_screen[0] > points[pivotIndex].pos_screen[0]){
 				pivotIndex = index;
 			}
 		}
@@ -156,7 +240,7 @@ static qboolean CG_FindConvexHull( auraTag_t *points, int *nr_points ) {
 	amount--;
 
 	// Calculate angle to pivot for each point in the array.
-    for ( index = 0; index < amount; index++ ) {
+    for(index = 0;index < amount;index++){
  
 		// point vector
 		vecPoint.pos_screen[0] = pivot.pos_screen[0] - points[index].pos_screen[0];
@@ -167,46 +251,46 @@ static qboolean CG_FindConvexHull( auraTag_t *points, int *nr_points ) {
 	}
 
 	// Sort the points by angle.
-	CG_QSortAngle(points, angles, 0, amount - 1);
+	CG_Aura_QSortAngle(points, angles, 0, amount - 1);
 
-	// Step through array to remove points that are not part of the convex hull.
+	// Step through array to remove points that are not p of the convex hull.
 	index = 1;
 
-	do {
+	do{
 		 // Assign points behind and in front of current point.
-		if ( index == 0) {
+		if(index == 0){
 			rightTurn = qtrue;
-		} else {
+		} else{
 			behind = points[index - 1];
 
-			if ( index == (amount - 1)) {
+			if(index == (amount - 1)){
 				infront = pivot;
-			} else {
+			} else{
 				infront = points[index + 1];
 			}
 
 			// Work out if we are making a right or left turn using vector product.
-			if ( ( (behind.pos_screen[0]  - points[index].pos_screen[0]) * (infront.pos_screen[1] - points[index].pos_screen[1]) -
-				   (infront.pos_screen[0] - points[index].pos_screen[0]) * (behind.pos_screen[1] - points[index].pos_screen[1]) ) < 0 ) {
+			if(( (behind.pos_screen[0]  - points[index].pos_screen[0]) * (infront.pos_screen[1] - points[index].pos_screen[1]) -
+				   (infront.pos_screen[0] - points[index].pos_screen[0]) * (behind.pos_screen[1] - points[index].pos_screen[1])) < 0){
 				rightTurn = qtrue;
-			}else {
+			}else{
 				rightTurn = qfalse;
 			}
 		}
 
-		if ( rightTurn ) {
+		if(rightTurn){
 			// point is currently considered part of the hull
 			index++;
-		} else {
+		} else{
 			// point is not part of the hull
 
 			// remove point from convex hull
-			if ( index == (amount - 1) ) {
+			if(index == (amount - 1)){
 				amount--;
-			} else {
+			} else{
 				// move everything after the current value one step forward
-				memcpy( buffer, &points[index + 1], sizeof(auraTag_t) * (amount - index - 1) );
-				memcpy( &points[index], buffer, sizeof(auraTag_t) * (amount - index - 1) );
+				memcpy( buffer, &points[index + 1], sizeof(auraTag_t) * (amount - index - 1));
+				memcpy( &points[index], buffer, sizeof(auraTag_t) * (amount - index - 1));
 				amount--;
 			}
 
@@ -214,7 +298,7 @@ static qboolean CG_FindConvexHull( auraTag_t *points, int *nr_points ) {
 			index--;
 		}
 
-	} while ( !(index == (amount - 1)) );
+	} while(!(index == (amount - 1)));
 	
 	// add pivot back into points array
 	points[amount] = pivot;
@@ -224,77 +308,121 @@ static qboolean CG_FindConvexHull( auraTag_t *points, int *nr_points ) {
 	return qtrue;
 }
 
+
 /*
-=============================
-CG_SetHullNormalsAndLengths
-=============================
+===========================
+CG_Aura_SetHullAttributes
+===========================
+  Set segment lengths, normals, circumference, etc.
 */
-static float CG_SetHullNormalsAndLengths( auraTag_t *points, int nr_points, float *tailpos ) {
+static void CG_Aura_SetHullAttributes( auraState_t *state){
 	int		index, behind, infront;
 	vec3_t	line_behind, line_infront, viewLine;
 	vec3_t	temp_behind, temp_infront;
 	float	circumference;
 
-	circumference = 0.0f;
-	// initialize negative, by which we'll see if there's a tail to travel to to begin with.
-	*tailpos = -1.0f;
-	for ( index = 0; index < nr_points; index++ ) {
+	auraTag_t *points;
+	int nr_points;
 
+	points = state->convexHull;
+	nr_points = state->convexHullCount;
+
+	circumference = 0.0f;
+
+	for(index = 0;index < nr_points;index++){
+		
 		// Set successor and predeccessor
-		if (index == 0) {
+		if(index == 0){
 			behind = nr_points - 1;
 			infront = index + 1;
-		} else if (index == nr_points - 1) {
+		} else if(index == nr_points - 1){
 			behind = index - 1;
 			infront = 0;
-		} else {
+		} else{
 			behind = index - 1;
 			infront = index + 1;
 		}
 
-		VectorSubtract (points[index].pos_world, cg.refdef.vieworg, viewLine);
+		VectorSubtract( points[index].pos_world, cg.refdef.vieworg, viewLine);
 
 		// Calculate the normal
-		VectorSubtract( points[index].pos_world, points[behind].pos_world,  line_behind  );
-		VectorSubtract( points[infront].pos_world, points[index].pos_world, line_infront );
+		VectorSubtract( points[index].pos_world, points[behind].pos_world,  line_behind );
+		VectorSubtract( points[infront].pos_world, points[index].pos_world, line_infront);
 
-		VectorNormalize( line_behind  );
-		circumference += (points[index].length = VectorNormalize( line_infront ));
+		VectorNormalize( line_behind );
+		circumference += (points[index].length = VectorNormalize( line_infront));
 
-		// save position of the tail
-		if ( points[infront].is_tail ) {
-			*tailpos = circumference;
-		}
-
-		CrossProduct( line_behind, viewLine, temp_behind );
-		CrossProduct( line_infront, viewLine, temp_infront );
-		if (!VectorNormalize ( temp_behind )) {
+		CrossProduct( line_behind, viewLine, temp_behind);
+		CrossProduct( line_infront, viewLine, temp_infront);
+		if(!VectorNormalize(temp_behind)){
 			viewLine[2] += 0.1f;
-			CrossProduct( line_behind, viewLine, temp_behind );
-			VectorNormalize ( temp_behind );
+			CrossProduct( line_behind, viewLine, temp_behind);
+			VectorNormalize(temp_behind);
 			viewLine[2] -= 0.1f;
 		}
 		
-		if (!VectorNormalize ( temp_infront )) {
+		if(!VectorNormalize(temp_infront)){
 			viewLine[2] += 0.1f;
-			CrossProduct( line_behind, viewLine, temp_behind );
-			VectorNormalize ( temp_behind );
+			CrossProduct( line_behind, viewLine, temp_behind);
+			VectorNormalize(temp_behind);
 			viewLine[2] -= 0.1f;
 		}
 		
-		VectorAdd( temp_behind, temp_infront, points[index].normal );
-		VectorNormalize( points[index].normal );
+		VectorAdd( temp_behind, temp_infront, points[index].normal);
+		VectorNormalize( points[index].normal);
 	}
 
-	return circumference;
+	state->convexHullCircumference = circumference;
 }
 
+
 /*
-=============
-CG_DrawSpike
-=============
+=========================
+CG_Aura_BuildConvexHull
+=========================
+  Calls all relevant functions to build up the aura's convex hull.
+  Returns false if no hull can be made.
 */
-static void CG_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t shader, vec4_t RGBModulate) {
+static qboolean CG_Aura_BuildConvexHull( centity_t *player, auraState_t *state, auraConfig_t *config){
+
+	// Retrieve hull points
+	CG_Aura_GetHullPoints( player, state, config);
+
+	// Arrange hull. Don't continue if there aren't enough points to form a hull.
+	if(!CG_Aura_ArrangeConvexHull( state->convexHull, &state->convexHullCount)){
+		return qfalse;
+	}
+
+	// Set hull's attributes
+	CG_Aura_SetHullAttributes( state);
+
+	// Hull building completed succesfully
+	return qtrue;
+}
+
+
+
+
+// =================================
+//
+//    A U R A   R E N D E R I N G
+//
+// =================================
+
+// Some constants needed for rendering.
+// FIXME: Should become dynamic, but NR_AURASPIKES may pose a problem with allocation of poly buffer.
+#define NR_AURASPIKES           50
+#define AURA_FLATTEN_NORMAL		0.75f
+#define AURA_ROOTCUTOFF_FRAQ	0.80f
+#define AURA_ROOTCUTOFF_DIST	7.00f
+
+/*
+===================
+CG_Aura_DrawSpike
+===================
+  Draws the polygons for one aura spike
+*/
+static void CG_Aura_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t shader, vec4_t RGBModulate){
 	vec3_t line, offset, viewLine;
 	polyVert_t verts[4];
 	float len;
@@ -305,7 +433,7 @@ static void CG_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t shade
 	CrossProduct (viewLine, line, offset);
 	len = VectorNormalize (offset);
 	
-	if (!len) {
+	if (!len){
 		return;
 	}
 	
@@ -322,8 +450,8 @@ static void CG_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t shade
 	verts[3].st[0] = 1;
 	verts[3].st[1] = 1;
 	
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
+	for (i = 0;i < 4;i++){
+		for (j = 0;j < 4;j++){
 			verts[i].modulate[j] = 255 * RGBModulate[j];
 		}
 	}
@@ -331,640 +459,585 @@ static void CG_DrawSpike (vec3_t start, vec3_t end, float width, qhandle_t shade
 	trap_R_AddPolyToScene( shader, 4, verts);
 }
 
+
 /*
-=========================
-CG_ConvexHullAuraRender
-=========================
+==========================
+CG_Aura_LerpSpikeSegment
+==========================
+  Lerps the position the aura spike should have along a segment of the convex hull
 */
-void CG_ConvexHullAuraRender ( auraSystem_t *auraSys ) {
-	int	i, j, k;
-	float length_pos, tail_pos, origin_pos, length_sofar;
-	float progress, progress_pct, lifetime_pct, lifetime_pct_pingpong, RGBModulate;
-	vec3_t lerpNormal, lerpPos, edge, endPos;
-	vec4_t RGBColor;
+static void CG_Aura_LerpSpikeSegment( auraState_t *state, int spikeNr, int *start, int *end, float *progress_pct){
+	float length_pos, length_sofar;
+	int i, j;
 
-	// Set up the tail hullpoint location.
-	if ( VectorLength( auraSys->delta ) < 180 ) {
-		VectorSet(auraSys->tailTip, 0, 0, 1);
-	} else {
-		VectorNormalize2( auraSys->delta, auraSys->tailTip );
-		VectorInverse( auraSys->tailTip );
+	// Map i onto the circumference of the convex hull.
+	length_pos = state->convexHullCircumference *((float)spikeNr / (float)(NR_AURASPIKES - 1));
+				
+	// Find the segment we are in right now.
+	length_sofar = 0;
+	for(i = 0;(( length_sofar + state->convexHull[i].length) < length_pos) &&(i < NR_AURASPIKES);i++){
+		length_sofar += state->convexHull[i].length;
 	}
-	VectorScale( auraSys->tailTip, (AURA_TAILLENGTH * auraSys->scale) - AURASPIKE_SIZE, auraSys->tailTip );
-	VectorAdd( auraSys->tailTip, auraSys->origin, auraSys->tailTip );
-
-	VectorCopy( auraSys->tailTip, auraSys->hullPoints[auraSys->nr_hullPoints].pos_world );
-	if (CG_WorldCoordToScreenCoordVec( auraSys->hullPoints[auraSys->nr_hullPoints].pos_world,
-		auraSys->hullPoints[auraSys->nr_hullPoints].pos_screen ) ) {
-		auraSys->hullPoints[auraSys->nr_hullPoints].is_tail = qtrue;
-		auraSys->nr_hullPoints++;
+	j = i + 1;
+	if(j == state->convexHullCount){
+		j = 0;
 	}
 
-	// build the convex hull
-	if ( !CG_FindConvexHull( auraSys->hullPoints, &auraSys->nr_hullPoints ) ) {
-		// We couldn't build a hull.
+	// Return found values.
+	*start = i;
+	*end = j;
+	*progress_pct = (length_pos - length_sofar) / state->convexHull[i].length;
+}
+
+
+/*
+==============
+CG_LerpSpike
+==============
+  Lerps one spike in the aura
+*/
+static void CG_LerpSpike( auraState_t *state, auraConfig_t *config, int spikeNr, float alphaModulate){
+	int start, end;
+	float progress_pct;
+	vec3_t viewLine;
+
+	
+	vec3_t lerpPos, lerpNormal, lerpDir, endPos, basePos;
+	float lerpTime, lerpModulate, lerpBorder, baseBorder, lerpSize;
+	vec4_t lerpColor;
+
+	vec3_t edge, tailDir, tempVec;
+
+	// Decide on which type of spike to use.
+	if(!( spikeNr % 3)){
+		lerpTime =(cg.time % 400) / 400.0f;
+		lerpSize = 14.0f * (1 + lerpTime);
+		lerpBorder = 2.5f * (1.75f + lerpTime);
+		baseBorder = 2.5f * 1.75f;
+
+	} else if(!( spikeNr % 2)){
+		lerpTime = (( cg.time + 200) % 400) / 400.0f;
+		lerpSize = 12.0f * (1 + lerpTime);
+		lerpBorder = 3.0f * (1.75f + lerpTime);
+		baseBorder = 3.0f * 1.75f;
+
+	} else{
+		lerpTime =(cg.time % 500) / 500.0f;
+		lerpSize = 10.0f * (1 + lerpTime);
+		lerpBorder = 2.75f * (1.75f + lerpTime);
+		baseBorder = 2.75f * 1.75f;
+	}
+	lerpModulate = -4 * lerpTime * lerpTime + 4 * lerpTime;
+
+	// NOTE: Prepared for a cvar switch between additive and
+	//       blended aura.
+	if(0){
+		lerpColor[0] = config->auraColor[0] * lerpModulate * alphaModulate;
+		lerpColor[1] = config->auraColor[1] * lerpModulate * alphaModulate;
+		lerpColor[2] = config->auraColor[2] * lerpModulate * alphaModulate;
+		lerpColor[3] = 1.0f;
+	} else{
+		lerpColor[0] = config->auraColor[0];
+		lerpColor[1] = config->auraColor[1];
+		lerpColor[2] = config->auraColor[2];
+		lerpColor[3] = lerpModulate * alphaModulate;
+	}
+
+	// Get our position in the hull
+	CG_Aura_LerpSpikeSegment( state, spikeNr, &start, &end, &progress_pct);
+
+	// Lerp the position using the stored normal to expand the aura a bit
+	VectorSet( lerpNormal, 0.0f, 0.0f, 0.0f);
+	VectorMA( lerpNormal, 1.0f - progress_pct, state->convexHull[start].normal, lerpNormal);
+	VectorMA( lerpNormal, progress_pct, state->convexHull[end].normal, lerpNormal);
+	VectorNormalize(lerpNormal);
+
+	VectorSubtract( state->convexHull[end].pos_world, state->convexHull[start].pos_world, edge);
+	VectorMA( state->convexHull[start].pos_world, progress_pct, edge, lerpPos);
+	VectorMA( lerpPos, baseBorder, lerpNormal, basePos);
+	VectorMA( lerpPos, lerpBorder, lerpNormal, lerpPos);
+	
+
+	// Create the direction
+	VectorSubtract( lerpPos, state->rootPos, lerpDir);
+		
+	// Flatten the direction a bit so it doesn't point to the tip too drasticly.
+	VectorSubtract( state->tailPos, state->origin, tailDir);
+	VectorPllComponent( lerpDir, tailDir, edge);
+	VectorScale( edge, AURA_FLATTEN_NORMAL, edge);
+	VectorSubtract( lerpDir, edge, lerpDir);
+	VectorNormalize( lerpDir);
+
+	// Set the viewing direction
+	VectorSubtract( lerpPos, cg.refdef.vieworg, viewLine);
+	VectorNormalize( viewLine);
+
+	// Don't display this spike if it would be travelling into / out of
+	// the screen too much: It is part of the blank area surrounding the root.
+	CrossProduct( viewLine, lerpDir, tempVec);
+	if(VectorLength(tempVec) < AURA_ROOTCUTOFF_FRAQ){
+
+		// Only disallow drawing if it's actually a segment originating
+		// from close enough to the root.
+		if(Distance( basePos, state->rootPos) < AURA_ROOTCUTOFF_DIST){
+			return;
+		}
+	}
+
+	VectorMA( lerpPos, lerpBorder, lerpDir, lerpPos);
+	VectorMA( lerpPos, lerpSize, lerpDir, endPos);
+	CG_Aura_DrawSpike( lerpPos, endPos, lerpSize / 1.25f, config->auraShader, lerpColor);
+}
+
+
+/*
+==========================
+CG_Aura_ConvexHullRender
+==========================
+*/
+static void CG_Aura_ConvexHullRender( centity_t *player, auraState_t *state, auraConfig_t *config){
+	int i;
+
+	// Don't draw the aura if it isn't active and the modulation is zero
+	if(!( state->isActive ||(state->modulate > 0.0f))){
 		return;
 	}
 
-	auraSys->hullCircumference = CG_SetHullNormalsAndLengths( auraSys->hullPoints, auraSys->nr_hullPoints, &tail_pos );
-
-	if ( cg.time > (auraSys->burstTimer + AURASPIKE_TIME) ) {
-		auraSys->burstTimer = cg.time;
+	// Don't draw the aura if configuration says we shouldn't.
+	if(!config->showAura){
+		return;
 	}
 
-	lifetime_pct = 1.0f - (float)( AURASPIKE_TIME - ( cg.time - auraSys->burstTimer ) ) / AURASPIKE_TIME;
-	RGBModulate =  -4 * lifetime_pct * lifetime_pct + 4 * lifetime_pct;
-	
-	
-
-	// first set
-	for ( i = 0; i < NR_AURASPIKES; i++ ) {
-		// map i onto the circumference of the convex hull
-		if ( tail_pos < 0 ) {
-			// If we don't have a tail, we do it the simple way
-			length_pos = auraSys->hullCircumference * ( (float)i / (float)(NR_AURASPIKES - 1));
-			length_pos += auraSys->hullCircumference * ( 1.0f / (float)(2.0f * (NR_AURASPIKES -1)) );
-			while ( length_pos > auraSys->hullCircumference ) {
-				length_pos -= auraSys->hullCircumference;
-			}
-			lifetime_pct_pingpong = lifetime_pct;
-		} else {
-			// otherwise we complicate matters a bit to let the spikes travel towards the tail
-			lifetime_pct_pingpong = RGBModulate;
-			origin_pos = tail_pos + 0.5f * auraSys->hullCircumference;
-			while ( origin_pos > auraSys->hullCircumference ) {
-				origin_pos -= auraSys->hullCircumference;
-			}
-
-			length_pos = auraSys->hullCircumference * ( (float)i / (float)(NR_AURASPIKES - 1));
-
-			if ( tail_pos > origin_pos ) {
-				// This means the break in the cycle is between tail-origin
-				if ( (length_pos < origin_pos) || (length_pos > tail_pos) ) {
-					length_pos -= auraSys->hullCircumference * (lifetime_pct / (float)(NR_AURASPIKES - 1));
-				} else {
-					length_pos += auraSys->hullCircumference * (lifetime_pct / (float)(NR_AURASPIKES - 1));
-				}
-			} else {
-				// This means the break in the cycle is between origin-tail
-				if ( (length_pos > origin_pos) || (length_pos < tail_pos) ) {
-					length_pos += auraSys->hullCircumference * (lifetime_pct / (float)(NR_AURASPIKES - 1));
-				} else {
-					length_pos -= auraSys->hullCircumference * (lifetime_pct / (float)(NR_AURASPIKES - 1));
-				}
-			}
-		}
-
-		while ( length_pos > auraSys->hullCircumference ) {
-			length_pos -= auraSys->hullCircumference;
-		}
-		while ( length_pos < 0 ) {
-			length_pos += auraSys->hullCircumference;
-		}
-
-		// find the segment we are in right now
-		length_sofar = 0;
-		for ( j = 0; ((length_sofar + auraSys->hullPoints[j].length) < length_pos ) && (j < NR_AURASPIKES) ; j++ ) {
-			length_sofar += auraSys->hullPoints[j].length;
-		}
-		k = j + 1;
-		if ( k == auraSys->nr_hullPoints ) k = 0;
-
-		// find how far we have progressed on that segment
-		progress = (length_pos - length_sofar);
-		progress_pct = progress / auraSys->hullPoints[j].length;
-
-		// interpolate the normal and position
-		VectorSet( lerpNormal, 0.0f, 0.0f, 0.0f);
-		VectorMA( lerpNormal, 1.0f - progress_pct, auraSys->hullPoints[j].normal, lerpNormal );
-		VectorMA( lerpNormal, progress_pct, auraSys->hullPoints[k].normal, lerpNormal );
-		VectorNormalize ( lerpNormal );
-
-		VectorSubtract( auraSys->hullPoints[k].pos_world, auraSys->hullPoints[j].pos_world, edge );
-		VectorMA( auraSys->hullPoints[j].pos_world, progress_pct, edge, lerpPos );
-
-		// do the drawing				
-		VectorMA( lerpPos, AURASPIKE_SIZE * ( 1 + lifetime_pct_pingpong) + AURASPIKE_BORDER * (1 + 2 * lifetime_pct_pingpong), lerpNormal, endPos );
-		VectorMA( lerpPos, AURASPIKE_BORDER * (1 + 2 * lifetime_pct_pingpong), lerpNormal, lerpPos );
-				
-		RGBColor[0] = auraSys->RGBColor[0] * RGBModulate;
-		RGBColor[1] = auraSys->RGBColor[1] * RGBModulate;
-		RGBColor[2] = auraSys->RGBColor[2] * RGBModulate;
-		RGBColor[3] = 1.0f;
-
-		CG_DrawSpike( lerpPos, endPos, AURASPIKE_SIZE / 1.25f * (1 + lifetime_pct_pingpong), auraSys->shader, RGBColor );
+	// Build the hull. Don't continue if it can't be built.
+	if(!CG_Aura_BuildConvexHull( player, state, config)){
+		return;
 	}
 
-
+	// Clear the poly buffer
 	
-	lifetime_pct = (1.0f - (float)( AURASPIKE_TIME - ( cg.time - auraSys->burstTimer ) ) / AURASPIKE_TIME);
-	lifetime_pct += 0.5;
-	while (lifetime_pct > 1.0f) {
-		lifetime_pct -= 1.0f;
+	// For each spike add it to the poly buffer
+	// FIXME: Uses old style direct adding with trap call until buffer system is built
+	for(i = 0;i < NR_AURASPIKES;i++){
+		CG_LerpSpike( state, config, i, state->modulate);		
 	}
-	RGBModulate = -4 * lifetime_pct * lifetime_pct + 4 * lifetime_pct;
-	lifetime_pct_pingpong = lifetime_pct;
+}
+// ===================================
+//
+//    A U R A   M A N A G E M E N T
+//
+// ===================================
+/*==================
+CG_Aura_AddTrail
+==================*/
+static void CG_Aura_AddTrail( centity_t *player, auraState_t *state, auraConfig_t *config){
+	// Don't draw a trail if the aura isn't active
+	if(!state->isActive){
+		return;
+	}
 
-	// second (smaller) set
-	for ( i = 0; i < ceil(1.5f * NR_AURASPIKES); i++ ) {
-		// map i onto the circumference of the convex hull
-		length_pos = auraSys->hullCircumference * ( (float)i / (float)(ceil(1.5f * NR_AURASPIKES) - 1) );
-		
-		
-		// find the segment we are in right now
-		length_sofar = 0;
-		for ( j = 0; ((length_sofar + auraSys->hullPoints[j].length) < length_pos ) && (j < NR_AURASPIKES) ; j++ ) {
-			length_sofar += auraSys->hullPoints[j].length;
+	// Don't draw a trail if configuration says we shouldn't.
+	if(!config->showTrail){
+		return;
+	}
+
+	// Update the trail only if we're using the boost aura
+	if(!(player->currentState.powerups &(1 << PW_BOOST))){
+		return;
+	}
+
+	// If we didn't draw the tail last frame, this is a new instantiation
+	// of the entity and we will have to reset the tail positions.
+	// NOTE: Give 1.5 second leeway for 'snapping' the tail
+	//       incase we (almost) immediately restart boosting.
+	if(player->lastTrailTime < (cg.time - cg.frametime - 1500)){		
+
+		CG_ResetTrail( player->currentState.clientNum, player->lerpOrigin, 1000,
+			config->trailWidth, config->trailShader, config->trailColor);
+	}
+	
+	CG_UpdateTrailHead( player->currentState.clientNum, player->lerpOrigin);
+
+	player->lastTrailTime = cg.time;
+}
+
+
+/*===================
+CG_Aura_AddDebris
+===================*/
+static void CG_Aura_AddDebris( centity_t *player, auraState_t *state, auraConfig_t *config){
+	// Don't add debris if the aura isn't active
+	if(!state->isActive){
+		return;
+	}
+
+	// Don't add debris could if configuration says we shouldn't.
+	if(!config->generatesDebris){
+		return;
+	}
+	
+	// Generate the debris cloud only if we aren't using the boost aura (and thus
+	// are using the charge aura).
+	if(player->currentState.powerups &(1 << PW_BOOST)){
+		return;
+	}
+
+	// Spawn the debris system if the player has just entered PVS
+	if(!CG_FrameHist_HadAura( player->currentState.number)){
+		PSys_SpawnCachedSystem( "AuraDebris", player->lerpOrigin, NULL, player, NULL, qtrue, qfalse);
+	}
+
+	CG_FrameHist_SetAura( player->currentState.number);
+}
+
+
+/*===================
+CG_Aura_AddSounds
+===================*/
+static void CG_Aura_AddSounds( centity_t *player, auraState_t *state, auraConfig_t *config){
+	// Don't add sounds if the aura isn't active
+	if(!state->isActive){
+		return;
+	}
+
+	// Add looping sounds depending on aura type (boost or charge)
+	if(player->currentState.powerups &(1 << PW_BOOST)){
+		if(config->boostLoopSound){
+			trap_S_AddLoopingSound( player->currentState.number, player->lerpOrigin, vec3_origin, config->boostLoopSound);
 		}
-		k = j + 1;
-		if ( k == auraSys->nr_hullPoints ) k = 0;
-
-		// find how far we have progressed on that segment
-		progress = (length_pos - length_sofar);
-		progress_pct = progress / auraSys->hullPoints[j].length;
-
-		// interpolate the normal and position
-		VectorSet( lerpNormal, 0.0f, 0.0f, 0.0f);
-		VectorMA( lerpNormal, 1.0f - progress_pct, auraSys->hullPoints[j].normal, lerpNormal );
-		VectorMA( lerpNormal, progress_pct, auraSys->hullPoints[k].normal, lerpNormal );
-		VectorNormalize ( lerpNormal );
-
-		VectorSubtract( auraSys->hullPoints[k].pos_world, auraSys->hullPoints[j].pos_world, edge );
-		VectorMA( auraSys->hullPoints[j].pos_world, progress_pct, edge, lerpPos );
-
-		// do the drawing				
-		VectorMA( lerpPos, AURASPIKE_SIZE * ( 1 + lifetime_pct_pingpong) + 0.8f * AURASPIKE_BORDER * (1 + 2 * lifetime_pct_pingpong), lerpNormal, endPos );
-		VectorMA( lerpPos, 0.8f * AURASPIKE_BORDER * (1 + 2 * lifetime_pct_pingpong), lerpNormal, lerpPos );
-				
-		RGBColor[0] = auraSys->RGBColor[0] * RGBModulate;
-		RGBColor[1] = auraSys->RGBColor[1] * RGBModulate;
-		RGBColor[2] = auraSys->RGBColor[2] * RGBModulate;
-		RGBColor[3] = 1.0f;
-
-		CG_DrawSpike( lerpPos, endPos, (AURASPIKE_SIZE / 1.25f) * (1 + lifetime_pct_pingpong), auraSys->shader, RGBColor );
+	} else{
+		if(config->chargeLoopSound){
+			trap_S_AddLoopingSound( player->currentState.number, player->lerpOrigin, vec3_origin, config->chargeLoopSound);
+		}
 	}
 }
 
 
-/*
-====================
-CG_FlameAuraRender
-====================
-*/
-void CG_FlameAuraRender ( auraSystem_t *auraSys, float RGBModulate, float scaleMod ) {
-	vec3_t			tailLine, viewLine, lobeLine, offset1, offset2;
-	
-	float			len;
-	int				i, j;
+/*===================
+CG_Aura_AddDLight
+===================*/
+static void CG_Aura_AddDLight( centity_t *player, auraState_t *state, auraConfig_t *config){
+	vec3_t	lightPos;
 
-	polyVert_t		Tail_verts[4];
-	polyVert_t		LeftLobe_verts[4];
-	polyVert_t		RightLobe_verts[4];
+	// add dynamic light when necessary
+	if(state->isActive ||(state->lightAmt > config->lightMin)){
 
-	
-	// Set up the tailTip location.
-	if ( VectorLength( auraSys->delta ) < 180 ) {
-		VectorSet(auraSys->tailTip, 0, 0, 1);
-	} else {
-		VectorNormalize2( auraSys->delta, auraSys->tailTip );
-		VectorInverse( auraSys->tailTip );
+		// Since lerpOrigin is the lightingOrigin for the player, this will add a backsplash light for the aura.
+		VectorAdd( player->lerpOrigin, cg.refdef.viewaxis[0], lightPos);
+
+		trap_R_AddLightToScene( lightPos, state->lightAmt, // +(cos(cg.time / 50.0f) * state->lightDev),
+								config->lightColor[0] * state->modulate,
+								config->lightColor[1] * state->modulate,
+								config->lightColor[2] * state->modulate);
 	}
-	VectorScale( auraSys->tailTip, AURA_TAILLENGTH * auraSys->scale * scaleMod, auraSys->tailTip );
-	VectorAdd( auraSys->tailTip, auraSys->origin, auraSys->tailTip );
-
-
-	// -( Left and right tips )-
-	
-	// Set up viewlines for the tail, crossproduct to determine coordinates
-	VectorSubtract ( auraSys->tailTip, auraSys->origin,   tailLine );
-	VectorSubtract ( auraSys->origin,  cg.refdef.vieworg, viewLine );
-	VectorNormalize( tailLine );
-	VectorNormalize( viewLine );
-
-	CrossProduct (viewLine, tailLine, offset1);
-	len = VectorNormalize (offset1);
-
-	// If crossproduct has too little length, then the tail is too close to being parallel
-	// to the view direction and it won't be displayed.
-	if ( len < AURA_BREAKANGLE ) {
-
-		// The tail isn't visible so we'll only display the two lobes,
-		// which will appear perpendicular to the view vector.
-
-		// Normalize the vectors if for some god-awful reason they were NOT originally.
-		AngleVectors( cg.refdefViewAngles, NULL, offset1, offset2 );
-		VectorNormalize( offset1 );
-		VectorNormalize( offset2 );
-
-		VectorMA( auraSys->origin,       -AURA_WIDTH * auraSys->scale * scaleMod, offset1, LeftLobe_verts[0].xyz );
-		VectorMA( LeftLobe_verts[0].xyz, -AURA_WIDTH * auraSys->scale * scaleMod, offset2, LeftLobe_verts[0].xyz );
-		LeftLobe_verts[0].st[0] = 0;
-		LeftLobe_verts[0].st[1] = 1;
-		VectorMA( auraSys->origin,       -AURA_WIDTH * auraSys->scale * scaleMod, offset1, LeftLobe_verts[1].xyz );
-		LeftLobe_verts[1].st[0] = 0;
-		LeftLobe_verts[1].st[1] = AURA_TEXTUREBREAK;
-		VectorMA (auraSys->origin,        AURA_WIDTH * auraSys->scale * scaleMod, offset1, LeftLobe_verts[2].xyz );
-		LeftLobe_verts[2].st[0] = 1;
-		LeftLobe_verts[2].st[1] = AURA_TEXTUREBREAK;
-		VectorMA (auraSys->origin,        AURA_WIDTH * auraSys->scale * scaleMod, offset1, LeftLobe_verts[3].xyz );
-		VectorMA (LeftLobe_verts[3].xyz, -AURA_WIDTH * auraSys->scale * scaleMod, offset2, LeftLobe_verts[3].xyz );
-		LeftLobe_verts[3].st[0] = 1;
-		LeftLobe_verts[3].st[1] = 1;
-		
-		// Set vertex modulation
-		for (i = 0; i < 4; i++) {
-			for (j = 0; j < 4; j++) {
-				if (j==4) {
-					LeftLobe_verts[i].modulate[j] = 255 * RGBModulate;
-					continue;
-				}
-				LeftLobe_verts[i].modulate[j] = 255 * auraSys->RGBColor[j] * RGBModulate;
-			}
-		}
-
-		VectorMA( auraSys->origin,        -AURA_WIDTH * auraSys->scale * scaleMod, offset1, RightLobe_verts[0].xyz );
-		RightLobe_verts[0].st[0] = 0;
-		RightLobe_verts[0].st[1] = AURA_TEXTUREBREAK;
-		VectorMA( auraSys->origin,        -AURA_WIDTH * auraSys->scale * scaleMod, offset1, RightLobe_verts[1].xyz );
-		VectorMA( RightLobe_verts[1].xyz,  AURA_WIDTH * auraSys->scale * scaleMod, offset2, RightLobe_verts[1].xyz );
-		RightLobe_verts[1].st[0] = 0;
-		RightLobe_verts[1].st[1] = 1;
-		VectorMA (auraSys->origin,         AURA_WIDTH * auraSys->scale * scaleMod, offset1, RightLobe_verts[2].xyz );
-		VectorMA (RightLobe_verts[2].xyz,  AURA_WIDTH * auraSys->scale * scaleMod, offset2, RightLobe_verts[2].xyz );
-		RightLobe_verts[2].st[0] = 1;
-		RightLobe_verts[2].st[1] = 1;
-		VectorMA (auraSys->origin,         AURA_WIDTH * auraSys->scale * scaleMod, offset1, RightLobe_verts[3].xyz );
-		RightLobe_verts[3].st[0] = 1;
-		RightLobe_verts[3].st[1] = AURA_TEXTUREBREAK;
-
-		// Set vertex modulation
-		for (i = 0; i < 4; i++) {
-			for (j = 0; j < 4; j++) {
-				if (j==4) {
-					RightLobe_verts[i].modulate[j] = 255 * RGBModulate;
-					continue;
-				}
-				RightLobe_verts[i].modulate[j] = 255 * auraSys->RGBColor[j] * RGBModulate;
-			}
-		}
-
-
-		// Add the two pieces of the aura to the scene
-		trap_R_AddPolyToScene( auraSys->shader, 4, LeftLobe_verts  );
-		trap_R_AddPolyToScene( auraSys->shader, 4, RightLobe_verts );
-
-	} else {
-		// Take another cross-product between viewLine and previous offset line.
-		// Retrieves lobeLine, extending out from tail's 'face'.
-		CrossProduct( viewLine, offset1, lobeLine );
-		VectorNormalize( lobeLine );
-		VectorMA (auraSys->origin,  AURA_WIDTH * auraSys->scale * scaleMod, lobeLine, auraSys->leftLobeTip);
-		VectorMA (auraSys->origin, -AURA_WIDTH * auraSys->scale * scaleMod, lobeLine, auraSys->rightLobeTip);
-
-		// Set tail's vertex data
-		// NOTE: offset is still the offset we calculated earlier, so this holds!
-		VectorMA (auraSys->tailTip, -AURA_WIDTH * auraSys->scale * scaleMod, offset1, Tail_verts[0].xyz);
-		Tail_verts[0].st[0] = 1;
-		Tail_verts[0].st[1] = 0;
-		VectorMA (auraSys->tailTip,  AURA_WIDTH * auraSys->scale * scaleMod, offset1, Tail_verts[1].xyz);
-		Tail_verts[1].st[0] = 0;
-		Tail_verts[1].st[1] = 0;
-		VectorMA (auraSys->origin,   AURA_WIDTH * auraSys->scale * scaleMod, offset1, Tail_verts[2].xyz);
-		Tail_verts[2].st[0] = 0;
-		Tail_verts[2].st[1] = AURA_TEXTUREBREAK;
-		VectorMA (auraSys->origin,  -AURA_WIDTH * auraSys->scale * scaleMod, offset1, Tail_verts[3].xyz);
-		Tail_verts[3].st[0] = 1;
-		Tail_verts[3].st[1] = AURA_TEXTUREBREAK;
-	
-		// Set vertex modulation
-		for (i = 0; i < 4; i++) {
-			for (j = 0; j < 4; j++) {
-				if (j==4) {
-					Tail_verts[i].modulate[j] = 255 * RGBModulate;
-					continue;
-				}
-				Tail_verts[i].modulate[j] = 255 * auraSys->RGBColor[j] * RGBModulate;
-			}
-		}
-
-		// Calculate the new offset setting for the lobeLine now.
-		CrossProduct (viewLine, lobeLine, offset2);
-		VectorNormalize (offset2);
-
-		// Set Left lobe's vertex data
-		// NOTE: offset is still the offset we calculated earlier, so this holds!
-		VectorMA (auraSys->leftLobeTip, -AURA_WIDTH * auraSys->scale * scaleMod, offset2, LeftLobe_verts[0].xyz);
-		LeftLobe_verts[0].st[0] = 1;
-		LeftLobe_verts[0].st[1] = 1;
-		VectorMA (auraSys->leftLobeTip,  AURA_WIDTH * auraSys->scale * scaleMod, offset2, LeftLobe_verts[1].xyz);
-		LeftLobe_verts[1].st[0] = 0;
-		LeftLobe_verts[1].st[1] = 1;
-		VectorMA (auraSys->origin,       AURA_WIDTH * auraSys->scale * scaleMod, offset2, LeftLobe_verts[2].xyz);
-		LeftLobe_verts[2].st[0] = 0;
-		LeftLobe_verts[2].st[1] = AURA_TEXTUREBREAK;
-		VectorMA (auraSys->origin,      -AURA_WIDTH * auraSys->scale * scaleMod, offset2, LeftLobe_verts[3].xyz);
-		LeftLobe_verts[3].st[0] = 1;
-		LeftLobe_verts[3].st[1] = AURA_TEXTUREBREAK;
-
-		// Set vertex modulation
-		for (i = 0; i < 4; i++) {
-			for (j = 0; j < 4; j++) {
-				if (j==4) {
-					LeftLobe_verts[i].modulate[j] = 255 * RGBModulate;
-					continue;
-				}
-				LeftLobe_verts[i].modulate[j] = 255 * auraSys->RGBColor[j] * RGBModulate;
-			}
-		}
-
-		// Add the two pieces of the aura to the scene
-		trap_R_AddPolyToScene( auraSys->shader, 4, Tail_verts );
-		trap_R_AddPolyToScene( auraSys->shader, 4, LeftLobe_verts );
-
-	} 	
 }
 
 
+/*==================
+CG_Aura_DimLight
+==================*/
+static void CG_Aura_DimLight( centity_t *player, auraState_t *state, auraConfig_t *config){
 
-/*
-===============
-CG_AuraRender
-===============
-*/
-void CG_AuraRender( centity_t *cent ) {
-	auraSystem_t	*auraSys;
-	int				clientNum;
+	if(state->isActive){
 
-	float			RGBModulate;
-	float			scaleMod;
+		if (state->lightAmt < config->lightMax){
+
+			state->lightAmt += config->lightGrowthRate *(cg.frametime / 25.0f);
+			if(state->lightAmt > config->lightMax){
+				state->lightAmt = config->lightMax;
+			}
+
+			state->lightDev = state->lightAmt / 10;
+		}
+
+	} else{
+
+		if (state->lightAmt > config->lightMin){
+			state->lightAmt -= config->lightGrowthRate *(cg.frametime / 50.0f);
+			if(state->lightAmt < config->lightMin){
+				state->lightAmt = config->lightMin;
+			}
+		}
+	}
+
+	state->modulate = (float)(state->lightAmt - config->lightMin) / (float)(config->lightMax - config->lightMin);
+	if(state->modulate < 0   ) state->modulate = 0;
+	if(state->modulate > 1.0f) state->modulate = 1.0f;
+}
+
+
+/*========================
+CG_AddAuraToScene
+========================*/
+void CG_AddAuraToScene( centity_t *player){
+	int				clientNum, tier;
+	auraState_t		*state;
+	auraConfig_t	*config;
 
 	// Get the aura system corresponding to the player
-	clientNum = cent->currentState.clientNum;
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
+	clientNum = player->currentState.clientNum;
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){
+		CG_Error( "Bad clientNum on player entity");
 		return;
 	}
-	auraSys = &playerAura[ clientNum ];
-
-
-
-	// Update some general values.
-	VectorCopy( cent->lerpOrigin, auraSys->origin );
-	VectorCopy( cent->currentState.pos.trDelta, auraSys->delta );
-	RGBModulate = (float)( AURA_BURSTTIME - ( cg.time - auraSys->burstTimer ) ) / AURA_BURSTTIME;
-	if ( RGBModulate < 0 ) {
-		RGBModulate = 0;
-	}
-	if ( RGBModulate > 1.0f ) {
-		RGBModulate = 1.0f;
-	}
-	scaleMod = 1.2f + (1 - RGBModulate) * 0.45f;
-
-	switch ( auraSys->type ) {
-	case AURA_FLAME:
-		// If the aura is not active don't draw the aura, only the burst.
-		if ( auraSys->active ) {
-			CG_FlameAuraRender ( auraSys, 1.0f, 1.0f );
-		}
-		// If there's still some color left in the burst, draw it.
-		if ( RGBModulate > 0 ) {
-			CG_FlameAuraRender ( auraSys, RGBModulate, scaleMod );
-		}
-		break;
-	case AURA_CONVEXHULL:
-		// FIXME: Always turned on for now, for testing
-		if ( auraSys->active ) {
-			CG_ConvexHullAuraRender( auraSys );
-		}
-		break;
-	default:
-		// shouldn't happen
-		break;
-	}
-
-	//  if aura is active
-	if ( auraSys->active ) {
-		vec3_t groundPoint;
-		trace_t trace;
-
-		// Add looping sound
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, auraSys->loopSound );
-
-		// Add dynamic light
-		trap_R_AddLightToScene( cent->lerpOrigin, 200, auraSys->RGBColor[0], auraSys->RGBColor[1], auraSys->RGBColor[2] );
-
-		// Handle the drifting debris cloud
-		VectorCopy( cent->lerpOrigin, groundPoint );
-		groundPoint[2] -= AURA_RUBBLE_DIST;
-		CG_Trace( &trace, cent->lerpOrigin, NULL, NULL, groundPoint, cent->currentState.number, CONTENTS_SOLID );
-		if ( trace.allsolid || trace.startsolid ) {
-			trace.fraction = 1.0f;
-		}
-		if ( trace.fraction < 1.0f ) {
-			// Place the origin of the system just a bit off the surface
-			VectorNormalize2(trace.plane.normal, groundPoint );
-			VectorMA( trace.endpos, 5, groundPoint, cent->groundPoint );
-			if ( !cent->particleSystems[4] ) {
-				cent->particleSystems[4] = CG_CreateParticleSystem_DriftDebris( cent->currentState.number );
-			}
-		} else {
-			// too far away, stop rubble spawn and rejuvenation,
-			// and break link if system is active
-			if ( cent->particleSystems[4] ) {
-				cent->particleSystems[4]->respawn = qfalse;
-				cent->particleSystems[4]->rejuvenate = qfalse;
-				VectorSet( cent->particleSystems[4]->force, 0, 0, 0);
-				VectorSet( cent->particleSystems[4]->force_turbulence, 0, 0, 0);
-				cent->particleSystems[4]->parentNr = ENTITYNUM_NONE;
-				cent->particleSystems[4] = 0;
-			}
-		}
-
-		// Update the tail if we're using the boost aura
-		if ( cent->currentState.powerups & ( 1 << PW_BOOST ) ) {
-		
-			// If we didn't draw the tail last frame this is a new instantiation
-			// of the entity and we will have to reset the tail positions.
-			if ( cent->lastTrailTime < (cg.time - cg.frametime - 1500) ) {
-				// Give 1.5 second leeway for 'snapping' the tail
-				// incase we (almost) immediately restart boosting.
-
-				CG_ResetTrail( cent->currentState.clientNum, cent->lerpOrigin, 1000,
-					10, auraSys->trailShader, auraSys->RGBColor );
-			}
+	state = &auraStates[ clientNum ];
+	tier = cgs.clientinfo[clientNum].tierCurrent;
+	config = &(state->configurations[tier]);	
 	
-			CG_UpdateTrailHead( cent->currentState.clientNum, cent->lerpOrigin );
-
-			cent->lastTrailTime = cg.time;
-		}
-	}
 	
-	return;
+	// Update origin
+	VectorCopy( player->lerpOrigin, state->origin);
+
+	// Calculate modulation for dimming
+	CG_Aura_DimLight( player, state, config);
+
+	// Add aura effects
+	CG_Aura_AddSounds( player, state, config);
+	CG_Aura_AddTrail( player, state, config);
+	CG_Aura_AddDebris( player, state, config);
+	CG_Aura_AddDLight( player, state, config);
+
+	// Render the aura
+	CG_Aura_ConvexHullRender( player, state, config);
 }
 
 
-/*
-==============
+/*==============
 CG_AuraStart
-==============
-*/
-void CG_AuraStart( centity_t *cent ) {
-	int				clientNum;
-	auraSystem_t	*auraSys;
+==============*/
+void CG_AuraStart( centity_t *player){
+	int				clientNum, tier;
+	auraState_t		*state;
+	auraConfig_t	*config;
+
 	vec3_t			groundPoint;
 	trace_t			trace;
 
-
-	// Get the aura system to work on
-	clientNum = cent->currentState.clientNum;
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
+	// Get the aura system corresponding to the player
+	clientNum = player->currentState.clientNum;
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){
+		CG_Error( "Bad clientNum on player entity");
+		return;
 	}
-	auraSys = &playerAura[ clientNum ];
+	state = &auraStates[ clientNum ];
+	tier = cgs.clientinfo[clientNum].tierCurrent;
+	config = &(state->configurations[tier]);	
+	
+
+	// If the aura is already active, don't continue activating it again.
+	if(state->isActive){
+		return;
+	}
 
 	// Initialize the system
-	auraSys->active = qtrue;
-	auraSys->burstTimer = cg.time;
+	state->isActive = qtrue;
+	state->lightAmt = config->lightMin;
 
-	// play the burst sound
-	trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, auraSys->startSound );
+	// create a small camerashake
+	CG_AddEarthquake( player->lerpOrigin, 1000, 1, 0, 1, 200);
 
-	// Check if we're on, or near ground level
-	VectorCopy( cent->lerpOrigin, groundPoint );
-	groundPoint[2] -= AURA_RUBBLE_DIST;
-	CG_Trace( &trace, cent->lerpOrigin, NULL, NULL, groundPoint, cent->currentState.number, CONTENTS_SOLID );
-	if ( trace.allsolid || trace.startsolid ) {
-		trace.fraction = 1.0f;
+	// We don't want smoke jets if this is a boost aura instead of a charge aura.
+	if(!(player->currentState.powerups &(1 << PW_BOOST))){
+		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->chargeStartSound);
+		// Check if we're on, or near ground level
+		VectorCopy( player->lerpOrigin, groundPoint);
+		groundPoint[2] -= 48;
+		CG_Trace( &trace, player->lerpOrigin, NULL, NULL, groundPoint, player->currentState.number, CONTENTS_SOLID);
+		if(trace.allsolid || trace.startsolid){
+			trace.fraction = 1.0f;
+		}
+		if(trace.fraction < 1.0f){
+			vec3_t tempAxis[3];
+
+			// Place the explosion just a bit off the surface
+			VectorNormalize2(trace.plane.normal, groundPoint);
+			VectorMA( trace.endpos, 5, groundPoint, groundPoint);
+
+			VectorNormalize2( trace.plane.normal, tempAxis[0]);
+			MakeNormalVectors( tempAxis[0], tempAxis[1], tempAxis[2]);
+			PSys_SpawnCachedSystem( "AuraSmokeBurst", groundPoint, tempAxis, NULL, NULL, qfalse, qfalse);
+		}
 	}
-	if ( trace.fraction < 1.0f ) {
-		// Place the explosion just a bit off the surface
-		VectorNormalize2(trace.plane.normal, groundPoint );
-		VectorMA( trace.endpos, 5, groundPoint, groundPoint );
-		CG_CreateParticleSystem_ExplodeDebris( groundPoint, trace.plane.normal, 14 );
+	else{
+		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->boostStartSound);
 	}
 }
 
 
-/*
-============
+/*============
 CG_AuraEnd
-============
-*/
-void CG_AuraEnd( centity_t *cent ) {
-	int		clientNum;
+============*/
+void CG_AuraEnd( centity_t *player){
+	int			clientNum;
+	auraState_t	*state;
 
-	clientNum = cent->currentState.clientNum;
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
+	clientNum = player->currentState.clientNum;
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){
+		CG_Error( "Bad clientNum on player entity");
 	}
 
-	playerAura[ clientNum ].active = qfalse;
+	state = &auraStates[ clientNum ];
 
-
-	if ( cent->particleSystems[4] ) {
-		cent->particleSystems[4]->respawn = qfalse;
-		cent->particleSystems[4]->rejuvenate = qfalse;
-		cent->particleSystems[4]->maxForceDistance = 0;
-		VectorSet( cent->particleSystems[4]->force, 0, 0, 0);
-		VectorSet( cent->particleSystems[4]->force_turbulence, 0, 0, 0);
-		cent->particleSystems[4]->parentNr = ENTITYNUM_NONE;
-		cent->particleSystems[4] = 0;
+	// If the aura is already deactivated, don't continue deactivating it again.
+	if(!state->isActive){
+		return;
 	}
+
+	state->isActive = qfalse;
 }
 
 
-
-
-
-/*
-===================
-CG_StoreAuraVerts
-===================
-  Reads and prepares the positions of the tags for a convex hull aura.
-*/
-#define MAX_AURATAGNAME 10
-void CG_StoreAuraVerts( refEntity_t *head, refEntity_t *torso, refEntity_t *legs, int clientNum ) {
-	int				i, j;
-	clientInfo_t	*ci;
-	auraSystem_t	*auraSys;
-	char			tagName[MAX_AURATAGNAME];
-
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
+/*=======================
+CG_RegisterClientAura
+=======================*/
+#define MAX_AURA_FILELEN 32000
+void parseAura(char *path,auraConfig_t *aura);
+void CG_RegisterClientAura(int clientNum,clientInfo_t *ci){
+	int	i;
+	char filename[MAX_QPATH * 2];
+	char auraPath[MAX_QPATH];
+	memset(&(auraStates[clientNum]), 0, sizeof(auraState_t));
+	for(i = 0;i < 8;i++){ 
+		ci->auraConfig[i] = &(auraStates[clientNum].configurations[i]);
+		memset(ci->auraConfig[i],0,sizeof(auraConfig_t));
+		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",ci->modelName,i+1);
+		parseAura(filename,ci->auraConfig[i]);
+		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",ci->modelName,i+1);
+		parseAura(filename,ci->auraConfig[i]);
 	}
-
-	ci = &cgs.clientinfo[clientNum];
-	auraSys = &playerAura[clientNum];
-	
-	j = 0;
-	// aura_tags in head.md3
-	for (i = 0; i < ci->nrAuraTags[AURATAGS_HEAD]; i++ ) {
-		
-		// Lerp the tag's position
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i );
-		CG_GetTagPosition( head, tagName, auraSys->hullPoints[j].pos_world);
-		if (CG_WorldCoordToScreenCoordVec( auraSys->hullPoints[j].pos_world,
-									   auraSys->hullPoints[j].pos_screen ) ) {
-			auraSys->hullPoints[j].is_tail = qfalse;
-			j++;
-		}
-	}
-
-	// aura_tags in upper.md3
-	for (i = 0; i < ci->nrAuraTags[AURATAGS_TORSO]; i++ ) {
-		
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i );
-		CG_GetTagPosition( torso, tagName, auraSys->hullPoints[j].pos_world);
-		if (CG_WorldCoordToScreenCoordVec( auraSys->hullPoints[j].pos_world,
-									   auraSys->hullPoints[j].pos_screen ) ) {
-			auraSys->hullPoints[j].is_tail = qfalse;
-			j++;
-		}
-	}
-
-	// aura_tags in lower.md3
-	for (i = 0; i < ci->nrAuraTags[AURATAGS_LEGS]; i++ ) {
-		
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i );
-		CG_GetTagPosition( legs, tagName, auraSys->hullPoints[j].pos_world);
-		if (CG_WorldCoordToScreenCoordVec( auraSys->hullPoints[j].pos_world,
-									   auraSys->hullPoints[j].pos_screen ) ) {
-			auraSys->hullPoints[j].is_tail = qfalse;
-			j++;
-		}
-	}
-
-	// Get the total number of possible vertices to account for in the hull
-	auraSys->nr_hullPoints = j;
 }
-
-
-
-/*
-==============
-CG_InitAuras
-==============
-*/
-void CG_InitAuras() {
+void parseAura(char *path,auraConfig_t *aura){
+	fileHandle_t auraCFG;
 	int i;
-	
-	// The structure is built so we intialize by only memsetting everything
-	// to null.
-	memset(playerAura, 0, sizeof(auraSystem_t) * MAX_CLIENTS);
-
-	for ( i = 0; i < MAX_CLIENTS; i++ ) {
-
-		playerAura[i].type = AURA_CONVEXHULL;
-		
-		playerAura[i].shader = trap_R_RegisterShader( "Aura_Spike" );
-		playerAura[i].trailShader = trap_R_RegisterShader( "Aura_Trail" );
-
-		VectorSet( playerAura[i].RGBColor, 1.0f, 1.0f, 1.0f );
-
-		playerAura[i].burstTimer = cg.time - (AURA_BURSTTIME + 50); // <-- Makes sure the burst isn't active
-		playerAura[i].scale = 1.5f;
-
-		playerAura[i].startSound = trap_S_RegisterSound( "sound/aura/AuraStart.wav", qfalse );
-		playerAura[i].loopSound  = trap_S_RegisterSound( "sound/aura/AuraLoop.wav",  qfalse );
+	char *token,*parse;
+	int fileLength;
+	char fileContents[32000];
+	if(trap_FS_FOpenFile(path,0,FS_READ)>0){
+		fileLength = trap_FS_FOpenFile(path,&auraCFG,FS_READ);
+		trap_FS_Read(fileContents,fileLength,auraCFG);
+		fileContents[fileLength] = 0;
+		trap_FS_FCloseFile(auraCFG);
+		parse = fileContents;
+		while(1){
+			token = COM_Parse(&parse);
+			if(!token[0]){break;}
+			else if(!Q_stricmp(token,"auraExists")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->showAura = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"auraAlways")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->auraAlways = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"hasAuraLight")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->showLight = token == "True" ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"hasAuraTrail")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->showTrail = token == "True" ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"hasAuraDebris")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->generatesDebris = token == "True" ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp( token, "auraTagCount")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					aura->numTags[i] = atoi( token);
+				}
+			}
+			else if(!Q_stricmp( token, "auraShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->auraShader = trap_R_RegisterShader(token);
+			}
+			else if(!Q_stricmp( token, "auraTrailShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->trailShader = trap_R_RegisterShader(token);
+			}
+			else if(!Q_stricmp( token, "auraChargeLoop")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->chargeLoopSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp( token, "auraChargeStart")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->chargeStartSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp( token, "auraBoostLoop")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->boostLoopSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp( token, "auraBoostStart")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->boostStartSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if (!Q_stricmp( token, "auraColor")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					aura->auraColor[i] = atof( token);
+					if(aura->auraColor[i] < 0) aura->auraColor[i] = 0;
+					if(aura->auraColor[i] > 1) aura->auraColor[i] = 1;
+				}
+			}
+			else if(!Q_stricmp( token, "auraLightColor")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					aura->lightColor[i] = atof( token);
+					if(aura->lightColor[i] < 0) aura->lightColor[i] = 0;
+					if(aura->lightColor[i] > 1) aura->lightColor[i] = 1;
+				}
+			}
+			else if(!Q_stricmp( token, "auraTrailColor")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					aura->trailColor[i] = atof( token);
+					if(aura->trailColor[i] < 0) aura->trailColor[i] = 0;
+					if(aura->trailColor[i] > 1) aura->trailColor[i] = 1;
+				}
+			}
+			else if(!Q_stricmp( token, "auraScale")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->auraScale = atof(token);
+			}
+			else if(!Q_stricmp( token, "auraLength")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->tailLength = atoi(token);
+			}
+			else if(!Q_stricmp( token, "auraLightMin")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->lightMin = atoi(token);
+			}
+			else if(!Q_stricmp( token, "auraLightMax")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->lightMax = atoi(token);
+			}
+			else if(!Q_stricmp( token, "auraLightGrowthRate")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->lightGrowthRate = atoi(token);
+			}
+		}
 	}
 }
+void CG_CopyClientAura( int from, int to){
+	memcpy(&auraStates[to], &auraStates[from], sizeof(auraState_t));
+}
+

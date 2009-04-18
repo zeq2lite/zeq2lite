@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_playerstate.c -- this file acts on changes in a new playerState_t
 // With normal play, this will be done after local prediction, but when
@@ -35,37 +15,15 @@ If the ammo has gone low enough to generate the warning, play a sound
 ==============
 */
 void CG_CheckAmmo( void ) {
-	int		i;
 	int		total;
 	int		previous;
-	int		weapons;
 
-	// see about how many seconds of ammo we have remaining
-	weapons = cg.snap->ps.stats[ STAT_WEAPONS ];
-	total = 0;
-	for ( i = WP_MACHINEGUN ; i < WP_NUM_WEAPONS ; i++ ) {
-		if ( ! ( weapons & ( 1 << i ) ) ) {
-			continue;
-		}
-		switch ( i ) {
-		case WP_ROCKET_LAUNCHER:
-		case WP_GRENADE_LAUNCHER:
-		case WP_RAILGUN:
-		case WP_SHOTGUN:
-#ifdef MISSIONPACK
-		case WP_PROX_LAUNCHER:
-#endif
-			total += cg.snap->ps.ammo[i] * 1000;
-			break;
-		default:
-			total += cg.snap->ps.ammo[i] * 200;
-			break;
-		}
-		if ( total >= 5000 ) {
-			cg.lowAmmoWarning = 0;
-			return;
-		}
+	total = cg.snap->ps.stats[powerLevelTotal];
+	if ( total >= 500 ) {
+		cg.lowAmmoWarning = 0;
+		return;
 	}
+	// END ADDING
 
 	previous = cg.lowAmmoWarning;
 
@@ -89,7 +47,7 @@ CG_DamageFeedback
 void CG_DamageFeedback( int yawByte, int pitchByte, int damage ) {
 	float		left, front, up;
 	float		kick;
-	int			health;
+	int			powerLevel;
 	float		scale;
 	vec3_t		dir;
 	vec3_t		angles;
@@ -99,12 +57,12 @@ void CG_DamageFeedback( int yawByte, int pitchByte, int damage ) {
 	// show the attacking player's head and name in corner
 	cg.attackerTime = cg.time;
 
-	// the lower on health you are, the greater the view kick will be
-	health = cg.snap->ps.stats[STAT_HEALTH];
-	if ( health < 40 ) {
+	// the lower on powerLevel you are, the greater the view kick will be
+	powerLevel = cg.snap->ps.stats[powerLevelTotal];
+	if ( powerLevel < 40 ) {
 		scale = 1;
 	} else {
-		scale = 40.0 / health;
+		scale = 40.0 / powerLevel;
 	}
 	kick = damage * scale;
 
@@ -295,7 +253,7 @@ CG_CheckLocalSounds
 ==================
 */
 void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
-	int			highScore, health, armor, reward;
+	int			highScore, powerLevel, armor, reward;
 	sfxHandle_t sfx;
 
 	// don't play the sounds if the player just changed teams
@@ -306,11 +264,11 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	// hit changes
 	if ( ps->persistant[PERS_HITS] > ops->persistant[PERS_HITS] ) {
 		armor  = ps->persistant[PERS_ATTACKEE_ARMOR] & 0xff;
-		health = ps->persistant[PERS_ATTACKEE_ARMOR] >> 8;
+		powerLevel = ps->persistant[PERS_ATTACKEE_ARMOR] >> 8;
 #ifdef MISSIONPACK
 		if (armor > 50 ) {
 			trap_S_StartLocalSound( cgs.media.hitSoundHighArmor, CHAN_LOCAL_SOUND );
-		} else if (armor || health > 100) {
+		} else if (armor || powerLevel > 100) {
 			trap_S_StartLocalSound( cgs.media.hitSoundLowArmor, CHAN_LOCAL_SOUND );
 		} else {
 			trap_S_StartLocalSound( cgs.media.hitSound, CHAN_LOCAL_SOUND );
@@ -322,10 +280,13 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 		trap_S_StartLocalSound( cgs.media.hitTeamSound, CHAN_LOCAL_SOUND );
 	}
 
-	// health changes of more than -1 should make pain sounds
-	if ( ps->stats[STAT_HEALTH] < ops->stats[STAT_HEALTH] - 1 ) {
-		if ( ps->stats[STAT_HEALTH] > 0 ) {
-			CG_PainEvent( &cg.predictedPlayerEntity, ps->stats[STAT_HEALTH] );
+	// powerLevel changes of more than -1 should make pain sounds
+	if ( ps->stats[powerLevelTotal] < ops->stats[powerLevelTotal] - 1 ) {
+		// but only if actual damage is there; not if deducting powerLevel for an attack!
+		if (ps->damageCount) {
+			if ( ps->stats[powerLevelTotal] > 0 ) {
+				CG_PainEvent( &cg.predictedPlayerEntity, ps->stats[powerLevelTotal] );
+			}
 		}
 	}
 
@@ -507,9 +468,10 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 	}
 
 	if ( cg.snap->ps.pm_type != PM_INTERMISSION 
-		&& ps->persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
+		 && ps->persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
 		CG_CheckLocalSounds( ps, ops );
 	}
+
 
 	// check for going low on ammo
 	CG_CheckAmmo();

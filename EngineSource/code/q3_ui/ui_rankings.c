@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 //
 // ui_rankings.c
@@ -80,7 +60,7 @@ void Rankings_DrawText( void* self )
 	y = f->generic.y + 4;
 	focus = (f->generic.parent->cursor == f->generic.menuPosition);
 
-	style = UI_LEFT|UI_SMALLFONT;
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	color = text_color_normal;
 	if( focus ) {
 		style |= UI_PULSE;
@@ -307,8 +287,8 @@ void Rankings_MenuInit( void ) {
 	s_rankings.login.generic.x			= 320;
 	s_rankings.login.generic.y			= y;
 	s_rankings.login.string				= "LOGIN";
-	s_rankings.login.style				= UI_CENTER|UI_SMALLFONT;
-	s_rankings.login.color				= colorRed;
+	s_rankings.login.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_rankings.login.color				= colorWhite;
 	y += 20;
 
 	s_rankings.logout.generic.type		= MTYPE_PTEXT;
@@ -318,8 +298,8 @@ void Rankings_MenuInit( void ) {
 	s_rankings.logout.generic.x			= 320;
 	s_rankings.logout.generic.y			= y;
 	s_rankings.logout.string				= "LOGOUT";
-	s_rankings.logout.style				= UI_CENTER|UI_SMALLFONT;
-	s_rankings.logout.color				= colorRed;
+	s_rankings.logout.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_rankings.logout.color				= colorWhite;
 
 	s_rankings.create.generic.type		= MTYPE_PTEXT;
 	s_rankings.create.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -328,8 +308,8 @@ void Rankings_MenuInit( void ) {
 	s_rankings.create.generic.x			= 320;
 	s_rankings.create.generic.y			= y;
 	s_rankings.create.string			= "SIGN UP";
-	s_rankings.create.style				= UI_CENTER|UI_SMALLFONT;
-	s_rankings.create.color				= colorRed;
+	s_rankings.create.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_rankings.create.color				= colorWhite;
 	y += 20;
 
 	s_rankings.spectate.generic.type		= MTYPE_PTEXT;
@@ -339,8 +319,8 @@ void Rankings_MenuInit( void ) {
 	s_rankings.spectate.generic.x			= 320;
 	s_rankings.spectate.generic.y			= y;
 	s_rankings.spectate.string				= "SPECTATE";
-	s_rankings.spectate.style				= UI_CENTER|UI_SMALLFONT;
-	s_rankings.spectate.color				= colorRed;
+	s_rankings.spectate.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_rankings.spectate.color				= colorWhite;
 	y += 20;
 
 	s_rankings.setup.generic.type		= MTYPE_PTEXT;
@@ -350,8 +330,8 @@ void Rankings_MenuInit( void ) {
 	s_rankings.setup.generic.x			= 320;
 	s_rankings.setup.generic.y			= y;
 	s_rankings.setup.string				= "SETUP";
-	s_rankings.setup.style				= UI_CENTER|UI_SMALLFONT;
-	s_rankings.setup.color				= colorRed;
+	s_rankings.setup.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_rankings.setup.color				= colorWhite;
 	y += 20;
 
 	s_rankings.leave.generic.type		= MTYPE_PTEXT;
@@ -361,8 +341,8 @@ void Rankings_MenuInit( void ) {
 	s_rankings.leave.generic.x			= 320;
 	s_rankings.leave.generic.y			= y;
 	s_rankings.leave.string				= "LEAVE ARENA";
-	s_rankings.leave.style				= UI_CENTER|UI_SMALLFONT;
-	s_rankings.leave.color				= colorRed;
+	s_rankings.leave.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_rankings.leave.color				= colorWhite;
 	y += 20;
 
 	status = (grank_status_t)trap_Cvar_VariableValue("client_status");

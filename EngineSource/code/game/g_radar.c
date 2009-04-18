@@ -29,7 +29,7 @@ void G_RadarUpdateCS(void) {
 				g_playerOrigins[i].valid = qfalse;
 			} else if ( !(ent->inuse) ) {
 				g_playerOrigins[i].valid = qfalse;
-			} else if( ent->health <= 0 ) {
+			} else if( ent->powerLevel <= 0 ) {
 				g_playerOrigins[i].valid = qfalse;
 			} else {
 				// get the client's player info
@@ -38,14 +38,14 @@ void G_RadarUpdateCS(void) {
 				//get and store the client position and information
 				VectorCopy( ps->origin, g_playerOrigins[i].pos );
 
-				g_playerOrigins[i].pl = ps->stats[STAT_PL] & ~PL_CHANGEBITS;
+				g_playerOrigins[i].pl = ps->stats[powerLevel];
 				g_playerOrigins[i].clientNum = ps->clientNum;
 
 				g_playerOrigins[i].properties = 0;
-				if ( ( ps->stats[STAT_CHARGELVL_PRI] >= 60 ) || ( ps->stats[STAT_CHARGELVL_SEC] >= 60 ) ) {
+				if ( ( ps->stats[chargePercentPrimary] >= 60 ) || ( ps->stats[chargePercentSecondary] >= 60 ) ) {
 					g_playerOrigins[i].properties |= RADAR_WARN;
 				}
-				if ( ( ps->stats[STAT_BITFLAGS] & STATBIT_KI_CHARGING ) || ps->powerups[PW_BOOST] ) {
+				if ( ( ps->eFlags & EF_AURA ) || ps->powerups[PW_BOOST] ) {
 					g_playerOrigins[i].properties |= RADAR_BURST;
 				}
 

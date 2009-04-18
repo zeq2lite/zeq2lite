@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /**********************************************************************
 	UI_ATOMS.C
@@ -30,12 +10,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 uiStatic_t		uis;
 qboolean		m_entersound;		// after a frame, so caching won't disrupt the sound
 
+// these are here so the functions in q_shared.c can link
+#ifndef UI_HARD_LINKED
+
 void QDECL Com_Error( int level, const char *error, ... ) {
 	va_list		argptr;
 	char		text[1024];
 
 	va_start (argptr, error);
-	Q_vsnprintf (text, sizeof(text), error, argptr);
+	vsprintf (text, error, argptr);
 	va_end (argptr);
 
 	trap_Error( va("%s", text) );
@@ -46,11 +29,13 @@ void QDECL Com_Printf( const char *msg, ... ) {
 	char		text[1024];
 
 	va_start (argptr, msg);
-	Q_vsnprintf (text, sizeof(text), msg, argptr);
+	vsprintf (text, msg, argptr);
 	va_end (argptr);
 
 	trap_Print( va("%s", text) );
 }
+
+#endif
 
 /*
 =================
@@ -330,6 +315,8 @@ static int propMapB[26][3] = {
 #define PROPB_SPACE_WIDTH	12
 #define PROPB_HEIGHT		36
 
+// bk001205 - code below duplicated in cgame/cg_drawtools.c
+// bk001205 - FIXME: does this belong in ui_shared.c?
 /*
 =================
 UI_DrawBannerString
@@ -338,7 +325,7 @@ UI_DrawBannerString
 static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 {
 	const char* s;
-	unsigned char	ch;
+	unsigned char	ch; // bk001204 - unsigned
 	float	ax;
 	float	ay;
 	float	aw;
@@ -351,15 +338,26 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 	// draw the colored text
 	trap_R_SetColor( color );
 	
-	ax = x * uis.xscale + uis.bias;
-	ay = y * uis.yscale;
+	// MDave: apply the new scaling
+#if 0
+	ax = x * uis.scale + uis.bias;
+	ay = y * uis.scale;
+#else
+	ax = x * uis.scaleX;
+	ay = y * uis.scaleY;
+#endif
 
 	s = str;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
-			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.xscale;
+			// MDave: apply the new scaling
+#if 0
+			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.scale;
+#else
+			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.scaleX;
+#endif
 		}
 		else if ( ch >= 'A' && ch <= 'Z' ) {
 			ch -= 'A';
@@ -367,10 +365,21 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 			frow = (float)propMapB[ch][1] / 256.0f;
 			fwidth = (float)propMapB[ch][2] / 256.0f;
 			fheight = (float)PROPB_HEIGHT / 256.0f;
-			aw = (float)propMapB[ch][2] * uis.xscale;
-			ah = (float)PROPB_HEIGHT * uis.yscale;
+			// MDave: apply the new scaling
+#if 0
+			aw = (float)propMapB[ch][2] * uis.scale;
+			ah = (float)PROPB_HEIGHT * uis.scale;
+#else
+			aw = (float)propMapB[ch][2] * uis.scaleX;
+			ah = (float)PROPB_HEIGHT * uis.scaleY;
+#endif
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol+fwidth, frow+fheight, uis.charsetPropB );
-			ax += (aw + (float)PROPB_GAP_WIDTH * uis.xscale);
+			// MDave: apply the new scaling
+#if 0
+			ax += (aw + (float)PROPB_GAP_WIDTH * uis.scale);
+#else
+			ax += (aw + (float)PROPB_GAP_WIDTH * uis.scaleX);
+#endif
 		}
 		s++;
 	}
@@ -416,7 +425,7 @@ void UI_DrawBannerString( int x, int y, const char* str, int style, vec4_t color
 	if ( style & UI_DROPSHADOW ) {
 		drawcolor[0] = drawcolor[1] = drawcolor[2] = 0;
 		drawcolor[3] = color[3];
-		UI_DrawBannerString2( x+2, y+2, str, drawcolor );
+		UI_DrawBannerString2( x+1, y+1, str, drawcolor );
 	}
 
 	UI_DrawBannerString2( x, y, str, color );
@@ -448,10 +457,10 @@ int UI_ProportionalStringWidth( const char* str ) {
 static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t color, float sizeScale, qhandle_t charset )
 {
 	const char* s;
-	unsigned char	ch;
+	unsigned char	ch; // bk001204 - unsigned
 	float	ax;
 	float	ay;
-	float	aw = 0;
+	float	aw = 0; // bk001204 - init
 	float	ah;
 	float	frow;
 	float	fcol;
@@ -461,27 +470,48 @@ static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t co
 	// draw the colored text
 	trap_R_SetColor( color );
 	
-	ax = x * uis.xscale + uis.bias;
-	ay = y * uis.yscale;
+	// JUHOX: apply the new scaling
+#if 0	
+	ax = x * uis.scale + uis.bias;
+	ay = y * uis.scale;
+#else
+	ax = x * uis.scaleX;
+	ay = y * uis.scaleY;
+#endif
 
 	s = str;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
-			aw = (float)PROP_SPACE_WIDTH * uis.xscale * sizeScale;
+			// JUHOX: apply the new scaling
+#if 0
+			aw = (float)PROP_SPACE_WIDTH * uis.scale * sizeScale;
+#else
+			aw = (float)PROP_SPACE_WIDTH * uis.scaleX * sizeScale;
+#endif
 		}
 		else if ( propMap[ch][2] != -1 ) {
 			fcol = (float)propMap[ch][0] / 256.0f;
 			frow = (float)propMap[ch][1] / 256.0f;
 			fwidth = (float)propMap[ch][2] / 256.0f;
 			fheight = (float)PROP_HEIGHT / 256.0f;
-			aw = (float)propMap[ch][2] * uis.xscale * sizeScale;
-			ah = (float)PROP_HEIGHT * uis.yscale * sizeScale;
+			// JUHOX: apply the new scaling
+#if 0
+			aw = (float)propMap[ch][2] * uis.scale * sizeScale;
+			ah = (float)PROP_HEIGHT * uis.scale * sizeScale;
+#else
+			aw = (float)propMap[ch][2] * uis.scaleX * sizeScale;
+			ah = (float)PROP_HEIGHT * uis.scaleY * sizeScale;
+#endif
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol+fwidth, frow+fheight, charset );
 		}
-
-		ax += (aw + (float)PROP_GAP_WIDTH * uis.xscale * sizeScale);
+		// JUHOX: apply the new scaling
+#if 0
+		ax += (aw + (float)PROP_GAP_WIDTH * uis.scale * sizeScale);
+#else
+		ax += (aw + (float)PROP_GAP_WIDTH * uis.scaleX * sizeScale);
+#endif
 		s++;
 	}
 
@@ -533,7 +563,7 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 	if ( style & UI_DROPSHADOW ) {
 		drawcolor[0] = drawcolor[1] = drawcolor[2] = 0;
 		drawcolor[3] = color[3];
-		UI_DrawProportionalString2( x+2, y+2, str, drawcolor, sizeScale, uis.charsetProp );
+		UI_DrawProportionalString2( x+1, y+1, str, drawcolor, sizeScale, uis.charsetProp );
 	}
 
 	if ( style & UI_INVERSE ) {
@@ -565,70 +595,6 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 
 /*
 =================
-UI_DrawProportionalString_Wrapped
-=================
-*/
-void UI_DrawProportionalString_AutoWrapped( int x, int y, int xmax, int ystep, const char* str, int style, vec4_t color ) {
-	int width;
-	char *s1,*s2,*s3;
-	char c_bcp;
-	char buf[1024];
-	float   sizeScale;
-
-	if (!str || str[0]=='\0')
-		return;
-	
-	sizeScale = UI_ProportionalSizeScale( style );
-	
-	Q_strncpyz(buf, str, sizeof(buf));
-	s1 = s2 = s3 = buf;
-
-	while (1) {
-		do {
-			s3++;
-		} while (*s3!=' ' && *s3!='\0');
-		c_bcp = *s3;
-		*s3 = '\0';
-		width = UI_ProportionalStringWidth(s1) * sizeScale;
-		*s3 = c_bcp;
-		if (width > xmax) {
-			if (s1==s2)
-			{
-				// fuck, don't have a clean cut, we'll overflow
-				s2 = s3;
-			}
-			*s2 = '\0';
-			UI_DrawProportionalString(x, y, s1, style, color);
-			y += ystep;
-			if (c_bcp == '\0')
-      {
-        // that was the last word
-        // we could start a new loop, but that wouldn't be much use
-        // even if the word is too long, we would overflow it (see above)
-        // so just print it now if needed
-        s2++;
-        if (*s2 != '\0') // if we are printing an overflowing line we have s2 == s3
-          UI_DrawProportionalString(x, y, s2, style, color);
-				break; 
-      }
-			s2++;
-			s1 = s2;
-			s3 = s2;
-		}
-		else
-		{
-			s2 = s3;
-			if (c_bcp == '\0') // we reached the end
-			{
-				UI_DrawProportionalString(x, y, s1, style, color);
-				break;
-			}
-		}
-	}
-}
-
-/*
-=================
 UI_DrawString2
 =================
 */
@@ -652,10 +618,18 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 	// draw the colored text
 	trap_R_SetColor( color );
 	
-	ax = x * uis.xscale + uis.bias;
-	ay = y * uis.yscale;
-	aw = charw * uis.xscale;
-	ah = charh * uis.yscale;
+	// JUHOX: apply the new scaling
+#if 0	
+	ax = x * uis.scale + uis.bias;
+	ay = y * uis.scale;
+	aw = charw * uis.scale;
+	ah = charh * uis.scale;
+#else
+	ax = x * uis.scaleX;
+	ay = y * uis.scaleY;
+	aw = charw * uis.scaleX;
+	ah = charh * uis.scaleY;
+#endif
 
 	s = str;
 	while ( *s )
@@ -685,6 +659,30 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 	}
 
 	trap_R_SetColor( NULL );
+}
+
+/*
+=================
+JUHOX: UI_DrawStrlen
+
+Returns character count, skiping color escape codes
+Exact copy of CG_DrawStrlen()
+=================
+*/
+int UI_DrawStrlen(const char *str) {
+	const char *s = str;
+	int count = 0;
+
+	while (*s) {
+		if (Q_IsColorString(s)) {
+			s += 2;
+		} else {
+			count++;
+			s++;
+		}
+	}
+
+	return count;
 }
 
 /*
@@ -741,13 +739,23 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 	{
 		case UI_CENTER:
 			// center justify at x
+			// JUHOX: use UI_DrawStrlen() instead of strlen
+#if 0
 			len = strlen(str);
+#else
+			len = UI_DrawStrlen(str);
+#endif
 			x   = x - len*charw/2;
 			break;
 
 		case UI_RIGHT:
 			// right justify at x
+			// JUHOX: use UI_DrawStrlen() instead of strlen
+#if 0
 			len = strlen(str);
+#else
+			len = UI_DrawStrlen(str);
+#endif
 			x   = x - len*charw;
 			break;
 
@@ -760,7 +768,7 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 	{
 		dropcolor[0] = dropcolor[1] = dropcolor[2] = 0;
 		dropcolor[3] = drawcolor[3];
-		UI_DrawString2(x+2,y+2,str,dropcolor,charw,charh);
+		UI_DrawString2(x+1,y+1,str,dropcolor,charw,charh);
 	}
 
 	UI_DrawString2(x,y,str,drawcolor,charw,charh);
@@ -801,6 +809,9 @@ static void NeedCDKeyAction( qboolean result ) {
 	}
 }
 
+// bk001205 - for LCC
+typedef void (*voidfunc_f)(void);
+
 void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 	// this should be the ONLY way the menu system is brought up
 	// enusure minumum menu data is cached
@@ -829,6 +840,7 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 		UI_InGameMenu();
 		return;
 		
+	// bk001204
 	case UIMENU_TEAM:
 	case UIMENU_POSTGAME:
 	default:
@@ -986,6 +998,31 @@ void UI_Cache_f( void ) {
 
 }
 
+/*
+=================
+JUHOX: UI_LFEdit_f
+=================
+*/
+#if MAPLENSFLARES
+static void UI_LFEdit_f(void) {
+	const char* mapname;
+
+	if (trap_Argc() != 2) return;
+
+	mapname = UI_Argv(1);
+	if (!mapname) return;
+	if (!mapname[0]) return;
+
+	trap_Cvar_SetValue("sv_maxclients", 1);
+	trap_Cvar_SetValue("dedicated", 0);
+	trap_Cvar_SetValue("sv_pure", 0);
+	trap_Cvar_SetValue("g_editmode", EM_mlf);
+	trap_Cvar_SetValue("g_gametype", 0);
+
+	// the wait commands will allow the dedicated to take effect
+	trap_Cmd_ExecuteText(EXEC_APPEND, va( "wait ; wait ; devmap %s\n", mapname));
+}
+#endif
 
 /*
 =================
@@ -1036,9 +1073,16 @@ qboolean UI_ConsoleCommand( int realTime ) {
 	}
 
 	if ( Q_stricmp (cmd, "ui_cdkey") == 0 ) {
-		UI_CDKeyMenu_f();
+//		UI_CDKeyMenu_f();
 		return qtrue;
 	}
+
+#if MAPLENSFLARES	// JUHOX: commands for map lens flares
+	if (Q_stricmp(cmd, "lfedit") == 0) {
+		UI_LFEdit_f();
+		return qtrue;
+	}
+#endif
 
 	return qfalse;
 }
@@ -1065,17 +1109,21 @@ void UI_Init( void ) {
 	trap_GetGlconfig( &uis.glconfig );
 
 	// for 640x480 virtualized screen
-	uis.xscale = uis.glconfig.vidWidth * (1.0/640.0);
-	uis.yscale = uis.glconfig.vidHeight * (1.0/480.0);
+	// JUHOX: wide screen option not very helpful; instead scale X & Y independent from each other
+#if 0
+	uis.scale = uis.glconfig.vidHeight * (1.0/480.0);
 	if ( uis.glconfig.vidWidth * 480 > uis.glconfig.vidHeight * 640 ) {
 		// wide screen
 		uis.bias = 0.5 * ( uis.glconfig.vidWidth - ( uis.glconfig.vidHeight * (640.0/480.0) ) );
-		uis.xscale = uis.yscale;
 	}
 	else {
 		// no wide screen
 		uis.bias = 0;
 	}
+#else
+	uis.scaleX = uis.glconfig.vidWidth / 640.0;
+	uis.scaleY = uis.glconfig.vidHeight / 480.0;
+#endif
 
 	// initialize the menu system
 	Menu_Cache();
@@ -1093,10 +1141,18 @@ Adjusted for resolution and screen aspect ratio
 */
 void UI_AdjustFrom640( float *x, float *y, float *w, float *h ) {
 	// expect valid pointers
-	*x = *x * uis.xscale + uis.bias;
-	*y *= uis.yscale;
-	*w *= uis.xscale;
-	*h *= uis.yscale;
+	// JUHOX: apply the new scaling
+#if 0
+	*x = *x * uis.scale + uis.bias;
+	*y *= uis.scale;
+	*w *= uis.scale;
+	*h *= uis.scale;
+#else
+	*x *= uis.scaleX;
+	*y *= uis.scaleY;
+	*w *= uis.scaleX;
+	*h *= uis.scaleY;
+#endif
 }
 
 void UI_DrawNamedPic( float x, float y, float width, float height, const char *picname ) {
@@ -1183,6 +1239,27 @@ void UI_UpdateScreen( void ) {
 
 /*
 =================
+JUHOX: UI_DrawBackPic
+=================
+*/
+void UI_DrawBackPic(qboolean drawPic) {
+	float x, y, w, h;
+
+	if (!drawPic) {
+		UI_FillRect(0, 0, 640, 480, colorBlack);
+	}
+	else {
+		x = 0;
+		y = 0;
+		w = 640;
+		h = 480;
+		UI_AdjustFrom640(&x, &y, &w, &h);
+		trap_R_DrawStretchPic(x, y, w, h, 0, 0, 1, 768.0/1024.0, uis.menuBackShader);
+	}
+}
+
+/*
+=================
 UI_Refresh
 =================
 */
@@ -1202,12 +1279,7 @@ void UI_Refresh( int realtime )
 		if (uis.activemenu->fullscreen)
 		{
 			// draw the background
-			if( uis.activemenu->showlogo ) {
-				UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
-			}
-			else {
-				UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackNoLogoShader );
-			}
+			UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
 		}
 
 		if (uis.activemenu->draw)
@@ -1229,7 +1301,7 @@ void UI_Refresh( int realtime )
 	if (uis.debug)
 	{
 		// cursor coordinates
-		UI_DrawString( 0, 0, va("(%d,%d)",uis.cursorx,uis.cursory), UI_LEFT|UI_SMALLFONT, colorRed );
+		UI_DrawString( 0, 0, va("(%d,%d)",uis.cursorx,uis.cursory), UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, colorRed );
 	}
 #endif
 

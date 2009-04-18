@@ -9,7 +9,7 @@
 #define STANDALONE 1
 #ifdef STANDALONE
   #define PRODUCT_NAME			"ZEQ2"
-  #define BASEGAME			"zeq2"
+  #define BASEGAME			"ZEQ2"
   #define CLIENT_WINDOW_TITLE     	"ZEQ2"
   #define CLIENT_WINDOW_MIN_TITLE 	"ZEQ2"
   #define GAMENAME_FOR_MASTER		"ZEQ2"	// must NOT contain whitespaces

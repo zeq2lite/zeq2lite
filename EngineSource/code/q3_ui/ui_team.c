@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 //
 // ui_team.c
@@ -46,6 +26,16 @@ typedef struct
 } teammain_t;
 
 static teammain_t	s_teammain;
+
+// bk001204 - unused
+//static menuframework_s	s_teammain_menu;
+//static menuaction_s		s_teammain_orders;
+//static menuaction_s		s_teammain_voice;
+//static menuaction_s		s_teammain_joinred;
+//static menuaction_s		s_teammain_joinblue;
+//static menuaction_s		s_teammain_joingame;
+//static menuaction_s		s_teammain_spectate;
+
 
 /*
 ===============
@@ -115,8 +105,8 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.joinred.generic.x        = 320;
 	s_teammain.joinred.generic.y        = y;
 	s_teammain.joinred.string           = "JOIN RED";
-	s_teammain.joinred.style            = UI_CENTER|UI_SMALLFONT;
-	s_teammain.joinred.color            = colorRed;
+	s_teammain.joinred.style            = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_teammain.joinred.color            = colorWhite;
 	y += 20;
 
 	s_teammain.joinblue.generic.type     = MTYPE_PTEXT;
@@ -126,8 +116,8 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.joinblue.generic.x        = 320;
 	s_teammain.joinblue.generic.y        = y;
 	s_teammain.joinblue.string           = "JOIN BLUE";
-	s_teammain.joinblue.style            = UI_CENTER|UI_SMALLFONT;
-	s_teammain.joinblue.color            = colorRed;
+	s_teammain.joinblue.style            = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_teammain.joinblue.color            = colorWhite;
 	y += 20;
 
 	s_teammain.joingame.generic.type     = MTYPE_PTEXT;
@@ -137,8 +127,8 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.joingame.generic.x        = 320;
 	s_teammain.joingame.generic.y        = y;
 	s_teammain.joingame.string           = "JOIN GAME";
-	s_teammain.joingame.style            = UI_CENTER|UI_SMALLFONT;
-	s_teammain.joingame.color            = colorRed;
+	s_teammain.joingame.style            = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_teammain.joingame.color            = colorWhite;
 	y += 20;
 
 	s_teammain.spectate.generic.type     = MTYPE_PTEXT;
@@ -148,8 +138,8 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.spectate.generic.x        = 320;
 	s_teammain.spectate.generic.y        = y;
 	s_teammain.spectate.string           = "SPECTATE";
-	s_teammain.spectate.style            = UI_CENTER|UI_SMALLFONT;
-	s_teammain.spectate.color            = colorRed;
+	s_teammain.spectate.style            = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_teammain.spectate.color            = colorWhite;
 	y += 20;
 
 	trap_GetConfigString(CS_SERVERINFO, info, MAX_INFO_STRING);   

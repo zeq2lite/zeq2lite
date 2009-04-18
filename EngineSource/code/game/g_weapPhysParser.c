@@ -1,1685 +1,2086 @@
-// Copyright (C) 2003-2004 RiO
+// Copyright (C) 2003-2005 RiO
 //
-// g_weapPhysParser.c -- parser for weapon phyiscs script language.
+// g_weapGfxParser.c -- token parser for ZEQ2's weapon physics script language.
 
-#include "g_local.h"
+#include "g_weapPhysParser.h" // <-- cg_local.h included in this
 
-#define MAX_SCRIPT_LENGTH		8000
-#define MAX_SCRIPTITEM_LENGTH	  50
-#define MAX_IMPORT_DEPTH		   5
 
-typedef enum {
-	ERROR_FILE_NOTFOUND,
-	ERROR_FILE_TOOBIG,
-	ERROR_PREMATURE_EOF,
-	ERROR_SYMBOL_UNEXPECTED,
-	ERROR_RESERVED_KEYWORD,
-	ERROR_SECOND_DOT,
-	ERROR_NO_ATTACKIDENT,
-	ERROR_IMPORTSYMBOL_UNKNOWN,
-	ERROR_ATTACKSYMBOL_UNKNOWN,
-	ERROR_IMPORT_FAILED,
-	ERROR_MAXIMPORT_EXCEEDED,
-	ERROR_NONVALID_INHERITANCE,
-	ERROR_NOT_SUBSECTION,
-	ERROR_NOT_DAMAGETYPE,
-	ERROR_NOT_HOMINGTYPE,
-	ERROR_UNKNOWNPROPERTY
-} weapPhysError_t;
-
-static int	G_weapPhysParser_importDepth;
+static int							g_weapPhysRecursionDepth;
+static g_userWeaponParseBuffer_t	g_weapPhysBuffer;
+	// FIXME: Can this be a local variable instead, or would it give us
+	//		  > 32k locals errors in the VM-bytecode compiler?
 
 /*
-   ---------------------------------------------------
-     E R R O R   H A N D L I N G   F U N C T I O N S
-   ---------------------------------------------------
+=======================
+G_weapPhys_StoreBuffer
+=======================
+Copies the contents in the buffer to a client's weapon
+configuration, converting filestrings into qhandle_t in
+the process.
 */
+void G_weapPhys_StoreBuffer(int clientNum, int weaponNum) {
+	g_userWeapon_t				*dest;
+	g_userWeaponParseBuffer_t	*src;
+
+	src = &g_weapPhysBuffer;
+	dest = G_FindUserWeaponData( clientNum, weaponNum + 1);
+	memset( dest, 0, sizeof(g_userWeapon_t));
+
+	// Size and form of buffer and storage is equal, so just
+	// copy the memory.
+	memcpy( dest, src, sizeof(g_userWeapon_t));
+
+	// Indicate the weapon as charged if there is a chargeReadyPct
+	// or chargeTime set to something other than 0.
+	if ( src->costs_chargeReady || src->costs_chargeTime ) {
+		dest->general_bitflags |= WPF_NEEDSCHARGE;
+	}
+
+	// If nrShots is set to < 1, internally it must be represented by 1 instead.
+	if ( dest->firing_nrShots < 1 ) dest->firing_nrShots = 1;
+
+	// Handle the presence of alternate fire weapons through the
+	// piggybacked WPF_ALTWEAPONPRESENT flag.
+	
+	// NOTE: The WPF_ALTWEAPONPRESENT flag will only be enabled in src if src is the
+	//       buffer for a secondary fire configuration. In this case it is implicitly
+	//       safe to subtract ALTWEAPON_OFFSET to obtain the primary fire index
+	//       of the weapon!
+	if ( src->general_bitflags & WPF_ALTWEAPONPRESENT ) {
+		src->general_bitflags &= ~WPF_ALTWEAPONPRESENT;
+		dest = G_FindUserWeaponData( clientNum, weaponNum - ALTWEAPON_OFFSET + 1);
+		dest->general_bitflags |= WPF_ALTWEAPONPRESENT;
+	}
+}
 
 /*
-==============================
-G_weapPhysParser_ErrorHandle
-==============================
-Sends feedback on script errors to the console.
+======================
+G_weapPhys_ParseType
+======================
+Parses 'type' field.
+Syntax:
+'type' '=' "enumstring"
 */
-void G_weapPhysParser_ErrorHandle( weapPhysError_t errorNr, char *string1, char *string2 ) {
-	switch ( errorNr ) {
-	case ERROR_FILE_NOTFOUND:
-		G_Printf( "WEAPONSCRIPT ERROR: File '%s' not found.\n", string1 );
-		break;
+qboolean G_weapPhys_ParseType( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+	
+	// NOTE: The sequences of the strings in these stringtables are dependant on the
+	//       sequences of enumeration types in g_userweapons.h !!!
+	char *Physics_strings[] = { "Missile", "Beam", "ForceField", "Torch", "Hitscan", "GroundSkim", "Trigger", "None", "" };
+	char *Detonation_strings[] = { "Ki", "Melee", "Slice", "Pierce", "Stone", "Burn", "Candy", "" };
+	char *Trajectory_strings[] = { "LineOfSight", "ProxBomb", "Guided", "Homing", "Arch", "Drunken", "" };
 
-	case ERROR_FILE_TOOBIG:
-		G_Printf( "WEAPONSCRIPT ERROR: File '%s' exceeds maximum script length.\n", string1 );
-		break;
+	int i;
 
-	case ERROR_PREMATURE_EOF:
-		G_Printf( "WEAPONSCRIPT ERROR: Premature end of file.\n" );
-		break;
+	if ( token->tokenSym != TOKEN_STRING ) {
+		G_weapPhys_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
 
-	case ERROR_SYMBOL_UNEXPECTED:
-		if ( !string2 ) {
-			G_Printf( "WEAPONSCRIPT ERROR: Unexpected symbol '%s' found.\n", string1 );
-		} else {
-			G_Printf( "WEAPONSCRIPT ERROR: Unexpected symbol '%s' found, expected '%s'.\n", string1, string2 );
+	switch ( category ) {
+
+	case CAT_PHYSICS:
+		for ( i = 0; Q_stricmp( Physics_strings[i], token->stringval ); i++ ) {
+			if ( !strcmp( Physics_strings[i], "" )) {
+				G_weapPhys_ErrorHandle( ERROR_UNKNOWN_ENUMTYPE, scanner, token->stringval, NULL );
+				return qfalse;
+			}
 		}
+		g_weapPhysBuffer.general_type = i;
 		break;
 
-	case ERROR_RESERVED_KEYWORD:
-		G_Printf( "WEAPONSCRIPT ERROR: Illegal use of reserved keyword '%s'.\n", string1 );
+	case CAT_DETONATION:
+		for ( i = 0; Q_stricmp( Detonation_strings[i], token->stringval ); i++ ) {
+			if ( !strcmp( Detonation_strings[i], "" )) {
+				G_weapPhys_ErrorHandle( ERROR_UNKNOWN_ENUMTYPE, scanner, token->stringval, NULL );
+				return qfalse;
+			}
+		}
+		g_weapPhysBuffer.damage_meansOfDeath = i;
 		break;
 
-	case ERROR_SECOND_DOT:
-		G_Printf( "WEAPONSCRIPT ERROR: Trying to prepend second import identifier.\n" );
-		break;
-
-	case ERROR_NO_ATTACKIDENT:
-		G_Printf( "WEAPONSCRIPT ERROR: Incomplete attack identifier.\n" );
-		break;
-
-	case ERROR_IMPORTSYMBOL_UNKNOWN:
-		G_Printf( "WEAPONSCRIPT ERROR: Unresolved import identifier '%s'.\n", string1 );
-		break;
-
-	case ERROR_ATTACKSYMBOL_UNKNOWN:
-		G_Printf( "WEAPONSCRIPT ERROR: Unresolved attack identifier '%s'.\n", string1 );
-		break;
-
-	case ERROR_IMPORT_FAILED:
-		G_Printf( "WEAPONSCRIPT ERROR: Failed to import '%s'.\n", string1 );
-
-	case ERROR_MAXIMPORT_EXCEEDED:
-		G_Printf( "WEAPONSCRIPT ERROR: Script exceeds maximum import depth.\n" );
-		break;
-
-	case ERROR_NONVALID_INHERITANCE:
-		G_Printf( "WEAPONSCRIPT ERROR: Can not inherit from '%s'.\n", string1 );
-		break;
-
-	case ERROR_NOT_SUBSECTION:
-		G_Printf( "WEAPONSCRIPT ERROR: '%s' is not a valid weapon declaration subsection.\n", string1 );
-		break;
-
-	case ERROR_NOT_DAMAGETYPE:
-		G_Printf( "WEAPONSCRIPT ERROR: '%s' is not a valid damage type.\n", string1 );
-		break;
-
-	case ERROR_NOT_HOMINGTYPE:
-		G_Printf( "WEAPONSCRIPT ERROR: '%s' is not a valid homing type.\n", string1 );
-		break;
-
-	case ERROR_UNKNOWNPROPERTY:
-		G_Printf( "WEAPONSCRIPT ERROR: '%s' is not a valid property or flag of '%s'.\n", string1, string2 );
+	case CAT_TRAJECTORY:
+		for ( i = 0; Q_stricmp( Trajectory_strings[i], token->stringval ); i++ ) {
+			if ( !strcmp( Trajectory_strings[i], "" )) {
+				G_weapPhys_ErrorHandle( ERROR_UNKNOWN_ENUMTYPE, scanner, token->stringval, NULL );
+				return qfalse;
+			}
+		}
+		g_weapPhysBuffer.homing_type = i;
 		break;
 
 	default:
-		G_Printf( "WEAPONSCRIPT ERROR: Unknown error occured.\n" );
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
 		break;
 	}
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
 }
 
+
 /*
-   -------------------------------------------------
-     B L O C K   R E A D I N G   F U N C T I O N S
-   -------------------------------------------------
+======================
+G_weapPhys_ParseSpeed
+======================
+Parses 'speed' field.
+Syntax:
+'speed' '=' ( <int> | <float> )
 */
+qboolean G_weapPhys_ParseSpeed( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
 
-qboolean G_weapPhysParser_ReadAttackBlock( char *script, g_userWeapon_t *weaponInfo ) {
-	char *scriptPos;
-	char *ungetPos;
-	char *token;
-
-	scriptPos = script;
-
-	// Read the opening bracket.
-	token = COM_Parse( &scriptPos );
-	if ( Q_stricmp( token, "{" ) ) {
-		G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "{" );
+	if ( category != CAT_PHYSICS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
 		return qfalse;
 	}
 
-	// Stay in this block until the closing bracket is met.
-	token = COM_Parse( &scriptPos );
-	if ( !(*token) ) {
-		G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
+	if ( (token->tokenSym != TOKEN_INTEGER) && (token->tokenSym != TOKEN_FLOAT) ) {
+		G_weapPhys_ErrorHandle( ERROR_FLOAT_EXPECTED, scanner, token->stringval, NULL );
 		return qfalse;
 	}
-	while ( Q_stricmp( token, "}" ) ) {
 
-		if ( !Q_stricmp( token, "Costs" ) ) {
-			// Read costs section
-			if ( g_verboseWeaponParser.integer ) {
-				G_Printf( "Processing Costs section.\n" );
+	g_weapPhysBuffer.physics_speed = token->floatval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+==============================
+G_weapPhys_ParseAcceleration
+==============================
+Parses 'acceleration' field.
+Syntax:
+'acceleration' '=' ( <int> | <float> )
+*/
+qboolean G_weapPhys_ParseAcceleration( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_PHYSICS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( (token->tokenSym != TOKEN_INTEGER) && (token->tokenSym != TOKEN_FLOAT) ) {
+		G_weapPhys_ErrorHandle( ERROR_FLOAT_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.physics_acceleration = token->floatval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+========================
+G_weapPhys_ParseRadius
+========================
+Parses 'radius' field.
+Syntax:
+'radius' '=' ( <int> | <float> ) ( e | ('+' ( <int> | <float> )) )
+*/
+qboolean G_weapPhys_ParseRadius( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( (category != CAT_PHYSICS) && (category != CAT_DETONATION) ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	switch ( category ) {
+	case CAT_PHYSICS:
+		g_weapPhysBuffer.physics_radius = token->intval;
+		break;
+	case CAT_DETONATION:
+		g_weapPhysBuffer.damage_radius = token->intval;
+		break;
+	default:
+		// shouldn't be able to happen
+		break;
+	}
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	if ( token->tokenSym == TOKEN_PLUS ) {
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
 			}
+			return qfalse;
+		}
 
-			// Read the opening bracket.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		}
+
+		switch ( category ) {
+		case CAT_PHYSICS:
+			g_weapPhysBuffer.physics_radiusMultiplier = token->intval;
+			break;
+		case CAT_DETONATION:
+			g_weapPhysBuffer.damage_radiusMultiplier = token->intval;
+			break;
+		default:
+			// shouldn't be able to happen
+			break;
+		}		
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+	} else {
+		// No + multiplier means we reset any old multiplier, to keep it from remaining
+		// as a ghost.
+
+		switch ( category ) {
+		case CAT_PHYSICS:
+			g_weapPhysBuffer.physics_radiusMultiplier = 0;
+			break;
+		case CAT_DETONATION:
+			g_weapPhysBuffer.damage_radiusMultiplier = 0;
+			break;
+		default:
+			// shouldn't be able to happen
+			break;
+		}	
+	}
+
+	return qtrue;
+}
+
+
+/*
+=======================
+G_weapPhys_ParseRange
+=======================
+Parses 'range' field.
+Syntax (Physics):
+  'range' '=' ( <int> | ( '[' <int> <int> ']'))
+Syntax (Trajectory):
+  'range' '=' <int>
+*/
+qboolean G_weapPhys_ParseRange( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	int rng_start, rng_end;
+
+	if ( (category != CAT_PHYSICS) && (category != CAT_TRAJECTORY) ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	
+
+	switch ( category ) {
+	case CAT_PHYSICS:
+		switch ( token->tokenSym ) {
+		case TOKEN_INTEGER:
+			rng_start = rng_end = token->intval;
+			break;
+
+		case TOKEN_OPENRANGE:
+
+			if ( !G_weapPhys_NextSym( scanner, token ) ) {
+				if ( token->tokenSym == TOKEN_EOF ) {
+					G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+				}
 				return qfalse;
 			}
 
-			if ( Q_stricmp( token, "{" ) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "{" );
+			if ( token->tokenSym != TOKEN_INTEGER ) {
+				G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+				return qfalse;
+			} else {
+				rng_start = token->intval;
+			}
+
+			if ( !G_weapPhys_NextSym( scanner, token ) ) {
+				if ( token->tokenSym == TOKEN_EOF ) {
+					G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+				}
 				return qfalse;
 			}
 
-			// Stay in this block until the closing bracket is met.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
+			if ( token->tokenSym != TOKEN_INTEGER ) {
+				G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
 				return qfalse;
+			} else {
+				rng_end = token->intval;
 			}
-			while ( Q_stricmp( token, "}" ) ) {
-				// Read items in costs section
 
-				if ( !Q_stricmp( token, "hp" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->costs_hp = atoi(token);
-
-
-
-				} else if ( !Q_stricmp( token, "ki" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->costs_ki = atoi(token);
-
-
-				
-				} else if ( !Q_stricmp( token, "stamina" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->costs_stamina = atoi(token);
-
-			
-				
-				} else if ( !Q_stricmp( token, "chargeTime" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->costs_chargeTime = atoi(token);
-				
-				
-				} else if ( !Q_stricmp( token, "chargeReady" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->costs_chargeReady = atoi(token);
-
-				
-				
-				} else if ( !Q_stricmp( token, "cooldownTime" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->costs_cooldownTime = atoi(token);
-
-				
-				
-				} else if ( !Q_stricmp( token, "+ki2hp" ) ) {
-					weaponInfo->costs_transKi2HP = qtrue;
-
-				} else if ( !Q_stricmp( token, "-ki2hp" ) ) {
-					weaponInfo->costs_transKi2HP = qfalse;
-
-				} else {
-					G_weapPhysParser_ErrorHandle( ERROR_UNKNOWNPROPERTY, token, "Costs" );
-					return qfalse;
+			if ( !G_weapPhys_NextSym( scanner, token ) ) {
+				if ( token->tokenSym == TOKEN_EOF ) {
+					G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
 				}
-
-
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-			}
-
-
-		} else if ( !Q_stricmp( token, "Damage" ) ) {
-			// Read damage section
-			if ( g_verboseWeaponParser.integer ) {
-				G_Printf( "Processing Damage section.\n" );
-			}
-
-			// Read the opening bracket.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
 				return qfalse;
 			}
 
-			if ( !Q_stricmp( token, "=" ) ) {
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-
-				if ( !Q_stricmp( token, "Ki" ) ) {
-					weaponInfo->damage_meansOfDeath = UMOD_KI;
-				} else if ( !Q_stricmp( token, "Blunt" ) || !Q_stricmp( token, "Melee" ) ) {
-					weaponInfo->damage_meansOfDeath = UMOD_MELEE;
-				} else if ( !Q_stricmp( token, "Slice" ) ) {
-					weaponInfo->damage_meansOfDeath = UMOD_SLICE;
-				} else if ( !Q_stricmp( token, "Pierce" ) ) {
-					weaponInfo->damage_meansOfDeath = UMOD_PIERCE;
-				} else if ( !Q_stricmp( token, "Petrify" ) ) {
-					weaponInfo->damage_meansOfDeath = UMOD_STONE;
-				} else if ( !Q_stricmp( token, "Burn" ) ) {
-					weaponInfo->damage_meansOfDeath = UMOD_BURN;
-				} else if ( !Q_stricmp( token, "Candy" ) ) {
-					weaponInfo->damage_meansOfDeath = UMOD_CANDY;
-				} else {
-					G_weapPhysParser_ErrorHandle( ERROR_NOT_DAMAGETYPE, token, NULL );
-					return qfalse;
-				}
-
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-			}
-
-			if ( Q_stricmp( token, "{" ) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "{" );
+			if ( token->tokenSym != TOKEN_CLOSERANGE ) {
+				G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "]" );
 				return qfalse;
 			}
+			break;
+
+		default:
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+			break;
+		}
+
+		g_weapPhysBuffer.physics_range_min = rng_start;
+		g_weapPhysBuffer.physics_range_max = rng_end;
+		break;
+
+	case CAT_TRAJECTORY:
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		}
+
+		g_weapPhysBuffer.homing_range = token->intval;
+		break;
+
+	default:
+		// shouldn't be able to happen
+		break;
+	}
+	
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
 
 
-			// Stay in this block until the closing bracket is met.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
+/*
+==========================
+G_weapPhys_ParseLifetime
+==========================
+Parses 'lifetime' field.
+Syntax:
+'lifetime' '=' <int>
+*/
+qboolean G_weapPhys_ParseLifetime( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_PHYSICS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.physics_lifetime = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+==========================
+G_weapPhys_ParseHitpoints
+==========================
+Parses 'hitpoints' / 'hp' field.
+Syntax:
+( 'hitpoints' | 'hp' ) '=' <int>
+*/
+qboolean G_weapPhys_ParseHitpoints( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_COSTS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.costs_hp = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+====================
+G_weapPhys_ParseKi
+====================
+Parses 'ki' / 'energy' field.
+Syntax:
+( 'ki' | 'energy' ) '=' <int>
+*/
+qboolean G_weapPhys_ParseKi( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_COSTS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.costs_ki = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+=========================
+G_weapPhys_ParseStamina
+=========================
+Parses 'stamina' field.
+Syntax:
+'stamina' '=' <int>
+*/
+qboolean G_weapPhys_ParseStamina( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_COSTS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.costs_stamina = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+==============================
+G_weapPhys_ParseCooldownTime
+==============================
+Parses 'cooldownTime' field.
+Syntax:
+'cooldownTime' '=' <int>
+*/
+qboolean G_weapPhys_ParseCooldownTime( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_COSTS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.costs_cooldownTime = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+============================
+G_weapPhys_ParseChargeTime
+============================
+Parses 'chargeTime' field.
+Syntax:
+'chargeTime' '=' <int>
+*/
+qboolean G_weapPhys_ParseChargeTime( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_COSTS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.costs_chargeTime = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+================================
+G_weapPhys_ParseChargeReadyPct
+================================
+Parses 'chargeReadyPct' field.
+Syntax:
+'chargeReadyPct' '=' <int>
+*/
+qboolean G_weapPhys_ParseChargeReadyPct( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_COSTS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.costs_chargeReady = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+================================
+G_weapPhys_ParseSubstHitpoints
+================================
+Parses 'substHitpoints' / 'substHp' field.
+Syntax:
+( 'substHitpoints' | 'substHp' ) '=' <int>
+*/
+qboolean G_weapPhys_ParseSubstHitpoints( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_COSTS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	switch ( token->tokenSym ) {
+	case TOKEN_TRUE:
+		g_weapPhysBuffer.costs_transKi2HP = qtrue;
+		break;
+	case TOKEN_FALSE:
+		g_weapPhysBuffer.costs_transKi2HP = qfalse;
+		break;
+	default:
+		G_weapPhys_ErrorHandle( ERROR_BOOLEAN_EXPECTED, scanner, token->stringval, NULL );
+		break;
+	}
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+========================
+G_weapPhys_ParseDamage
+========================
+Parses 'damage' field.
+Syntax:
+'damage' '=' <int>
+*/
+qboolean G_weapPhys_ParseDamage( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_DETONATION ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.damage_damage = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	if ( token->tokenSym == TOKEN_PLUS ) {
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
 			}
-			while ( Q_stricmp( token, "}" ) ) {
-				// Read items in damage section
+			return qfalse;
+		}
 
-				if ( !Q_stricmp( token, "damage" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		}
 
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
+		g_weapPhysBuffer.damage_multiplier = token->intval;
 
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->damage_damage = atoi(token);
-
-					ungetPos = scriptPos;
-					token = COM_Parse( &scriptPos );
-					if ( token[0] == '+' ) {
-						if ( token[1] ) {
-							weaponInfo->damage_multiplier = atoi(&token[1]);
-						} else {
-							G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						}
-					} else {
-						scriptPos = ungetPos;
-					}
-
-
-
-				} else if ( !Q_stricmp( token, "radius" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->damage_radius = atoi(token);
-
-					ungetPos = scriptPos;
-					token = COM_Parse( &scriptPos );
-					if ( token[0] == '+' ) {
-						if ( token[1] ) {
-							weaponInfo->damage_radiusMultiplier = atoi(&token[1]);
-						} else {
-							G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						}
-					} else {
-						scriptPos = ungetPos;
-					}
-
-
-
-				} else if ( !Q_stricmp( token, "knockback" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->damage_extraKnockback = atoi(token);
-
-
-
-				} else if ( !Q_stricmp( token, "+piercing" ) ) {
-					weaponInfo->damage_piercing = qtrue;
-
-				} else if ( !Q_stricmp( token, "-piercing" ) ) {
-					weaponInfo->damage_piercing = qfalse;
-
-				} else if ( !Q_stricmp( token, "+continuous" ) ) {
-					weaponInfo->damage_continuous = qtrue;
-
-				} else if ( !Q_stricmp( token, "-continuous" ) ) {
-					weaponInfo->damage_continuous = qfalse;
-
-				} else if ( !Q_stricmp( token, "+lethal" ) ) {
-					weaponInfo->damage_lethal = qtrue;
-
-				} else if ( !Q_stricmp( token, "-lethal" ) ) {
-					weaponInfo->damage_lethal = qfalse;
-
-				} else if ( !Q_stricmp( token, "+planetary" ) ) {
-					weaponInfo->damage_planetary = qtrue;
-
-				} else if ( !Q_stricmp( token, "-planetary" ) ) {
-					weaponInfo->damage_planetary = qfalse;
-
-				} else {
-					G_weapPhysParser_ErrorHandle( ERROR_UNKNOWNPROPERTY, token, "Damage" );
-					return qfalse;
-				}
-
-
-
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
 			}
+			return qfalse;
+		}
+	} else {
+		// No + multiplier means we reset any old multiplier, to keep it from remaining
+		// as a ghost.
+
+		g_weapPhysBuffer.damage_multiplier = 0;
+	}
+
+	return qtrue;
+}
 
 
-		} else if ( !Q_stricmp( token, "Firing" ) ) {
-			// Read firing section
-			if ( g_verboseWeaponParser.integer ) {
-				G_Printf( "Processing Firing section.\n" );
+/*
+===========================
+G_weapPhys_ParseKnockBack
+===========================
+Parses 'knockback' field.
+Syntax:
+'knockback' '=' <int>
+*/
+qboolean G_weapPhys_ParseKnockBack( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_DETONATION ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.damage_extraKnockback = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+=========================
+G_weapPhys_ParseNrShots
+=========================
+Parses 'nrShots' field.
+Syntax:
+'nrShots' '=' <int>
+*/
+qboolean G_weapPhys_ParseNrShots( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_MUZZLE ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.firing_nrShots = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+=============================
+G_weapPhys_ParseOffsetWidth
+=============================
+Parses 'offsetWidth' field.
+Syntax:
+'offsetWidth' '=' ( <int> | ( '[' <int> <int> ']' ) )
+*/
+qboolean G_weapPhys_ParseOffsetWidth( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	int rng_start, rng_end;
+
+	if ( category != CAT_MUZZLE ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	switch ( token->tokenSym ) {
+	case TOKEN_INTEGER:
+		rng_start = rng_end = token->intval;
+		break;
+	case TOKEN_OPENRANGE:
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
 			}
-
-			// Read the opening bracket.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}
-
-			if ( Q_stricmp( token, "{" ) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "{" );
-				return qfalse;
-			}
-
-			// Stay in this block until the closing bracket is met.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}
-			while ( Q_stricmp( token, "}" ) ) {
-				// Read items in firing section
-
-				if ( !Q_stricmp( token, "nrShots" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->firing_nrShots = atoi(token);
-
-
-
-				} else if ( !Q_stricmp( token, "offsetWidth" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->firing_offsetW = atoi(token);
-
-
-				
-				} else if ( !Q_stricmp( token, "offsetHeight" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->firing_offsetH = atoi(token);
-
-			
-				
-				} else if ( !Q_stricmp( token, "deviateWidth" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->firing_deviateW = atoi(token);
-
-				
-				
-				} else if ( !Q_stricmp( token, "deviateHeight" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->firing_deviateH = atoi(token);
-					
-
-
-				} else if ( !Q_stricmp( token, "+flipWidth" ) ) {
-					weaponInfo->firing_offsetWFlip = qtrue;
-
-				} else if ( !Q_stricmp( token, "-flipWidth" ) ) {
-					weaponInfo->firing_offsetWFlip = qfalse;
-
-				} else {
-					G_weapPhysParser_ErrorHandle( ERROR_UNKNOWNPROPERTY, token, "Firing" );
-					return qfalse;
-				}
-
-				
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-			}
-
-
-		} else if ( !Q_stricmp( token, "Homing" ) ) {
-			// Read homing section
-			if ( g_verboseWeaponParser.integer ) {
-				G_Printf( "Processing Homing section.\n" );
-			}
-
-			// Read the opening bracket.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}
-
-			if ( !Q_stricmp( token, "=" ) ) {
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-
-				if ( !Q_stricmp( token, "None" ) ) {
-					weaponInfo->homing_type = HOM_NONE;
-				} else if ( !Q_stricmp( token, "Prox" ) || !Q_stricmp( token, "Proximity" ) ) {
-					weaponInfo->homing_type = HOM_PROX;
-				} else if ( !Q_stricmp( token, "Guided" ) ) {
-					weaponInfo->homing_type = HOM_GUIDED;
-				} else if ( !Q_stricmp( token, "Arch" ) ) {
-					weaponInfo->homing_type = HOM_ARCH;
-				} else if ( !Q_stricmp( token, "Cylinder" ) ) {
-					weaponInfo->homing_type = HOM_CYLINDER;
-				} else {
-					G_weapPhysParser_ErrorHandle( ERROR_NOT_HOMINGTYPE, token, NULL );
-					return qfalse;
-				}
-
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-			}
-
-			if ( Q_stricmp( token, "{" ) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "{" );
-				return qfalse;
-			}
-
-
-			// Stay in this block until the closing bracket is met.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}
-			while ( Q_stricmp( token, "}" ) ) {
-				// Read items in homing section
-				
-				if ( !Q_stricmp( token, "range" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->homing_range = atoi(token);
-
-
-
-				} else if ( !Q_stricmp( token, "angleWidth" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->homing_angleW = atoi(token);
-
-
-
-				} else if ( !Q_stricmp( token, "angleHeight" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->homing_angleH = atoi(token);
-
-
-
-				} else {
-					G_weapPhysParser_ErrorHandle( ERROR_UNKNOWNPROPERTY, token, "Homing" );
-					return qfalse;
-				}
-
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-			}
-
-
-		} else if ( !Q_stricmp( token, "Physics" ) ) {
-			// Read physics section
-			if ( g_verboseWeaponParser.integer ) {
-				G_Printf( "Processing Physics section.\n" );
-			}
-
-			// Read the opening bracket.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}
-
-			if ( Q_stricmp( token, "{" ) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "{" );
-				return qfalse;
-			}
-
-			// Stay in this block until the closing bracket is met.
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}
-			while ( Q_stricmp( token, "}" ) ) {
-				// Read items in physics section
-
-				if ( !Q_stricmp( token, "speed" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->physics_speed = atof(token);
-
-
-
-				} else if ( !Q_stricmp( token, "acceleration" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->physics_acceleration = atof(token);
-
-
-
-				} else if ( !Q_stricmp( token, "gravity" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->physics_gravity = atof(token);
-
-
-
-				} else if ( !Q_stricmp( token, "radius" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->physics_radius = atoi(token);
-
-					ungetPos = scriptPos;
-					token = COM_Parse( &scriptPos );
-					if ( token[0] == '+' ) {
-						if ( token[1] ) {
-							weaponInfo->physics_radiusMultiplier = atoi(&token[1]);
-						} else {
-							G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						}
-					} else {
-						scriptPos = ungetPos;
-					}
-
-
-
-				} else if ( !Q_stricmp( token, "nrBounces" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->physics_maxBounces = atoi(token);
-
-
-
-				} else if ( !Q_stricmp( token, "bounceTransfer" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->physics_bounceFrac = atof(token);
-
-
-
-				} else if ( !Q_stricmp( token, "range" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->physics_range = atoi(token);
-
-
-
-				} else if ( !Q_stricmp( token, "lifetime" ) ) {
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					if ( Q_stricmp( token, "=" ) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-						return qfalse;
-					}
-
-					token = COM_Parse( &scriptPos );
-					if ( !(*token) ) {
-						G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-						return qfalse;
-					}
-
-					weaponInfo->physics_lifetime = atoi(token);
-
-
-
-				} else {
-					G_weapPhysParser_ErrorHandle( ERROR_UNKNOWNPROPERTY, token, "Physics" );
-					return qfalse;
-				}
-
-
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-			}
-
-
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
 		} else {
-			G_weapPhysParser_ErrorHandle( ERROR_NOT_SUBSECTION, token, NULL );
+			rng_start = token->intval;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
 			return qfalse;
 		}
 
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			rng_end = token->intval;
+		}
 
-		token = COM_Parse( &scriptPos );
-		if ( !(*token) ) {
-			G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
 			return qfalse;
 		}
-	}
-	return qtrue;
-}
 
-
-
-/*
-   -------------------------------------------------------------------------------
-     B L O C K   L O C A T I O N   &   I N H E R I T A N C E   F U N C T I O N S
-   -------------------------------------------------------------------------------
-*/
-
-/*
-======================================
-G_weapPhysParser_DecomposeIdentifier
-======================================
-Splits a combined '<import>.<attack>' identifier
-into its components <import> and <attack>.
-*/
-qboolean G_weapPhysParser_DecomposeIdentifier( char *input, char **importIdent, char **attackIdent ) {
-	int i;
-	qboolean dotSet;
-
-	Q_strncpyz( *importIdent, input, sizeof(char) * MAX_SCRIPTITEM_LENGTH );
-	*attackIdent = *importIdent;
-
-	dotSet = qfalse;
-	
-	i = 0;
-	// As long as there is string left to parse
-	while ( (*importIdent)[i] ) {
-		
-		// If we encounter a dot
-		if ( (*importIdent)[i] == '.' ) {
-
-			// We can only have one dot. More dots means an error
-			if ( dotSet ) {
-				G_weapPhysParser_ErrorHandle( ERROR_SECOND_DOT, NULL, NULL );
-				return qfalse;
-			}
-			
-			// Mark the dot being used and seperate the importIdent and attackIdent.
-			dotSet = qtrue;
-			(*importIdent)[i] = '\0';
-			*attackIdent = &((*importIdent)[i + 1]);
-
-			// If the dot was the last symbol, we would end up with a blank attackIdent,
-			// which would spell trouble.
-			if ( !(*attackIdent) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_NO_ATTACKIDENT, NULL, NULL );
-				return qfalse;
-			}
+		if ( token->tokenSym != TOKEN_CLOSERANGE ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "]" );
+			return qfalse;
 		}
+		break;
 
-		// Jump to the next symbol in the string.
-		i++;
+	default:
+		G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+		return qfalse;
 	}
 
-	// If we didn't find a dot, there is no import identifier, so make sure
-	// we return the null string for it.
-	if ( !dotSet ) {
-		*importIdent = &(*importIdent)[i];
+	g_weapPhysBuffer.firing_offsetW_min = rng_start;
+	g_weapPhysBuffer.firing_offsetW_max = rng_end;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
 	}
 
 	return qtrue;
 }
 
+
 /*
-=========================================
-G_weapPhysParser_ParseImportIdentifiers
-=========================================
-Searches through the list of import statements
-to find a matching import identifier and retrieve
-the associated filename.
+==============================
+G_weapPhys_ParseOffsetHeight
+==============================
+Parses 'offsetHeight' field.
+Syntax:
+'offsetHeight' '=' ( <int> | ( '[' <int> <int> ']' ) )
 */
-qboolean G_weapPhysParser_ParseImportIdentifiers( char *script, char *importIdent, char *filename ) {
-	char *scriptPos;
-	char *token;
-	int braceCount;
-	
-	braceCount = 0;
-	scriptPos = script;
-	while ( 1 ) {
-		token = COM_Parse( &scriptPos );
+qboolean G_weapPhys_ParseOffsetHeight( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
 
-		// No more import declarations left to parse.
-		if ( !(*token) ) {
-			G_weapPhysParser_ErrorHandle( ERROR_IMPORTSYMBOL_UNKNOWN, importIdent, NULL );
-			return qfalse;
-		}
+	int rng_start, rng_end;
 
-		if ( !Q_stricmp( token, "{" ) ) {
-			braceCount++;
-		}
-
-		if ( !Q_stricmp( token, "}" ) ) {
-			braceCount--;
-		}
-
-		if ( braceCount < 0 ) {
-			G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, "}", NULL );
-			return qfalse;
-		}
-
-		
-		// Did we find the start of an import declaration and are we
-		// not inside a block? (Which would mean someone used the
-		// reserved keyword somewhere they shouldn't have.)
-		if ( !Q_stricmp( token, "import" ) ) {
-
-			if ( braceCount > 0 ) {
-				G_weapPhysParser_ErrorHandle( ERROR_RESERVED_KEYWORD, "import", NULL );
-				return qfalse;
-			}
-
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}
-
-			// If the token matches the entry we're looking for
-			if ( !Q_stricmp( token, importIdent ) ) {
-
-
-				// Read the equivalence sign of the import identifier's declaration
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}				
-				if ( Q_stricmp( token, "=" ) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-					return qfalse;
-				}
-
-				token = COM_Parse( &scriptPos );
-				if ( !(*token) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-					return qfalse;
-				}
-
-				// We've found the filename, exit the function succesfully.
-				Q_strncpyz( filename, token, sizeof(char) * MAX_QPATH );
-
-				// Handle some verbose output
-				if ( g_verboseWeaponParser.integer ) {
-					G_Printf( "Import identifier '%s' resolved to file '%s'.\n", importIdent, filename );
-				}
-
-				return qtrue;
-			}
-		}
+	if ( category != CAT_MUZZLE ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
 	}
 
+	switch ( token->tokenSym ) {
+	case TOKEN_INTEGER:
+		rng_start = rng_end = token->intval;
+		break;
+	case TOKEN_OPENRANGE:
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			rng_start = token->intval;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			rng_end = token->intval;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_CLOSERANGE ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "]" );
+			return qfalse;
+		}
+		break;
+
+	default:
+		G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.firing_offsetH_min = rng_start;
+	g_weapPhysBuffer.firing_offsetH_max = rng_end;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+============================
+G_weapPhys_ParseAngleWidth
+============================
+Parses 'angleWidth' field.
+Syntax:
+'angleWidth' '=' ( <int> | ( '[' <int> <int> ']' ) )
+*/
+qboolean G_weapPhys_ParseAngleWidth( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	int rng_start, rng_end;
+
+	if ( category != CAT_MUZZLE ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	switch ( token->tokenSym ) {
+	case TOKEN_INTEGER:
+		rng_start = rng_end = token->intval;
+		break;
+	case TOKEN_OPENRANGE:
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			rng_start = token->intval;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			rng_end = token->intval;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_CLOSERANGE ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "]" );
+			return qfalse;
+		}
+		break;
+
+	default:
+		G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+		return qfalse;
+		break;
+	}
+
+	g_weapPhysBuffer.firing_angleW_min = rng_start;
+	g_weapPhysBuffer.firing_angleW_max = rng_end;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+
+	return qtrue;
+}
+
+
+/*
+=============================
+G_weapPhys_ParseAngleHeight
+=============================
+Parses 'angleHeight' field.
+Syntax:
+'angleHeight' '=' ( <int> | ( '[' <int> <int> ']' ) )
+*/
+qboolean G_weapPhys_ParseAngleHeight( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	int rng_start, rng_end;
+
+	if ( category != CAT_MUZZLE ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	switch ( token->tokenSym ) {
+	case TOKEN_INTEGER:
+		rng_start = rng_end = token->intval;
+		break;
+		case TOKEN_OPENRANGE:
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			rng_start = token->intval;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			rng_end = token->intval;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_CLOSERANGE ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "]" );
+			return qfalse;
+		}
+		break;
+
+	default:
+		G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+		return qfalse;
+		break;
+	}
+
+	g_weapPhysBuffer.firing_angleH_min = rng_start;
+	g_weapPhysBuffer.firing_angleH_max = rng_end;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+
+	return qtrue;
+}
+
+
+/*
+=============================
+G_weapPhys_ParseFlipInWidth
+=============================
+Parses 'flipInWidth' field.
+Syntax:
+'flipInWidth' '=' <int>
+*/
+qboolean G_weapPhys_ParseFlipInWidth( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_MUZZLE ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	switch ( token->tokenSym ) {
+	case TOKEN_TRUE:
+		g_weapPhysBuffer.firing_offsetWFlip = qtrue;
+		break;
+	case TOKEN_FALSE:
+		g_weapPhysBuffer.firing_offsetWFlip = qfalse;
+		break;
+	default:
+		G_weapPhys_ErrorHandle( ERROR_BOOLEAN_EXPECTED, scanner, token->stringval, NULL );
+		break;
+	}
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+=============================
+G_weapPhys_ParseFlipInWidth
+=============================
+Parses 'flipInHeight' field.
+Syntax:
+'flipInHeight' '=' <int>
+*/
+qboolean G_weapPhys_ParseFlipInHeight( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_MUZZLE ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	switch ( token->tokenSym ) {
+	case TOKEN_TRUE:
+		g_weapPhysBuffer.firing_offsetHFlip = qtrue;
+		break;
+	case TOKEN_FALSE:
+		g_weapPhysBuffer.firing_offsetHFlip = qfalse;
+		break;
+	default:
+		G_weapPhys_ErrorHandle( ERROR_BOOLEAN_EXPECTED, scanner, token->stringval, NULL );
+		break;
+	}
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+==============================
+G_weapPhys_ParseFOV
+==============================
+Parses 'fieldOfView' / 'FOV' field.
+Syntax:
+( 'fieldOfView' | 'FOV' ) '=' <int>
+*/
+qboolean G_weapPhys_ParseFOV( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_MUZZLE ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.homing_FOV = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+
+/*
+=======================
+G_weapPhys_ParseDummy
+=======================
+A special dummy function used in the terminator of
+the g_weapPhysFields list. Never actually used, and
+if it _would_ be called, it would always hault
+parsing.
+*/
+qboolean G_weapPhys_ParseDummy( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
 	return qfalse;
 }
 
 
+
+
+// ==================================================================================
+//
+//    F  I  X  E  D     F  U  N  C  T  I  O  N  S  - Do not change the below.
+//
+// ==================================================================================
+
 /*
-=========================================
-G_weapPhysParser_ParseAttackIdentifiers
-=========================================
-Searches through the list of actual weapon scripts
-for a matching identifier and sets up the attack.
+=========================
+G_weapPhys_ParseImports
+=========================
+Parses import definitions and stores them
+in a reference list.
 */
+static qboolean G_weapPhys_ParseImports( g_weapPhysParser_t *parser ) {
+	g_weapPhysToken_t		*token;
+	g_weapPhysScanner_t		*scanner;
+	char					refname[MAX_TOKENSTRING_LENGTH];
+	char					filename[MAX_TOKENSTRING_LENGTH];
+
+	scanner = &parser->scanner;
+	token = &parser->token;
+
+	// Syntax:
+	//   'import' "<refname>" '=' "<filename>" "<defname>"
+
+	while ( token->tokenSym == TOKEN_IMPORT ) {
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_STRING ) {
+			G_weapPhys_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			Q_strncpyz( refname, token->stringval, sizeof(refname) );
+		}
+		
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_EQUALS ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "=" );
+			return qfalse;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_STRING ) {
+			G_weapPhys_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			Q_strncpyz( filename, token->stringval, sizeof(filename) );
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_STRING ) {
+			G_weapPhys_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		}
+
+		if ( !G_weapPhys_AddImportRef( parser, refname, filename, token->stringval ) ) {
+			return qfalse;
+		}
+
+		// NOTE: Do it like this to prevent errors if a file happens to only contain
+		//       import lines. While it is actually useless to have such a file, it
+		//       still is syntacticly correct.
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym != TOKEN_EOF ) {
+				return qfalse;
+			}
+		}
+	}
+
+	return qtrue;
+}
+
+
+/*
+========================
+G_weapPhys_ParseFields
+========================
+Parses the fields of one category
+within a weapon definition.
+*/
+static qboolean G_weapPhys_ParseFields( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category ) {
+	g_weapPhysToken_t	*token;
+	g_weapPhysScanner_t	*scanner;
+
+	scanner = &parser->scanner;
+	token = &parser->token;
+
+	while ( token->tokenSym == TOKEN_FIELD ) {
+		int field;
+
+		field = token->identifierIndex;
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_EQUALS ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "=" );
+			return qfalse;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if (!g_weapPhysFields[field].parseFunc( parser, category, field ) ) {
+			return qfalse;
+		}		
+	}
+	return qtrue;
+}
+
+
+/*
+============================
+G_weapPhys_ParseCategories
+============================
+Parses the categories of a weapon
+definition.
+*/
+static qboolean G_weapPhys_ParseCategories( g_weapPhysParser_t *parser ) {
+	g_weapPhysToken_t		*token;
+	g_weapPhysScanner_t		*scanner;
+	
+	int		currentCategory;
+
+	scanner = &parser->scanner;
+	token = &parser->token;
+
+	// Syntax:
+	//   <categoryname> '{' <HANDLE FIELDS> '}'
+
+	while ( token->tokenSym == TOKEN_CATEGORY ) {
+		currentCategory = token->identifierIndex;
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_OPENBLOCK ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		// Handles fields
+		if (!G_weapPhys_ParseFields( parser, currentCategory ) ) {
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_CLOSEBLOCK ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "}" );
+			return qfalse;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+	}
+
+	if ( token->tokenSym != TOKEN_CLOSEBLOCK ) {
+		G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "}" );
+		return qfalse;
+	}
+
+	if ( g_verboseParse.integer ) {
+		G_Printf("Processed categories succesfully.\n");
+	}
+
+	return qtrue;
+}
+
+
+/*
+================================
+G_weapPhys_PreParseDefinitions
+================================
+Pre-parses the definitions of the weapons in the
+scriptfile. The contents of a definition block
+are checked for validity by the lexical scanner
+and parser to make sure syntax is correct.
+The parsed values however, are not yet stored,
+because we don't have a link to an actual
+weapon yet. Entry points into the definitions
+are cached into a table for a quick jump once
+we find out the links in G_weapPhys_ParseLinks.
+*/
+static qboolean G_weapPhys_PreParseDefinitions( g_weapPhysParser_t *parser ) {
+	g_weapPhysToken_t		*token;
+	g_weapPhysScanner_t		*scanner;
+
+	int						defline;
+	char					*defpos;
+	g_weapPhysAccessLvls_t	accessLvl;
+	qboolean				hasSuper;
+	char					supername[MAX_TOKENSTRING_LENGTH];
+	char					refname[MAX_TOKENSTRING_LENGTH];
+
+
+	int						blockCount;
+
+	scanner = &parser->scanner;
+	token = &parser->token;
+
+	// Syntax:
+	//   ( 'public' | 'protected' | 'private' ) "<refname>" ( e | '=' ( "<importref>" | "<definitionref>" ) ) '{' <HANDLE CATEGORIES> '}'
+	while ( ( token->tokenSym == TOKEN_PRIVATE ) || ( token->tokenSym == TOKEN_PUBLIC ) || ( token->tokenSym == TOKEN_PROTECTED ) ) {
+		
+		if ( token->tokenSym == TOKEN_PUBLIC ) {
+			accessLvl = LVL_PUBLIC;
+		} else if ( token->tokenSym == TOKEN_PROTECTED ) {
+			accessLvl = LVL_PROTECTED;
+		} else {
+			accessLvl = LVL_PRIVATE;
+		}
+
+		hasSuper = qfalse;
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_STRING ) {
+			G_weapPhys_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			Q_strncpyz( refname, token->stringval, sizeof(refname) );
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+		
+		// Are we deriving?
+		if ( token->tokenSym == TOKEN_EQUALS ) {
+			hasSuper = qtrue;
+
+			if ( !G_weapPhys_NextSym( scanner, token ) ) {
+				if ( token->tokenSym == TOKEN_EOF ) {
+					G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+				}
+				return qfalse;
+			}
+
+			if ( token->tokenSym != TOKEN_STRING ) {
+				G_weapPhys_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+				return qfalse;
+			}
+
+			if ( !G_weapPhys_FindDefinitionRef( parser, token->stringval ) ) {
+				return qfalse;
+			} else {
+				Q_strncpyz( supername, token->stringval, sizeof(supername) );
+			}
+
+			if ( !G_weapPhys_NextSym( scanner, token ) ) {
+				if ( token->tokenSym == TOKEN_EOF ) {
+					G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+				}
+				return qfalse;
+			}
+		}
+
+		if ( token->tokenSym != TOKEN_OPENBLOCK ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "{" );
+			return qfalse;
+		} else {
+			blockCount = 1;
+			defline = scanner->line;
+			defpos = scanner->pos;
+			if (!G_weapPhys_AddDefinitionRef( parser, refname, defpos, defline, accessLvl, hasSuper, supername ) ) {
+				return qfalse;
+			}
+		}
+
+		while ( blockCount > 0 ) {
+
+			if ( !G_weapPhys_NextSym( scanner, token ) ) {
+				if ( token->tokenSym == TOKEN_EOF ) {
+					G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+				}
+				return qfalse;
+			}
+
+			if ( token->tokenSym == TOKEN_OPENBLOCK ) {
+				blockCount++;
+			}
+
+			if ( token->tokenSym == TOKEN_CLOSEBLOCK ) {
+				blockCount--;
+			}
+		}
+
+		// NOTE: This makes sure we don't get an error if a file contains no weapon link
+		//       lines, but instead terminates after the definitions. This is what one
+		//       would expect of 'library' files.
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym != TOKEN_EOF ) {
+				return qfalse;
+			}
+		}
+	}
+
+	return qtrue;
+}
+
+
+/*
+=======================
+G_weapPhys_ParseLinks
+=======================
+Parses weapon links to definitions and continues to
+parse the actual weapon definitions.
+*/
+static qboolean G_weapPhys_ParseLinks( g_weapPhysParser_t *parser ) {
+	g_weapPhysToken_t		*token;
+	g_weapPhysScanner_t		*scanner;
+
+	int						weaponNum;
+	char					pri_refname[MAX_TOKENSTRING_LENGTH];
+	char					sec_refname[MAX_TOKENSTRING_LENGTH];
+
+	scanner = &parser->scanner;
+	token = &parser->token;
+
+	// Syntax:
+	//   'weapon' <int> '=' "<refname>" ( e | '|' "<refname>" )
+
+	while ( token->tokenSym == TOKEN_WEAPON ) {
+		
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_INTEGER ) {
+			G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			weaponNum = token->intval;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_EQUALS ) {
+			G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, "=" );
+			return qfalse;
+		}
+
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		if ( token->tokenSym != TOKEN_STRING ) {
+			G_weapPhys_ErrorHandle( ERROR_STRING_EXPECTED, scanner,  token->stringval, NULL );
+			return qfalse;
+		}
+
+		if ( !G_weapPhys_FindDefinitionRef( parser, token->stringval ) ) {
+			G_weapPhys_ErrorHandle( ERROR_DEFINITION_UNDEFINED, scanner, token->stringval, NULL );
+			return qfalse;
+		} else {
+			Q_strncpyz( pri_refname, token->stringval, sizeof(pri_refname) );
+		}
+
+		// NOTE: This makes sure we don't get an error if the last link in the file contains
+		//       no secondary definition, but instead terminates after the primary one.
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym != TOKEN_EOF ) {
+				return qfalse;
+			}
+		}
+
+		if ( token->tokenSym == TOKEN_COLON ) {
+
+			if ( !G_weapPhys_NextSym( scanner, token ) ) {
+				return qfalse;
+			}
+
+			if ( token->tokenSym != TOKEN_STRING ) {
+				G_weapPhys_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+				return qfalse;
+			}
+
+			if ( !G_weapPhys_FindDefinitionRef( parser, token->stringval ) ) {
+				G_weapPhys_ErrorHandle( ERROR_DEFINITION_UNDEFINED, scanner, token->stringval, NULL );
+				return qfalse;
+			} else {
+				Q_strncpyz( sec_refname, token->stringval, sizeof(sec_refname) );
+			}
+
+			// NOTE: This makes sure we don't get an error if this is the last link in the file.
+			if ( !G_weapPhys_NextSym( scanner, token ) ) {
+				if ( token->tokenSym != TOKEN_EOF ) {
+					return qfalse;
+				}
+			}
+
+		} else {
+			Q_strncpyz( sec_refname, "", sizeof(sec_refname) );
+		}
+
+		if ( !G_weapPhys_AddLinkRef( parser, weaponNum, pri_refname, sec_refname ) ) {
+			return qfalse;
+		}
+	}
+
+	return qtrue;
+}
+
+
+
+/*
+===================================
+G_weapPhys_IncreaseRecursionDepth
+===================================
+Increases inheritance recursion depth.
+Checks if the maximum level is exceeded and returns
+an error if so.
+*/
+static qboolean G_weapPhys_IncreaseRecursionDepth( void ) {
+	if ( g_weapPhysRecursionDepth == MAX_RECURSION_DEPTH ) {
+		return qfalse;
+	}
+
+	g_weapPhysRecursionDepth++;
+	return qtrue;
+}
+
+
+/*
+===================================
+G_weapPhys_DecreaseRecursionDepth
+===================================
+Decreases inheritance recursion depth.
+*/
+static void G_weapPhys_DecreaseRecursionDepth( void ) {
+	g_weapPhysRecursionDepth--;
+}
 
 // Need this prototyped
-qboolean G_weapPhysParser_SubParse( char *filename, char *attackIdent, g_userWeapon_t *weaponInfo );
+qboolean G_weapPhys_ParseDefinition( g_weapPhysParser_t *parser, char* refname, g_weapPhysAccessLvls_t *accessLvl );
 
-qboolean G_weapPhysParser_ParseAttackIdentifiers( char *script, char *searchIdent, char **blockStart, g_userWeapon_t *weaponInfo ) {
-	char		*scriptPos;
-	char		*token;
-	int			braceCount;
-	qboolean	exported;
+/*
+==================================
+G_weapPhys_ParseRemoteDefinition
+==================================
+Instantiates a new parser and scanner
+to parse a remote definition
+*/
+qboolean G_weapPhys_ParseRemoteDefinition( char *filename, char *refname ) {
+	g_weapPhysParser_t		parser;
+	g_weapPhysScanner_t		*scanner;
+	g_weapPhysToken_t		*token;
+	int						i;
 
-	char	buffer[MAX_SCRIPTITEM_LENGTH];
-	char	*importIdent = buffer;		// assign this to surpress compiler warning
-	char	*attackIdent = importIdent; // assign this to surpress compiler warning
-	char	newFilename[MAX_QPATH];
+	// Initialize the parser
+	memset( &parser, 0, sizeof(parser) );
+	scanner = &parser.scanner;
+	token = &parser.token;	
 
-	braceCount = 0;
-	scriptPos = script;
-	exported = qfalse;
-	while ( 1 ) {
-		token = COM_Parse( &scriptPos );
+	// Initialize the scanner by loading the file
+	G_weapPhys_LoadFile( scanner, filename );
 
-		// No more attack declarations left to parse.
-		if ( !(*token) ) {
-			G_weapPhysParser_ErrorHandle( ERROR_ATTACKSYMBOL_UNKNOWN, attackIdent, NULL );
+	// Get the very first token initialized. If
+	// it is an end of file token, we will not parse
+	// the empty file but will instead exit with true.
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym != TOKEN_EOF ) {
 			return qfalse;
-		}
-
-		if ( !Q_stricmp( token, "{" ) ) {
-			braceCount++;
-		}
-
-		if ( !Q_stricmp( token, "}" ) ) {
-			braceCount--;
-		}
-
-		if ( braceCount < 0 ) {
-			G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, "}", NULL );
-			return qfalse;
-		}
-
-		
-		// Did we find the start of an export declaration and are we
-		// not inside a block? (Which would mean someone used the
-		// reserved keyword somewhere they shouldn't have.)
-		if ( !Q_stricmp( token, "export" ) ) {
-			if ( braceCount > 0 ) {
-				G_weapPhysParser_ErrorHandle( ERROR_RESERVED_KEYWORD, "export", NULL );
-				return qfalse;
-			}
-
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-			}
-
-			exported = qtrue;
-		}
-		
-
-		// We've found a match
-		if ( !Q_stricmp( token, searchIdent ) && ( exported || ( G_weapPhysParser_importDepth == 0 ) ) ) {
-
-			// Handle some verbose output
-			if ( g_verboseWeaponParser.integer ) {
-				G_Printf( "Attack identifier '%s' found. Parsing this weapon.\n", searchIdent );
-			}
-
-
-			// Read the equivalence sign of the export / attack identifier's declaration
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}				
-			if ( Q_stricmp( token, "=" ) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-				return qfalse;
-			}
-
-			// Read the name to be used, parse out the import part if not a default type
-			token = COM_Parse( &scriptPos );
-			if ( !(*token) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-				return qfalse;
-			}
-
-			if (!G_weapPhysParser_DecomposeIdentifier( token, &importIdent, &attackIdent ) ) {
-				return qfalse;
-			}
-
-			// Handle some verbose output
-			if ( g_verboseWeaponParser.integer ) {
-				G_Printf( "Attack declaration read:\n   Import: '%s'\n   Attack: '%s'\n", importIdent, attackIdent );
-			}
-
-			if ( *importIdent ) {
-				// We have found an attack that needs to be imported from another file.
-
-				if ( !Q_stricmp(attackIdent, "Missile") || !Q_stricmp(attackIdent, "Beam") ||
-					 !Q_stricmp(attackIdent, "Hitscan") || !Q_stricmp(attackIdent, "Skim") ) {
-					G_weapPhysParser_ErrorHandle( ERROR_RESERVED_KEYWORD, attackIdent, NULL );
-					return qfalse;
-				}
-						
-				// Scan the import identifiers list for the filename to be used.
-				if (!G_weapPhysParser_ParseImportIdentifiers( script, importIdent, newFilename ) ) {
-					return qfalse;
-				}
-
-				// Parse the new weapon file for the attack identifier's information
-				if (!G_weapPhysParser_SubParse( newFilename, attackIdent, weaponInfo ) ) {
-					G_weapPhysParser_ErrorHandle( ERROR_IMPORT_FAILED, attackIdent, NULL );
-					return qfalse;
-				}
-
-				// We've arrived back at this level, so signal that we start overriding
-				// previously set properties now.
-				if ( g_verboseWeaponParser.integer ) {
-					G_Printf( "   Overriding previous settings.\n" );
-				}
-			
-			} else {
-
-				if ( !Q_stricmp( attackIdent, "Missile" ) ) {
-					// Initialize as a missile
-					weaponInfo->general_type = WPT_MISSILE;
-
-				} else if ( !Q_stricmp( attackIdent, "Beam" ) ) {
-					// Initialize as a beam
-					weaponInfo->general_type = WPT_BEAM;
-
-				} else if ( !Q_stricmp( attackIdent, "Hitscan" ) ) {
-					// Initialize as a hitscan
-					weaponInfo->general_type = WPT_HITSCAN;
-
-				} else if ( !Q_stricmp( attackIdent, "Skim" ) ) {
-					// Initialize as a groundskimmer
-					weaponInfo->general_type = WPT_GROUNDSKIM;
-
-				} else {
-					G_weapPhysParser_ErrorHandle( ERROR_NONVALID_INHERITANCE, attackIdent, NULL );
-					return qfalse;
-				}
-			}
-
-			// Be sure to return the correct start of this block!
-			*blockStart = scriptPos;
+		} else {
 			return qtrue;
-		
-		} else {
-			exported = qfalse;
 		}
-
 	}
 
-	return qfalse;
-}
+	// Parse the imports
+	if ( !G_weapPhys_ParseImports( &parser ) ) {
+		return qfalse;
+	}
 
+	// Pre-Parse the definitions
+	if ( !G_weapPhys_PreParseDefinitions( &parser ) ) {
+		return qfalse;
+	}
 
-/*
-===========================
-G_weapPhysParser_SubParse
-===========================
-Parses an imported file. This function is slightly different
-from the main function to suppport maximum import depth and to
-ignore weapon declarations. It only has to load a file and
-search for a relevant attack identifier.
-*/
-qboolean G_weapPhysParser_SubParse( char *filename, char *attackIdent, g_userWeapon_t *weaponInfo ) {
-	char		script[MAX_SCRIPT_LENGTH];
-	char		*scriptPos;
-	char		*blockPos;
-	int			len;
-	qhandle_t	file;
+	// Parse the link to the weapons
+	// NOTE: We don't really need to do this, but it does
+	//       ensure file structure.
+	if ( !G_weapPhys_ParseLinks( &parser ) ) {
+		return qfalse;
+	}
+
+	// Respond with an error if something is trailing the
+	// link definitions.
+	// NOTE: We don't really need to do this, but it does
+	//       ensure file structure.
+	if ( token->tokenSym != TOKEN_EOF ) {
+		G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	// If we're dealing with a local definition in this file, then that definition
+	// MUST be public, since we're importing it to another file.
+	i = G_weapPhys_FindDefinitionRef( &parser, refname ) - 1;
+	if ( i < MAX_DEFINES ) {
+		if ( parser.definitionRef[i].accessLvl != LVL_PUBLIC ) {
+			scanner->line = parser.definitionRef[i].scannerLine; // <-- Make sure the error reports the correct line
+			G_weapPhys_ErrorHandle( ERROR_IMPORTING_NON_PUBLIC, scanner, parser.definitionRef[i].refname, NULL );
+			return qfalse;
+		}
+	}
+
+	if ( !G_weapPhys_ParseDefinition( &parser, refname, NULL ) ) {
+		return qfalse;
+	}
 	
-
-	G_weapPhysParser_importDepth++;
-
-	if ( G_weapPhysParser_importDepth > MAX_IMPORT_DEPTH ) {
-		G_weapPhysParser_ErrorHandle( ERROR_MAXIMPORT_EXCEEDED, NULL, NULL );
-		return qfalse;
-	}
-
-	// Grab file handle
-	len = trap_FS_FOpenFile( filename, &file, FS_READ );
-	if ( !file ) {
-		G_weapPhysParser_ErrorHandle( ERROR_FILE_NOTFOUND, filename, NULL );
-		return qfalse;
-	}
-	if ( len >= (sizeof(script) - 1)) {
-		G_weapPhysParser_ErrorHandle( ERROR_FILE_TOOBIG, filename, NULL );
-		trap_FS_FCloseFile( file );
-		return qfalse;
-	}
-
-	// Read file
-	trap_FS_Read( script, len, file );
-	trap_FS_FCloseFile( file );
-	script[len] = '\0'; // ensure null termination
-	
-
-	// Handle some verbose output
-	if ( g_verboseWeaponParser.integer ) {
-		G_Printf( "Scriptfile '%s' has been read into memory.\n", filename );
-	}
-
-
-	// Find the attack information we're looking for in this file
-	scriptPos = script;
-	if (!G_weapPhysParser_ParseAttackIdentifiers( scriptPos, attackIdent, &blockPos, weaponInfo ) ) {
-		return qfalse;
-	}
-
-	if (!G_weapPhysParser_ReadAttackBlock( blockPos, weaponInfo ) ) {
-		return qfalse;
-	}
-
-	G_weapPhysParser_importDepth--;
 	return qtrue;
 }
 
 
 /*
 ============================
-G_weapPhysParser_MainParse
+G_weapPhys_ParseDefinition
 ============================
-Main parsing function. This is called to parse the required files and
-set up a player's weapons.
+Parses a definition, taking inheritance into account.
 */
-qboolean G_weapPhysParser_MainParse( char *filename, int clientNum, int *weaponMask ) {
-	char	script[MAX_SCRIPT_LENGTH];
-	char	*scriptPos;
-	char	*blockPos;
-	char	*token;
+qboolean G_weapPhys_ParseDefinition( g_weapPhysParser_t *parser, char* refname, g_weapPhysAccessLvls_t *accessLvl ) {
+	int i;
+	g_weapPhysScanner_t	*scanner;
+	g_weapPhysToken_t	*token;
+	g_weapPhysAccessLvls_t lastAccessLvl;
 
-	char	buffer[MAX_SCRIPTITEM_LENGTH];
-	char	*importIdent = buffer; // assign this to surpress compiler warning
-	char	*attackIdent = importIdent; // assign this to surpress compiler warning
-	char	newFilename[MAX_QPATH];
+	lastAccessLvl = LVL_PUBLIC; // <-- Incase there IS no last access level from a super class
+	scanner = &parser->scanner;
+	token = &parser->token;
 
-	int			len;
-	qhandle_t	file;
+	i = G_weapPhys_FindDefinitionRef( parser, refname ) - 1; // <-- Must subtract one to get proper index!
+	if ( i < MAX_DEFINES ) {
+		// local declaration
+		if ( parser->definitionRef[i].hasSuper ) {
+			
+			if (!G_weapPhys_IncreaseRecursionDepth() ) {
+				G_weapPhys_ErrorHandle( ERROR_MAX_RECURSION, scanner, NULL, NULL );
+				return qfalse;
+			}
 
-	int				weaponNr;
-	g_userWeapon_t	*weaponInfo;
-	g_userWeapon_t	*alt_weaponInfo;
+			if ( g_verboseParse.integer ) {
+				G_Printf("Inheriting superclass '%s'\n", parser->definitionRef[i].supername );
+			}
+			if ( !G_weapPhys_ParseDefinition( parser, parser->definitionRef[i].supername, &lastAccessLvl ) ) {
+				return qfalse;
+			}
+			
+			G_weapPhys_DecreaseRecursionDepth();
+		}
 
-	// Handle some verbose output
-	if ( g_verboseWeaponParser.integer ) {
-		G_Printf( "\n=============================\n  W E A P O N   P A R S E R\n=============================\n\n");
-	}	
+		// Check if the super class was private, instead of public or protected
+		if ( lastAccessLvl == LVL_PRIVATE ) {
+			G_weapPhys_ErrorHandle( ERROR_INHERITING_PRIVATE, scanner, parser->definitionRef[i].supername, NULL );
+			return qfalse;
+		}
 
-	// Grab file handle
-	len = trap_FS_FOpenFile( filename, &file, FS_READ );
-	if ( !file ) {
-		G_weapPhysParser_ErrorHandle( ERROR_FILE_NOTFOUND, filename, NULL );
-		return qfalse;
+		// Reposition the lexical scanner
+		scanner->pos = parser->definitionRef[i].scannerPos;
+		scanner->line = parser->definitionRef[i].scannerLine;
+
+		// Check if we're not breaking access level hierarchy
+		if ( accessLvl ) {
+			*accessLvl = parser->definitionRef[i].accessLvl;
+			if ( *accessLvl < lastAccessLvl ) {
+				G_weapPhys_ErrorHandle( ERROR_OVERRIDING_WITH_HIGHER_ACCESS, scanner, parser->definitionRef[i].refname, NULL );
+				return qfalse;
+			}
+		}
+
+		// Skip the '{' opening brace of the definition block, and align to the first real
+		// symbol in the block.
+		if ( !G_weapPhys_NextSym( scanner, token ) ) {
+			if ( token->tokenSym == TOKEN_EOF ) {
+				G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+			}
+			return qfalse;
+		}
+
+		// Parse the block's categories.
+		if ( !G_weapPhys_ParseCategories( parser ) ) {
+			return qfalse;
+		}
+
+	} else {
+		// imported declaration
+		
+		// First subtract the offset we added to detect difference between
+		// an imported and a local definition.
+		i -= MAX_DEFINES;
+
+		if (!G_weapPhys_IncreaseRecursionDepth() ) {
+				G_weapPhys_ErrorHandle( ERROR_MAX_RECURSION, scanner, NULL, NULL );
+				return qfalse;
+		}
+
+		if ( g_verboseParse.integer ) {
+			G_Printf("Importing '%s'\n", refname );
+		}		
+
+		if ( !G_weapPhys_ParseRemoteDefinition( parser->importRef[i].filename, parser->importRef[i].defname ) ) {
+			return qfalse;
+		}
+
+		G_weapPhys_DecreaseRecursionDepth();
 	}
-	if ( len >= (sizeof(script) - 1)) {
-		G_weapPhysParser_ErrorHandle( ERROR_FILE_TOOBIG, filename, NULL );
-		trap_FS_FCloseFile( file );
-		return qfalse;
-	}
 
-	// Read file
-	trap_FS_Read( script, len, file );
-	trap_FS_FCloseFile( file );
-	script[len] = '\0'; // ensure null termination
+	return qtrue;
 
-	// Handle some verbose output
-	if ( g_verboseWeaponParser.integer ) {
-		G_Printf( "Scriptfile '%s' has been read into memory.\n", filename );
-	}
+}
 
-	// Reset the import depth and weaponMask
-	G_weapPhysParser_importDepth = 0;
+/*
+==================
+G_weapPhys_Parse
+==================
+Main parsing function for a scriptfile.
+This is the parser's 'entrypoint',
+*/
+qboolean G_weapPhys_Parse( char *filename, int clientNum ) {
+	g_weapPhysParser_t		parser;
+	g_weapPhysScanner_t		*scanner;
+	g_weapPhysToken_t		*token;
+	int						i;
+	int						*weaponMask;
+
+	// Initialize the parser
+	memset( &parser, 0, sizeof(parser) );
+	scanner = &parser.scanner;
+	token = &parser.token;
+	g_weapPhysRecursionDepth = 0;
+
+	// Clear the weapons here, so we are never stuck with 'ghost' weapons
+	// if an error occurs in the parse.
+	weaponMask = G_FindUserWeaponMask( clientNum );
 	*weaponMask = 0;
-
 	
-	// Find a weapon declaration to work on
-	for ( weaponNr = 1; weaponNr <= MAX_PLAYERWEAPONS; weaponNr++ ) {
-		char	weaponIdent[10]; // Give it a bit of leeway, incase we choose bigger MAX_PLAYERWEAPONS
-		int		braceCount;
+	// Initialize the scanner by loading the file
+	G_weapPhys_LoadFile( scanner, filename );
 
-		// Set which weapon declaration we are currently looking for.
-		Com_sprintf( weaponIdent, sizeof(weaponIdent), "Wp%i", weaponNr );
-		weaponInfo = G_FindUserWeaponData( clientNum, weaponNr );
-		alt_weaponInfo = G_FindUserAltWeaponData( clientNum, weaponNr );
-			
-		// Start looking
-		braceCount = 0;
-		scriptPos = script;
-		while ( 1 ) {
-			token = COM_Parse( &scriptPos );
-
-			if ( !(*token) ) {
-				// We didn't find this weapon declaration, which means there
-				// are no more weapon declarations left to parse.
-				
-				// Handle some verbose output
-				if ( g_verboseWeaponParser.integer ) {
-					G_Printf( "Weapon parsing complete.\n", weaponIdent );
-				}
-				return qtrue;
-			}
-
-			if ( !Q_stricmp( token, "{" ) ) {
-				braceCount++;
-			}
-
-			if ( !Q_stricmp( token, "}" ) ) {
-				braceCount--;
-			}
-
-			if ( braceCount < 0 ) {
-				G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, "}", NULL );
-				return qfalse;
-			}
-
-			// Did we find the start of the declaration and are we
-			// not inside a block? (Which would mean someone used
-			// the reserved keyword somewhere they shouldn't have.)
-			if ( !Q_stricmp( token, weaponIdent ) ) {
-				if ( braceCount ) {
-					G_weapPhysParser_ErrorHandle( ERROR_RESERVED_KEYWORD, weaponIdent, NULL );
-					return qfalse;
-				}
-				break;
-			}
-		}
-
-		// Handle some verbose output
-		if ( g_verboseWeaponParser.integer ) {
-			G_Printf( "Weapon '%s' found. Parsing this declaration.\n", weaponIdent );
-		}
-
-		// Read the equivalence sign of the weapon declaration
-		token = COM_Parse( &scriptPos );
-		if ( !(*token) ) {
-			G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
+	// Get the very first token initialized. If
+	// it is an end of file token, we will not parse
+	// the empty file but will instead exit with true.
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym != TOKEN_EOF ) {
 			return qfalse;
-		}
-		if ( Q_stricmp( token, "=" ) ) {
-			G_weapPhysParser_ErrorHandle( ERROR_SYMBOL_UNEXPECTED, token, "=" );
-			return qfalse;
-		}
-
-		// Read the name to be used, parse out the import identifier
-		token = COM_Parse( &scriptPos );
-		if ( !(*token) ) {
-			G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-			return qfalse;
-		}
-		if (!G_weapPhysParser_DecomposeIdentifier( token, &importIdent, &attackIdent ) ) {
-			return qfalse;
-		}
-
-		// Handle some verbose output
-		if ( g_verboseWeaponParser.integer ) {
-			G_Printf( "Declaration read:\n   Import: '%s'\n   Attack: '%s'\n", importIdent, attackIdent );
-		}
-
-		if ( *importIdent ) {
-			// We have found an attack that needs to be imported from another file.
-			
-			
-			// Scan the import identifiers list for the filename to be used.
-			if (!G_weapPhysParser_ParseImportIdentifiers( script, importIdent, newFilename ) ) {
-				return qfalse;
-			}
-
-			// Parse the new weapon file for the attack identifier's information
-			if (!G_weapPhysParser_SubParse( newFilename, attackIdent, weaponInfo ) ) {
-				return qfalse;
-			}			
-
 		} else {
-			// We have found an attack that has a local declaration.
-
-			// Find the attack information we're looking for in this file
-			if (!G_weapPhysParser_ParseAttackIdentifiers( script, attackIdent, &blockPos, weaponInfo ) ) {
-				return qfalse;
-			}
-
-			if (!G_weapPhysParser_ReadAttackBlock( blockPos, weaponInfo ) ) {
-				return qfalse;
-			}
+			return qtrue;
 		}
+	}
 
-		// Mark needscharge flag based on chargetime and chargeready parameters
-		if ( weaponInfo->costs_chargeReady && weaponInfo->costs_chargeTime ) {
-			weaponInfo->general_bitflags |= WPF_NEEDSCHARGE;
-		}
-		
-		// See if there's an alternate fire
-		token = COM_Parse( &scriptPos );
-		if ( !(*token) ) {
-			// Reached the end of the file and thus the declaration.
-			// Proceed with the next weapon number.
-			*weaponMask |= ( 1 << weaponNr );
-			continue;
-		}
-		if ( Q_stricmp( token, "|" ) ) {
-			// We have not found an alternate fire to process on this number,
-			// thus we've reached the end of the declaration.
-			// Proceed with the next weapon number.
-			*weaponMask |= ( 1 << weaponNr );
+	// Parse the imports
+	if ( !G_weapPhys_ParseImports( &parser ) ) {
+		return qfalse;
+	}
+
+	// Pre-Parse the definitions
+	if ( !G_weapPhys_PreParseDefinitions( &parser ) ) {
+		return qfalse;
+	}
+
+	// Parse the link to the weapons
+	if ( !G_weapPhys_ParseLinks( &parser ) ) {
+		return qfalse;
+	}
+
+	// Respond with an error if something is trailing the
+	// link definitions.
+	if ( token->tokenSym != TOKEN_EOF ) {
+		G_weapPhys_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	// Work through the link table, parsing and assigning the definitions
+	// as we go.
+	for ( i = 0; i < MAX_LINKS; i++ ) {
+
+		if ( !parser.linkRef[i].active ) {
 			continue;
 		}
 
-		// Handle some verbose output
-		if ( g_verboseWeaponParser.integer ) {
-			G_Printf( "Continuing parse to find alternate fire declaration.\n" );
+		// Empty the buffer.
+		memset( &g_weapPhysBuffer, 0, sizeof(g_weapPhysBuffer) );
+
+		if ( g_verboseParse.integer ) {
+			G_Printf( "Processing weapon nr %i, primary '%s'.\n", i+1, parser.linkRef[i].pri_refname );
 		}
 
-		// Read the name to be used, parse out the import identifier
-		token = COM_Parse( &scriptPos );
-		if ( !(*token) ) {
-			G_weapPhysParser_ErrorHandle( ERROR_PREMATURE_EOF, NULL, NULL );
-			return qfalse;
-		}
-		if (!G_weapPhysParser_DecomposeIdentifier( token, &importIdent, &attackIdent ) ) {
+		if ( !G_weapPhys_ParseDefinition( &parser, parser.linkRef[i].pri_refname, NULL ) ) {
 			return qfalse;
 		}
 
-		// Handle some verbose output
-		if ( g_verboseWeaponParser.integer ) {
-			G_Printf( "Declaration read:\n   Import: '%s'\n   Attack: '%s'\n", importIdent, attackIdent );
+		G_weapPhys_StoreBuffer( clientNum, i );
+
+		// Empty the buffer.
+		memset( &g_weapPhysBuffer, 0, sizeof(g_weapPhysBuffer) );
+
+		if ( strcmp( parser.linkRef[i].sec_refname, "" ) ) {
+			if ( g_verboseParse.integer ) {
+				G_Printf("Processing weapon nr %i, secondary '%s'.\n", i+1, parser.linkRef[i].sec_refname );
+			}
+			if ( !G_weapPhys_ParseDefinition( &parser, parser.linkRef[i].sec_refname, NULL ) ) {
+				return qfalse;
+			}
+
+			// Piggyback the alternate fire present flag in the buffer of the alternate fire
+			// to let G_weapPhys_StoreBuffer enable this flag on the primary fire.
+			g_weapPhysBuffer.general_bitflags |= WPF_ALTWEAPONPRESENT;
+		}
+
+		G_weapPhys_StoreBuffer( clientNum, i + ALTWEAPON_OFFSET );
+
+
+
+		// If everything went okay, we add the weapon to the availability mask
+		*weaponMask |= ( 1 << (i+1) );
+
+		if ( g_verboseParse.integer ) {
+			G_Printf("Added weapon nr %i to availabilty mask. New mask reads: %i\n", i+1, *weaponMask );
 		}
 		
-		if ( *importIdent ) {
-			// We have found an attack that needs to be imported from another file.
-			
-			
-			// Scan the import identifiers list for the filename to be used.
-			if (!G_weapPhysParser_ParseImportIdentifiers( script, importIdent, newFilename ) ) {
-				return qfalse;
-			}
+	}
 
-			// Parse the new weapon file for the attack identifier's information
-			if (!G_weapPhysParser_SubParse( newFilename, attackIdent, alt_weaponInfo ) ) {
-				G_weapPhysParser_ErrorHandle( ERROR_IMPORT_FAILED, attackIdent, NULL );
-				return qfalse;
-			}
-			
-		} else {
-			// We have found an attack that has a local declaration.
-
-			// Scan the attack identifiers for a match.
-			if (!G_weapPhysParser_ParseAttackIdentifiers( script, attackIdent, &blockPos, alt_weaponInfo ) ) {
-				return qfalse;
-			}
-
-			if (!G_weapPhysParser_ReadAttackBlock( blockPos, alt_weaponInfo ) ) {
-				return qfalse;
-			}
-		}
-
-		// Mark alternate weapon present
-		weaponInfo->general_bitflags |= WPF_ALTWEAPONPRESENT;
-
-		// Mark needscharge flag based on chargetime and chargeready parameters
-		if ( alt_weaponInfo->costs_chargeReady && alt_weaponInfo->costs_chargeTime ) {
-			alt_weaponInfo->general_bitflags |= WPF_NEEDSCHARGE;
-		}
-
-		*weaponMask |= ( 1 << weaponNr );
+	if ( g_verboseParse.integer ) {
+		G_Printf("Parse completed succesfully.\n");
 	}
 
 	return qtrue;
 }
-

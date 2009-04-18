@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "ui_local.h"
 
@@ -64,15 +44,15 @@ typedef struct {
 static cinematicsMenuInfo_t	cinematicsMenuInfo;
 
 static char *cinematics[] = {
-	"idlogo",
+	"zeq2Logo",
 	"intro",
-	"tier1",
-	"tier2",
-	"tier3",
-	"tier4",
-	"tier5",
-	"tier6",
-	"tier7",
+	"saiyanSaga",
+	"namekSaga",
+	"freizaSaga",
+	"androidSaga",
+	"cellSaga",
+	"fusionSaga",
+	"buuSaga",
 	"end"
 };
 
@@ -129,7 +109,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.banner.generic.y			= 16;
 	cinematicsMenuInfo.banner.string			= "CINEMATICS";
 	cinematicsMenuInfo.banner.color				= color_white;
-	cinematicsMenuInfo.banner.style				= UI_CENTER;
+	cinematicsMenuInfo.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	cinematicsMenuInfo.framel.generic.type		= MTYPE_BITMAP;
 	cinematicsMenuInfo.framel.generic.name		= ART_FRAMEL;
@@ -154,9 +134,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_idlogo.generic.y			= y;
 	cinematicsMenuInfo.cin_idlogo.generic.id		= ID_CIN_IDLOGO;
 	cinematicsMenuInfo.cin_idlogo.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_idlogo.string			= "ID LOGO";
-	cinematicsMenuInfo.cin_idlogo.color				= color_red;
-	cinematicsMenuInfo.cin_idlogo.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_idlogo.string			= "ZEQ2 Logo";
+	cinematicsMenuInfo.cin_idlogo.color				= color_white;
+	cinematicsMenuInfo.cin_idlogo.style				= UI_CENTER|UI_DROPSHADOW;
 
 	y += VERTICAL_SPACING;
 	cinematicsMenuInfo.cin_intro.generic.type		= MTYPE_PTEXT;
@@ -165,9 +145,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_intro.generic.y			= y;
 	cinematicsMenuInfo.cin_intro.generic.id			= ID_CIN_INTRO;
 	cinematicsMenuInfo.cin_intro.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_intro.string				= "INTRO";
-	cinematicsMenuInfo.cin_intro.color				= color_red;
-	cinematicsMenuInfo.cin_intro.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_intro.string				= "Intro";
+	cinematicsMenuInfo.cin_intro.color				= color_white;
+	cinematicsMenuInfo.cin_intro.style				= UI_CENTER|UI_DROPSHADOW;
 	if( uis.demoversion ) {
 		cinematicsMenuInfo.cin_intro.generic.flags |= QMF_GRAYED;
 	}
@@ -179,9 +159,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier1.generic.y			= y;
 	cinematicsMenuInfo.cin_tier1.generic.id			= ID_CIN_TIER1;
 	cinematicsMenuInfo.cin_tier1.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_tier1.string				= "Tier 1";
-	cinematicsMenuInfo.cin_tier1.color				= color_red;
-	cinematicsMenuInfo.cin_tier1.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_tier1.string				= "Saiyan Saga";
+	cinematicsMenuInfo.cin_tier1.color				= color_white;
+	cinematicsMenuInfo.cin_tier1.style				= UI_CENTER|UI_DROPSHADOW;
 	if( !UI_CanShowTierVideo( 1 ) ) {
 		cinematicsMenuInfo.cin_tier1.generic.flags |= QMF_GRAYED;
 	}
@@ -193,9 +173,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier2.generic.y			= y;
 	cinematicsMenuInfo.cin_tier2.generic.id			= ID_CIN_TIER2;
 	cinematicsMenuInfo.cin_tier2.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_tier2.string				= "Tier 2";
-	cinematicsMenuInfo.cin_tier2.color				= color_red;
-	cinematicsMenuInfo.cin_tier2.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_tier2.string				= "Namek Saga";
+	cinematicsMenuInfo.cin_tier2.color				= color_white;
+	cinematicsMenuInfo.cin_tier2.style				= UI_CENTER|UI_DROPSHADOW;
 	if( !UI_CanShowTierVideo( 2 ) ) {
 		cinematicsMenuInfo.cin_tier2.generic.flags |= QMF_GRAYED;
 	}
@@ -207,9 +187,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier3.generic.y			= y;
 	cinematicsMenuInfo.cin_tier3.generic.id			= ID_CIN_TIER3;
 	cinematicsMenuInfo.cin_tier3.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_tier3.string				= "Tier 3";
-	cinematicsMenuInfo.cin_tier3.color				= color_red;
-	cinematicsMenuInfo.cin_tier3.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_tier3.string				= "Frieza Saga";
+	cinematicsMenuInfo.cin_tier3.color				= color_white;
+	cinematicsMenuInfo.cin_tier3.style				= UI_CENTER|UI_DROPSHADOW;
 	if( !UI_CanShowTierVideo( 3 ) ) {
 		cinematicsMenuInfo.cin_tier3.generic.flags |= QMF_GRAYED;
 	}
@@ -221,9 +201,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier4.generic.y			= y;
 	cinematicsMenuInfo.cin_tier4.generic.id			= ID_CIN_TIER4;
 	cinematicsMenuInfo.cin_tier4.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_tier4.string				= "Tier 4";
-	cinematicsMenuInfo.cin_tier4.color				= color_red;
-	cinematicsMenuInfo.cin_tier4.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_tier4.string				= "Android Saga";
+	cinematicsMenuInfo.cin_tier4.color				= color_white;
+	cinematicsMenuInfo.cin_tier4.style				= UI_CENTER|UI_DROPSHADOW;
 	if( !UI_CanShowTierVideo( 4 ) ) {
 		cinematicsMenuInfo.cin_tier4.generic.flags |= QMF_GRAYED;
 	}
@@ -235,9 +215,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier5.generic.y			= y;
 	cinematicsMenuInfo.cin_tier5.generic.id			= ID_CIN_TIER5;
 	cinematicsMenuInfo.cin_tier5.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_tier5.string				= "Tier 5";
-	cinematicsMenuInfo.cin_tier5.color				= color_red;
-	cinematicsMenuInfo.cin_tier5.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_tier5.string				= "Cell Saga";
+	cinematicsMenuInfo.cin_tier5.color				= color_white;
+	cinematicsMenuInfo.cin_tier5.style				= UI_CENTER|UI_DROPSHADOW;
 	if( !UI_CanShowTierVideo( 5 ) ) {
 		cinematicsMenuInfo.cin_tier5.generic.flags |= QMF_GRAYED;
 	}
@@ -249,9 +229,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier6.generic.y			= y;
 	cinematicsMenuInfo.cin_tier6.generic.id			= ID_CIN_TIER6;
 	cinematicsMenuInfo.cin_tier6.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_tier6.string				= "Tier 6";
-	cinematicsMenuInfo.cin_tier6.color				= color_red;
-	cinematicsMenuInfo.cin_tier6.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_tier6.string				= "Fusion Saga";
+	cinematicsMenuInfo.cin_tier6.color				= color_white;
+	cinematicsMenuInfo.cin_tier6.style				= UI_CENTER|UI_DROPSHADOW;
 	if( !UI_CanShowTierVideo( 6 ) ) {
 		cinematicsMenuInfo.cin_tier6.generic.flags |= QMF_GRAYED;
 	}
@@ -263,9 +243,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier7.generic.y			= y;
 	cinematicsMenuInfo.cin_tier7.generic.id			= ID_CIN_TIER7;
 	cinematicsMenuInfo.cin_tier7.generic.callback	= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_tier7.string				= "Tier 7";
-	cinematicsMenuInfo.cin_tier7.color				= color_red;
-	cinematicsMenuInfo.cin_tier7.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_tier7.string				= "Buu Saga";
+	cinematicsMenuInfo.cin_tier7.color				= color_white;
+	cinematicsMenuInfo.cin_tier7.style				= UI_CENTER|UI_DROPSHADOW;
 	if( !UI_CanShowTierVideo( 7 ) ) {
 		cinematicsMenuInfo.cin_tier7.generic.flags |= QMF_GRAYED;
 	}
@@ -277,9 +257,9 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_end.generic.y			= y;
 	cinematicsMenuInfo.cin_end.generic.id			= ID_CIN_END;
 	cinematicsMenuInfo.cin_end.generic.callback		= UI_CinematicsMenu_Event; 
-	cinematicsMenuInfo.cin_end.string				= "END";
-	cinematicsMenuInfo.cin_end.color				= color_red;
-	cinematicsMenuInfo.cin_end.style				= UI_CENTER;
+	cinematicsMenuInfo.cin_end.string				= "End";
+	cinematicsMenuInfo.cin_end.color				= color_white;
+	cinematicsMenuInfo.cin_end.style				= UI_CENTER|UI_DROPSHADOW;
 	if( !UI_CanShowTierVideo( 8 ) ) {
 		cinematicsMenuInfo.cin_end.generic.flags |= QMF_GRAYED;
 	}

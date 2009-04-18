@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "ui_local.h"
 
@@ -128,11 +108,11 @@ static void ServerInfo_MenuDraw( void )
 	const char		*s;
 	char			key[MAX_INFO_KEY];
 	char			value[MAX_INFO_VALUE];
-	int				i = 0, y;
+	int				y;
 
 	y = SCREEN_HEIGHT/2 - s_serverinfo.numlines*(SMALLCHAR_HEIGHT)/2 - 20;
 	s = s_serverinfo.info;
-	while ( s && i < s_serverinfo.numlines ) {
+	while ( s ) {
 		Info_NextPair( &s, key, value );
 		if ( !key[0] ) {
 			break;
@@ -140,11 +120,10 @@ static void ServerInfo_MenuDraw( void )
 
 		Q_strcat( key, MAX_INFO_KEY, ":" ); 
 
-		UI_DrawString(SCREEN_WIDTH*0.50 - 8,y,key,UI_RIGHT|UI_SMALLFONT,color_red);
-		UI_DrawString(SCREEN_WIDTH*0.50 + 8,y,value,UI_LEFT|UI_SMALLFONT,text_color_normal);
+		UI_DrawString(SCREEN_WIDTH*0.50 - 8,y,key,UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW,color_white);
+		UI_DrawString(SCREEN_WIDTH*0.50 + 8,y,value,UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW,text_color_normal);
 
 		y += SMALLCHAR_HEIGHT;
-		i++;
 	}
 
 	Menu_Draw( &s_serverinfo.menu );
@@ -204,7 +183,7 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.banner.generic.y	  = 16;
 	s_serverinfo.banner.string		  = "SERVER INFO";
 	s_serverinfo.banner.color	      = color_white;
-	s_serverinfo.banner.style	      = UI_CENTER;
+	s_serverinfo.banner.style	      = UI_CENTER|UI_DROPSHADOW;
 
 	s_serverinfo.framel.generic.type  = MTYPE_BITMAP;
 	s_serverinfo.framel.generic.name  = SERVERINFO_FRAMEL;
@@ -229,8 +208,8 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.add.generic.x		  = 320;
 	s_serverinfo.add.generic.y		  = 371;
 	s_serverinfo.add.string  		  = "ADD TO FAVORITES";
-	s_serverinfo.add.style  		  = UI_CENTER|UI_SMALLFONT;
-	s_serverinfo.add.color			  =	color_red;
+	s_serverinfo.add.style  		  = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_serverinfo.add.color			  =	color_white;
 	if( trap_Cvar_VariableValue( "sv_running" ) ) {
 		s_serverinfo.add.generic.flags |= QMF_GRAYED;
 	}

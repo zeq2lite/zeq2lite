@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =============================================================================
@@ -187,8 +167,8 @@ void UI_SPSkillMenu_Cache( void ) {
 	skillMenuInfo.skillpics[3] = trap_R_RegisterShaderNoMip( ART_MAP_COMPLETE4 );
 	skillMenuInfo.skillpics[4] = trap_R_RegisterShaderNoMip( ART_MAP_COMPLETE5 );
 
-	skillMenuInfo.nightmareSound = trap_S_RegisterSound( "sound/misc/nightmare.wav", qfalse );
-	skillMenuInfo.silenceSound = trap_S_RegisterSound( "sound/misc/silence.wav", qfalse );
+	skillMenuInfo.nightmareSound = trap_S_RegisterSound( "sound/misc/nightmare.ogg", qfalse );
+	skillMenuInfo.silenceSound = trap_S_RegisterSound( "sound/misc/silence.ogg", qfalse );
 }
 
 
@@ -220,7 +200,7 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.art_banner.generic.y			= 16;
 	skillMenuInfo.art_banner.string				= "DIFFICULTY";
 	skillMenuInfo.art_banner.color				= color_white;
-	skillMenuInfo.art_banner.style				= UI_CENTER;
+	skillMenuInfo.art_banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	skillMenuInfo.item_baby.generic.type		= MTYPE_PTEXT;
 	skillMenuInfo.item_baby.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -229,8 +209,8 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_baby.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_baby.generic.id			= ID_BABY;
 	skillMenuInfo.item_baby.string				= "I Can Win";
-	skillMenuInfo.item_baby.color				= color_red;
-	skillMenuInfo.item_baby.style				= UI_CENTER;
+	skillMenuInfo.item_baby.color				= color_white;
+	skillMenuInfo.item_baby.style				= UI_CENTER|UI_DROPSHADOW;
 
 	skillMenuInfo.item_easy.generic.type		= MTYPE_PTEXT;
 	skillMenuInfo.item_easy.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -239,8 +219,8 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_easy.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_easy.generic.id			= ID_EASY;
 	skillMenuInfo.item_easy.string				= "Bring It On";
-	skillMenuInfo.item_easy.color				= color_red;
-	skillMenuInfo.item_easy.style				= UI_CENTER;
+	skillMenuInfo.item_easy.color				= color_white;
+	skillMenuInfo.item_easy.style				= UI_CENTER|UI_DROPSHADOW;
 
 	skillMenuInfo.item_medium.generic.type		= MTYPE_PTEXT;
 	skillMenuInfo.item_medium.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -249,8 +229,8 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_medium.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_medium.generic.id		= ID_MEDIUM;
 	skillMenuInfo.item_medium.string			= "Hurt Me Plenty";
-	skillMenuInfo.item_medium.color				= color_red;
-	skillMenuInfo.item_medium.style				= UI_CENTER;
+	skillMenuInfo.item_medium.color				= color_white;
+	skillMenuInfo.item_medium.style				= UI_CENTER|UI_DROPSHADOW;
 
 	skillMenuInfo.item_hard.generic.type		= MTYPE_PTEXT;
 	skillMenuInfo.item_hard.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -259,8 +239,8 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_hard.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_hard.generic.id			= ID_HARD;
 	skillMenuInfo.item_hard.string				= "Hardcore";
-	skillMenuInfo.item_hard.color				= color_red;
-	skillMenuInfo.item_hard.style				= UI_CENTER;
+	skillMenuInfo.item_hard.color				= color_white;
+	skillMenuInfo.item_hard.style				= UI_CENTER|UI_DROPSHADOW;
 
 	skillMenuInfo.item_nightmare.generic.type		= MTYPE_PTEXT;
 	skillMenuInfo.item_nightmare.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -269,8 +249,8 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_nightmare.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_nightmare.generic.id			= ID_NIGHTMARE;
 	skillMenuInfo.item_nightmare.string				= "NIGHTMARE!";
-	skillMenuInfo.item_nightmare.color				= color_red;
-	skillMenuInfo.item_nightmare.style				= UI_CENTER;
+	skillMenuInfo.item_nightmare.color				= color_white;
+	skillMenuInfo.item_nightmare.style				= UI_CENTER|UI_DROPSHADOW;
 
 	skillMenuInfo.item_back.generic.type		= MTYPE_BITMAP;
 	skillMenuInfo.item_back.generic.name		= ART_BACK;

@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "g_local.h"
 
@@ -37,7 +17,7 @@ void G_BounceMissile( gentity_t *ent, trace_t *trace ) {
 
 	// reflect the velocity on the trace plane
 	hitTime = level.previousTime + ( level.time - level.previousTime ) * trace->fraction;
-	BG_EvaluateTrajectoryDelta( &ent->s.pos, hitTime, velocity );
+	BG_EvaluateTrajectoryDelta( &ent->s, &ent->s.pos, hitTime, velocity );
 	dot = DotProduct( velocity, trace->plane.normal );
 	VectorMA( velocity, -2*dot, trace->plane.normal, ent->s.pos.trDelta );
 
@@ -56,6 +36,27 @@ void G_BounceMissile( gentity_t *ent, trace_t *trace ) {
 }
 
 
+// ADDING FOR ZEQ2
+/*
+===============
+G_FreeBeamTrail
+===============
+*/
+void G_FreeBeamTrail( gentity_t *ent, int secs) {
+	// Recursively free all beam waypoints, turning them into fadeout trails
+	// Each next one will have 1 more second to fade out
+	if (ent->s.otherEntityNum2 != ENTITYNUM_NONE) {
+		G_FreeBeamTrail( &g_entities[ent->s.otherEntityNum2], secs + 1 );
+	}
+
+	ent->s.eType = ET_GENERAL;
+	G_AddEvent( ent, EV_BEAM_FADE, secs );
+
+	ent->freeAfterEvent = qtrue;
+}
+// END ADDING
+
+
 /*
 ================
 G_ExplodeMissile
@@ -67,7 +68,7 @@ void G_ExplodeMissile( gentity_t *ent ) {
 	vec3_t		dir;
 	vec3_t		origin;
 
-	BG_EvaluateTrajectory( &ent->s.pos, level.time, origin );
+	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
 	SnapVector( origin );
 	G_SetOrigin( ent, origin );
 
@@ -171,10 +172,10 @@ static void ProximityMine_Activate( gentity_t *ent ) {
 	ent->nextthink = level.time + g_proxMineTimeout.integer;
 
 	ent->takedamage = qtrue;
-	ent->health = 1;
+	ent->powerLevel = 1;
 	ent->die = ProximityMine_Die;
 
-	ent->s.loopSound = G_SoundIndex( "sound/weapons/proxmine/wstbtick.wav" );
+	ent->s.loopSound = G_SoundIndex( "sound/weapons/proxmine/wstbtick.ogg" );
 
 	// build the proximity trigger
 	trigger = G_Spawn ();
@@ -273,6 +274,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	vec3_t			forward, impactpoint, bouncedir;
 	int				eFlags;
 #endif
+	
 	other = &g_entities[trace->entityNum];
 
 	// check for bounce
@@ -313,7 +315,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 				g_entities[ent->r.ownerNum].client->accuracy_hits++;
 				hitClient = qtrue;
 			}
-			BG_EvaluateTrajectoryDelta( &ent->s.pos, level.time, velocity );
+			BG_EvaluateTrajectoryDelta( &ent->s, &ent->s.pos, level.time, velocity );
 			if ( VectorLength( velocity ) == 0 ) {
 				velocity[2] = 1;	// stepped on a grenade
 			}
@@ -330,7 +332,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 		}
 
 		// if it's a player, stick it on to them (flag them and remove this entity)
-		if( other->s.eType == ET_PLAYER && other->health > 0 ) {
+		if( other->s.eType == ET_PLAYER && other->powerLevel > 0 ) {
 			ProximityMine_Player( ent, other );
 			return;
 		}
@@ -450,7 +452,7 @@ void G_RunMissile( gentity_t *ent ) {
 	int			passent;
 
 	// get current position
-	BG_EvaluateTrajectory( &ent->s.pos, level.time, origin );
+	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
 
 	// if this missile bounced off an invulnerability sphere
 	if ( ent->target_ent ) {
@@ -487,6 +489,7 @@ void G_RunMissile( gentity_t *ent ) {
 			if (ent->parent && ent->parent->client && ent->parent->client->hook == ent) {
 				ent->parent->client->hook = NULL;
 			}
+
 			G_FreeEntity( ent );
 			return;
 		}
@@ -635,7 +638,6 @@ gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir) {
 
 //=============================================================================
 
-
 /*
 =================
 fire_rocket
@@ -650,6 +652,9 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->classname = "rocket";
 	bolt->nextthink = level.time + 15000;
 	bolt->think = G_ExplodeMissile;
+
+	// END ADDING
+
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_ROCKET_LAUNCHER;
@@ -666,7 +671,8 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, 900, bolt->s.pos.trDelta );
+//	VectorScale( dir, 900, bolt->s.pos.trDelta );
+	VectorScale( dir, 150, bolt->s.pos.trDelta );
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 	VectorCopy (start, bolt->r.currentOrigin);
 

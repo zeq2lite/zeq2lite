@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 /*****************************************************************************
@@ -27,20 +7,24 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * desc:		Quake3 bot AI
  *
  * $Archive: /MissionPack/code/game/ai_dmq3.c $
+ * $Author: Zaphod $ 
+ * $Revision: 85 $
+ * $Modtime: 5/16/01 2:53p $
+ * $Date: 5/16/01 2:53p $
  *
  *****************************************************************************/
 
 
 #include "g_local.h"
-#include "../botlib/botlib.h"
-#include "../botlib/be_aas.h"
-#include "../botlib/be_ea.h"
-#include "../botlib/be_ai_char.h"
-#include "../botlib/be_ai_chat.h"
-#include "../botlib/be_ai_gen.h"
-#include "../botlib/be_ai_goal.h"
-#include "../botlib/be_ai_move.h"
-#include "../botlib/be_ai_weap.h"
+#include "botlib.h"
+#include "be_aas.h"
+#include "be_ea.h"
+#include "be_ai_char.h"
+#include "be_ai_chat.h"
+#include "be_ai_gen.h"
+#include "be_ai_goal.h"
+#include "be_ai_move.h"
+#include "be_ai_weap.h"
 //
 #include "ai_main.h"
 #include "ai_dmq3.h"
@@ -275,9 +259,9 @@ EntityHasQuad
 ==================
 */
 qboolean EntityHasQuad(aas_entityinfo_t *entinfo) {
-	if (entinfo->powerups & (1 << PW_QUAD)) {
-		return qtrue;
-	}
+//	if (entinfo->powerups & (1 << PW_QUAD)) {
+//		return qtrue;
+//	}
 	return qfalse;
 }
 
@@ -1720,22 +1704,22 @@ void BotUpdateInventory(bot_state_t *bs) {
 
 	memcpy(oldinventory, bs->inventory, sizeof(oldinventory));
 	//armor
-	bs->inventory[INVENTORY_ARMOR] = bs->cur_ps.stats[STAT_ARMOR];
+	bs->inventory[INVENTORY_ARMOR] = 0; //bs->cur_ps.stats[STAT_ARMOR];
 	//weapons
-	bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GAUNTLET)) != 0;
-	bs->inventory[INVENTORY_SHOTGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_SHOTGUN)) != 0;
-	bs->inventory[INVENTORY_MACHINEGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_MACHINEGUN)) != 0;
-	bs->inventory[INVENTORY_GRENADELAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRENADE_LAUNCHER)) != 0;
-	bs->inventory[INVENTORY_ROCKETLAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_ROCKET_LAUNCHER)) != 0;
-	bs->inventory[INVENTORY_LIGHTNING] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_LIGHTNING)) != 0;
-	bs->inventory[INVENTORY_RAILGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_RAILGUN)) != 0;
-	bs->inventory[INVENTORY_PLASMAGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_PLASMAGUN)) != 0;
-	bs->inventory[INVENTORY_BFG10K] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_BFG)) != 0;
-	bs->inventory[INVENTORY_GRAPPLINGHOOK] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRAPPLING_HOOK)) != 0;
+	bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[skills] & (1 << WP_GAUNTLET)) != 0;
+	bs->inventory[INVENTORY_SHOTGUN] = (bs->cur_ps.stats[skills] & (1 << WP_SHOTGUN)) != 0;
+	bs->inventory[INVENTORY_MACHINEGUN] = (bs->cur_ps.stats[skills] & (1 << WP_MACHINEGUN)) != 0;
+	bs->inventory[INVENTORY_GRENADELAUNCHER] = (bs->cur_ps.stats[skills] & (1 << WP_GRENADE_LAUNCHER)) != 0;
+	bs->inventory[INVENTORY_ROCKETLAUNCHER] = (bs->cur_ps.stats[skills] & (1 << WP_ROCKET_LAUNCHER)) != 0;
+	bs->inventory[INVENTORY_LIGHTNING] = (bs->cur_ps.stats[skills] & (1 << WP_LIGHTNING)) != 0;
+	bs->inventory[INVENTORY_RAILGUN] = (bs->cur_ps.stats[skills] & (1 << WP_RAILGUN)) != 0;
+	bs->inventory[INVENTORY_PLASMAGUN] = (bs->cur_ps.stats[skills] & (1 << WP_PLASMAGUN)) != 0;
+	bs->inventory[INVENTORY_BFG10K] = (bs->cur_ps.stats[skills] & (1 << WP_BFG)) != 0;
+	bs->inventory[INVENTORY_GRAPPLINGHOOK] = (bs->cur_ps.stats[skills] & (1 << WP_GRAPPLING_HOOK)) != 0;
 #ifdef MISSIONPACK
-	bs->inventory[INVENTORY_NAILGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_NAILGUN)) != 0;;
-	bs->inventory[INVENTORY_PROXLAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_PROX_LAUNCHER)) != 0;;
-	bs->inventory[INVENTORY_CHAINGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_CHAINGUN)) != 0;;
+	bs->inventory[INVENTORY_NAILGUN] = (bs->cur_ps.stats[skills] & (1 << WP_NAILGUN)) != 0;;
+	bs->inventory[INVENTORY_PROXLAUNCHER] = (bs->cur_ps.stats[skills] & (1 << WP_PROX_LAUNCHER)) != 0;;
+	bs->inventory[INVENTORY_CHAINGUN] = (bs->cur_ps.stats[skills] & (1 << WP_CHAINGUN)) != 0;;
 #endif
 	//ammo
 	bs->inventory[INVENTORY_SHELLS] = bs->cur_ps.ammo[WP_SHOTGUN];
@@ -1752,37 +1736,37 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_BELT] = bs->cur_ps.ammo[WP_CHAINGUN];
 #endif
 	//powerups
-	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[STAT_HEALTH];
-	bs->inventory[INVENTORY_TELEPORTER] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
-	bs->inventory[INVENTORY_MEDKIT] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_MEDKIT;
+	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[powerLevel];
+	bs->inventory[INVENTORY_TELEPORTER] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
+	bs->inventory[INVENTORY_MEDKIT] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_MEDKIT;
 #ifdef MISSIONPACK
-	bs->inventory[INVENTORY_KAMIKAZE] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_KAMIKAZE;
-	bs->inventory[INVENTORY_PORTAL] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_PORTAL;
-	bs->inventory[INVENTORY_INVULNERABILITY] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_INVULNERABILITY;
+	bs->inventory[INVENTORY_KAMIKAZE] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_KAMIKAZE;
+	bs->inventory[INVENTORY_PORTAL] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_PORTAL;
+	bs->inventory[INVENTORY_INVULNERABILITY] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_INVULNERABILITY;
 #endif
-	bs->inventory[INVENTORY_QUAD] = bs->cur_ps.powerups[PW_QUAD] != 0;
-	bs->inventory[INVENTORY_ENVIRONMENTSUIT] = bs->cur_ps.powerups[PW_BATTLESUIT] != 0;
-	bs->inventory[INVENTORY_HASTE] = bs->cur_ps.powerups[PW_HASTE] != 0;
+	bs->inventory[INVENTORY_QUAD] = 0; //bs->cur_ps.powerups[PW_QUAD] != 0;
+	bs->inventory[INVENTORY_ENVIRONMENTSUIT] = 0; //bs->cur_ps.powerups[PW_BATTLESUIT] != 0;
+	bs->inventory[INVENTORY_HASTE] = 0; //bs->cur_ps.powerups[PW_HASTE] != 0;
 	bs->inventory[INVENTORY_INVISIBILITY] = bs->cur_ps.powerups[PW_INVIS] != 0;
-	bs->inventory[INVENTORY_REGEN] = bs->cur_ps.powerups[PW_REGEN] != 0;
-	bs->inventory[INVENTORY_FLIGHT] = bs->cur_ps.powerups[PW_FLIGHT] != 0;
+	bs->inventory[INVENTORY_REGEN] = 0; //bs->cur_ps.powerups[PW_REGEN] != 0;
+	bs->inventory[INVENTORY_FLIGHT] = bs->cur_ps.powerups[PW_FLYING] != 0; //bs->cur_ps.powerups[PW_FLIGHT] != 0;
 #ifdef MISSIONPACK
-	bs->inventory[INVENTORY_SCOUT] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_SCOUT;
-	bs->inventory[INVENTORY_GUARD] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_GUARD;
-	bs->inventory[INVENTORY_DOUBLER] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_DOUBLER;
-	bs->inventory[INVENTORY_AMMOREGEN] = bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_AMMOREGEN;
+	bs->inventory[INVENTORY_SCOUT] = 0; //bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_SCOUT;
+	bs->inventory[INVENTORY_GUARD] = 0; //bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_GUARD;
+	bs->inventory[INVENTORY_DOUBLER] = 0; //bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_DOUBLER;
+	bs->inventory[INVENTORY_AMMOREGEN] = 0; //bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_AMMOREGEN;
 #endif
 	bs->inventory[INVENTORY_REDFLAG] = bs->cur_ps.powerups[PW_REDFLAG] != 0;
 	bs->inventory[INVENTORY_BLUEFLAG] = bs->cur_ps.powerups[PW_BLUEFLAG] != 0;
 #ifdef MISSIONPACK
 	bs->inventory[INVENTORY_NEUTRALFLAG] = bs->cur_ps.powerups[PW_NEUTRALFLAG] != 0;
 	if (BotTeam(bs) == TEAM_RED) {
-		bs->inventory[INVENTORY_REDCUBE] = bs->cur_ps.generic1;
+		bs->inventory[INVENTORY_REDCUBE] = 0; //bs->cur_ps.generic1;
 		bs->inventory[INVENTORY_BLUECUBE] = 0;
 	}
 	else {
 		bs->inventory[INVENTORY_REDCUBE] = 0;
-		bs->inventory[INVENTORY_BLUECUBE] = bs->cur_ps.generic1;
+		bs->inventory[INVENTORY_BLUECUBE] = 0; //bs->cur_ps.generic1;
 	}
 #endif
 	BotCheckItemPickup(bs, oldinventory);
@@ -2207,9 +2191,9 @@ float BotAggression(bot_state_t *bs) {
 	}
 	//if the enemy is located way higher than the bot
 	if (bs->inventory[ENEMY_HEIGHT] > 200) return 0;
-	//if the bot is very low on health
+	//if the bot is very low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 60) return 0;
-	//if the bot is low on health
+	//if the bot is low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 80) {
 		//if the bot has insufficient armor
 		if (bs->inventory[INVENTORY_ARMOR] < 40) return 0;
@@ -2389,9 +2373,9 @@ int BotCanAndWantsToRocketJump(bot_state_t *bs) {
 	if (bs->inventory[INVENTORY_ROCKETS] < 3) return qfalse;
 	//never rocket jump with the Quad
 	if (bs->inventory[INVENTORY_QUAD]) return qfalse;
-	//if low on health
+	//if low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 60) return qfalse;
-	//if not full health
+	//if not full powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 90) {
 		//if the bot has insufficient armor
 		if (bs->inventory[INVENTORY_ARMOR] < 40) return qfalse;
@@ -2416,9 +2400,9 @@ int BotHasPersistantPowerupAndWeapon(bot_state_t *bs) {
 		return qfalse;
 	}
 #endif
-	//if the bot is very low on health
+	//if the bot is very low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 60) return qfalse;
-	//if the bot is low on health
+	//if the bot is low on powerLevel
 	if (bs->inventory[INVENTORY_HEALTH] < 80) {
 		//if the bot has insufficient armor
 		if (bs->inventory[INVENTORY_ARMOR] < 40) return qfalse;
@@ -2507,7 +2491,7 @@ int BotWantsToCamp(bot_state_t *bs) {
 		bs->camp_time = FloatTime();
 		return qfalse;
 	}
-	//if the bot isn't healthy anough
+	//if the bot isn't powerLevely anough
 	if (BotAggression(bs) < 50) return qfalse;
 	//the bot should have at least have the rocket launcher, the railgun or the bfg10k with some ammo
 	if ((bs->inventory[INVENTORY_ROCKETLAUNCHER] <= 0 || bs->inventory[INVENTORY_ROCKETS < 10]) &&
@@ -2927,7 +2911,7 @@ BotFindEnemy
 ==================
 */
 int BotFindEnemy(bot_state_t *bs, int curenemy) {
-	int i, healthdecrease;
+	int i, powerLeveldecrease;
 	float f, alertness, easyfragger, vis;
 	float squaredist, cursquaredist;
 	aas_entityinfo_t entinfo, curenemyinfo;
@@ -2935,10 +2919,10 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 
 	alertness = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_ALERTNESS, 0, 1);
 	easyfragger = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_EASY_FRAGGER, 0, 1);
-	//check if the health decreased
-	healthdecrease = bs->lasthealth > bs->inventory[INVENTORY_HEALTH];
-	//remember the current health value
-	bs->lasthealth = bs->inventory[INVENTORY_HEALTH];
+	//check if the powerLevel decreased
+	powerLeveldecrease = bs->lastpowerLevel > bs->inventory[INVENTORY_HEALTH];
+	//remember the current powerLevel value
+	bs->lastpowerLevel = bs->inventory[INVENTORY_HEALTH];
 	//
 	if (curenemy >= 0) {
 		BotEntityInfo(curenemy, &curenemyinfo);
@@ -3012,8 +2996,8 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		if (squaredist > Square(900.0 + alertness * 4000.0)) continue;
 		//if on the same team
 		if (BotSameTeam(bs, i)) continue;
-		//if the bot's health decreased or the enemy is shooting
-		if (curenemy < 0 && (healthdecrease || EntityIsShooting(&entinfo)))
+		//if the bot's powerLevel decreased or the enemy is shooting
+		if (curenemy < 0 && (powerLeveldecrease || EntityIsShooting(&entinfo)))
 			f = 360;
 		else
 			f = 90 + 90 - (90 - (squaredist > Square(810) ? Square(810) : squaredist) / (810 * 9));
@@ -3021,7 +3005,7 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		vis = BotEntityVisible(bs->entitynum, bs->eye, bs->viewangles, f, i);
 		if (vis <= 0) continue;
 		//if the enemy is quite far away, not shooting and the bot is not damaged
-		if (curenemy < 0 && squaredist > Square(100) && !healthdecrease && !EntityIsShooting(&entinfo))
+		if (curenemy < 0 && squaredist > Square(100) && !powerLeveldecrease && !EntityIsShooting(&entinfo))
 		{
 			//check if we can avoid this enemy
 			VectorSubtract(bs->origin, entinfo.origin, dir);
@@ -3751,6 +3735,7 @@ void BotMapScripts(bot_state_t *bs) {
 BotSetMovedir
 ==================
 */
+// bk001205 - made these static
 static vec3_t VEC_UP		= {0, -1,  0};
 static vec3_t MOVEDIR_UP	= {0,  0,  1};
 static vec3_t VEC_DOWN		= {0, -2,  0};
@@ -3813,7 +3798,7 @@ BotFuncButtonGoal
 int BotFuncButtonActivateGoal(bot_state_t *bs, int bspent, bot_activategoal_t *activategoal) {
 	int i, areas[10], numareas, modelindex, entitynum;
 	char model[128];
-	float lip, dist, health, angle;
+	float lip, dist, powerLevel, angle;
 	vec3_t size, start, end, mins, maxs, angles, points[10];
 	vec3_t movedir, origin, goalorigin, bboxmins, bboxmaxs;
 	vec3_t extramins = {1, 1, 1}, extramaxs = {-1, -1, -1};
@@ -3846,9 +3831,9 @@ int BotFuncButtonActivateGoal(bot_state_t *bs, int bspent, bot_activategoal_t *a
 	dist = fabs(movedir[0]) * size[0] + fabs(movedir[1]) * size[1] + fabs(movedir[2]) * size[2];
 	dist *= 0.5;
 	//
-	trap_AAS_FloatForBSPEpairKey(bspent, "health", &health);
+	trap_AAS_FloatForBSPEpairKey(bspent, "powerLevel", &powerLevel);
 	//if the button is shootable
-	if (health) {
+	if (powerLevel) {
 		//calculate the shoot target
 		VectorMA(origin, -dist, movedir, goalorigin);
 		//
@@ -4157,7 +4142,7 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 	int i, ent, cur_entities[10], spawnflags, modelindex, areas[MAX_ACTIVATEAREAS*2], numareas, t;
 	char model[MAX_INFO_STRING], tmpmodel[128];
 	char target[128], classname[128];
-	float health;
+	float powerLevel;
 	char targetname[10][128];
 	aas_entityinfo_t entinfo;
 	aas_areainfo_t areainfo;
@@ -4175,15 +4160,15 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 		return 0;
 	}
 	trap_AAS_ValueForBSPEpairKey(ent, "classname", classname, sizeof(classname));
-	if (!*classname) {
+	if (!classname) {
 		BotAI_Print(PRT_ERROR, "BotGetActivateGoal: entity with model %s has no classname\n", model);
 		return 0;
 	}
 	//if it is a door
 	if (!strcmp(classname, "func_door")) {
-		if (trap_AAS_FloatForBSPEpairKey(ent, "health", &health)) {
-			//if the door has health then the door must be shot to open
-			if (health) {
+		if (trap_AAS_FloatForBSPEpairKey(ent, "powerLevel", &powerLevel)) {
+			//if the door has powerLevel then the door must be shot to open
+			if (powerLevel) {
 				BotFuncDoorActivateGoal(bs, ent, activategoal);
 				return ent;
 			}
@@ -4449,7 +4434,7 @@ void BotAIBlocked(bot_state_t *bs, bot_moveresult_t *moveresult, int activate) {
 #ifdef OBSTACLEDEBUG
 	ClientName(bs->client, netname, sizeof(netname));
 	BotAI_Print(PRT_MESSAGE, "%s: I'm blocked by model %d\n", netname, entinfo.modelindex);
-#endif // OBSTACLEDEBUG
+#endif OBSTACLEDEBUG
 	// if blocked by a bsp model and the bot wants to activate it
 	if (activate && entinfo.modelindex > 0 && entinfo.modelindex <= max_bspmodelindex) {
 		// find the bsp entity which should be activated in order to get the blocking entity out of the way
@@ -4838,25 +4823,25 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 			}
 			trap_GetConfigstring(CS_SOUNDS + state->eventParm, buf, sizeof(buf));
 			/*
-			if (!strcmp(buf, "sound/teamplay/flagret_red.wav")) {
+			if (!strcmp(buf, "sound/teamplay/flagret_red.ogg")) {
 				//red flag is returned
 				bs->redflagstatus = 0;
 				bs->flagstatuschanged = qtrue;
 			}
-			else if (!strcmp(buf, "sound/teamplay/flagret_blu.wav")) {
+			else if (!strcmp(buf, "sound/teamplay/flagret_blu.ogg")) {
 				//blue flag is returned
 				bs->blueflagstatus = 0;
 				bs->flagstatuschanged = qtrue;
 			}
 			else*/
 #ifdef MISSIONPACK
-			if (!strcmp(buf, "sound/items/kamikazerespawn.wav" )) {
+			if (!strcmp(buf, "sound/items/kamikazerespawn.ogg" )) {
 				//the kamikaze respawned so dont avoid it
 				BotDontAvoid(bs, "Kamikaze");
 			}
 			else
 #endif
-				if (!strcmp(buf, "sound/items/poweruprespawn.wav")) {
+				if (!strcmp(buf, "sound/items/poweruprespawn.ogg")) {
 				//powerup respawned... go get it
 				BotGoForPowerups(bs);
 			}
@@ -4949,7 +4934,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 				//check out the sound
 				trap_GetConfigstring(CS_SOUNDS + state->eventParm, buf, sizeof(buf));
 				//if falling into a death pit
-				if (!strcmp(buf, "*falling1.wav")) {
+				if (!strcmp(buf, "*falling1.ogg")) {
 					//if the bot has a personal teleporter
 					if (bs->inventory[INVENTORY_TELEPORTER] > 0) {
 						//use the holdable item
@@ -4972,6 +4957,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		case EV_STEP_12:
 		case EV_STEP_16:
 		case EV_JUMP_PAD:
+		case EV_HIGHJUMP:
 		case EV_JUMP:
 		case EV_TAUNT:
 		case EV_WATER_TOUCH:
@@ -4983,6 +4969,8 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		case EV_NOAMMO:
 		case EV_CHANGE_WEAPON:
 		case EV_FIRE_WEAPON:
+		case EV_ALTFIRE_WEAPON:
+		case EV_LIGHTSPEED_GHOSTIMAGE:
 			//FIXME: either add to sound queue or mark player as someone making noise
 			break;
 		case EV_USE_ITEM0:
@@ -5232,7 +5220,7 @@ void BotDeathmatchAI(bot_state_t *bs, float thinktime) {
 		ClientName(bs->client, name, sizeof(name));
 		trap_BotSetChatName(bs->cs, name, bs->client);
 		//
-		bs->lastframe_health = bs->inventory[INVENTORY_HEALTH];
+		bs->lastframe_powerLevel = bs->inventory[INVENTORY_HEALTH];
 		bs->lasthitcount = bs->cur_ps.persistant[PERS_HITS];
 		//
 		bs->setupcount = 0;
@@ -5288,7 +5276,7 @@ void BotDeathmatchAI(bot_state_t *bs, float thinktime) {
 		BotAI_Print(PRT_ERROR, "%s at %1.1f switched more than %d AI nodes\n", name, FloatTime(), MAX_NODESWITCHES);
 	}
 	//
-	bs->lastframe_health = bs->inventory[INVENTORY_HEALTH];
+	bs->lastframe_powerLevel = bs->inventory[INVENTORY_HEALTH];
 	bs->lasthitcount = bs->cur_ps.persistant[PERS_HITS];
 }
 
@@ -5458,3 +5446,4 @@ BotShutdownDeathmatchAI
 void BotShutdownDeathmatchAI(void) {
 	altroutegoals_setup = qfalse;
 }
+

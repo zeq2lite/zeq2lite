@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "ui_local.h"
 
@@ -95,7 +75,7 @@ static const char *handicap_items[] = {
 	"15",
 	"10",
 	"5",
-	NULL
+	0
 };
 
 
@@ -120,7 +100,7 @@ static void PlayerSettings_DrawName( void *self ) {
 	y = f->generic.y;
 	focus = (f->generic.parent->cursor == f->generic.menuPosition);
 
-	style = UI_LEFT|UI_SMALLFONT;
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	color = text_color_normal;
 	if( focus ) {
 		style |= UI_PULSE;
@@ -167,7 +147,7 @@ static void PlayerSettings_DrawName( void *self ) {
 	// draw at bottom also using proportional font
 	Q_strncpyz( name, f->field.buffer, sizeof(name) );
 	Q_CleanStr( name );
-	UI_DrawProportionalString( 320, 440, name, UI_CENTER|UI_BIGFONT, text_color_normal );
+	UI_DrawProportionalString( 320, 440, name, UI_CENTER|UI_BIGFONT|UI_DROPSHADOW, text_color_normal );
 }
 
 
@@ -185,7 +165,7 @@ static void PlayerSettings_DrawHandicap( void *self ) {
 	item = (menulist_s *)self;
 	focus = (item->generic.parent->cursor == item->generic.menuPosition);
 
-	style = UI_LEFT|UI_SMALLFONT;
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	color = text_color_normal;
 	if( focus ) {
 		style |= UI_PULSE;
@@ -211,7 +191,7 @@ static void PlayerSettings_DrawEffects( void *self ) {
 	item = (menulist_s *)self;
 	focus = (item->generic.parent->cursor == item->generic.menuPosition);
 
-	style = UI_LEFT|UI_SMALLFONT;
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	color = text_color_normal;
 	if( focus ) {
 		style |= UI_PULSE;
@@ -243,11 +223,11 @@ static void PlayerSettings_DrawPlayer( void *self ) {
 		viewangles[YAW]   = 180 - 30;
 		viewangles[PITCH] = 0;
 		viewangles[ROLL]  = 0;
-		UI_PlayerInfo_SetInfo( &s_playersettings.playerinfo, LEGS_IDLE, TORSO_STAND, viewangles, vec3_origin, WP_MACHINEGUN, qfalse );
+		UI_PlayerInfo_SetInfo( &s_playersettings.playerinfo, LEGS_FLY_IDLE, TORSO_FLY_IDLE, viewangles, vec3_origin, WP_NONE, qfalse );
 	}
 
 	b = (menubitmap_s*) self;
-	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_playersettings.playerinfo, uis.realtime/2 );
+	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_playersettings.playerinfo, uis.realtime / PLAYER_MODEL_SPEED );
 }
 
 
@@ -309,7 +289,7 @@ static void PlayerSettings_SetMenuItems( void ) {
 	viewangles[ROLL]  = 0;
 
 	UI_PlayerInfo_SetModel( &s_playersettings.playerinfo, UI_Cvar_VariableString( "model" ) );
-	UI_PlayerInfo_SetInfo( &s_playersettings.playerinfo, LEGS_IDLE, TORSO_STAND, viewangles, vec3_origin, WP_MACHINEGUN, qfalse );
+	UI_PlayerInfo_SetInfo( &s_playersettings.playerinfo, LEGS_FLY_IDLE, TORSO_FLY_IDLE, viewangles, vec3_origin, WP_NONE, qfalse );
 
 	// handicap
 	h = Com_Clamp( 5, 100, trap_Cvar_VariableValue("handicap") );
@@ -366,7 +346,7 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.banner.generic.y     = 16;
 	s_playersettings.banner.string        = "PLAYER SETTINGS";
 	s_playersettings.banner.color         = color_white;
-	s_playersettings.banner.style         = UI_CENTER;
+	s_playersettings.banner.style         = UI_CENTER|UI_DROPSHADOW;
 
 	s_playersettings.framel.generic.type  = MTYPE_BITMAP;
 	s_playersettings.framel.generic.name  = ART_FRAMEL;

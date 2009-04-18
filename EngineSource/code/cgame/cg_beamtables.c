@@ -7,10 +7,10 @@
 #define BEAMTABLE_UPDATE	 750	// 750 ms between updates
 #define	MAX_BEAMTABLE_SIZE	  32	// Should be more than enough for any beam, unless
 									// it lasts MUCH longer than is good for gameplay.
-
+/*
 #define TESS_DISTANCE		  20    // The distance required for one tesselation of a
 									// beam segment.
-
+*/
 
 typedef struct beamTableElem_s {
 	struct beamTableElem_s		*prev, *next;
@@ -25,6 +25,7 @@ typedef struct {
 	qboolean			alreadyWiped;
 	int					updateTime;
 	qhandle_t			shader;
+	char				tagName[MAX_QPATH];
 	float				width;
 } beamTable_t;
 
@@ -123,7 +124,7 @@ CG_BeamTableUpdate
 ====================
   Updates the beamtable associated with the client entity.
 */
-void CG_BeamTableUpdate( centity_t *cent, float width, qhandle_t shader ) {
+void CG_BeamTableUpdate( centity_t *cent, float width, qhandle_t shader, char *tagName ) {
 	beamTable_t *currentTable;
 
 	// Failsafe against arrays running out of bounds.
@@ -133,15 +134,16 @@ void CG_BeamTableUpdate( centity_t *cent, float width, qhandle_t shader ) {
 	}
 
 	// Do we work on the alternate fire tables, or the primary fire ones?
-	if (cent->currentState.weapon > ALTWEAPON_OFFSET) {
+	if ( cent->currentState.weapon > ALTWEAPON_OFFSET) {
 		currentTable = &(beamTableAlternate[cent->currentState.clientNum]);
 	} else {
 		currentTable = &(beamTablePrimary[cent->currentState.clientNum]);
 	}
 
-	// set the width and shader
+	// set the width, shader and tag to lock on to.
 	currentTable->width = width;
 	currentTable->shader = shader;
+	Q_strncpyz(currentTable->tagName, tagName, sizeof(currentTable->tagName));
 
 	// always update the terminator symbol
 	VectorCopy(cent->lerpOrigin, currentTable->table_activeList.pos);
@@ -306,9 +308,14 @@ static void CG_ShiftVerts( polyVert_t *verts ) {
 }
 
 
+// NOTE: This old way of doing the tesscount is bad for beams that
+//       have wide curves. It uses more tesselations than is
+//       affordable.
+/*
 static int CG_TessCount (const vec3_t startPos, const vec3_t endPos) {
 	float	dist;
 	int		tess;
+	
 
 	dist = Distance(startPos, endPos);
 	tess = dist / TESS_DISTANCE;
@@ -318,16 +325,71 @@ static int CG_TessCount (const vec3_t startPos, const vec3_t endPos) {
 
 	return tess;
 }
+*/
+static int CG_TessCount( const beamTableElem_t *startElem, const beamTableElem_t *endElem ) {
+	float	directTangentRatio;
+	float	indirectTangentRatio;
+	float	tangentRatio;
+	float   dist;
+	vec3_t	dir;
+	int		detail;
+
+	VectorSubtract( endElem->pos, startElem->pos, dir );
+	if ( (dist = VectorNormalize( dir )) == 0.0f ) {
+		//If the distance is 0, then we don't make ANY tesselations at all.
+		return 0;
+	}
+
+	directTangentRatio = 1 - DotProduct( startElem->tangent, endElem->tangent );
+	indirectTangentRatio = 1 - DotProduct( dir, endElem->tangent );
+	// NOTE: These should produce numbers between 0 and 2. 2 When the tangents
+	//       differ 180 degrees, 0 when they do not differ.
+	
+	// Pick the biggest one
+	tangentRatio = indirectTangentRatio > directTangentRatio ? indirectTangentRatio : directTangentRatio;
+
+	// Clamp the detail value
+	detail = r_beamDetail.value;
+	if ( detail < 0 ) {
+		detail = 0;
+	}
+
+	if ( detail >= 40 ) {
+		detail = 40;
+		if ( tangentRatio < 1 ) {
+			tangentRatio = 1;
+		}
+	} else if ( detail <= 30 ) {
+		if ( tangentRatio < 0.5 ) {
+			tangentRatio = 0.5;
+		}
+	} else if ( detail <= 20 ) {
+		if ( tangentRatio < 0.25 ) {
+			tangentRatio = 0.25;
+		}
+	} else if ( detail <= 10 ) {
+		if ( tangentRatio < 0.1 ) {
+			tangentRatio = 0.1;
+		}
+	}
+
+	// On small distances always use the maximum tangent ratio
+	if ( dist < 100 ) {
+		tangentRatio = 2;
+	}
+
+	return 1 + floor( tangentRatio * detail );
+}
 
 
 
 /*
 ==================
-CG_AddBeamTables
+CG_DrawBeamTable
 ==================
   Draws one beam table.
 */
-static void DrawBeamTable ( int clientNum, qboolean alternate ) {
+static void CG_DrawBeamTable ( int clientNum, qboolean alternate ) {
 	beamTable_t			*currentTable;
 	beamTableElem_t		*currentElem;
 	beamTableElem_t		*prevElem;
@@ -366,23 +428,38 @@ static void DrawBeamTable ( int clientNum, qboolean alternate ) {
 	// Failsafe against arrays running out of bounds.
 	if ( ( clientNum < 0 ) || ( clientNum >= MAX_CLIENTS ) ) {
 		CG_Error( "Bad clientNum in beamtable drawing" );
-		return; // Don't know if return is necessary, but do it anyway.
+		return; // FIXME: Don't know if return is necessary, but it can't hurt either way.
 	}
 
 	// Do we work on the alternate fire tables, or the primary fire ones?
 	if ( alternate ) {
+		orientation_t orient;
+
 		currentTable = &(beamTableAlternate[clientNum]);
 
 		// retrieve the correct starter point
-		VectorCopy(cgs.clientinfo[clientNum].weaponTagPos1, starter.pos);
-		VectorCopy(cgs.clientinfo[clientNum].weaponTagDir1, starter.tangent);
+		if (!CG_GetTagOrientationFromPlayerEntity( &(cg_entities[clientNum]), currentTable->tagName, &orient)) {
+			// If the tag can not be found, wipe the table and don't display the beam
+			currentTable->activeThisFrame = qfalse;
+		} else {
+			VectorCopy( orient.origin, starter.pos);
+			VectorCopy( orient.axis[0], starter.tangent );
+		}
+
 
 	} else {
+		orientation_t orient;
+
 		currentTable = &(beamTablePrimary[clientNum]);
 
 		// retrieve the correct starter point
-		VectorCopy(cgs.clientinfo[clientNum].weaponTagPos0, starter.pos);
-		VectorCopy(cgs.clientinfo[clientNum].weaponTagDir0, starter.tangent);
+		if (!CG_GetTagOrientationFromPlayerEntity( &(cg_entities[clientNum]), currentTable->tagName, &orient)) {
+			// If the tag can not be found, wipe the table and don't display the beam
+			currentTable->activeThisFrame = qfalse;
+		} else {
+			VectorCopy( orient.origin, starter.pos);
+			VectorCopy( orient.axis[0], starter.tangent );
+		}
 	}
 
 	// If the beam table wasn't rendered last time, then no beam will be rendered this
@@ -402,7 +479,8 @@ static void DrawBeamTable ( int clientNum, qboolean alternate ) {
 	while ( 1 ) {
 
 		// get the tesselation count for this segment
-		tessSize = CG_TessCount( prevElem->pos, currentElem->pos );
+		//tessSize = CG_TessCount( prevElem->pos, currentElem->pos );
+		tessSize = CG_TessCount( prevElem, currentElem );
 
 		// get the midpoints for this segment
 		CG_BezierMidPoints( prevElem->pos, currentElem->pos,
@@ -449,7 +527,7 @@ void CG_AddBeamTables( void ) {
 	int i;
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
-		DrawBeamTable( i, qfalse );
-		DrawBeamTable( i, qtrue  );
+		CG_DrawBeamTable( i, qfalse );
+		CG_DrawBeamTable( i, qtrue  );
 	}
 }

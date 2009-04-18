@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =======================================================================
@@ -50,7 +30,7 @@ static const char *rate_items[] = {
 	"56K",
 	"ISDN",
 	"LAN/Cable/xDSL",
-	NULL
+	0
 };
 
 typedef struct {
@@ -148,7 +128,7 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.banner.generic.y			= 16;
 	networkOptionsInfo.banner.string			= "SYSTEM SETUP";
 	networkOptionsInfo.banner.color				= color_white;
-	networkOptionsInfo.banner.style				= UI_CENTER;
+	networkOptionsInfo.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	networkOptionsInfo.framel.generic.type		= MTYPE_BITMAP;
 	networkOptionsInfo.framel.generic.name		= ART_FRAMEL;
@@ -173,8 +153,8 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.graphics.generic.x			= 216;
 	networkOptionsInfo.graphics.generic.y			= 240 - 2 * PROP_HEIGHT;
 	networkOptionsInfo.graphics.string				= "GRAPHICS";
-	networkOptionsInfo.graphics.style				= UI_RIGHT;
-	networkOptionsInfo.graphics.color				= color_red;
+	networkOptionsInfo.graphics.style				= UI_RIGHT|UI_DROPSHADOW;
+	networkOptionsInfo.graphics.color				= color_white;
 
 	networkOptionsInfo.display.generic.type			= MTYPE_PTEXT;
 	networkOptionsInfo.display.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -183,8 +163,8 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.display.generic.x			= 216;
 	networkOptionsInfo.display.generic.y			= 240 - PROP_HEIGHT;
 	networkOptionsInfo.display.string				= "DISPLAY";
-	networkOptionsInfo.display.style				= UI_RIGHT;
-	networkOptionsInfo.display.color				= color_red;
+	networkOptionsInfo.display.style				= UI_RIGHT|UI_DROPSHADOW;
+	networkOptionsInfo.display.color				= color_white;
 
 	networkOptionsInfo.sound.generic.type			= MTYPE_PTEXT;
 	networkOptionsInfo.sound.generic.flags			= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -193,8 +173,8 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.sound.generic.x				= 216;
 	networkOptionsInfo.sound.generic.y				= 240;
 	networkOptionsInfo.sound.string					= "SOUND";
-	networkOptionsInfo.sound.style					= UI_RIGHT;
-	networkOptionsInfo.sound.color					= color_red;
+	networkOptionsInfo.sound.style					= UI_RIGHT|UI_DROPSHADOW;
+	networkOptionsInfo.sound.color					= color_white;
 
 	networkOptionsInfo.network.generic.type			= MTYPE_PTEXT;
 	networkOptionsInfo.network.generic.flags		= QMF_RIGHT_JUSTIFY;
@@ -203,8 +183,8 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.network.generic.x			= 216;
 	networkOptionsInfo.network.generic.y			= 240 + PROP_HEIGHT;
 	networkOptionsInfo.network.string				= "NETWORK";
-	networkOptionsInfo.network.style				= UI_RIGHT;
-	networkOptionsInfo.network.color				= color_red;
+	networkOptionsInfo.network.style				= UI_RIGHT|UI_DROPSHADOW;
+	networkOptionsInfo.network.color				= color_white;
 
 	y = 240 - 1 * (BIGCHAR_HEIGHT+2);
 	networkOptionsInfo.rate.generic.type		= MTYPE_SPINCONTROL;

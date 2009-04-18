@@ -10,8 +10,8 @@ typedef enum {
 					//	clientside to lighten network burden.
 	WPT_HITSCAN,	//	Rail- / lightninggun style hitscan attack
 	WPT_GROUNDSKIM,	//	Missile which travels on the ground after it connects with it
-	WPT_NONE		//	No visible attack at all.
-					//	Useful for self-healing, since it spawns nothing.
+	WPT_TRIGGER,	//  For redirecting an existing weapon.
+	WPT_NONE		//	Useful for self-healing, since it spawns nothing.
 } userWeaponType_t;
 
 typedef enum {
@@ -20,6 +20,7 @@ typedef enum {
 	HOM_GUIDED,		//	Attack is guided by the player. ( NOTE: Bots will use a special kind of homing. )
 	HOM_REGULAR,	//	Attack can pickup targets within its range and vision.
 	HOM_ARCH,		//	Attack will arch outwards and curve back inwards towards opponents registered location.
+	HOM_DRUNKEN,	//	Attack will wobble around drunkenly
 	HOM_CYLINDER	//	Attack can only pickup targets in a cylinder, extending downwards from
 					//	a little below its current position. ( NOTE: A little below, to prevent
 					//	turning into horizontal travel.)
@@ -47,13 +48,12 @@ typedef struct {
 	// Homing
 	userWeaponHoming_t	homing_type;				// homing AI for weapon (see above)
 	int					homing_range;				// range within which the weapon scans for targets
-	int					homing_angleW;				// Width of the weapon's range of vision when scanning for targets
-	int					homing_angleH;				// Height of the weapon's range of vision when scanning for targets
+	int					homing_FOV;					// FOV of the weapon's range of vision when scanning for targets	
 
 	// Costs
-	int					costs_ki;					// Ki to fire a shot of the weapon. Charging weapons deduct the cost linearly, with the total amount being deducted when charged to 100%.
-	int					costs_hp;					// HP to fire a shot of the weapon. Charging weapons deduct the cost linearly, with the total amount being deducted when charged to 100%
-	int					costs_stamina;				// Stamina to fire a shot of the weapon. Charging weapons deduct the cost linearly, with the total amount being deducted when charged to 100%
+	int					costs_ki;					// Ki to fire a shot of the weapon. Charging weapons deduct the cost each second
+	int					costs_hp;					// HP to fire a shot of the weapon. Charging weapons deduct the cost each second.
+	int					costs_stamina;				// Stamina to fire a shot of the weapon. Charging weapons deduct the cost each second.
 	int					costs_chargeTime;			// Time to charge 1% of the weapon
 	int					costs_chargeReady;			// Percentage at which the weapon can be fired
 	int					costs_cooldownTime;			// Time the weapon must rest after being fired, before it can be fired again.
@@ -77,20 +77,28 @@ typedef struct {
 	float				physics_gravity;			// Percentage of the map's gravity the attack is affected by.
 	int					physics_radius;				// Spherical collision radius of the attack
 	int					physics_radiusMultiplier;	// Actual radius = physics_radius * multiplier * charge level / 100.
-	int					physics_range;				// Range a hitscan attack has.
+	int					physics_range_min;			// Minimum range a hitscan attack has.
+	int					physics_range_max;			// Maximum range a hitscan attack has.
 	int					physics_lifetime;			// Maximum time the attack can exist before 'blowing up'.
 	float				physics_bounceFrac;			// How much of the energy to pass on in a bounce. 0 == no bounce
 	int					physics_maxBounces;			// How many times at max the missile can bounce.
 	
 	// Firing
-	int					firing_deviateW;			// Maximum width angle ( + and - ) a projectile can deviate from its firing path.
-	int					firing_deviateH;			// Maximum height angle ( + and - ) a projectile can deviate from its firing path.
-	int					firing_offsetW;				// Width offset a shot will deviate from the player's regular muzzle point.
-	int					firing_offsetH;				// Height offset a shot will deviate from the player's regular muzzle point.
+	int					firing_angleW_min;			// Minimum width angle ( + and - ) a projectile can deviate from its firing path.
+	int					firing_angleW_max;			// Maximum width angle ( + and - ) a projectile can deviate from its firing path.
+	int					firing_angleH_min;			// Minimum height angle ( + and - ) a projectile can deviate from its firing path.
+	int					firing_angleH_max;			// Maximum height angle ( + and - ) a projectile can deviate from its firing path.
+	int					firing_offsetW_max;			// Maximum width offset a shot will deviate from the player's regular muzzle point.
+	int					firing_offsetW_min;			// Minimum width offset a shot will deviate from the player's regular muzzle point.
+	int					firing_offsetH_max;			// Maximum height offset a shot will deviate from the player's regular muzzle point.
+	int					firing_offsetH_min;			// Minimum height offset a shot will deviate from the player's regular muzzle point.
 	qboolean			firing_offsetWFlip;			// Flip the width offset every alternating shot. ( NOTE: For left-right-left-... weapons. )
+	qboolean			firing_offsetHFlip;			// Flip the height offset every alternating shot. ( NOTE: For up-down-up-... weapons. )
 	int					firing_nrShots;				// Nr of projectiles fired in one shot.
 } g_userWeapon_t;
 
+// For use in the physics parser
+typedef g_userWeapon_t g_userWeaponParseBuffer_t; // <-- is just the same.
 
 // function declarations for g_userweapons.c
 
@@ -99,5 +107,4 @@ g_userWeapon_t *G_FindUserWeaponSpawnData( int clientNum, int weaponNum );
 g_userWeapon_t *G_FindUserAltWeaponData( int clientNum, int weaponNum );
 g_userWeapon_t *G_FindUserAltWeaponSpawnData( int clientNum, int weaponNum );
 void G_LinkUserWeaponData( playerState_t *ps );
-void G_InitUserWeaponData( void );
-int G_FindUserWeaponMask( int clientNum );
+int *G_FindUserWeaponMask( int clientNum );

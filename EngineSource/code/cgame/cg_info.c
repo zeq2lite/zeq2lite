@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_info.c -- display information while data is being loading
 
@@ -111,15 +91,15 @@ void CG_LoadingClient( int clientNum ) {
 			skin = "default";
 		}
 
-		Com_sprintf( iconName, MAX_QPATH, "models/players/%s/icon_%s.tga", model, skin );
+		Com_sprintf( iconName, MAX_QPATH, "players//%s/icon_%s.tga", model, skin );
 		
 		loadingPlayerIcons[loadingPlayerIconCount] = trap_R_RegisterShaderNoMip( iconName );
 		if ( !loadingPlayerIcons[loadingPlayerIconCount] ) {
-			Com_sprintf( iconName, MAX_QPATH, "models/players/characters/%s/icon_%s.tga", model, skin );
+			Com_sprintf( iconName, MAX_QPATH, "players//characters/%s/icon_%s.tga", model, skin );
 			loadingPlayerIcons[loadingPlayerIconCount] = trap_R_RegisterShaderNoMip( iconName );
 		}
 		if ( !loadingPlayerIcons[loadingPlayerIconCount] ) {
-			Com_sprintf( iconName, MAX_QPATH, "models/players/%s/icon_%s.tga", DEFAULT_MODEL, "default" );
+			Com_sprintf( iconName, MAX_QPATH, "players//%s/icon_%s.tga", DEFAULT_MODEL, "default" );
 			loadingPlayerIcons[loadingPlayerIconCount] = trap_R_RegisterShaderNoMip( iconName );
 		}
 		if ( loadingPlayerIcons[loadingPlayerIconCount] ) {
@@ -131,7 +111,7 @@ void CG_LoadingClient( int clientNum ) {
 	Q_CleanStr( personality );
 
 	if( cgs.gametype == GT_SINGLE_PLAYER ) {
-		trap_S_RegisterSound( va( "sound/player/announce/%s.wav", personality ), qtrue );
+		trap_S_RegisterSound( va( "sound/player/announce/%s.ogg", personality ), qtrue );
 	}
 
 	CG_LoadingString( personality );
@@ -159,9 +139,9 @@ void CG_DrawInformation( void ) {
 	sysInfo = CG_ConfigString( CS_SYSTEMINFO );
 
 	s = Info_ValueForKey( info, "mapname" );
-	levelshot = trap_R_RegisterShaderNoMip( va( "levelshots/%s.tga", s ) );
+	levelshot = trap_R_RegisterShaderNoMip( va( "maps/%s.jpg", s ) );
 	if ( !levelshot ) {
-		levelshot = trap_R_RegisterShaderNoMip( "menu/art/unknownmap" );
+		levelshot = trap_R_RegisterShaderNoMip( "maps/unknown" );
 	}
 	trap_R_SetColor( NULL );
 	CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, levelshot );
@@ -224,6 +204,13 @@ void CG_DrawInformation( void ) {
 			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
 		y += PROP_HEIGHT;
 	}
+
+#if MAPLENSFLARES	// JUHOX: lens flare editor message
+	if (cgs.editMode == EM_mlf) {
+		UI_DrawProportionalString(320, y, "LENS FLARE EDITOR", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite);
+		return;
+	}
+#endif
 
 	// cheats warning
 	s = Info_ValueForKey( sysInfo, "sv_cheats" );

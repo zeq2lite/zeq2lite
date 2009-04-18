@@ -2064,6 +2064,8 @@ int AAS_AreaVisible(int srcarea, int destarea)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
+
+/*
 float DistancePointToLine(vec3_t v1, vec3_t v2, vec3_t point)
 {
 	vec3_t vec, p2;
@@ -2072,6 +2074,8 @@ float DistancePointToLine(vec3_t v1, vec3_t v2, vec3_t point)
 	VectorSubtract(point, p2, vec);
 	return VectorLength(vec);
 } //end of the function DistancePointToLine
+*/
+
 //===========================================================================
 //
 // Parameter:			-

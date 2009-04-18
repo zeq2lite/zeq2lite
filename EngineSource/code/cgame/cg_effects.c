@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_effects.c -- these functions generate localentities, usually as a result
 // of event processing
@@ -179,26 +159,34 @@ void CG_SpawnEffect( vec3_t org ) {
 	le->startTime = cg.time;
 	le->endTime = cg.time + 500;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+	le->radius = 64;
 
 	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
 
 	re = &le->refEntity;
 
-	re->reType = RT_MODEL;
+//	re->reType = RT_MODEL;
+	re->reType = RT_SPRITE;
+	re->radius = le->radius;
+
 	re->shaderTime = cg.time / 1000.0f;
 
-#ifndef MISSIONPACK
+	re->shaderRGBA[0] = le->color[0] * 0xff;
+	re->shaderRGBA[1] = le->color[1] * 0xff;
+	re->shaderRGBA[2] = le->color[2] * 0xff;
+	re->shaderRGBA[3] = 0xff;
+//#ifndef MISSIONPACK
 	re->customShader = cgs.media.teleportEffectShader;
-#endif
-	re->hModel = cgs.media.teleportEffectModel;
+//#endif
+//	re->hModel = cgs.media.teleportEffectModel;
 	AxisClear( re->axis );
 
 	VectorCopy( org, re->origin );
-#ifdef MISSIONPACK
+//#ifdef MISSIONPACK
 	re->origin[2] += 16;
-#else
-	re->origin[2] -= 24;
-#endif
+//#else
+//	re->origin[2] -= 24;
+//#endif
 }
 
 
@@ -716,3 +704,230 @@ void CG_BigExplode( vec3_t playerOrigin ) {
 	CG_LaunchExplode( origin, velocity, cgs.media.smoke2 );
 }
 
+
+/*
+======================
+CG_MakeUserExplosion
+======================
+*/
+void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics) {
+	float			angle;
+	localEntity_t	*expShell;
+	localEntity_t	*expShock;
+	int				offset;
+	vec3_t			tmpVec, newOrigin;
+
+	// skew the time a bit so they aren't all in sync
+	offset = rand() & 63;	
+
+	if ( !(weaponGraphics->explosionModel && weaponGraphics->explosionSkin) ) {
+		if (weaponGraphics->explosionShader) {
+			// allocate the entity as a sprite explosion
+			expShell = CG_AllocLocalEntity();
+			expShell->leFlags = 0;
+			expShell->leType = LE_SPRITE_EXPLOSION;
+
+			// set the type as sprite and link the image
+			expShell->refEntity.reType = RT_SPRITE;
+			expShell->refEntity.customShader = weaponGraphics->explosionShader;
+			expShell->refEntity.radius = 4 * weaponGraphics->explosionSize;
+
+			// randomly rotate sprite orientation
+			expShell->refEntity.rotation = rand() % 360;
+			
+			// set origin
+			VectorScale( dir, 16, tmpVec );
+			VectorAdd( tmpVec, origin, newOrigin );
+			VectorCopy( newOrigin, expShell->refEntity.origin );
+			VectorCopy( newOrigin, expShell->refEntity.oldorigin );
+
+			// set the explosion's duration
+			expShell->startTime = cg.time - offset;
+			expShell->endTime = expShell->startTime + weaponGraphics->explosionTime;
+			expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
+
+			// create a camera shake
+			CG_AddEarthquake( origin, 
+				weaponGraphics->explosionSize / 2 
+				, weaponGraphics->explosionTime / 1000
+				, ( weaponGraphics->explosionTime / 1000 ) / 2
+				, ( weaponGraphics->explosionTime / 1000 ) * 2
+				, weaponGraphics->explosionSize / 2 );
+
+			// bias the time so all shader effects start correctly
+			expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
+
+			// set the Dlight RGB values
+			expShell->lightColor[0] = weaponGraphics->explosionDlightColor[0];
+			expShell->lightColor[1] = weaponGraphics->explosionDlightColor[1];
+			expShell->lightColor[2] = weaponGraphics->explosionDlightColor[2];
+			expShell->light = weaponGraphics->explosionDlightRadius * 100;
+		}
+	} else {
+		// allocate the entity as a ZEQ explosion
+		expShell = CG_AllocLocalEntity();
+		expShell->leFlags = 0;
+		expShell->leType = LE_ZEQEXPLOSION;
+
+		// set the type as model and link the model and skin
+		expShell->refEntity.reType = RT_MODEL;
+		expShell->refEntity.hModel = weaponGraphics->explosionModel;
+		expShell->refEntity.customSkin = weaponGraphics->explosionSkin;
+		
+		// set axis with random rotate
+		if ( !dir ) {
+			AxisClear( expShell->refEntity.axis );
+		} else {
+			angle = rand() % 360;
+			VectorCopy( dir, expShell->refEntity.axis[0] );
+			RotateAroundDirection( expShell->refEntity.axis, angle );
+		}
+
+		// scale axes to explosion's full size
+		expShell->refEntity.nonNormalizedAxes = qtrue;
+		VectorNormalize(expShell->refEntity.axis[0]);
+		VectorNormalize(expShell->refEntity.axis[1]);
+		VectorNormalize(expShell->refEntity.axis[2]);
+		VectorScale(expShell->refEntity.axis[0], weaponGraphics->explosionSize, expShell->refEntity.axis[0]);
+		VectorScale(expShell->refEntity.axis[1], weaponGraphics->explosionSize, expShell->refEntity.axis[1]);
+		VectorScale(expShell->refEntity.axis[2], weaponGraphics->explosionSize, expShell->refEntity.axis[2]);
+
+		// set origin
+		VectorCopy( origin, newOrigin );
+		VectorCopy( newOrigin, expShell->refEntity.origin );
+		VectorCopy( newOrigin, expShell->refEntity.oldorigin );
+
+		// set the explosion's duration
+		expShell->startTime = cg.time - offset;
+		expShell->endTime = expShell->startTime + weaponGraphics->explosionTime;
+		expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
+
+		// create a camera shake
+		CG_AddEarthquake( origin, 
+			weaponGraphics->explosionSize * 100 
+			, weaponGraphics->explosionTime / 1000
+			, ( weaponGraphics->explosionTime / 1000 ) / 2
+			, ( weaponGraphics->explosionTime / 1000 ) * 2
+			, weaponGraphics->explosionSize * 100 );
+
+		// bias the time so all shader effects start correctly
+		expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
+
+		// set the Dlight RGB values
+		expShell->lightColor[0] = weaponGraphics->explosionDlightColor[0];
+		expShell->lightColor[1] = weaponGraphics->explosionDlightColor[1];
+		expShell->lightColor[2] = weaponGraphics->explosionDlightColor[2];
+		expShell->light = weaponGraphics->explosionDlightRadius * 100;
+	}
+
+
+
+
+	if ( weaponGraphics->shockwaveModel && weaponGraphics->shockwaveSkin ) {
+		// allocate the entity as a ZEQ explosion
+		expShock = CG_AllocLocalEntity();
+		expShock->leFlags = 0;
+		expShock->leType = LE_ZEQEXPLOSION;
+
+		// set the type as model and link the model and skin
+		expShock->refEntity.reType = RT_MODEL;
+		expShock->refEntity.hModel = weaponGraphics->shockwaveModel;
+		expShock->refEntity.customSkin = weaponGraphics->shockwaveSkin;
+		
+		// set axis with random rotate
+		if ( !dir ) {
+			AxisClear( expShock->refEntity.axis );
+		} else {
+			angle = rand() % 360;
+			VectorCopy( dir, expShock->refEntity.axis[0] );
+			RotateAroundDirection( expShock->refEntity.axis, angle );
+		}
+
+		// scale axes to explosion's full size
+		expShock->refEntity.nonNormalizedAxes = qtrue;
+		VectorNormalize(expShock->refEntity.axis[0]);
+		VectorNormalize(expShock->refEntity.axis[1]);
+		VectorNormalize(expShock->refEntity.axis[2]);
+		VectorScale(expShock->refEntity.axis[0], 2 * weaponGraphics->explosionSize, expShock->refEntity.axis[0]);
+		VectorScale(expShock->refEntity.axis[1], 2 * weaponGraphics->explosionSize, expShock->refEntity.axis[1]);
+		VectorScale(expShock->refEntity.axis[2], 2 * weaponGraphics->explosionSize, expShock->refEntity.axis[2]);
+
+		// set origin
+		VectorCopy( origin, newOrigin );
+		VectorCopy( newOrigin, expShock->refEntity.origin );
+		VectorCopy( newOrigin, expShock->refEntity.oldorigin );
+
+		// set the explosion's duration
+		expShock->startTime = cg.time - offset - (weaponGraphics->explosionTime / 4);
+		expShock->endTime = expShock->startTime + (weaponGraphics->explosionTime / 1.5);
+		expShock->lifeRate = 1.0 / ( expShock->endTime - expShock->startTime );
+
+/*
+		// NOTE: camera shakes for shockwaves?
+		// create a camera shake
+		CG_AddEarthquake( origin, 
+			weaponGraphics->explosionSize * 100 
+			, weaponGraphics->explosionTime / 1000
+			, ( weaponGraphics->explosionTime / 1000 ) / 2
+			, ( weaponGraphics->explosionTime / 1000 ) * 2
+			, weaponGraphics->explosionSize * 100 );
+*/
+		// bias the time so all shader effects start correctly
+		expShock->refEntity.shaderTime = expShock->startTime / 1000.0f;
+
+		// disable this Dlight
+		expShock->light = 0;
+	}
+
+	if ( weaponGraphics->explosionParticleSystem[0] ) {
+		vec3_t tempAxis[3];
+
+		VectorCopy( dir, tempAxis[0] );
+		MakeNormalVectors( tempAxis[0], tempAxis[1], tempAxis[2] );
+		PSys_SpawnCachedSystem( weaponGraphics->explosionParticleSystem, origin, tempAxis, NULL, NULL, qfalse, qfalse );
+	}
+
+	if ( weaponGraphics->smokeParticleSystem[0] ) {
+		vec3_t tempAxis[3];
+
+		VectorCopy( dir, tempAxis[0] );
+		MakeNormalVectors( tempAxis[0], tempAxis[1], tempAxis[2] );
+		PSys_SpawnCachedSystem( weaponGraphics->smokeParticleSystem, origin, tempAxis, NULL, NULL, qfalse, qfalse );
+	}
+}
+
+/*
+===========================
+CG_CreateStraightBeamFade
+===========================
+*/
+void CG_CreateStraightBeamFade(vec3_t start, vec3_t end, cg_userWeapon_t *weaponGraphics) {
+	localEntity_t	*beam;
+	int				duration;
+
+	if ( !weaponGraphics->missileTrailShader ) {
+		return;
+	}
+
+	beam = CG_AllocLocalEntity();
+	beam->leFlags = 0;
+	beam->leType = LE_STRAIGHTBEAM_FADE;
+
+	if ( weaponGraphics->missileTrailRadius ) {
+		beam->radius = weaponGraphics->missileTrailRadius;
+	} else {
+		beam->radius = 10;
+	}
+
+	beam->refEntity.customShader = weaponGraphics->missileTrailShader;
+	VectorCopy( start, beam->refEntity.origin );
+	VectorCopy( end, beam->refEntity.oldorigin );
+
+	duration = Distance( start, end );
+
+	beam->startTime = cg.time;
+	beam->endTime = cg.time + duration;
+	beam->lifeRate = 1.0 / ( beam->endTime - beam->startTime );
+
+	beam->refEntity.shaderTime = beam->startTime / 1000.0f;
+}

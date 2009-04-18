@@ -1,28 +1,14 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
-#include "../qcommon/q_shared.h"
-#include "../renderer/tr_types.h"
+#include "../game/q_shared.h"
+#include "tr_types.h"
 #include "../game/bg_public.h"
+// ADDING FOR ZEQ2
+#include "../game/bg_userweapons.h"
+#include "cg_userweapons.h"
+#include "cg_auras.h"
+#include "cg_tiers.h"
+// END ADDING
 #include "cg_public.h"
 
 
@@ -52,7 +38,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	ITEM_SCALEUP_TIME	1000
 #define	ZOOM_TIME			150
 #define	ITEM_BLOB_TIME		200
-#define	MUZZLE_FLASH_TIME	20
+#define	MUZZLE_FLASH_TIME	80 //20
 #define	SINK_TIME			1000		// time for fragments to sink into ground before going away
 #define	ATTACKER_HEAD_TIME	10000
 #define	REWARD_TIME			3000
@@ -67,8 +53,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define STAT_MINUS			10	// num frame for '-' stats digit
 
 #define	ICON_SIZE			48
-#define	CHAR_WIDTH			32
-#define	CHAR_HEIGHT			48
+#define	CHAR_WIDTH			8	// 32
+#define	CHAR_HEIGHT			12	// 48
 #define	TEXT_ICON_SPACE		4
 
 #define	TEAMCHAT_WIDTH		80
@@ -83,17 +69,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define TEAM_OVERLAY_MAXNAME_WIDTH	12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH	16
 
-#define	DEFAULT_MODEL			"sarge"
+#define	DEFAULT_MODEL			"goku"
 #ifdef MISSIONPACK
 #define	DEFAULT_TEAM_MODEL		"james"
 #define	DEFAULT_TEAM_HEAD		"*james"
 #else
-#define	DEFAULT_TEAM_MODEL		"sarge"
-#define	DEFAULT_TEAM_HEAD		"sarge"
+#define	DEFAULT_TEAM_MODEL		"goku"
+#define	DEFAULT_TEAM_HEAD		"goku"
 #endif
 
-#define DEFAULT_REDTEAM_NAME		"Stroggs"
-#define DEFAULT_BLUETEAM_NAME		"Pagans"
+#define DEFAULT_REDTEAM_NAME		"HFIL Fighters"
+#define DEFAULT_BLUETEAM_NAME		"Z Fighters"
 
 typedef enum {
 	FOOTSTEP_NORMAL,
@@ -145,7 +131,7 @@ typedef struct {
 
 
 typedef struct {
-	lerpFrame_t		legs, torso, flag;
+	lerpFrame_t		legs, torso, head, flag;
 	int				painTime;
 	int				painDirection;	// flip from 0 to 1
 	int				lightningFiring;
@@ -158,6 +144,10 @@ typedef struct {
 	float			barrelAngle;
 	int				barrelTime;
 	qboolean		barrelSpinning;
+
+	// needed to obtain tag positions after player entity has been processed.
+	// For linking beam attacks, particle systems, etc.
+	refEntity_t		legsRef, torsoRef, headRef;
 } playerEntity_t;
 
 //=================================================
@@ -197,6 +187,16 @@ typedef struct centity_s {
 	// exact interpolated position of entity on this frame
 	vec3_t			lerpOrigin;
 	vec3_t			lerpAngles;
+	
+	
+	// ADDING FOR ZEQ2
+	float			lerpPrim;
+	float			lerpSec;
+
+	int				lastTrailTime;		// last cg.time the trail for this cent was rendered
+	int				lastPVSTime;		// last cg.time the entity was in the PVS
+	int				lastAuraPSysTime;	// last cg.time especially for the coupled aura debris system
+	// END ADDING
 } centity_t;
 
 
@@ -226,6 +226,9 @@ typedef enum {
 	LE_FADE_RGB,
 	LE_SCALE_FADE,
 	LE_SCOREPLUM,
+	LE_ZEQEXPLOSION,
+	LE_ZEQSMOKE,
+	LE_STRAIGHTBEAM_FADE,
 #ifdef MISSIONPACK
 	LE_KAMIKAZE,
 	LE_INVULIMPACT,
@@ -312,38 +315,25 @@ typedef struct {
 
 typedef struct {
 	qboolean		infoValid;
-
 	char			name[MAX_QPATH];
 	team_t			team;
-
 	int				botSkill;		// 0 = not bot, 1-5 = bot
-
 	vec3_t			color1;
 	vec3_t			color2;
-
 	int				score;			// updated by score servercmds
 	int				location;		// location index for team mode
-	int				health;			// you only get this info about your teammates
+	int				powerLevel;			// you only get this info about your teammates
 	int				armor;
 	int				curWeapon;
-
 	int				handicap;
 	int				wins, losses;	// in tourney mode
-
 	int				teamTask;		// task in teamplay (offence/defence)
 	qboolean		teamLeader;		// true when this is a team leader
-
 	int				powerups;		// so can display quad/flag status
-
 	int				medkitUsageTime;
 	int				invulnerabilityStartTime;
 	int				invulnerabilityStopTime;
-
 	int				breathPuffTime;
-
-	// when clientinfo is changed, the loading of models/skins/sounds
-	// can be deferred until you are dead, to prevent hitches in
-	// gameplay
 	char			modelName[MAX_QPATH];
 	char			skinName[MAX_QPATH];
 	char			headModelName[MAX_QPATH];
@@ -351,29 +341,29 @@ typedef struct {
 	char			redTeam[MAX_TEAMNAME];
 	char			blueTeam[MAX_TEAMNAME];
 	qboolean		deferred;
-
 	qboolean		newAnims;		// true if using the new mission pack animations
 	qboolean		fixedlegs;		// true if legs yaw is always the same as torso yaw
 	qboolean		fixedtorso;		// true if torso never changes yaw
-
 	vec3_t			headOffset;		// move head in icon views
 	footstep_t		footsteps;
 	gender_t		gender;			// from model
-
-	qhandle_t		legsModel;
-	qhandle_t		legsSkin;
-
-	qhandle_t		torsoModel;
-	qhandle_t		torsoSkin;
-
-	qhandle_t		headModel;
-	qhandle_t		headSkin;
-
+	qhandle_t		legsModel[8];
+	qhandle_t		legsSkin[8];
+	qhandle_t		torsoModel[8];
+	qhandle_t		torsoSkin[8];
+	qhandle_t		headModel[8];
+	qhandle_t		headSkin[8];
 	qhandle_t		modelIcon;
-
 	animation_t		animations[MAX_TOTALANIMATIONS];
-
 	sfxHandle_t		sounds[MAX_CUSTOM_SOUNDS];
+	//ADDING FOR ZEQ2
+	qboolean		transformStart;
+	int				transformLength;
+	int				tierCurrent;
+	int				tierMax;
+	int				cameraBackup[3];
+	tierConfig_t	tierConfig[7];
+	auraConfig_t	*auraConfig[7];
 } clientInfo_t;
 
 
@@ -444,6 +434,114 @@ typedef struct {
 #define MAX_REWARDSTACK		10
 #define MAX_SOUNDBUFFER		20
 
+// JUHOX: definitions used for map lens flares
+#if MAPLENSFLARES
+#define MAX_LENSFLARE_EFFECTS 200
+#define MAX_MISSILE_LENSFLARE_EFFECTS 16
+#define MAX_LENSFLARES_PER_EFFECT 32
+typedef enum {
+	LFM_reflexion,
+	LFM_glare,
+	LFM_star
+} lensFlareMode_t;
+typedef struct {
+	qhandle_t shader;
+	lensFlareMode_t mode;
+	float pos;	// position at light axis
+	float size;
+	float rgba[4];
+	float rotationOffset;
+	float rotationYawFactor;
+	float rotationPitchFactor;
+	float rotationRollFactor;
+	float fadeAngleFactor;		// for spotlights
+	float entityAngleFactor;	// for spotlights
+	float intensityThreshold;
+} lensFlare_t;
+typedef struct {
+	char name[64];
+	float range;
+	float rangeSqr;
+	float fadeAngle;	// for spotlights
+	int numLensFlares;
+	lensFlare_t lensFlares[MAX_LENSFLARES_PER_EFFECT];
+} lensFlareEffect_t;
+
+#define MAX_LIGHTS_PER_MAP 1024
+#define LIGHT_INTEGRATION_BUFFER_SIZE 8	// must be a power of 2
+typedef struct {
+	float light;
+	vec3_t origin;
+} lightSample_t;
+typedef struct {
+	vec3_t origin;
+	centity_t* lock;
+	float radius;
+	float lightRadius;
+	vec3_t dir;		// for spotlights
+	float angle;	// for spotlights
+	float maxVisAngle;
+	const lensFlareEffect_t* lfeff;
+	int libPos;
+	int libNumEntries;
+	lightSample_t lib[LIGHT_INTEGRATION_BUFFER_SIZE];	// lib = light integration buffer
+} lensFlareEntity_t;
+
+typedef enum {
+	LFEEM_none,
+	LFEEM_pos,
+	LFEEM_target,
+	LFEEM_radius
+} lfeEditMode_t;
+typedef enum {
+	LFEDM_normal,
+	LFEDM_marks,
+	LFEDM_none
+} lfeDrawMode_t;
+typedef enum {
+	LFEMM_coarse,
+	LFEMM_fine
+} lfeMoveMode_t;
+typedef enum {
+	LFECS_small,
+	LFECS_lightRadius,
+	LFECS_visRadius
+} lfeCursorSize_t;
+typedef enum {
+	LFECM_main,
+	LFECM_copyOptions
+} lfeCommandMode_t;
+
+#define LFECO_EFFECT		1
+#define LFECO_VISRADIUS		2
+#define LFECO_LIGHTRADIUS	4
+#define LFECO_SPOT_DIR		8
+#define LFECO_SPOT_ANGLE	16
+
+typedef struct {
+	lensFlareEntity_t* selectedLFEnt;	// NULL = none
+	lfeDrawMode_t drawMode;
+	lfeEditMode_t editMode;
+	lfeMoveMode_t moveMode;
+	lfeCursorSize_t cursorSize;
+	float fmm_distance;	// fmm = fine move mode
+	vec3_t fmm_offset;	// fmm = fine move mode
+	qboolean delAck;
+	int selectedEffect;
+	int markedLFEnt;	// -1 = none
+	lensFlareEntity_t originalLFEnt;	// backup for undo
+	int oldButtons;
+	int lastClick;
+	qboolean editTarget;
+	vec3_t targetPosition;
+	lfeCommandMode_t cmdMode;
+	int copyOptions;
+	lensFlareEntity_t copiedLFEnt;	// for copy / paste
+	qboolean moversStopped;
+	centity_t* selectedMover;
+} lfEditor_t;
+#endif
+
 //======================================================================
 
 // all cg.stepTime, cg.duckTime, cg.landTime, etc are set to cg.time when the action
@@ -451,45 +549,47 @@ typedef struct {
 
 #define MAX_PREDICTED_EVENTS	16
  
+#if EARTHQUAKE_SYSTEM	// JUHOX: definitions
+typedef struct {
+	vec3_t origin;
+	float radius;	// negative for global earthquakes
+	float amplitude;
+	int startTime;
+	int endTime;
+	int fadeInTime;
+	int fadeOutTime;
+} earthquake_t;
+#define MAX_EARTHQUAKES 64
+#endif
+
 typedef struct {
 	int			clientFrame;		// incremented each frame
 
 	int			clientNum;
-	
+
 	qboolean	demoPlayback;
 	qboolean	levelShot;			// taking a level menu screenshot
 	int			deferredPlayerLoading;
 	qboolean	loading;			// don't defer players at initial startup
 	qboolean	intermissionStarted;	// don't play voice rewards, because game will end shortly
-
 	// there are only one or two snapshot_t that are relevent at a time
 	int			latestSnapshotNum;	// the number of snapshots the client system has received
 	int			latestSnapshotTime;	// the time from latestSnapshotNum, so we don't need to read the snapshot yet
-
 	snapshot_t	*snap;				// cg.snap->serverTime <= cg.time
 	snapshot_t	*nextSnap;			// cg.nextSnap->serverTime > cg.time, or NULL
 	snapshot_t	activeSnapshots[2];
-
 	float		frameInterpolation;	// (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)
-
 	qboolean	thisFrameTeleport;
 	qboolean	nextFrameTeleport;
-
 	int			frametime;		// cg.time - cg.oldTime
-
 	int			time;			// this is the time value that the client
 								// is rendering at.
 	int			oldTime;		// time at last frame, used for missile trails and prediction checking
-
 	int			physicsTime;	// either cg.snap->time or cg.nextSnap->time
-
 	int			timelimitWarnings;	// 5 min, 1 min, overtime
 	int			fraglimitWarnings;
-
 	qboolean	mapRestart;			// set on a map restart to set back the weapon
-
 	qboolean	renderingThirdPerson;		// during deaths, chasecams, etc
-
 	// prediction state
 	qboolean	hyperspace;				// true if prediction has hit a trigger_teleport
 	playerState_t	predictedPlayerState;
@@ -497,16 +597,12 @@ typedef struct {
 	qboolean	validPPS;				// clear until the first call to CG_PredictPlayerState
 	int			predictedErrorTime;
 	vec3_t		predictedError;
-
 	int			eventSequence;
 	int			predictableEvents[MAX_PREDICTED_EVENTS];
-
 	float		stepChange;				// for stair up smoothing
 	int			stepTime;
-
 	float		duckChange;				// for duck viewheight smoothing
 	int			duckTime;
-
 	float		landChange;				// for landing hard
 	int			landTime;
 
@@ -523,14 +619,33 @@ typedef struct {
 	refdef_t	refdef;
 	vec3_t		refdefViewAngles;		// will be converted to refdef.viewaxis
 
+#if MAPLENSFLARES	// JUHOX: variables for map lens flares
+	vec3_t		lastViewOrigin;
+	float		viewMovement;
+	int			numFramesWithoutViewMovement;
+#endif
+
+#if MAPLENSFLARES	// JUHOX: lens flare editor variables
+	lfEditor_t lfEditor;
+#endif
+
+#if EARTHQUAKE_SYSTEM	// JUHOX: earthquake variables
+	int earthquakeStartedTime;
+	int earthquakeEndTime;
+	float earthquakeAmplitude;
+	int earthquakeFadeInTime;
+	int earthquakeFadeOutTime;
+	int earthquakeSoundCounter;
+	int lastEarhquakeSoundStartedTime;
+	earthquake_t earthquakes[MAX_EARTHQUAKES];
+	float additionalTremble;
+#endif
 	// zoom key
 	qboolean	zoomed;
 	int			zoomTime;
 	float		zoomSensitivity;
-
 	// information screen text during loading
 	char		infoScreenText[MAX_STRING_CHARS];
-
 	// scoreboard
 	int			scoresRequestTime;
 	int			numScores;
@@ -541,14 +656,14 @@ typedef struct {
 	qboolean	scoreBoardShowing;
 	int			scoreFadeTime;
 	char		killerName[MAX_NAME_LENGTH];
-	char			spectatorList[MAX_STRING_CHARS];		// list of names
-	int				spectatorLen;												// length of list
-	float			spectatorWidth;											// width in device units
-	int				spectatorTime;											// next time to offset
-	int				spectatorPaintX;										// current paint x
-	int				spectatorPaintX2;										// current paint x
-	int				spectatorOffset;										// current offset from start
-	int				spectatorPaintLen; 									// current offset from start
+	char		spectatorList[MAX_STRING_CHARS];		// list of names
+	int			spectatorLen;							// length of list
+	float		spectatorWidth;							// width in device units
+	int			spectatorTime;							// next time to offset
+	int			spectatorPaintX;						// current paint x
+	int			spectatorPaintX2;						// current paint x
+	int			spectatorOffset;						// current offset from start
+	int			spectatorPaintLen; 						// current offset from start
 
 	// skull trails
 	skulltrail_t	skulltrails[MAX_CLIENTS];
@@ -610,6 +725,10 @@ typedef struct {
 	int			weaponAnimation;
 	int			weaponAnimationTime;
 
+	// ADDING FOR ZEQ2
+	int			PLBar_foldPct;	// Need to know how far we've folded in or out already
+	// END ADDING
+
 	// blend blobs
 	float		damageTime;
 	float		damageX, damageY, damageValue;
@@ -635,15 +754,24 @@ typedef struct {
 	float		bobfracsin;
 	int			bobcycle;
 	float		xyspeed;
-	int     nextOrbitTime;
+	int			nextOrbitTime;
 
 	//qboolean cameraMode;		// if rendering from a loaded camera
 
 
 	// development tool
-	refEntity_t		testModelEntity;
-	char			testModelName[MAX_QPATH];
-	qboolean		testGun;
+	refEntity_t	testModelEntity;
+	char		testModelName[MAX_QPATH];
+	qboolean	testGun;
+
+	// ADDING FOR ZEQ2
+	qboolean	lockReady;
+	vec3_t		lockedTarget;
+
+	qboolean	guide_view;
+	vec3_t		guide_target;	// where to look for guided missiles
+
+	// END ADDING
 
 } cg_t;
 
@@ -722,6 +850,17 @@ typedef struct {
 
 	qhandle_t	lightningShader;
 
+	// ADDING FOR ZEQ2
+	qhandle_t	hudShader;
+	qhandle_t	markerAscendShader;
+	qhandle_t	markerDescendShader;
+
+	qhandle_t	RadarBlipShader;
+	qhandle_t	RadarBurstShader;
+	qhandle_t	RadarWarningShader;
+	qhandle_t	RadarMidpointShader;
+	// END ADDING
+
 	qhandle_t	friendShader;
 
 	qhandle_t	balloonShader;
@@ -745,6 +884,12 @@ typedef struct {
 	qhandle_t	nailPuffShader;
 	qhandle_t	blueProxMine;
 #endif
+
+	qhandle_t	bfgLFGlare;	// JUHOX
+	qhandle_t	bfgLFDisc;	// JUHOX
+	qhandle_t	bfgLFRing;	// JUHOX
+	qhandle_t	bfgLFLine;	// JUHOX
+	qhandle_t	bfgLFStar;	// JUHOX
 
 	qhandle_t	numberShaders[11];
 
@@ -970,13 +1115,18 @@ typedef struct {
 
 	sfxHandle_t	regenSound;
 	sfxHandle_t	protectSound;
-	sfxHandle_t	n_healthSound;
+	sfxHandle_t	n_powerLevelSound;
 	sfxHandle_t	hgrenb1aSound;
 	sfxHandle_t	hgrenb2aSound;
 	sfxHandle_t	wstbimplSound;
 	sfxHandle_t	wstbimpmSound;
 	sfxHandle_t	wstbimpdSound;
 	sfxHandle_t	wstbactvSound;
+
+	// ADDING FOR ZEQ2
+	sfxHandle_t	radarwarningSound;
+	sfxHandle_t	lightspeedSound;
+	// END ADDING
 
 } cgMedia_t;
 
@@ -1008,6 +1158,14 @@ typedef struct {
 	char			mapname[MAX_QPATH];
 	char			redTeam[MAX_QPATH];
 	char			blueTeam[MAX_QPATH];
+
+#if MAPLENSFLARES	// JUHOX: serverinfo cvars for map lens flares
+	editMode_t		editMode;
+	char			sunFlareEffect[128];
+	float			sunFlareYaw;
+	float			sunFlarePitch;
+	float			sunFlareDistance;
+#endif
 
 	int				voteTime;
 	int				voteYes;
@@ -1065,6 +1223,24 @@ typedef struct {
 	int acceptLeader;
 	char acceptVoice[MAX_NAME_LENGTH];
 
+#if MAPLENSFLARES	// JUHOX: variables for map lens flares
+	int numLensFlareEffects;
+	lensFlareEffect_t lensFlareEffects[MAX_LENSFLARE_EFFECTS];
+
+	int numLensFlareEntities;
+	lensFlareEntity_t sunFlare;
+	lensFlareEntity_t lensFlareEntities[MAX_LIGHTS_PER_MAP];
+#endif
+	// JUHOX: variables for missile lens flares
+	int numMissileLensFlareEffects;
+	lensFlareEffect_t missileLensFlareEffects[MAX_MISSILE_LENSFLARE_EFFECTS];
+	const lensFlareEffect_t* lensFlareEffectBeamHead;
+	const lensFlareEffect_t* lensFlareEffectSolarFlare;
+	const lensFlareEffect_t* lensFlareEffectExplosion1;
+	const lensFlareEffect_t* lensFlareEffectExplosion2;
+	const lensFlareEffect_t* lensFlareEffectExplosion3;
+	const lensFlareEffect_t* lensFlareEffectExplosion4;
+
 	// media
 	cgMedia_t		media;
 
@@ -1102,6 +1278,7 @@ extern	vmCvar_t		cg_teamOverlayUserinfo;
 extern	vmCvar_t		cg_crosshairX;
 extern	vmCvar_t		cg_crosshairY;
 extern	vmCvar_t		cg_crosshairSize;
+extern	vmCvar_t		cg_crosshairMargin;
 extern	vmCvar_t		cg_crosshairHealth;
 extern	vmCvar_t		cg_drawStatus;
 extern	vmCvar_t		cg_draw2D;
@@ -1133,7 +1310,9 @@ extern	vmCvar_t		cg_fov;
 extern	vmCvar_t		cg_zoomFov;
 extern	vmCvar_t		cg_thirdPersonRange;
 extern	vmCvar_t		cg_thirdPersonAngle;
+extern	vmCvar_t		cg_thirdPersonHeight;
 extern	vmCvar_t		cg_thirdPerson;
+extern	vmCvar_t		cg_stereoSeparation;
 extern	vmCvar_t		cg_lagometer;
 extern	vmCvar_t		cg_drawAttacker;
 extern	vmCvar_t		cg_synchronousClients;
@@ -1182,6 +1361,24 @@ extern  vmCvar_t		cg_recordSPDemo;
 extern  vmCvar_t		cg_recordSPDemoName;
 extern	vmCvar_t		cg_obeliskRespawnDelay;
 #endif
+//ADDING FOR ZEQ2
+extern	vmCvar_t		cg_lockonDistance;
+extern	vmCvar_t		cg_tailDetail;
+extern	vmCvar_t		cg_verboseParse;
+extern  vmCvar_t		r_beamDetail;
+extern	vmCvar_t		cg_soundAttenuation;
+extern	vmCvar_t		cg_thirdPersonCamera;
+extern	vmCvar_t		cg_beamControl;
+extern	vmCvar_t		cg_music;
+// END ADDING
+#if MAPLENSFLARES
+extern	vmCvar_t		cg_lensFlare;		// JUHOX
+extern	vmCvar_t		cg_mapFlare;		// JUHOX
+extern	vmCvar_t		cg_sunFlare;		// JUHOX
+extern	vmCvar_t		cg_missileFlare;	// JUHOX
+#endif
+
+extern	radar_t			cg_playerOrigins[MAX_CLIENTS];
 
 //
 // cg_main.c
@@ -1204,9 +1401,18 @@ void CG_MouseEvent(int x, int y);
 void CG_EventHandling(int type);
 void CG_RankRunFrame( void );
 void CG_SetScoreSelection(void *menu);
-score_t *CG_GetSelectedScore( void );
-void CG_BuildSpectatorString( void );
+score_t *CG_GetSelectedScore();
+void CG_BuildSpectatorString();
 
+#if MAPLENSFLARES	// JUHOX: prototypes
+void CG_LFEntOrigin(const lensFlareEntity_t* lfent, vec3_t origin);
+void CG_SetLFEntOrigin(lensFlareEntity_t* lfent, const vec3_t origin);
+void CG_SetLFEdMoveMode(lfeMoveMode_t mode);
+void CG_SelectLFEnt(int lfentnum);
+void CG_LoadLensFlares(void);
+void CG_ComputeMaxVisAngle(lensFlareEntity_t* lfent);
+void CG_LoadLensFlareEntities(void);
+#endif
 
 //
 // cg_view.c
@@ -1220,9 +1426,24 @@ void CG_TestModelPrevSkin_f (void);
 void CG_ZoomDown_f( void );
 void CG_ZoomUp_f( void );
 void CG_AddBufferedSound( sfxHandle_t sfx);
+qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y );
+qboolean CG_WorldCoordToScreenCoordVec( vec3_t world, vec2_t screen );
 
 void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback );
 
+#if EARTHQUAKE_SYSTEM	// JUHOX: prototypes
+void CG_AddEarthquake(
+	const vec3_t origin, float radius,
+	float duration, float fadeIn, float fadeOut,	// in seconds
+	float amplitude
+);
+void CG_AdjustEarthquakes(const vec3_t delta);
+#endif
+
+#if MAPLENSFLARES	// JUHOX: prototypes
+void CG_AddLFEditorCursor(void);
+void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality);	// JUHOX
+#endif
 
 //
 // cg_drawtools.c
@@ -1239,7 +1460,9 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 void CG_DrawBigString( int x, int y, const char *s, float alpha );
 void CG_DrawBigStringColor( int x, int y, const char *s, vec4_t color );
 void CG_DrawSmallString( int x, int y, const char *s, float alpha );
+void CG_DrawSmallStringHalfHeight( int x, int y, const char *s, float alpha );
 void CG_DrawSmallStringColor( int x, int y, const char *s, vec4_t color );
+void CG_DrawMediumStringColor( int x, int y, const char *s, vec4_t color );
 
 int CG_DrawStrlen( const char *str );
 
@@ -1247,7 +1470,7 @@ float	*CG_FadeColor( int startMsec, int totalMsec );
 float *CG_TeamColor( int team );
 void CG_TileClear( void );
 void CG_ColorForHealth( vec4_t hcolor );
-void CG_GetColorForHealth( int health, int armor, vec4_t hcolor );
+void CG_GetColorForHealth( int powerLevel, int armor, vec4_t hcolor );
 
 void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color );
 void CG_DrawRect( float x, float y, float width, float height, float size, const float *color );
@@ -1276,23 +1499,23 @@ void CG_OwnerDraw(float x, float y, float w, float h, float text_x, float text_y
 void CG_Text_Paint(float x, float y, float scale, vec4_t color, const char *text, float adjust, int limit, int style);
 int CG_Text_Width(const char *text, float scale, int limit);
 int CG_Text_Height(const char *text, float scale, int limit);
-void CG_SelectPrevPlayer( void );
-void CG_SelectNextPlayer( void );
+void CG_SelectPrevPlayer();
+void CG_SelectNextPlayer();
 float CG_GetValue(int ownerDraw);
 qboolean CG_OwnerDrawVisible(int flags);
 void CG_RunMenuScript(char **args);
-void CG_ShowResponseHead( void );
+void CG_ShowResponseHead();
 void CG_SetPrintString(int type, const char *p);
-void CG_InitTeamChat( void );
+void CG_InitTeamChat();
 void CG_GetTeamColor(vec4_t *color);
-const char *CG_GetGameStatusText( void );
-const char *CG_GetKillerText( void );
-void CG_Draw3DModel(float x, float y, float w, float h, qhandle_t model, qhandle_t skin, vec3_t origin, vec3_t angles);
+const char *CG_GetGameStatusText();
+const char *CG_GetKillerText();
+void CG_Draw3DModel( float x, float y, float w, float h, qhandle_t model, qhandle_t skin, vec3_t origin, vec3_t angles );
 void CG_Text_PaintChar(float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, qhandle_t hShader);
-void CG_CheckOrderPending( void );
-const char *CG_GameTypeString( void );
-qboolean CG_YourTeamHasFlag( void );
-qboolean CG_OtherTeamHasFlag( void );
+void CG_CheckOrderPending();
+const char *CG_GameTypeString();
+qboolean CG_YourTeamHasFlag();
+qboolean CG_OtherTeamHasFlag();
 qhandle_t CG_StatusHandle(int task);
 
 
@@ -1305,6 +1528,12 @@ void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team );
 void CG_NewClientInfo( int clientNum );
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
+qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci );
+qboolean CG_GetTagOrientationFromPlayerEntity( centity_t *cent, char *tagName, orientation_t *tagOrient );
+qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *tagName, orientation_t *tagOrient );
+qboolean CG_GetTagOrientationFromPlayerEntityTorsoModel( centity_t *cent, char *tagName, orientation_t *tagOrient );
+qboolean CG_GetTagOrientationFromPlayerEntityLegsModel( centity_t *cent, char *tagName, orientation_t *tagOrient );
+void CG_SpawnLightSpeedGhost( centity_t *cent );
 
 //
 // cg_predict.c
@@ -1313,6 +1542,13 @@ void CG_BuildSolidList( void );
 int	CG_PointContents( const vec3_t point, int passEntityNum );
 void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
 					 int skipNumber, int mask );
+#if 1	// JUHOX: prototype for CG_SmoothTrace()
+void CG_SmoothTrace(
+	trace_t *result,
+	const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end,
+	int skipNumber, int mask
+);
+#endif
 void CG_PredictPlayerState( void );
 void CG_LoadDeferredPlayers( void );
 
@@ -1323,7 +1559,7 @@ void CG_LoadDeferredPlayers( void );
 void CG_CheckEvents( centity_t *cent );
 const char	*CG_PlaceString( int rank );
 void CG_EntityEvent( centity_t *cent, vec3_t position );
-void CG_PainEvent( centity_t *cent, int health );
+void CG_PainEvent( centity_t *cent, int powerLevel );
 
 
 //
@@ -1338,8 +1574,12 @@ void CG_PositionEntityOnTag( refEntity_t *entity, const refEntity_t *parent,
 							qhandle_t parentModel, char *tagName );
 void CG_PositionRotatedEntityOnTag( refEntity_t *entity, const refEntity_t *parent, 
 							qhandle_t parentModel, char *tagName );
+void CG_GetTagPosition( refEntity_t *parent, char *tagName, vec3_t outpos);
+void CG_GetTagOrientation( refEntity_t *parent, char *tagName, vec3_t dir);
 
-
+#if MAPLENSFLARES	// JUHOX: prototypes
+void CG_Mover(centity_t *cent);
+#endif
 
 //
 // cg_weapons.c
@@ -1351,11 +1591,12 @@ void CG_Weapon_f( void );
 void CG_RegisterWeapon( int weaponNum );
 void CG_RegisterItemVisuals( int itemNum );
 
-void CG_FireWeapon( centity_t *cent );
+void CG_FireWeapon( centity_t *cent, qboolean altFire );
 void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, impactSound_t soundType );
 void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum );
 void CG_ShotgunFire( entityState_t *es );
 void CG_Bullet( vec3_t origin, int sourceEntityNum, vec3_t normal, qboolean flesh, int fleshEntityNum );
+void CG_Draw3DLine(const vec3_t start, const vec3_t end, qhandle_t shader);	// JUHOX
 
 void CG_RailTrail( clientInfo_t *ci, vec3_t start, vec3_t end );
 void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi );
@@ -1364,6 +1605,15 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 void CG_DrawWeaponSelect( void );
 
 void CG_OutOfAmmoChange( void );	// should this be in pmove?
+
+// FIXME: Should these be in drawtools instead?
+//        Should these be generalized for use in all manual poly drawing functions? (probably, yes...)
+void CG_DrawLine (vec3_t start, vec3_t end, float width, qhandle_t shader, float RGBModulate);
+void CG_DrawLineRGBA (vec3_t start, vec3_t end, float width, qhandle_t shader, vec4_t RGBA);
+
+void CG_UserMissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, qboolean inAir );
+void CG_UserMissileHitPlayer( int weapon, int clientNum, vec3_t origin, vec3_t dir, int entityNum );
+void CG_UserRailTrail( int weapon, int clientNum, vec3_t start, vec3_t end);
 
 //
 // cg_marks.c
@@ -1416,6 +1666,9 @@ void CG_Bleed( vec3_t origin, int entityNum );
 localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 								qhandle_t hModel, qhandle_t shader, int msec,
 								qboolean isSprite );
+
+void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics);
+void CG_CreateStraightBeamFade(vec3_t start, vec3_t end, cg_userWeapon_t *weaponGraphics);
 
 //
 // cg_snapshot.c
@@ -1495,7 +1748,7 @@ int			trap_FS_FOpenFile( const char *qpath, fileHandle_t *f, fsMode_t mode );
 void		trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void		trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void		trap_FS_FCloseFile( fileHandle_t f );
-int			trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
+int			trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize );
 
 // add commands to the local console as if they were typed in
 // for map changing, etc.  The command is not executed immediately,
@@ -1546,9 +1799,9 @@ void		trap_S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t v
 void		trap_S_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
 void		trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 
-// respatialize recalculates the volumes of sound as they should be heard by the
+// repatialize recalculates the volumes of sound as they should be heard by the
 // given entityNum and position
-void		trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
+void		trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater, float attenuation );
 sfxHandle_t	trap_S_RegisterSound( const char *sample, qboolean compressed );		// returns buzz if not found
 void		trap_S_StartBackgroundTrack( const char *intro, const char *loop );	// empty name stops music
 void	trap_S_StopBackgroundTrack( void );
@@ -1634,7 +1887,7 @@ typedef enum {
   SYSTEM_PRINT,
   CHAT_PRINT,
   TEAMCHAT_PRINT
-} q3print_t;
+} q3print_t; // bk001201 - warning: useless keyword or type name in empty declaration
 
 
 int trap_CIN_PlayCinematic( const char *arg0, int xpos, int ypos, int width, int height, int bits);
@@ -1665,4 +1918,85 @@ void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 extern qboolean		initparticles;
 int CG_NewParticleArea ( int num );
 
+//ADDING FOR ZEQ2
+
+//
+// cg_auras.c
+//
+void CG_AuraStart( centity_t *player );
+void CG_AuraEnd( centity_t *player );
+void CG_RegisterClientAura(int clientNum,clientInfo_t *ci);
+void CG_AddAuraToScene( centity_t *player );
+void CG_CopyClientAura( int from, int to );
+
+//
+// cg_beamtables.c
+//
+void CG_InitBeamTables( void );
+void CG_AddBeamTables( void );
+void CG_BeamTableUpdate( centity_t *cent, float width, qhandle_t shader, char *tagName );
+
+
+//
+// cg_trails.c
+//
+void CG_InitTrails( void );
+void CG_ResetTrail( int entityNum, vec3_t origin, float baseSpeed, float width, qhandle_t shader, vec3_t color );
+void CG_UpdateTrailHead( int entityNum, vec3_t origin );
+void CG_AddTrailsToScene ( void );
+
+
+//
+// cg_radar.c
+//
+void CG_InitRadarBlips( void );
+void CG_DrawRadar();
+void CG_UpdateRadarBlips( char *cmd );
+
+
+//
+// cg_weapGfxParser.c
+//
+qboolean CG_weapGfx_Parse( char *filename, int clientNum );
+
+//
+// cg_tiersystem.c
+//
+qboolean CG_RegisterClientModelnameWithTiers( clientInfo_t *ci, const char *modelName, const char *skinName );
+
+//
+// cg_particlesystem.c
+//
+void CG_InitParticleSystems( void );
+void CG_AddParticleSystems( void );
+void PSys_SpawnCachedSystem( char* systemName, vec3_t origin, vec3_t *axis,
+							 centity_t *cent, char* tagName,
+							 qboolean auraLink, qboolean weaponLink );
+
+//
+// cg_frameHist.c
+//
+void CG_FrameHist_Init( void );
+void CG_FrameHist_NextFrame( void );
+
+void CG_FrameHist_SetPVS( int num );
+qboolean CG_FrameHist_IsInPVS( int num );
+qboolean CG_FrameHist_WasInPVS( int num );
+
+void CG_FrameHist_SetAura( int num );
+qboolean CG_FrameHist_HasAura( int num );
+qboolean CG_FrameHist_HadAura( int num );
+
+int CG_FrameHist_IsWeaponState( int num );
+int CG_FrameHist_WasWeaponState( int num );
+
+int CG_FrameHist_IsWeaponNr( int num );
+int CG_FrameHist_WasWeaponNr( int num );
+
+
+//
+// cg_motionblur.c
+//
+void CG_MotionBlur( void );
+//END ADDING
 

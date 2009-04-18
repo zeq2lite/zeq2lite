@@ -1,32 +1,34 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 #include "g_local.h"
 
+void P_TierUp( gclient_t *client ) {
+	playerState_t *ps;
+	ps = &client->ps;
+	if(ps->stats[tierCurrent] < 7){
+		ps->stats[tierCurrent]++;
+		if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
+			ps->powerups[PW_TRANSFORM] = 2700 + (ps->stats[tierCurrent] * 800);
+			ps->stats[tierTotal] = ps->stats[tierCurrent];
+			//trap_S_StartSound(client->playerEntity->pos1,ENTITYNUM_NONE,CHAN_BODY,client->tiers[tierCurrent].soundTransformFirst);
+		}
+		else{
+			//G_Sound(client->playerEntity,CHAN_VOICE,G_SoundIndex(strcat(tierPath,"transform.ogg")));
+		}
+	}
+}
+
+void P_TierDown( playerState_t *ps ) {
+	if (ps->stats[tierCurrent] > 0){
+		ps->stats[tierCurrent]--;
+	}
+}
+
 
 /*
 ===============
-G_DamageFeedback
+P_DamageFeedback
 
 Called just before a snapshot is sent to the given player.
 Totals up all damage and generates both the player_state_t
@@ -45,9 +47,12 @@ void P_DamageFeedback( gentity_t *player ) {
 	}
 
 	// total points of damage shot at the player this frame
-	count = client->damage_blood + client->damage_armor;
-	if ( count == 0 ) {
-		return;		// didn't take any damage
+	count = client->damage_blood; // + client->damage_armor;
+	if ( count == 0 ) { // didn't take any damage
+		// ADDING FOR ZEQ2
+		// but we DO need to reset this to 0 for the deductHP to work!
+		client->ps.damageCount = 0;
+		return;		
 	}
 
 	if ( count > 255 ) {
@@ -72,7 +77,7 @@ void P_DamageFeedback( gentity_t *player ) {
 	// play an apropriate pain sound
 	if ( (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) ) {
 		player->pain_debounce_time = level.time + 700;
-		G_AddEvent( player, EV_PAIN, player->health );
+		G_AddEvent( player, EV_PAIN, player->powerLevel );
 		client->ps.damageEvent++;
 	}
 
@@ -83,7 +88,7 @@ void P_DamageFeedback( gentity_t *player ) {
 	// clear totals
 	//
 	client->damage_blood = 0;
-	client->damage_armor = 0;
+	//client->damage_armor = 0;
 	client->damage_knockback = 0;
 }
 
@@ -107,8 +112,14 @@ void P_WorldEffects( gentity_t *ent ) {
 
 	waterlevel = ent->waterlevel;
 
-	envirosuit = ent->client->ps.powerups[PW_BATTLESUIT] > level.time;
+	envirosuit = qfalse; //ent->client->ps.powerups[PW_BATTLESUIT] > level.time;
 
+	
+	// <-- RiO: Drowning in ZEQ2 needs to become PL-cap dependent
+
+	ent->client->airOutTime = level.time + 12000;
+
+	/*
 	//
 	// check for drowning
 	//
@@ -122,19 +133,19 @@ void P_WorldEffects( gentity_t *ent ) {
 		if ( ent->client->airOutTime < level.time) {
 			// drown!
 			ent->client->airOutTime += 1000;
-			if ( ent->health > 0 ) {
+			if ( ent->powerLevel > 0 ) {
 				// take more damage the longer underwater
 				ent->damage += 2;
 				if (ent->damage > 15)
 					ent->damage = 15;
 
 				// play a gurp sound instead of a normal pain sound
-				if (ent->health <= ent->damage) {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("*drown.wav"));
+				if (ent->powerLevel <= ent->damage) {
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("*drown.ogg"));
 				} else if (rand()&1) {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp1.wav"));
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp1.ogg"));
 				} else {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp2.wav"));
+					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp2.ogg"));
 				}
 
 				// don't play a normal pain sound
@@ -149,12 +160,15 @@ void P_WorldEffects( gentity_t *ent ) {
 		ent->damage = 2;
 	}
 
+	-->
+	*/
+
 	//
 	// check for sizzle damage (move to pmove?)
 	//
 	if (waterlevel && 
 		(ent->watertype&(CONTENTS_LAVA|CONTENTS_SLIME)) ) {
-		if (ent->health > 0
+		if (ent->powerLevel > 0
 			&& ent->pain_debounce_time <= level.time	) {
 
 			if ( envirosuit ) {
@@ -184,7 +198,7 @@ G_SetClientSound
 void G_SetClientSound( gentity_t *ent ) {
 #ifdef MISSIONPACK
 	if( ent->s.eFlags & EF_TICKING ) {
-		ent->client->ps.loopSound = G_SoundIndex( "sound/weapons/proxmine/wstbtick.wav");
+		ent->client->ps.loopSound = G_SoundIndex( "sound/weapons/proxmine/wstbtick.ogg");
 	}
 	else
 #endif
@@ -254,8 +268,12 @@ void	G_TouchTriggers( gentity_t *ent ) {
 		return;
 	}
 
+#if MAPLENSFLARES	// JUHOX: never touch triggers in lens flare editor
+	if (g_editmode.integer == EM_mlf) return;
+#endif
+
 	// dead clients don't activate triggers!
-	if ( ent->client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( ent->client->ps.stats[powerLevel] <= 0 ) {
 		return;
 	}
 
@@ -341,10 +359,30 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 		pm.trace = trap_Trace;
 		pm.pointcontents = trap_PointContents;
 
+#if MAPLENSFLARES	// JUHOX: set player tracemask & speed for lens flare editor
+		if (g_editmode.integer == EM_mlf) {
+			pm.tracemask = 0;
+			if (level.lfeFMM) {
+				client->ps.speed = 30;
+				if (pm.cmd.buttons & BUTTON_WALKING) client->ps.speed = 15;
+			}
+			if (pm.cmd.buttons & BUTTON_ATTACK) {
+				pm.cmd.forwardmove = 0;
+				pm.cmd.rightmove = 0;
+				pm.cmd.upmove = 0;
+			}
+		}
+#endif
+
 		// perform a pmove
 		Pmove (&pm);
 		// save results of pmove
 		VectorCopy( client->ps.origin, ent->s.origin );
+
+		// ADDING FOR ZEQ2
+		// Update altered powerLevel value
+		ent->powerLevel = client->ps.stats[powerLevel];
+		// END ADDING
 
 		G_TouchTriggers( ent );
 		trap_UnlinkEntity( ent );
@@ -402,108 +440,74 @@ Actions that happen once a second
 */
 void ClientTimerActions( gentity_t *ent, int msec ) {
 	gclient_t	*client;
-#ifdef MISSIONPACK
-	int			maxHealth;
-#endif
+	g_userWeapon_t *weaponInfo;
+	g_userWeapon_t *alt_weaponInfo;
 
 	client = ent->client;
-	client->timeResidual += msec;
+
+	// Retrieve our weapon's settings
+	weaponInfo = G_FindUserWeaponData( client->ps.clientNum, client->ps.weapon );
+	if ( weaponInfo->general_bitflags & WPF_ALTWEAPONPRESENT ) {
+		alt_weaponInfo = G_FindUserAltWeaponData( client->ps.clientNum, client->ps.weapon );
+	} else {
+		alt_weaponInfo = weaponInfo;
+	}
+	
+
+	client->timeResidual += msec; // standard events
+	client->timeResidualPriCharge += msec; // Weapon primary charging
+	client->timeResidualSecCharge += msec; // Weapon secondary charging
 
 	while ( client->timeResidual >= 1000 ) {
 		client->timeResidual -= 1000;
 
-		// regenerate
-#ifdef MISSIONPACK
-		if( bg_itemlist[client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
-			maxHealth = client->ps.stats[STAT_MAX_HEALTH] / 2;
+		// count down powerLevel when over max
+		if ( ent->powerLevel > client->ps.stats[powerLevelTotal] ) {
+			ent->powerLevel--;
 		}
-		else if ( client->ps.powerups[PW_REGEN] ) {
-			maxHealth = client->ps.stats[STAT_MAX_HEALTH];
-		}
-		else {
-			maxHealth = 0;
-		}
-		if( maxHealth ) {
-			if ( ent->health < maxHealth ) {
-				ent->health += 15;
-				if ( ent->health > maxHealth * 1.1 ) {
-					ent->health = maxHealth * 1.1;
+	}
+	
+	while ( (client->timeResidualPriCharge >= weaponInfo->costs_chargeTime) && (weaponInfo->costs_chargeTime > 0) ) {
+		client->timeResidualPriCharge -= weaponInfo->costs_chargeTime;
+
+		if ( client->ps.weaponstate == WEAPON_CHARGING ) {
+
+			if ( (client->ps.stats[powerLevel] > weaponInfo->costs_ki) && (client->ps.stats[chargePercentPrimary] < 100)) {
+				client->ps.stats[powerLevel] -= weaponInfo->costs_ki;
+				client->ps.stats[chargePercentPrimary] += 1; //weaponInfo->chargeRatio;
+				if (client->ps.stats[chargePercentPrimary] > 100) {
+					client->ps.stats[chargePercentPrimary] = 100;
 				}
-				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
-			} else if ( ent->health < maxHealth * 2) {
-				ent->health += 5;
-				if ( ent->health > maxHealth * 2 ) {
-					ent->health = maxHealth * 2;
-				}
-				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
 			}
-#else
-		if ( client->ps.powerups[PW_REGEN] ) {
-			if ( ent->health < client->ps.stats[STAT_MAX_HEALTH]) {
-				ent->health += 15;
-				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 1.1 ) {
-					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 1.1;
+		}
+	}
+	// If we're not capable of charging, don't let there be any residual time left to charge!
+	if ( (client->ps.weaponstate != WEAPON_CHARGING) || (weaponInfo->costs_chargeTime == 0)) {
+		client->timeResidualPriCharge = 0;
+	}
+
+
+	while ( (client->timeResidualSecCharge >= alt_weaponInfo->costs_chargeTime) && (alt_weaponInfo->costs_chargeTime > 0) ) {
+		client->timeResidualSecCharge -= alt_weaponInfo->costs_chargeTime;
+		
+		if ( client->ps.weaponstate == WEAPON_ALTCHARGING ) {
+
+			if ((client->ps.stats[powerLevel] > alt_weaponInfo->costs_ki) && (client->ps.stats[chargePercentSecondary] < 100)) {
+				client->ps.stats[powerLevel] -= alt_weaponInfo->costs_ki;
+				client->ps.stats[chargePercentSecondary] += 1; //alt_weaponInfo->chargeRatio;
+				if (client->ps.stats[chargePercentSecondary] > 100) {
+					client->ps.stats[chargePercentSecondary] = 100;
 				}
-				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
-			} else if ( ent->health < client->ps.stats[STAT_MAX_HEALTH] * 2) {
-				ent->health += 5;
-				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
-					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 2;
-				}
-				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
-			}
-#endif
-		} else {
-			// count down health when over max
-			if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
-				ent->health--;
 			}
 		}
 
-		// count down armor when over max
-		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
-			client->ps.stats[STAT_ARMOR]--;
-		}
 	}
-#ifdef MISSIONPACK
-	if( bg_itemlist[client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_AMMOREGEN ) {
-		int w, max, inc, t, i;
-    int weapList[]={WP_MACHINEGUN,WP_SHOTGUN,WP_GRENADE_LAUNCHER,WP_ROCKET_LAUNCHER,WP_LIGHTNING,WP_RAILGUN,WP_PLASMAGUN,WP_BFG,WP_NAILGUN,WP_PROX_LAUNCHER,WP_CHAINGUN};
-    int weapCount = sizeof(weapList) / sizeof(int);
-		//
-    for (i = 0; i < weapCount; i++) {
-		  w = weapList[i];
-
-		  switch(w) {
-			  case WP_MACHINEGUN: max = 50; inc = 4; t = 1000; break;
-			  case WP_SHOTGUN: max = 10; inc = 1; t = 1500; break;
-			  case WP_GRENADE_LAUNCHER: max = 10; inc = 1; t = 2000; break;
-			  case WP_ROCKET_LAUNCHER: max = 10; inc = 1; t = 1750; break;
-			  case WP_LIGHTNING: max = 50; inc = 5; t = 1500; break;
-			  case WP_RAILGUN: max = 10; inc = 1; t = 1750; break;
-			  case WP_PLASMAGUN: max = 50; inc = 5; t = 1500; break;
-			  case WP_BFG: max = 10; inc = 1; t = 4000; break;
-			  case WP_NAILGUN: max = 10; inc = 1; t = 1250; break;
-			  case WP_PROX_LAUNCHER: max = 5; inc = 1; t = 2000; break;
-			  case WP_CHAINGUN: max = 100; inc = 5; t = 1000; break;
-			  default: max = 0; inc = 0; t = 1000; break;
-		  }
-		  client->ammoTimes[w] += msec;
-		  if ( client->ps.ammo[w] >= max ) {
-			  client->ammoTimes[w] = 0;
-		  }
-		  if ( client->ammoTimes[w] >= t ) {
-			  while ( client->ammoTimes[w] >= t )
-				  client->ammoTimes[w] -= t;
-			  client->ps.ammo[w] += inc;
-			  if ( client->ps.ammo[w] > max ) {
-				  client->ps.ammo[w] = max;
-			  }
-		  }
-    }
+	// If we're not capable of charging, don't let there be any residual time left to charge!
+	if ( (client->ps.weaponstate != WEAPON_ALTCHARGING) || (alt_weaponInfo->costs_chargeTime == 0)) {
+		client->timeResidualSecCharge = 0;
 	}
-#endif
 }
+
 
 /*
 ====================
@@ -535,15 +539,18 @@ but any server game effects are handled here
 ================
 */
 void ClientEvents( gentity_t *ent, int oldEventSequence ) {
-	int		i, j;
-	int		event;
-	gclient_t *client;
-	int		damage;
-	vec3_t	dir;
-	vec3_t	origin, angles;
+	int			i, j;
+	int			event;
+	gclient_t	*client;
+	int			damage;
+	vec3_t		dir;
+	vec3_t		origin, angles;
 //	qboolean	fired;
-	gitem_t *item;
-	gentity_t *drop;
+	gitem_t		*item;
+	gentity_t	*drop;
+	// ADDING FOR ZEQ2
+	gentity_t	*missile;
+	// END ADDING
 
 	client = ent->client;
 
@@ -569,11 +576,36 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			}
 			VectorSet (dir, 0, 0, 1);
 			ent->pain_debounce_time = level.time + 200;	// no normal pain sound
-			G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
+			
+			// ADDING FOR ZEQ2
+			
+			// We have no falling damage, but will have knockback smash damage instead later on...
+			// G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
+
+			// END ADDING
 			break;
 
 		case EV_FIRE_WEAPON:
-			FireWeapon( ent );
+			FireWeapon( ent, qfalse );
+			break;
+
+		// <-- RiO; ZEQ2 specific events
+		
+		case EV_ALTFIRE_WEAPON:
+			FireWeapon( ent, qtrue );
+			break;
+
+		case EV_DETONATE_WEAPON:
+			missile = client->guidetarget;
+			G_RemoveUserWeapon( missile );
+			break;
+
+		case EV_TIERUP:
+			P_TierUp( client );
+			break;
+
+		case EV_TIERDOWN:
+			P_TierDown( &client->ps );
 			break;
 
 		case EV_USE_ITEM1:		// teleporter
@@ -630,7 +662,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 
 		case EV_USE_ITEM2:		// medkit
-			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] + 25;
+			ent->powerLevel = ent->client->ps.stats[powerLevelTotal] + 25;
 
 			break;
 
@@ -683,7 +715,7 @@ static int StuckInOtherClient(gentity_t *ent) {
 		if ( !ent2->client ) {
 			continue;
 		}
-		if ( ent2->health <= 0 ) {
+		if ( ent2->powerLevel <= 0 ) {
 			continue;
 		}
 		//
@@ -704,6 +736,72 @@ static int StuckInOtherClient(gentity_t *ent) {
 	return qfalse;
 }
 #endif
+void SetTargetPos(gentity_t* ent) {
+	gentity_t* theTarget;
+	int targetNum;
+	float pos;
+	vec3_t dest;
+	
+	targetNum = ent->client->ps.stats[target];
+	if (targetNum < 0 || targetNum >= ENTITYNUM_MAX_NORMAL) return;
+	theTarget = &g_entities[targetNum];
+	if (!theTarget->inuse) return;
+
+	VectorCopy(theTarget->s.pos.trBase, dest);
+	//dest[2] += BG_PlayerTargetOffset(&target->s, pos);
+	VectorCopy(dest, ent->s.origin2);
+}
+static void GetTarget(gentity_t* ent) {
+	trace_t tr;
+	vec3_t forward, right, up, muzzle, end;
+	gentity_t* theTarget;
+
+	if (ent->client->ps.stats[powerLevel] <= 0) {
+		ent->client->ps.stats[target] = -1;
+		return;
+	}
+
+	// set aiming directions
+	AngleVectors(ent->client->ps.viewangles, forward, right, up);
+
+	CalcMuzzlePoint(ent, forward, right, up, muzzle);
+
+	VectorMA(muzzle, 10000, forward, end);
+
+	trap_Trace(&tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT);
+	if (tr.fraction >= 1) goto NoTarget;
+	if (tr.surfaceFlags & SURF_NOIMPACT) goto NoTarget;
+
+	theTarget = &g_entities[tr.entityNum];
+	if (
+			theTarget->client &&
+			!OnSameTeam(ent, theTarget) &&
+			theTarget->client->sess.sessionTeam != TEAM_SPECTATOR &&
+			theTarget->client->ps.pm_type != PM_SPECTATOR &&
+			theTarget->client->ps.stats[powerLevel] > 0
+		)
+	{
+		ent->client->ps.stats[target] = tr.entityNum;
+		SetTargetPos(ent);
+		//ent->client->looseTargetTime = 0;
+		return;
+	}
+
+	NoTarget:
+	if (ent->client->ps.stats[target] < 0) return;
+	//if (!ent->client->looseTargetTime) {
+		//ent->client->looseTargetTime = level.time + 200;
+	//}
+	else if (
+		//level.time > ent->client->looseTargetTime ||
+		g_entities[ent->client->ps.stats[target]].powerLevel <= 0
+	) {
+		ent->client->ps.stats[target] = -1;
+		//ent->client->looseTargetTime = 0;
+		return;
+	}
+	SetTargetPos(ent);
+}
 
 void BotTestSolid(vec3_t origin);
 
@@ -831,7 +929,7 @@ void ClientThink_real( gentity_t *ent ) {
 
 	if ( client->noclip ) {
 		client->ps.pm_type = PM_NOCLIP;
-	} else if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+	} else if ( client->ps.stats[powerLevel] <= 0 ) {
 		client->ps.pm_type = PM_DEAD;
 	} else {
 		client->ps.pm_type = PM_NORMAL;
@@ -839,18 +937,24 @@ void ClientThink_real( gentity_t *ent ) {
 
 	client->ps.gravity = g_gravity.value;
 
+	// set the initial power level
+	client->ps.powerlevel = g_powerlevel.value;
+	
+	// set the power level charge speed
+	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
+
+	// set player rolling
+	client->ps.rolling = g_rolling.value;
+
+	// set player running value
+	client->ps.running = g_running.value;
+
 	// set speed
 	client->ps.speed = g_speed.value;
 
-#ifdef MISSIONPACK
-	if( bg_itemlist[client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_SCOUT ) {
-		client->ps.speed *= 1.5;
-	}
-	else
-#endif
-	if ( client->ps.powerups[PW_HASTE] ) {
-		client->ps.speed *= 1.3;
-	}
+	// <-- RiO; Link the weapon information
+	G_LinkUserWeaponData( &(client->ps) );
+	// -->
 
 	// Let go of the hook if we aren't firing
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
@@ -863,12 +967,14 @@ void ClientThink_real( gentity_t *ent ) {
 
 	memset (&pm, 0, sizeof(pm));
 
+	/*
 	// check for the hit-scan gauntlet, don't let the action
 	// go through as an attack unless it actually hits something
 	if ( client->ps.weapon == WP_GAUNTLET && !( ucmd->buttons & BUTTON_TALK ) &&
 		( ucmd->buttons & BUTTON_ATTACK ) && client->ps.weaponTime <= 0 ) {
 		pm.gauntletHit = CheckGauntletAttack( ent );
 	}
+	*/
 
 	if ( ent->flags & FL_FORCE_GESTURE ) {
 		ent->flags &= ~FL_FORCE_GESTURE;
@@ -936,10 +1042,14 @@ void ClientThink_real( gentity_t *ent ) {
 				ent->client->ps.pm_type = PM_SPINTERMISSION;
 			}
 		}
-		Pmove (&pm);
-#else
-		Pmove (&pm);
 #endif
+
+	Pmove (&pm);
+	
+	// <-- RiO; Update altered powerLevel value
+	ent->powerLevel = client->ps.stats[powerLevel];
+	// -->
+	GetTarget(ent);
 
 	// save results of pmove
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
@@ -995,7 +1105,7 @@ void ClientThink_real( gentity_t *ent ) {
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
 
 	// check for respawning
-	if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( client->ps.stats[powerLevel] <= 0 ) {
 		// wait for the attack button to be pressed
 		if ( level.time > client->respawnTime ) {
 			// forcerespawn is to prevent users from waiting out powerups
@@ -1105,7 +1215,7 @@ while a slow client may have multiple ClientEndFrame between ClientThink.
 ==============
 */
 void ClientEndFrame( gentity_t *ent ) {
-	int			i;
+//	int			i;
 	clientPersistant_t	*pers;
 
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
@@ -1115,31 +1225,16 @@ void ClientEndFrame( gentity_t *ent ) {
 
 	pers = &ent->client->pers;
 
+/*
 	// turn off any expired powerups
 	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		if ( ent->client->ps.powerups[ i ] < level.time ) {
-			ent->client->ps.powerups[ i ] = 0;
+		if (i != PW_FLYING) {
+			if ( ent->client->ps.powerups[ i ] < level.time ) {
+				ent->client->ps.powerups[ i ] = 0;
+			}
 		}
 	}
-
-#ifdef MISSIONPACK
-	// set powerup for player animation
-	if( bg_itemlist[ent->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
-		ent->client->ps.powerups[PW_GUARD] = level.time;
-	}
-	if( bg_itemlist[ent->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_SCOUT ) {
-		ent->client->ps.powerups[PW_SCOUT] = level.time;
-	}
-	if( bg_itemlist[ent->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_DOUBLER ) {
-		ent->client->ps.powerups[PW_DOUBLER] = level.time;
-	}
-	if( bg_itemlist[ent->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_AMMOREGEN ) {
-		ent->client->ps.powerups[PW_AMMOREGEN] = level.time;
-	}
-	if ( ent->client->invulnerabilityTime > level.time ) {
-		ent->client->ps.powerups[PW_INVULNERABILITY] = level.time;
-	}
-#endif
+*/
 
 	// save network bandwidth
 #if 0
@@ -1158,10 +1253,10 @@ void ClientEndFrame( gentity_t *ent ) {
 	}
 
 	// burn from lava, etc
-	P_WorldEffects (ent);
+	P_WorldEffects( ent );
 
 	// apply all the damage taken this frame
-	P_DamageFeedback (ent);
+	P_DamageFeedback( ent );
 
 	// add the EF_CONNECTION flag if we haven't gotten commands recently
 	if ( level.time - ent->client->lastCmdTime > 1000 ) {
@@ -1170,7 +1265,7 @@ void ClientEndFrame( gentity_t *ent ) {
 		ent->s.eFlags &= ~EF_CONNECTION;
 	}
 
-	ent->client->ps.stats[STAT_HEALTH] = ent->health;	// FIXME: get rid of ent->health...
+	ent->client->ps.stats[powerLevel] = ent->powerLevel;	// FIXME: get rid of ent->powerLevel...
 
 	G_SetClientSound (ent);
 

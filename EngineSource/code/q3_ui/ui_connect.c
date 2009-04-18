@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "ui_local.h"
 
@@ -82,6 +62,15 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 	downloadCount = trap_Cvar_VariableValue( "cl_downloadCount" );
 	downloadTime = trap_Cvar_VariableValue( "cl_downloadTime" );
 
+#if 0 // bk010104
+	fprintf( stderr, "\n\n-----------------------------------------------\n");
+	fprintf( stderr, "DB: downloadSize:  %16d\n", downloadSize );
+	fprintf( stderr, "DB: downloadCount: %16d\n", downloadCount );
+	fprintf( stderr, "DB: downloadTime:  %16d\n", downloadTime );  
+  	fprintf( stderr, "DB: UI realtime:   %16d\n", uis.realtime );	// bk
+	fprintf( stderr, "DB: UI frametime:  %16d\n", uis.frametime );	// bk
+#endif
+
 	leftWidth = width = UI_ProportionalStringWidth( dlText ) * UI_ProportionalSizeScale( style );
 	width = UI_ProportionalStringWidth( etaText ) * UI_ProportionalSizeScale( style );
 	if (width > leftWidth) leftWidth = width;
@@ -94,7 +83,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 	UI_DrawProportionalString( 8, 224, xferText, style, color_white );
 
 	if (downloadSize > 0) {
-		s = va( "%s (%d%%)", downloadName, (int)( (float)downloadCount * 100.0f / downloadSize ) );
+		s = va( "%s (%d%%)", downloadName, downloadCount * 100 / downloadSize );
 	} else {
 		s = downloadName;
 	}
@@ -109,12 +98,19 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 		UI_DrawProportionalString( leftWidth, 192, 
 			va("(%s of %s copied)", dlSizeBuf, totalSizeBuf), style, color_white );
 	} else {
+	  // bk010108
+	  //float elapsedTime = (float)(uis.realtime - downloadTime); // current - start (msecs)
+	  //elapsedTime = elapsedTime * 0.001f; // in seconds
+	  //if ( elapsedTime <= 0.0f ) elapsedTime == 0.0f;
 	  if ( (uis.realtime - downloadTime) / 1000) {
 			xferRate = downloadCount / ((uis.realtime - downloadTime) / 1000);
 		  //xferRate = (int)( ((float)downloadCount) / elapsedTime);
 		} else {
 			xferRate = 0;
 		}
+
+	  //fprintf( stderr, "DB: elapsedTime:  %16.8f\n", elapsedTime );	// bk
+	  //fprintf( stderr, "DB: xferRate:   %16d\n", xferRate );	// bk
 
 		UI_ReadableSize( xferRateBuf, sizeof xferRateBuf, xferRate );
 
@@ -125,7 +121,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 			// We do it in K (/1024) because we'd overflow around 4MB
 			n = (n - (((downloadCount/1024) * n) / (downloadSize/1024))) * 1000;
 			
-			UI_PrintTime ( dlTimeBuf, sizeof dlTimeBuf, n );
+			UI_PrintTime ( dlTimeBuf, sizeof dlTimeBuf, n ); // bk010104
 				//(n - (((downloadCount/1024) * n) / (downloadSize/1024))) * 1000);
 
 			UI_DrawProportionalString( leftWidth, 160, 
@@ -169,7 +165,12 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	if ( !overlay ) {
 		// draw the dialog background
 		UI_SetColor( color_white );
+#if 0	// JUHOX: draw background picture for connect screen
 		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+#else
+		UI_DrawBackPic(qtrue);
+//		UI_DrawHandlePic(30, 35, 580, 36, uis.menuBackTitleShader);	// "H U N T"
+#endif
 	}
 
 	// see what information we should display
@@ -189,7 +190,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	
 	// print any server info (server full, bad version, etc)
 	if ( cstate.connState < CA_CONNECTED ) {
-		UI_DrawProportionalString_AutoWrapped( 320, 192, 630, 20, cstate.messageString, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
+		UI_DrawProportionalString( 320, 192, cstate.messageString, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
 	}
 
 #if 0

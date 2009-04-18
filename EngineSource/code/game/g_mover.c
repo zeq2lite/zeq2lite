@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 #include "g_local.h"
@@ -432,8 +412,8 @@ void G_MoverTeam( gentity_t *ent ) {
 	pushed_p = pushed;
 	for (part = ent ; part ; part=part->teamchain) {
 		// get current position
-		BG_EvaluateTrajectory( &part->s.pos, level.time, origin );
-		BG_EvaluateTrajectory( &part->s.apos, level.time, angles );
+		BG_EvaluateTrajectory( &part->s, &part->s.pos, level.time, origin );
+		BG_EvaluateTrajectory( &part->s, &part->s.apos, level.time, angles );
 		VectorSubtract( origin, part->r.currentOrigin, move );
 		VectorSubtract( angles, part->r.currentAngles, amove );
 		if ( !G_MoverPush( part, move, amove, &obstacle ) ) {
@@ -446,8 +426,8 @@ void G_MoverTeam( gentity_t *ent ) {
 		for ( part = ent ; part ; part = part->teamchain ) {
 			part->s.pos.trTime += level.time - level.previousTime;
 			part->s.apos.trTime += level.time - level.previousTime;
-			BG_EvaluateTrajectory( &part->s.pos, level.time, part->r.currentOrigin );
-			BG_EvaluateTrajectory( &part->s.apos, level.time, part->r.currentAngles );
+			BG_EvaluateTrajectory( &part->s, &part->s.pos, level.time, part->r.currentOrigin );
+			BG_EvaluateTrajectory( &part->s, &part->s.apos, level.time, part->r.currentAngles );
 			trap_LinkEntity( part );
 		}
 
@@ -539,7 +519,7 @@ void SetMoverState( gentity_t *ent, moverState_t moverState, int time ) {
 		ent->s.pos.trType = TR_LINEAR_STOP;
 		break;
 	}
-	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );	
+	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, ent->r.currentOrigin );	
 	trap_LinkEntity( ent );
 }
 
@@ -941,7 +921,7 @@ NOMONSTER	monsters will not trigger this door
 "dmg"		damage to inflict when blocked (2 default)
 "color"		constantLight color
 "light"		constantLight radius
-"health"	if set, the door must be shot open
+"powerLevel"	if set, the door must be shot open
 */
 void SP_func_door (gentity_t *ent) {
 	vec3_t	abs_movedir;
@@ -949,8 +929,8 @@ void SP_func_door (gentity_t *ent) {
 	vec3_t	size;
 	float	lip;
 
-	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/doors/dr1_strt.wav");
-	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/doors/dr1_end.wav");
+	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/doors/dr1_strt.ogg");
+	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/doors/dr1_end.ogg");
 
 	ent->blocked = Blocked_Door;
 
@@ -996,13 +976,13 @@ void SP_func_door (gentity_t *ent) {
 	ent->nextthink = level.time + FRAMETIME;
 
 	if ( ! (ent->flags & FL_TEAMSLAVE ) ) {
-		int health;
+		int powerLevel;
 
-		G_SpawnInt( "health", "0", &health );
-		if ( health ) {
+		G_SpawnInt( "powerLevel", "0", &powerLevel );
+		if ( powerLevel ) {
 			ent->takedamage = qtrue;
 		}
-		if ( ent->targetname || health ) {
+		if ( ent->targetname || powerLevel ) {
 			// non touch/shoot doors
 			ent->think = Think_MatchTeam;
 		} else {
@@ -1029,7 +1009,7 @@ Don't allow decent if a living player is on it
 ===============
 */
 void Touch_Plat( gentity_t *ent, gentity_t *other, trace_t *trace ) {
-	if ( !other->client || other->client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( !other->client || other->client->ps.stats[powerLevel] <= 0 ) {
 		return;
 	}
 
@@ -1116,8 +1096,8 @@ Plats are always drawn in the extended position so they will light correctly.
 void SP_func_plat (gentity_t *ent) {
 	float		lip, height;
 
-	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/plats/pt1_strt.wav");
-	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/plats/pt1_end.wav");
+	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/plats/pt1_strt.ogg");
+	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/plats/pt1_end.ogg");
 
 	VectorClear (ent->s.angles);
 
@@ -1191,7 +1171,7 @@ When a button is touched, it moves some distance in the direction of it's angle,
 "speed"		override the default 40 speed
 "wait"		override the default 1 second wait (-1 = never return)
 "lip"		override the default 4 pixel lip remaining at end of move
-"health"	if set, the button must be killed instead of touched
+"powerLevel"	if set, the button must be killed instead of touched
 "color"		constantLight color
 "light"		constantLight radius
 */
@@ -1201,7 +1181,7 @@ void SP_func_button( gentity_t *ent ) {
 	vec3_t		size;
 	float		lip;
 
-	ent->sound1to2 = G_SoundIndex("sound/movers/switches/butn2.wav");
+	ent->sound1to2 = G_SoundIndex("sound/movers/switches/butn2.ogg");
 	
 	if ( !ent->speed ) {
 		ent->speed = 40;
@@ -1228,7 +1208,7 @@ void SP_func_button( gentity_t *ent ) {
 	distance = abs_movedir[0] * size[0] + abs_movedir[1] * size[1] + abs_movedir[2] * size[2] - lip;
 	VectorMA (ent->pos1, distance, ent->movedir, ent->pos2);
 
-	if (ent->health) {
+	if (ent->powerLevel) {
 		// shootable button
 		ent->takedamage = qtrue;
 	} else {

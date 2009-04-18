@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_draw.c -- draw all of the graphical elements during
 // active (after loading) gameplay
@@ -262,7 +242,85 @@ static void CG_DrawField (int x, int y, int width, int value) {
 		l--;
 	}
 }
-#endif // MISSIONPACK
+#endif // !MISSIONPACK
+
+
+/*
+=================
+CG_DrawHorGauge
+
+=================
+*/
+void CG_DrawHorGauge( float x, float y, float w, float h, vec4_t color_bar, vec4_t color_empty, int value, int maxvalue, qboolean reversed) {
+	float pct;
+	float bar_w;
+
+	pct = (float)value / (float)maxvalue;
+	bar_w = w * pct;
+
+	if (color_empty[3]) {
+		trap_R_SetColor( color_empty );
+		CG_DrawPic( x, y, w, h, cgs.media.whiteShader );
+	}
+	trap_R_SetColor( color_bar );
+
+	if (bar_w > w) {
+		bar_w = w;
+	}
+
+	if (bar_w == 0) {
+		trap_R_SetColor( NULL );
+		return;
+	}
+
+	if (!reversed) {
+		CG_DrawPic( x, y, bar_w, h, cgs.media.whiteShader );
+	} else {
+		CG_DrawPic( x + w - bar_w, y, bar_w, h, cgs.media.whiteShader );
+	}
+
+	trap_R_SetColor( NULL );
+}
+
+
+/*
+==================
+CG_DrawVertGauge
+
+==================
+*/
+void CG_DrawVertGauge( float x, float y, float w, float h, vec4_t color_bar, vec4_t color_empty, int value, int maxvalue, qboolean reversed) {
+	float pct;
+	float bar_h;
+
+	pct = (float)value / (float)maxvalue;
+	bar_h = h * pct;
+
+	if (color_empty[3]) {
+		trap_R_SetColor( color_empty );
+		CG_DrawPic( x, y, w, h, cgs.media.whiteShader );
+	}
+	trap_R_SetColor( color_bar );
+
+	if (bar_h > h) {
+		bar_h = h;
+	}
+
+	if (bar_h == 0) {
+		trap_R_SetColor( NULL );
+		return;
+	}
+
+	if (reversed) {
+		CG_DrawPic( x, y, w, bar_h, cgs.media.whiteShader );
+	} else {
+		CG_DrawPic( x, y + h - bar_h, w, bar_h, cgs.media.whiteShader );
+	}
+
+	trap_R_SetColor( NULL );
+}
+
+
 
 /*
 ================
@@ -321,15 +379,14 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	float			len;
 	vec3_t			origin;
 	vec3_t			mins, maxs;
-
 	ci = &cgs.clientinfo[ clientNum ];
-
+	CG_DrawPic( x, y, w, h, ci->tierConfig[ci->tierCurrent].icon);
+/*
 	if ( cg_draw3dIcons.integer ) {
-		cm = ci->headModel;
+		cm = ci->headModel[ci->tierCurrent];
 		if ( !cm ) {
 			return;
 		}
-
 		// offset the origin y and z to center the head
 		trap_R_ModelBounds( cm, mins, maxs );
 
@@ -344,11 +401,11 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 		// allow per-model tweaking
 		VectorAdd( origin, ci->headOffset, origin );
 
-		CG_Draw3DModel( x, y, w, h, ci->headModel, ci->headSkin, origin, headAngles );
+		CG_Draw3DModel( x, y, w, h, ci->headModel[ci->tierCurrent], ci->headSkin[ci->tierCurrent], origin, headAngles );
 	} else if ( cg_drawIcons.integer ) {
 		CG_DrawPic( x, y, w, h, ci->modelIcon );
 	}
-
+*/
 	// if they are deferred, draw a cross out
 	if ( ci->deferred ) {
 		CG_DrawPic( x, y, w, h, cgs.media.deferShader );
@@ -515,53 +572,34 @@ void CG_DrawTeamBackground( int x, int y, int w, int h, float alpha, int team )
 	trap_R_SetColor( NULL );
 }
 
+
 /*
 ================
 CG_DrawStatusBar
 
 ================
 */
-#ifndef MISSIONPACK
 static void CG_DrawStatusBar( void ) {
-	int			color;
 	centity_t	*cent;
 	playerState_t	*ps;
-	int			value;
-	vec4_t		hcolor;
+	vec4_t		powerColor,dullColor,limitColor,excessColor,emptyColor;
 	vec3_t		angles;
-	vec3_t		origin;
-
-	static float colors[4][4] = { 
-//		{ 0.2, 1.0, 0.2, 1.0 } , { 1.0, 0.2, 0.2, 1.0 }, {0.5, 0.5, 0.5, 1} };
-		{ 1.0f, 0.69f, 0.0f, 1.0f },    // normal
-		{ 1.0f, 0.2f, 0.2f, 1.0f },     // low health
-		{ 0.5f, 0.5f, 0.5f, 1.0f },     // weapon firing
-		{ 1.0f, 1.0f, 1.0f, 1.0f } };   // health > 100
-
-	if ( cg_drawStatus.integer == 0 ) {
-		return;
-	}
-
+	const char	*powerLevelString;
+	int 		powerLevelOffset;
+	long	 	powerLevelDisplay;
+	float		multiplier;
+	float 		currentPercent,maxPercent;
+	float 		tierLast,tierNext,tier;
+	clientInfo_t *ci;
+	cg_userWeapon_t	*weaponGraphics;
+	ci = &cgs.clientinfo[cg.snap->ps.clientNum];
+	if(cg_drawStatus.integer == 0){return;}
 	// draw the team background
 	CG_DrawTeamBackground( 0, 420, 640, 60, 0.33f, cg.snap->ps.persistant[PERS_TEAM] );
-
 	cent = &cg_entities[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
-
 	VectorClear( angles );
-
-	// draw any 3D icons first, so the changes back to 2D are minimized
-	if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
-		origin[0] = 70;
-		origin[1] = 0;
-		origin[2] = 0;
-		angles[YAW] = 90 + 20 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
-					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
-	}
-
-	CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
-
+	angles[YAW] = 180;
 	if( cg.predictedPlayerState.powerups[PW_REDFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_RED );
 	} else if( cg.predictedPlayerState.powerups[PW_BLUEFLAG] ) {
@@ -569,86 +607,55 @@ static void CG_DrawStatusBar( void ) {
 	} else if( cg.predictedPlayerState.powerups[PW_NEUTRALFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_FREE );
 	}
-
-	if ( ps->stats[ STAT_ARMOR ] ) {
-		origin[0] = 90;
-		origin[1] = 0;
-		origin[2] = -10;
-		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
-		CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
-					   cgs.media.armorModel, 0, origin, angles );
+	//
+	// Draw That Hud!
+	//
+	emptyColor[0] = 0.3f;
+	emptyColor[1] = 0.3f;
+	emptyColor[2] = 0.3f;
+	emptyColor[3] = 0.3f;
+	dullColor[0] = 0.188f;
+	dullColor[1] = 0.278f;
+	dullColor[2] = 0.345f;
+	dullColor[3] = 1.0f;
+	powerColor[0] = 0.0f;
+	powerColor[1] = 0.588f;
+	powerColor[2] = 1.0f;
+	powerColor[3] = 1.0f;
+	limitColor[0] = 0.5f;
+	limitColor[1] = 0.16f;
+	limitColor[2] = 0.16f;
+	limitColor[3] = 1.0f;
+	excessColor[0] = 0.9f;
+	excessColor[1] = 0.5f;
+	excessColor[2] = 0.0f;
+	excessColor[3] = 1.0f;
+	tier = (float)ps->stats[tierCurrent];
+	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
+	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];
+	multiplier = ci->tierConfig[ci->tierCurrent].hudMultiplier;
+	if(multiplier <= 0){
+		multiplier = ((tier*tier*tier*tier)+1.0);
 	}
-	//
-	// ammo
-	//
-	if ( cent->currentState.weapon ) {
-		value = ps->ammo[cent->currentState.weapon];
-		if ( value > -1 ) {
-			if ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING
-				&& cg.predictedPlayerState.weaponTime > 100 ) {
-				// draw as dark grey when reloading
-				color = 2;	// dark grey
-			} else {
-				if ( value >= 0 ) {
-					color = 0;	// green
-				} else {
-					color = 1;	// red
-				}
-			}
-			trap_R_SetColor( colors[color] );
-			
-			CG_DrawField (0, 432, 3, value);
-			trap_R_SetColor( NULL );
-
-			// if we didn't draw a 3D icon, draw a 2D icon for ammo
-			if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-				qhandle_t	icon;
-
-				icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
-				if ( icon ) {
-					CG_DrawPic( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, icon );
-				}
-			}
-		}
+	powerLevelDisplay = (float)ps->stats[powerLevel] * multiplier;
+	powerLevelString = va("%i",powerLevelDisplay);
+	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
+	if(currentPercent > 1.0){currentPercent = 1.0;}
+	CG_DrawHorGauge(60,449,200,16,limitColor,emptyColor,1,1,qfalse); 
+	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 
+	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	
+	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
+	if(tier){	
+		tierLast = (3640 * tier) / (float)ps->persistant[powerLevelMaximum];
+		CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
 	}
-
-	//
-	// health
-	//
-	value = ps->stats[STAT_HEALTH];
-	if ( value > 100 ) {
-		trap_R_SetColor( colors[3] );		// white
-	} else if (value > 25) {
-		trap_R_SetColor( colors[0] );	// green
-	} else if (value > 0) {
-		color = (cg.time >> 8) & 1;	// flash
-		trap_R_SetColor( colors[color] );
-	} else {
-		trap_R_SetColor( colors[1] );	// red
+	if(tier < ps->stats[tierTotal]){
+		tierNext = (3640 * (tier + 1)) / (float)ps->persistant[powerLevelMaximum];
+		CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
 	}
-
-	// stretch the health up when taking damage
-	CG_DrawField ( 185, 432, 3, value);
-	CG_ColorForHealth( hcolor );
-	trap_R_SetColor( hcolor );
-
-
-	//
-	// armor
-	//
-	value = ps->stats[STAT_ARMOR];
-	if (value > 0 ) {
-		trap_R_SetColor( colors[0] );
-		CG_DrawField (370, 432, 3, value);
-		trap_R_SetColor( NULL );
-		// if we didn't draw a 3D icon, draw a 2D icon for armor
-		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-			CG_DrawPic( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cgs.media.armorIcon );
-		}
-
-	}
+	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
+	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
 }
-#endif
 
 /*
 ===========================================================================================
@@ -672,7 +679,7 @@ static float CG_DrawAttacker( float y ) {
 	const char	*name;
 	int			clientNum;
 
-	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[powerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -916,9 +923,9 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 					TEAM_OVERLAY_MAXLOCATION_WIDTH);
 			}
 
-			CG_GetColorForHealth( ci->health, ci->armor, hcolor );
+			CG_GetColorForHealth( ci->powerLevel, ci->armor, hcolor );
 
-			Com_sprintf (st, sizeof(st), "%3i %3i", ci->health,	ci->armor);
+			Com_sprintf (st, sizeof(st), "%3i %3i", ci->powerLevel,	ci->armor);
 
 			xx = x + TINYCHAR_WIDTH * 3 + 
 				TINYCHAR_WIDTH * pwidth + TINYCHAR_WIDTH * lwidth;
@@ -930,13 +937,13 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 			// draw weapon icon
 			xx += TINYCHAR_WIDTH * 3;
 
-			if ( cg_weapons[ci->curWeapon].weaponIcon ) {
-				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
-					cg_weapons[ci->curWeapon].weaponIcon );
-			} else {
-				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
-					cgs.media.deferShader );
-			}
+//			if ( cg_weapons[ci->curWeapon].weaponIcon ) {
+//				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
+//					cg_weapons[ci->curWeapon].weaponIcon );
+//			} else {
+//				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
+//					cgs.media.deferShader );
+//			}
 
 			// Draw powerup icons
 			if (right) {
@@ -976,11 +983,17 @@ CG_DrawUpperRight
 
 =====================
 */
-static void CG_DrawUpperRight(stereoFrame_t stereoFrame)
-{
+static void CG_DrawUpperRight( void ) {
 	float	y;
 
 	y = 0;
+
+#if MAPLENSFLARES	// JUHOX: draw lens flare editor title
+	if (cgs.editMode == EM_mlf) {
+		CG_DrawBigString(640 - 17 * BIGCHAR_WIDTH, y, "lens flare editor", 1);
+		y += BIGCHAR_HEIGHT;
+	}
+#endif
 
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 1 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qtrue );
@@ -988,7 +1001,7 @@ static void CG_DrawUpperRight(stereoFrame_t stereoFrame)
 	if ( cg_drawSnapshot.integer ) {
 		y = CG_DrawSnapshot( y );
 	}
-	if (cg_drawFPS.integer && (stereoFrame == STEREO_CENTER || stereoFrame == STEREO_RIGHT)) {
+	if ( cg_drawFPS.integer ) {
 		y = CG_DrawFPS( y );
 	}
 	if ( cg_drawTimer.integer ) {
@@ -1084,6 +1097,19 @@ static float CG_DrawScores( float y ) {
 			}
 		}
 
+#ifdef MISSIONPACK
+		if ( cgs.gametype == GT_1FCTF ) {
+			// Display flag status
+			item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
+
+			if (item) {
+				y1 = y - BIGCHAR_HEIGHT - 8;
+				if( cgs.flagStatus >= 0 && cgs.flagStatus <= 3 ) {
+					CG_DrawPic( x, y1-4, w, BIGCHAR_HEIGHT+8, cgs.media.flagShader[cgs.flagStatus] );
+				}
+			}
+		}
+#endif
 		if ( cgs.gametype >= GT_CTF ) {
 			v = cgs.capturelimit;
 		} else {
@@ -1161,7 +1187,7 @@ static float CG_DrawScores( float y ) {
 
 	return y1 - 8;
 }
-#endif // MISSIONPACK
+#endif // ! MISSIONPACK
 
 /*
 ================
@@ -1188,7 +1214,7 @@ static float CG_DrawPowerups( float y ) {
 
 	ps = &cg.snap->ps;
 
-	if ( ps->stats[STAT_HEALTH] <= 0 ) {
+	if ( ps->stats[powerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -1274,14 +1300,19 @@ CG_DrawLowerRight
 static void CG_DrawLowerRight( void ) {
 	float	y;
 
+	// JUHOX: don't draw scores in lens flare editor
+#if MAPLENSFLARES
+	if (cgs.editMode == EM_mlf) return;
+#endif
+
 	y = 480 - ICON_SIZE;
 
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 2 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qfalse );
 	} 
 
-	y = CG_DrawScores( y );
-	y = CG_DrawPowerups( y );
+	//y = CG_DrawScores( y );
+	//y = CG_DrawPowerups( y );
 }
 #endif // MISSIONPACK
 
@@ -1295,7 +1326,7 @@ static int CG_DrawPickupItem( int y ) {
 	int		value;
 	float	*fadeColor;
 
-	if ( cg.snap->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( cg.snap->ps.stats[powerLevel] <= 0 ) {
 		return y;
 	}
 
@@ -1412,7 +1443,7 @@ static void CG_DrawTeamInfo( void ) {
 		}
 	}
 }
-#endif // MISSIONPACK
+#endif // !MISSIONPACK
 
 /*
 ===================
@@ -1421,16 +1452,16 @@ CG_DrawHoldableItem
 */
 #ifndef MISSIONPACK
 static void CG_DrawHoldableItem( void ) { 
-	int		value;
+//	int		value;
 
-	value = cg.snap->ps.stats[STAT_HOLDABLE_ITEM];
-	if ( value ) {
-		CG_RegisterItemVisuals( value );
-		CG_DrawPic( 640-ICON_SIZE, (SCREEN_HEIGHT-ICON_SIZE)/2, ICON_SIZE, ICON_SIZE, cg_items[ value ].icon );
-	}
+//	value = cg.snap->ps.stats[STAT_HOLDABLE_ITEM];
+//	if ( value ) {
+//		CG_RegisterItemVisuals( value );
+//		CG_DrawPic( 640-ICON_SIZE, (SCREEN_HEIGHT-ICON_SIZE)/2, ICON_SIZE, ICON_SIZE, cg_items[ value ].icon );
+//	}
 
 }
-#endif // MISSIONPACK
+#endif // !MISSIONPACK
 
 #ifdef MISSIONPACK
 /*
@@ -1597,18 +1628,18 @@ static void CG_DrawDisconnect( void ) {
 	int			cmdNum;
 	usercmd_t	cmd;
 	const char		*s;
-	int			w;
+	int			w;  // bk010215 - FIXME char message[1024];
 
 	// draw the phone jack if we are completely past our buffers
 	cmdNum = trap_GetCurrentCmdNumber() - CMD_BACKUP + 1;
 	trap_GetUserCmd( cmdNum, &cmd );
 	if ( cmd.serverTime <= cg.snap->ps.commandTime
-		|| cmd.serverTime > cg.time ) {	// special check for map_restart
+		|| cmd.serverTime > cg.time ) {	// special check for map_restart // bk 0102165 - FIXME
 		return;
 	}
 
 	// also add text in center of screen
-	s = "Connection Interrupted";
+	s = "Connection Interrupted"; // bk 010215 - FIXME
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 	CG_DrawBigString( 320 - w/2, 100, s, 1.0F);
 
@@ -1787,8 +1818,8 @@ static void CG_DrawCenterString( void ) {
 	char	*start;
 	int		l;
 	int		x, y, w;
-#ifdef MISSIONPACK
-	int h;
+#ifdef MISSIONPACK // bk010221 - unused else
+  int h;
 #endif
 	float	*color;
 
@@ -1856,19 +1887,24 @@ CROSSHAIR
 ================================================================================
 */
 
+// NOTE: Prototype so it's known
+static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross );
 
 /*
 =================
 CG_DrawCrosshair
 =================
 */
-static void CG_DrawCrosshair(void)
-{
-	float		w, h;
-	qhandle_t	hShader;
-	float		f;
-	float		x, y;
-	int			ca;
+static void CG_DrawCrosshair(void) {
+	float			w, h;
+	qhandle_t		hShader;
+	float			f;
+	float			x, y;
+	int				ca;
+	trace_t			trace;
+	playerState_t	*ps;
+	vec3_t			muzzle, forward, up;
+	vec3_t			start, end;
 
 	if ( !cg_drawCrosshair.integer ) {
 		return;
@@ -1878,11 +1914,32 @@ static void CG_DrawCrosshair(void)
 		return;
 	}
 
-	if ( cg.renderingThirdPerson ) {
+
+	ps = &cg.predictedPlayerState;
+
+	AngleVectors( ps->viewangles, forward, NULL, up );
+	VectorCopy( ps->origin, muzzle );
+	VectorMA( muzzle, ps->viewheight, up, muzzle );
+	VectorMA( muzzle, 14, forward, muzzle );
+		
+	VectorCopy( muzzle, start );
+	VectorMA( start, 131072, forward, end );
+
+	CG_Trace( &trace, start, NULL, NULL, end, cg.snap->ps.clientNum, CONTENTS_SOLID|CONTENTS_BODY );	
+	if ( !CG_WorldCoordToScreenCoordFloat( trace.endpos, &x, &y ) ) {
 		return;
 	}
 
-	// set color based on health
+	w = h = cg_crosshairSize.value;
+
+	// pulse the size of the crosshair when picking up items
+	f = cg.time - cg.itemPickupBlendTime;
+	if ( f > 0 && f < ITEM_BLOB_TIME ) {
+		f /= ITEM_BLOB_TIME;
+		w *= ( 1 + f );
+		h *= ( 1 + f );
+	}
+
 	if ( cg_crosshairHealth.integer ) {
 		vec4_t		hcolor;
 
@@ -1892,105 +1949,16 @@ static void CG_DrawCrosshair(void)
 		trap_R_SetColor( NULL );
 	}
 
-	w = h = cg_crosshairSize.value;
-
-	// pulse the size of the crosshair when picking up items
-	f = cg.time - cg.itemPickupBlendTime;
-	if ( f > 0 && f < ITEM_BLOB_TIME ) {
-		f /= ITEM_BLOB_TIME;
-		w *= ( 1 + f );
-		h *= ( 1 + f );
-	}
-
-	x = cg_crosshairX.integer;
-	y = cg_crosshairY.integer;
-	CG_AdjustFrom640( &x, &y, &w, &h );
-
 	ca = cg_drawCrosshair.integer;
 	if (ca < 0) {
 		ca = 0;
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
-	trap_R_DrawStretchPic( x + cg.refdef.x + 0.5 * (cg.refdef.width - w), 
-		y + cg.refdef.y + 0.5 * (cg.refdef.height - h), 
-		w, h, 0, 0, 1, 1, hShader );
-}
+	CG_DrawPic( x - 0.5f * w, y - 0.5f * h, w, h, hShader );
+	trap_R_SetColor( NULL );
 
-/*
-=================
-CG_DrawCrosshair3D
-=================
-*/
-static void CG_DrawCrosshair3D(void)
-{
-	float		w, h;
-	qhandle_t	hShader;
-	float		f;
-	int			ca;
-
-	trace_t trace;
-	vec3_t endpos;
-	float stereoSep, zProj, maxdist, xmax;
-	char rendererinfos[128];
-	refEntity_t ent;
-
-	if ( !cg_drawCrosshair.integer ) {
-		return;
-	}
-
-	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
-		return;
-	}
-
-	if ( cg.renderingThirdPerson ) {
-		return;
-	}
-
-	w = h = cg_crosshairSize.value;
-
-	// pulse the size of the crosshair when picking up items
-	f = cg.time - cg.itemPickupBlendTime;
-	if ( f > 0 && f < ITEM_BLOB_TIME ) {
-		f /= ITEM_BLOB_TIME;
-		w *= ( 1 + f );
-		h *= ( 1 + f );
-	}
-
-	ca = cg_drawCrosshair.integer;
-	if (ca < 0) {
-		ca = 0;
-	}
-	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
-
-	// Use a different method rendering the crosshair so players don't see two of them when
-	// focusing their eyes at distant objects with high stereo separation
-	// We are going to trace to the next shootable object and place the crosshair in front of it.
-
-	// first get all the important renderer information
-	trap_Cvar_VariableStringBuffer("r_zProj", rendererinfos, sizeof(rendererinfos));
-	zProj = atof(rendererinfos);
-	trap_Cvar_VariableStringBuffer("r_stereoSeparation", rendererinfos, sizeof(rendererinfos));
-	stereoSep = zProj / atof(rendererinfos);
-	
-	xmax = zProj * tan(cg.refdef.fov_x * M_PI / 360.0f);
-	
-	// let the trace run through until a change in stereo separation of the crosshair becomes less than one pixel.
-	maxdist = cgs.glconfig.vidWidth * stereoSep * zProj / (2 * xmax);
-	VectorMA(cg.refdef.vieworg, maxdist, cg.refdef.viewaxis[0], endpos);
-	CG_Trace(&trace, cg.refdef.vieworg, NULL, NULL, endpos, 0, MASK_SHOT);
-	
-	memset(&ent, 0, sizeof(ent));
-	ent.reType = RT_SPRITE;
-	ent.renderfx = RF_DEPTHHACK | RF_CROSSHAIR;
-	
-	VectorCopy(trace.endpos, ent.origin);
-	
-	// scale the crosshair so it appears the same size for all distances
-	ent.radius = w / 640 * xmax * trace.fraction * maxdist / zProj;
-	ent.customShader = hShader;
-
-	trap_R_AddRefEntityToScene(&ent);
+	CG_DrawCrosshairChargeBars( x, y );	
 }
 
 
@@ -2001,33 +1969,45 @@ CG_ScanForCrosshairEntity
 =================
 */
 static void CG_ScanForCrosshairEntity( void ) {
-	trace_t		trace;
-	vec3_t		start, end;
-	int			content;
+	trace_t			trace;
+	vec3_t			start,end,minSize,maxSize,muzzle,forward,up,targetPosition;
+	playerState_t	*ps;
+	int				content;
 
+	/*
 	VectorCopy( cg.refdef.vieworg, start );
 	VectorMA( start, 131072, cg.refdef.viewaxis[0], end );
 
 	CG_Trace( &trace, start, vec3_origin, vec3_origin, end, 
 		cg.snap->ps.clientNum, CONTENTS_SOLID|CONTENTS_BODY );
-	if ( trace.entityNum >= MAX_CLIENTS ) {
-		return;
-	}
+	*/
+	ps = &cg.predictedPlayerState;
 
-	// if the player is in fog, don't show it
+	AngleVectors( ps->viewangles, forward, NULL, up );
+	VectorCopy( ps->origin, muzzle );
+	VectorMA( muzzle, ps->viewheight, up, muzzle );
+	VectorMA( muzzle, 14, forward, muzzle );
+		
+	VectorCopy( muzzle, start );
+	VectorMA( start, 131072, forward, end );
+	
+	cg.lockReady = qfalse;
+	minSize[0] = -(float)cg_lockonDistance.value;
+	minSize[1] = -(float)cg_lockonDistance.value;
+	minSize[2] = -(float)cg_lockonDistance.value;
+	maxSize[0] = -minSize[0];
+	maxSize[1] = -minSize[1];
+	maxSize[2] = -minSize[2];
+	CG_Trace( &trace, start, minSize, maxSize, end, cg.snap->ps.clientNum, CONTENTS_BODY );
+	if((trace.entityNum >= MAX_CLIENTS) || (ps->lockedOn)){return;}
 	content = trap_CM_PointContents( trace.endpos, 0 );
-	if ( content & CONTENTS_FOG ) {
-		return;
-	}
-
-	// if the player is invisible, don't show it
-	if ( cg_entities[ trace.entityNum ].currentState.powerups & ( 1 << PW_INVIS ) ) {
-		return;
-	}
-
-	// update the fade timer
+	cg.lockReady = qtrue;
 	cg.crosshairClientNum = trace.entityNum;
 	cg.crosshairClientTime = cg.time;
+	VectorCopy(cg_entities[trace.entityNum].lerpOrigin,targetPosition);
+	ps->lockedTarget[0] = targetPosition[0];
+	ps->lockedTarget[1] = targetPosition[1];
+	ps->lockedTarget[2] = targetPosition[2];
 }
 
 
@@ -2047,9 +2027,15 @@ static void CG_DrawCrosshairNames( void ) {
 	if ( !cg_drawCrosshairNames.integer ) {
 		return;
 	}
-	if ( cg.renderingThirdPerson ) {
+
+	// ADDING FOR ZEQ2
+
+	// NOTE: The crosshair is still renderable in 3rd person!
+/*	if ( cg.renderingThirdPerson ) {
 		return;
 	}
+
+*/	// END ADDING
 
 	// scan the known entities to see if the crosshair is sighted on one
 	CG_ScanForCrosshairEntity();
@@ -2062,19 +2048,109 @@ static void CG_DrawCrosshairNames( void ) {
 	}
 
 	name = cgs.clientinfo[ cg.crosshairClientNum ].name;
+
 #ifdef MISSIONPACK
 	color[3] *= 0.5f;
 	w = CG_Text_Width(name, 0.3f, 0);
 	CG_Text_Paint( 320 - w / 2, 190, 0.3f, color, name, 0, 0, ITEM_TEXTSTYLE_SHADOWED);
+
 #else
 	w = CG_DrawStrlen( name ) * BIGCHAR_WIDTH;
 	CG_DrawBigString( 320 - w / 2, 170, name, color[3] * 0.5f );
 #endif
+
 	trap_R_SetColor( NULL );
 }
 
 
+
+/*
+==========================
+CG_DrawCrosshairChargeBars
+==========================
+*/
+static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
+	return;
+}
+
+
 //==============================================================================
+
+
+/*
+=================
+JUHOX: CG_DrawLensFlareEffectList
+=================
+*/
+#if MAPLENSFLARES
+static void CG_DrawLensFlareEffectList(void) {
+	int firstEffect;
+	int y;
+	int i;
+
+	y = 480 - 12 * TINYCHAR_HEIGHT;
+
+	firstEffect = cg.lfEditor.selectedEffect - 5;
+	for (i = 0; i < 12; i++) {
+		int effectNum;
+
+		effectNum = firstEffect + i;
+		if (effectNum >= 0 && effectNum < cgs.numLensFlareEffects) {
+			lensFlareEffect_t* lfeff;
+			int width;
+			const float* color;
+
+			lfeff = &cgs.lensFlareEffects[effectNum];
+			width = CG_DrawStrlen(lfeff->name) * TINYCHAR_WIDTH;
+			color = i == 5? colorWhite : colorMdGrey;
+			CG_DrawStringExt(640 - width, y, lfeff->name, color, qtrue, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		y += TINYCHAR_HEIGHT;
+	}
+}
+#endif
+
+/*
+=================
+JUHOX: CG_DrawCopyOptions
+=================
+*/
+#if MAPLENSFLARES
+static void CG_DrawCopyOptions(void) {
+	int y;
+	char buf[256];
+
+	y = 480;
+
+	y -= TINYCHAR_HEIGHT;	// 9
+	y -= TINYCHAR_HEIGHT;	// 8
+	y -= TINYCHAR_HEIGHT;	// 7
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[6] paste entity angle = %s", cg.lfEditor.copyOptions & LFECO_SPOT_ANGLE? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[5] paste direction    = %s", cg.lfEditor.copyOptions & LFECO_SPOT_DIR? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[4] paste light radius = %s", cg.lfEditor.copyOptions & LFECO_LIGHTRADIUS? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[3] paste vis radius   = %s", cg.lfEditor.copyOptions & LFECO_VISRADIUS? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[2] paste effect       = %s", cg.lfEditor.copyOptions & LFECO_EFFECT? "on" : "off");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+	y -= TINYCHAR_HEIGHT;
+	Com_sprintf(buf, sizeof(buf), "[1] done");
+	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+}
+#endif
 
 /*
 =================
@@ -2082,6 +2158,197 @@ CG_DrawSpectator
 =================
 */
 static void CG_DrawSpectator(void) {
+
+#if MAPLENSFLARES
+	if (cgs.editMode == EM_mlf) {
+		static const vec4_t backFillColor = {
+			0.0, 0.0, 0.0, 0.6
+		};
+		static const vec4_t colorDkGreen = {
+			0.0, 0.5, 0.0, 1.0
+		};
+		static const vec4_t colorLtGreen = {
+			0.5, 1.0, 0.5, 1.0
+		};
+		static const char* const drawModes[] = {
+			"normal", "marks", "none"
+		};
+		static const char* const cursorSize[] = {
+			"small", "light radius", "vis radius"
+		};
+		static const char* const moveModes[] = {
+			"coarse", "fine"
+		};
+		char buf[256];
+		int y;
+
+		// crosshair
+		if (!cg.lfEditor.selectedLFEnt || cg.lfEditor.editMode != LFEEM_pos) {
+			CG_DrawPic(320 - 12, 240 - 12, 24, 24, cgs.media.crosshairShader[0]);
+		}
+
+		CG_FillRect(0, 480 - 12 * TINYCHAR_HEIGHT, 640, 12 * TINYCHAR_HEIGHT, backFillColor);
+
+		CG_DrawLensFlareEffectList();
+
+		if (cg.lfEditor.cmdMode == LFECM_copyOptions) {
+			CG_DrawCopyOptions();
+			return;
+		}
+
+		y = 480;
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[9] cursor size = %s", cursorSize[cg.lfEditor.cursorSize]);
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[9] draw mode = %s", drawModes[cg.lfEditor.drawMode]);
+			CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[8] copy entity data");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			const char* name;
+
+			name = "";
+			if (cg.lfEditor.selectedLFEnt && cg.lfEditor.selectedLFEnt->lfeff) {
+				name = cg.lfEditor.selectedLFEnt->lfeff->name;
+			}
+			Com_sprintf(buf, sizeof(buf), "[8] note effect %s", name);
+			CG_DrawStringExt(0, y, buf, name[0]? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[7] paste entity data");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[7] assign effect %s", cgs.lensFlareEffects[cg.lfEditor.selectedEffect].name);
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[6] paste options");
+			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[6] %sedit light size f+b / vis radius l+r", cg.lfEditor.editMode == LFEEM_radius? "^3" : "");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[5] find entity using %s", cgs.lensFlareEffects[cg.lfEditor.selectedEffect].name);
+			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[5] %sedit spotlight target", cg.lfEditor.editMode == LFEEM_target? "^3" : "");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			if (cg.lfEditor.selectedLFEnt) {
+				if (cg.lfEditor.selectedLFEnt->lock) {
+					CG_DrawStringExt(0, y, "[4] unlock from mover", colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+				}
+				else {
+					CG_DrawStringExt(0, y, "[4] lock to selected mover", cg.lfEditor.selectedMover? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+				}
+			}
+			else {
+				CG_DrawStringExt(0, y, "[4] lock to selected mover", colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			}
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[4] %sedit position & vis radius", cg.lfEditor.editMode == LFEEM_pos? "^3" : "");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[3] find mover %s", cg.lfEditor.moversStopped? "" : "(need to be stopped)");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.moversStopped? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[3] %sdelete flare entity", cg.lfEditor.delAck? "^1really^7 " : "");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
+			Com_sprintf(buf, sizeof(buf), "[2] %s movers", cg.lfEditor.moversStopped? "release" : "stop");
+			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+		else {
+			Com_sprintf(buf, sizeof(buf), "[2] %s flare entity", cg.lfEditor.selectedLFEnt? "duplicate" : "create");
+			CG_DrawStringExt(0, y, buf, cg.lfEditor.editMode == LFEEM_none? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+
+		y -= TINYCHAR_HEIGHT;
+		Com_sprintf(buf, sizeof(buf), "[1] cancel");
+		CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? NULL : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+		y -= TINYCHAR_HEIGHT;
+		Com_sprintf(buf, sizeof(buf), "[TAB] move mode = %s", moveModes[cg.lfEditor.moveMode]);
+		CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt && cg.lfEditor.editMode > LFEEM_none? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+		y -= TINYCHAR_HEIGHT;
+		Com_sprintf(buf, sizeof(buf), "[WALK] alternate command set");
+		CG_DrawStringExt(0, y, buf, (cg.lfEditor.oldButtons & BUTTON_WALKING)? colorLtGreen : colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+
+		y -= TINYCHAR_HEIGHT;
+		if (!cg.lfEditor.selectedLFEnt) {
+			if (cg.lfEditor.markedLFEnt >= 0) {
+				Com_sprintf(buf, sizeof(buf), "[ATTACK] select flare entity");
+				CG_DrawStringExt(0, y, buf, NULL, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			}
+		}
+		else {
+			switch (cg.lfEditor.editMode) {
+			case LFEEM_none:
+				Com_sprintf(buf, sizeof(buf), "[ATTACK] accept changes");
+				break;
+			case LFEEM_pos:
+				if (cg.lfEditor.moveMode == LFEMM_coarse) {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] switch to tune mode");
+				}
+				else {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] modify view dist (f+b) or vis radius (l+r)");
+				}
+				break;
+			case LFEEM_target:
+				if (cg.lfEditor.editTarget) {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] set target");
+				}
+				else if (DistanceSquared(cg.refdef.vieworg, cg.lfEditor.targetPosition) < 1) {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] remove target & leave editing mode");
+				}
+				else {
+					Com_sprintf(buf, sizeof(buf), "[ATTACK] set angle & leave editing mode");
+				}
+				break;
+			case LFEEM_radius:
+				Com_sprintf(buf, sizeof(buf), "[ATTACK] modify view distance (f+b)");
+				break;
+			default:
+				buf[0] = 0;
+				break;
+			}
+			CG_DrawStringExt(0, y, buf, NULL, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		}
+	}
+	else
+#endif
+
 	CG_DrawBigString(320 - 9 * 8, 440, "SPECTATOR", 1.0F);
 	if ( cgs.gametype == GT_TOURNAMENT ) {
 		CG_DrawBigString(320 - 15 * 8, 460, "waiting to play", 1.0F);
@@ -2161,7 +2428,7 @@ static void CG_DrawTeamVote(void) {
 }
 
 
-static qboolean CG_DrawScoreboard( void ) {
+static qboolean CG_DrawScoreboard() {
 #ifdef MISSIONPACK
 	static qboolean firstTime = qtrue;
 	float fade, *fadeColor;
@@ -2302,9 +2569,8 @@ static void CG_DrawAmmoWarning( void ) {
 	}
 
 	if ( cg.lowAmmoWarning == 2 ) {
-		s = "OUT OF AMMO";
 	} else {
-		s = "LOW AMMO WARNING";
+		s = "LOW POWER";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 	CG_DrawBigString(320 - w / 2, 64, s, 1.0F);
@@ -2501,7 +2767,7 @@ static void CG_DrawWarmup( void ) {
 CG_DrawTimedMenus
 =================
 */
-void CG_DrawTimedMenus( void ) {
+void CG_DrawTimedMenus() {
 	if (cg.voiceTime) {
 		int t = cg.time - cg.voiceTime;
 		if ( t > 2500 ) {
@@ -2512,13 +2778,13 @@ void CG_DrawTimedMenus( void ) {
 	}
 }
 #endif
+
 /*
 =================
 CG_Draw2D
 =================
 */
-static void CG_Draw2D(stereoFrame_t stereoFrame)
-{
+static void CG_Draw2D( void ) {
 #ifdef MISSIONPACK
 	if (cgs.orderPending && cg.time > cgs.orderTime) {
 		CG_CheckOrderPending();
@@ -2543,16 +2809,15 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 		return;
 	}
 */
+
+
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		CG_DrawSpectator();
-
-		if(stereoFrame == STEREO_CENTER)
-			CG_DrawCrosshair();
-
+		CG_DrawCrosshair();
 		CG_DrawCrosshairNames();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if ( !cg.showScores && cg.snap->ps.stats[STAT_HEALTH] > 0 ) {
+		if ( !cg.showScores && cg.snap->ps.stats[powerLevel] > 0 ) {
 
 #ifdef MISSIONPACK
 			if ( cg_drawStatus.integer ) {
@@ -2561,6 +2826,7 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 			}
 #else
 			CG_DrawStatusBar();
+			CG_DrawRadar();
 #endif
       
 			CG_DrawAmmoWarning();
@@ -2568,8 +2834,7 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 #ifdef MISSIONPACK
 			CG_DrawProxWarning();
 #endif      
-			if(stereoFrame == STEREO_CENTER)
-				CG_DrawCrosshair();
+			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
 			CG_DrawWeaponSelect();
 
@@ -2595,10 +2860,10 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 
 #ifdef MISSIONPACK
 	if (!cg_paused.integer) {
-		CG_DrawUpperRight(stereoFrame);
+		CG_DrawUpperRight();
 	}
 #else
-	CG_DrawUpperRight(stereoFrame);
+	CG_DrawUpperRight();
 #endif
 
 #ifndef MISSIONPACK
@@ -2618,12 +2883,14 @@ static void CG_Draw2D(stereoFrame_t stereoFrame)
 }
 
 
-static void CG_DrawTourneyScoreboard( void ) {
+static void CG_DrawTourneyScoreboard() {
 #ifdef MISSIONPACK
 #else
 	CG_DrawOldTourneyScoreboard();
 #endif
 }
+
+
 
 /*
 =====================
@@ -2633,6 +2900,9 @@ Perform all drawing needed to completely fill the screen
 =====================
 */
 void CG_DrawActive( stereoFrame_t stereoView ) {
+	float		separation;
+	vec3_t		baseOrg;
+
 	// optionally draw the info screen instead
 	if ( !cg.snap ) {
 		CG_DrawInformation();
@@ -2646,17 +2916,79 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		return;
 	}
 
+	switch ( stereoView ) {
+	case STEREO_CENTER:
+		separation = 0;
+		break;
+	case STEREO_LEFT:
+		separation = -cg_stereoSeparation.value / 2;
+		break;
+	case STEREO_RIGHT:
+		separation = cg_stereoSeparation.value / 2;
+		break;
+	default:
+		separation = 0;
+		CG_Error( "CG_DrawActive: Undefined stereoView" );
+	}
+
+
 	// clear around the rendered view if sized down
 	CG_TileClear();
 
-	if(stereoView != STEREO_CENTER)
-		CG_DrawCrosshair3D();
+	// offset vieworg appropriately if we're doing stereo separation
+	VectorCopy( cg.refdef.vieworg, baseOrg );
+	if ( separation != 0 ) {
+		VectorMA( cg.refdef.vieworg, -separation, cg.refdef.viewaxis[1], cg.refdef.vieworg );
+	}
+
+#if MAPLENSFLARES	// JUHOX: add lens flare editor cursor
+	if (
+		cgs.editMode == EM_mlf &&
+		!(
+			cg.lfEditor.moversStopped &&
+			cg.lfEditor.selectedMover
+		)
+	) {
+		CG_AddLFEditorCursor();
+	}
+#endif
+
+	CG_MotionBlur();
 
 	// draw 3D view
 	trap_R_RenderScene( &cg.refdef );
 
+#if MAPLENSFLARES	// JUHOX: mark selected mover for lens flare editor
+	if (
+		cgs.editMode == EM_mlf &&
+		cg.lfEditor.moversStopped &&
+		cg.lfEditor.selectedMover
+	) {
+		static const vec4_t darkening = { 0.2, 0, 0, 0.7 };
+
+		CG_FillRect(0, 0, 640, 480, darkening);
+		trap_R_ClearScene();
+		CG_Mover(cg.lfEditor.selectedMover);
+		CG_AddLFEditorCursor();
+		cg.refdef.rdflags |= RDF_NOWORLDMODEL;
+		trap_R_RenderScene(&cg.refdef);
+	}
+#endif
+
+	// restore original viewpoint if running stereo
+	if ( separation != 0 ) {
+		VectorCopy( baseOrg, cg.refdef.vieworg );
+	}
+
 	// draw status bar and other floating elements
- 	CG_Draw2D(stereoView);
+ 	CG_Draw2D();
+
+
+	// ADDING FOR ZEQ2
+	// HACK: We don't support deferring, so until it can REALLY be removed,
+	// always issue a CG_LoadDeferredPlayers() call.
+	CG_LoadDeferredPlayers();
+	// END ADDING
 }
 
 

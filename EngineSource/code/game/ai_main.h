@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 /*****************************************************************************
@@ -27,6 +7,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * desc:		Quake3 bot AI
  *
  * $Archive: /source/code/botai/ai_chat.c $
+ * $Author: Mrelusive $ 
+ * $Revision: 21 $
+ * $Modtime: 11/10/99 3:30p $
+ * $Date: 11/10/99 6:08p $
  *
  *****************************************************************************/
 
@@ -142,7 +126,7 @@ typedef struct bot_state_s
 	int tfl;										//the travel flags the bot uses
 	int flags;										//several flags
 	int respawn_wait;								//wait until respawned
-	int lasthealth;									//health value previous frame
+	int lastpowerLevel;									//powerLevel value previous frame
 	int lastkilledplayer;							//last killed player
 	int lastkilledby;								//player that last killed this bot
 	int botdeathtype;								//the death type of the bot
@@ -156,7 +140,7 @@ typedef struct bot_state_s
 	int num_kills;									//number of kills of this bot
 	int revenge_enemy;								//the revenge enemy
 	int revenge_kills;								//number of kills the enemy made
-	int lastframe_health;							//health value the last frame
+	int lastframe_powerLevel;							//powerLevel value the last frame
 	int lasthitcount;								//number of hits last frame
 	int chatto;										//chat to all or team
 	float walker;									//walker charactertic

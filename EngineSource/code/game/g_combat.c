@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // g_combat.c
 
@@ -74,6 +54,12 @@ Toss the weapon and powerups for the killed player
 =================
 */
 void TossClientItems( gentity_t *self ) {
+	// ADDING FOR ZEQ2
+	// Weapons and powerups aren't tossed at all.
+	return;
+	// END ADDING
+
+	/*
 	gitem_t		*item;
 	int			weapon;
 	float		angle;
@@ -91,7 +77,7 @@ void TossClientItems( gentity_t *self ) {
 		if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
 			weapon = self->client->pers.cmd.weapon;
 		}
-		if ( !( self->client->ps.stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
+		if ( !( self->client->ps.stats[skills] & ( 1 << weapon ) ) ) {
 			weapon = WP_NONE;
 		}
 	}
@@ -124,6 +110,7 @@ void TossClientItems( gentity_t *self ) {
 			}
 		}
 	}
+	*/
 }
 
 #ifdef MISSIONPACK
@@ -203,7 +190,7 @@ void TossClientPersistantPowerups( gentity_t *ent ) {
 	powerup->r.contents = CONTENTS_TRIGGER;
 	trap_LinkEntity( powerup );
 
-	ent->client->ps.stats[STAT_PERSISTANT_POWERUP] = 0;
+	// ent->client->ps.stats[STAT_PERSISTANT_POWERUP] = 0;
 	ent->client->persistantPowerup = NULL;
 }
 #endif
@@ -215,6 +202,7 @@ LookAtKiller
 ==================
 */
 void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) {
+	/*
 	vec3_t		dir;
 	vec3_t		angles;
 
@@ -223,15 +211,16 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) 
 	} else if ( inflictor && inflictor != self ) {
 		VectorSubtract (inflictor->s.pos.trBase, self->s.pos.trBase, dir);
 	} else {
-		self->client->ps.stats[STAT_DEAD_YAW] = self->s.angles[YAW];
+		self->client->ps.stats[deathCameraAngle] = self->s.angles[YAW];
 		return;
 	}
 
-	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
+	self->client->ps.stats[deathCameraAngle] = vectoyaw ( dir );
 
 	angles[YAW] = vectoyaw ( dir );
 	angles[PITCH] = 0; 
 	angles[ROLL] = 0;
+	*/
 }
 
 /*
@@ -270,11 +259,11 @@ body_die
 ==================
 */
 void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
-	if ( self->health > GIB_HEALTH ) {
+	if ( self->powerLevel > GIB_HEALTH ) {
 		return;
 	}
 	if ( !g_blood.integer ) {
-		self->health = GIB_HEALTH+1;
+		self->powerLevel = GIB_HEALTH+1;
 		return;
 	}
 
@@ -311,8 +300,6 @@ char	*modNames[] = {
 	"MOD_NAIL",
 	"MOD_CHAINGUN",
 	"MOD_PROXIMITY_MINE",
-	"MOD_KAMIKAZE",
-	"MOD_JUICED",
 #endif
 	"MOD_GRAPPLE"
 };
@@ -457,9 +444,8 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	// check for a player that almost brought in cubes
 	CheckAlmostScored( self, attacker );
 
-	if (self->client && self->client->hook) {
+	if (self->client && self->client->hook)
 		Weapon_HookFree(self->client->hook);
-	}
 #ifdef MISSIONPACK
 	if ((self->client->ps.eFlags & EF_TICKING) && self->activator) {
 		self->client->ps.eFlags &= ~EF_TICKING;
@@ -489,7 +475,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	if ( meansOfDeath < 0 || meansOfDeath >= sizeof( modNames ) / sizeof( modNames[0] ) ) {
 		obit = "<bad obituary>";
 	} else {
-		obit = modNames[meansOfDeath];
+		obit = modNames[ meansOfDeath ];
 	}
 
 	G_LogPrintf("Kill: %i %i %i: %s killed %s by %s\n", 
@@ -583,7 +569,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		}
 	}
 #ifdef MISSIONPACK
-	TossClientPersistantPowerups( self );
+	// TossClientPersistantPowerups( self );
 	if( g_gametype.integer == GT_HARVESTER ) {
 		TossClientCubes( self );
 	}
@@ -631,7 +617,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	memset( self->client->ps.powerups, 0, sizeof(self->client->ps.powerups) );
 
 	// never gib in a nodrop
-	if ( (self->health <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || meansOfDeath == MOD_SUICIDE) {
+	if ( (self->powerLevel <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || meansOfDeath == MOD_SUICIDE) {
 		// gib death
 		GibEntity( self, killer );
 	} else {
@@ -651,10 +637,10 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			break;
 		}
 
-		// for the no-blood option, we need to prevent the health
+		// for the no-blood option, we need to prevent the powerLevel
 		// from going to gib level
-		if ( self->health <= GIB_HEALTH ) {
-			self->health = GIB_HEALTH+1;
+		if ( self->powerLevel <= GIB_HEALTH ) {
+			self->powerLevel = GIB_HEALTH+1;
 		}
 
 		self->client->ps.legsAnim = 
@@ -680,44 +666,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	trap_LinkEntity (self);
 
 }
-
-
-/*
-================
-CheckArmor
-================
-*/
-int CheckArmor (gentity_t *ent, int damage, int dflags)
-{
-	gclient_t	*client;
-	int			save;
-	int			count;
-
-	if (!damage)
-		return 0;
-
-	client = ent->client;
-
-	if (!client)
-		return 0;
-
-	if (dflags & DAMAGE_NO_ARMOR)
-		return 0;
-
-	// armor
-	count = client->ps.stats[STAT_ARMOR];
-	save = ceil( damage * ARMOR_PROTECTION );
-	if (save >= count)
-		save = count;
-
-	if (!save)
-		return 0;
-
-	client->ps.stats[STAT_ARMOR] -= save;
-
-	return save;
-}
-
 /*
 ================
 RaySphereIntersections
@@ -796,7 +744,7 @@ int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t i
 #endif
 /*
 ============
-T_Damage
+G_Damage
 
 targ		entity that is being damaged
 inflictor	entity that is causing the damage
@@ -829,26 +777,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 #ifdef MISSIONPACK
 	vec3_t		bouncedir, impactpoint;
 #endif
-
-	if (!targ->takedamage) {
+	if (!targ->takedamage){
 		return;
 	}
-
 	// the intermission has allready been qualified for, so don't
 	// allow any extra scoring
 	if ( level.intermissionQueued ) {
 		return;
 	}
-#ifdef MISSIONPACK
-	if ( targ->client && mod != MOD_JUICED) {
-		if ( targ->client->invulnerabilityTime > level.time) {
-			if ( dir && point ) {
-				G_InvulnerabilityEffect( targ, dir, point, impactpoint, bouncedir );
-			}
-			return;
-		}
-	}
-#endif
 	if ( !inflictor ) {
 		inflictor = &g_entities[ENTITYNUM_WORLD];
 	}
@@ -856,27 +792,17 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		attacker = &g_entities[ENTITYNUM_WORLD];
 	}
 
-	// shootable doors / buttons don't actually have any health
+	// shootable doors / buttons don't actually have any powerLevel
 	if ( targ->s.eType == ET_MOVER ) {
 		if ( targ->use && targ->moverState == MOVER_POS1 ) {
 			targ->use( targ, inflictor, attacker );
 		}
 		return;
 	}
-#ifdef MISSIONPACK
-	if( g_gametype.integer == GT_OBELISK && CheckObeliskAttack( targ, attacker ) ) {
-		return;
-	}
-#endif
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
-		max = attacker->client->ps.stats[STAT_MAX_HEALTH];
-#ifdef MISSIONPACK
-		if( bg_itemlist[attacker->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
-			max /= 2;
-		}
-#endif
+		max = attacker->client->ps.stats[powerLevelTotal];
 		damage = damage * max / 100;
 	}
 
@@ -912,8 +838,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 		mass = 200;
 
-		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
-		VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
+		//VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
+		//VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
 
 		// set the timer so that the other client can't cancel
 		// out the movement immediately
@@ -946,125 +872,68 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 				return;
 			}
 		}
-#ifdef MISSIONPACK
-		if (mod == MOD_PROXIMITY_MINE) {
-			if (inflictor && inflictor->parent && OnSameTeam(targ, inflictor->parent)) {
-				return;
-			}
-			if (targ == attacker) {
-				return;
-			}
-		}
-#endif
-
 		// check for godmode
 		if ( targ->flags & FL_GODMODE ) {
 			return;
 		}
 	}
-
-	// battlesuit protects from all radius damage (but takes knockback)
-	// and protects 50% against all damage
-	if ( client && client->ps.powerups[PW_BATTLESUIT] ) {
-		G_AddEvent( targ, EV_POWERUP_BATTLESUIT, 0 );
-		if ( ( dflags & DAMAGE_RADIUS ) || ( mod == MOD_FALLING ) ) {
-			return;
-		}
-		damage *= 0.5;
-	}
-
 	// add to the attacker's hit counter (if the target isn't a general entity like a prox mine)
-	if ( attacker->client && client
-			&& targ != attacker && targ->health > 0
-			&& targ->s.eType != ET_MISSILE
-			&& targ->s.eType != ET_GENERAL) {
-		if ( OnSameTeam( targ, attacker ) ) {
+	if(attacker->client && targ != attacker && targ->powerLevel > 0 && targ->s.eType != ET_MISSILE && targ->s.eType != ET_GENERAL){
+		if(OnSameTeam(targ,attacker)){
 			attacker->client->ps.persistant[PERS_HITS]--;
-		} else {
+		}
+		else{
 			attacker->client->ps.persistant[PERS_HITS]++;
 		}
-		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (targ->health<<8)|(client->ps.stats[STAT_ARMOR]);
+		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (targ->powerLevel<<8)|0;
 	}
-
-	// always give half damage if hurting self
 	// calculated after knockback, so rocket jumping works
-	if ( targ == attacker) {
-		damage *= 0.5;
-	}
-
-	if ( damage < 1 ) {
-		damage = 1;
-	}
+	if(targ == attacker){damage *= 0.25;}
+	if (damage < 1){damage = 1;}
 	take = damage;
-	save = 0;
-
-	// save some from armor
-	asave = CheckArmor (targ, take, dflags);
-	take -= asave;
-
-	if ( g_debugDamage.integer ) {
-		G_Printf( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,
-			targ->health, take, asave );
-	}
-
 	// add to the damage inflicted on a player this frame
-	// the total will be turned into screen blends and view angle kicks
-	// at the end of the frame
-	if ( client ) {
-		if ( attacker ) {
+	if(client){
+		if(attacker){
 			client->ps.persistant[PERS_ATTACKER] = attacker->s.number;
-		} else {
+		}
+		else{
 			client->ps.persistant[PERS_ATTACKER] = ENTITYNUM_WORLD;
 		}
-		client->damage_armor += asave;
-		client->damage_blood += take;
-		client->damage_knockback += knockback;
-		if ( dir ) {
+		//client->damage_blood += take;
+		//client->damage_knockback += knockback;
+		if(dir){
 			VectorCopy ( dir, client->damage_from );
 			client->damage_fromWorld = qfalse;
-		} else {
-			VectorCopy ( targ->r.currentOrigin, client->damage_from );
+		}
+		else{
+			VectorCopy(targ->r.currentOrigin,client->damage_from);
 			client->damage_fromWorld = qtrue;
 		}
 	}
-
-	// See if it's the player hurting the emeny flag carrier
-#ifdef MISSIONPACK
-	if( g_gametype.integer == GT_CTF || g_gametype.integer == GT_1FCTF ) {
-#else	
-	if( g_gametype.integer == GT_CTF) {
-#endif
-		Team_CheckHurtCarrier(targ, attacker);
-	}
-
 	if (targ->client) {
 		// set the last client who damaged the target
 		targ->client->lasthurt_client = attacker->s.number;
 		targ->client->lasthurt_mod = mod;
 	}
-
 	// do the damage
-	if (take) {
-		targ->health = targ->health - take;
-		if ( targ->client ) {
-			targ->client->ps.stats[STAT_HEALTH] = targ->health;
+	if(take){
+		//targ->powerLevel -= take;
+		if(targ->client){
+			targ->client->ps.stats[powerLevelTotal] -= take;
+			targ->client->ps.persistant[powerLevelMaximum] += take;
 		}
-			
-		if ( targ->health <= 0 ) {
-			if ( client )
+		if(targ->powerLevel<= 0) {
+			if (client){
 				targ->flags |= FL_NO_KNOCKBACK;
-
-			if (targ->health < -999)
-				targ->health = -999;
-
+			}
 			targ->enemy = attacker;
-			targ->die (targ, inflictor, attacker, take, mod);
+			targ->die(targ,inflictor,attacker,take,mod);
 			return;
-		} else if ( targ->pain ) {
-			targ->pain (targ, attacker, take);
+		}
+		else if(targ->pain){
+			targ->pain(targ,attacker,take);
 		}
 	}
-
 }
 
 

@@ -1,25 +1,4 @@
 /*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
-/*
 =======================================================================
 
 RESET MENU
@@ -106,14 +85,14 @@ Reset_MenuDraw
 */
 static void Reset_MenuDraw( void ) {
 	UI_DrawNamedPic( 142, 118, 359, 256, ART_FRAME );
-	UI_DrawProportionalString( 320, 194 + 10, "RESET GAME?", UI_CENTER|UI_INVERSE, color_red );
-	UI_DrawProportionalString( s_reset.slashX, 265, "/", UI_LEFT|UI_INVERSE, color_red );
+	UI_DrawProportionalString( 320, 194 + 10, "RESET GAME?", UI_CENTER|UI_INVERSE|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( s_reset.slashX, 265, "/", UI_LEFT|UI_INVERSE|UI_DROPSHADOW, color_white );
 	Menu_Draw( &s_reset.menu );
 
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This resets all of the", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "single player game variables.", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 2, "Do this only if you want to", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 3, "start over from the beginning.", UI_CENTER|UI_SMALLFONT, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This resets all of the", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "single player game variables.", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 2, "Do this only if you want to", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 3, "start over from the beginning.", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
 }
 
 
@@ -172,8 +151,8 @@ void UI_ResetMenu(void) {
 	s_reset.yes.generic.x			= l1;
 	s_reset.yes.generic.y			= 264;
 	s_reset.yes.string				= "YES";
-	s_reset.yes.color				= color_red;
-	s_reset.yes.style				= UI_LEFT;
+	s_reset.yes.color				= color_white;
+	s_reset.yes.style				= UI_LEFT|UI_DROPSHADOW;
 
 	s_reset.no.generic.type			= MTYPE_PTEXT;      
 	s_reset.no.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS; 
@@ -182,8 +161,8 @@ void UI_ResetMenu(void) {
 	s_reset.no.generic.x		    = l3;
 	s_reset.no.generic.y		    = 264;
 	s_reset.no.string				= "NO";
-	s_reset.no.color			    = color_red;
-	s_reset.no.style			    = UI_LEFT;
+	s_reset.no.color			    = color_white;
+	s_reset.no.style			    = UI_LEFT|UI_DROPSHADOW;
 
 	Menu_AddItem( &s_reset.menu,	&s_reset.yes );             
 	Menu_AddItem( &s_reset.menu,	&s_reset.no );

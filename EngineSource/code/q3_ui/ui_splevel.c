@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =============================================================================
@@ -138,10 +118,10 @@ static void PlayerIcon( const char *modelAndSkin, char *iconName, int iconNameMa
 		skin = "default";
 	}
 
-	Com_sprintf(iconName, iconNameMaxSize, "models/players/%s/icon_%s.tga", model, skin );
+	Com_sprintf(iconName, iconNameMaxSize, "players//%s/icon_%s.png", model, skin );
 
 	if( !trap_R_RegisterShaderNoMip( iconName ) && Q_stricmp( skin, "default" ) != 0 ) {
-		Com_sprintf(iconName, iconNameMaxSize, "models/players/%s/icon_default.tga", model );
+		Com_sprintf(iconName, iconNameMaxSize, "players//%s/icon_default.png", model );
 	}
 }
 
@@ -231,7 +211,7 @@ static void UI_SPLevelMenu_SetMenuArena( int n, int level, const char *arenaInfo
 		levelMenuInfo.levelScores[n] = 8;
 	}
 
-	strcpy( levelMenuInfo.levelPicNames[n], va( "levelshots/%s.tga", map ) );
+	strcpy( levelMenuInfo.levelPicNames[n], va( "maps/%s.tga", map ) );
 	if( !trap_R_RegisterShaderNoMip( levelMenuInfo.levelPicNames[n] ) ) {
 		strcpy( levelMenuInfo.levelPicNames[n], ART_MAP_UNKNOWN );
 	}
@@ -350,10 +330,10 @@ UI_SPLevelMenu_ResetEvent
 =================
 */
 static void UI_SPLevelMenu_ResetDraw( void ) {
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This resets all of the", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "single player game variables.", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 2, "Do this only if you want to", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 3, "start over from the beginning.", UI_CENTER|UI_SMALLFONT, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This resets all of the", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "single player game variables.", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 2, "Do this only if you want to", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 3, "start over from the beginning.", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
 }
 
 static void UI_SPLevelMenu_ResetAction( qboolean result ) {
@@ -551,7 +531,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 	// draw player name
 	trap_Cvar_VariableStringBuffer( "name", string, 32 );
 	Q_CleanStr( string );
-	UI_DrawProportionalString( 320, PLAYER_Y, string, UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawProportionalString( 320, PLAYER_Y, string, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 
 	// check for model changes
 	trap_Cvar_VariableStringBuffer( "model", buf, sizeof(buf) );
@@ -592,11 +572,11 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 				Com_sprintf( string, sizeof(string), "%i", level );
 			}
 
-			UI_DrawString( x + 24, y + 48, string, UI_CENTER, color_yellow );
+			UI_DrawString( x + 24, y + 48, string, UI_CENTER|UI_DROPSHADOW, color_lightBlue );
 		}
 	}
 
-	UI_DrawProportionalString( 18, 38, va( "Tier %i", selectedArenaSet + 1 ), UI_LEFT|UI_SMALLFONT, color_orange );
+	UI_DrawProportionalString( 18, 38, va( "Tier %i", selectedArenaSet + 1 ), UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 
 	for ( n = 0; n < levelMenuInfo.numMaps; n++ ) {
 		x = levelMenuInfo.item_maps[n].generic.x;
@@ -605,7 +585,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 	}
 
 	if ( selectedArenaSet > currentSet ) {
-		UI_DrawProportionalString( 320, 216, "ACCESS DENIED", UI_CENTER|UI_BIGFONT, color_red );
+		UI_DrawProportionalString( 320, 216, "ACCESS DENIED", UI_CENTER|UI_BIGFONT|UI_DROPSHADOW, color_red );
 		return;
 	}
 
@@ -616,7 +596,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 		x = levelMenuInfo.item_maps[n].generic.x;
 		y = levelMenuInfo.item_maps[n].generic.y;
 
-		UI_DrawString( x + 64, y + 96, levelMenuInfo.levelNames[n], UI_CENTER|UI_SMALLFONT, color_orange );
+		UI_DrawString( x + 64, y + 96, levelMenuInfo.levelNames[n], UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 
 		if( levelMenuInfo.levelScores[n] == 1 ) {
 			UI_DrawHandlePic( x, y, 128, 96, levelMenuInfo.levelCompletePic[levelMenuInfo.levelScoresSkill[n] - 1] ); 
@@ -641,7 +621,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 	Q_strncpyz( buf, Info_ValueForKey( levelMenuInfo.selectedArenaInfo, "map" ), 20 );
 	Q_strupr( buf );
 	Com_sprintf( string, sizeof(string), "%s: %s", buf, Info_ValueForKey( levelMenuInfo.selectedArenaInfo, "longname" ) );
-	UI_DrawProportionalString( 320, y, string, UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawProportionalString( 320, y, string, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 
 //	fraglimit = atoi( Info_ValueForKey( levelMenuInfo.selectedArenaInfo, "fraglimit" ) );
 //	UI_DrawString( 18, 212, va("Frags %i", fraglimit) , UI_LEFT|UI_SMALLFONT, color_orange );
@@ -656,9 +636,9 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 		}
 		else {
 			UI_FillRect( x, y, 64, 64, color_black );
-			UI_DrawProportionalString( x+22, y+18, "?", UI_BIGFONT, color_orange );
+			UI_DrawProportionalString( x+22, y+18, "?", UI_BIGFONT|UI_DROPSHADOW, color_lightBlue );
 		}
-		UI_DrawString( x, y + 64, levelMenuInfo.botNames[n], UI_SMALLFONT|UI_LEFT, color_orange );
+		UI_DrawString( x, y + 64, levelMenuInfo.botNames[n], UI_SMALLFONT|UI_LEFT|UI_DROPSHADOW, color_lightBlue );
 	}
 }
 

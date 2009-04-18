@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 #include "g_local.h"
@@ -38,6 +18,9 @@ typedef struct {
 gentity_t		g_entities[MAX_GENTITIES];
 gclient_t		g_clients[MAX_CLIENTS];
 
+#if MAPLENSFLARES	// JUHOX: cvars for map lens flares
+vmCvar_t	g_editmode;
+#endif
 vmCvar_t	g_gametype;
 vmCvar_t	g_dmflags;
 vmCvar_t	g_fraglimit;
@@ -66,8 +49,8 @@ vmCvar_t	g_synchronousClients;
 vmCvar_t	g_warmup;
 vmCvar_t	g_doWarmup;
 vmCvar_t	g_restarted;
-vmCvar_t	g_logfile;
-vmCvar_t	g_logfileSync;
+vmCvar_t	g_log;
+vmCvar_t	g_logSync;
 vmCvar_t	g_blood;
 vmCvar_t	g_podiumDist;
 vmCvar_t	g_podiumDrop;
@@ -94,7 +77,14 @@ vmCvar_t	g_enableDust;
 vmCvar_t	g_enableBreath;
 vmCvar_t	g_proxMineTimeout;
 #endif
+// ADDING FOR ZEQ2
+vmCvar_t	g_verboseParse;
+vmCvar_t	g_powerlevel;
+vmCvar_t	g_powerlevelChargeScale;
+vmCvar_t	g_rolling;
+vmCvar_t	g_running;
 
+// bk001129 - made static to avoid aliasing
 static cvarTable_t		gameCvarTable[] = {
 	// don't override the cheat state set by the system
 	{ &g_cheats, "sv_cheats", "", 0, 0, qfalse },
@@ -104,6 +94,9 @@ static cvarTable_t		gameCvarTable[] = {
 	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
 	{ &g_restarted, "g_restarted", "0", CVAR_ROM, 0, qfalse  },
 	{ NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+#if MAPLENSFLARES	// JUHOX: cvars for map lens flares
+	{ &g_editmode, "g_editmode", "0", CVAR_SERVERINFO | CVAR_INIT, 0, qfalse },
+#endif
 
 	// latched vars
 	{ &g_gametype, "g_gametype", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qfalse  },
@@ -126,8 +119,8 @@ static cvarTable_t		gameCvarTable[] = {
 
 	{ &g_warmup, "g_warmup", "20", CVAR_ARCHIVE, 0, qtrue  },
 	{ &g_doWarmup, "g_doWarmup", "0", 0, 0, qtrue  },
-	{ &g_logfile, "g_log", "games.log", CVAR_ARCHIVE, 0, qfalse  },
-	{ &g_logfileSync, "g_logsync", "0", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_log, "g_log", "games.log", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_logSync, "g_logSync", "0", CVAR_ARCHIVE, 0, qfalse  },
 
 	{ &g_password, "g_password", "", CVAR_USERINFO, 0, qfalse  },
 
@@ -173,14 +166,22 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_enableBreath, "g_enableBreath", "0", CVAR_SERVERINFO, 0, qtrue, qfalse },
 	{ &g_proxMineTimeout, "g_proxMineTimeout", "20000", 0, 0, qfalse },
 #endif
-	{ &g_smoothClients, "g_smoothClients", "1", 0, 0, qfalse},
-	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, qfalse},
-	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, qfalse},
+	{ &g_smoothClients, "g_smoothClients", "1", 0, 0, qfalse },
+	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, qfalse },
+	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, qfalse },
 
-	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse}
+	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse },
+	// ADDING FOR ZEQ2
+	{ &g_verboseParse, "g_verboseParse", "0", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_powerlevel, "g_powerlevel", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
+	{ &g_powerlevelChargeScale, "g_powerlevelChargeScale", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
+	{ &g_rolling, "g_rolling", "1", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_running, "g_running", "0", CVAR_ARCHIVE, 0, qtrue }
+	// END ADDING
 
 };
 
+// bk001129 - made static to avoid aliasing
 static int gameCvarTableSize = sizeof( gameCvarTable ) / sizeof( gameCvarTable[0] );
 
 
@@ -198,7 +199,7 @@ This is the only way control passes into the module.
 This must be the very first function compiled into the .q3vm file
 ================
 */
-intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
+int vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
 	switch ( command ) {
 	case GAME_INIT:
 		G_InitGame( arg0, arg1, arg2 );
@@ -207,7 +208,7 @@ intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, 
 		G_ShutdownGame( arg0 );
 		return 0;
 	case GAME_CLIENT_CONNECT:
-		return (intptr_t)ClientConnect( arg0, arg1, arg2 );
+		return (int)ClientConnect( arg0, arg1, arg2 );
 	case GAME_CLIENT_THINK:
 		ClientThink( arg0 );
 		return 0;
@@ -241,7 +242,7 @@ void QDECL G_Printf( const char *fmt, ... ) {
 	char		text[1024];
 
 	va_start (argptr, fmt);
-	Q_vsnprintf (text, sizeof(text), fmt, argptr);
+	vsprintf (text, fmt, argptr);
 	va_end (argptr);
 
 	trap_Printf( text );
@@ -252,7 +253,7 @@ void QDECL G_Error( const char *fmt, ... ) {
 	char		text[1024];
 
 	va_start (argptr, fmt);
-	Q_vsnprintf (text, sizeof(text), fmt, argptr);
+	vsprintf (text, fmt, argptr);
 	va_end (argptr);
 
 	trap_Error( text );
@@ -314,7 +315,7 @@ void G_FindTeams( void ) {
 	G_Printf ("%i teams with %i entities\n", c, c2);
 }
 
-void G_RemapTeamShaders( void ) {
+void G_RemapTeamShaders() {
 #ifdef MISSIONPACK
 	char string[1024];
 	float f = level.time * 0.001;
@@ -423,16 +424,16 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	level.time = levelTime;
 	level.startTime = levelTime;
 
-	level.snd_fry = G_SoundIndex("sound/player/fry.wav");	// FIXME standing in lava / slime
+	level.snd_fry = G_SoundIndex("sound/player/fry.ogg");	// FIXME standing in lava / slime
 
-	if ( g_gametype.integer != GT_SINGLE_PLAYER && g_logfile.string[0] ) {
-		if ( g_logfileSync.integer ) {
-			trap_FS_FOpenFile( g_logfile.string, &level.logFile, FS_APPEND_SYNC );
+	if ( g_gametype.integer != GT_SINGLE_PLAYER && g_log.string[0] ) {
+		if ( g_logSync.integer ) {
+			trap_FS_FOpenFile( g_log.string, &level.logFile, FS_APPEND_SYNC );
 		} else {
-			trap_FS_FOpenFile( g_logfile.string, &level.logFile, FS_APPEND );
+			trap_FS_FOpenFile( g_log.string, &level.logFile, FS_APPEND );
 		}
 		if ( !level.logFile ) {
-			G_Printf( "WARNING: Couldn't open logfile: %s\n", g_logfile.string );
+			G_Printf( "WARNING: Couldn't open logfile: %s\n", g_log.string );
 		} else {
 			char	serverinfo[MAX_INFO_STRING];
 
@@ -488,12 +489,16 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	SaveRegisteredItems();
 
+	// ADDING FOR ZEQ2
+	// Parse the weapon lists.
+	// FIXME: As soon as these become variable, move them
+	// to the client spawning functions!
 	G_Printf ("-----------------------------------\n");
 
 	if( g_gametype.integer == GT_SINGLE_PLAYER || trap_Cvar_VariableIntegerValue( "com_buildScript" ) ) {
 		G_ModelIndex( SP_PODIUM_MODEL );
-		G_SoundIndex( "sound/player/gurp1.wav" );
-		G_SoundIndex( "sound/player/gurp2.wav" );
+		G_SoundIndex( "sound/player/gurp1.ogg" );
+		G_SoundIndex( "sound/player/gurp2.ogg" );
 	}
 
 	if ( trap_Cvar_VariableIntegerValue( "bot_enable" ) ) {
@@ -534,12 +539,15 @@ void G_ShutdownGame( int restart ) {
 
 //===================================================================
 
+#ifndef GAME_HARD_LINKED
+// this is only here so the functions in q_shared.c and bg_*.c can link
+
 void QDECL Com_Error ( int level, const char *error, ... ) {
 	va_list		argptr;
 	char		text[1024];
 
 	va_start (argptr, error);
-	Q_vsnprintf (text, sizeof(text), error, argptr);
+	vsprintf (text, error, argptr);
 	va_end (argptr);
 
 	G_Error( "%s", text);
@@ -550,11 +558,13 @@ void QDECL Com_Printf( const char *msg, ... ) {
 	char		text[1024];
 
 	va_start (argptr, msg);
-	Q_vsnprintf (text, sizeof(text), msg, argptr);
+	vsprintf (text, msg, argptr);
 	va_end (argptr);
 
 	G_Printf ("%s", text);
 }
+
+#endif
 
 /*
 ========================================================================
@@ -990,7 +1000,7 @@ void BeginIntermission( void ) {
 		if (!client->inuse)
 			continue;
 		// respawn if dead
-		if (client->health <= 0) {
+		if (client->powerLevel <= 0) {
 			respawn(client);
 		}
 		MoveClientToIntermission( client );
@@ -1014,8 +1024,6 @@ or moved to a new level based on the "nextmap" cvar
 void ExitLevel (void) {
 	int		i;
 	gclient_t *cl;
-	char nextmap[MAX_STRING_CHARS];
-	char d1[MAX_STRING_CHARS];
 
 	//bot interbreeding
 	BotInterbreedEndMatch();
@@ -1033,16 +1041,8 @@ void ExitLevel (void) {
 		return;	
 	}
 
-	trap_Cvar_VariableStringBuffer( "nextmap", nextmap, sizeof(nextmap) );
-	trap_Cvar_VariableStringBuffer( "d1", d1, sizeof(d1) );
 
-	if( !Q_stricmp( nextmap, "map_restart 0" ) && Q_stricmp( d1, "" ) ) {
-		trap_Cvar_Set( "nextmap", "vstr d2" );
-		trap_SendConsoleCommand( EXEC_APPEND, "vstr d1\n" );
-	} else {
-		trap_SendConsoleCommand( EXEC_APPEND, "vstr nextmap\n" );
-	}
-
+	trap_SendConsoleCommand( EXEC_APPEND, "vstr nextmap\n" );
 	level.changemap = NULL;
 	level.intermissiontime = 0;
 
@@ -1092,7 +1092,7 @@ void QDECL G_LogPrintf( const char *fmt, ... ) {
 	Com_sprintf( string, sizeof(string), "%3i:%i%i ", min, tens, sec );
 
 	va_start( argptr, fmt );
-	Q_vsnprintf(string + 7, sizeof(string) - 7, fmt, argptr);
+	vsprintf( string +7 , fmt,argptr );
 	va_end( argptr );
 
 	if ( g_dedicated.integer ) {
@@ -1116,7 +1116,7 @@ Append information about this game to the log file
 void LogExit( const char *string ) {
 	int				i, numSorted;
 	gclient_t		*cl;
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK // bk001205
 	qboolean won = qtrue;
 #endif
 	G_LogPrintf( "Exit: %s\n", string );
@@ -1187,7 +1187,7 @@ wait 10 seconds before going on.
 =================
 */
 void CheckIntermissionExit( void ) {
-	int			ready, notReady, playerCount;
+	int			ready, notReady;
 	int			i;
 	gclient_t	*cl;
 	int			readyMask;
@@ -1200,7 +1200,6 @@ void CheckIntermissionExit( void ) {
 	ready = 0;
 	notReady = 0;
 	readyMask = 0;
-	playerCount = 0;
 	for (i=0 ; i< g_maxclients.integer ; i++) {
 		cl = level.clients + i;
 		if ( cl->pers.connected != CON_CONNECTED ) {
@@ -1210,7 +1209,6 @@ void CheckIntermissionExit( void ) {
 			continue;
 		}
 
-		playerCount++;
 		if ( cl->readyToExit ) {
 			ready++;
 			if ( i < 16 ) {
@@ -1228,7 +1226,8 @@ void CheckIntermissionExit( void ) {
 		if ( cl->pers.connected != CON_CONNECTED ) {
 			continue;
 		}
-		cl->ps.stats[STAT_CLIENTS_READY] = readyMask;
+		//cl->ps.stats[STAT_CLIENTS_READY] = readyMask;
+		trap_SetConfigstring(CS_CLIENTSREADY, va("%i", readyMask));
 	}
 
 	// never exit in less than five seconds
@@ -1236,19 +1235,16 @@ void CheckIntermissionExit( void ) {
 		return;
 	}
 
-	// only test ready status when there are real players present
-	if ( playerCount > 0 ) {
-		// if nobody wants to go, clear timer
-		if ( !ready ) {
-			level.readyToExit = qfalse;
-			return;
-		}
+	// if nobody wants to go, clear timer
+	if ( !ready ) {
+		level.readyToExit = qfalse;
+		return;
+	}
 
-		// if everyone wants to go, go now
-		if ( !notReady ) {
-			ExitLevel();
-			return;
-		}
+	// if everyone wants to go, go now
+	if ( !notReady ) {
+		ExitLevel();
+		return;
 	}
 
 	// the first person to ready starts the ten second timeout
@@ -1443,13 +1439,13 @@ void CheckTournament( void ) {
 		// if all players have arrived, start the countdown
 		if ( level.warmupTime < 0 ) {
 			if ( level.numPlayingClients == 2 ) {
-				// fudge by -1 to account for extra delays
-				if ( g_warmup.integer > 1 ) {
+
+				if( g_warmup.integer > 1 ) {
+					// fudge by -1 to account for extra delays
 					level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
 				} else {
 					level.warmupTime = 0;
 				}
-
 				trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
 			}
 			return;
@@ -1533,7 +1529,6 @@ void CheckVote( void ) {
 	if ( level.time - level.voteTime >= VOTE_TIME ) {
 		trap_SendServerCommand( -1, "print \"Vote failed.\n\"" );
 	} else {
-		// ATVI Q3 1.32 Patch #9, WNF
 		if ( level.voteYes > level.numVotingClients/2 ) {
 			// execute the command, then remove the vote
 			trap_SendServerCommand( -1, "print \"Vote passed.\n\"" );
@@ -1727,7 +1722,7 @@ void G_RunFrame( int levelTime ) {
 	int			i;
 	gentity_t	*ent;
 	int			msec;
-int start, end;
+	int start, end;
 
 	// if we are waiting for the level to restart, do nothing
 	if ( level.restarted ) {
@@ -1784,8 +1779,24 @@ int start, end;
 		}
 
 		if ( ent->s.eType == ET_MISSILE ) {
-			G_RunMissile( ent );
+			G_RunUserMissile( ent );
 			continue;
+		}
+
+		if ( ent->s.eType == ET_BEAMHEAD ) {
+			G_RunUserMissile( ent );
+		}
+
+		if ( ent->s.eType == ET_SKIMMER ) {
+			G_RunUserSkimmer( ent );
+		}
+
+		if ( ent->s.eType == ET_RIFT ) {
+			G_RunRiftWeaponClass( ent );
+		}
+
+		if ( ent->s.eType == ET_TORCH ) {
+			G_RunUserTorch( ent );
 		}
 
 		if ( ent->s.eType == ET_ITEM || ent->physicsObject ) {
@@ -1805,9 +1816,9 @@ int start, end;
 
 		G_RunThink( ent );
 	}
-end = trap_Milliseconds();
+	end = trap_Milliseconds();
 
-start = trap_Milliseconds();
+	start = trap_Milliseconds();
 	// perform final fixups on the players
 	ent = &g_entities[0];
 	for (i=0 ; i < level.maxclients ; i++, ent++ ) {
@@ -1815,7 +1826,9 @@ start = trap_Milliseconds();
 			ClientEndFrame( ent );
 		}
 	}
-end = trap_Milliseconds();
+	end = trap_Milliseconds();
+
+	G_RadarUpdateCS();
 
 	// see if it is time to do a tournement restart
 	CheckTournament();

@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "g_local.h"
 
@@ -80,7 +60,7 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 		if ( client->pers.connected == CON_DISCONNECTED ) {
 			continue;
 		}
-		if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+		if ( client->ps.stats[powerLevel] <= 0 ) {
 			continue;
 		}
 
@@ -128,7 +108,7 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 	other->client->persistantPowerup = ent;
 
 	switch( ent->item->giTag ) {
-	case PW_GUARD:
+/*	case PW_GUARD:
 		clientNum = other->client->ps.clientNum;
 		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
 		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
@@ -137,10 +117,10 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 		}
 		max = (int)(2 *  handicap);
 
-		other->health = max;
-		other->client->ps.stats[STAT_HEALTH] = max;
-		other->client->ps.stats[STAT_MAX_HEALTH] = max;
-		other->client->ps.stats[STAT_ARMOR] = max;
+		other->powerLevel = max;
+		other->client->ps.stats[powerLevel] = max;
+		other->client->ps.stats[powerLevelTotal] = max;
+		//other->client->ps.stats[STAT_ARMOR] = max;
 		other->client->pers.maxHealth = max;
 
 		break;
@@ -153,7 +133,7 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 			handicap = 100.0f;
 		}
 		other->client->pers.maxHealth = handicap;
-		other->client->ps.stats[STAT_ARMOR] = 0;
+		//other->client->ps.stats[STAT_ARMOR] = 0;
 		break;
 
 	case PW_DOUBLER:
@@ -165,17 +145,17 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 		}
 		other->client->pers.maxHealth = handicap;
 		break;
-	case PW_AMMOREGEN:
-		clientNum = other->client->ps.clientNum;
-		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
-		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
-		if( handicap<=0.0f || handicap>100.0f) {
-			handicap = 100.0f;
-		}
-		other->client->pers.maxHealth = handicap;
-		memset(other->client->ammoTimes, 0, sizeof(other->client->ammoTimes));
-		break;
-	default:
+//	case PW_AMMOREGEN:
+//		clientNum = other->client->ps.clientNum;
+//		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
+//		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
+//		if( handicap<=0.0f || handicap>100.0f) {
+//			handicap = 100.0f;
+//		}
+//		other->client->pers.maxHealth = handicap;
+//		memset(other->client->ammoTimes, 0, sizeof(other->client->ammoTimes));
+//		break;
+*/	default:
 		clientNum = other->client->ps.clientNum;
 		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
 		handicap = atof( Info_ValueForKey( userinfo, "handicap" ) );
@@ -194,11 +174,11 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 
 int Pickup_Holdable( gentity_t *ent, gentity_t *other ) {
 
-	other->client->ps.stats[STAT_HOLDABLE_ITEM] = ent->item - bg_itemlist;
+//	other->client->ps.stats[STAT_HOLDABLE_ITEM] = ent->item - bg_itemlist;
 
-	if( ent->item->giTag == HI_KAMIKAZE ) {
-		other->client->ps.eFlags |= EF_KAMIKAZE;
-	}
+//	if( ent->item->giTag == HI_KAMIKAZE ) {
+//		other->client->ps.eFlags |= EF_KAMIKAZE;
+//	}
 
 	return RESPAWN_HOLDABLE;
 }
@@ -257,7 +237,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 	}
 
 	// add the weapon
-	other->client->ps.stats[STAT_WEAPONS] |= ( 1 << ent->item->giTag );
+	other->client->ps.stats[skills] |= ( 1 << ent->item->giTag );
 
 	Add_Ammo( other, ent->item->giTag, quantity );
 
@@ -279,17 +259,10 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	int			max;
 	int			quantity;
 
-	// small and mega healths will go over the max
-#ifdef MISSIONPACK
-	if( other->client && bg_itemlist[other->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
-		max = other->client->ps.stats[STAT_MAX_HEALTH];
-	}
-	else
-#endif
 	if ( ent->item->quantity != 5 && ent->item->quantity != 100 ) {
-		max = other->client->ps.stats[STAT_MAX_HEALTH];
+		max = other->client->ps.stats[powerLevelTotal];
 	} else {
-		max = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+		max = other->client->ps.stats[powerLevelTotal] * 2;
 	}
 
 	if ( ent->count ) {
@@ -298,14 +271,14 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 		quantity = ent->item->quantity;
 	}
 
-	other->health += quantity;
+	other->powerLevel += quantity;
 
-	if (other->health > max ) {
-		other->health = max;
+	if (other->powerLevel > max ) {
+		other->powerLevel = max;
 	}
-	other->client->ps.stats[STAT_HEALTH] = other->health;
+	other->client->ps.stats[powerLevel] = other->powerLevel;
 
-	if ( ent->item->quantity == 100 ) {		// mega health respawns slow
+	if ( ent->item->quantity == 100 ) {		// mega powerLevel respawns slow
 		return RESPAWN_MEGAHEALTH;
 	}
 
@@ -315,29 +288,14 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 //======================================================================
 
 int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
-#ifdef MISSIONPACK
-	int		upperBound;
-
-	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-
-	if( other->client && bg_itemlist[other->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
-		upperBound = other->client->ps.stats[STAT_MAX_HEALTH];
+/*	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
+	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[powerLevelTotal] * 2 ) {
+		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[powerLevelTotal] * 2;
 	}
-	else {
-		upperBound = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
-	}
-
-	if ( other->client->ps.stats[STAT_ARMOR] > upperBound ) {
-		other->client->ps.stats[STAT_ARMOR] = upperBound;
-	}
-#else
-	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
-		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
-	}
-#endif
 
 	return RESPAWN_ARMOR;
+*/
+	return 0;
 }
 
 //======================================================================
@@ -384,7 +342,7 @@ void RespawnItem( gentity_t *ent ) {
 		else {
 			te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_SOUND );
 		}
-		te->s.eventParm = G_SoundIndex( "sound/items/poweruprespawn.wav" );
+		te->s.eventParm = G_SoundIndex( "sound/items/poweruprespawn.ogg" );
 		te->r.svFlags |= SVF_BROADCAST;
 	}
 
@@ -399,7 +357,7 @@ void RespawnItem( gentity_t *ent ) {
 		else {
 			te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_SOUND );
 		}
-		te->s.eventParm = G_SoundIndex( "sound/items/kamikazerespawn.wav" );
+		te->s.eventParm = G_SoundIndex( "sound/items/kamikazerespawn.ogg" );
 		te->r.svFlags |= SVF_BROADCAST;
 	}
 
@@ -416,12 +374,14 @@ Touch_Item
 ===============
 */
 void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
+	return;
+/*
 	int			respawn;
 	qboolean	predict;
 
 	if (!other->client)
 		return;
-	if (other->health < 1)
+	if (other->powerLevel < 1)
 		return;		// dead people can't pickup
 
 	// the same pickup rules are used for client side and server side
@@ -436,11 +396,15 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 	// call the item-specific pickup function
 	switch( ent->item->giType ) {
 	case IT_WEAPON:
-		respawn = Pickup_Weapon(ent, other);
+//		ADDING FOR ZEQ2
+		respawn = 0; //Pickup_Weapon(ent, other);
+//		END ADDING
 //		predict = qfalse;
 		break;
 	case IT_AMMO:
-		respawn = Pickup_Ammo(ent, other);
+//		ADDING FOR ZEQ2
+		respawn = 0; //Pickup_Ammo(ent, other);
+//		END ADDING
 //		predict = qfalse;
 		break;
 	case IT_ARMOR:
@@ -548,6 +512,7 @@ void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace) {
 		ent->think = RespawnItem;
 	}
 	trap_LinkEntity( ent );
+	*/
 }
 
 
@@ -800,9 +765,13 @@ ClearRegisteredItems
 void ClearRegisteredItems( void ) {
 	memset( itemRegistered, 0, sizeof( itemRegistered ) );
 
+#if MAPLENSFLARES	// JUHOX: don't load items for lens flare editor
+	if (g_editmode.integer == EM_mlf) return;
+#endif
+
 	// players always start with the base weapon
-	RegisterItem( BG_FindItemForWeapon( WP_MACHINEGUN ) );
-	RegisterItem( BG_FindItemForWeapon( WP_GAUNTLET ) );
+//	RegisterItem( BG_FindItemForWeapon( WP_MACHINEGUN ) );
+//	RegisterItem( BG_FindItemForWeapon( WP_GAUNTLET ) );
 #ifdef MISSIONPACK
 	if( g_gametype.integer == GT_HARVESTER ) {
 		RegisterItem( BG_FindItem( "Red Cube" ) );
@@ -894,7 +863,7 @@ void G_SpawnItem (gentity_t *ent, gitem_t *item) {
 	ent->physicsBounce = 0.50;		// items are bouncy
 
 	if ( item->giType == IT_POWERUP ) {
-		G_SoundIndex( "sound/items/poweruprespawn.wav" );
+		G_SoundIndex( "sound/items/poweruprespawn.ogg" );
 		G_SpawnFloat( "noglobalsound", "0", &ent->speed);
 	}
 
@@ -919,7 +888,7 @@ void G_BounceItem( gentity_t *ent, trace_t *trace ) {
 
 	// reflect the velocity on the trace plane
 	hitTime = level.previousTime + ( level.time - level.previousTime ) * trace->fraction;
-	BG_EvaluateTrajectoryDelta( &ent->s.pos, hitTime, velocity );
+	BG_EvaluateTrajectoryDelta( &ent->s, &ent->s.pos, hitTime, velocity );
 	dot = DotProduct( velocity, trace->plane.normal );
 	VectorMA( velocity, -2*dot, trace->plane.normal, ent->s.pos.trDelta );
 
@@ -968,7 +937,7 @@ void G_RunItem( gentity_t *ent ) {
 	}
 
 	// get current position
-	BG_EvaluateTrajectory( &ent->s.pos, level.time, origin );
+	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
 
 	// trace a line from the previous position to the current position
 	if ( ent->clipmask ) {

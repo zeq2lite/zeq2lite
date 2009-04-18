@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =======================================================================
@@ -146,7 +126,7 @@ static void UI_CDKeyMenu_DrawKey( void *self ) {
 		color = color_yellow;
 	}
 	else {
-		color = color_orange;
+		color = color_lightBlue;
 	}
 
 	x = 320 - 8 * BIGCHAR_WIDTH;
@@ -170,13 +150,13 @@ static void UI_CDKeyMenu_DrawKey( void *self ) {
 
 	val = UI_CDKeyMenu_PreValidateKey( f->field.buffer );
 	if( val == 1 ) {
-		UI_DrawProportionalString( 320, 376, "Please enter your CD Key", UI_CENTER|UI_SMALLFONT, color_yellow );
+		UI_DrawProportionalString( 320, 376, "Please enter your CD Key", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_yellow );
 	}
 	else if ( val == 0 ) {
-		UI_DrawProportionalString( 320, 376, "The CD Key appears to be valid, thank you", UI_CENTER|UI_SMALLFONT, color_white );
+		UI_DrawProportionalString( 320, 376, "The CD Key appears to be valid, thank you", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	}
 	else {
-		UI_DrawProportionalString( 320, 376, "The CD Key is not valid", UI_CENTER|UI_SMALLFONT, color_red );
+		UI_DrawProportionalString( 320, 376, "The CD Key is not valid", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_red );
 	}
 }
 
@@ -200,7 +180,7 @@ static void UI_CDKeyMenu_Init( void ) {
 	cdkeyMenuInfo.banner.generic.y					= 16;
 	cdkeyMenuInfo.banner.string						= "CD KEY";
 	cdkeyMenuInfo.banner.color						= color_white;
-	cdkeyMenuInfo.banner.style						= UI_CENTER;
+	cdkeyMenuInfo.banner.style						= UI_CENTER|UI_DROPSHADOW;
 
 	cdkeyMenuInfo.frame.generic.type				= MTYPE_BITMAP;
 	cdkeyMenuInfo.frame.generic.name				= ART_FRAME;

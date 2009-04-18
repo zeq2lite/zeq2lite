@@ -1,35 +1,14 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_event.c -- handle entity events at snapshot or playerstate transitions
 
 #include "cg_local.h"
-
+#include "../qcommon/q_shared.h"
 // for the voice chats
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK // bk001205
 #include "../../ui/menudef.h"
 #endif
 //==========================================================================
-
 /*
 ===================
 CG_PlaceString
@@ -151,11 +130,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	if (attacker == target) {
 		gender = ci->gender;
 		switch (mod) {
-#ifdef MISSIONPACK
-		case MOD_KAMIKAZE:
-			message = "goes out with a bang";
-			break;
-#endif
 		case MOD_GRENADE_SPLASH:
 			if ( gender == GENDER_FEMALE )
 				message = "tripped on her own grenade";
@@ -183,17 +157,6 @@ static void CG_Obituary( entityState_t *ent ) {
 		case MOD_BFG_SPLASH:
 			message = "should have used a smaller gun";
 			break;
-#ifdef MISSIONPACK
-		case MOD_PROXIMITY_MINE:
-			if( gender == GENDER_FEMALE ) {
-				message = "found her prox mine";
-			} else if ( gender == GENDER_NEUTER ) {
-				message = "found it's prox mine";
-			} else {
-				message = "found his prox mine";
-			}
-			break;
-#endif
 		default:
 			if ( gender == GENDER_FEMALE )
 				message = "killed herself";
@@ -215,19 +178,13 @@ static void CG_Obituary( entityState_t *ent ) {
 		char	*s;
 
 		if ( cgs.gametype < GT_TEAM ) {
-			s = va("You fragged %s\n%s place with %i", targetName, 
+			s = va("You took %s's life \n%s place with %i", targetName, 
 				CG_PlaceString( cg.snap->ps.persistant[PERS_RANK] + 1 ),
 				cg.snap->ps.persistant[PERS_SCORE] );
 		} else {
-			s = va("You fragged %s", targetName );
+			s = va("You took %s's life", targetName );
 		}
-#ifdef MISSIONPACK
-		if (!(cg_singlePlayerActive.integer && cg_cameraOrbit.integer)) {
-			CG_CenterPrint( s, SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
-		} 
-#else
 		CG_CenterPrint( s, SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
-#endif
 
 		// print the text message as well
 	}
@@ -294,29 +251,33 @@ static void CG_Obituary( entityState_t *ent ) {
 			message = "was blasted by";
 			message2 = "'s BFG";
 			break;
-#ifdef MISSIONPACK
-		case MOD_NAIL:
-			message = "was nailed by";
-			break;
-		case MOD_CHAINGUN:
-			message = "got lead poisoning from";
-			message2 = "'s Chaingun";
-			break;
-		case MOD_PROXIMITY_MINE:
-			message = "was too close to";
-			message2 = "'s Prox Mine";
-			break;
-		case MOD_KAMIKAZE:
-			message = "falls to";
-			message2 = "'s Kamikaze blast";
-			break;
-		case MOD_JUICED:
-			message = "was juiced by";
-			break;
-#endif
 		case MOD_TELEFRAG:
 			message = "tried to invade";
 			message2 = "'s personal space";
+			break;
+		case MOD_KI:
+			message = "was blasted to bits by";
+			break;
+		case MOD_MELEE:
+			message = "was pummeled by";
+			break;
+		case MOD_SLICE:
+			message = "was sliced in two by";
+			break;
+		case MOD_PIERCE:
+			message = "was pierced by";
+			message2 = "'s weapon";
+			break;
+		case MOD_STONE:
+			message = "has become a statue for";
+			message2= "'s garden";
+			break;
+		case MOD_BURN:
+			message = "was fried to a crisp by";
+			break;
+		case MOD_CANDY:
+			message = "was turned into";
+			message2= "'s snack";
 			break;
 		default:
 			message = "was killed by";
@@ -426,7 +387,7 @@ CG_PainEvent
 Also called by playerstate transition
 ================
 */
-void CG_PainEvent( centity_t *cent, int health ) {
+void CG_PainEvent( centity_t *cent, int powerLevel ) {
 	char	*snd;
 
 	// don't do more than two pain sounds a second
@@ -434,14 +395,14 @@ void CG_PainEvent( centity_t *cent, int health ) {
 		return;
 	}
 
-	if ( health < 25 ) {
-		snd = "*pain25_1.wav";
-	} else if ( health < 50 ) {
-		snd = "*pain50_1.wav";
-	} else if ( health < 75 ) {
-		snd = "*pain75_1.wav";
+	if ( powerLevel < 25 ) {
+		snd = "*pain25_1.ogg";
+	} else if ( powerLevel < 50 ) {
+		snd = "*pain50_1.ogg";
+	} else if ( powerLevel < 75 ) {
+		snd = "*pain75_1.ogg";
 	} else {
-		snd = "*pain100_1.wav";
+		snd = "*pain100_1.ogg";
 	}
 	trap_S_StartSound( NULL, cent->currentState.number, CHAN_VOICE, 
 		CG_CustomSound( cent->currentState.number, snd ) );
@@ -469,6 +430,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	const char		*s;
 	int				clientNum;
 	clientInfo_t	*ci;
+	int	r;
+
+	r = random() * 10;
 
 	es = &cent->currentState;
 	event = es->event & ~EV_EVENT_BITS;
@@ -541,7 +505,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_FALL_MEDIUM:
 		DEBUGNAME("EV_FALL_MEDIUM");
 		// use normal pain sound
-		trap_S_StartSound( NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*pain100_1.wav" ) );
+		trap_S_StartSound( NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*pain100_1.ogg" ) );
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			// smooth landing z changes
 			cg.landChange = -16;
@@ -550,7 +514,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_FALL_FAR:
 		DEBUGNAME("EV_FALL_FAR");
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.wav" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.ogg" ) );
 		cent->pe.painTime = cg.time;	// don't play a pain sound right after this
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			// smooth landing z changes
@@ -614,16 +578,24 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 		// boing sound at origin, jump sound on player
 		trap_S_StartSound ( cent->lerpOrigin, -1, CHAN_VOICE, cgs.media.jumpPadSound );
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.wav" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
 		break;
 
+	case EV_HIGHJUMP:
+		DEBUGNAME("EV_HIGHJUMP");
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*highjump1.ogg" ) );
+		break;
 	case EV_JUMP:
 		DEBUGNAME("EV_JUMP");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.wav" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
 		break;
 	case EV_TAUNT:
 		DEBUGNAME("EV_TAUNT");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.wav" ) );
+		cg.predictedPlayerState.lockedOn = qfalse;
+		if(cg.lockReady){
+			cg.predictedPlayerState.lockedOn = qtrue;
+			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
+		}
 		break;
 #ifdef MISSIONPACK
 	case EV_TAUNT_YES:
@@ -665,7 +637,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_WATER_CLEAR:
 		DEBUGNAME("EV_WATER_CLEAR");
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.wav" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.ogg" ) );
 		break;
 
 	case EV_ITEM_PICKUP:
@@ -684,11 +656,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			// powerups and team items will have a separate global sound, this one
 			// will be played at prediction time
 			if ( item->giType == IT_POWERUP || item->giType == IT_TEAM) {
-				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.n_healthSound );
+				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.n_powerLevelSound );
 			} else if (item->giType == IT_PERSISTANT_POWERUP) {
 #ifdef MISSIONPACK
 				switch (item->giTag ) {
-					case PW_SCOUT:
+/*					case PW_SCOUT:
 						trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.scoutSound );
 					break;
 					case PW_GUARD:
@@ -700,7 +672,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 					case PW_AMMOREGEN:
 						trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.ammoregenSound );
 					break;
-				}
+*/				}
 #endif
 			} else {
 				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	trap_S_RegisterSound( item->pickup_sound, qfalse ) );
@@ -753,8 +725,25 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_FIRE_WEAPON:
 		DEBUGNAME("EV_FIRE_WEAPON");
-		CG_FireWeapon( cent );
+		CG_FireWeapon( cent, qfalse );
 		break;
+	case EV_ALTFIRE_WEAPON:
+		DEBUGNAME("EV_ALTFIRE_WEAPON");
+		CG_FireWeapon( cent, qtrue );
+		break;
+
+		// ADDING FOR ZEQ2
+	case EV_DETONATE_WEAPON:
+		DEBUGNAME("EV_DETONATE_WEAPON");
+		break;
+
+	case EV_LIGHTSPEED_GHOSTIMAGE:
+		DEBUGNAME("EV_LIGHTSPEED_GHOSTIMAGE");
+		CG_SpawnEffect( position );
+		CG_SpawnLightSpeedGhost( cent );
+		break;
+
+	// END ADDING
 
 	case EV_USE_ITEM0:
 		DEBUGNAME("EV_USE_ITEM0");
@@ -816,9 +805,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_USE_ITEM14");
 		CG_UseItem( cent );
 		break;
-
 	//=================================================================
-
 	//
 	// other events
 	//
@@ -827,13 +814,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.teleInSound );
 		CG_SpawnEffect( position);
 		break;
-
 	case EV_PLAYER_TELEPORT_OUT:
 		DEBUGNAME("EV_PLAYER_TELEPORT_OUT");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.teleOutSound );
-		CG_SpawnEffect(  position);
+		CG_SpawnEffect( position);
 		break;
-
 	case EV_ITEM_POP:
 		DEBUGNAME("EV_ITEM_POP");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.respawnSound );
@@ -843,7 +828,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		cent->miscTime = cg.time;	// scale up from this
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.respawnSound );
 		break;
-
 	case EV_GRENADE_BOUNCE:
 		DEBUGNAME("EV_GRENADE_BOUNCE");
 		if ( rand() & 1 ) {
@@ -852,7 +836,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.hgrenb2aSound );
 		}
 		break;
-
 #ifdef MISSIONPACK
 	case EV_PROXIMITY_MINE_STICK:
 		DEBUGNAME("EV_PROXIMITY_MINE_STICK");
@@ -864,7 +847,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.wstbimpdSound );
 		}
 		break;
-
 	case EV_PROXIMITY_MINE_TRIGGER:
 		DEBUGNAME("EV_PROXIMITY_MINE_TRIGGER");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.wstbactvSound );
@@ -898,28 +880,40 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_SCOREPLUM");
 		CG_ScorePlum( cent->currentState.otherEntityNum, cent->lerpOrigin, cent->currentState.time );
 		break;
-
 	//
 	// missile impacts
 	//
 	case EV_MISSILE_HIT:
 		DEBUGNAME("EV_MISSILE_HIT");
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum );
+		//CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum );
+		CG_UserMissileHitPlayer( es->weapon, es->clientNum, position, dir, es->otherEntityNum );
 		break;
-
 	case EV_MISSILE_MISS:
 		DEBUGNAME("EV_MISSILE_MISS");
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
+		//CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
+		CG_UserMissileHitWall( es->weapon, es->clientNum, position, dir, qfalse );
 		break;
-
 	case EV_MISSILE_MISS_METAL:
 		DEBUGNAME("EV_MISSILE_MISS_METAL");
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_METAL );
+		//CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_METAL );
+		CG_UserMissileHitWall( es->weapon, es->clientNum, position, dir, qfalse );
 		break;
-
+	// ADDING FOR ZEQ2
+	case EV_MISSILE_MISS_AIR:
+		DEBUGNAME("EV_MISSILE_MISS_AIR");
+		ByteToDir( es->eventParm, dir );
+		CG_UserMissileHitWall( es->weapon, es->clientNum, position, dir, qtrue );	
+	case EV_BEAM_FADE:
+		DEBUGNAME("EV_BEAM_FADE");
+		break;
+	case EV_RAILTRAIL:
+		CG_UserRailTrail( es->weapon, es->clientNum, es->origin2, es->pos.trBase );
+		break;
+	// END ADDING
+/*
 	case EV_RAILTRAIL:
 		DEBUGNAME("EV_RAILTRAIL");
 		cent->currentState.weapon = WP_RAILGUN;
@@ -930,23 +924,20 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			CG_MissileHitWall( es->weapon, es->clientNum, position, dir, IMPACTSOUND_DEFAULT );
 		}
 		break;
-
+*/
 	case EV_BULLET_HIT_WALL:
 		DEBUGNAME("EV_BULLET_HIT_WALL");
 		ByteToDir( es->eventParm, dir );
 		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qfalse, ENTITYNUM_WORLD );
 		break;
-
 	case EV_BULLET_HIT_FLESH:
 		DEBUGNAME("EV_BULLET_HIT_FLESH");
 		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qtrue, es->eventParm );
 		break;
-
 	case EV_SHOTGUN:
 		DEBUGNAME("EV_SHOTGUN");
 		CG_ShotgunFire( es );
 		break;
-
 	case EV_GENERAL_SOUND:
 		DEBUGNAME("EV_GENERAL_SOUND");
 		if ( cgs.gameSounds[ es->eventParm ] ) {
@@ -966,7 +957,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			trap_S_StartSound (NULL, cg.snap->ps.clientNum, CHAN_AUTO, CG_CustomSound( es->number, s ) );
 		}
 		break;
-
 	case EV_GLOBAL_TEAM_SOUND:	// play from the player's head so it never diminishes
 		{
 			DEBUGNAME("EV_GLOBAL_TEAM_SOUND");
@@ -996,52 +986,28 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 						CG_AddBufferedSound( cgs.media.returnYourTeamSound );
 					else
 						CG_AddBufferedSound( cgs.media.returnOpponentSound );
-					//
 					CG_AddBufferedSound( cgs.media.redFlagReturnedSound );
 					break;
-
-				case GTS_RED_TAKEN: // CTF: red team took blue flag, 1FCTF: blue team took the neutral flag
-					// if this player picked up the flag then a sound is played in CG_CheckLocalSounds
+				case GTS_RED_TAKEN:
 					if (cg.snap->ps.powerups[PW_BLUEFLAG] || cg.snap->ps.powerups[PW_NEUTRALFLAG]) {
 					}
 					else {
 					if (cgs.clientinfo[cg.clientNum].team == TEAM_BLUE) {
-#ifdef MISSIONPACK
-							if (cgs.gametype == GT_1FCTF) 
-								CG_AddBufferedSound( cgs.media.yourTeamTookTheFlagSound );
-							else
-#endif
 						 	CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
 						}
 						else if (cgs.clientinfo[cg.clientNum].team == TEAM_RED) {
-#ifdef MISSIONPACK
-							if (cgs.gametype == GT_1FCTF)
-								CG_AddBufferedSound( cgs.media.enemyTookTheFlagSound );
-							else
-#endif
  							CG_AddBufferedSound( cgs.media.yourTeamTookEnemyFlagSound );
 						}
 					}
 					break;
-				case GTS_BLUE_TAKEN: // CTF: blue team took the red flag, 1FCTF red team took the neutral flag
-					// if this player picked up the flag then a sound is played in CG_CheckLocalSounds
+				case GTS_BLUE_TAKEN:
 					if (cg.snap->ps.powerups[PW_REDFLAG] || cg.snap->ps.powerups[PW_NEUTRALFLAG]) {
 					}
 					else {
 						if (cgs.clientinfo[cg.clientNum].team == TEAM_RED) {
-#ifdef MISSIONPACK
-							if (cgs.gametype == GT_1FCTF)
-								CG_AddBufferedSound( cgs.media.yourTeamTookTheFlagSound );
-							else
-#endif
 							CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
 						}
 						else if (cgs.clientinfo[cg.clientNum].team == TEAM_BLUE) {
-#ifdef MISSIONPACK
-							if (cgs.gametype == GT_1FCTF)
-								CG_AddBufferedSound( cgs.media.enemyTookTheFlagSound );
-							else
-#endif
 							CG_AddBufferedSound( cgs.media.yourTeamTookEnemyFlagSound );
 						}
 					}
@@ -1056,7 +1022,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 						CG_AddBufferedSound( cgs.media.yourBaseIsUnderAttackSound );
 					}
 					break;
-
 				case GTS_REDTEAM_SCORED:
 					CG_AddBufferedSound(cgs.media.redScoredSound);
 					break;
@@ -1072,66 +1037,49 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				case GTS_TEAMS_ARE_TIED:
 					CG_AddBufferedSound( cgs.media.teamsTiedSound );
 					break;
-#ifdef MISSIONPACK
-				case GTS_KAMIKAZE:
-					trap_S_StartLocalSound(cgs.media.kamikazeFarSound, CHAN_ANNOUNCER);
-					break;
-#endif
 				default:
 					break;
 			}
 			break;
 		}
-
+#if EARTHQUAKE_SYSTEM
+	case EV_EARTHQUAKE:
+		CG_AddEarthquake(
+			es->origin, es->angles2[1],
+			es->angles[0], es->angles[1], es->angles[2],
+			es->angles2[0]
+		);
+		if (!es->time) {
+			cg.earthquakeSoundCounter = (cg.earthquakeEndTime - cg.earthquakeStartedTime) / 200;
+			cg.lastEarhquakeSoundStartedTime = cg.time - 1000;
+		}
+		break;
+#endif
 	case EV_PAIN:
-		// local player sounds are triggered in CG_CheckLocalSounds,
-		// so ignore events on the player
 		DEBUGNAME("EV_PAIN");
-		if ( cent->currentState.number != cg.snap->ps.clientNum ) {
+		if (cent->currentState.number != cg.snap->ps.clientNum){
 			CG_PainEvent( cent, es->eventParm );
 		}
 		break;
-
 	case EV_DEATH1:
 	case EV_DEATH2:
 	case EV_DEATH3:
 		DEBUGNAME("EV_DEATHx");
 		trap_S_StartSound( NULL, es->number, CHAN_VOICE, 
-				CG_CustomSound( es->number, va("*death%i.wav", event - EV_DEATH1 + 1) ) );
+				CG_CustomSound( es->number, va("*death%i.ogg", event - EV_DEATH1 + 1) ) );
 		break;
-
-
 	case EV_OBITUARY:
 		DEBUGNAME("EV_OBITUARY");
 		CG_Obituary( es );
 		break;
-
-	//
-	// powerup events
-	//
 	case EV_POWERUP_QUAD:
 		DEBUGNAME("EV_POWERUP_QUAD");
-		if ( es->number == cg.snap->ps.clientNum ) {
-			cg.powerupActive = PW_QUAD;
-			cg.powerupTime = cg.time;
-		}
-		trap_S_StartSound (NULL, es->number, CHAN_ITEM, cgs.media.quadSound );
 		break;
 	case EV_POWERUP_BATTLESUIT:
 		DEBUGNAME("EV_POWERUP_BATTLESUIT");
-		if ( es->number == cg.snap->ps.clientNum ) {
-			cg.powerupActive = PW_BATTLESUIT;
-			cg.powerupTime = cg.time;
-		}
-		trap_S_StartSound (NULL, es->number, CHAN_ITEM, cgs.media.protectSound );
 		break;
 	case EV_POWERUP_REGEN:
 		DEBUGNAME("EV_POWERUP_REGEN");
-		if ( es->number == cg.snap->ps.clientNum ) {
-			cg.powerupActive = PW_REGEN;
-			cg.powerupTime = cg.time;
-		}
-		trap_S_StartSound (NULL, es->number, CHAN_ITEM, cgs.media.regenSound );
 		break;
 
 	case EV_GIB_PLAYER:
@@ -1154,6 +1102,22 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_DEBUG_LINE:
 		DEBUGNAME("EV_DEBUG_LINE");
 		CG_Beam( cent );
+		break;
+
+	case EV_TIERUP:
+		DEBUGNAME("EV_TIERUP");
+		if((ci->tierCurrent+1)>ci->tierMax){
+			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent+1].soundTransformFirst);
+		}
+		else{
+			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent+1].soundTransformUp);
+		}
+		break;
+	case EV_TIERDOWN:
+		DEBUGNAME("EV_TIERDOWN");
+		if((ci->tierCurrent-1) > 0){
+			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent-1].soundTransformDown);
+		}
 		break;
 
 	default:
@@ -1197,7 +1161,7 @@ void CG_CheckEvents( centity_t *cent ) {
 	}
 
 	// calculate the position at exactly the frame time
-	BG_EvaluateTrajectory( &cent->currentState.pos, cg.snap->serverTime, cent->lerpOrigin );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.pos, cg.snap->serverTime, cent->lerpOrigin );
 	CG_SetEntitySoundPosition( cent );
 
 	CG_EntityEvent( cent, cent->lerpOrigin );

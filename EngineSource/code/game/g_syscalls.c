@@ -1,44 +1,21 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "g_local.h"
 
 // this file is only included when building a dll
 // g_syscalls.asm is included instead when building a qvm
-#ifdef Q3_VM
-#error "Do not use in VM build"
-#endif
 
-static intptr_t (QDECL *syscall)( intptr_t arg, ... ) = (intptr_t (QDECL *)( intptr_t, ...))-1;
+static int (QDECL *syscall)( int arg, ... ) = (int (QDECL *)( int, ...))-1;
 
 
-void dllEntry( intptr_t (QDECL *syscallptr)( intptr_t arg,... ) ) {
+void dllEntry( int (QDECL *syscallptr)( int arg,... ) ) {
 	syscall = syscallptr;
 }
 
 int PASSFLOAT( float x ) {
-	floatint_t fi;
-	fi.f = x;
-	return fi.i;
+	float	floatTemp;
+	floatTemp = x;
+	return *(int *)&floatTemp;
 }
 
 void	trap_Printf( const char *fmt ) {
@@ -78,10 +55,6 @@ void	trap_FS_FCloseFile( fileHandle_t f ) {
 
 int trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize ) {
 	return syscall( G_FS_GETFILELIST, path, extension, listbuf, bufsize );
-}
-
-int trap_FS_Seek( fileHandle_t f, long offset, int origin ) {
-	return syscall( G_FS_SEEK, f, offset, origin );
 }
 
 void	trap_SendConsoleCommand( int exec_when, const char *text ) {
@@ -290,9 +263,9 @@ void trap_AAS_PresenceTypeBoundingBox(int presencetype, vec3_t mins, vec3_t maxs
 }
 
 float trap_AAS_Time(void) {
-	floatint_t fi;
-	fi.i = syscall( BOTLIB_AAS_TIME );
-	return fi.f;
+	int temp;
+	temp = syscall( BOTLIB_AAS_TIME );
+	return (*(float*)&temp);
 }
 
 int trap_AAS_PointAreaNum(vec3_t point) {
@@ -476,15 +449,15 @@ void trap_BotFreeCharacter(int character) {
 }
 
 float trap_Characteristic_Float(int character, int index) {
-	floatint_t fi;
-	fi.i = syscall( BOTLIB_AI_CHARACTERISTIC_FLOAT, character, index );
-	return fi.f;
+	int temp;
+	temp = syscall( BOTLIB_AI_CHARACTERISTIC_FLOAT, character, index );
+	return (*(float*)&temp);
 }
 
 float trap_Characteristic_BFloat(int character, int index, float min, float max) {
-	floatint_t fi;
-	fi.i = syscall( BOTLIB_AI_CHARACTERISTIC_BFLOAT, character, index, PASSFLOAT(min), PASSFLOAT(max) );
-	return fi.f;
+	int temp;
+	temp = syscall( BOTLIB_AI_CHARACTERISTIC_BFLOAT, character, index, PASSFLOAT(min), PASSFLOAT(max) );
+	return (*(float*)&temp);
 }
 
 int trap_Characteristic_Integer(int character, int index) {
@@ -652,9 +625,9 @@ int trap_BotGetMapLocationGoal(char *name, void /* struct bot_goal_s */ *goal) {
 }
 
 float trap_BotAvoidGoalTime(int goalstate, int number) {
-	floatint_t fi;
-	fi.i = syscall( BOTLIB_AI_AVOID_GOAL_TIME, goalstate, number );
-	return fi.f;
+	int temp;
+	temp = syscall( BOTLIB_AI_AVOID_GOAL_TIME, goalstate, number );
+	return (*(float*)&temp);
 }
 
 void trap_BotSetAvoidGoalTime(int goalstate, int number, float avoidtime) {

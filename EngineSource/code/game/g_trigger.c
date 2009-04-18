@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "g_local.h"
 
@@ -203,7 +183,7 @@ void SP_trigger_push( gentity_t *self ) {
 	self->r.svFlags &= ~SVF_NOCLIENT;
 
 	// make sure the client precaches this sound
-	G_SoundIndex("sound/world/jumppad.wav");
+	G_SoundIndex("sound/world/jumppad.ogg");
 
 	self->s.eType = ET_PUSH_TRIGGER;
 	self->touch = trigger_push_touch;
@@ -221,7 +201,7 @@ void Use_target_push( gentity_t *self, gentity_t *other, gentity_t *activator ) 
 	if ( activator->client->ps.pm_type != PM_NORMAL ) {
 		return;
 	}
-	if ( activator->client->ps.powerups[PW_FLIGHT] ) {
+	if ( activator->client->ps.powerups[PW_FLYING] ) {
 		return;
 	}
 
@@ -247,9 +227,9 @@ void SP_target_push( gentity_t *self ) {
 	VectorScale (self->s.origin2, self->speed, self->s.origin2);
 
 	if ( self->spawnflags & 1 ) {
-		self->noise_index = G_SoundIndex("sound/world/jumppad.wav");
+		self->noise_index = G_SoundIndex("sound/world/jumppad.ogg");
 	} else {
-		self->noise_index = G_SoundIndex("sound/misc/windfly.wav");
+		self->noise_index = G_SoundIndex("sound/misc/windfly.ogg");
 	}
 	if ( self->target ) {
 		VectorCopy( self->s.origin, self->r.absmin );
@@ -314,7 +294,7 @@ void SP_trigger_teleport( gentity_t *self ) {
 	}
 
 	// make sure the client precaches this sound
-	G_SoundIndex("sound/world/jumppad.wav");
+	G_SoundIndex("sound/world/jumppad.ogg");
 
 	self->s.eType = ET_TELEPORT_TRIGGER;
 	self->touch = trigger_teleporter_touch;
@@ -383,7 +363,7 @@ void hurt_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {
 void SP_trigger_hurt( gentity_t *self ) {
 	InitTrigger (self);
 
-	self->noise_index = G_SoundIndex( "sound/world/electro.wav" );
+	self->noise_index = G_SoundIndex( "sound/world/electro.ogg" );
 	self->touch = hurt_touch;
 
 	if ( !self->damage ) {

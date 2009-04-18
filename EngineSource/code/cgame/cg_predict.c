@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_predict.c -- this file generates cg.predictedPlayerState by either
 // interpolating between snapshots from the server or locally predicting
@@ -104,7 +84,7 @@ static void CG_ClipMoveToEntities ( const vec3_t start, const vec3_t mins, const
 			// special value for bmodel
 			cmodel = trap_CM_InlineModel( ent->modelindex );
 			VectorCopy( cent->lerpAngles, angles );
-			BG_EvaluateTrajectory( &cent->currentState.pos, cg.physicsTime, origin );
+			BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.pos, cg.physicsTime, origin );
 		} else {
 			// encoded bbox
 			x = (ent->solid & 255);
@@ -152,6 +132,24 @@ void	CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec
 	CG_ClipMoveToEntities (start, mins, maxs, end, skipNumber, mask, &t);
 
 	*result = t;
+}
+
+/*
+================
+JUHOX: CG_SmoothTrace
+================
+*/
+void CG_SmoothTrace(
+	trace_t *result,
+	const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
+	int skipNumber, int mask
+) {
+	int physicsTime;
+
+	physicsTime = cg.physicsTime;
+	cg.physicsTime = cg.time;
+	CG_Trace(result, start, mins, maxs, end, skipNumber, mask);
+	cg.physicsTime = cg.time;
 }
 
 /*
@@ -221,7 +219,11 @@ static void CG_InterpolatePlayerState( qboolean grabAngles ) {
 		cmdNum = trap_GetCurrentCmdNumber();
 		trap_GetUserCmd( cmdNum, &cmd );
 
-		PM_UpdateViewAngles( out, &cmd );
+//		if ( out->rolling ) {
+			PM_UpdateViewAngles( out, &cmd );
+//		} else {
+//			PM_UpdateViewAngles2( out, &cmd );
+//		}
 	}
 
 	// if the next frame is a teleport, we can't lerp to it
@@ -259,6 +261,10 @@ CG_TouchItem
 ===================
 */
 static void CG_TouchItem( centity_t *cent ) {
+
+	return;
+
+/*
 	gitem_t		*item;
 
 	if ( !cg_predictItems.integer ) {
@@ -310,11 +316,12 @@ static void CG_TouchItem( centity_t *cent ) {
 
 	// if its a weapon, give them some predicted ammo so the autoswitch will work
 	if ( item->giType == IT_WEAPON ) {
-		cg.predictedPlayerState.stats[ STAT_WEAPONS ] |= 1 << item->giTag;
+		cg.predictedPlayerState.stats[ skills ] |= 1 << item->giTag;
 		if ( !cg.predictedPlayerState.ammo[ item->giTag ] ) {
 			cg.predictedPlayerState.ammo[ item->giTag ] = 1;
 		}
 	}
+*/
 }
 
 
@@ -334,9 +341,14 @@ static void CG_TouchTriggerPrediction( void ) {
 	qboolean	spectator;
 
 	// dead clients don't activate triggers
-	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {
+	if ( cg.predictedPlayerState.stats[powerLevelTotal] <= 0 ) {
 		return;
 	}
+
+	// JUHOX: don't touch triggers in lens flare editor
+#if MAPLENSFLARES
+	if (cgs.editMode == EM_mlf) return;
+#endif
 
 	spectator = ( cg.predictedPlayerState.pm_type == PM_SPECTATOR );
 
@@ -441,6 +453,7 @@ void CG_PredictPlayerState( void ) {
 		return;
 	}
 
+	
 	// prepare for pmove
 	cg_pmove.ps = &cg.predictedPlayerState;
 	cg_pmove.trace = CG_Trace;
@@ -454,6 +467,11 @@ void CG_PredictPlayerState( void ) {
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		cg_pmove.tracemask &= ~CONTENTS_BODY;	// spectators can fly through bodies
 	}
+#if MAPLENSFLARES	// JUHOX: set player tracemask for lens flare editor
+	if (cgs.editMode == EM_mlf) {
+		cg_pmove.tracemask = 0;
+	}
+#endif
 	cg_pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
 
 	// save the state before the pmove so we can detect transitions
@@ -506,7 +524,11 @@ void CG_PredictPlayerState( void ) {
 		trap_GetUserCmd( cmdNum, &cg_pmove.cmd );
 
 		if ( cg_pmove.pmove_fixed ) {
-			PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd );
+//			if ( cg_pmove.ps->rolling ) {
+				PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd );
+//			} else {
+//				PM_UpdateViewAngles2( cg_pmove.ps, &cg_pmove.cmd );
+//			}
 		}
 
 		// don't do anything if the time is before the snapshot player time
@@ -576,6 +598,180 @@ void CG_PredictPlayerState( void ) {
 		// don't predict gauntlet firing, which is only supposed to happen
 		// when it actually inflicts damage
 		cg_pmove.gauntletHit = qfalse;
+
+		if (
+			cg.predictedPlayerState.stats[target] >= 0 &&
+			cg.predictedPlayerState.stats[target] < ENTITYNUM_MAX_NORMAL
+		) {
+			centity_t* theTarget;
+			float pos;
+
+			theTarget = &cg_entities[cg.predictedPlayerState.stats[target]];
+			BG_EvaluateTrajectory(&theTarget->currentState,&theTarget->currentState.pos, cg.time, cg_pmove.target);
+			//cg_pmove.target[2] += BG_PlayerTargetOffset(&theTarget->currentState, pos);
+		}
+
+#if MAPLENSFLARES	// JUHOX: lens flare editor movement
+		if (
+			cgs.editMode == EM_mlf &&
+			cg.lfEditor.cmdMode == LFECM_main
+		) {
+			if (
+				!cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.markedLFEnt >= 0 &&
+				cg.lfEditor.lastClick < cg.time - 100 &&
+				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				CG_SelectLFEnt(cg.lfEditor.markedLFEnt);
+			}
+			else if (
+				cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.editMode == LFEEM_none &&
+				cg.lfEditor.lastClick < cg.time - 100 &&
+				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				cg.lfEditor.selectedLFEnt = NULL;
+				CG_SetLFEdMoveMode(LFEMM_coarse);
+			}
+
+			if (
+				cg.lfEditor.editMode == LFEEM_pos &&
+				cg.lfEditor.moveMode == LFEMM_coarse &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				CG_SetLFEdMoveMode(LFEMM_fine);
+			}
+
+			if (
+				cg.lfEditor.editMode == LFEEM_pos &&
+				cg.lfEditor.moveMode == LFEMM_fine &&
+				cg.lfEditor.selectedLFEnt &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				float move;
+
+				move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 2000.0;
+				cg.lfEditor.fmm_distance -= move;
+				if (cg.lfEditor.fmm_distance < 20) cg.lfEditor.fmm_distance = 20;
+				if (cg.lfEditor.fmm_distance > 300) cg.lfEditor.fmm_distance = 300;
+
+				move = cg_pmove.cmd.rightmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 8000.0;
+				cg.lfEditor.selectedLFEnt->radius += move;
+				if (cg.lfEditor.selectedLFEnt->radius < 2.5) cg.lfEditor.selectedLFEnt->radius = 2.5;
+				if (cg.lfEditor.selectedLFEnt->radius > 100) cg.lfEditor.selectedLFEnt->radius = 100;
+
+				cg_pmove.cmd.forwardmove = 0;
+				cg_pmove.cmd.rightmove = 0;
+				cg_pmove.cmd.upmove = 0;
+			}
+
+			if (
+				cg.lfEditor.editMode == LFEEM_target &&
+				cg.lfEditor.moveMode == LFEMM_fine
+			) {
+				float move;
+
+				move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 2000.0;
+				cg.lfEditor.fmm_distance -= move;
+				if (cg.lfEditor.fmm_distance < 20) cg.lfEditor.fmm_distance = 20;
+				if (cg.lfEditor.fmm_distance > 300) cg.lfEditor.fmm_distance = 300;
+
+				cg_pmove.cmd.forwardmove = 0;
+				cg_pmove.cmd.rightmove = 0;
+				cg_pmove.cmd.upmove = 0;
+			}
+
+			if (
+				cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.editMode == LFEEM_target &&
+				cg.lfEditor.editTarget &&
+				cg.lfEditor.lastClick < cg.time - 100 &&
+				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				vec3_t dir;
+
+				CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, dir);
+				VectorSubtract(cg.refdef.vieworg, dir, dir);
+				if (VectorNormalize(dir) > 0.1) {
+					VectorCopy(dir, cg.lfEditor.selectedLFEnt->dir);
+					CG_ComputeMaxVisAngle(cg.lfEditor.selectedLFEnt);
+				}
+				cg.lfEditor.editTarget = qfalse;
+				VectorCopy(cg.refdef.vieworg, cg.lfEditor.targetPosition);
+			}
+			else if (
+				cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.editMode == LFEEM_target &&
+				!cg.lfEditor.editTarget &&
+				cg.lfEditor.lastClick < cg.time - 100 &&
+				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
+				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
+			) {
+				if (Distance(cg.refdef.vieworg, cg.lfEditor.targetPosition) >= 1) {
+					vec3_t origin;
+					vec3_t dir;
+
+					CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, origin);
+					VectorSubtract(cg.refdef.vieworg, origin, dir);
+					if (VectorNormalize(dir) > 0.1) {
+						cg.lfEditor.selectedLFEnt->angle = acos(DotProduct(dir, cg.lfEditor.selectedLFEnt->dir)) * (180.0 / M_PI);
+					}
+				}
+				else {
+					cg.lfEditor.selectedLFEnt->angle = -1;
+				}
+				CG_ComputeMaxVisAngle(cg.lfEditor.selectedLFEnt);
+				cg.lfEditor.editMode = LFEEM_none;
+				CG_SetLFEdMoveMode(LFEMM_coarse);
+			}
+
+			if (
+				cg.lfEditor.selectedLFEnt &&
+				cg.lfEditor.editMode == LFEEM_radius
+			) {
+				float move;
+				
+				if (cg_pmove.cmd.buttons & BUTTON_ATTACK) {
+					move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 2000.0;
+					cg.lfEditor.fmm_distance -= move;
+					if (cg.lfEditor.fmm_distance < 20) cg.lfEditor.fmm_distance = 20;
+					if (cg.lfEditor.fmm_distance > 300) cg.lfEditor.fmm_distance = 300;					
+				}
+				else {
+					move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 8000.0;
+					cg.lfEditor.selectedLFEnt->lightRadius += move;
+					if (cg.lfEditor.selectedLFEnt->lightRadius < 2) {
+						if (move > 0) {
+							cg.lfEditor.selectedLFEnt->lightRadius = 2;
+						}
+						else {
+							cg.lfEditor.selectedLFEnt->lightRadius = 0.5;
+						}
+					}
+					if (cg.lfEditor.selectedLFEnt->lightRadius > cg.lfEditor.selectedLFEnt->radius) {
+						cg.lfEditor.selectedLFEnt->lightRadius = cg.lfEditor.selectedLFEnt->radius;
+					}
+					
+					move = cg_pmove.cmd.rightmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 8000.0;
+					cg.lfEditor.selectedLFEnt->radius += move;
+					if (cg.lfEditor.selectedLFEnt->radius < 2.5) cg.lfEditor.selectedLFEnt->radius = 2.5;
+					if (cg.lfEditor.selectedLFEnt->radius > 100) cg.lfEditor.selectedLFEnt->radius = 100;
+				}
+
+				cg_pmove.cmd.forwardmove = 0;
+				cg_pmove.cmd.rightmove = 0;
+				cg_pmove.cmd.upmove = 0;
+			}
+
+			if (cg.lfEditor.oldButtons != cg_pmove.cmd.buttons) {
+				cg.lfEditor.lastClick = cg.time;
+			}
+			cg.lfEditor.oldButtons = cg_pmove.cmd.buttons;
+		}
+#endif
 
 		if ( cg_pmove.pmove_fixed ) {
 			cg_pmove.cmd.serverTime = ((cg_pmove.cmd.serverTime + pmove_msec.integer-1) / pmove_msec.integer) * pmove_msec.integer;

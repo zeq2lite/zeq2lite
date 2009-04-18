@@ -1,31 +1,14 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // bg_public.h -- definitions shared by both the server game and client game modules
 
 // because games can change separately from the main system version, we need a
 // second version that must match between game and cgame
 
-#define	GAME_VERSION		BASEGAME "-1"
+#define	GAME_VERSION		"zeq2"
+
+#define EARTHQUAKE_SYSTEM	1	// JUHOX
+#define MAPLENSFLARES		1	// JUHOX
 
 #define	DEFAULT_GRAVITY		800
 #define	GIB_HEALTH			-40
@@ -122,6 +105,14 @@ typedef enum {
 	GT_MAX_GAME_TYPE
 } gametype_t;
 
+// JUHOX: global definitions for map lens flares
+#if MAPLENSFLARES
+typedef enum {
+	EM_none,
+	EM_mlf		// map lens flares
+} editMode_t;
+#endif
+
 typedef enum { GENDER_MALE, GENDER_FEMALE, GENDER_NEUTER } gender_t;
 
 /*
@@ -165,7 +156,7 @@ typedef enum {
 
 // pmove->pm_flags
 #define	PMF_DUCKED			1
-#define	PMF_JUMP_HELD		2
+#define	PMF_JUMP_HELD		2		// jump key held
 #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
 #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
 #define	PMF_TIME_LAND		32		// pm_time is time before rejump
@@ -195,6 +186,7 @@ typedef struct {
 	qboolean	gauntletHit;		// true if a gauntlet attack would actually hit something
 
 	int			framecount;
+	vec3_t		target;
 
 	// results (out)
 	int			numtouch;
@@ -219,6 +211,7 @@ typedef struct {
 
 // if a full pmove isn't done on the client, you can just update the angles
 void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd );
+void PM_UpdateViewAngles2( playerState_t *ps, const usercmd_t *cmd );
 void Pmove (pmove_t *pmove);
 
 //===================================================================================
@@ -227,25 +220,21 @@ void Pmove (pmove_t *pmove);
 // player_state->stats[] indexes
 // NOTE: may not have more than 16
 typedef enum {
-	STAT_HEALTH,					// player health
-	STAT_WEAPONS,					// 16 bit bitmask
-	STAT_DEAD_YAW,					// look this direction when dead (FIXME: get rid of?)
-	STAT_MAX_HEALTH,				// health limit
+	powerLevel,
+	powerLevelTotal,
+	powerLevelCounter,		// Used to calculate the remainder time for PL changing
+	powerLevelTimer,		// Used to calculate the time between updating of the powerLevel cap
+	powerLevelTimer2,		// Used to calculate the time between decrementing powerLevel over the cap
+	skills,					// 16 bit bitmask
+	target,					// used to hold currect locked on target
 	// ADDING FOR ZEQ2
-	STAT_TIER,						// Current powertier; integer; range [0..8]
-	STAT_PLTIMER,					// Used to calculate the remainder time for PL changing
-	STAT_DEDUCTHP,					// Workaround for deducting HP for attack
-
-	STAT_CHARGELVL_PRI,				// % of primary attack charged
-	STAT_CHARGELVL_SEC,				// % of secondary attack charged
-
-	STAT_BITFLAGS,					// Set of bitflags for player
-
-	STAT_CAPTIMER,					// Used to calculate the time between updating of the health cap
-	STAT_CAPTIMER2,					// Used to calculate the time between decrementing health over the cap
-	STAT_POWERBUTTONS_TIMER			// Used to store how long BUTTON_POWER_UP and BUTTON_POWER_DOWN
-									// have been held down in one go. Throttles power up / down speed.
-
+	tierCurrent,
+	tierTotal,
+	chargePercentPrimary,	// % of primary attack charged
+	chargePercentSecondary,	// % of secondary attack charged
+	bitFlags,				// Set of bitflags for player
+	STAT_POWERBUTTONS_TIMER	// Used to store how long BUTTON_POWER_UP and BUTTON_POWER_DOWN
+							// have been held down in one go. Throttles power up / down speed.
 	// END ADDING
 } statIndex_t;
 
@@ -277,7 +266,7 @@ typedef enum {
 	PERS_SPAWN_COUNT,				// incremented every respawn
 	PERS_PLAYEREVENTS,				// 16 bits that can be flipped for events
 	PERS_ATTACKER,					// clientnum of last damage inflicter
-	PERS_ATTACKEE_ARMOR,			// health/armor of last person we attacked
+	PERS_ATTACKEE_ARMOR,			// powerLevel/armor of last person we attacked
 	PERS_KILLED,					// count of the number of times you died
 	// player awards tracking
 	PERS_IMPRESSIVE_COUNT,			// two railgun hits in a row
@@ -286,7 +275,7 @@ typedef enum {
 	PERS_ASSIST_COUNT,				// assist awards
 	PERS_GAUNTLET_FRAG_COUNT,		// kills with the gauntlet
 	PERS_CAPTURES,					// captures
-	PERS_HEALTH_CAP					// current health cap should be saved across spawns
+	powerLevelMaximum				// current powerLevel cap should be saved across spawns
 } persEnum_t;
 
 
@@ -333,6 +322,7 @@ typedef enum {
 
 	PW_INVULNERABILITY,
 	PW_LIGHTSPEED,
+	PW_TRANSFORM,
 
 
 	PW_NUM_POWERUPS
@@ -511,7 +501,8 @@ typedef enum {
 	EV_TAUNT_GUARDBASE,
 	EV_TAUNT_PATROL,
 	// ADDING FOR ZEQ2
-	EV_BEAM_FADE
+	EV_BEAM_FADE,
+	EV_EARTHQUAKE
 	// END ADDING
 
 } entity_event_t;
@@ -536,6 +527,9 @@ typedef enum {
 
 // animations
 typedef enum {
+
+// DEATH
+
 	BOTH_DEATH1,
 	BOTH_DEAD1,
 	BOTH_DEATH2,
@@ -543,90 +537,195 @@ typedef enum {
 	BOTH_DEATH3,
 	BOTH_DEAD3,
 
-	TORSO_GESTURE,
+// IDLE
 
-	TORSO_ATTACK,
-	TORSO_ATTACK2,
-
-	TORSO_DROP,
-	TORSO_RAISE,
+	HEAD_IDLE,
+	HEAD_IDLE_LOCKED,
 
 	TORSO_STAND,
-	TORSO_STAND2,
-
-	LEGS_WALKCR,
-	LEGS_WALK,
-	LEGS_RUN,
-	LEGS_BACK,
-	LEGS_SWIM,
-
-	LEGS_JUMP,
-	LEGS_LAND,
-
-	LEGS_JUMPB,
-	LEGS_LANDB,
+	TORSO_STAND_LOCKED,
+	TORSO_CROUCH,
 
 	LEGS_IDLE,
+	LEGS_IDLE_LOCKED,
 	LEGS_IDLECR,
 
 	LEGS_TURN,
 
-//	TORSO_GETFLAG,
-//	TORSO_GUARDBASE,
-//	TORSO_PATROL,
-//	TORSO_FOLLOWME,
-//	TORSO_AFFIRMATIVE,
-//	TORSO_NEGATIVE,
+// WALK
 
-	// ADDING FOR ZEQ2
-	LEGS_DASH_RIGHT,
-	LEGS_DASH_LEFT,
-	LEGS_DASH_FORWARD,
-	LEGS_DASH_BACKWARD,
-
-	LEGS_KI_CHARGE,
-	LEGS_PL_UP,
-	LEGS_PL_DOWN,
-	LEGS_TRANS_UP,
-	LEGS_TRANS_BACK,
-
-	LEGS_FLY_IDLE,
-	LEGS_FLY_FORWARD,
-	LEGS_FLY_BACKWARD,
+	HEAD_WALK,
 
 	TORSO_WALKCR,
 	TORSO_WALK,
+
+	LEGS_WALKCR,
+	LEGS_WALK,
+
+// RUN
+
+	HEAD_RUN,
+	HEAD_BACK,
+
 	TORSO_RUN,
 	TORSO_BACK,
+
+	LEGS_RUN,
+	LEGS_BACK,
+
+// SWIM
+
+	HEAD_SWIM,
+
 	TORSO_SWIM,
+
+	LEGS_SWIM,
+
+// JUMP
+
+	HEAD_JUMP,
+	HEAD_LAND,
+	HEAD_JUMPB,
+	HEAD_LANDB,
 
 	TORSO_JUMP,
 	TORSO_LAND,
-
 	TORSO_JUMPB,
 	TORSO_LANDB,
+
+	LEGS_JUMP,
+	LEGS_LAND,
+	LEGS_JUMPB,
+	LEGS_LANDB,
+
+// DASH
+
+	HEAD_DASH_RIGHT,
+	HEAD_DASH_LEFT,
+	HEAD_DASH_FORWARD,
+	HEAD_DASH_BACKWARD,
 
 	TORSO_DASH_RIGHT,
 	TORSO_DASH_LEFT,
 	TORSO_DASH_FORWARD,
 	TORSO_DASH_BACKWARD,
 
-	TORSO_KI_CHARGE,
-	TORSO_PL_UP,
-	TORSO_PL_DOWN,
-	TORSO_TRANS_UP,
-	TORSO_TRANS_BACK,
+	LEGS_DASH_RIGHT,
+	LEGS_DASH_LEFT,
+	LEGS_DASH_FORWARD,
+	LEGS_DASH_BACKWARD,
+
+// FLY
+
+	HEAD_FLY_IDLE,
+	HEAD_FLY_FORWARD,
+	HEAD_FLY_BACKWARD,
 
 	TORSO_FLY_IDLE,
 	TORSO_FLY_FORWARD,
 	TORSO_FLY_BACKWARD,
 
-	HEAD_IDLE,
+	LEGS_FLY_IDLE,
+	LEGS_FLY_FORWARD,
+	LEGS_FLY_BACKWARD,
+
+// KI
+
 	HEAD_KI_CHARGE,
 	HEAD_PL_UP,
 	HEAD_PL_DOWN,
+
+	TORSO_KI_CHARGE,
+	TORSO_PL_UP,
+	TORSO_PL_DOWN,
+
+	LEGS_KI_CHARGE,
+	LEGS_PL_UP,
+	LEGS_PL_DOWN,
+
+// TRANSFORM
+
+	TORSO_TRANS_UP,
+	TORSO_TRANS_BACK,
+
+	LEGS_TRANS_UP,
+	LEGS_TRANS_BACK,
+
 	HEAD_TRANS_UP,
 	HEAD_TRANS_BACK,
+
+// DEFENSE
+
+	HEAD_STUNNED,
+	HEAD_PUSH,
+	HEAD_DEFLECT,
+	HEAD_BLOCK,
+
+	TORSO_STUNNED,
+	TORSO_PUSH,
+	TORSO_DEFLECT,
+	TORSO_BLOCK,
+
+	LEGS_STUNNED,
+	LEGS_PUSH,
+	LEGS_DEFLECT,
+	LEGS_BLOCK,
+
+// SPEED MELEE ATTACKS
+
+	HEAD_SPEED_MELEE_ATTACK,
+	HEAD_SPEED_MELEE_DODGE,
+	HEAD_SPEED_MELEE_BLOCK,
+	HEAD_SPEED_MELEE_HIT,
+
+	TORSO_SPEED_MELEE_ATTACK,
+	TORSO_SPEED_MELEE_DODGE,
+	TORSO_SPEED_MELEE_BLOCK,
+	TORSO_SPEED_MELEE_HIT,
+
+	LEGS_SPEED_MELEE_ATTACK,
+	LEGS_SPEED_MELEE_DODGE,
+	LEGS_SPEED_MELEE_BLOCK,
+	LEGS_SPEED_MELEE_HIT,
+
+// POWER MELEE ATTACKS
+
+	HEAD_POWER_MELEE_1,
+	HEAD_POWER_MELEE_2,
+	HEAD_POWER_MELEE_3,
+	HEAD_POWER_MELEE_4,
+	HEAD_POWER_MELEE_5,
+	HEAD_POWER_MELEE_6,
+
+	TORSO_POWER_MELEE_1,
+	TORSO_POWER_MELEE_2,
+	TORSO_POWER_MELEE_3,
+	TORSO_POWER_MELEE_4,
+	TORSO_POWER_MELEE_5,
+	TORSO_POWER_MELEE_6,
+
+	LEGS_POWER_MELEE_1,
+	LEGS_POWER_MELEE_2,
+	LEGS_POWER_MELEE_3,
+	LEGS_POWER_MELEE_4,
+	LEGS_POWER_MELEE_5,
+	LEGS_POWER_MELEE_6,
+
+// KNOCKBACK
+
+	HEAD_KNOCKBACK,
+	HEAD_KNOCKBACK_RECOVER_1,
+	HEAD_KNOCKBACK_RECOVER_2,
+
+	TORSO_KNOCKBACK,
+	TORSO_KNOCKBACK_RECOVER_1,
+	TORSO_KNOCKBACK_RECOVER_2,
+
+	LEGS_KNOCKBACK,
+	LEGS_KNOCKBACK_RECOVER_1,
+	LEGS_KNOCKBACK_RECOVER_2,
+
+// KI ATTACKS
 
 	HEAD_KI_ATTACK1_PREPARE,
 	HEAD_KI_ATTACK1_FIRE,
@@ -862,7 +961,7 @@ typedef enum {
 #define MAX_ITEM_MODELS 4
 
 typedef struct gitem_s {
-	char		*classname;	// spawning name
+	char		*classname;		// spawning name
 	char		*pickup_sound;
 	char		*world_model[MAX_ITEM_MODELS];
 

@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 //
 // ui_signup.c
@@ -146,7 +126,7 @@ void Signup_MenuInit( void ) {
 	s_signup.name.generic.x					= 310;
 	s_signup.name.generic.y					= y;
 	s_signup.name.string					= "NAME";
-	s_signup.name.style						= UI_RIGHT|UI_SMALLFONT;
+	s_signup.name.style						= UI_RIGHT|UI_SMALLFONT;|UI_DROPSHADOW
 	s_signup.name.color						= s_signup_color_prompt;
 
 	s_signup.name_box.generic.type			= MTYPE_FIELD;
@@ -165,7 +145,7 @@ void Signup_MenuInit( void ) {
 	s_signup.password.generic.x				= 310;
 	s_signup.password.generic.y				= y;
 	s_signup.password.string				= "PASSWORD";
-	s_signup.password.style					= UI_RIGHT|UI_SMALLFONT;
+	s_signup.password.style					= UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW;
 	s_signup.password.color					= s_signup_color_prompt;
 
 	s_signup.password_box.generic.type			= MTYPE_FIELD;
@@ -184,7 +164,7 @@ void Signup_MenuInit( void ) {
 	s_signup.again.generic.x				= 310;
 	s_signup.again.generic.y				= y;
 	s_signup.again.string					= "(AGAIN)";
-	s_signup.again.style					= UI_RIGHT|UI_SMALLFONT;
+	s_signup.again.style					= UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW;
 	s_signup.again.color					= s_signup_color_prompt;
 
 	s_signup.again_box.generic.type			= MTYPE_FIELD;
@@ -203,7 +183,7 @@ void Signup_MenuInit( void ) {
 	s_signup.email.generic.x				= 310;
 	s_signup.email.generic.y				= y;
 	s_signup.email.string					= "EMAIL";
-	s_signup.email.style					= UI_RIGHT|UI_SMALLFONT;
+	s_signup.email.style					= UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW;
 	s_signup.email.color					= s_signup_color_prompt;
 
 	s_signup.email_box.generic.type			= MTYPE_FIELD;
@@ -223,8 +203,8 @@ void Signup_MenuInit( void ) {
 	s_signup.signup.generic.x				= 310;
 	s_signup.signup.generic.y				= y;
 	s_signup.signup.string					= "SIGN UP";
-	s_signup.signup.style					= UI_RIGHT|UI_SMALLFONT;
-	s_signup.signup.color					= colorRed;
+	s_signup.signup.style					= UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW;
+	s_signup.signup.color					= colorWhite;
 
 	s_signup.cancel.generic.type			= MTYPE_PTEXT;
 	s_signup.cancel.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -233,8 +213,8 @@ void Signup_MenuInit( void ) {
 	s_signup.cancel.generic.x				= 330;
 	s_signup.cancel.generic.y				= y;
 	s_signup.cancel.string					= "CANCEL";
-	s_signup.cancel.style					= UI_LEFT|UI_SMALLFONT;
-	s_signup.cancel.color					= colorRed;
+	s_signup.cancel.style					= UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
+	s_signup.cancel.color					= colorWhite;
 	y += 20;
 
 	status = (grank_status_t)trap_Cvar_VariableValue("client_status");

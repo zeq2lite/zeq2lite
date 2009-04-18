@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_consolecmds.c -- text commands typed in at the local console, or
 // executed by a key binding
@@ -86,6 +66,20 @@ static void CG_Viewpos_f (void) {
 
 static void CG_ScoresDown_f( void ) {
 
+	// JUHOX: toggle lens flare editor move mode
+#if MAPLENSFLARES
+	if (cgs.editMode == EM_mlf) {
+		if (
+			cg.lfEditor.selectedLFEnt &&
+			cg.lfEditor.cmdMode == LFECM_main &&
+			cg.lfEditor.editMode > LFEEM_none
+		) {
+			CG_SetLFEdMoveMode(!cg.lfEditor.moveMode);
+		}
+		return;
+	}
+#endif
+
 #ifdef MISSIONPACK
 		CG_BuildSpectatorString();
 #endif
@@ -115,9 +109,106 @@ static void CG_ScoresUp_f( void ) {
 	}
 }
 
+
+/*
+=================
+JUHOX: CG_SaveLensFlareEntities_f
+=================
+*/
+#if MAPLENSFLARES
+static void CG_SaveLensFlareEntities_f(void) {
+	char mapname[256];
+	char name[256];
+	fileHandle_t f;
+	int i;
+	int n;
+
+	if (cgs.editMode != EM_mlf) return;
+
+	trap_Cvar_VariableStringBuffer("mapname", mapname, sizeof(mapname));
+	Com_sprintf(name, sizeof(name), "maps/%s.lfe", mapname);
+
+	trap_FS_FOpenFile(name, &f, FS_WRITE);
+	if (!f) {
+		CG_Printf("Could not create '%s'\n", name);
+		return;
+	}
+	CG_Printf("writing '%s'...\n", name);
+
+	n = 0;
+	for (i = 0; i < cgs.numLensFlareEntities; i++) {
+		const lensFlareEntity_t* lfent;
+		char buf[512];
+		char lockOption[16];
+		char lightRadius[16];
+
+		lfent = &cgs.lensFlareEntities[i];
+		if (!lfent->lfeff) continue;
+
+		if (lfent->lock) {
+			Com_sprintf(lockOption, sizeof(lockOption), "mv %d ", lfent->lock->currentState.number);
+		}
+		else {
+			lockOption[0] = 0;
+		}
+
+		if (lfent->lightRadius > 1) {
+			Com_sprintf(lightRadius, sizeof(lightRadius), "lr %f ", lfent->lightRadius);
+		}
+		else {
+			lightRadius[0] = 0;
+		}
+
+		Com_sprintf(
+			buf, sizeof(buf), "{ %s %f %f %f %f %f %f %f %f %s%s}\n",
+			lfent->lfeff->name,
+			lfent->origin[0], lfent->origin[1], lfent->origin[2],
+			lfent->radius,
+			lfent->dir[0], lfent->dir[1], lfent->dir[2],
+			lfent->angle,
+			lockOption, lightRadius
+		);
+		trap_FS_Write(buf, strlen(buf), f);
+
+		n++;
+	}
+	trap_FS_FCloseFile(f);
+
+	CG_Printf("%d lens flare entities saved\n", n);
+}
+#endif
+
+/*
+=================
+JUHOX: CG_RevertLensFlareEntities_f
+=================
+*/
+#if MAPLENSFLARES
+static void CG_RevertLensFlareEntities_f(void) {
+	if (cgs.editMode != EM_mlf) return;
+
+	CG_LoadLensFlareEntities();
+}
+#endif
+
+/*
+=================
+JUHOX: CG_UpdateLensFlares_f
+=================
+*/
+#if MAPLENSFLARES
+static void CG_UpdateLensFlares_f(void) {
+	if (cgs.editMode != EM_mlf) return;
+
+	CG_SaveLensFlareEntities_f();
+	CG_LoadLensFlares();
+	CG_LoadLensFlareEntities();
+}
+#endif
+
 #ifdef MISSIONPACK
 extern menuDef_t *menuScoreboard;
-void Menu_Reset( void );			// FIXME: add to right include file
+void Menu_Reset();			// FIXME: add to right include file
 
 static void CG_LoadHud_f( void) {
   char buff[1024];
@@ -444,7 +535,6 @@ static void CG_Camera_f( void ) {
 }
 */
 
-
 typedef struct {
 	char	*cmd;
 	void	(*function)(void);
@@ -472,6 +562,11 @@ static consoleCommand_t	commands[] = {
 	{ "vtell_target", CG_VoiceTellTarget_f },
 	{ "vtell_attacker", CG_VoiceTellAttacker_f },
 	{ "tcmd", CG_TargetCommand_f },
+#if MAPLENSFLARES
+	{ "lfsave", CG_SaveLensFlareEntities_f },
+	{ "lfrevert", CG_RevertLensFlareEntities_f },
+	{ "lfupdate", CG_UpdateLensFlares_f },
+#endif
 #ifdef MISSIONPACK
 	{ "loadhud", CG_LoadHud_f },
 	{ "nextTeamMember", CG_NextTeamMember_f },
@@ -500,7 +595,7 @@ static consoleCommand_t	commands[] = {
 #endif
 	{ "startOrbit", CG_StartOrbit_f },
 	//{ "camera", CG_Camera_f },
-	{ "loaddeferred", CG_LoadDeferredPlayers }	
+	{ "loaddeferred", CG_LoadDeferredPlayers }
 };
 
 

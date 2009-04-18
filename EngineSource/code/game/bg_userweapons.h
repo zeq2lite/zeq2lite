@@ -19,6 +19,8 @@
 #define WPF_NEEDSCHARGE			0x00000020	// determines whether or not the weapon needs to be charged before firing
 #define WPF_READY				0x00000040  // will be set by the server when the weapon is ready to be fired
 #define WPF_KI2HP				0x00000080  // determines whether or not the attack is usable through hp, if no more ki is left
+#define WPF_CONTINUOUS			0x00000100	// determines whether or not the attack is continuous fire
+#define WPF_GUIDED				0x00000200  // determines whether or not the attack is supposed to be guided
 
 
 // NOTE: References for numbers when adding future flags
@@ -44,7 +46,7 @@ typedef enum {
 	WPSTAT_STAMCOST,
 	WPSTAT_CHRGTIME,
 	WPSTAT_COOLTIME,
-	WPSTAT_BITFLAGS,
+	WPbitFlags,
 
 	WPSTAT_ALT_KICOST,
 	WPSTAT_ALT_HPCOST,
@@ -58,9 +60,4 @@ typedef enum {
 
 } bg_weaponInfos_t;
 
-
-//NOTE: Don't really belong with 'weapons', but its ridiculous to start a new unit for it
-#define MAX_STAMINA		500
-#define MAX_KI			1000
-#define MAX_JUMPING		8000
 

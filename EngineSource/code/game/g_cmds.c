@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "g_local.h"
 
@@ -111,7 +91,7 @@ qboolean	CheatsOk( gentity_t *ent ) {
 		trap_SendServerCommand( ent-g_entities, va("print \"Cheats are not enabled on this server.\n\""));
 		return qfalse;
 	}
-	if ( ent->health <= 0 ) {
+	if ( ent->powerLevel <= 0 ) {
 		trap_SendServerCommand( ent-g_entities, va("print \"You must be alive to use this command.\n\""));
 		return qfalse;
 	}
@@ -247,16 +227,16 @@ void Cmd_Give_f (gentity_t *ent)
 	else
 		give_all = qfalse;
 
-	if (give_all || Q_stricmp( name, "health") == 0)
+	if (give_all || Q_stricmp( name, "powerLevel") == 0)
 	{
-		ent->health = ent->client->ps.stats[STAT_MAX_HEALTH];
+		ent->powerLevel = ent->client->ps.stats[powerLevelTotal];
 		if (!give_all)
 			return;
 	}
 
 	if (give_all || Q_stricmp(name, "weapons") == 0)
 	{
-		ent->client->ps.stats[STAT_WEAPONS] = (1 << WP_NUM_WEAPONS) - 1 - 
+		ent->client->ps.stats[skills] = (1 << WP_NUM_WEAPONS) - 1 - 
 			( 1 << WP_GRAPPLING_HOOK ) - ( 1 << WP_NONE );
 		if (!give_all)
 			return;
@@ -273,7 +253,7 @@ void Cmd_Give_f (gentity_t *ent)
 
 	if (give_all || Q_stricmp(name, "armor") == 0)
 	{
-		ent->client->ps.stats[STAT_ARMOR] = 200;
+//		ent->client->ps.stats[STAT_ARMOR] = 200;
 
 		if (!give_all)
 			return;
@@ -465,11 +445,11 @@ void Cmd_Kill_f( gentity_t *ent ) {
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		return;
 	}
-	if (ent->health <= 0) {
+	if (ent->powerLevel <= 0) {
 		return;
 	}
 	ent->flags &= ~FL_GODMODE;
-	ent->client->ps.stats[STAT_HEALTH] = ent->health = -999;
+	ent->client->ps.stats[powerLevel] = ent->powerLevel = -999;
 	player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 }
 
@@ -592,7 +572,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	//
 
 	// if the player was dead leave the body
-	if ( client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if ( client->ps.stats[powerLevel] <= 0 ) {
 		CopyToBodyQue(ent);
 	}
 
@@ -601,7 +581,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	if ( oldTeam != TEAM_SPECTATOR ) {
 		// Kill him (makes sure he loses flags, etc)
 		ent->flags &= ~FL_GODMODE;
-		ent->client->ps.stats[STAT_HEALTH] = ent->health = 0;
+		ent->client->ps.stats[powerLevel] = ent->powerLevel = 0;
 		player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 
 	}
@@ -1213,7 +1193,6 @@ Cmd_CallVote_f
 ==================
 */
 void Cmd_CallVote_f( gentity_t *ent ) {
-	char*	c;
 	int		i;
 	char	arg1[MAX_STRING_TOKENS];
 	char	arg2[MAX_STRING_TOKENS];
@@ -1240,16 +1219,9 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 	trap_Argv( 1, arg1, sizeof( arg1 ) );
 	trap_Argv( 2, arg2, sizeof( arg2 ) );
 
-	// check for command separators in arg2
-	for( c = arg2; *c; ++c) {
-		switch(*c) {
-			case '\n':
-			case '\r':
-			case ';':
-				trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string.\n\"" );
-				return;
-			break;
-		}
+	if( strchr( arg1, ';' ) || strchr( arg2, ';' ) ) {
+		trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string.\n\"" );
+		return;
 	}
 
 	if ( !Q_stricmp( arg1, "map_restart" ) ) {
@@ -1600,6 +1572,50 @@ void Cmd_Stats_f( gentity_t *ent ) {
 
 /*
 =================
+JUHOX: Cmd_LFEMM_f
+=================
+*/
+#if MAPLENSFLARES
+static void Cmd_LFEMM_f(gentity_t* ent) {
+	char arg[16];
+
+	if (trap_Argc() < 2) return;
+	if (g_editmode.integer != EM_mlf) return;
+	if (ent->s.number != 0) return;
+
+	trap_Argv(1, arg, sizeof(arg));
+	level.lfeFMM = atoi(arg);
+
+	if (trap_Argc() >= 5) {
+		vec3_t origin;
+
+		trap_Argv(2, arg, sizeof(arg));
+		origin[0] = atof(arg);
+		trap_Argv(3, arg, sizeof(arg));
+		origin[1] = atof(arg);
+		trap_Argv(4, arg, sizeof(arg));
+		origin[2] = atof(arg);
+		G_SetOrigin(ent, origin);
+		VectorCopy(origin, ent->client->ps.origin);
+		ent->client->ps.eFlags ^= EF_TELEPORT_BIT;
+
+		if (trap_Argc() >= 8) {
+			playerState_t* ps;
+
+			ps = &ent->client->ps;
+			trap_Argv(5, arg, sizeof(arg));
+			ps->delta_angles[0] += ANGLE2SHORT(atof(arg) - ps->viewangles[0]);
+			trap_Argv(6, arg, sizeof(arg));
+			ps->delta_angles[1] += ANGLE2SHORT(atof(arg) - ps->viewangles[1]);
+			trap_Argv(7, arg, sizeof(arg));
+			ps->delta_angles[2] += ANGLE2SHORT(atof(arg) - ps->viewangles[2]);
+		}
+	}
+}
+#endif
+
+/*
+=================
 ClientCommand
 =================
 */
@@ -1615,6 +1631,14 @@ void ClientCommand( int clientNum ) {
 
 	trap_Argv( 0, cmd, sizeof( cmd ) );
 
+#if MAPLENSFLARES	// JUHOX: don't accept normal client commands in edit mode
+	if (g_editmode.integer > EM_none) {
+		if (!Q_stricmp(cmd, "lfemm")) {
+			Cmd_LFEMM_f(ent);
+		}
+		return;
+	}
+#endif
 	if (Q_stricmp (cmd, "say") == 0) {
 		Cmd_Say_f (ent, SAY_ALL, qfalse);
 		return;

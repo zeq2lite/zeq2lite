@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // g_weapon.c 
 // perform the server side effects of a weapon firing
@@ -30,6 +10,22 @@ static	vec3_t	forward, right, up;
 static	vec3_t	muzzle;
 
 #define NUM_NAILSHOTS 15
+
+/*
+=====================
+G_GetMuzzleSettings
+=====================
+*/
+// Botched this together because Q3 stores the muzzle calculations as globals in this unit,
+// instead of passing them as parameters. When the old weapons unit is killed off, the
+// muzzle calculatons can switch to g_usermissile.c and this function will no longer be
+// needed.
+void G_GetMuzzleSettings(vec3_t muzzle_g, vec3_t forward_g, vec3_t right_g, vec3_t up_g) {
+	VectorCopy(muzzle, muzzle_g);
+	VectorCopy(forward, forward_g);
+	VectorCopy(right, right_g);
+	VectorCopy(up, up_g);
+}
 
 /*
 ================
@@ -99,17 +95,19 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 		return qfalse;
 	}
 
-	if (ent->client->ps.powerups[PW_QUAD] ) {
-		G_AddEvent( ent, EV_POWERUP_QUAD, 0 );
-		s_quadFactor = g_quadfactor.value;
-	} else {
+//	if (ent->client->ps.powerups[PW_QUAD] ) {
+//		G_AddEvent( ent, EV_POWERUP_QUAD, 0 );
+//		s_quadFactor = g_quadfactor.value;
+//	} else {
 		s_quadFactor = 1;
-	}
+//	}
+/*
 #ifdef MISSIONPACK
 	if( ent->client->persistantPowerup && ent->client->persistantPowerup->item && ent->client->persistantPowerup->item->giTag == PW_DOUBLER ) {
 		s_quadFactor *= 2;
 	}
 #endif
+*/
 
 	damage = 50 * s_quadFactor;
 	G_Damage( traceEnt, ent, ent, forward, tr.endpos,
@@ -760,7 +758,7 @@ qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker ) {
 		return qfalse;
 	}
 
-	if( target->client->ps.stats[STAT_HEALTH] <= 0 ) {
+	if( target->client->ps.stats[powerLevel] <= 0 ) {
 		return qfalse;
 	}
 
@@ -781,7 +779,10 @@ set muzzle location relative to pivoting eye
 */
 void CalcMuzzlePoint ( gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint ) {
 	VectorCopy( ent->s.pos.trBase, muzzlePoint );
-	muzzlePoint[2] += ent->client->ps.viewheight;
+	//FIXME: Old Q3A style adding to the vertical component will no longer work because of
+	//       the barrel rolling, switched to a vectorMA function.
+	//muzzlePoint[2] += ent->client->ps.viewheight;
+	VectorMA( muzzlePoint, ent->client->ps.viewheight, up, muzzlePoint );
 	VectorMA( muzzlePoint, 14, forward, muzzlePoint );
 	// snap to integer coordinates for more efficient network bandwidth usage
 	SnapVector( muzzlePoint );
@@ -794,9 +795,14 @@ CalcMuzzlePointOrigin
 set muzzle location relative to pivoting eye
 ===============
 */
+// FIXME: Why does this function do EXACTLY the same as CalcMuzzlePoint without using the extra
+//        vec3_t origin? Stupid! Propose to change all calls to this function to the other one.
 void CalcMuzzlePointOrigin ( gentity_t *ent, vec3_t origin, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint ) {
 	VectorCopy( ent->s.pos.trBase, muzzlePoint );
-	muzzlePoint[2] += ent->client->ps.viewheight;
+	//FIXME: Old Q3A style adding to the vertical component will no longer work because of
+	//       the barrel rolling, switched to a vectorMA function.
+	//muzzlePoint[2] += ent->client->ps.viewheight;
+	VectorMA( muzzlePoint, ent->client->ps.viewheight, up, muzzlePoint );
 	VectorMA( muzzlePoint, 14, forward, muzzlePoint );
 	// snap to integer coordinates for more efficient network bandwidth usage
 	SnapVector( muzzlePoint );
@@ -809,87 +815,25 @@ void CalcMuzzlePointOrigin ( gentity_t *ent, vec3_t origin, vec3_t forward, vec3
 FireWeapon
 ===============
 */
-void FireWeapon( gentity_t *ent ) {
-	if (ent->client->ps.powerups[PW_QUAD] ) {
-		s_quadFactor = g_quadfactor.value;
-	} else {
-		s_quadFactor = 1;
-	}
-#ifdef MISSIONPACK
-	if( ent->client->persistantPowerup && ent->client->persistantPowerup->item && ent->client->persistantPowerup->item->giTag == PW_DOUBLER ) {
-		s_quadFactor *= 2;
-	}
-#endif
+void FireWeapon( gentity_t *ent, qboolean altfire ) {
+	s_quadFactor = 1;
 
-	// track shots taken for accuracy tracking.  Grapple is not a weapon and gauntet is just not tracked
+	/*
+	// track shots taken for accuracy tracking.
+	// Grapple is not a weapon and gauntet is just not tracked
 	if( ent->s.weapon != WP_GRAPPLING_HOOK && ent->s.weapon != WP_GAUNTLET ) {
-#ifdef MISSIONPACK
-		if( ent->s.weapon == WP_NAILGUN ) {
-			ent->client->accuracy_shots += NUM_NAILSHOTS;
-		} else {
-			ent->client->accuracy_shots++;
-		}
-#else
 		ent->client->accuracy_shots++;
-#endif
 	}
+	*/
 
 	// set aiming directions
 	AngleVectors (ent->client->ps.viewangles, forward, right, up);
 
 	CalcMuzzlePointOrigin ( ent, ent->client->oldOrigin, forward, right, up, muzzle );
 
-	// fire the specific weapon
-	switch( ent->s.weapon ) {
-	case WP_GAUNTLET:
-		Weapon_Gauntlet( ent );
-		break;
-	case WP_LIGHTNING:
-		Weapon_LightningFire( ent );
-		break;
-	case WP_SHOTGUN:
-		weapon_supershotgun_fire( ent );
-		break;
-	case WP_MACHINEGUN:
-		if ( g_gametype.integer != GT_TEAM ) {
-			Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE );
-		} else {
-			Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE );
-		}
-		break;
-	case WP_GRENADE_LAUNCHER:
-		weapon_grenadelauncher_fire( ent );
-		break;
-	case WP_ROCKET_LAUNCHER:
-		Weapon_RocketLauncher_Fire( ent );
-		break;
-	case WP_PLASMAGUN:
-		Weapon_Plasmagun_Fire( ent );
-		break;
-	case WP_RAILGUN:
-		weapon_railgun_fire( ent );
-		break;
-	case WP_BFG:
-		BFG_Fire( ent );
-		break;
-	case WP_GRAPPLING_HOOK:
-		Weapon_GrapplingHook_Fire( ent );
-		break;
-#ifdef MISSIONPACK
-	case WP_NAILGUN:
-		Weapon_Nailgun_Fire( ent );
-		break;
-	case WP_PROX_LAUNCHER:
-		weapon_proxlauncher_fire( ent );
-		break;
-	case WP_CHAINGUN:
-		Bullet_Fire( ent, CHAINGUN_SPREAD, MACHINEGUN_DAMAGE );
-		break;
-#endif
-	default:
-// FIXME		G_Error( "Bad ent->s.weapon" );
-		break;
-	}
+	Fire_UserWeapon ( ent, muzzle, forward, altfire );
+	ent->client->ps.stats[bitFlags] ^= STATBIT_FLIPOFFSET;
+	return;
 }
 
 

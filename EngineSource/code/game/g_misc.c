@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // g_misc.c
 
@@ -162,7 +142,7 @@ void locateCamera( gentity_t *ent ) {
 
 	owner = G_PickTarget( ent->target );
 	if ( !owner ) {
-		G_Printf( "Couldn't find target for misc_partal_surface\n" );
+		G_Printf( "Couldn't find target for misc_portal_surface\n" );
 		G_FreeEntity( ent );
 		return;
 	}
@@ -363,7 +343,7 @@ void DropPortalDestination( gentity_t *player ) {
 
 	ent->r.contents = CONTENTS_CORPSE;
 	ent->takedamage = qtrue;
-	ent->health = 200;
+	ent->powerLevel = 200;
 	ent->die = PortalDie;
 
 	VectorCopy( player->s.apos.trBase, ent->s.angles );
@@ -377,7 +357,7 @@ void DropPortalDestination( gentity_t *player ) {
 	ent->count = player->client->portalID;
 
 	// give the item back so they can drop the source now
-	player->client->ps.stats[STAT_HOLDABLE_ITEM] = BG_FindItem( "Portal" ) - bg_itemlist;
+//	player->client->ps.stats[STAT_HOLDABLE_ITEM] = BG_FindItem( "Portal" ) - bg_itemlist;
 }
 
 
@@ -385,7 +365,7 @@ static void PortalTouch( gentity_t *self, gentity_t *other, trace_t *trace) {
 	gentity_t	*destination;
 
 	// see if we will even let other try to use it
-	if( other->health <= 0 ) {
+	if( other->powerLevel <= 0 ) {
 		return;
 	}
 	if( !other->client ) {
@@ -456,7 +436,7 @@ void DropPortalSource( gentity_t *player ) {
 
 	ent->r.contents = CONTENTS_CORPSE | CONTENTS_TRIGGER;
 	ent->takedamage = qtrue;
-	ent->health = 200;
+	ent->powerLevel = 200;
 	ent->die = PortalDie;
 
 	trap_LinkEntity( ent );

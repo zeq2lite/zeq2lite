@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =============================================================================
@@ -85,7 +65,7 @@ static void UI_SaveConfigMenu_SaveEvent( void *ptr, int event ) {
 		return;
 	}
 
-	COM_StripExtension(saveConfig.savename.field.buffer, configname, sizeof(configname));
+	COM_StripExtension(saveConfig.savename.field.buffer, configname );
 	trap_Cmd_ExecuteText( EXEC_APPEND, va( "writeconfig %s.cfg\n", configname ) );
 	UI_PopMenu();
 }
@@ -104,15 +84,15 @@ static void UI_SaveConfigMenu_SavenameDraw( void *self ) {
 	f = (menufield_s *)self;
 
 	if( f == Menu_ItemAtCursor( &saveConfig.menu ) ) {
-		style = UI_LEFT|UI_PULSE|UI_SMALLFONT;
+		style = UI_LEFT|UI_PULSE|UI_SMALLFONT|UI_DROPSHADOW;
 		color = text_color_highlight;
 	}
 	else {
-		style = UI_LEFT|UI_SMALLFONT;
-		color = colorRed;
+		style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
+		color = colorWhite;
 	}
 
-	UI_DrawProportionalString( 320, 192, "Enter filename:", UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawProportionalString( 320, 192, "Enter filename:", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	UI_FillRect( f->generic.x, f->generic.y, f->field.widthInChars*SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, colorBlack );
 	MField_Draw( &f->field, f->generic.x, f->generic.y, style, color );
 }
@@ -135,7 +115,7 @@ static void UI_SaveConfigMenu_Init( void ) {
 	saveConfig.banner.generic.y			= 16;
 	saveConfig.banner.string			= "SAVE CONFIG";
 	saveConfig.banner.color				= color_white;
-	saveConfig.banner.style				= UI_CENTER;
+	saveConfig.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	saveConfig.background.generic.type		= MTYPE_BITMAP;
 	saveConfig.background.generic.name		= ART_BACKGROUND;

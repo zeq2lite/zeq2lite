@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 //
 // g_arenas.c
@@ -43,7 +23,7 @@ void UpdateTournamentInfo( void ) {
 	int			playerClientNum;
 	int			n, accuracy, perfect,	msglen;
 	int			buflen;
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK // bk001205
   int score1, score2;
 	qboolean won;
 #endif
@@ -163,12 +143,12 @@ static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity
 	body->s.groundEntityNum = ENTITYNUM_WORLD;
 	body->s.legsAnim = LEGS_IDLE;
 	body->s.torsoAnim = TORSO_STAND;
-	if( body->s.weapon == WP_NONE ) {
-		body->s.weapon = WP_MACHINEGUN;
-	}
-	if( body->s.weapon == WP_GAUNTLET) {
-		body->s.torsoAnim = TORSO_STAND2;
-	}
+//	if( body->s.weapon == WP_NONE ) {
+//		body->s.weapon = WP_MACHINEGUN;
+//	}
+//	if( body->s.weapon == WP_GAUNTLET) {
+//		body->s.torsoAnim = TORSO_STAND2;
+//	}
 	body->s.event = 0;
 	body->r.svFlags = ent->r.svFlags;
 	VectorCopy (ent->r.mins, body->r.mins);
@@ -203,19 +183,19 @@ static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity
 static void CelebrateStop( gentity_t *player ) {
 	int		anim;
 
-	if( player->s.weapon == WP_GAUNTLET) {
-		anim = TORSO_STAND2;
-	}
-	else {
+//	if( player->s.weapon == WP_GAUNTLET) {
+//		anim = TORSO_STAND2;
+//	}
+//	else {
 		anim = TORSO_STAND;
-	}
+//	}
 	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
 }
 
 
 #define	TIMER_GESTURE	(34*66+50)
 static void CelebrateStart( gentity_t *player ) {
-	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | TORSO_GESTURE;
+	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) ;//| TORSO_GESTURE;
 	player->nextthink = level.time + TIMER_GESTURE;
 	player->think = CelebrateStop;
 

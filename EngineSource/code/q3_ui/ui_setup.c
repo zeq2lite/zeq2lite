@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =======================================================================
@@ -91,8 +71,8 @@ Setup_ResetDefaults_Draw
 =================
 */
 static void Setup_ResetDefaults_Draw( void ) {
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This will reset *ALL*", UI_CENTER|UI_SMALLFONT, color_yellow );
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "options to their default values.", UI_CENTER|UI_SMALLFONT, color_yellow );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This will reset *ALL*", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "options to their default values.", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 }
 
 
@@ -124,7 +104,7 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 		break;
 
 	case ID_CDKEY:
-		UI_CDKeyMenu();
+//		UI_CDKeyMenu();
 		break;
 
 //	case ID_LOAD:
@@ -165,7 +145,7 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.banner.generic.y					= 16;
 	setupMenuInfo.banner.string						= "SETUP";
 	setupMenuInfo.banner.color						= color_white;
-	setupMenuInfo.banner.style						= UI_CENTER;
+	setupMenuInfo.banner.style						= UI_CENTER|UI_DROPSHADOW;
 
 	setupMenuInfo.framel.generic.type				= MTYPE_BITMAP;
 	setupMenuInfo.framel.generic.name				= ART_FRAMEL;
@@ -191,8 +171,8 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.setupplayer.generic.id			= ID_CUSTOMIZEPLAYER;
 	setupMenuInfo.setupplayer.generic.callback		= UI_SetupMenu_Event; 
 	setupMenuInfo.setupplayer.string				= "PLAYER";
-	setupMenuInfo.setupplayer.color					= color_red;
-	setupMenuInfo.setupplayer.style					= UI_CENTER;
+	setupMenuInfo.setupplayer.color					= color_lightBlue;
+	setupMenuInfo.setupplayer.style					= UI_CENTER|UI_DROPSHADOW;
 
 	y += SETUP_MENU_VERTICAL_SPACING;
 	setupMenuInfo.setupcontrols.generic.type		= MTYPE_PTEXT;
@@ -202,8 +182,8 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.setupcontrols.generic.id			= ID_CUSTOMIZECONTROLS;
 	setupMenuInfo.setupcontrols.generic.callback	= UI_SetupMenu_Event; 
 	setupMenuInfo.setupcontrols.string				= "CONTROLS";
-	setupMenuInfo.setupcontrols.color				= color_red;
-	setupMenuInfo.setupcontrols.style				= UI_CENTER;
+	setupMenuInfo.setupcontrols.color				= color_lightBlue;
+	setupMenuInfo.setupcontrols.style				= UI_CENTER|UI_DROPSHADOW;
 
 	y += SETUP_MENU_VERTICAL_SPACING;
 	setupMenuInfo.setupsystem.generic.type			= MTYPE_PTEXT;
@@ -213,8 +193,8 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.setupsystem.generic.id			= ID_SYSTEMCONFIG;
 	setupMenuInfo.setupsystem.generic.callback		= UI_SetupMenu_Event; 
 	setupMenuInfo.setupsystem.string				= "SYSTEM";
-	setupMenuInfo.setupsystem.color					= color_red;
-	setupMenuInfo.setupsystem.style					= UI_CENTER;
+	setupMenuInfo.setupsystem.color					= color_lightBlue;
+	setupMenuInfo.setupsystem.style					= UI_CENTER|UI_DROPSHADOW;
 
 	y += SETUP_MENU_VERTICAL_SPACING;
 	setupMenuInfo.game.generic.type					= MTYPE_PTEXT;
@@ -224,8 +204,8 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.game.generic.id					= ID_GAME;
 	setupMenuInfo.game.generic.callback				= UI_SetupMenu_Event; 
 	setupMenuInfo.game.string						= "GAME OPTIONS";
-	setupMenuInfo.game.color						= color_red;
-	setupMenuInfo.game.style						= UI_CENTER;
+	setupMenuInfo.game.color						= color_lightBlue;
+	setupMenuInfo.game.style						= UI_CENTER|UI_DROPSHADOW;
 
 	y += SETUP_MENU_VERTICAL_SPACING;
 	setupMenuInfo.cdkey.generic.type				= MTYPE_PTEXT;
@@ -235,8 +215,8 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.cdkey.generic.id					= ID_CDKEY;
 	setupMenuInfo.cdkey.generic.callback			= UI_SetupMenu_Event; 
 	setupMenuInfo.cdkey.string						= "CD Key";
-	setupMenuInfo.cdkey.color						= color_red;
-	setupMenuInfo.cdkey.style						= UI_CENTER;
+	setupMenuInfo.cdkey.color						= color_lightBlue;
+	setupMenuInfo.cdkey.style						= UI_CENTER|UI_DROPSHADOW;
 
 	if( !trap_Cvar_VariableValue( "cl_paused" ) ) {
 #if 0
@@ -248,8 +228,8 @@ static void UI_SetupMenu_Init( void ) {
 		setupMenuInfo.load.generic.id					= ID_LOAD;
 		setupMenuInfo.load.generic.callback				= UI_SetupMenu_Event; 
 		setupMenuInfo.load.string						= "LOAD";
-		setupMenuInfo.load.color						= color_red;
-		setupMenuInfo.load.style						= UI_CENTER;
+		setupMenuInfo.load.color						= color_lightBlue;
+		setupMenuInfo.load.style						= UI_CENTER|UI_DROPSHADOW;
 
 		y += SETUP_MENU_VERTICAL_SPACING;
 		setupMenuInfo.save.generic.type					= MTYPE_PTEXT;
@@ -259,8 +239,8 @@ static void UI_SetupMenu_Init( void ) {
 		setupMenuInfo.save.generic.id					= ID_SAVE;
 		setupMenuInfo.save.generic.callback				= UI_SetupMenu_Event; 
 		setupMenuInfo.save.string						= "SAVE";
-		setupMenuInfo.save.color						= color_red;
-		setupMenuInfo.save.style						= UI_CENTER;
+		setupMenuInfo.save.color						= color_lightBlue;
+		setupMenuInfo.save.style						= UI_CENTER|UI_DROPSHADOW;
 #endif
 
 		y += SETUP_MENU_VERTICAL_SPACING;
@@ -271,8 +251,8 @@ static void UI_SetupMenu_Init( void ) {
 		setupMenuInfo.defaults.generic.id				= ID_DEFAULTS;
 		setupMenuInfo.defaults.generic.callback			= UI_SetupMenu_Event; 
 		setupMenuInfo.defaults.string					= "DEFAULTS";
-		setupMenuInfo.defaults.color					= color_red;
-		setupMenuInfo.defaults.style					= UI_CENTER;
+		setupMenuInfo.defaults.color					= color_lightBlue;
+		setupMenuInfo.defaults.style					= UI_CENTER|UI_DROPSHADOW;
 	}
 
 	setupMenuInfo.back.generic.type					= MTYPE_BITMAP;
@@ -293,7 +273,7 @@ static void UI_SetupMenu_Init( void ) {
 	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.setupcontrols );
 	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.setupsystem );
 	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.game );
-	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.cdkey );
+//	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.cdkey );
 //	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.load );
 //	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.save );
 	if( !trap_Cvar_VariableValue( "cl_paused" ) ) {

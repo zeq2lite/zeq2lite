@@ -1,25 +1,4 @@
 /*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
-/*
 =======================================================================
 
 SYSTEM CONFIGURATION MENU
@@ -134,7 +113,7 @@ void Options_MenuInit( void ) {
 	s_options.banner.generic.y		= 16;
 	s_options.banner.string		    = "SYSTEM SETUP";
 	s_options.banner.color			= color_white;
-	s_options.banner.style			= UI_CENTER;
+	s_options.banner.style			= UI_CENTER|UI_DROPSHADOW;
 
 	s_options.framel.generic.type  = MTYPE_BITMAP;
 	s_options.framel.generic.name  = ART_FRAMEL;
@@ -160,8 +139,8 @@ void Options_MenuInit( void ) {
 	s_options.graphics.generic.x		= 320;
 	s_options.graphics.generic.y		= y;
 	s_options.graphics.string			= "GRAPHICS";
-	s_options.graphics.color			= color_red;
-	s_options.graphics.style			= UI_CENTER;
+	s_options.graphics.color			= color_white;
+	s_options.graphics.style			= UI_CENTER|UI_DROPSHADOW;
 
 	y += VERTICAL_SPACING;
 	s_options.display.generic.type		= MTYPE_PTEXT;
@@ -171,8 +150,8 @@ void Options_MenuInit( void ) {
 	s_options.display.generic.x			= 320;
 	s_options.display.generic.y			= y;
 	s_options.display.string			= "DISPLAY";
-	s_options.display.color				= color_red;
-	s_options.display.style				= UI_CENTER;
+	s_options.display.color				= color_white;
+	s_options.display.style				= UI_CENTER|UI_DROPSHADOW;
 
 	y += VERTICAL_SPACING;
 	s_options.sound.generic.type		= MTYPE_PTEXT;
@@ -182,8 +161,8 @@ void Options_MenuInit( void ) {
 	s_options.sound.generic.x			= 320;
 	s_options.sound.generic.y			= y;
 	s_options.sound.string				= "SOUND";
-	s_options.sound.color				= color_red;
-	s_options.sound.style				= UI_CENTER;
+	s_options.sound.color				= color_white;
+	s_options.sound.style				= UI_CENTER|UI_DROPSHADOW;
 
 	y += VERTICAL_SPACING;
 	s_options.network.generic.type		= MTYPE_PTEXT;
@@ -193,8 +172,8 @@ void Options_MenuInit( void ) {
 	s_options.network.generic.x			= 320;
 	s_options.network.generic.y			= y;
 	s_options.network.string			= "NETWORK";
-	s_options.network.color				= color_red;
-	s_options.network.style				= UI_CENTER;
+	s_options.network.color				= color_white;
+	s_options.network.style				= UI_CENTER|UI_DROPSHADOW;
 
 	s_options.back.generic.type	    = MTYPE_BITMAP;
 	s_options.back.generic.name     = ART_BACK0;

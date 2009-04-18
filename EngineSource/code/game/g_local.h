@@ -1,35 +1,18 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // g_local.h -- local definitions for game module
 
-#include "../qcommon/q_shared.h"
+#include "q_shared.h"
 #include "bg_public.h"
+// ADDING FOR ZEQ2
+#include "bg_userweapons.h"
+#include "g_userweapons.h"
+// END ADDING
 #include "g_public.h"
-
 //==================================================================
 
 // the "gameversion" client command will print this plus compile date
-#define	GAMEVERSION	BASEGAME
+#define	GAMEVERSION	"zeq2"
 
 #define BODY_QUEUE_SIZE		8
 
@@ -51,6 +34,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define FL_NO_BOTS				0x00002000	// spawn point not for bot use
 #define FL_NO_HUMANS			0x00004000	// spawn point just for bots
 #define FL_FORCE_GESTURE		0x00008000	// force gesture on client
+// ADDING FOR ZEQ2
+#define	FL_FLYING				0x00006000	// for when we're flying
+// END ADDING
 
 // movers are things like doors, plats, buttons, etc
 typedef enum {
@@ -127,6 +113,19 @@ struct gentity_s {
 	gentity_t	*target_ent;
 
 	float		speed;
+	// ADDING FOR ZEQ2
+	float		accel;
+	float		gravity;
+	float		bounceFrac;
+	int			bouncesLeft;
+	int			timesTriggered;
+	float		homAccel;
+	float		homRange;
+	float		homAngle;
+	int			powerLevel;
+	qboolean	struggling;
+	
+	// END ADDING
 	vec3_t		movedir;
 
 	int			nextthink;
@@ -141,30 +140,20 @@ struct gentity_s {
 	int			pain_debounce_time;
 	int			fly_sound_debounce_time;	// wind tunnel
 	int			last_move_time;
-
-	int			health;
-
 	qboolean	takedamage;
-
 	int			damage;
+	int			damageRadius;
 	int			splashDamage;	// quad will increase this without increasing radius
 	int			splashRadius;
 	int			methodOfDeath;
 	int			splashMethodOfDeath;
-
+	int			extraKnockback;
 	int			count;
-
 	gentity_t	*chain;
 	gentity_t	*enemy;
 	gentity_t	*activator;
 	gentity_t	*teamchain;		// next entity in team
 	gentity_t	*teammaster;	// master of the team
-
-#ifdef MISSIONPACK
-	int			kamikazeTime;
-	int			kamikazeShockTime;
-#endif
-
 	int			watertype;
 	int			waterlevel;
 
@@ -175,6 +164,24 @@ struct gentity_s {
 	float		random;
 
 	gitem_t		*item;			// for bonus items
+
+	// ADDING FOR ZEQ2
+	int			maxMissileTime;	// Anything more than this will always explode a guided missile.
+	int			missileSpawnTime; // Need to know when the missile was spawned for this.
+
+	int			sectionSpawnTime; // Servertime at which the last drop of a waypoint for a beam took place.
+	int			newSectionTime;  // Time to pass before a new waypoint drop;
+
+	int			chargelvl;			// [0..100]; Percentage of charge up used by attack
+	qboolean	explodeOnMaxLifetime; // does the attack explode when max lifetime is reached, or just disappear?
+	qboolean	continuousExplosion; // Should the explosion be continuous?
+	qboolean	guided;				// is the attack guided?
+	qboolean	onGround;			// is the attack currently on the ground?
+
+	gentity_t	*contFire_ent;		// Used to link continuous fire entities (like ET_TORCH ),
+	gentity_t	*contAltfire_ent;	// so you can clean them up upon button release.
+
+	// END ADDING
 };
 
 
@@ -257,7 +264,7 @@ typedef struct {
 
 // this structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'
-struct gclient_s {
+extern struct gclient_s {
 	// ps MUST be the first element, because the server expects it
 	playerState_t	ps;				// communicated by server to clients
 
@@ -280,8 +287,8 @@ struct gclient_s {
 
 	// sum up damage over an entire frame, so
 	// shotgun blasts give a single big kick
-	int			damage_armor;		// damage absorbed by armor
-	int			damage_blood;		// damage taken out of health
+	//int			damage_armor;		// damage absorbed by armor
+	int			damage_blood;		// damage taken out of powerLevel
 	int			damage_knockback;	// impact damage
 	vec3_t		damage_from;		// origin for vector calculation
 	qboolean	damage_fromWorld;	// if true, don't use the damage_from vector
@@ -309,18 +316,20 @@ struct gclient_s {
 	qboolean	fireHeld;			// used for hook
 	gentity_t	*hook;				// grapple hook if out
 
+	// ADDING FOR ZEQ2
+	gentity_t	*guidetarget;		// guided weapon when firing one
+	gentity_t	*playerEntity;
+	char		*modelName;
+	
+	// END ADDING
+
 	int			switchTeamTime;		// time the player switched teams
 
 	// timeResidual is used to handle events that happen every second
-	// like health / armor countdowns and regeneration
+	// like powerLevel / armor countdowns and regeneration
 	int			timeResidual;
-
-#ifdef MISSIONPACK
-	gentity_t	*persistantPowerup;
-	int			portalID;
-	int			ammoTimes[WP_NUM_WEAPONS];
-	int			invulnerabilityTime;
-#endif
+	int			timeResidualPriCharge;
+	int			timeResidualSecCharge;
 
 	char		*areabits;
 };
@@ -410,6 +419,11 @@ typedef struct {
 	gentity_t	*locationHead;			// head of the location list
 	int			bodyQueIndex;			// dead bodies
 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
+	int			lastRadarUpdateTime;	// when did the radar last update
+
+	#if MAPLENSFLARES	// JUHOX: level locals for the lens flare editor
+	qboolean	lfeFMM;	// FMM = fine move mode
+#endif
 #ifdef MISSIONPACK
 	int			portalSequence;
 #endif
@@ -490,7 +504,7 @@ void G_AddPredictableEvent( gentity_t *ent, int event, int eventParm );
 void G_AddEvent( gentity_t *ent, int event, int eventParm );
 void G_SetOrigin( gentity_t *ent, vec3_t origin );
 void AddRemap(const char *oldShader, const char *newShader, float timeOffset);
-const char *BuildShaderStateConfig( void );
+const char *BuildShaderStateConfig();
 
 //
 // g_combat.c
@@ -530,7 +544,10 @@ gentity_t *fire_grapple (gentity_t *self, vec3_t start, vec3_t dir);
 gentity_t *fire_nail( gentity_t *self, vec3_t start, vec3_t forward, vec3_t right, vec3_t up );
 gentity_t *fire_prox( gentity_t *self, vec3_t start, vec3_t aimdir );
 #endif
-
+// ADDING FOR ZEQ2
+void G_FreeBeamTrail( gentity_t *ent, int secs);
+void G_ExplodeMissile( gentity_t *ent );
+// END ADDING
 
 //
 // g_mover.c
@@ -595,10 +612,13 @@ qboolean G_FilterPacket (char *from);
 //
 // g_weapon.c
 //
-void FireWeapon( gentity_t *ent );
+void FireWeapon( gentity_t *ent, qboolean altfire );
 #ifdef MISSIONPACK
 void G_StartKamikaze( gentity_t *ent );
 #endif
+// ADDING FOR ZEQ2
+void G_GetMuzzleSettings(vec3_t muzzle_g, vec3_t forward_g, vec3_t right_g, vec3_t up_g);
+// END ADDING
 
 //
 // p_hud.c
@@ -640,6 +660,7 @@ void ClientCommand( int clientNum );
 //
 // g_active.c
 //
+void SetTargetPos(gentity_t* ent);
 void ClientThink( int clientNum );
 void ClientEndFrame( gentity_t *ent );
 void G_RunClient( gentity_t *ent );
@@ -687,6 +708,39 @@ void Svcmd_AddBot_f( void );
 void Svcmd_BotList_f( void );
 void BotInterbreedEndMatch( void );
 
+//
+// g_usermissile.c
+//
+
+void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfire );
+void Release_UserWeapon( gentity_t *self, qboolean altfire );
+void G_RunUserMissile( gentity_t *ent );
+void G_RunUserSkimmer( gentity_t *ent );
+void G_RunUserTorch( gentity_t *ent );
+void G_RunRiftWeaponClass( gentity_t *ent );
+
+void G_ExplodeUserWeapon (gentity_t *self);
+void G_RemoveUserWeapon (gentity_t *self);
+void G_DieUserWeapon( gentity_t *self, gentity_t *inflictor,
+					  gentity_t *attacker, int damage, int mod );
+
+//
+// g_weapPhysParser.c
+//
+
+qboolean G_weapPhysParser_MainParse( char *filename, int clientNum, int *weaponMask );
+
+//
+// g_radar.c
+//
+void G_RadarUpdateCS( void );
+
+//
+// g_weapPhysParser.c
+//
+qboolean G_weapPhys_Parse( char *filename, int clientNum );
+
+
 // ai_main.c
 #define MAX_FILEPATH			144
 
@@ -712,7 +766,7 @@ void BotTestAAS(vec3_t origin);
 extern	level_locals_t	level;
 extern	gentity_t		g_entities[MAX_GENTITIES];
 
-#define	FOFS(x) ((size_t)&(((gentity_t *)0)->x))
+#define	FOFS(x) ((int)&(((gentity_t *)0)->x))
 
 extern	vmCvar_t	g_gametype;
 extern	vmCvar_t	g_dedicated;
@@ -764,6 +818,16 @@ extern	vmCvar_t	g_enableDust;
 extern	vmCvar_t	g_enableBreath;
 extern	vmCvar_t	g_singlePlayer;
 extern	vmCvar_t	g_proxMineTimeout;
+// ADDING FOR ZEQ2
+extern	vmCvar_t	g_verboseParse;
+extern	vmCvar_t	g_powerlevel;
+extern	vmCvar_t	g_powerlevelChargeScale;
+extern	vmCvar_t	g_rolling;
+extern	vmCvar_t	g_running;
+// END ADDING
+#if MAPLENSFLARES	// JUHOX: cvars for map lens flares
+extern	vmCvar_t	g_editmode;
+#endif
 
 void	trap_Printf( const char *fmt );
 void	trap_Error( const char *fmt );
@@ -776,7 +840,6 @@ void	trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void	trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void	trap_FS_FCloseFile( fileHandle_t f );
 int		trap_FS_GetFileList( const char *path, const char *extension, char *listbuf, int bufsize );
-int		trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
 void	trap_SendConsoleCommand( int exec_when, const char *text );
 void	trap_Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *value, int flags );
 void	trap_Cvar_Update( vmCvar_t *cvar );

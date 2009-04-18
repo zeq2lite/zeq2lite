@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_drawtools.c -- helper functions called by cg_draw, cg_scoreboard, cg_info, etc
 #include "cg_local.h"
@@ -82,7 +62,7 @@ void CG_DrawTopBottom(float x, float y, float w, float h, float size) {
 }
 /*
 ================
-UI_DrawRect
+CG_DrawRect
 
 Coordinates are 640*480 virtual values
 =================
@@ -184,7 +164,7 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 				s += 2;
 				continue;
 			}
-			CG_DrawChar( xx + 2, y + 2, charWidth, charHeight, *s );
+			CG_DrawChar( xx + 1, y + 1, charWidth, charHeight, *s );
 			cnt++;
 			xx += charWidth;
 			s++;
@@ -231,11 +211,23 @@ void CG_DrawSmallString( int x, int y, const char *s, float alpha ) {
 
 	color[0] = color[1] = color[2] = 1.0;
 	color[3] = alpha;
-	CG_DrawStringExt( x, y, s, color, qfalse, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+	CG_DrawStringExt( x, y, s, color, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+}
+
+void CG_DrawSmallStringHalfHeight( int x, int y, const char *s, float alpha ) {
+	float	color[4];
+
+	color[0] = color[1] = color[2] = 1.0;
+	color[3] = alpha;
+	CG_DrawStringExt( x, y, s, color, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT / 2, 0 );
 }
 
 void CG_DrawSmallStringColor( int x, int y, const char *s, vec4_t color ) {
-	CG_DrawStringExt( x, y, s, color, qtrue, qfalse, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+	CG_DrawStringExt( x, y, s, color, qtrue, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+}
+
+void CG_DrawMediumStringColor( int x, int y, const char *s, vec4_t color ) {
+	CG_DrawStringExt( x, y, s, color, qtrue, qtrue, MEDIUMCHAR_WIDTH, MEDIUMCHAR_HEIGHT, 0 );
 }
 
 /*
@@ -381,41 +373,41 @@ float *CG_TeamColor( int team ) {
 CG_GetColorForHealth
 =================
 */
-void CG_GetColorForHealth( int health, int armor, vec4_t hcolor ) {
+void CG_GetColorForHealth( int powerLevel, int armor, vec4_t hcolor ) {
 	int		count;
 	int		max;
 
 	// calculate the total points of damage that can
-	// be sustained at the current health / armor level
-	if ( health <= 0 ) {
+	// be sustained at the current powerLevel / armor level
+	if ( powerLevel <= 0 ) {
 		VectorClear( hcolor );	// black
 		hcolor[3] = 1;
 		return;
 	}
 	count = armor;
-	max = health * ARMOR_PROTECTION / ( 1.0 - ARMOR_PROTECTION );
+	max = powerLevel * ARMOR_PROTECTION / ( 1.0 - ARMOR_PROTECTION );
 	if ( max < count ) {
 		count = max;
 	}
-	health += count;
+	powerLevel += count;
 
-	// set the color based on health
+	// set the color based on powerLevel
 	hcolor[0] = 1.0;
 	hcolor[3] = 1.0;
-	if ( health >= 100 ) {
+	if ( powerLevel >= 100 ) {
 		hcolor[2] = 1.0;
-	} else if ( health < 66 ) {
+	} else if ( powerLevel < 66 ) {
 		hcolor[2] = 0;
 	} else {
-		hcolor[2] = ( health - 66 ) / 33.0;
+		hcolor[2] = ( powerLevel - 66 ) / 33.0;
 	}
 
-	if ( health > 60 ) {
+	if ( powerLevel > 60 ) {
 		hcolor[1] = 1.0;
-	} else if ( health < 30 ) {
+	} else if ( powerLevel < 30 ) {
 		hcolor[1] = 0;
 	} else {
-		hcolor[1] = ( health - 30 ) / 30.0;
+		hcolor[1] = ( powerLevel - 30 ) / 30.0;
 	}
 }
 
@@ -426,11 +418,19 @@ CG_ColorForHealth
 */
 void CG_ColorForHealth( vec4_t hcolor ) {
 
-	CG_GetColorForHealth( cg.snap->ps.stats[STAT_HEALTH], 
-		cg.snap->ps.stats[STAT_ARMOR], hcolor );
+//	CG_GetColorForHealth( cg.snap->ps.stats[powerLevel], 
+//		cg.snap->ps.stats[STAT_ARMOR], hcolor );
+	CG_GetColorForHealth( cg.snap->ps.stats[powerLevel], 
+		0, hcolor );
 }
 
 
+
+
+// bk001205 - code below duplicated in q3_ui/ui-atoms.c
+// bk001205 - FIXME: does this belong in ui_shared.c?
+// bk001205 - FIXME: HARD_LINKED flags not visible here
+#ifndef Q3_STATIC // bk001205 - q_shared defines not visible here 
 /*
 =================
 UI_DrawProportionalString2
@@ -590,7 +590,7 @@ UI_DrawBannerString
 static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 {
 	const char* s;
-	unsigned char	ch;
+	unsigned char	ch; // bk001204 : array subscript
 	float	ax;
 	float	ay;
 	float	aw;
@@ -668,7 +668,7 @@ void UI_DrawBannerString( int x, int y, const char* str, int style, vec4_t color
 	if ( style & UI_DROPSHADOW ) {
 		drawcolor[0] = drawcolor[1] = drawcolor[2] = 0;
 		drawcolor[3] = color[3];
-		UI_DrawBannerString2( x+2, y+2, str, drawcolor );
+		UI_DrawBannerString2( x+1, y+1, str, drawcolor );
 	}
 
 	UI_DrawBannerString2( x, y, str, color );
@@ -700,7 +700,7 @@ int UI_ProportionalStringWidth( const char* str ) {
 static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t color, float sizeScale, qhandle_t charset )
 {
 	const char* s;
-	unsigned char	ch;
+	unsigned char	ch; // bk001204 - unsigned
 	float	ax;
 	float	ay;
 	float	aw;
@@ -786,7 +786,7 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 	if ( style & UI_DROPSHADOW ) {
 		drawcolor[0] = drawcolor[1] = drawcolor[2] = 0;
 		drawcolor[3] = color[3];
-		UI_DrawProportionalString2( x+2, y+2, str, drawcolor, sizeScale, cgs.media.charsetProp );
+		UI_DrawProportionalString2( x+1, y+1, str, drawcolor, sizeScale, cgs.media.charsetProp );
 	}
 
 	if ( style & UI_INVERSE ) {
@@ -815,3 +815,4 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 
 	UI_DrawProportionalString2( x, y, str, color, sizeScale, cgs.media.charsetProp );
 }
+#endif // Q3STATIC

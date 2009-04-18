@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 
 #include "g_local.h"
@@ -47,9 +27,8 @@ void Team_InitGame( void ) {
 
 	switch( g_gametype.integer ) {
 	case GT_CTF:
-		teamgame.redStatus = -1; // Invalid to force update
+		teamgame.redStatus = teamgame.blueStatus = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_RED, FLAG_ATBASE );
-		 teamgame.blueStatus = -1; // Invalid to force update
 		Team_SetFlagStatus( TEAM_BLUE, FLAG_ATBASE );
 		break;
 #ifdef MISSIONPACK
@@ -108,7 +87,7 @@ void QDECL PrintMsg( gentity_t *ent, const char *fmt, ... ) {
 	char		*p;
 	
 	va_start (argptr,fmt);
-	if (Q_vsnprintf (msg, sizeof(msg), fmt, argptr) > sizeof(msg)) {
+	if (vsprintf (msg, fmt, argptr) > sizeof(msg)) {
 		G_Error ( "PrintMsg overrun" );
 	}
 	va_end (argptr);
@@ -323,7 +302,7 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 		attacker->client->pers.teamState.lastfraggedcarrier = level.time;
 		AddScore(attacker, targ->r.currentOrigin, CTF_FRAG_CARRIER_BONUS);
 		attacker->client->pers.teamState.fragcarrier++;
-		PrintMsg(NULL, "%s" S_COLOR_WHITE " fragged %s's flag carrier!\n",
+		PrintMsg(NULL, "%s" S_COLOR_WHITE " took the life of %s's flag carrier!\n",
 			attacker->client->pers.netname, TeamName(team));
 
 		// the target had the flag, clear the hurt carrier
@@ -341,7 +320,7 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 		attacker->client->pers.teamState.lastfraggedcarrier = level.time;
 		AddScore(attacker, targ->r.currentOrigin, CTF_FRAG_CARRIER_BONUS * tokens * tokens);
 		attacker->client->pers.teamState.fragcarrier++;
-		PrintMsg(NULL, "%s" S_COLOR_WHITE " fragged %s's skull carrier!\n",
+		PrintMsg(NULL, "%s" S_COLOR_WHITE " took the life of %s's skull carrier!\n",
 			attacker->client->pers.netname, TeamName(team));
 
 		// the target had the flag, clear the hurt carrier
@@ -1059,7 +1038,7 @@ static int QDECL SortClients( const void *a, const void *b ) {
 TeamplayLocationsMessage
 
 Format:
-	clientNum location health armor weapon powerups
+	clientNum location powerLevel armor weapon powerups
 
 ==================
 */
@@ -1099,8 +1078,9 @@ void TeamplayInfoMessage( gentity_t *ent ) {
 		if (player->inuse && player->client->sess.sessionTeam == 
 			ent->client->sess.sessionTeam ) {
 
-			h = player->client->ps.stats[STAT_HEALTH];
-			a = player->client->ps.stats[STAT_ARMOR];
+			h = player->client->ps.stats[powerLevel];
+			//a = player->client->ps.stats[STAT_ARMOR];
+			a = 0;
 			if (h < 0) h = 0;
 			if (a < 0) a = 0;
 
@@ -1139,7 +1119,7 @@ void CheckTeamStatus(void) {
 			if (ent->inuse && (ent->client->sess.sessionTeam == TEAM_RED ||	ent->client->sess.sessionTeam == TEAM_BLUE)) {
 				loc = Team_GetLocation( ent );
 				if (loc)
-					ent->client->pers.teamState.location = loc->health;
+					ent->client->pers.teamState.location = loc->powerLevel;
 				else
 					ent->client->pers.teamState.location = 0;
 			}
@@ -1199,24 +1179,24 @@ Obelisks
 
 static void ObeliskRegen( gentity_t *self ) {
 	self->nextthink = level.time + g_obeliskRegenPeriod.integer * 1000;
-	if( self->health >= g_obeliskHealth.integer ) {
+	if( self->powerLevel >= g_obeliskHealth.integer ) {
 		return;
 	}
 
 	G_AddEvent( self, EV_POWERUP_REGEN, 0 );
-	self->health += g_obeliskRegenAmount.integer;
-	if ( self->health > g_obeliskHealth.integer ) {
-		self->health = g_obeliskHealth.integer;
+	self->powerLevel += g_obeliskRegenAmount.integer;
+	if ( self->powerLevel > g_obeliskHealth.integer ) {
+		self->powerLevel = g_obeliskHealth.integer;
 	}
 
-	self->activator->s.modelindex2 = self->health * 0xff / g_obeliskHealth.integer;
+	self->activator->s.modelindex2 = self->powerLevel * 0xff / g_obeliskHealth.integer;
 	self->activator->s.frame = 0;
 }
 
 
 static void ObeliskRespawn( gentity_t *self ) {
 	self->takedamage = qtrue;
-	self->health = g_obeliskHealth.integer;
+	self->powerLevel = g_obeliskHealth.integer;
 
 	self->think = ObeliskRegen;
 	self->nextthink = level.time + g_obeliskRegenPeriod.integer * 1000;
@@ -1297,7 +1277,7 @@ static void ObeliskPain( gentity_t *self, gentity_t *attacker, int damage ) {
 	if (actualDamage <= 0) {
 		actualDamage = 1;
 	}
-	self->activator->s.modelindex2 = self->health * 0xff / g_obeliskHealth.integer;
+	self->activator->s.modelindex2 = self->powerLevel * 0xff / g_obeliskHealth.integer;
 	if (!self->activator->s.frame) {
 		G_AddEvent(self, EV_OBELISKPAIN, 0);
 	}
@@ -1325,7 +1305,7 @@ gentity_t *SpawnObelisk( vec3_t origin, int team, int spawnflags) {
 	if( g_gametype.integer == GT_OBELISK ) {
 		ent->r.contents = CONTENTS_SOLID;
 		ent->takedamage = qtrue;
-		ent->health = g_obeliskHealth.integer;
+		ent->powerLevel = g_obeliskHealth.integer;
 		ent->die = ObeliskDie;
 		ent->pain = ObeliskPain;
 		ent->think = ObeliskRegen;
@@ -1381,7 +1361,7 @@ void SP_team_redobelisk( gentity_t *ent ) {
 	if ( g_gametype.integer == GT_OBELISK ) {
 		obelisk = SpawnObelisk( ent->s.origin, TEAM_RED, ent->spawnflags );
 		obelisk->activator = ent;
-		// initial obelisk health value
+		// initial obelisk powerLevel value
 		ent->s.modelindex2 = 0xff;
 		ent->s.frame = 0;
 	}
@@ -1406,7 +1386,7 @@ void SP_team_blueobelisk( gentity_t *ent ) {
 	if ( g_gametype.integer == GT_OBELISK ) {
 		obelisk = SpawnObelisk( ent->s.origin, TEAM_BLUE, ent->spawnflags );
 		obelisk->activator = ent;
-		// initial obelisk health value
+		// initial obelisk powerLevel value
 		ent->s.modelindex2 = 0xff;
 		ent->s.frame = 0;
 	}

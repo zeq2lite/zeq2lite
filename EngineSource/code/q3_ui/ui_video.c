@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "ui_local.h"
 
@@ -93,25 +73,25 @@ static void DriverInfo_MenuDraw( void )
 
 	Menu_Draw( &s_driverinfo.menu );
 
-	UI_DrawString( 320, 80, "VENDOR", UI_CENTER|UI_SMALLFONT, color_red );
-	UI_DrawString( 320, 152, "PIXELFORMAT", UI_CENTER|UI_SMALLFONT, color_red );
-	UI_DrawString( 320, 192, "EXTENSIONS", UI_CENTER|UI_SMALLFONT, color_red );
+	UI_DrawString( 320, 80, "VENDOR", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawString( 320, 152, "PIXELFORMAT", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawString( 320, 192, "EXTENSIONS", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
-	UI_DrawString( 320, 80+16, uis.glconfig.vendor_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 96+16, uis.glconfig.version_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 112+16, uis.glconfig.renderer_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 152+16, va ("color(%d-bits) Z(%d-bits) stencil(%d-bits)", uis.glconfig.colorBits, uis.glconfig.depthBits, uis.glconfig.stencilBits), UI_CENTER|UI_SMALLFONT, text_color_normal );
+	UI_DrawString( 320, 80+16, uis.glconfig.vendor_string, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, text_color_normal );
+	UI_DrawString( 320, 96+16, uis.glconfig.version_string, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, text_color_normal );
+	UI_DrawString( 320, 112+16, uis.glconfig.renderer_string, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, text_color_normal );
+	UI_DrawString( 320, 152+16, va ("color(%d-bits) Z(%d-bits) stencil(%d-bits)", uis.glconfig.colorBits, uis.glconfig.depthBits, uis.glconfig.stencilBits), UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, text_color_normal );
 
 	// double column
 	y = 192+16;
 	for (i=0; i<s_driverinfo.numstrings/2; i++) {
-		UI_DrawString( 320-4, y, s_driverinfo.strings[i*2], UI_RIGHT|UI_SMALLFONT, text_color_normal );
-		UI_DrawString( 320+4, y, s_driverinfo.strings[i*2+1], UI_LEFT|UI_SMALLFONT, text_color_normal );
+		UI_DrawString( 320-4, y, s_driverinfo.strings[i*2], UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW, text_color_normal );
+		UI_DrawString( 320+4, y, s_driverinfo.strings[i*2+1], UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, text_color_normal );
 		y += SMALLCHAR_HEIGHT;
 	}
 
 	if (s_driverinfo.numstrings & 1)
-		UI_DrawString( 320, y, s_driverinfo.strings[s_driverinfo.numstrings-1], UI_CENTER|UI_SMALLFONT, text_color_normal );
+		UI_DrawString( 320, y, s_driverinfo.strings[s_driverinfo.numstrings-1], UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, text_color_normal );
 }
 
 /*
@@ -156,7 +136,7 @@ static void UI_DriverInfo_Menu( void )
 	s_driverinfo.banner.generic.y	  = 16;
 	s_driverinfo.banner.string		  = "DRIVER INFO";
 	s_driverinfo.banner.color	      = color_white;
-	s_driverinfo.banner.style	      = UI_CENTER;
+	s_driverinfo.banner.style	      = UI_CENTER|UI_DROPSHADOW;
 
 	s_driverinfo.framel.generic.type  = MTYPE_BITMAP;
 	s_driverinfo.framel.generic.name  = DRIVERINFO_FRAMEL;
@@ -185,11 +165,7 @@ static void UI_DriverInfo_Menu( void )
 	s_driverinfo.back.height  		   = 64;
 	s_driverinfo.back.focuspic         = DRIVERINFO_BACK1;
 
-  // TTimo: overflow with particularly long GL extensions (such as the gf3)
-  // https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=399
-  // NOTE: could have pushed the size of stringbuff, but the list is already out of the screen
-  // (no matter what your resolution)
-  Q_strncpyz(s_driverinfo.stringbuff, uis.glconfig.extensions_string, 1024);
+	strcpy( s_driverinfo.stringbuff, uis.glconfig.extensions_string );
 
 	// build null terminated extension strings
 	eptr = s_driverinfo.stringbuff;
@@ -237,6 +213,13 @@ GRAPHICS OPTIONS MENU
 #define GRAPHICSOPTIONS_BACK1	"menu/art/back_1"
 #define GRAPHICSOPTIONS_ACCEPT0	"menu/art/accept_0"
 #define GRAPHICSOPTIONS_ACCEPT1	"menu/art/accept_1"
+
+static const char *s_drivers[] =
+{
+	OPENGL_DRIVER_NAME,
+	_3DFX_DRIVER_NAME,
+	0
+};
 
 #define ID_BACK2		101
 #define ID_FULLSCREEN	102
@@ -297,9 +280,6 @@ static graphicsoptions_t		s_graphicsoptions;
 static InitialVideoOptions_s s_ivo_templates[] =
 {
 	{
-		6, qtrue, 3, 0, 2, 2, 2, 1, 0, qtrue
-	},
-	{
 		4, qtrue, 2, 0, 2, 2, 1, 1, 0, qtrue	// JDC: this was tq 3
 	},
 	{
@@ -317,84 +297,6 @@ static InitialVideoOptions_s s_ivo_templates[] =
 };
 
 #define NUM_IVO_TEMPLATES ( sizeof( s_ivo_templates ) / sizeof( s_ivo_templates[0] ) )
-
-static const char *builtinResolutions[ ] =
-{
-	"320x240",
-	"400x300",
-	"512x384",
-	"640x480",
-	"800x600",
-	"960x720",
-	"1024x768",
-	"1152x864",
-	"1280x1024",
-	"1600x1200",
-	"2048x1536",
-	"856x480 16:9",
-	"1280x720 16:9",
-	"1365x768 16:9",
-	"1600x900 16:9",
-	"1920x1080 16:9",
-	"1440x900 16:10",
-	"1680x1050 16:10",
-	"1920x1200 16:10",
-	NULL
-};
-
-static char resbuf[ MAX_STRING_CHARS ];
-static const char* detectedResolutions[ 32 ];
-
-static const char** resolutions = builtinResolutions;
-static qboolean resolutionsDetected = qfalse;
-
-/*
-=================
-GraphicsOptions_FindBuiltinResolution
-=================
-*/
-static int GraphicsOptions_FindBuiltinResolution( int mode )
-{
-	int i;
-
-	if( !resolutionsDetected )
-		return mode;
-
-	if( mode < 0 )
-		return -1;
-
-	for( i = 0; builtinResolutions[ i ]; i++ )
-	{
-		if( !strcmp( builtinResolutions[ i ], detectedResolutions[ mode ] ) )
-			return i;
-	}
-
-	return -1;
-}
-
-/*
-=================
-GraphicsOptions_FindDetectedResolution
-=================
-*/
-static int GraphicsOptions_FindDetectedResolution( int mode )
-{
-	int i;
-
-	if( !resolutionsDetected )
-		return mode;
-
-	if( mode < 0 )
-		return -1;
-
-	for( i = 0; detectedResolutions[ i ]; i++ )
-	{
-		if( !strcmp( builtinResolutions[ mode ], detectedResolutions[ i ] ) )
-			return i;
-	}
-
-	return -1;
-}
 
 /*
 =================
@@ -424,13 +326,13 @@ static void GraphicsOptions_CheckConfig( void )
 {
 	int i;
 
-	for ( i = 0; i < NUM_IVO_TEMPLATES-1; i++ )
+	for ( i = 0; i < NUM_IVO_TEMPLATES; i++ )
 	{
 		if ( s_ivo_templates[i].colordepth != s_graphicsoptions.colordepth.curvalue )
 			continue;
 		if ( s_ivo_templates[i].driver != s_graphicsoptions.driver.curvalue )
 			continue;
-		if ( GraphicsOptions_FindDetectedResolution(s_ivo_templates[i].mode) != s_graphicsoptions.mode.curvalue )
+		if ( s_ivo_templates[i].mode != s_graphicsoptions.mode.curvalue )
 			continue;
 		if ( s_ivo_templates[i].fullscreen != s_graphicsoptions.fs.curvalue )
 			continue;
@@ -447,9 +349,7 @@ static void GraphicsOptions_CheckConfig( void )
 		s_graphicsoptions.list.curvalue = i;
 		return;
 	}
-
-	// return 'Custom' ivo template
-	s_graphicsoptions.list.curvalue = NUM_IVO_TEMPLATES - 1;
+	s_graphicsoptions.list.curvalue = 4;
 }
 
 /*
@@ -558,36 +458,26 @@ static void GraphicsOptions_ApplyChanges( void *unused, int notification )
 	}
 	trap_Cvar_SetValue( "r_picmip", 3 - s_graphicsoptions.tq.curvalue );
 	trap_Cvar_SetValue( "r_allowExtensions", s_graphicsoptions.allow_extensions.curvalue );
-
-	if( resolutionsDetected )
-	{
-		// search for builtin mode that matches the detected mode
-		int mode;
-		if ( s_graphicsoptions.mode.curvalue == -1
-			|| s_graphicsoptions.mode.curvalue >= sizeof(detectedResolutions)/sizeof(detectedResolutions[0]) )
-			s_graphicsoptions.mode.curvalue = 0;
-
-		mode = GraphicsOptions_FindBuiltinResolution( s_graphicsoptions.mode.curvalue );
-		if( mode == -1 )
-		{
-			char w[ 16 ], h[ 16 ];
-			Q_strncpyz( w, detectedResolutions[ s_graphicsoptions.mode.curvalue ], sizeof( w ) );
-			*strchr( w, 'x' ) = 0;
-			Q_strncpyz( h,
-					strchr( detectedResolutions[ s_graphicsoptions.mode.curvalue ], 'x' ) + 1, sizeof( h ) );
-			trap_Cvar_Set( "r_customwidth", w );
-			trap_Cvar_Set( "r_customheight", h );
-		}
-
-		trap_Cvar_SetValue( "r_mode", mode );
-	}
-	else
-		trap_Cvar_SetValue( "r_mode", s_graphicsoptions.mode.curvalue );
-
+	trap_Cvar_SetValue( "r_mode", s_graphicsoptions.mode.curvalue );
 	trap_Cvar_SetValue( "r_fullscreen", s_graphicsoptions.fs.curvalue );
-	trap_Cvar_SetValue( "r_colorbits", 0 );
-	trap_Cvar_SetValue( "r_depthbits", 0 );
-	trap_Cvar_SetValue( "r_stencilbits", 0 );
+	trap_Cvar_Set( "r_glDriver", ( char * ) s_drivers[s_graphicsoptions.driver.curvalue] );
+	switch ( s_graphicsoptions.colordepth.curvalue )
+	{
+	case 0:
+		trap_Cvar_SetValue( "r_colorbits", 0 );
+		trap_Cvar_SetValue( "r_depthbits", 0 );
+		trap_Cvar_SetValue( "r_stencilbits", 0 );
+		break;
+	case 1:
+		trap_Cvar_SetValue( "r_colorbits", 16 );
+		trap_Cvar_SetValue( "r_depthbits", 16 );
+		trap_Cvar_SetValue( "r_stencilbits", 0 );
+		break;
+	case 2:
+		trap_Cvar_SetValue( "r_colorbits", 32 );
+		trap_Cvar_SetValue( "r_depthbits", 24 );
+		break;
+	}
 	trap_Cvar_SetValue( "r_vertexLight", s_graphicsoptions.lighting.curvalue );
 
 	if ( s_graphicsoptions.geometry.curvalue == 2 )
@@ -645,7 +535,7 @@ static void GraphicsOptions_Event( void* ptr, int event ) {
 	case ID_LIST:
 		ivo = &s_ivo_templates[s_graphicsoptions.list.curvalue];
 
-		s_graphicsoptions.mode.curvalue        = GraphicsOptions_FindDetectedResolution(ivo->mode);
+		s_graphicsoptions.mode.curvalue        = ivo->mode;
 		s_graphicsoptions.tq.curvalue          = ivo->tq;
 		s_graphicsoptions.lighting.curvalue    = ivo->lighting;
 		s_graphicsoptions.colordepth.curvalue  = ivo->colordepth;
@@ -654,11 +544,11 @@ static void GraphicsOptions_Event( void* ptr, int event ) {
 		s_graphicsoptions.filter.curvalue      = ivo->filter;
 		s_graphicsoptions.fs.curvalue          = ivo->fullscreen;
 		break;
-
+/*
 	case ID_DRIVERINFO:
 		UI_DriverInfo_Menu();
 		break;
-
+*/
 	case ID_BACK2:
 		UI_PopMenu();
 		break;
@@ -717,35 +607,10 @@ GraphicsOptions_SetMenuItems
 */
 static void GraphicsOptions_SetMenuItems( void )
 {
-	s_graphicsoptions.mode.curvalue =
-		GraphicsOptions_FindDetectedResolution( trap_Cvar_VariableValue( "r_mode" ) );
-
+	s_graphicsoptions.mode.curvalue = trap_Cvar_VariableValue( "r_mode" );
 	if ( s_graphicsoptions.mode.curvalue < 0 )
 	{
-		if( resolutionsDetected )
-		{
-			int i;
-			char buf[MAX_STRING_CHARS];
-			trap_Cvar_VariableStringBuffer("r_customwidth", buf, sizeof(buf)-2);
-			buf[strlen(buf)+1] = 0;
-			buf[strlen(buf)] = 'x';
-			trap_Cvar_VariableStringBuffer("r_customheight", buf+strlen(buf), sizeof(buf)-strlen(buf));
-
-			for(i = 0; detectedResolutions[i]; ++i)
-			{
-				if(!strcmp(buf, detectedResolutions[i]))
-				{
-					s_graphicsoptions.mode.curvalue = i;
-					break;
-				}
-			}
-			if ( s_graphicsoptions.mode.curvalue < 0 )
-				s_graphicsoptions.mode.curvalue = 0;
-		}
-		else
-		{
-			s_graphicsoptions.mode.curvalue = 3;
-		}
+		s_graphicsoptions.mode.curvalue = 3;
 	}
 	s_graphicsoptions.fs.curvalue = trap_Cvar_VariableValue("r_fullscreen");
 	s_graphicsoptions.allow_extensions.curvalue = trap_Cvar_VariableValue("r_allowExtensions");
@@ -834,7 +699,7 @@ void GraphicsOptions_MenuInit( void )
 	{
 		"Default",
 		"Voodoo",
-		NULL
+		0
 	};
 
 	static const char *tq_names[] =
@@ -842,25 +707,24 @@ void GraphicsOptions_MenuInit( void )
 		"Default",
 		"16 bit",
 		"32 bit",
-		NULL
+		0
 	};
 
 	static const char *s_graphics_options_names[] =
 	{
-		"Very High Quality",
 		"High Quality",
 		"Normal",
 		"Fast",
 		"Fastest",
 		"Custom",
-		NULL
+		0
 	};
 
 	static const char *lighting_names[] =
 	{
 		"Lightmap",
 		"Vertex",
-		NULL
+		0
 	};
 
 	static const char *colordepth_names[] =
@@ -868,55 +732,56 @@ void GraphicsOptions_MenuInit( void )
 		"Default",
 		"16 bit",
 		"32 bit",
-		NULL
+		0
 	};
 
+	static const char *resolutions[] = 
+	{
+		"320x240",
+		"400x300",
+		"512x384",
+		"640x480",
+		"800x600",
+		"960x720",
+		"1024x768",
+		"1152x864",
+		"1280x1024",
+		"1600x1200",
+		"2048x1536",
+		"856x480 16:9",
+		"1280x720 16:9",
+		"1365x768 16:9",
+		"1600x900 16:9",
+		"1920x1080 16:9",
+		"1440x900 16:10",
+		"1680x1050 16:10",
+		"1920x1200 16:10",
+		0
+	};
 	static const char *filter_names[] =
 	{
 		"Bilinear",
 		"Trilinear",
-		NULL
+		0
 	};
 	static const char *quality_names[] =
 	{
 		"Low",
 		"Medium",
 		"High",
-		NULL
+		0
 	};
 	static const char *enabled_names[] =
 	{
 		"Off",
 		"On",
-		NULL
+		0
 	};
 
 	int y;
 
 	// zero set all our globals
 	memset( &s_graphicsoptions, 0 ,sizeof(graphicsoptions_t) );
-
-
-	Q_strncpyz(resbuf, UI_Cvar_VariableString("r_availableModes"), sizeof(resbuf));
-	if(*resbuf)
-	{
-		char* s = resbuf;
-		unsigned int i = 0;
-		while( s && i < sizeof(detectedResolutions)/sizeof(detectedResolutions[0])-1)
-		{
-			detectedResolutions[i++] = s;
-			s = strchr(s, ' ');
-			if( s )
-				*s++ = '\0';
-		}
-		detectedResolutions[ i ] = NULL;
-
-		if( i > 0 )
-		{
-			resolutions = detectedResolutions;
-			resolutionsDetected = qtrue;
-		}
-	}
 
 	GraphicsOptions_Cache();
 
@@ -929,7 +794,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.banner.generic.y	   = 16;
 	s_graphicsoptions.banner.string  	   = "SYSTEM SETUP";
 	s_graphicsoptions.banner.color         = color_white;
-	s_graphicsoptions.banner.style         = UI_CENTER;
+	s_graphicsoptions.banner.style         = UI_CENTER|UI_DROPSHADOW;
 
 	s_graphicsoptions.framel.generic.type  = MTYPE_BITMAP;
 	s_graphicsoptions.framel.generic.name  = GRAPHICSOPTIONS_FRAMEL;
@@ -954,8 +819,8 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.graphics.generic.x		= 216;
 	s_graphicsoptions.graphics.generic.y		= 240 - 2 * PROP_HEIGHT;
 	s_graphicsoptions.graphics.string			= "GRAPHICS";
-	s_graphicsoptions.graphics.style			= UI_RIGHT;
-	s_graphicsoptions.graphics.color			= color_red;
+	s_graphicsoptions.graphics.style			= UI_RIGHT|UI_DROPSHADOW;
+	s_graphicsoptions.graphics.color			= color_white;
 
 	s_graphicsoptions.display.generic.type		= MTYPE_PTEXT;
 	s_graphicsoptions.display.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -964,8 +829,8 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.display.generic.x			= 216;
 	s_graphicsoptions.display.generic.y			= 240 - PROP_HEIGHT;
 	s_graphicsoptions.display.string			= "DISPLAY";
-	s_graphicsoptions.display.style				= UI_RIGHT;
-	s_graphicsoptions.display.color				= color_red;
+	s_graphicsoptions.display.style				= UI_RIGHT|UI_DROPSHADOW;
+	s_graphicsoptions.display.color				= color_white;
 
 	s_graphicsoptions.sound.generic.type		= MTYPE_PTEXT;
 	s_graphicsoptions.sound.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -974,8 +839,8 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.sound.generic.x			= 216;
 	s_graphicsoptions.sound.generic.y			= 240;
 	s_graphicsoptions.sound.string				= "SOUND";
-	s_graphicsoptions.sound.style				= UI_RIGHT;
-	s_graphicsoptions.sound.color				= color_red;
+	s_graphicsoptions.sound.style				= UI_RIGHT|UI_DROPSHADOW;
+	s_graphicsoptions.sound.color				= color_white;
 
 	s_graphicsoptions.network.generic.type		= MTYPE_PTEXT;
 	s_graphicsoptions.network.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -984,8 +849,8 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.network.generic.x			= 216;
 	s_graphicsoptions.network.generic.y			= 240 + PROP_HEIGHT;
 	s_graphicsoptions.network.string			= "NETWORK";
-	s_graphicsoptions.network.style				= UI_RIGHT;
-	s_graphicsoptions.network.color				= color_red;
+	s_graphicsoptions.network.style				= UI_RIGHT|UI_DROPSHADOW;
+	s_graphicsoptions.network.color				= color_white;
 
 	y = 240 - 6 * (BIGCHAR_HEIGHT + 2);
 	s_graphicsoptions.list.generic.type     = MTYPE_SPINCONTROL;
@@ -1091,7 +956,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.filter.generic.y	    = y;
 	s_graphicsoptions.filter.itemnames      = filter_names;
 	y += 2*BIGCHAR_HEIGHT;
-
+/*
 	s_graphicsoptions.driverinfo.generic.type     = MTYPE_PTEXT;
 	s_graphicsoptions.driverinfo.generic.flags    = QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_graphicsoptions.driverinfo.generic.callback = GraphicsOptions_Event;
@@ -1099,10 +964,10 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.driverinfo.generic.x        = 320;
 	s_graphicsoptions.driverinfo.generic.y        = y;
 	s_graphicsoptions.driverinfo.string           = "Driver Info";
-	s_graphicsoptions.driverinfo.style            = UI_CENTER|UI_SMALLFONT;
-	s_graphicsoptions.driverinfo.color            = color_red;
+	s_graphicsoptions.driverinfo.style            = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	s_graphicsoptions.driverinfo.color            = color_white;
 	y += BIGCHAR_HEIGHT+2;
-
+*/
 	s_graphicsoptions.back.generic.type	    = MTYPE_BITMAP;
 	s_graphicsoptions.back.generic.name     = GRAPHICSOPTIONS_BACK0;
 	s_graphicsoptions.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -1144,7 +1009,7 @@ void GraphicsOptions_MenuInit( void )
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.tq );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.texturebits );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.filter );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.driverinfo );
+//	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.driverinfo );
 
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.back );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.apply );

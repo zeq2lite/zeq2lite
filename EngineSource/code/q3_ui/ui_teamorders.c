@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =======================================================================
@@ -229,7 +209,7 @@ static void UI_TeamOrdersMenu_ListDraw( void *self ) {
 	x =	320;//l->generic.x;
 	y =	l->generic.y;
 	for( i = 0; i < l->numitems; i++ ) {
-		style = UI_LEFT|UI_SMALLFONT|UI_CENTER;
+		style = UI_LEFT|UI_SMALLFONT|UI_CENTER|UI_DROPSHADOW;
 		if( i == l->curvalue ) {
 			color = color_yellow;
 			if( hasfocus ) {
@@ -237,7 +217,7 @@ static void UI_TeamOrdersMenu_ListDraw( void *self ) {
 			}
 		}
 		else {
-			color = color_orange;
+			color = color_lightBlue;
 		}
 
 		UI_DrawProportionalString( x, y, l->itemnames[i], style, color );
@@ -295,7 +275,7 @@ static void UI_TeamOrdersMenu_BuildBotList( void ) {
 	int		numPlayers;
 	int		isBot;
 	int		n;
-	char	playerTeam = '3';
+	char	playerTeam;
 	char	botTeam;
 	char	info[MAX_INFO_STRING];
 
@@ -314,6 +294,8 @@ static void UI_TeamOrdersMenu_BuildBotList( void ) {
 
 	for( n = 0; n < numPlayers && teamOrdersMenuInfo.numBots < 9; n++ ) {
 		trap_GetConfigString( CS_PLAYERS + n, info, MAX_INFO_STRING );
+
+		playerTeam = TEAM_SPECTATOR; // bk001204 = possible uninit use
 
 		if( n == cs.clientNum ) {
 			playerTeam = *Info_ValueForKey( info, "t" );
@@ -356,7 +338,7 @@ static void UI_TeamOrdersMenu_Init( void ) {
 	teamOrdersMenuInfo.banner.generic.y			= 16;
 	teamOrdersMenuInfo.banner.string			= "TEAM ORDERS";
 	teamOrdersMenuInfo.banner.color				= color_white;
-	teamOrdersMenuInfo.banner.style				= UI_CENTER;
+	teamOrdersMenuInfo.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	teamOrdersMenuInfo.frame.generic.type		= MTYPE_BITMAP;
 	teamOrdersMenuInfo.frame.generic.flags		= QMF_INACTIVE;

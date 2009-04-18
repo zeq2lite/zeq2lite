@@ -1,28 +1,48 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_ents.c -- present snapshot entities, happens every single frame
 
 #include "cg_local.h"
+
+/*
+======================
+CG_GetTagPosition
+
+Retrieves the position of a tag directly
+======================
+*/
+void CG_GetTagPosition( refEntity_t *parent, char *tagName, vec3_t outpos) {
+	int i;
+	orientation_t lerped;
+
+	// lerp the tag
+	trap_R_LerpTag( &lerped, parent->hModel, parent->oldframe, parent->frame,
+		1.0 - parent->backlerp, tagName );
+
+	VectorCopy( parent->origin, outpos );
+	for ( i = 0 ; i < 3 ; i++ ) {
+		VectorMA( outpos, lerped.origin[i], parent->axis[i], outpos );
+	}
+}
+
+/*
+======================
+CG_GetTagOrientation
+
+Retrieves the orientation of a tag directly
+======================
+*/
+void CG_GetTagOrientation( refEntity_t *parent, char *tagName, vec3_t dir) {
+	orientation_t lerped;
+	vec3_t	temp_axis[3];
+
+	// lerp the tag
+	trap_R_LerpTag( &lerped, parent->hModel, parent->oldframe, parent->frame,
+		1.0 - parent->backlerp, tagName );
+
+	MatrixMultiply( lerped.axis, ((refEntity_t *)parent)->axis, temp_axis );
+	VectorCopy( temp_axis[0], dir );
+}
 
 
 /*
@@ -326,43 +346,10 @@ static void CG_Item( centity_t *cent ) {
 		VectorScale( ent.axis[1], 1.5, ent.axis[1] );
 		VectorScale( ent.axis[2], 1.5, ent.axis[2] );
 		ent.nonNormalizedAxes = qtrue;
-#ifdef MISSIONPACK
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, cgs.media.weaponHoverSound );
-#endif
 	}
-
-#ifdef MISSIONPACK
-	if ( item->giType == IT_HOLDABLE && item->giTag == HI_KAMIKAZE ) {
-		VectorScale( ent.axis[0], 2, ent.axis[0] );
-		VectorScale( ent.axis[1], 2, ent.axis[1] );
-		VectorScale( ent.axis[2], 2, ent.axis[2] );
-		ent.nonNormalizedAxes = qtrue;
-	}
-#endif
 
 	// add to refresh list
 	trap_R_AddRefEntityToScene(&ent);
-
-#ifdef MISSIONPACK
-	if ( item->giType == IT_WEAPON && wi->barrelModel ) {
-		refEntity_t	barrel;
-
-		memset( &barrel, 0, sizeof( barrel ) );
-
-		barrel.hModel = wi->barrelModel;
-
-		VectorCopy( ent.lightingOrigin, barrel.lightingOrigin );
-		barrel.shadowPlane = ent.shadowPlane;
-		barrel.renderfx = ent.renderfx;
-
-		CG_PositionRotatedEntityOnTag( &barrel, &ent, wi->weaponModel, "tag_barrel" );
-
-		AxisCopy( ent.axis, barrel.axis );
-		barrel.nonNormalizedAxes = ent.nonNormalizedAxes;
-
-		trap_R_AddRefEntityToScene( &barrel );
-	}
-#endif
 
 	// accompanying rings / spheres for powerups
 	if ( !cg_simpleItems.integer ) 
@@ -397,6 +384,274 @@ static void CG_Item( centity_t *cent ) {
 
 //============================================================================
 
+
+/*
+===============
+JUHOX: CG_AddMissileLensFlare
+===============
+*/
+static void CG_AddMissileLensFlare(centity_t* cent) {
+	lensFlareEntity_t lfent;
+
+	if (!cg_lensFlare.integer) return;
+
+	switch (cent->currentState.weapon) {
+	case WP_ROCKET_LAUNCHER:
+		memset(&lfent, 0, sizeof(lfent));
+		lfent.lfeff = cgs.lensFlareEffectBeamHead;
+		lfent.angle = 90;
+		VectorNegate(cent->currentState.pos.trDelta, lfent.dir);
+		VectorNormalize(lfent.dir);
+		break;
+	default:
+		return;
+	}
+
+	if (!lfent.lfeff) return;
+
+	VectorCopy(cent->lerpOrigin, lfent.origin);
+
+	CG_ComputeMaxVisAngle(&lfent);
+
+	CG_AddLensFlare(&lfent, 1);
+}
+
+/*
+===========================
+CG_TrailFunc_StraightBeam
+===========================
+*/
+void CG_TrailFunc_StraightBeam( centity_t *ent ) {
+	entityState_t	*es;
+	centity_t		*owner_ent;
+	cg_userWeapon_t	*weaponGraphics;
+	float			radius;
+	orientation_t	orient;
+	
+	// Initialize some things for quick reference
+	es = &ent->currentState;
+	owner_ent = &cg_entities[es->clientNum];
+	weaponGraphics = CG_FindUserWeaponGraphics( es->clientNum, es->weapon );
+
+	if (!weaponGraphics->missileTrailShader) {
+		return;
+	}
+
+	if (weaponGraphics->missileTrailRadius) {
+		radius = weaponGraphics->missileTrailRadius;
+	} else {
+		radius = 10;
+	}
+
+	if ( CG_GetTagOrientationFromPlayerEntity( &cg_entities[es->clientNum], weaponGraphics->chargeTag[0], &orient )) {
+		CG_DrawLine (orient.origin, ent->lerpOrigin, radius, weaponGraphics->missileTrailShader, 1);
+	}
+}
+
+/*
+========================
+CG_TrailFunc_BendyBeam
+========================
+*/
+void CG_TrailFunc_BendyBeam( centity_t *ent ) {
+	entityState_t	*es;
+	cg_userWeapon_t	*weaponGraphics;
+	float			radius;
+	//vec3_t			tangent;
+
+	// Set up shortcut references
+	es = &ent->currentState;
+	weaponGraphics = CG_FindUserWeaponGraphics( es->clientNum, es->weapon );
+	
+	if ( weaponGraphics->missileTrailRadius ) {
+		radius = weaponGraphics->missileTrailRadius;
+	} else {
+		radius = 10;
+	}
+
+	if ( weaponGraphics->missileTrailShader ) {
+		CG_BeamTableUpdate( ent, radius, weaponGraphics->missileTrailShader, weaponGraphics->chargeTag[0] );
+	}
+}
+
+
+
+/*
+================================
+CG_TrailFunc_SpiralBeam_Helper
+================================
+*/
+// Helper function to make CG_TrailFunc_SpiralBeam
+// more readable.
+void CG_TrailFunc_SpiralBeam_Helper ( entityState_t *es, centity_t *ent, int time, vec3_t origin) {
+	cg_userWeapon_t	*weaponGraphics;
+	vec3_t			tmpAxis[3];
+
+
+	weaponGraphics = CG_FindUserWeaponGraphics( es->clientNum, es->weapon );
+
+	BG_EvaluateTrajectory( es, &es->pos, time, origin );
+
+	// convert direction of travel into axis
+	if (VectorNormalize2( es->pos.trDelta, tmpAxis[0] ) == 0 ) {
+		tmpAxis[0][2] = 1;
+	}
+	RotateAroundDirection( tmpAxis, time * 2 );
+	
+	// upscale the offset of the coil to the main beam
+	if ( weaponGraphics->missileTrailSpiralOffset ) {
+		VectorScale( tmpAxis[2], weaponGraphics->missileTrailSpiralOffset, tmpAxis[2] );
+	}
+	VectorAdd( origin, tmpAxis[2], origin );
+}
+	
+
+
+/*
+=========================
+CG_TrailFunc_SpiralBeam
+=========================
+*/
+void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
+	vec3_t			lastPos, lastPos2;
+	int				step, t;
+	int				startTime;
+	entityState_t	*es;
+	localEntity_t	*le;
+	refEntity_t		*re;
+	cg_userWeapon_t	*weaponGraphics;
+
+	// Draw the central beam
+	CG_TrailFunc_StraightBeam( ent );
+
+	step = cg_tailDetail.value / 4;
+
+	es = &ent->currentState;
+	weaponGraphics = CG_FindUserWeaponGraphics( es->clientNum, es->weapon );
+
+	if (!weaponGraphics->missileTrailSpiralShader) {
+		return;
+	}
+
+	startTime = ent->trailTime;
+	ent->trailTime = cg.time;
+	t = startTime + step;
+	
+	// if object (e.g. grenade) is stationary, don't show tail
+	if ( es->pos.trType == TR_STATIONARY ) {
+		return;
+	}
+
+	CG_TrailFunc_SpiralBeam_Helper ( es, ent, startTime, lastPos);
+	
+	// Build segments
+		
+	for (; t <= ent->trailTime; t += step) {
+		CG_TrailFunc_SpiralBeam_Helper ( es, ent, t, lastPos2);
+
+		le = CG_AllocLocalEntity();
+		re = &le->refEntity;
+		le->leType = LE_FADE_RGB;
+		le->startTime = t;
+		le->endTime = t + 1000;
+		le->lifeRate = 1.0 / (le->endTime - le->startTime);
+	
+		re->reType = RT_RAIL_CORE;
+		re->customShader = weaponGraphics->missileTrailSpiralShader;
+	 
+		VectorCopy(lastPos, re->origin);
+		VectorCopy(lastPos2, re->oldorigin);
+ 
+		re->shaderRGBA[0] = 0xff;
+	    re->shaderRGBA[1] = 0xff;
+	    re->shaderRGBA[2] = 0xff;
+	    re->shaderRGBA[3] = 0xff;
+
+		le->color[0] = 1.00f;
+		le->color[1] = 1.00f;
+		le->color[2] = 1.00f;
+		le->color[3] = 1.00f;
+
+		AxisClear( re->axis );
+
+		VectorCopy(lastPos2, lastPos);
+	}
+
+	CG_TrailFunc_SpiralBeam_Helper ( es, ent, ent->trailTime, lastPos2);
+
+	le = CG_AllocLocalEntity();
+	re = &le->refEntity;
+	le->leType = LE_FADE_RGB;
+	le->startTime = ent->trailTime;
+	le->endTime = ent->trailTime + 500;
+	le->lifeRate = 1.0 / (le->endTime - le->startTime);
+	
+	re->reType = RT_RAIL_CORE;
+	re->customShader = weaponGraphics->missileTrailSpiralShader;
+	 
+	VectorCopy(lastPos, re->origin);
+	VectorCopy(lastPos2, re->oldorigin);
+ 
+	re->shaderRGBA[0] = 0xff;
+	re->shaderRGBA[1] = 0xff;
+	re->shaderRGBA[2] = 0xff;
+	re->shaderRGBA[3] = 0xff;
+
+	le->color[0] = 1.00f;
+	le->color[1] = 1.00f;
+	le->color[2] = 1.00f;
+	le->color[3] = 1.00f;
+
+	AxisClear( re->axis );
+}
+
+
+/*
+=======================
+CG_TrailFunc_FadeTail
+=======================
+*/
+void CG_TrailFunc_FadeTail( centity_t *cent ) {
+	entityState_t	*es;
+	cg_userWeapon_t	*weaponGraphics;
+	vec3_t			delta;
+
+	es = &cent->currentState;
+	
+	weaponGraphics = CG_FindUserWeaponGraphics( es->clientNum, es->weapon );
+	
+	if ( !weaponGraphics->missileTrailShader || !weaponGraphics->missileTrailRadius ) {
+		return;
+	}
+
+	// If we didn't draw the tail last frame this is a new instantiation
+	// of the entity and we will have to reset the tail positions.
+	if ( cent->lastTrailTime < (cg.time - cg.frametime - 200) ) { // -200; give 0.2 sec leeway, just in case
+		BG_EvaluateTrajectoryDelta( es, &es->pos, cg.time, delta );
+		CG_ResetTrail( es->number, cent->lerpOrigin, VectorLength( delta ),
+			weaponGraphics->missileTrailRadius, weaponGraphics->missileTrailShader, NULL );
+	}
+	
+	CG_UpdateTrailHead( es->number, cent->lerpOrigin );
+
+	cent->lastTrailTime = cg.time;
+}
+
+
+/*
+===============
+CG_Torch
+===============
+*/
+static void CG_Torch( centity_t *cent ) {
+	entityState_t		*s1;
+	cg_userWeapon_t		*weaponGraphics;
+
+	s1 = &cent->currentState;
+	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
+}
+
+
 /*
 ===============
 CG_Missile
@@ -405,53 +660,93 @@ CG_Missile
 static void CG_Missile( centity_t *cent ) {
 	refEntity_t			ent;
 	entityState_t		*s1;
-	const weaponInfo_t		*weapon;
-//	int	col;
+	cg_userWeapon_t		*weaponGraphics;
+	float				missileScale;
+	int					missileChargeLvl;
+	
 
 	s1 = &cent->currentState;
-	if ( s1->weapon > WP_NUM_WEAPONS ) {
-		s1->weapon = 0;
+	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
+
+	// The missile's charge level was stored in this field. We hijacked it on the
+	// server to be able to transmit the missile's own charge level.
+	missileChargeLvl = s1->powerups;
+
+	// Obtain the scale the missile must have.
+	if (weaponGraphics->chargeGrowth) {
+		// below the start, we use the lowest form
+		if (weaponGraphics->chargeStartPct >= missileChargeLvl) {
+			missileScale = weaponGraphics->chargeStartsize;
+		} else {
+			// above the end, we use the highest form
+			if (weaponGraphics->chargeEndPct <= missileChargeLvl) {
+				missileScale = weaponGraphics->chargeEndsize;
+			} else {
+				float	PctRange;
+				float	PctVal;
+				float	SizeRange;
+				float	SizeVal;
+
+				// inbetween, we work out the value
+				PctRange = weaponGraphics->chargeEndPct - weaponGraphics->chargeStartPct;
+				PctVal = missileChargeLvl - weaponGraphics->chargeStartPct;
+
+				SizeRange = weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize;
+				SizeVal = (PctVal / PctRange) * SizeRange;
+				missileScale = SizeVal + weaponGraphics->chargeStartsize;
+			}
+		}
+	} else {
+		missileScale = 1;
 	}
-	weapon = &cg_weapons[s1->weapon];
+	missileScale = missileScale * weaponGraphics->missileSize;
 
 	// calculate the axis
-	VectorCopy( s1->angles, cent->lerpAngles);
+	 VectorCopy( s1->angles, cent->lerpAngles);
+	
+	// If it's a guided missile, and belongs to this client, return its position to cg.
+	if ((cent->currentState.clientNum == cg.clientNum) && (cent->currentState.eFlags & EF_GUIDED)) {
+		VectorCopy(cent->lerpOrigin, cg.guide_target);
+		cg.guide_view = qtrue;
+	}
+
 
 	// add trails
-	if ( weapon->missileTrailFunc ) 
-	{
-		weapon->missileTrailFunc( cent, weapon );
-	}
-/*
-	if ( cent->currentState.modelindex == TEAM_RED ) {
-		col = 1;
-	}
-	else if ( cent->currentState.modelindex == TEAM_BLUE ) {
-		col = 2;
-	}
-	else {
-		col = 0;
+	if ( weaponGraphics->missileTrailShader && weaponGraphics->missileTrailRadius ) {
+		if ( cent->currentState.eType == ET_MISSILE ) {
+			CG_TrailFunc_FadeTail( cent );
+
+		} else if ( cent->currentState.eType == ET_BEAMHEAD ) {
+			if ( cent->currentState.eFlags & EF_GUIDED ) {
+				CG_TrailFunc_BendyBeam( cent );
+
+			} else if ( weaponGraphics->missileTrailSpiralShader &&
+				        weaponGraphics->missileTrailSpiralRadius &&
+						weaponGraphics->missileTrailSpiralOffset ) {
+				CG_TrailFunc_SpiralBeam( cent );
+
+			} else {
+				CG_TrailFunc_StraightBeam( cent );
+			}
+		}
 	}
 
 	// add dynamic light
-	if ( weapon->missileDlight ) {
-		trap_R_AddLightToScene(cent->lerpOrigin, weapon->missileDlight, 
-			weapon->missileDlightColor[col][0], weapon->missileDlightColor[col][1], weapon->missileDlightColor[col][2] );
-	}
-*/
-	// add dynamic light
-	if ( weapon->missileDlight ) {
-		trap_R_AddLightToScene(cent->lerpOrigin, weapon->missileDlight, 
-			weapon->missileDlightColor[0], weapon->missileDlightColor[1], weapon->missileDlightColor[2] );
+	if ( weaponGraphics->missileDlightRadius ) {
+		trap_R_AddLightToScene(cent->lerpOrigin,
+			100 * weaponGraphics->missileDlightRadius, 
+			weaponGraphics->missileDlightColor[0],
+			weaponGraphics->missileDlightColor[1],
+			weaponGraphics->missileDlightColor[2] );
 	}
 
 	// add missile sound
-	if ( weapon->missileSound ) {
+	if ( weaponGraphics->missileSound ) {
 		vec3_t	velocity;
 
-		BG_EvaluateTrajectoryDelta( &cent->currentState.pos, cg.time, velocity );
+		BG_EvaluateTrajectoryDelta( &cent->currentState, &cent->currentState.pos, cg.time, velocity );
 
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, velocity, weapon->missileSound );
+		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, velocity, weaponGraphics->missileSound );
 	}
 
 	// create the render entity
@@ -459,50 +754,89 @@ static void CG_Missile( centity_t *cent ) {
 	VectorCopy( cent->lerpOrigin, ent.origin);
 	VectorCopy( cent->lerpOrigin, ent.oldorigin);
 
-	if ( cent->currentState.weapon == WP_PLASMAGUN ) {
+	// JUHOX: draw BeamHead missile lens flare effects
+	CG_AddMissileLensFlare(cent);
+
+	if ( ! (weaponGraphics->missileModel && weaponGraphics->missileSkin) ) {
 		ent.reType = RT_SPRITE;
-		ent.radius = 16;
+		ent.radius = 4 * missileScale;
 		ent.rotation = 0;
-		ent.customShader = cgs.media.plasmaBallShader;
+		ent.customShader = weaponGraphics->missileShader;
 		trap_R_AddRefEntityToScene( &ent );
-		return;
-	}
-
-	// flicker between two skins
-	ent.skinNum = cg.clientFrame & 1;
-	ent.hModel = weapon->missileModel;
-	ent.renderfx = weapon->missileRenderfx | RF_NOSHADOW;
-
-#ifdef MISSIONPACK
-	if ( cent->currentState.weapon == WP_PROX_LAUNCHER ) {
-		if (s1->generic1 == TEAM_BLUE) {
-			ent.hModel = cgs.media.blueProxMine;
-		}
-	}
-#endif
-
-	// convert direction of travel into axis
-	if ( VectorNormalize2( s1->pos.trDelta, ent.axis[0] ) == 0 ) {
-		ent.axis[0][2] = 1;
-	}
-
-	// spin as it moves
-	if ( s1->pos.trType != TR_STATIONARY ) {
-		RotateAroundDirection( ent.axis, cg.time / 4 );
 	} else {
-#ifdef MISSIONPACK
-		if ( s1->weapon == WP_PROX_LAUNCHER ) {
-			AnglesToAxis( cent->lerpAngles, ent.axis );
+		ent.reType = RT_MODEL;
+		ent.hModel = weaponGraphics->missileModel;
+		ent.customSkin = weaponGraphics->missileSkin;
+		ent.renderfx = RF_NOSHADOW;
+		
+		// We want something simple for simple roll-spinning missiles,
+		// but will use quaternions to get a correct yaw rotation for
+		// disk attacks and the like.
+		if ( !weaponGraphics->missileSpin[0] && !weaponGraphics->missileSpin[1] ) {
+					
+			// convert direction of travel into axis
+			if ( VectorNormalize2( s1->pos.trDelta, ent.axis[0] ) == 0 ) {
+				ent.axis[0][2] = 1;
+			}
+			// spin as it moves
+			if ( s1->pos.trType != TR_STATIONARY ) {
+				RotateAroundDirection( ent.axis, weaponGraphics->missileSpin[2] * cg.time / 4.0f );
+			} else {
+				RotateAroundDirection( ent.axis, weaponGraphics->missileSpin[2] * s1->time );
+			}
+		} else {
+			vec3_t tempAngles;
+			vec4_t quatOrient;
+			vec4_t quatRot;
+			vec4_t quatResult;
+			vec3_t spinRotate;
+
+			// convert direction of travel into axis
+			if ( VectorNormalize2( s1->pos.trDelta, ent.axis[0] ) == 0 ) {
+				ent.axis[0][0] = 1;
+			}
+
+			if ( s1->pos.trType != TR_STATIONARY ) {
+				VectorSet( spinRotate, cg.time / 4.0f, cg.time / 4.0f, cg.time / 4.0f );
+			} else {
+				VectorSet( spinRotate, s1->time, s1->time, s1->time );
+			}
+			VectorPieceWiseMultiply( spinRotate, weaponGraphics->missileSpin, spinRotate );
+
+			vectoangles( ent.axis[0], tempAngles );
+			AnglesToQuat( tempAngles, quatOrient );
+			AnglesToQuat( spinRotate, quatRot );
+			QuatMul( quatOrient, quatRot, quatResult );
+			QuatToAxis( quatResult, ent.axis );
 		}
-		else
-#endif
-		{
-			RotateAroundDirection( ent.axis, s1->time );
+
+		ent.nonNormalizedAxes = qtrue;
+		VectorScale(ent.axis[0], missileScale, ent.axis[0]);
+		VectorScale(ent.axis[1], missileScale, ent.axis[1]);
+		VectorScale(ent.axis[2], missileScale, ent.axis[2]);
+
+		trap_R_AddRefEntityToScene( &ent );
+	}
+
+	// Check if it is a groundskimmer missile and activate a new debris trail
+	// if the entity is a entering into the PVS this frame.
+	if ( s1->eType == ET_SKIMMER ) {
+		//if ( cent->lastPVSTime < ( cg.time - cg.frametime - 100 )) { // 100 msec leeway for inconsistency in engine timing
+		if ( !CG_FrameHist_WasInPVS( s1->number )) {
+			PSys_SpawnCachedSystem( "TrailDebris", cent->lerpOrigin, NULL, cent, NULL, qfalse, qfalse );
 		}
 	}
 
-	// add to refresh list, possibly with quad glow
-	CG_AddRefEntityWithPowerups( &ent, s1, TEAM_FREE );
+	// Check if we should activate a missile specific particle system
+	//if ( cent->lastPVSTime < ( cg.time - cg.frametime - 100) ) {
+	if ( !CG_FrameHist_WasInPVS( s1->number )) {
+		if ( weaponGraphics->missileParticleSystem[0] ) {
+			vec3_t tempAxis[3];
+
+			AnglesToAxis( cent->lerpAngles, tempAxis );
+			PSys_SpawnCachedSystem( weaponGraphics->missileParticleSystem, cent->lerpOrigin, tempAxis, cent, NULL, qfalse, qfalse );
+		}
+	}
 }
 
 /*
@@ -559,7 +893,7 @@ static void CG_Grapple( centity_t *cent ) {
 CG_Mover
 ===============
 */
-static void CG_Mover( centity_t *cent ) {
+/*static*/ void CG_Mover( centity_t *cent ) {	// JUHOX: also called from cg_draw.c for lens flare editor
 	refEntity_t			ent;
 	entityState_t		*s1;
 
@@ -678,11 +1012,11 @@ void CG_AdjustPositionForMover( const vec3_t in, int moverNum, int fromTime, int
 		return;
 	}
 
-	BG_EvaluateTrajectory( &cent->currentState.pos, fromTime, oldOrigin );
-	BG_EvaluateTrajectory( &cent->currentState.apos, fromTime, oldAngles );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.pos, fromTime, oldOrigin );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.apos, fromTime, oldAngles );
 
-	BG_EvaluateTrajectory( &cent->currentState.pos, toTime, origin );
-	BG_EvaluateTrajectory( &cent->currentState.apos, toTime, angles );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.pos, toTime, origin );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.apos, toTime, angles );
 
 	VectorSubtract( origin, oldOrigin, deltaOrigin );
 	VectorSubtract( angles, oldAngles, deltaAngles );
@@ -705,28 +1039,28 @@ static void CG_InterpolateEntityPosition( centity_t *cent ) {
 	// it would be an internal error to find an entity that interpolates without
 	// a snapshot ahead of the current one
 	if ( cg.nextSnap == NULL ) {
-		CG_Error( "CG_InterpoateEntityPosition: cg.nextSnap == NULL" );
+		CG_Error( "CG_InterpolateEntityPosition: cg.nextSnap == NULL" );
 	}
 
 	f = cg.frameInterpolation;
 
 	// this will linearize a sine or parabolic curve, but it is important
 	// to not extrapolate player positions if more recent data is available
-	BG_EvaluateTrajectory( &cent->currentState.pos, cg.snap->serverTime, current );
-	BG_EvaluateTrajectory( &cent->nextState.pos, cg.nextSnap->serverTime, next );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.pos, cg.snap->serverTime, current );
+	BG_EvaluateTrajectory( &cent->nextState, &cent->nextState.pos, cg.nextSnap->serverTime, next );
 
 	cent->lerpOrigin[0] = current[0] + f * ( next[0] - current[0] );
 	cent->lerpOrigin[1] = current[1] + f * ( next[1] - current[1] );
 	cent->lerpOrigin[2] = current[2] + f * ( next[2] - current[2] );
 
-	BG_EvaluateTrajectory( &cent->currentState.apos, cg.snap->serverTime, current );
-	BG_EvaluateTrajectory( &cent->nextState.apos, cg.nextSnap->serverTime, next );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.apos, cg.snap->serverTime, current );
+	BG_EvaluateTrajectory( &cent->nextState, &cent->nextState.apos, cg.nextSnap->serverTime, next );
 
 	cent->lerpAngles[0] = LerpAngle( current[0], next[0], f );
 	cent->lerpAngles[1] = LerpAngle( current[1], next[1], f );
 	cent->lerpAngles[2] = LerpAngle( current[2], next[2], f );
-
 }
+
 
 /*
 ===============
@@ -759,8 +1093,8 @@ static void CG_CalcEntityLerpPositions( centity_t *cent ) {
 	}
 
 	// just use the current frame and evaluate as best we can
-	BG_EvaluateTrajectory( &cent->currentState.pos, cg.time, cent->lerpOrigin );
-	BG_EvaluateTrajectory( &cent->currentState.apos, cg.time, cent->lerpAngles );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.pos, cg.time, cent->lerpOrigin );
+	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.apos, cg.time, cent->lerpAngles );
 
 	// adjust for riding a mover if it wasn't rolled into the predicted
 	// player state
@@ -817,7 +1151,7 @@ static void CG_TeamBase( centity_t *cent ) {
 		// if hit
 		if ( cent->currentState.frame == 1) {
 			// show hit model
-			// modelindex2 is the health value of the obelisk
+			// modelindex2 is the powerLevel value of the obelisk
 			c = cent->currentState.modelindex2;
 			model.shaderRGBA[0] = 0xff;
 			model.shaderRGBA[1] = c;
@@ -883,7 +1217,7 @@ static void CG_TeamBase( centity_t *cent ) {
 		else {
 			cent->miscTime = 0;
 			cent->muzzleFlashTime = 0;
-			// modelindex2 is the health value of the obelisk
+			// modelindex2 is the powerLevel value of the obelisk
 			c = cent->currentState.modelindex2;
 			model.shaderRGBA[0] = 0xff;
 			model.shaderRGBA[1] = c;
@@ -953,13 +1287,14 @@ static void CG_AddCEntity( centity_t *cent ) {
 		CG_General( cent );
 		break;
 	case ET_PLAYER:
+		//CG_CalcEntityLerpWeaponCharges( cent );
 		CG_Player( cent );
 		break;
 	case ET_ITEM:
 		CG_Item( cent );
 		break;
 	case ET_MISSILE:
-		CG_Missile( cent );
+		CG_Missile( cent );		
 		break;
 	case ET_MOVER:
 		CG_Mover( cent );
@@ -979,7 +1314,21 @@ static void CG_AddCEntity( centity_t *cent ) {
 	case ET_TEAM:
 		CG_TeamBase( cent );
 		break;
+	// ADDING FOR ZEQ2
+	case ET_BEAMHEAD:
+		CG_Missile( cent );
+		break;
+	case ET_SKIMMER:
+		CG_Missile( cent );
+		break;
+	case ET_TORCH:
+		CG_Torch( cent );
+		break;
+	// END ADDING
 	}
+
+	//cent->lastPVSTime = cg.time;
+	CG_FrameHist_SetPVS( cent->currentState.number );
 }
 
 /*

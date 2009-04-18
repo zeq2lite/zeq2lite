@@ -1,23 +1,15 @@
 #include "g_local.h"
-
 #define	MIN_SKIM_NORMAL	0.5f
-
 #define	MISSILE_PRESTEP_TIME	 50
 #define SOLID_ADD				400  // Add extra to guide line to go behind solids with weapon
 #define BEAM_SECTION_TIME		520  // Timeframe to spawn a new beam section
-
 #define SKIM_MIN_GROUNDCLEARANCE	 5	// Amount the attack will 'hover' above ground
 #define	SKIM_MAX_GROUNDCLEARANCE	25	// How much distance are we allowed to take to reach ground level again.
 										// Used in a check for passing steep cliffs, etc. while skimming.
 
-#define DEF_FORTITUDE	0.66
-
-
-/*
-   -------------------------------
-     M I S C   F U N C T I O N S
-   -------------------------------
-*/
+/*-------------------------------
+ M I S C   F U N C T I O N S
+-------------------------------*/
 
 
 /*
@@ -43,27 +35,28 @@ gentity_t *GetMissileOwnerEntity (gentity_t *missile) {
    ---------------------------------
 */
 
-
-
-
 /*
-===============
-Think_Arch
-===============
+=============
+Think_Torch
+=============
 */
-void Think_Arch( gentity_t *self ) {
+void Think_Torch( gentity_t *self ) {
+	// NOTE: This function is called to override and destroy a torch type continuous
+	//       attack when its lifetime runs out. It is specificly optimized for torches,
+	//       and doesn't need to be run every frame.
+	g_userWeapon_t	*weaponInfo;
 
-	// DUMMY FUNCTION UNTIL WE CAN FIGURE OUT HOW THE #$&^#$& HELL TO GET
-	// THIS WORKING PROPERLY. 
+	weaponInfo = G_FindUserWeaponData( self->r.ownerNum, self->s.weapon );
+
+	// Set the weapon state to WEAPON_COOLING
+	g_entities[self->r.ownerNum].client->ps.weaponstate = WEAPON_COOLING;
 	
-
-	// If the weapon has existed too long, make the next think detonate it.
-	if ( ( self->missileSpawnTime + self->maxMissileTime ) <= level.time) {
-	  self->think = G_ExplodeUserWeapon;
-	}
-	self->nextthink = level.time + FRAMETIME;
+	// Set the cooldown time on the weapon
+	g_entities[self->r.ownerNum].client->ps.weaponTime = weaponInfo->costs_cooldownTime;
+	
+	// Free the entity
+	G_FreeEntity( self );
 }
-
 
 
 /*
@@ -133,7 +126,7 @@ void Think_Guided (gentity_t *self) {
 	// If our weapon's owner can't be found, skip anything related to guiding.
 	if ( !owner )
 	{
-		G_Printf( S_COLOR_YELLOW "WARNING: Think_Guided reports unowned fired weapon!\n" );
+		G_Printf( S_COLOR_YELLOW "WARNING: Think_Guided reports unknown fired weapon!\n" );
 	} else {
 		// Calculate where we are now aiming.
 		AngleVectors( owner->client->ps.viewangles, forward, right, up );
@@ -160,7 +153,7 @@ void Think_Guided (gentity_t *self) {
 		SnapVector( self->s.pos.trDelta );
 
 		self->s.pos.trType = TR_LINEAR;
-		self->s.pos.trTime = level.time; //- 50;
+		self->s.pos.trTime = level.time;
 	}
 
 	// If we're dealing with a beam, we have to record beamsections.
@@ -369,55 +362,22 @@ void Think_CylinderHoming (gentity_t *self) {
 	self->nextthink = level.time + FRAMETIME;
 }
 
-
 /*
 =====================
 Think_NormalMissile
 =====================
 */
 void Think_NormalMissile (gentity_t *self) {
-	// This is just a normal missile, so we only have to check if it's
-	// existed too long or not.
-
-	// If the weapon has existed too long, make the next think detonate it.
-	if ( ( self->missileSpawnTime + self->maxMissileTime ) <= level.time ) {
-	  self->think = G_ExplodeUserWeapon;
-	}
+	//if ( ( self->missileSpawnTime + self->maxMissileTime ) <= level.time ) {
+	//  self->think = G_ExplodeUserWeapon;
+	//}
 	self->nextthink = level.time + FRAMETIME;
 }
-
-
-
-/*
-   -----------------------------------
-     D A M A G E   F U N C T I O N S
-   -----------------------------------
-*/
-
-int CheckFortitude (gentity_t *ent, int damage, int dflags) {
-	gclient_t	*client;
-	int			save;
-	int			count;
-
-	if (!damage)
-		return 0;
-
+int CheckFortitude (gentity_t *ent, int damage, int dflags){
+	gclient_t *client;
 	client = ent->client;
-
-	if (!client) {
-		return 0;
-	}
-
-	if (dflags & DAMAGE_NO_ARMOR) {
-		return 0;
-	}
-
-	// PL will determine your fortitude
-	count = client->ps.stats[STAT_PL] & ~PL_CHANGEBITS;
-	// Amount saved will be 2/3 of the PL-determined percentage of the damage
-	save = ceil( damage * DEF_FORTITUDE * count / 100.0f );
-
-	return save;
+	if(!client || !client->ps.stats[tierTotal]) {return 0;}
+	return (client->ps.stats[tierTotal] * 0.1) * damage;
 }
 
 /*
@@ -431,155 +391,64 @@ attacker = entity the inflictor belongs to
 dir = direction for knockback
 point = origin of attack
 */
-void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *attacker,
-			   vec3_t dir, vec3_t point, int damage, int dflags, int methodOfDeath, int extraKnockback ) {
-	gclient_t	*tgClient;
-	int			take;
-	int			save;
-	int			asave;
-	int			knockback;
-
-
-	if (!target->takedamage) {
-		return;
-	}
-
-	// the intermission has already been qualified for, so don't
-	// allow any extra scoring
-	if ( level.intermissionQueued ) {
-		return;
-	}
-
-	if ( !inflictor ) {
-		inflictor = &g_entities[ENTITYNUM_WORLD];
-	}
-	if ( !attacker ) {
-		attacker = &g_entities[ENTITYNUM_WORLD];
-	}
-
-	// shootable doors / buttons don't actually have any health
-	// FIXME: Eventually disable for ZEQ2, or have to keep for func_breakable?
-	if ( target->s.eType == ET_MOVER ) {
-		if ( target->use && target->moverState == MOVER_POS1 ) {
-			target->use( target, inflictor, attacker );
-		}
-		return;
-	}
-
-	
+void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int extraKnockback){
+	gclient_t *tgClient;
+	int	asave;
+	int	knockback;
+	int newPower;
+	if(!target->takedamage){return;}
+	if(level.intermissionQueued){return;}
+	if(!inflictor){inflictor = &g_entities[ENTITYNUM_WORLD];}
+	if(!attacker){attacker = &g_entities[ENTITYNUM_WORLD];}
 	tgClient = target->client;
-
-	if ( tgClient ) {
-		if ( tgClient->noclip ) {
-			return;
-		}
-	}
-
-	if ( !dir ) {
-		dflags |= DAMAGE_NO_KNOCKBACK;
-	} else {
-		VectorNormalize( dir );
-	}
-
-	
-	if ( inflictor == &g_entities[ENTITYNUM_WORLD] ) {
+	if(tgClient && tgClient->noclip){return;}
+	if(!dir){dflags |= DAMAGE_NO_KNOCKBACK;}
+	else{
+		VectorNormalize(dir);
+	}	
+	if(inflictor == &g_entities[ENTITYNUM_WORLD]){
 		knockback = damage;
-	} else {
+	}
+	else{
 		knockback = damage + extraKnockback;
 	}
-	/*
-	if ( knockback > 200 ) {
-		knockback = 200;
-	}
-	*/
-	// Don't allow more knockback than this (though it's already very high)
-	if ( knockback > 5000 ) {
-		knockback = 5000;
-	}
-	if ( knockback < 0 ) {
+	if((target->flags & FL_NO_KNOCKBACK) || (dflags & DAMAGE_NO_KNOCKBACK)){
 		knockback = 0;
 	}
-	if ( target->flags & FL_NO_KNOCKBACK ) {
-		knockback = 0;
-	}
-	if ( dflags & DAMAGE_NO_KNOCKBACK ) {
-		knockback = 0;
-	}
-
-	// figure momentum add, even if the damage won't be taken
-	if ( knockback && tgClient ) {
+	
+	if(knockback && tgClient){
 		vec3_t	kvel;
 		float	mass;
-
 		mass = 200;
-
 		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
-		VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
-
+		//VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
 		// set the timer so that the other client can't cancel
 		// out the movement immediately
-		if ( !tgClient->ps.pm_time ) {
-			int		t;
-
+		if(!tgClient->ps.pm_time){
+			int	t;
 			t = knockback * 2;
-			if ( t < 50 ) {
+			if(t < 50){
 				t = 50;
 			}
-			if ( t > 200 ) {
+			if(t > 200 ) {
 				t = 200;
 			}
 			tgClient->ps.pm_time = t;
 			tgClient->ps.pm_flags |= PMF_TIME_KNOCKBACK;
 		}
 	}
-
-	// check for completely getting out of the damage
-	if ( !(dflags & DAMAGE_NO_PROTECTION) ) {
-
-		// if TF_NO_FRIENDLY_FIRE is set, don't do damage to the targetet
-		// if the attacker was on the same team
-		if ( target != attacker && OnSameTeam (target, attacker)  ) {
-			if ( !g_friendlyFire.integer ) {
-				return;
-			}
-		}
-
-		// check for godmode
-		if ( target->flags & FL_GODMODE ) {
-			return;
-		}
+	if(!(dflags & DAMAGE_NO_PROTECTION)){
+		if(((target != attacker && OnSameTeam(target, attacker)) && !g_friendlyFire.integer) || (target->flags & FL_GODMODE)){return;}
 	}
-
-
-	// add to the attacker's hit counter (if the targetet isn't a general entity like a prox mine)
-	if ( attacker->client && target != attacker && target->health > 0
-			&& target->s.eType != ET_MISSILE
-			&& target->s.eType != ET_GENERAL) {
-		if ( OnSameTeam( target, attacker ) ) {
-			attacker->client->ps.persistant[PERS_HITS]--;
-		} else {
-			attacker->client->ps.persistant[PERS_HITS]++;
-		}
-		//attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->health<<8)|(client->ps.stats[STAT_ARMOR]);
-		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->health<<8)|(tgClient->ps.stats[STAT_PL] & ~PL_CHANGEBITS);
+	if(attacker->client && target != attacker && target->powerLevel > 0	&& target->s.eType != ET_MISSILE && target->s.eType != ET_GENERAL){
+		attacker->client->ps.persistant[PERS_HITS] += OnSameTeam(target,attacker) ? -1 : 1;
+		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->powerLevel<<8)|0;
 	}
-
-	// always give half damage if hurting self
-	// calculated after knockback, so rocket jumping works
-	if ( target == attacker) {
-		damage *= 0.5;
+	if(target == attacker){
+		damage *= 0.2;
 	}
-
-	if ( damage < 1 ) {
-		damage = 1;
-	}
-	take = damage;
-	save = 0;
-
-	// save some from armor
-	asave = CheckFortitude (target, take, dflags);
-	take -= asave;
-
+	asave = CheckFortitude(target,damage,dflags);
+	damage -= asave;
 	// add to the damage inflicted on a player this frame
 	// the total will be turned into screen blends and view angle kicks
 	// at the end of the frame
@@ -589,8 +458,7 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 		} else {
 			tgClient->ps.persistant[PERS_ATTACKER] = ENTITYNUM_WORLD;
 		}
-		//tgClient->damage_armor += asave;
-		tgClient->damage_blood += take;
+		tgClient->damage_blood += damage;
 		tgClient->damage_knockback += knockback;
 		if ( dir ) {
 			VectorCopy ( dir, tgClient->damage_from );
@@ -600,37 +468,31 @@ void G_UserWeaponDamage( gentity_t *target, gentity_t *inflictor, gentity_t *att
 			tgClient->damage_fromWorld = qtrue;
 		}
 	}
-
-	// See if it's the player hurting the emeny flag carrier
-	if( g_gametype.integer == GT_CTF) {
-		Team_CheckHurtCarrier(target, attacker);
-	}
-
-	if (tgClient) {
-		// set the last client who damaged the target
+	if(tgClient){
 		tgClient->lasthurt_client = attacker->s.number;
 		tgClient->lasthurt_mod = methodOfDeath;
 	}
-
-	// do the damage
-	if (take) {
-		target->health = target->health - take;
-		if ( tgClient ) {
-			tgClient->ps.stats[STAT_HEALTH] = target->health;
-		}
-			
-		if ( target->health <= 0 ) {
-			if ( tgClient )
+	if(damage){
+		if(tgClient){
+			tgClient->ps.stats[powerLevelTotal] = tgClient->ps.stats[powerLevelTotal] - damage;
+			newPower = tgClient->ps.persistant[powerLevelMaximum] + (damage*0.5);
+			if(newPower < 32768){
+				tgClient->ps.persistant[powerLevelMaximum] = newPower;
+			}
+			if(target->powerLevel <= 0 && tgClient->ps.stats[powerLevelTotal] <= 0){
+				target->enemy = attacker;
 				target->flags |= FL_NO_KNOCKBACK;
-
-			if (target->health < -999)
-				target->health = -999;
-
-			target->enemy = attacker;
-			target->die (target, inflictor, attacker, take, methodOfDeath);
-			return;
-		} else if ( target->pain ) {
-			target->pain (target, attacker, take);
+				target->die(target,inflictor,attacker,damage,methodOfDeath);
+			}
+			if(target->pain){
+				target->pain(target,attacker,damage);
+			}
+		}
+		else{
+			target->powerLevel = target->powerLevel - damage;
+			if(target->powerLevel <= 0){
+				target->die(target,inflictor,attacker,damage,methodOfDeath);
+			}
 		}
 	}
 
@@ -718,44 +580,29 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 */
 
 
-void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNum ) {
+void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNum, vec3_t muzzle, vec3_t forward ) {
 	trace_t		tr;
-
-	// muzzle settings that need to be retrieved from g_weapons.c
-	vec3_t		muzzle, forward, right, up;
-	
-	float		rndH, rndV;
-	float		upScale, rightScale;
 	vec3_t		end;
 
 	gentity_t	*tempEnt;
 	gentity_t	*tempEnt2;
 	gentity_t	*traceEnt;
 	int			i, passent;
-
-	float		spreadHor, spreadVer, range;
+	float		rnd;
+	float		physics_range;
 
 #ifdef MISSIONPACK
 	vec3_t		impactpoint, bouncedir;
 #endif
 
-	// Retrieve the muzzle that was set in g_weapons.c
-	G_GetMuzzleSettings(muzzle, forward, right, up);
-
-	// Set some shortcuts
-	spreadHor = weaponInfo->firing_deviateW;
-	spreadVer = weaponInfo->firing_deviateH;
-	range     = weaponInfo->physics_range;
-
-
-	// Calculate a random position within the spread cone
-	rndH = (2 * random() - 1) * spreadHor;
-	rndV = (2 * random() - 1) * spreadVer;
-	upScale    = sin(DEG2RAD(rndH)) * range;
-	rightScale = sin(DEG2RAD(rndV)) * range;
-	VectorMA (muzzle, range, forward, end);
-	VectorMA (end, rightScale, right, end);
-	VectorMA (end, upScale, up, end);
+	// Get the end point
+	if ( weaponInfo->physics_range_min != weaponInfo->physics_range_max ) {
+		rnd = crandom();
+		physics_range = ( 1.0f - rnd ) * weaponInfo->physics_range_min + rnd * weaponInfo->physics_range_max;
+	} else {
+		physics_range = weaponInfo->physics_range_max;
+	}	
+	VectorMA (muzzle, physics_range, forward, end);
 
 	// Set the player to not be able of being hurt by this shot
 	passent = self->s.number;
@@ -765,10 +612,6 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 	for (i = 0; i < 10; i++) {
 
 		trap_Trace (&tr, muzzle, NULL, NULL, end, passent, MASK_SHOT);
-		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
-			return;
-		}
-
 		traceEnt = &g_entities[ tr.entityNum ];
 		// snap the endpos to integers, but nudged towards the line
 		SnapVectorTowards( tr.endpos, muzzle );
@@ -791,7 +634,7 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 				self->client->accuracy_hits++;
 			}
 
-		} else if( tr.fraction == 1.0f ) {
+		} else if( tr.fraction == 1.0f || tr.surfaceFlags & SURF_NOIMPACT ) {
 			G_AddEvent( tempEnt, EV_MISSILE_MISS_AIR, DirToByte( tr.plane.normal ) );
 		} else if( tr.surfaceFlags & SURF_METALSTEPS ) {
 			G_AddEvent( tempEnt, EV_MISSILE_MISS_METAL, DirToByte( tr.plane.normal ) );
@@ -810,6 +653,10 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 		tempEnt2->s.clientNum = self->s.number;
 		tempEnt2->s.weapon = weaponNum;
 		VectorCopy( muzzle, tempEnt2->s.origin2 );
+
+		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
+			return;
+		}
 		
 
 		if ( traceEnt->takedamage) {
@@ -849,15 +696,34 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 }
 
 
+void Release_UserWeapon( gentity_t *self, qboolean altfire ) {
+	// Work on primary or alternate fire.
+	if ( altfire ) {
+
+		// If the altfired entity exists, then destroy it and null the pointer (just incase).
+		if ( self->contAltfire_ent ) {
+			G_FreeEntity( self->contAltfire_ent );
+			self->contAltfire_ent = NULL;
+		}
+	} else {
+		// If the fired entity exists, then destroy it and null the pointer (just incase).
+		if ( self->contFire_ent ) {
+			G_FreeEntity( self->contFire_ent );
+			self->contFire_ent = NULL;
+		}
+	}
+}
+
 /*
 =================
 Fire_UserWeapon
 =================
 */
-void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfire) {
+void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfire ) {
 	gentity_t		*bolt;
 	g_userWeapon_t	*weaponInfo;
 	vec3_t			muzzle, forward, right, up;
+	vec3_t			firingDir, firingStart; // <-- Contain the altered aiming and origin vectors.
 
 	// Get a hold of the weapon we're firing.
 	// If altfire is used and it exists, use altfire, else use regular fire
@@ -868,10 +734,74 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 	if ( ( weaponInfo->general_bitflags & WPF_ALTWEAPONPRESENT ) && altfire ) {
 		weaponInfo = G_FindUserAltWeaponData( self->s.clientNum, self->s.weapon );
 	}
-		
 
 	// Retrieve the muzzle that was set in g_weapons.c
 	G_GetMuzzleSettings(muzzle, forward, right, up);
+
+
+	// Determine the corrected firing angle and firing origin
+
+	VectorCopy( dir, firingDir);
+	if ( weaponInfo->firing_angleW_min || weaponInfo->firing_angleW_max ) {
+		vec3_t	temp;
+		float	rnd;
+		float	firing_angleW;
+
+		rnd = crandom(); // <-- between 0.0f and 1.0f
+		firing_angleW = ( 1.0f - rnd ) * weaponInfo->firing_angleW_min + rnd * weaponInfo->firing_angleW_max;
+
+		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetWFlip ) {
+			RotatePointAroundVector( temp, up, firingDir, firing_angleW );
+		} else {
+			RotatePointAroundVector( temp, up, firingDir, -firing_angleW );
+		}
+		VectorCopy( temp, firingDir );
+	}
+	if ( weaponInfo->firing_angleH_min || weaponInfo->firing_angleH_max ) {
+		vec3_t temp;
+		float	rnd;
+		float	firing_angleH;
+
+		rnd = crandom(); // <-- between 0.0f and 1.0f
+		firing_angleH = ( 1.0f - rnd ) * weaponInfo->firing_angleH_min + rnd * weaponInfo->firing_angleH_max;
+
+		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetHFlip ) {
+			RotatePointAroundVector( temp, right, firingDir, firing_angleH );
+		} else {
+			RotatePointAroundVector( temp, right, firingDir, -firing_angleH );
+		}
+		VectorCopy( temp, firingDir );
+	}
+	VectorNormalize( firingDir );
+
+	VectorCopy( start, firingStart );
+	if ( weaponInfo->firing_offsetW_min || weaponInfo->firing_offsetW_max ) {
+		float rnd;
+		float firing_offsetW;
+
+		rnd = crandom(); // <-- between 0.0f and 1.0f
+		firing_offsetW = ( 1.0f - rnd ) * weaponInfo->firing_offsetW_min + rnd * weaponInfo->firing_offsetW_max;
+
+		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetWFlip ) {
+			VectorMA( firingStart, -firing_offsetW, right, firingStart );
+		} else {
+			VectorMA( firingStart, firing_offsetW, right, firingStart );
+		}
+	}
+	if ( weaponInfo->firing_offsetH_min || weaponInfo->firing_offsetH_max ) {
+		float rnd;
+		float firing_offsetH;
+
+		rnd = crandom(); // <-- between 0.0f and 1.0f
+		firing_offsetH = ( 1.0f - rnd ) * weaponInfo->firing_offsetH_min + rnd * weaponInfo->firing_offsetH_max;
+
+		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetHFlip ) {
+			VectorMA( firingStart, -firing_offsetH, up, firingStart );
+		} else {
+			VectorMA( firingStart, firing_offsetH, up, firingStart );
+		}
+	}
+	
 
 	// Take the necessary steps to configure and fire the weapon.
 	switch ( weaponInfo->general_type ) {
@@ -901,13 +831,13 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
@@ -917,10 +847,30 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
 
+		bolt->takedamage = qtrue;
+		bolt->powerLevel = 1; // <-- We need to enter _something_ here, or the missile will die
+						  //     instantly.
+
+		{
+			float radius;
+			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
+			radius = sqrt((radius * radius) / 3); // inverse of Pythagoras
+
+			VectorSet( bolt->r.mins, -radius, -radius, -radius );
+			VectorSet( bolt->r.maxs, radius, radius, radius );
+			VectorCopy( bolt->r.mins, bolt->r.absmin );
+			VectorCopy( bolt->r.maxs, bolt->r.absmax );
+
+			bolt->r.contents = CONTENTS_CORPSE; // So we can pass through a missile, but can still fire at it.
+
+			bolt->die = G_DieUserWeapon;			
+		}
+
 		bolt->speed = weaponInfo->physics_speed;
 		bolt->accel = weaponInfo->physics_acceleration;
 		bolt->bounceFrac = weaponInfo->physics_bounceFrac;
 		bolt->bouncesLeft = weaponInfo->physics_maxBounces;
+		bolt->timesTriggered = 0;
 		
 		// Configure the type correctly if we're using gravity or acceleration
 		// Gravity affection takes precedence over acceleration.
@@ -930,7 +880,7 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			bolt->s.pos.trType = TR_MAPGRAVITY;
 			bolt->s.pos.trDuration = bolt->gravity;
 		} else {
-			if (bolt->accel > 0) {
+			if (bolt->accel != 0.0f) {
 				bolt->s.pos.trType = TR_ACCEL;
 				bolt->s.pos.trDuration = bolt->accel;
 			} else {
@@ -940,29 +890,12 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		
 		// move a bit on the very first frame
 		bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;
-		VectorCopy( start, bolt->s.pos.trBase );
-		if ( ( self->client->ps.stats[STAT_BITFLAGS] & STATBIT_FLIPOFFSETW ) && weaponInfo->firing_offsetWFlip ) {
-			VectorMA( bolt->s.pos.trBase, -weaponInfo->firing_offsetW, right, bolt->s.pos.trBase );
-		} else {
-			VectorMA( bolt->s.pos.trBase, weaponInfo->firing_offsetW, right, bolt->s.pos.trBase );
-		}
-		VectorMA( bolt->s.pos.trBase, weaponInfo->firing_offsetH, up, bolt->s.pos.trBase );
-		VectorCopy( start, bolt->r.currentOrigin );
+		VectorCopy( firingStart, bolt->s.pos.trBase );
+		VectorCopy( firingStart, bolt->r.currentOrigin );
 
 		VectorCopy( self->client->ps.viewangles, self->s.angles );
 
-
-/*
-		// If an override direction was specified, take it.
-		if ( (weaponInfo->overrideDir[0] > 0) ||
-			 (weaponInfo->overrideDir[1] > 0) ||
-			 (weaponInfo->overrideDir[2] > 0)   ) {
-			VectorCopy( weaponInfo->overrideDir, dir );
-			VectorNormalize( dir );
-		}
-*/
-		
-		VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
+		VectorScale( firingDir, bolt->speed, bolt->s.pos.trDelta );
 		// This saves network bandwidth.
 		SnapVector( bolt->s.pos.trDelta );
 
@@ -978,11 +911,6 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			bolt->think = Think_Guided;
 			bolt->nextthink = level.time + FRAMETIME;
 			
-			// Reference back to the client for motion tracking.
-			// bolt->s.otherEntityNum = self->s.number;
-			// FIXME: This is now implicitly present in bolt->s.clientNum for
-			//        displaying the correct graphics clientside.
-			
 			// Kill off previously set accel, bounce and gravity. Guided missiles
 			// do not accelerate, bounce or experience gravity.
 			bolt->accel = 0;
@@ -994,9 +922,6 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			bolt->s.eFlags |= EF_GUIDED;
 			self->client->guidetarget = bolt;
 			
-			// Set the player's weapon state to guiding and forcibly disable the
-			// dash.
-			self->client->ps.weaponstate = WEAPON_GUIDING;
 			bolt->guided = qtrue;
 			break;
 
@@ -1025,7 +950,7 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 			{ // Open new block to get some local variables in here
 				trace_t	trace;
-				vec3_t  begin, mid, end, aim, temp;
+				vec3_t  begin, mid, end;
 				float	length;
 
 				VectorCopy( bolt->s.pos.trBase, begin );
@@ -1035,30 +960,22 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 				length = Distance( begin, end );
 
-				VectorCopy( dir, aim);
-				if ( weaponInfo->homing_angleW ) {
-					if ( ( self->client->ps.stats[STAT_BITFLAGS] & STATBIT_FLIPOFFSETW ) && weaponInfo->firing_offsetWFlip ) {
-						RotatePointAroundVector( temp, up, aim, weaponInfo->homing_angleW );
-					} else {
-						RotatePointAroundVector( temp, up, aim, -weaponInfo->homing_angleW );
-					}
-					VectorCopy( temp, aim );
-				}
-				if ( weaponInfo->homing_angleH ) {
-					RotatePointAroundVector( temp, right, aim, weaponInfo->homing_angleH );
-					VectorCopy( temp, aim );
-				}
-
-				VectorMA( begin, length / 2.0f, aim, mid );
-
+				VectorMA( begin, length / 2.0f, firingDir, mid );
 
 				bolt->s.pos.trType = TR_ARCH;
-				bolt->s.pos.trTime = level.time;
 				bolt->s.pos.trDuration = 1000.0f * length / weaponInfo->physics_speed;
 				VectorCopy( begin, bolt->s.pos.trBase );
 				VectorCopy( mid, bolt->s.angles2 );
 				VectorCopy( end, bolt->s.pos.trDelta );
 			}
+			break;
+
+		case HOM_DRUNKEN:
+			bolt->think = Think_NormalMissile;
+			bolt->nextthink = level.time + FRAMETIME;
+
+			bolt->s.pos.trType = TR_DRUNKEN;
+			bolt->s.pos.trDuration = weaponInfo->homing_range;
 			break;
 		
 		case HOM_NONE:
@@ -1102,13 +1019,13 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
@@ -1125,16 +1042,6 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->gravity = 0;
 		bolt->s.pos.trType = TR_LINEAR;
 		
-/*
-		// If an override direction was specified, take it.
-		if ( (weaponInfo->overrideDir[0] > 0) ||
-			 (weaponInfo->overrideDir[1] > 0) ||
-			 (weaponInfo->overrideDir[2] > 0)   ) {
-			VectorCopy( weaponInfo->overrideDir, dir );
-			VectorNormalize( dir );
-		}
-*/
-
 		VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
 		// This saves network bandwidth.
 		SnapVector( bolt->s.pos.trDelta );
@@ -1155,9 +1062,6 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			bolt->s.eFlags |= EF_GUIDED;
 			self->client->guidetarget = bolt;
 
-			// Set the player's weapon state to guiding and forcibly disable the
-			// dash.
-			self->client->ps.weaponstate = WEAPON_GUIDING;
 			bolt->guided = qtrue;
 			break;
 
@@ -1173,9 +1077,6 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			bolt->s.eFlags |= EF_GUIDED;
 			self->client->guidetarget = bolt;
 
-			// Set the player's weapon state to guiding and forcibly disable the
-			// dash.
-			self->client->ps.weaponstate = WEAPON_GUIDING;
 			bolt->guided = qtrue;			
 			break;
 
@@ -1193,10 +1094,13 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 	/* HITSCAN */
 
 	case WPT_HITSCAN:
+
 		if ( !altfire ) {
-			UserHitscan_Fire( self, weaponInfo, self->s.weapon );
+			UserHitscan_Fire( self, weaponInfo, self->s.weapon, firingStart, firingDir );
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		} else {
-			UserHitscan_Fire( self, weaponInfo, self->s.weapon + ALTWEAPON_OFFSET );
+			UserHitscan_Fire( self, weaponInfo, self->s.weapon + ALTWEAPON_OFFSET, firingStart, firingDir );
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		}
 		break;
 
@@ -1227,13 +1131,13 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_SEC];
+			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_SEC] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[STAT_CHARGELVL_PRI];
+			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[STAT_CHARGELVL_PRI] = 0; // Only reset it here!
+			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
@@ -1247,23 +1151,13 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->accel = 0;
 		bolt->s.pos.trType = TR_LINEAR;
 		
-/*
-		// If an override direction was specified, take it.
-		if ( (weaponInfo->overrideDir[0] > 0) ||
-			 (weaponInfo->overrideDir[1] > 0) ||
-			 (weaponInfo->overrideDir[2] > 0)   ) {
-			VectorCopy( weaponInfo->overrideDir, dir );
-			VectorNormalize( dir );
-		}
-*/
-
-		VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
+		VectorScale( firingDir, bolt->speed, bolt->s.pos.trDelta );
 		// This saves network bandwidth.
 		SnapVector( bolt->s.pos.trDelta );
 		// move a bit on the very first frame
 		bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;
-		VectorCopy( start, bolt->s.pos.trBase );
-		VectorCopy( start, bolt->r.currentOrigin );
+		VectorCopy( firingStart, bolt->s.pos.trBase );
+		VectorCopy( firingStart, bolt->r.currentOrigin );
 
 		// Set the correct think, which for a groundskim is only regular think. 
 		bolt->think = Think_NormalMissile;
@@ -1283,11 +1177,131 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 
 	case WPT_TORCH:
-//		bolt = G_Spawn();
-//		bolt->classname = "user_torch";
-//		bolt->s.eType = ET_TORCH;
+		bolt = G_Spawn();
+		bolt->classname = "user_torch";
+		bolt->s.eType = ET_TORCH;
+
+		// Set the properties we need for a torch
+		bolt->clipmask = MASK_SHOT;
+		bolt->target_ent = NULL;
+		bolt->r.ownerNum = self->s.number;
+		bolt->s.clientNum = self->s.number;
+
+		// Set the weapon number correct, depending on altfire status.
+		if ( !altfire ) {
+			bolt->s.weapon = self->s.weapon;
+		} else {
+			bolt->s.weapon = self->s.weapon + ALTWEAPON_OFFSET;
+		}
+
+		// Make sure the entity is in the PVS if you should be able to spot part of the torch
+		VectorSet( bolt->r.maxs,  weaponInfo->physics_range_max,  weaponInfo->physics_range_max,  weaponInfo->physics_range_max );
+		VectorSet( bolt->r.mins, -weaponInfo->physics_range_max, -weaponInfo->physics_range_max, -weaponInfo->physics_range_max );
+
+		// Hijack homRange and homAngle for the torch range and torch width angle.
+		// The latter is built from the physics_radius parameter, which contains
+		// the radius of the torch cone at the maximum distance, and the physics_range_max
+		// parameter, which contains the maximum range of the torch attack.
+		bolt->homRange = Q_fabs(weaponInfo->physics_range_max);
+		bolt->homAngle = atan2( bolt->homRange, Q_fabs(weaponInfo->physics_radius) ); // NOTE: Keep this in radians
+
+		// Set the movement type for the torch to interpolation.
+		bolt->s.pos.trType = TR_INTERPOLATE;
+		bolt->s.apos.trType = TR_INTERPOLATE;
+		VectorCopy( start, bolt->s.pos.trBase );
+		vectoangles( dir, bolt->s.apos.trBase );
+
+		// Hijack trDelta for getting physics_range_max and physics_radius to the client
+		bolt->s.pos.trDelta[0] = Q_fabs(weaponInfo->physics_range_max);
+		bolt->s.pos.trDelta[1] = Q_fabs(weaponInfo->physics_radius);
+	
+		// Set the MoD
+		bolt->methodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
+		bolt->splashMethodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
+
+		// Set the think function that will demolish the torch if it persists too long
+		bolt->think = Think_Torch;
+		bolt->nextthink = weaponInfo->physics_lifetime;
 		break;
 
+	case WPT_TRIGGER:
+		{
+			gentity_t		*trigTarget;
+			trace_t			trace;
+			vec3_t			newBase, newDir, traceEnd;
+			int				pass_ent, i;
+			float			traceDist;
+			
+			for ( i = 0; i < MAX_GENTITIES; i++ ) {
+			
+				// Select the entity
+				trigTarget = &g_entities[i];
+			
+				// See if it is affected by the trigger
+				if ( !trigTarget->inuse ) {
+					continue;
+				} else if ( trigTarget->s.eType != ET_MISSILE ) {
+					continue;
+				} else if ( trigTarget->timesTriggered >= weaponInfo->firing_nrShots ) {
+					continue;
+				} else if ( !altfire && ( trigTarget->s.weapon != self->s.weapon + ALTWEAPON_OFFSET )) {
+					continue;
+				} else if ( altfire && ( trigTarget->s.weapon != self->s.weapon )) {
+					continue;
+				}
+
+				// Get the target's current position
+				BG_EvaluateTrajectory( &trigTarget->s, &trigTarget->s.pos, level.time, newBase );
+
+				// Don't process any missiles beyond the maximum range of control
+				if ( Distance(newBase, start) > weaponInfo->physics_range_max ) {
+					continue;
+				}
+
+				// Set the target's new starting position and increase its trigger count
+				VectorCopy( newBase, trigTarget->s.pos.trBase );
+				trigTarget->timesTriggered++;
+				 
+				// Setup the new directional vector for the triggered weapon.
+				VectorSubtract( start, newBase, newDir );
+				traceDist = VectorLength( newDir ) + SOLID_ADD;
+	
+				VectorScale( dir, traceDist, traceEnd );
+				VectorAdd( traceEnd, start, traceEnd );
+				
+				pass_ent = self->s.number;
+				trap_Trace( &trace, start, NULL, NULL, traceEnd, pass_ent, MASK_PLAYERSOLID );
+				VectorSubtract( trace.endpos, start, traceEnd );
+
+				VectorAdd( traceEnd, newDir, newDir );
+				VectorNormalize( newDir );
+
+				// Set the triggered weapon's new direction and speed
+				VectorScale( newDir, weaponInfo->physics_speed, trigTarget->s.pos.trDelta );
+				vectoangles( newDir, trigTarget->s.angles );
+				trigTarget->s.pos.trTime = level.time;
+
+				// Configure the type correctly if we're using gravity or acceleration
+				// Gravity affection takes precedence over acceleration.
+				// FIXME: Can we get both simultaneously?
+				if (weaponInfo->physics_gravity > 0) {
+					trigTarget->accel = 0;
+					trigTarget->gravity = (weaponInfo->physics_gravity / 100) * g_gravity.value; 
+					trigTarget->s.pos.trType = TR_MAPGRAVITY;
+					trigTarget->s.pos.trDuration = trigTarget->gravity;
+				} else if (weaponInfo->physics_acceleration != 0.0f) {
+					trigTarget->gravity = 0;
+					trigTarget->accel = weaponInfo->physics_acceleration;
+					trigTarget->s.pos.trType = TR_ACCEL;
+					trigTarget->s.pos.trDuration = trigTarget->accel;
+				} else {
+					trigTarget->accel = 0;
+					trigTarget->gravity = 0;
+					trigTarget->s.pos.trType = TR_LINEAR;
+				}
+			}
+		}
+		break;
 
 	case WPT_NONE:
 		// We don't need to generate any kind of attack
@@ -1306,11 +1320,22 @@ void Fire_UserWeapon (gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
    -----------------------------------------
 */
 
-void G_ExplodeUserWeapon (gentity_t *self) {
+void G_DieUserWeapon( gentity_t *self, gentity_t *inflictor,
+					  gentity_t *attacker, int damage, int mod ) {
+	if (inflictor == self)
+		return;
+	self->takedamage = qfalse;
+	self->think = G_ExplodeUserWeapon;
+	self->nextthink = level.time + FRAMETIME;
+}
+
+void G_ExplodeUserWeapon( gentity_t *self ) {
 	// Handles actual detonation of the weapon in question.
 
 	vec3_t		dir = { 0, 0, 1};
 	vec3_t		origin;
+
+	self->takedamage = qfalse;
 
 	// Terminate guidance
 	if ( self->guided ) {
@@ -1362,7 +1387,7 @@ static void G_BounceUserMissile( gentity_t *self, trace_t *trace ) {
 void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 // Handles impact of the weapon with map geometry or entities.
 	gentity_t		*other;
-	qboolean		hitClient = qfalse;			
+	qboolean		hitClient = qfalse;		
 	
 	other = &g_entities[trace->entityNum];
 
@@ -1373,6 +1398,8 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 		self->bouncesLeft--;
 		return;
 	}
+
+	self->takedamage = qfalse;
 
 	// Can the target take damage?
 	if (other->takedamage) {
@@ -1399,6 +1426,16 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 				self->s.origin, self->damage, 
 				0, self->methodOfDeath);
 			*/
+
+			{
+				g_userWeapon_t	*weaponInfo;
+
+				weaponInfo = G_FindUserWeaponData( self->s.clientNum, self->s.weapon );
+				G_UserWeaponDamage( other, self, &g_entities[self->r.ownerNum], velocity, self->s.origin,
+									weaponInfo->damage_damage, 0,
+									MOD_KI + weaponInfo->damage_meansOfDeath,
+									weaponInfo->damage_extraKnockback );
+			}
 		}
 	}
 
@@ -1424,7 +1461,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 	G_SetOrigin( self, trace->endpos );
 	
 
-	if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->damageRadius, self->methodOfDeath, self->extraKnockback )) {
+	if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
 		if( !hitClient ) {
 			g_entities[self->s.clientNum].client->accuracy_hits++;
 		}
@@ -1642,3 +1679,150 @@ void G_RunUserSkimmer( gentity_t *ent ) {
 		trap_LinkEntity( ent );
 	}
 }
+
+
+#define RIFT_MAX_GROUNDLEVEL_VARIATION 25 // Maximum fluctuation of 25 game units positive/negative in the height
+#define RIFT_DEGRADE_TIME	1000 //msec
+#define RIFT_HEIGHT			200
+void G_RunRiftFrame( gentity_t *ent, int time ) {
+	vec3_t		origin, traceTarget;	
+	trace_t		trace;
+	float		up;
+	int			pass_ent;
+
+	if ( time > level.time ) return;
+	if ( time < (level.time - RIFT_DEGRADE_TIME)) return;
+
+	pass_ent = ent->r.ownerNum;
+
+	// get origin and target point
+	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, time, origin );
+	VectorCopy( origin, traceTarget );
+	traceTarget[2] -= RIFT_MAX_GROUNDLEVEL_VARIATION;
+	origin[2] += RIFT_MAX_GROUNDLEVEL_VARIATION;
+
+	// trace a line between the valid vertical margin for the rift
+	trap_Trace( &trace, origin, NULL, NULL, traceTarget, ENTITYNUM_NONE, MASK_SOLID );
+
+	if ( trace.allsolid ) {
+		// The virtual piercing missile ended up staying inside a volume.
+		// The missile is removed.
+		G_RemoveUserWeapon( ent );
+	}
+	else if (time == level.time) {
+		VectorCopy( origin, ent->r.currentOrigin );
+		ent->r.currentOrigin[2] -= RIFT_MAX_GROUNDLEVEL_VARIATION;
+	}
+
+	// trace upwards from the point of origin to do damge,
+	// trace length modified by timeframe using second degree polynomial
+	VectorCopy( trace.endpos, origin );
+	VectorAdd( origin, trace.plane.normal, origin );
+	up = 2.0f * (float)(level.time - time ) / (float)RIFT_DEGRADE_TIME - 1;
+	up = -1 * (up * up) + 1;
+	up *= RIFT_HEIGHT; // FIXME: Must be replaced by weapon script based field...
+	
+	VectorCopy( origin, traceTarget );
+	traceTarget[2] += up;
+	trap_Trace( &trace, origin, NULL, NULL, traceTarget, pass_ent, ent->clipmask );
+
+	if ( trace.startsolid || trace.allsolid ) {
+		// make sure the trace.entityNum is set to the entity we're stuck in
+		trap_Trace( &trace, ent->r.currentOrigin, NULL, NULL, ent->r.currentOrigin, pass_ent, ent->clipmask );
+		trace.fraction = 0;
+	}
+
+	if ( trace.fraction != 1 ) {
+		// we hit something, now see if we can damage it
+		gentity_t	*traceEnt;
+		vec3_t		upVec = { 0, 0, 1 };
+
+		traceEnt = &g_entities[ trace.entityNum ];
+
+		if ( traceEnt->takedamage) {
+
+			G_UserWeaponDamage( traceEnt, &g_entities[ent->r.ownerNum], ent, upVec,
+								trace.endpos, ent->damage, 0, ent->methodOfDeath, 0 );
+		}
+	}
+}
+
+void G_RunRiftWeaponClass( gentity_t *ent ) {
+	int i;
+
+	for ( i = level.time - RIFT_DEGRADE_TIME; i <= level.time; i += 100 ) {
+		G_RunRiftFrame( ent, i );
+	}
+	
+}
+
+
+void G_RunUserTorch( gentity_t *ent ) {
+	gentity_t	*owner, *target;
+	vec3_t		forward, right, up, muzzle, targetDir, torchEnd;
+	trace_t		trace;
+	int			i;
+	float		targetRange, torchRange, targetAngle;
+
+	owner = &g_entities[ent->r.ownerNum];
+
+	// If the owner no longer is firing the weapon
+	if ( owner->client->ps.weaponstate != WEAPON_FIRING ) {
+		G_FreeEntity( ent );
+		return;
+	}
+
+	// Calculate where we are now aiming.
+	AngleVectors( owner->client->ps.viewangles, forward, right, up );
+	CalcMuzzlePoint( owner, forward, right, up, muzzle );
+
+	// Give the entity the new aiming settings
+	VectorCopy( muzzle, ent->s.pos.trBase );
+	vectoangles( forward, ent->s.apos.trBase );
+
+	// Get the new end point of the torch at the maximum distance
+	VectorMA( ent->s.pos.trBase, ent->homRange, forward, torchEnd );
+
+	// Clamp the end point, so we don't shoot torches straight through walls, but only locally.
+	trap_Trace( &trace, muzzle, NULL, NULL, torchEnd, ent->r.ownerNum, MASK_SOLID );
+	torchRange = Distance( trace.endpos, muzzle );
+	
+	// Do damage to any clients stuck inside the blast, not including the owner client.
+	for ( i = 0; i < level.numConnectedClients; i++ ) {
+		float dmgFrac;
+
+		if ( ent->r.ownerNum == i ) {
+			continue;
+		}
+		
+		target = &g_entities[i];
+		VectorSubtract( target->s.pos.trBase, muzzle, targetDir );
+		targetRange = VectorNormalize( targetDir );
+		if ( targetRange > torchRange ) {
+			continue;
+		}
+
+		targetAngle = hack_acos( DotProduct( targetDir, forward ));
+		if ( ent->homAngle < targetAngle ) {
+			continue;
+		}
+
+		if ( ent->homAngle ) {
+			dmgFrac = 1 - (targetAngle / ent->homAngle);
+
+			// Making sure floating point rounding errors don't cause problems
+			if ( dmgFrac < 0 ) {
+				dmgFrac = 0;
+			}
+		} else {
+			dmgFrac = 1;
+		}
+		
+		G_UserWeaponDamage( target, owner, ent, forward, muzzle, dmgFrac * ent->damage, 0, ent->methodOfDeath, 0 );
+	}
+
+	// Round off stored vectors
+	SnapVector( ent->s.pos.trBase );
+	SnapVector( ent->s.apos.trBase );
+}
+

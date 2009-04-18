@@ -1,31 +1,11 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_servercmds.c -- reliably sequenced text commands sent by the server
 // these are processed at snapshot transition time, so there will definately
 // be a valid snapshot this frame
 
 #include "cg_local.h"
-#include "../../ui/menudef.h"
+#include "../../ui/menudef.h" // bk001205 - for Q3_ui as well
 
 typedef struct {
 	const char *order;
@@ -33,20 +13,20 @@ typedef struct {
 } orderTask_t;
 
 static const orderTask_t validOrders[] = {
-	{ VOICECHAT_GETFLAG,						TEAMTASK_OFFENSE },
-	{ VOICECHAT_OFFENSE,						TEAMTASK_OFFENSE },
-	{ VOICECHAT_DEFEND,							TEAMTASK_DEFENSE },
-	{ VOICECHAT_DEFENDFLAG,					TEAMTASK_DEFENSE },
-	{ VOICECHAT_PATROL,							TEAMTASK_PATROL },
-	{ VOICECHAT_CAMP,								TEAMTASK_CAMP },
-	{ VOICECHAT_FOLLOWME,						TEAMTASK_FOLLOW },
-	{ VOICECHAT_RETURNFLAG,					TEAMTASK_RETRIEVE },
-	{ VOICECHAT_FOLLOWFLAGCARRIER,	TEAMTASK_ESCORT }
+	{ VOICECHAT_GETFLAG,			TEAMTASK_OFFENSE	},
+	{ VOICECHAT_OFFENSE,			TEAMTASK_OFFENSE	},
+	{ VOICECHAT_DEFEND,				TEAMTASK_DEFENSE	},
+	{ VOICECHAT_DEFENDFLAG,			TEAMTASK_DEFENSE	},
+	{ VOICECHAT_PATROL,				TEAMTASK_PATROL		},
+	{ VOICECHAT_CAMP,				TEAMTASK_CAMP		},
+	{ VOICECHAT_FOLLOWME,			TEAMTASK_FOLLOW		},
+	{ VOICECHAT_RETURNFLAG,			TEAMTASK_RETRIEVE	},
+	{ VOICECHAT_FOLLOWFLAGCARRIER,	TEAMTASK_ESCORT		}
 };
 
 static const int numValidOrders = sizeof(validOrders) / sizeof(orderTask_t);
 
-#ifdef MISSIONPACK
+#ifdef MISSIONPACK // bk001204
 static int CG_ValidOrder(const char *p) {
 	int i;
 	for (i = 0; i < numValidOrders; i++) {
@@ -118,25 +98,14 @@ static void CG_ParseTeamInfo( void ) {
 	int		client;
 
 	numSortedTeamPlayers = atoi( CG_Argv( 1 ) );
-	if( numSortedTeamPlayers < 0 || numSortedTeamPlayers > TEAM_MAXOVERLAY )
-	{
-		CG_Error( "CG_ParseTeamInfo: numSortedTeamPlayers out of range (%d)",
-				numSortedTeamPlayers );
-		return;
-	}
 
 	for ( i = 0 ; i < numSortedTeamPlayers ; i++ ) {
 		client = atoi( CG_Argv( i * 6 + 2 ) );
-		if( client < 0 || client >= MAX_CLIENTS )
-		{
-		  CG_Error( "CG_ParseTeamInfo: bad client number: %d", client );
-		  return;
-		}
 
 		sortedTeamPlayers[i] = client;
 
 		cgs.clientinfo[ client ].location = atoi( CG_Argv( i * 6 + 3 ) );
-		cgs.clientinfo[ client ].health = atoi( CG_Argv( i * 6 + 4 ) );
+		cgs.clientinfo[ client ].powerLevel = atoi( CG_Argv( i * 6 + 4 ) );
 		cgs.clientinfo[ client ].armor = atoi( CG_Argv( i * 6 + 5 ) );
 		cgs.clientinfo[ client ].curWeapon = atoi( CG_Argv( i * 6 + 6 ) );
 		cgs.clientinfo[ client ].powerups = atoi( CG_Argv( i * 6 + 7 ) );
@@ -171,6 +140,11 @@ void CG_ParseServerinfo( void ) {
 	trap_Cvar_Set("g_redTeam", cgs.redTeam);
 	Q_strncpyz( cgs.blueTeam, Info_ValueForKey( info, "g_blueTeam" ), sizeof(cgs.blueTeam) );
 	trap_Cvar_Set("g_blueTeam", cgs.blueTeam);
+#if MAPLENSFLARES	// JUHOX: parse serverinfo cvars for map lens flares
+	cgs.editMode = atoi(Info_ValueForKey(info, "g_editmode"));
+	if (cgs.maxclients > 1) cgs.editMode = EM_none;
+	if (atoi(Info_ValueForKey(CG_ConfigString(CS_SYSTEMINFO), "sv_cheats")) != 1) cgs.editMode = EM_none;
+#endif
 }
 
 /*
@@ -453,6 +427,13 @@ static void CG_MapRestart( void ) {
 	CG_InitMarkPolys();
 	CG_ClearParticles ();
 
+	// ADDING FOR ZEQ2
+	CG_FrameHist_Init();
+	CG_InitTrails();
+	CG_InitParticleSystems();
+	CG_InitBeamTables();
+	CG_InitRadarBlips();
+
 	// make sure the "3 frags left" warnings play again
 	cg.fraglimitWarnings = 0;
 
@@ -483,7 +464,7 @@ static void CG_MapRestart( void ) {
 		}
 	}
 #endif
-	trap_Cvar_Set("cg_thirdPerson", "0");
+	trap_Cvar_Set("cg_thirdPerson", "1"); // ZEQ2 Stays in third person
 }
 
 #define MAX_VOICEFILESIZE	16384
@@ -531,7 +512,6 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 	char *token;
 	voiceChat_t *voiceChats;
 	qboolean compress;
-	sfxHandle_t sound;
 
 	compress = qtrue;
 	if (cg_buildScript.integer) {
@@ -599,16 +579,15 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 			}
 			if (!Q_stricmp(token, "}"))
 				break;
-			sound = trap_S_RegisterSound( token, compress );
-			voiceChats[voiceChatList->numVoiceChats].sounds[voiceChats[voiceChatList->numVoiceChats].numSounds] = sound;
+			voiceChats[voiceChatList->numVoiceChats].sounds[voiceChats[voiceChatList->numVoiceChats].numSounds] = 
+          trap_S_RegisterSound( token , compress );
 			token = COM_ParseExt(p, qtrue);
 			if (!token || token[0] == 0) {
 				return qtrue;
 			}
 			Com_sprintf(voiceChats[voiceChatList->numVoiceChats].chats[
 							voiceChats[voiceChatList->numVoiceChats].numSounds], MAX_CHATSIZE, "%s", token);
-			if (sound)
-				voiceChats[voiceChatList->numVoiceChats].numSounds++;
+			voiceChats[voiceChatList->numVoiceChats].numSounds++;
 			if (voiceChats[voiceChatList->numVoiceChats].numSounds >= MAX_VOICESOUNDS)
 				break;
 		}
@@ -1069,22 +1048,15 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
-	if ( Q_stricmp (cmd, "remapShader") == 0 )
-	{
-		if (trap_Argc() == 4)
-		{
+	if ( Q_stricmp (cmd, "remapShader") == 0 ) {
+		if (trap_Argc() == 4) {
 			char shader1[MAX_QPATH];
 			char shader2[MAX_QPATH];
-			char shader3[MAX_QPATH];
-
 			Q_strncpyz(shader1, CG_Argv(1), sizeof(shader1));
 			Q_strncpyz(shader2, CG_Argv(2), sizeof(shader2));
-			Q_strncpyz(shader3, CG_Argv(3), sizeof(shader3));
-
-			trap_R_RemapShader(shader1, shader2, shader3);
+			trap_R_RemapShader(shader1, shader2, CG_Argv(3));
+			return;
 		}
-		
-		return;
 	}
 
 	// loaddeferred can be both a servercmd and a consolecmd
@@ -1097,6 +1069,92 @@ static void CG_ServerCommand( void ) {
 	// the menu system during development
 	if ( !strcmp( cmd, "clientLevelShot" ) ) {
 		cg.levelShot = qtrue;
+		return;
+	}
+
+	if ( !strcmp( cmd, "radar" ) ) {
+		int count;
+		int i;
+		const char *ptr;
+
+		// expand the string into our settings
+
+		// clear out old list
+		memset( cg_playerOrigins, 0, sizeof(cg_playerOrigins) );
+
+		// get amount in current list
+		count = atof( CG_Argv( 1 ) );
+
+		for( i = 0; i < count ; i++ ) {
+			// set the string pointer to the correct set of parameters
+			ptr = CG_Argv(i + 2);
+
+			//read in the clientNum
+			cg_playerOrigins[i].clientNum = atof(ptr);
+
+			//move the ptr on until we come to a comma
+			ptr = strchr(ptr, ',');
+
+			//skip over the comma
+			ptr++;
+
+			//read in the PL
+			cg_playerOrigins[i].pl = atof(ptr);
+
+			//move the ptr on until we come to a comma
+			ptr = strchr(ptr, ',');
+
+			//skip over the comma
+			ptr++;
+
+			//read in the PL
+			cg_playerOrigins[i].team = atof(ptr);
+
+			//move the ptr on until we come to a comma
+			ptr = strchr(ptr, ',');
+
+			//skip over the comma
+			ptr++;
+
+			//read in the PL
+			cg_playerOrigins[i].properties = atof(ptr);
+
+			//move the ptr on until we come to a comma
+			ptr = strchr(ptr, ',');
+
+			//skip over the comma
+			ptr++;
+
+			//read in the first position number
+			cg_playerOrigins[i].pos[0] = atof(ptr);
+
+			//move the ptr on until we come to a comma
+			ptr = strchr(ptr, ',');
+
+			//skip over the comma
+			ptr++;
+
+			//read in the next position number
+			cg_playerOrigins[i].pos[1] = atof(ptr);
+
+			//move the ptr on until we come to a comma
+			ptr = strchr(ptr, ',');
+
+			//skip over the comma
+			ptr++;
+
+			//read in the final position number
+			cg_playerOrigins[i].pos[2] = atof(ptr);
+
+			// Do a probability check on whether we're going to display the dot
+			// or not.
+			if ( qtrue ) {
+				//mark the entry as valid
+				cg_playerOrigins[i].valid = qtrue;
+			} else {
+				cg_playerOrigins[i].valid = qfalse;
+			}
+		}
 		return;
 	}
 

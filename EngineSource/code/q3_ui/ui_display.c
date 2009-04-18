@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =======================================================================
@@ -130,7 +110,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.banner.generic.y			= 16;
 	displayOptionsInfo.banner.string			= "SYSTEM SETUP";
 	displayOptionsInfo.banner.color				= color_white;
-	displayOptionsInfo.banner.style				= UI_CENTER;
+	displayOptionsInfo.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	displayOptionsInfo.framel.generic.type		= MTYPE_BITMAP;
 	displayOptionsInfo.framel.generic.name		= ART_FRAMEL;
@@ -155,8 +135,8 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.graphics.generic.x			= 216;
 	displayOptionsInfo.graphics.generic.y			= 240 - 2 * PROP_HEIGHT;
 	displayOptionsInfo.graphics.string				= "GRAPHICS";
-	displayOptionsInfo.graphics.style				= UI_RIGHT;
-	displayOptionsInfo.graphics.color				= color_red;
+	displayOptionsInfo.graphics.style				= UI_RIGHT|UI_DROPSHADOW;
+	displayOptionsInfo.graphics.color				= color_white;
 
 	displayOptionsInfo.display.generic.type			= MTYPE_PTEXT;
 	displayOptionsInfo.display.generic.flags		= QMF_RIGHT_JUSTIFY;
@@ -165,8 +145,8 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.display.generic.x			= 216;
 	displayOptionsInfo.display.generic.y			= 240 - PROP_HEIGHT;
 	displayOptionsInfo.display.string				= "DISPLAY";
-	displayOptionsInfo.display.style				= UI_RIGHT;
-	displayOptionsInfo.display.color				= color_red;
+	displayOptionsInfo.display.style				= UI_RIGHT|UI_DROPSHADOW;
+	displayOptionsInfo.display.color				= color_white;
 
 	displayOptionsInfo.sound.generic.type			= MTYPE_PTEXT;
 	displayOptionsInfo.sound.generic.flags			= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -175,8 +155,8 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.sound.generic.x				= 216;
 	displayOptionsInfo.sound.generic.y				= 240;
 	displayOptionsInfo.sound.string					= "SOUND";
-	displayOptionsInfo.sound.style					= UI_RIGHT;
-	displayOptionsInfo.sound.color					= color_red;
+	displayOptionsInfo.sound.style					= UI_RIGHT|UI_DROPSHADOW;
+	displayOptionsInfo.sound.color					= color_white;
 
 	displayOptionsInfo.network.generic.type			= MTYPE_PTEXT;
 	displayOptionsInfo.network.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -185,8 +165,8 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.network.generic.x			= 216;
 	displayOptionsInfo.network.generic.y			= 240 + PROP_HEIGHT;
 	displayOptionsInfo.network.string				= "NETWORK";
-	displayOptionsInfo.network.style				= UI_RIGHT;
-	displayOptionsInfo.network.color				= color_red;
+	displayOptionsInfo.network.style				= UI_RIGHT|UI_DROPSHADOW;
+	displayOptionsInfo.network.color				= color_white;
 
 	y = 240 - 1 * (BIGCHAR_HEIGHT+2);
 	displayOptionsInfo.brightness.generic.type		= MTYPE_SLIDER;

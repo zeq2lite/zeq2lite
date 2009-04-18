@@ -1,45 +1,21 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 // cg_syscalls.c -- this file is only included when building a dll
 // cg_syscalls.asm is included instead when building a qvm
-#ifdef Q3_VM
-#error "Do not use in VM build"
-#endif
-
 #include "cg_local.h"
 
-static intptr_t (QDECL *syscall)( intptr_t arg, ... ) = (intptr_t (QDECL *)( intptr_t, ...))-1;
+static int (QDECL *syscall)( int arg, ... ) = (int (QDECL *)( int, ...))-1;
 
 
-void dllEntry( intptr_t (QDECL  *syscallptr)( intptr_t arg,... ) ) {
+void dllEntry( int (QDECL  *syscallptr)( int arg,... ) ) {
 	syscall = syscallptr;
 }
 
 
 int PASSFLOAT( float x ) {
-	floatint_t fi;
-	fi.f = x;
-	return fi.i;
+	float	floatTemp;
+	floatTemp = x;
+	return *(int *)&floatTemp;
 }
 
 void	trap_Print( const char *fmt ) {
@@ -98,8 +74,8 @@ void	trap_FS_FCloseFile( fileHandle_t f ) {
 	syscall( CG_FS_FCLOSEFILE, f );
 }
 
-int trap_FS_Seek( fileHandle_t f, long offset, int origin ) {
-	return syscall( CG_FS_SEEK, f, offset, origin );
+int trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize ) {
+	return syscall( CG_FS_GETFILELIST, path, extension, listbuf, bufsize );
 }
 
 void	trap_SendConsoleCommand( const char *text ) {
@@ -183,47 +159,47 @@ int		trap_CM_MarkFragments( int numPoints, const vec3_t *points,
 	return syscall( CG_CM_MARKFRAGMENTS, numPoints, points, projection, maxPoints, pointBuffer, maxFragments, fragmentBuffer );
 }
 
-void	trap_S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfx ) {
+void trap_S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfx ) {
 	syscall( CG_S_STARTSOUND, origin, entityNum, entchannel, sfx );
 }
 
-void	trap_S_StartLocalSound( sfxHandle_t sfx, int channelNum ) {
+void trap_S_StartLocalSound( sfxHandle_t sfx, int channelNum ) {
 	syscall( CG_S_STARTLOCALSOUND, sfx, channelNum );
 }
 
-void	trap_S_ClearLoopingSounds( qboolean killall ) {
+void trap_S_ClearLoopingSounds( qboolean killall ) {
 	syscall( CG_S_CLEARLOOPINGSOUNDS, killall );
 }
 
-void	trap_S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx ) {
+void trap_S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx ) {
 	syscall( CG_S_ADDLOOPINGSOUND, entityNum, origin, velocity, sfx );
 }
 
-void	trap_S_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx ) {
+void trap_S_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx ) {
 	syscall( CG_S_ADDREALLOOPINGSOUND, entityNum, origin, velocity, sfx );
 }
 
-void	trap_S_StopLoopingSound( int entityNum ) {
+void trap_S_StopLoopingSound( int entityNum ) {
 	syscall( CG_S_STOPLOOPINGSOUND, entityNum );
 }
 
-void	trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin ) {
+void trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin ) {
 	syscall( CG_S_UPDATEENTITYPOSITION, entityNum, origin );
 }
 
-void	trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater, float attenuation ) {
+void trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater, float attenuation ) {
 	syscall( CG_S_RESPATIALIZE, entityNum, origin, axis, inwater, attenuation );
 }
 
-sfxHandle_t	trap_S_RegisterSound( const char *sample, qboolean compressed ) {
+sfxHandle_t trap_S_RegisterSound( const char *sample, qboolean compressed ) {
 	return syscall( CG_S_REGISTERSOUND, sample, compressed );
 }
 
-void	trap_S_StartBackgroundTrack( const char *intro, const char *loop ) {
+void trap_S_StartBackgroundTrack( const char *intro, const char *loop ) {
 	syscall( CG_S_STARTBACKGROUNDTRACK, intro, loop );
 }
 
-void	trap_R_LoadWorldMap( const char *mapname ) {
+void trap_R_LoadWorldMap( const char *mapname ) {
 	syscall( CG_R_LOADWORLDMAP, mapname );
 }
 

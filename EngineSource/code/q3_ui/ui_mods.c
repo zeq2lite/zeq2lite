@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "ui_local.h"
 
@@ -106,6 +86,42 @@ static void UI_Mods_ParseInfos( char *modDir, char *modDesc ) {
 }
 
 
+#if 0 // bk001204 - unused
+/*
+===============
+UI_Mods_LoadModsFromFile
+===============
+*/
+static void UI_Mods_LoadModsFromFile( char *filename ) {
+	int				len;
+	fileHandle_t	f;
+	char			buf[1024];
+
+	len = trap_FS_FOpenFile( filename, &f, FS_READ );
+	if ( !f ) {
+		trap_Print( va( S_COLOR_RED "file not found: %s\n", filename ) );
+		return;
+	}
+	if ( len >= sizeof(buf) ) {
+		trap_Print( va( S_COLOR_RED "file too large: %s is %i, max allowed is %i", filename, len, sizeof(buf) ) );
+		trap_FS_FCloseFile( f );
+		return;
+	}
+
+	trap_FS_Read( buf, len, f );
+	buf[len] = 0;
+	trap_FS_FCloseFile( f );
+
+	len = strlen( filename );
+	if( !Q_stricmp(filename +  len - 4,".mod") ) {
+		filename[len-4] = '\0';
+	}
+
+	UI_Mods_ParseInfos( filename, buf );
+}
+#endif
+
+
 /*
 ===============
 UI_Mods_LoadMods
@@ -123,9 +139,9 @@ static void UI_Mods_LoadMods( void ) {
 	s_mods.descriptionPtr = s_mods.description;
 	s_mods.fs_gamePtr = s_mods.fs_game;
 
-	// always start off with baseq3
+	// always start off with ZEQ2
 	s_mods.list.numitems = 1;
-	s_mods.list.itemnames[0] = s_mods.descriptionList[0] = "Quake III Arena";
+	s_mods.list.itemnames[0] = s_mods.descriptionList[0] = "ZEQ2";
 	s_mods.fs_gameList[0] = "";
 
 	numdirs = trap_FS_GetFileList( "$modlist", "", dirlist, sizeof(dirlist) );
@@ -161,7 +177,7 @@ static void UI_Mods_MenuInit( void ) {
 	s_mods.banner.generic.y			= 16;
 	s_mods.banner.string			= "MODS";
 	s_mods.banner.color				= color_white;
-	s_mods.banner.style				= UI_CENTER;
+	s_mods.banner.style				= UI_CENTER|UI_DROPSHADOW;
 
 	s_mods.framel.generic.type		= MTYPE_BITMAP;
 	s_mods.framel.generic.name		= ART_FRAMEL;

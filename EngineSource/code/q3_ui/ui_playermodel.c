@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 #include "ui_local.h"
 
@@ -182,7 +162,7 @@ static void PlayerModel_UpdateModel( void )
 	VectorClear( moveangles );
 
 	UI_PlayerInfo_SetModel( &s_playermodel.playerinfo, s_playermodel.modelskin );
-	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_IDLE, TORSO_STAND, viewangles, moveangles, WP_MACHINEGUN, qfalse );
+	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_FLY_IDLE, TORSO_FLY_IDLE, viewangles, moveangles, WP_NONE, qfalse );
 }
 
 /*
@@ -331,7 +311,7 @@ static void PlayerModel_PicEvent( void* ptr, int event )
 
 	// get model and strip icon_
 	modelnum = s_playermodel.modelpage*MAX_MODELSPERPAGE + i;
-	buffptr  = s_playermodel.modelnames[modelnum] + strlen("models/players/");
+	buffptr  = s_playermodel.modelnames[modelnum] + strlen("players//");
 	pdest    = strstr(buffptr,"icon_");
 	if (pdest)
 	{
@@ -373,11 +353,11 @@ static void PlayerModel_DrawPlayer( void *self )
 	b = (menubitmap_s*) self;
 
 	if( trap_MemoryRemaining() <= LOW_MEMORY ) {
-		UI_DrawProportionalString( b->generic.x, b->generic.y + b->height / 2, "LOW MEMORY", UI_LEFT, color_red );
+		UI_DrawProportionalString( b->generic.x, b->generic.y + b->height / 2, "LOW MEMORY", UI_LEFT|UI_DROPSHADOW, color_white );
 		return;
 	}
 
-	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_playermodel.playerinfo, uis.realtime/2 );
+	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_playermodel.playerinfo, uis.realtime / PLAYER_MODEL_SPEED );
 }
 
 /*
@@ -391,7 +371,7 @@ static void PlayerModel_BuildList( void )
 	int		numfiles;
 	char	dirlist[2048];
 	char	filelist[2048];
-	char	skinname[MAX_QPATH];
+	char	skinname[64];
 	char*	dirptr;
 	char*	fileptr;
 	int		i;
@@ -406,7 +386,7 @@ static void PlayerModel_BuildList( void )
 	s_playermodel.nummodels = 0;
 
 	// iterate directory of all player models
-	numdirs = trap_FS_GetFileList("models/players", "/", dirlist, 2048 );
+	numdirs = trap_FS_GetFileList("players/", "/", dirlist, 2048 );
 	dirptr  = dirlist;
 	for (i=0; i<numdirs && s_playermodel.nummodels < MAX_PLAYERMODELS; i++,dirptr+=dirlen+1)
 	{
@@ -418,26 +398,26 @@ static void PlayerModel_BuildList( void )
 			continue;
 			
 		// iterate all skin files in directory
-		numfiles = trap_FS_GetFileList( va("models/players/%s",dirptr), "tga", filelist, 2048 );
+		numfiles = trap_FS_GetFileList( va("players//%s",dirptr), "png", filelist, 2048 );
 		fileptr  = filelist;
 		for (j=0; j<numfiles && s_playermodel.nummodels < MAX_PLAYERMODELS;j++,fileptr+=filelen+1)
 		{
 			filelen = strlen(fileptr);
 
-			COM_StripExtension(fileptr,skinname, sizeof(skinname));
+			COM_StripExtension(fileptr,skinname);
 
 			// look for icon_????
 			if (!Q_stricmpn(skinname,"icon_",5))
 			{
 				Com_sprintf( s_playermodel.modelnames[s_playermodel.nummodels++],
 					sizeof( s_playermodel.modelnames[s_playermodel.nummodels] ),
-					"models/players/%s/%s", dirptr, skinname );
+					"players//%s/%s", dirptr, skinname );
 				//if (s_playermodel.nummodels >= MAX_PLAYERMODELS)
 				//	return;
 			}
 
 			if( precache ) {
-				trap_S_RegisterSound( va( "sound/player/announce/%s_wins.wav", skinname), qfalse );
+				trap_S_RegisterSound( va( "sound/player/announce/%s_wins.ogg", skinname), qfalse );
 			}
 		}
 	}	
@@ -473,7 +453,7 @@ static void PlayerModel_SetMenuItems( void )
 	for (i=0; i<s_playermodel.nummodels; i++)
 	{
 		// strip icon_
-		buffptr  = s_playermodel.modelnames[i] + strlen("models/players/");
+		buffptr  = s_playermodel.modelnames[i] + strlen("players//");
 		pdest    = strstr(buffptr,"icon_");
 		if (pdest)
 		{
@@ -537,7 +517,7 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.banner.generic.y     = 16;
 	s_playermodel.banner.string        = "PLAYER MODEL";
 	s_playermodel.banner.color         = color_white;
-	s_playermodel.banner.style         = UI_CENTER;
+	s_playermodel.banner.style         = UI_CENTER|UI_DROPSHADOW;
 
 	s_playermodel.framel.generic.type  = MTYPE_BITMAP;
 	s_playermodel.framel.generic.name  = MODEL_FRAMEL;
@@ -603,7 +583,7 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.playername.generic.x	   = 320;
 	s_playermodel.playername.generic.y	   = 440;
 	s_playermodel.playername.string	       = playername;
-	s_playermodel.playername.style		   = UI_CENTER;
+	s_playermodel.playername.style		   = UI_CENTER|UI_DROPSHADOW;
 	s_playermodel.playername.color         = text_color_normal;
 
 	s_playermodel.modelname.generic.type  = MTYPE_PTEXT;
@@ -611,7 +591,7 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.modelname.generic.x	  = 497;
 	s_playermodel.modelname.generic.y	  = 54;
 	s_playermodel.modelname.string	      = modelname;
-	s_playermodel.modelname.style		  = UI_CENTER;
+	s_playermodel.modelname.style		  = UI_CENTER|UI_DROPSHADOW;
 	s_playermodel.modelname.color         = text_color_normal;
 
 	s_playermodel.skinname.generic.type   = MTYPE_PTEXT;
@@ -619,7 +599,7 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.skinname.generic.x	  = 497;
 	s_playermodel.skinname.generic.y	  = 394;
 	s_playermodel.skinname.string	      = skinname;
-	s_playermodel.skinname.style		  = UI_CENTER;
+	s_playermodel.skinname.style		  = UI_CENTER|UI_DROPSHADOW;
 	s_playermodel.skinname.color          = text_color_normal;
 
 	s_playermodel.player.generic.type      = MTYPE_BITMAP;
