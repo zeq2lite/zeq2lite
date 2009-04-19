@@ -1162,7 +1162,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.stats[chargePercentSecondary] = 0;
 	// END ADDING
 
-	ent->powerLevel = client->ps.stats[powerLevel] = g_powerlevel.value ; //client->ps.stats[powerLevelTotal];
+	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
 	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;

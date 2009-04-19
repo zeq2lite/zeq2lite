@@ -596,17 +596,28 @@ static qboolean PM_CheckJump( void ) {
 		}
 		VectorScale( pm->ps->velocity, JUMP_VELOCITY, pm->ps->velocity );
 
-		//pm->ps->velocity[0] *= 1.8f;
-		//pm->ps->velocity[1] *= 1.8f;
-		pm->ps->velocity[2] = JUMP_VELOCITY * 1.75f;
+		if ( PM_CheckBoost() ) {
+			pm->ps->velocity[0] *= 1.50f;
+			pm->ps->velocity[1] *= 1.50f;
+			pm->ps->velocity[2] = JUMP_VELOCITY * 5.00f;
+		} else {
+			pm->ps->velocity[0] *= 1.0f;
+			pm->ps->velocity[1] *= 1.0f;
+			pm->ps->velocity[2] = JUMP_VELOCITY * 1.75f;
+		}
 
 		PM_AddEvent( EV_HIGHJUMP );
 
 	} else {
-		//pm->ps->velocity[0] *= 2.0f;
-		//pm->ps->velocity[1] *= 2.0f;
-		pm->ps->velocity[2] = JUMP_VELOCITY * 1.25f;
-
+		if ( PM_CheckBoost() ) {
+			pm->ps->velocity[0] *= 1.25f;
+			pm->ps->velocity[1] *= 1.25f;
+			pm->ps->velocity[2] = JUMP_VELOCITY * 4.00f;
+		} else {
+			pm->ps->velocity[0] *= 1.0f;
+			pm->ps->velocity[1] *= 1.0f;
+			pm->ps->velocity[2] = JUMP_VELOCITY * 1.25f;
+		}
 		PM_AddEvent( EV_JUMP );
 	}
 
@@ -618,6 +629,14 @@ static qboolean PM_CheckJump( void ) {
 		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 	}
 
+	if ( pm->ps->velocity[0] >= 500 )
+		pm->ps->velocity[0] = 500;
+
+	if ( pm->ps->velocity[1] >= 500 )
+		pm->ps->velocity[1] = 500;
+
+	if ( pm->ps->velocity[2] >= 1000 )
+		pm->ps->velocity[2] = 1000;
 
 	PM_StopDash(); // implicitly stops boost and lightspeed as well
 
