@@ -1310,14 +1310,26 @@ static void CG_PlayerAnimation( centity_t *cent,
 								int *torsoOld, int *torso, float *torsoBackLerp,
 								int *headOld, int *head, float *headBackLerp ) {
 	clientInfo_t	*ci;
-	int				clientNum;
+	int				clientNum, tier;
 	float			speedScale;
+	qboolean		onBodyQue;
 
 	clientNum = cent->currentState.clientNum;
 
 	if ( cg_noPlayerAnims.integer ) {
 		*legsOld = *legs = *torsoOld = *torso = 0;
 		return;
+	}
+
+	// <-- MDave:  Check if we're dealing with the actual client entity (and not
+	//           a dead body from the body queue)
+	onBodyQue = (cent->currentState.number != cent->currentState.clientNum);
+	// -->
+
+	if (onBodyQue) {
+		tier = 0;
+	} else {
+		tier = cent->currentState.tier;
 	}
 
 	/*
@@ -1356,7 +1368,11 @@ static void CG_PlayerAnimation( centity_t *cent,
 		// NOTE: Torso animations take precedence over leg animations when deciding which
 		//       head animation to play.
 		torsoAnimNum = cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT;
-		if ( TORSO_WALK == torsoAnimNum ) {
+		if ( cent->currentState.eFlags & EF_AURA ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
+		} else if ( ci->auraConfig[tier]->auraAlways ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
+		} else if ( TORSO_WALK == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_WALK, speedScale );
 		} else if ( TORSO_RUN == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_RUN, speedScale );

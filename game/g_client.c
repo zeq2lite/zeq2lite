@@ -740,7 +740,7 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	// set max powerLevel
 	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
+	client->ps.stats[powerLevelTotal] = client->ps.stats[powerLevelTotal];//g_powerlevel.value;
 	client->playerEntity = ent;
 
 	// setup tier information
