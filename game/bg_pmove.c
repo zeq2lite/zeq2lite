@@ -43,69 +43,44 @@ qboolean PM_DeductFromHealth( int wanted ) {
 //=====================
 //  PM_BuildBufferHealth
 //=====================
-#define MAX_BUFFERHEALTH_PER_MSEC 2
-// FIXME: MAX_BUFFERHEALTH_PER_MSEC will go into a per-player configuration statistic called 'regen rate' later on.
 void PM_BuildBufferHealth( void ) {
 	float capRatio, maxRatio;
-
-	// If current powerLevel exceeds the cap, give no buffer at all.
 	if ( pm->ps->stats[powerLevelTotal] > pm->ps->persistant[powerLevelMaximum] ) {
 		pml.bufferHealth = 0;
 		return;
 	}
-
-	// Get the ratios between cap and current, and cap and max.
-	//capRatio = (float)pm->ps->persistant[powerLevelMaximum] / (float)pm->ps->stats[powerLevel];
-	//maxRatio = (float)pm->ps->persistant[powerLevelMaximum] / (float)pm->ps->stats[powerLevelTotal];
-
-	// Calculate the buffer depending on both ratios, together with pml.frametime to
-	// make it framerate independant.
-	//pml.bufferHealth = (int)ceil(MAX_BUFFERHEALTH_PER_MSEC * pml.msec);
 }
-
-
-/*
-===============
+/*===============
 PM_AddEvent
-
-===============
-*/
+===============*/
 void PM_AddEvent( int newEvent ) {
 	BG_AddPredictableEventToPlayerstate( newEvent, 0, pm->ps );
 }
-
-/*
-===============
+/*===============
 PM_AddTouchEnt
-===============
-*/
+===============*/
 void PM_AddTouchEnt( int entityNum ) {
 	int		i;
-
 	if ( entityNum == ENTITYNUM_WORLD ) {
 		return;
 	}
 	if ( pm->numtouch == MAXTOUCH ) {
 		return;
 	}
-
 	// see if it is already added
 	for ( i = 0 ; i < pm->numtouch ; i++ ) {
 		if ( pm->touchents[ i ] == entityNum ) {
 			return;
 		}
 	}
-
 	// add it
 	pm->touchents[pm->numtouch] = entityNum;
 	pm->numtouch++;
 }
 
-/*
-===================
+/*===================
 PM_StartTorsoAnim
-===================
-*/
+===================*/
 static void PM_StartTorsoAnim( int anim ) {
 	if ( pm->ps->pm_type >= PM_DEAD ) {
 		return;
@@ -596,28 +571,17 @@ static qboolean PM_CheckJump( void ) {
 		}
 		VectorScale( pm->ps->velocity, JUMP_VELOCITY, pm->ps->velocity );
 
-		if ( PM_CheckBoost() ) {
-			pm->ps->velocity[0] *= 1.50f;
-			pm->ps->velocity[1] *= 1.50f;
-			pm->ps->velocity[2] = JUMP_VELOCITY * 5.00f;
-		} else {
-			pm->ps->velocity[0] *= 1.0f;
-			pm->ps->velocity[1] *= 1.0f;
-			pm->ps->velocity[2] = JUMP_VELOCITY * 1.75f;
-		}
+		//pm->ps->velocity[0] *= 1.8f;
+		//pm->ps->velocity[1] *= 1.8f;
+		pm->ps->velocity[2] = JUMP_VELOCITY * 1.75f;
 
 		PM_AddEvent( EV_HIGHJUMP );
 
 	} else {
-		if ( PM_CheckBoost() ) {
-			pm->ps->velocity[0] *= 1.25f;
-			pm->ps->velocity[1] *= 1.25f;
-			pm->ps->velocity[2] = JUMP_VELOCITY * 4.00f;
-		} else {
-			pm->ps->velocity[0] *= 1.0f;
-			pm->ps->velocity[1] *= 1.0f;
-			pm->ps->velocity[2] = JUMP_VELOCITY * 1.25f;
-		}
+		//pm->ps->velocity[0] *= 2.0f;
+		//pm->ps->velocity[1] *= 2.0f;
+		pm->ps->velocity[2] = JUMP_VELOCITY * 1.25f;
+
 		PM_AddEvent( EV_JUMP );
 	}
 
@@ -629,14 +593,6 @@ static qboolean PM_CheckJump( void ) {
 		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 	}
 
-	if ( pm->ps->velocity[0] >= 500 )
-		pm->ps->velocity[0] = 500;
-
-	if ( pm->ps->velocity[1] >= 500 )
-		pm->ps->velocity[1] = 500;
-
-	if ( pm->ps->velocity[2] >= 1000 )
-		pm->ps->velocity[2] = 1000;
 
 	PM_StopDash(); // implicitly stops boost and lightspeed as well
 
@@ -2448,26 +2404,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 				continue;
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
-/*
-		// circularly clamp the angles with deltas
-		for (i=0 ; i<3 ; i++) {
-			temp = cmd->angles[i] + ps->delta_angles[i];
-			if ( i == PITCH ) {
-				// don't let the player look up or down more than 90 degrees
-				if ( temp > 16000 ) {
-					ps->delta_angles[i] = 16000 - cmd->angles[i];
-					temp = 16000;
-				} else if ( temp < -16000 ) {
-					ps->delta_angles[i] = -16000 - cmd->angles[i];
-					temp = -16000;
-				}
-			}
-			ps->viewangles[i] = SHORT2ANGLE(temp);
-		}
-		return;
-*/
 	}
-
 	// ADDING FOR ZEQ2
 	// If we're flying, use quaternion multiplication to work on player's
 	// local axes.
