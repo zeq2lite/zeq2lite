@@ -1,5 +1,5 @@
 #include "cg_local.h"
-void parseTier(char *path,tierConfig_t *tier);
+void parseTier(char *path,tierConfig_cg *tier);
 qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *modelName, const char *skinName){
 	int	i;
 	char filename[MAX_QPATH * 2];
@@ -17,7 +17,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		// ===================================
 		// Config
 		// ===================================
-		memset(&ci->tierConfig[i],0,sizeof(tierConfig_t));
+		memset(&ci->tierConfig[i],0,sizeof(tierConfig_cg));
 		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 		ci->tierConfig[i].icon = trap_R_RegisterShaderNoMip(strcat(tierPath,"icon.png"));
 		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
@@ -112,7 +112,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 
 	return qtrue;
 }
-void parseTier(char *path,tierConfig_t *tier){
+void parseTier(char *path,tierConfig_cg *tier){
 	fileHandle_t tierCFG;
 	int i;
 	char *token,*parse;

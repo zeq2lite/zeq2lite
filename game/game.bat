@@ -77,6 +77,8 @@ if "%1"=="TA" goto TA
 @if errorlevel 1 goto quit
 %cc%  ../g_userweapons.c
 @if errorlevel 1 goto quit
+%cc%  ../g_tiers.c
+@if errorlevel 1 goto quit
 %cc%  ../g_radar.c
 @if errorlevel 1 goto quit
 %cc%  ../g_weapPhysParser.c
@@ -155,6 +157,8 @@ call compile TA g_trigger.c
 call compile TA g_utils.c
 @if errorlevel 1 goto quit
 call compile TA g_weapon.c
+@if errorlevel 1 goto quit
+call compile TA g_tiers.c
 @if errorlevel 1 goto quit
 call compile TA ai_vcmd.c
 @if errorlevel 1 goto quit

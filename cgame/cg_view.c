@@ -277,7 +277,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	int 		clientNum;
 	float		newAngle,newRange,newHeight;
 	clientInfo_t *ci;
-	tierConfig_t *tier;
+	tierConfig_cg *tier;
 	ps = &cg.predictedPlayerState;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];

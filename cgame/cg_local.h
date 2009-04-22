@@ -5,6 +5,7 @@
 #include "../game/bg_public.h"
 // ADDING FOR ZEQ2
 #include "../game/bg_userweapons.h"
+#include "../game/g_tiers.h"
 #include "cg_userweapons.h"
 #include "cg_auras.h"
 #include "cg_tiers.h"
@@ -362,7 +363,7 @@ typedef struct {
 	int				tierCurrent;
 	int				tierMax;
 	int				cameraBackup[3];
-	tierConfig_t	tierConfig[7];
+	tierConfig_cg	tierConfig[7];
 	auraConfig_t	*auraConfig[7];
 } clientInfo_t;
 

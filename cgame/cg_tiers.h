@@ -9,4 +9,4 @@ typedef struct{
 	sfxHandle_t soundTransformFirst;
 	sfxHandle_t soundTransformUp;
 	sfxHandle_t soundTransformDown;
-}tierConfig_t;
+}tierConfig_cg;

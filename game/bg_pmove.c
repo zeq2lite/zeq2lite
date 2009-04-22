@@ -6,6 +6,7 @@
 #include "bg_public.h"
 #include "bg_local.h"
 #include "bg_userweapons.h"
+#include "g_tiers.h"
 pmove_t		*pm;
 pml_t		pml;
 // movement parameters
@@ -1864,8 +1865,6 @@ static void PM_BeginWeaponChange( int weapon ) {
 
 	PM_AddEvent( EV_CHANGE_WEAPON );
 	pm->ps->weaponstate = WEAPON_DROPPING;
-	//pm->ps->weaponTime += 10;
-	//PM_StartTorsoAnim( TORSO_DROP );
 }
 
 
@@ -1876,20 +1875,14 @@ PM_FinishWeaponChange
 */
 static void PM_FinishWeaponChange( void ) {
 	int		weapon;
-
 	weapon = pm->cmd.weapon;
 	if ( weapon < WP_NONE || weapon >= WP_NUM_WEAPONS ) {
 		weapon = WP_NONE;
 	}
-
 	if ( !( pm->ps->stats[skills] & ( 1 << weapon ) ) ) {
 		weapon = WP_NONE;
 	}
-
 	pm->ps->weapon = weapon;
-	//pm->ps->weaponstate = WEAPON_RAISING;
-	//pm->ps->weaponTime += 10;
-	//PM_StartTorsoAnim( TORSO_RAISE );
 }
 
 

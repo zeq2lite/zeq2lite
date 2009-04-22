@@ -7,6 +7,7 @@
 // ADDING FOR ZEQ2
 #include "bg_userweapons.h"
 #include "g_userweapons.h"
+#include "g_tiers.h"
 // END ADDING
 #include "g_public.h"
 //==================================================================

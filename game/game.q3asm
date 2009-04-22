@@ -35,6 +35,7 @@ g_utils
 g_weapon
 g_userweapons
 g_usermissile
+g_tiers
 g_weapPhysParser
 g_weapPhysScanner
 g_weapPhysAttributes

@@ -2,7 +2,6 @@
 //
 #ifndef __Q_SHARED_H
 #define __Q_SHARED_H
-
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
 
@@ -1142,7 +1141,6 @@ typedef struct playerState_s {
 	vec3_t		velocity;
 	int			weaponTime;
 	int			gravity;
-	int			speed;
 	int			delta_angles[3];	// add to command angles to get view direction
 									// changed by spawns, rotating objects, and teleporters
 
@@ -1178,16 +1176,32 @@ typedef struct playerState_s {
 	vec3_t		viewangles;		// for fixed views
 	int			viewheight;
 
-	// <-- RiO
+	// <-- ZEQ2
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
 	int			powerlevel;
 	int			powerlevelChargeScale;
+	int 		requirementPowerLevelCurrent;
+	int			requirementPowerLevelTotal;
+	int 		requirementPowerLevelMaximum;
+	int 		zanzokenCost;
+	int 		zanzokenDistance;
+	int 		speed;
+	float 		meleeAttack;
+	float 		meleeDefense;
+	float 		energyDefense;
+	float		energyAttackDamage;
+	float 		energyAttackCost;
+	float 		transformTime;
+	float 		powerLevelDrain;
+	float 		powerLevelTotalDrain;
+	float 		powerLevelMaximumDrain;
+	float 		powerLevelChargeRate;
+	float 		powerLevelBreakLimitRate;
 	int			rolling;
 	int			running;
 	qboolean	lockedOn;
 	vec3_t		lockedTarget;
-	// RiO -->
 
 	// damage feedback
 	int			damageEvent;	// when it changes, latch the other parms

@@ -1023,7 +1023,6 @@ void ClientSpawn(gentity_t *ent) {
 	gentity_t	*spawnPoint;
 	int		flags;
 	int		savedPing;
-//	char	*savedAreaBits;
 	int		accuracy_hits, accuracy_shots;
 	int		eventSequence;
 	char	model[MAX_QPATH];
@@ -1034,17 +1033,15 @@ void ClientSpawn(gentity_t *ent) {
 	// find a spawn point
 	// do it before setting powerLevel back up, so farthest
 	// ranging doesn't count this client
-	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
-		spawnPoint = SelectSpectatorSpawnPoint ( 
-						spawn_origin, spawn_angles);
-	} else if (g_gametype.integer >= GT_CTF ) {
+	if(client->sess.sessionTeam == TEAM_SPECTATOR){
+		spawnPoint = SelectSpectatorSpawnPoint(spawn_origin, spawn_angles);
+	}
+	else if (g_gametype.integer >= GT_CTF ){
 		// all base oriented team games use the CTF spawn points
-		spawnPoint = SelectCTFSpawnPoint ( 
-						client->sess.sessionTeam, 
-						client->pers.teamState.state, 
-						spawn_origin, spawn_angles);
-	} else {
-		do {
+		spawnPoint = SelectCTFSpawnPoint(client->sess.sessionTeam,client->pers.teamState.state,spawn_origin, spawn_angles);
+	}
+	else{
+		do{
 			// the first spawn should be at a good looking spot
 			if ( !client->pers.initialSpawn && client->pers.localClient ) {
 				client->pers.initialSpawn = qtrue;
@@ -1055,19 +1052,13 @@ void ClientSpawn(gentity_t *ent) {
 					client->ps.origin, 
 					spawn_origin, spawn_angles);
 			}
-
-			// Tim needs to prevent bots from spawning at the initial point
-			// on q3dm0...
 			if ( ( spawnPoint->flags & FL_NO_BOTS ) && ( ent->r.svFlags & SVF_BOT ) ) {
 				continue;	// try again
 			}
-			// just to be symetric, we have a nohumans option...
 			if ( ( spawnPoint->flags & FL_NO_HUMANS ) && !( ent->r.svFlags & SVF_BOT ) ) {
 				continue;	// try again
 			}
-
 			break;
-
 		} while ( 1 );
 	}
 	client->pers.teamState.state = TEAM_ACTIVE;
@@ -1085,7 +1076,6 @@ void ClientSpawn(gentity_t *ent) {
 	saved = client->pers;
 	savedSess = client->sess;
 	savedPing = client->ps.ping;
-//	savedAreaBits = client->areabits;
 	accuracy_hits = client->accuracy_hits;
 	accuracy_shots = client->accuracy_shots;
 	for ( i = 0 ; i < MAX_PERSISTANT ; i++ ) {
@@ -1098,7 +1088,6 @@ void ClientSpawn(gentity_t *ent) {
 	client->pers = saved;
 	client->sess = savedSess;
 	client->ps.ping = savedPing;
-//	client->areabits = savedAreaBits;
 	client->accuracy_hits = accuracy_hits;
 	client->accuracy_shots = accuracy_shots;
 	client->lastkilled_client = -1;
@@ -1107,14 +1096,12 @@ void ClientSpawn(gentity_t *ent) {
 		client->ps.persistant[i] = persistant[i];
 	}
 	client->ps.eventSequence = eventSequence;
-	// increment the spawncount so the client will detect the respawn
 	client->ps.persistant[PERS_SPAWN_COUNT]++;
 	client->ps.persistant[PERS_TEAM] = client->sess.sessionTeam;
 
 	client->airOutTime = level.time + 12000;
 
 	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
-	// set max powerLevel
 	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
 
@@ -1125,15 +1112,12 @@ void ClientSpawn(gentity_t *ent) {
 	if ( g_powerlevel.value > 32768 ) {
 		g_powerlevel.value = 32768;
 	}
-
-	if ( g_powerlevelChargeScale.value < 0 ) {
-		g_powerlevelChargeScale.value = 0;
+	if ( g_powerlevelChargeScale.value < 0.1 ) {
+		g_powerlevelChargeScale.value = 0.1;
 	}
-
 	if ( g_powerlevelChargeScale.value > 5 ) {
 		g_powerlevelChargeScale.value = 5;
 	}
-
 	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
 	client->ps.eFlags = flags;
 
@@ -1156,7 +1140,7 @@ void ClientSpawn(gentity_t *ent) {
 
 	// ADDING FOR ZEQ2
 	client->modelName = model;
-	//setupTiers(client);
+	setupTiers(client->ps.clientNum,model);
 	client->ps.stats[skills] = *G_FindUserWeaponMask( index );
 	client->ps.stats[chargePercentPrimary] = 0;
 	client->ps.stats[chargePercentSecondary] = 0;
