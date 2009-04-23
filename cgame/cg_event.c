@@ -1108,6 +1108,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TIERUP:
 		DEBUGNAME("EV_TIERUP");
+		CG_Printf("Client TierUp Called.\n");
 		if((ci->tierCurrent+1)>ci->tierMax){
 			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent+1].soundTransformFirst);
 		}

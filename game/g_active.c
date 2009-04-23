@@ -4,7 +4,7 @@
 #include "bg_local.h"
 void tierUp(gclient_t *client){
 	playerState_t *ps;
-	ps = &client->ps;
+	ps = pm->ps;
 	ps->stats[tierCurrent]++;
 	if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
 		ps->powerups[PW_TRANSFORM] = client->tiers[ps->stats[tierCurrent]].transformTime;
@@ -13,27 +13,27 @@ void tierUp(gclient_t *client){
 }
 void tierDown(gclient_t *client){
 	playerState_t *ps;
-	ps = &client->ps;
+	ps = pm->ps;
 	if(ps->stats[tierCurrent] > 0){
 		ps->stats[tierCurrent]--;
 	}
 }
 void tierCheck(gclient_t *client){
 	int tier;
-	tierConfig_g *nextTier,*baseTier;
 	playerState_t *ps;
-	ps = &client->ps;
+	tierConfig_g *nextTier,*baseTier;
+	ps = pm->ps;
 	tier = ps->stats[tierCurrent];
 	if(tier+1 < 8){
 		nextTier = &client->tiers[tier+1];
 		if((ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) && (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) && (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
-			BG_AddPredictableEventToPlayerstate(EV_TIERUP,0,pm->ps);
+			BG_AddPredictableEventToPlayerstate(EV_TIERUP,0,ps);
 		}
 	}
 	if(tier > 0){
 		baseTier = &client->tiers[tier];
 		if((ps->stats[powerLevel] <= baseTier->requirementPowerLevelCurrent) || (ps->stats[powerLevelTotal] <= baseTier->requirementPowerLevelTotal) || (ps->persistant[powerLevelMaximum] <= baseTier->requirementPowerLevelMaximum)){
-			BG_AddPredictableEventToPlayerstate(EV_TIERDOWN,0,pm->ps);
+			BG_AddPredictableEventToPlayerstate(EV_TIERDOWN,0,ps);
 		}
 	}
 }
