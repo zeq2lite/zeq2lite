@@ -490,7 +490,10 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		}
 		else{
 			target->powerLevel = target->powerLevel - damage;
+			G_Printf(va("Attack Powerlevel = %i\n",target->powerLevel));
+			G_Printf(va("Attack Damage = %i\n",damage));
 			if(target->powerLevel <= 0){
+				G_Printf(va("Dead"));
 				target->die(target,inflictor,attacker,damage,methodOfDeath);
 			}
 		}
@@ -833,10 +836,16 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
+			bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[chargePercentSecondary];
+			G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
+			G_Printf(va("charge percent = %i\n",self->client->ps.stats[chargePercentSecondary]));
 			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
 			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
+			bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[chargePercentPrimary];
+			G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
+			G_Printf(va("charge percent = %i\n",self->client->ps.stats[chargePercentPrimary]));
 			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
@@ -848,7 +857,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->target_ent = NULL;
 
 		bolt->takedamage = qtrue;
-		bolt->powerLevel = 1; // <-- We need to enter _something_ here, or the missile will die
+		//bolt->powerLevel = 1; // <-- We need to enter _something_ here, or the missile will die
 						  //     instantly.
 
 		{
@@ -896,6 +905,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		VectorCopy( self->client->ps.viewangles, self->s.angles );
 
 		VectorScale( firingDir, bolt->speed, bolt->s.pos.trDelta );
+		VectorCopy(firingDir,bolt->movedir);
 		// This saves network bandwidth.
 		SnapVector( bolt->s.pos.trDelta );
 
@@ -1014,21 +1024,23 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->s.clientNum = self->s.number;	// <-- clientNum is free on all but ET_PLAYER so
 		bolt->parent = self;				//     use it to store the owner for clientside.
 		VectorCopy( self->client->ps.viewangles, bolt->s.angles ); // store the correct angles
-		
 		bolt->damage = weaponInfo->damage_damage;
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
+			bolt->powerLevel = weaponInfo->costs_ki * self->client->ps.stats[chargePercentSecondary];
 			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
 			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
+			bolt->powerLevel = weaponInfo->costs_ki * self->client->ps.stats[chargePercentPrimary];
 			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
+		bolt->takedamage = qtrue;
 		bolt->methodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
 		bolt->splashMethodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
 				
@@ -1049,6 +1061,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;
 		VectorCopy( start, bolt->s.pos.trBase );
 		VectorCopy( start, bolt->r.currentOrigin );
+		VectorCopy( firingDir, bolt->movedir );
 
 		VectorCopy( self->client->ps.viewangles, self->s.angles );
 
@@ -1388,6 +1401,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 // Handles impact of the weapon with map geometry or entities.
 	gentity_t		*other;
 	qboolean		hitClient = qfalse;		
+	G_Printf(va("G_ImpactUserWeapon\n"));
 	
 	other = &g_entities[trace->entityNum];
 
@@ -1399,14 +1413,16 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 		return;
 	}
 
-	self->takedamage = qfalse;
+	self->takedamage = qtrue;
 
 	// Can the target take damage?
 	if (other->takedamage) {
+		G_Printf(va("other->takedamage = qtrue\n"));
 		// FIXME: wrong damage direction?
 		// Does the missile do damage?
 		if ( self->damage ) {
 			vec3_t	velocity;
+			G_Printf(va("self->damage = qtrue\n"));
 
 			// Log accuracy hits
 			if( LogAccuracyHit( other, &g_entities[self->s.clientNum] ) ) {
@@ -1431,6 +1447,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 				g_userWeapon_t	*weaponInfo;
 
 				weaponInfo = G_FindUserWeaponData( self->s.clientNum, self->s.weapon );
+				G_Printf(va("G_UserWeaponDamage"));
 				G_UserWeaponDamage( other, self, &g_entities[self->r.ownerNum], velocity, self->s.origin,
 									weaponInfo->damage_damage, 0,
 									MOD_KI + weaponInfo->damage_meansOfDeath,
@@ -1443,31 +1460,44 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 	if ( self->guided ) {
 		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
 	}
-
+	if((self->s.eType == ET_MISSILE) || (self->s.eType == ET_BEAMHEAD)){
+		self->s.pos.trTime = 0;
+		self->s.pos.trDuration = 0;
+		self->struggling = qtrue;
+		//self->speed *= self->powerLevel;
+		//VectorClear( self->s.pos.trDelta );
+		VectorScale( self->movedir, self->powerLevel, self->s.pos.trDelta );
+		// This saves network bandwidth.
+		//SnapVector( self->s.pos.trDelta );
+		//VectorCopy( trace->endpos,self->s.pos.trBase );
+		//VectorCopy( self->r.currentOrigin,other->r.currentOrigin );
+	}
+	if(self->powerLevel <= 0 || !(other->takedamage) ){
 	// Add the explosion event to the entity, and make it free itself after event.
-	if ( other->takedamage && other->client ) {
-		G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
-		self->s.otherEntityNum = other->s.number;
-	} else if( trace->surfaceFlags & SURF_METALSTEPS ) {
-		G_AddEvent( self, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
-	} else {
-		G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
-	}
-	self->freeAfterEvent = qtrue;
-
-	// change over to a normal stationary entity right at the point of impact
-	self->s.eType = ET_GENERAL;
-	SnapVectorTowards( trace->endpos, self->s.pos.trBase );	// save net bandwidth
-	G_SetOrigin( self, trace->endpos );
-	
-
-	if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
-		if( !hitClient ) {
-			g_entities[self->s.clientNum].client->accuracy_hits++;
+		if ( other->takedamage && other->client ) {
+			G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
+			self->s.otherEntityNum = other->s.number;
+		} else if( trace->surfaceFlags & SURF_METALSTEPS ) {
+			G_AddEvent( self, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
+		} else {
+			G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
 		}
+		self->freeAfterEvent = qtrue;
+
+		// change over to a normal stationary entity right at the point of impact
+		self->s.eType = ET_GENERAL;
+		SnapVectorTowards( trace->endpos, self->s.pos.trBase );	// save net bandwidth
+		G_SetOrigin( self, trace->endpos );
 	
+
+		if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
+			if( !hitClient ) {
+				g_entities[self->s.clientNum].client->accuracy_hits++;
+			}
+	
+		}
+		trap_LinkEntity( self );
 	}
-	trap_LinkEntity( self );
 }
 
 
@@ -1523,7 +1553,7 @@ void G_RunUserMissile( gentity_t *ent ) {
 
 		G_ImpactUserWeapon( ent, &trace );
 
-		if ( (ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD) ) {
+		if ( (ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD) && ((ent->powerLevel <= 0)||(g_entities[trace.entityNum].powerLevel <=0)) ) {
 			// Missile has changed to ET_GENERAL and has exploded, so we don't want
 			// to run the think function!
 			// Return immediately instead.
