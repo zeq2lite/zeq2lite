@@ -80,20 +80,20 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->powerLevelBreakLimitRate = atof(token);
 			}
-			else if(!Q_stricmp(token,"powerLevelDrain")){
+			else if(!Q_stricmp(token,"powerLevelEffect")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->powerLevelDrain = atoi(token);
+				tier->powerLevelEffect = atoi(token);
 			}
-			else if(!Q_stricmp(token,"powerLevelTotalDrain")){
+			else if(!Q_stricmp(token,"powerLevelTotalEffect")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->powerLevelTotalDrain = atoi(token);
+				tier->powerLevelTotalEffect = atoi(token);
 			}
-			else if(!Q_stricmp(token,"powerLevelMaximumDrain")){
+			else if(!Q_stricmp(token,"powerLevelMaximumEffect")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->powerLevelMaximumDrain = atoi(token);
+				tier->powerLevelMaximumEffect = atoi(token);
 			}
 			else if(!Q_stricmp(token,"requirementPowerLevelCurrent")){
 				token = COM_Parse(&parse);

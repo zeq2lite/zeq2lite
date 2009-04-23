@@ -74,6 +74,7 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_TEAMPLAY		2
 #define GAMES_TOURNEY		3
 #define GAMES_CTF			4
+#define GAMES_STRUGGLE		5
 
 static const char *master_items[] = {
 	"Local",
@@ -89,6 +90,7 @@ static const char *servertype_items[] = {
 	"Team Deathmatch",
 	"Tournament",
 	"Capture the Flag",
+	"Struggle",
 	0
 };
 
@@ -452,7 +454,11 @@ static void ArenaServers_UpdateMenu( void ) {
 				continue;
 			}
 			break;
-
+		case GAMES_STRUGGLE:
+			if( servernodeptr->gametype != GT_STRUGGLE ) {
+				continue;
+			}
+			break;
 		case GAMES_TEAMPLAY:
 			if( servernodeptr->gametype != GT_TEAM ) {
 				continue;

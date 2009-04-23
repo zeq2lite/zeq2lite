@@ -76,12 +76,13 @@ static startserver_t s_startserver;
 static const char *gametype_items[] = {
 	"Free For All",
 	"Team Deathmatch",
+	"Struggle",
 	"Tournament",
 	"Capture the Flag",
 	0
 };
 
-static int gametype_remap[] = {GT_FFA, GT_TEAM, GT_TOURNAMENT, GT_CTF};
+static int gametype_remap[] = {GT_FFA, GT_TEAM, GT_STRUGGLE,GT_TOURNAMENT, GT_CTF};
 static int gametype_remap2[] = {0, 2, 0, 1, 3};
 
 
@@ -115,7 +116,10 @@ static int GametypeBits( char *string ) {
 			bits |= 1 << GT_TOURNAMENT;
 			continue;
 		}
-
+		if( Q_stricmp( token, "struggle" ) == 0 ) {
+			bits |= 1 << GT_STRUGGLE;
+			continue;
+		}
 		if( Q_stricmp( token, "single" ) == 0 ) {
 			bits |= 1 << GT_SINGLE_PLAYER;
 			continue;
@@ -731,6 +735,7 @@ static void ServerOptions_Start( void ) {
 
 	switch( s_serveroptions.gametype ) {
 	case GT_FFA:
+	case GT_STRUGGLE:
 	default:
 		trap_Cvar_SetValue( "ui_ffa_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_ffa_timelimit", timelimit );
@@ -1105,6 +1110,7 @@ static void ServerOptions_SetMenuItems( void ) {
 
 	switch( s_serveroptions.gametype ) {
 	case GT_FFA:
+	case GT_STRUGGLE:
 	default:
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ffa_fraglimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ffa_timelimit" ) ) );

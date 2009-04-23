@@ -231,6 +231,9 @@ void CG_DrawInformation( void ) {
 	case GT_TOURNAMENT:
 		s = "Tournament";
 		break;
+	case GT_STRUGGLE:
+		s = "Struggle";
+		break;
 	case GT_TEAM:
 		s = "Team Deathmatch";
 		break;

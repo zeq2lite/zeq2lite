@@ -15,8 +15,8 @@ typedef struct{
 	float energyAttackDamage;
 	float energyAttackCost;
 	float transformTime;
-	float powerLevelDrain;
-	float powerLevelTotalDrain;
-	float powerLevelMaximumDrain;
+	float powerLevelEffect;
+	float powerLevelTotalEffect;
+	float powerLevelMaximumEffect;
 	float powerLevelBreakLimitRate;
 }tierConfig_g;

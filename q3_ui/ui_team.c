@@ -149,6 +149,7 @@ void TeamMain_MenuInit( void ) {
 	switch( gametype ) {
 	case GT_SINGLE_PLAYER:
 	case GT_FFA:
+	case GT_STRUGGLE:
 	case GT_TOURNAMENT:
 		s_teammain.joinred.generic.flags  |= QMF_GRAYED;
 		s_teammain.joinblue.generic.flags |= QMF_GRAYED;

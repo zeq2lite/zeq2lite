@@ -2604,10 +2604,6 @@ static void CG_DrawWarmup( void ) {
 
 		if ( ci1 && ci2 ) {
 			s = va( "%s vs %s", ci1->name, ci2->name );
-#ifdef MISSIONPACK
-			w = CG_Text_Width(s, 0.6f, 0);
-			CG_Text_Paint(320 - w / 2, 60, 0.6f, colorWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE);
-#else
 			w = CG_DrawStrlen( s );
 			if ( w > 640 / GIANT_WIDTH ) {
 				cw = 640 / w;
@@ -2616,30 +2612,19 @@ static void CG_DrawWarmup( void ) {
 			}
 			CG_DrawStringExt( 320 - w * cw/2, 20,s, colorWhite, 
 					qfalse, qtrue, cw, (int)(cw * 1.5f), 0 );
-#endif
 		}
 	} else {
 		if ( cgs.gametype == GT_FFA ) {
 			s = "Free For All";
+		} else if ( cgs.gametype == GT_STRUGGLE ) {
+			s = "Struggle";
 		} else if ( cgs.gametype == GT_TEAM ) {
 			s = "Team Deathmatch";
 		} else if ( cgs.gametype == GT_CTF ) {
 			s = "Capture the Flag";
-#ifdef MISSIONPACK
-		} else if ( cgs.gametype == GT_1FCTF ) {
-			s = "One Flag CTF";
-		} else if ( cgs.gametype == GT_OBELISK ) {
-			s = "Overload";
-		} else if ( cgs.gametype == GT_HARVESTER ) {
-			s = "Harvester";
-#endif
 		} else {
 			s = "";
 		}
-#ifdef MISSIONPACK
-		w = CG_Text_Width(s, 0.6f, 0);
-		CG_Text_Paint(320 - w / 2, 90, 0.6f, colorWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE);
-#else
 		w = CG_DrawStrlen( s );
 		if ( w > 640 / GIANT_WIDTH ) {
 			cw = 640 / w;
@@ -2648,7 +2633,6 @@ static void CG_DrawWarmup( void ) {
 		}
 		CG_DrawStringExt( 320 - w * cw/2, 25,s, colorWhite, 
 				qfalse, qtrue, cw, (int)(cw * 1.1f), 0 );
-#endif
 	}
 
 	sec = ( sec - cg.time ) / 1000;

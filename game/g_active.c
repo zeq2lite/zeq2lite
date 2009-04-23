@@ -548,9 +548,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			G_RemoveUserWeapon( missile );
 			break;
 		case EV_TIERCHECK:
-			//ps->stats[powerLevel] += client->tiers[tier].powerLevelDrain;
-			//ps->stats[powerLevelTotal] += client->tiers[tier].powerLevelTotalDrain;
-			//ps->persistant[powerLevelMaximum] += client->tiers[tier].powerLevelMaximumDrain;
+			//ps->stats[powerLevel] += client->tiers[tier].powerLevelEffect;
+			//ps->stats[powerLevelTotal] += client->tiers[tier].powerLevelTotalEffect;
+			//ps->persistant[powerLevelMaximum] += client->tiers[tier].powerLevelMaximumEffect;
 			tierCheck(client);
 			break;
 		case EV_TIERUP:
