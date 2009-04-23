@@ -489,7 +489,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 			}
 		}
 		else{
-			target->powerLevel = target->powerLevel - damage;
+			target->powerLevel = target->powerLevel - 1.0f;
 			G_Printf(va("Attack Powerlevel = %i\n",target->powerLevel));
 			G_Printf(va("Attack Damage = %i\n",damage));
 			if(target->powerLevel <= 0){
@@ -1472,7 +1472,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 		//VectorCopy( trace->endpos,self->s.pos.trBase );
 		//VectorCopy( self->r.currentOrigin,other->r.currentOrigin );
 	}
-	if(self->powerLevel <= 0 || !(other->takedamage) ){
+	if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER) ){
 	// Add the explosion event to the entity, and make it free itself after event.
 		if ( other->takedamage && other->client ) {
 			G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
