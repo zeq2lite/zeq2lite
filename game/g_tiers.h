@@ -1,4 +1,5 @@
 typedef struct{
+	qboolean exists;
 	qboolean customWeapons;
 	qboolean permanent;
 	qboolean requirementPowerLevelButton;
@@ -17,6 +18,5 @@ typedef struct{
 	float powerLevelDrain;
 	float powerLevelTotalDrain;
 	float powerLevelMaximumDrain;
-	float powerLevelChargeRate;
 	float powerLevelBreakLimitRate;
 }tierConfig_g;

@@ -2272,21 +2272,10 @@ static const char *CG_FeederItemText(float feederID, int index, int column, qhan
 	if (info && info->infoValid) {
 		switch (column) {
 			case 0:
-				if ( info->powerups & ( 1 << PW_NEUTRALFLAG ) ) {
-					item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
-					*handle = cg_items[ ITEM_INDEX(item) ].icon;
-				} else if ( info->powerups & ( 1 << PW_REDFLAG ) ) {
-					item = BG_FindItemForPowerup( PW_REDFLAG );
-					*handle = cg_items[ ITEM_INDEX(item) ].icon;
-				} else if ( info->powerups & ( 1 << PW_BLUEFLAG ) ) {
-					item = BG_FindItemForPowerup( PW_BLUEFLAG );
-					*handle = cg_items[ ITEM_INDEX(item) ].icon;
-				} else {
-					if ( info->botSkill > 0 && info->botSkill <= 5 ) {
-						*handle = cgs.media.botSkillShaders[ info->botSkill - 1 ];
-					} else if ( info->handicap < 100 ) {
-					return va("%i", info->handicap );
-					}
+				if ( info->botSkill > 0 && info->botSkill <= 5 ) {
+					*handle = cgs.media.botSkillShaders[ info->botSkill - 1 ];
+				} else if ( info->handicap < 100 ) {
+				return va("%i", info->handicap );
 				}
 			break;
 			case 1:

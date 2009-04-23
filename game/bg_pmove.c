@@ -350,100 +350,51 @@ PM_CheckPowerLevel
 ==================
 */
 static qboolean PM_CheckPowerLevel(void){
-	int plSpeed,tier,lowBreak,highBreak,chargeScale,amount;
+	int plSpeed,tier,chargeScale,amount;
 	tier = pm->ps->stats[tierCurrent];
-	lowBreak = 1000;
-	highBreak = (32000 / 9) * (tier + 1);
-	chargeScale = pm->ps->powerlevelChargeScale * 10;
+	chargeScale = pm->ps->powerlevelChargeScale * 13;
 	pm->ps->stats[powerLevelTimer2] += pml.msec;
 	while(pm->ps->stats[powerLevelTimer2] >= 50){
 		pm->ps->stats[powerLevelTimer2] -= 50;
 		if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
 			pm->ps->stats[powerLevel] -= 6 * (pm->ps->stats[tierCurrent] + 1);
 		}
+		if(pm->ps->stats[powerLevelTotal] < pm->ps->persistant[powerLevelMaximum]){
+			pm->ps->stats[powerLevelTotal] += (float)pm->ps->persistant[powerLevelMaximum] * 0.001;
+		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_UP){
-		// set representations for powering up
 		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
-		PM_StopDash(); // implicitly stops boost and lightspeed as well
-		PM_StopBoost();
 		pm->ps->eFlags |= EF_AURA;
-		if((pm->ps->stats[powerLevel] > highBreak)){
-			PM_ContinueLegsAnim(LEGS_TRANS_UP );
-		}
-		else{
-			PM_ContinueLegsAnim(LEGS_PL_UP );
-		}
-		// Increment the hold down timer
-		if(pm->ps->stats[STAT_POWERBUTTONS_TIMER] < 0)pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
-		if(pm->ps->stats[STAT_POWERBUTTONS_TIMER] < 16000){
-			pm->ps->stats[STAT_POWERBUTTONS_TIMER] += pml.msec;
-		}
-		if(pm->ps->stats[STAT_POWERBUTTONS_TIMER] > 16000){
-			pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 16000;
-		}
-		// Increment the power level timer scaled by hold down time
-		plSpeed = (pm->ps->stats[STAT_POWERBUTTONS_TIMER] / 500.0f) + 1;
-		pm->ps->stats[powerLevelCounter] += pml.msec * plSpeed;
-
+		//PM_ContinueLegsAnim(LEGS_PL_UP);
 		pm->ps->stats[powerLevelTimer] += pml.msec;
-		while(pm->ps->stats[powerLevelTimer] >= 12){
-			pm->ps->stats[powerLevelTimer] -= 10;
+		while(pm->ps->stats[powerLevelTimer] >= 85){
+			pm->ps->stats[powerLevelTimer] -= 85;
+			if((pm->ps->stats[powerLevel] + 85) > 32768){continue;}
 			if(pm->ps->stats[powerLevel] < pm->ps->stats[powerLevelTotal]){
-				pm->ps->stats[powerLevel] += chargeScale;
+				pm->ps->stats[powerLevel] += 85;
 			}
-			else{
-				if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
-					pm->ps->stats[powerLevelTotal] += chargeScale * 0.5;
-				}
-				else if(pm->ps->stats[powerLevelTotal] <= pm->ps->persistant[powerLevelMaximum]){
-					pm->ps->stats[powerLevelTotal] += chargeScale * 0.2;
-				}
-				else{
-					pm->ps->stats[powerLevelTotal] += chargeScale * 0.4;
+			else if(pm->ps->stats[powerLevelTotal] == pm->ps->persistant[powerLevelMaximum]){
+				if(pm->ps->stats[powerLevelTotal] <= pm->ps->persistant[powerLevelMaximum]){
+					pm->ps->stats[powerLevelTotal] += chargeScale;
 				}
 				if(pm->ps->stats[powerLevelTotal] >= pm->ps->persistant[powerLevelMaximum]){
 					pm->ps->persistant[powerLevelMaximum] = pm->ps->stats[powerLevelTotal];
 				}
 			}
 		}
-		if(pm->ps->stats[powerLevel] >= 32768) {pm->ps->stats[powerLevel] = 32768;}
-		if(pm->ps->stats[powerLevelTotal] >= 32768) {pm->ps->stats[powerLevelTotal] = 32768;}
-		if(pm->ps->stats[powerLevelMaximum] >= 32768) {pm->ps->stats[powerLevelMaximum] = 32768;}
 		return qtrue;
 	}
-	// ifthe player wants to power down
 	if(pm->cmd.buttons & BUTTON_POWER_DOWN){
-		// set representations for powering down
 		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
-		PM_StopDash(); // implicitly stops boost and lightspeed as well
-		PM_StopBoost();
-		PM_ContinueLegsAnim(LEGS_PL_DOWN );
-		// Decrement the hold down timer
-		if(pm->ps->stats[STAT_POWERBUTTONS_TIMER] > 0)pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
-		if(pm->ps->stats[STAT_POWERBUTTONS_TIMER] > -16000){
-			pm->ps->stats[STAT_POWERBUTTONS_TIMER] -= pml.msec;
+		if(pm->ps->stats[powerLevel] - 20 > 50){
+			pm->ps->stats[powerLevel] -= 20;
 		}
-		if(pm->ps->stats[STAT_POWERBUTTONS_TIMER] < -16000){
-			pm->ps->stats[STAT_POWERBUTTONS_TIMER] = -16000;
+		else{
+			pm->ps->stats[powerLevel] = 50;
 		}
-		plSpeed = (-pm->ps->stats[STAT_POWERBUTTONS_TIMER] / 500.0f) + 1;
-		pm->ps->stats[powerLevelTimer] -= pml.msec * plSpeed;
-		while(pm->ps->stats[powerLevelTimer] <= -50){
-			pm->ps->stats[powerLevelTimer] += 50;
-			amount = chargeScale * (pm->ps->stats[tierCurrent] + 1);
-			if(pm->ps->stats[powerLevel] - amount > 50){
-				pm->ps->stats[powerLevel] -= amount;
-			}
-			else{
-				pm->ps->stats[powerLevel] = 50;
-			}
-		}
-
 		return qtrue;
 	}
-
-	// Reset the hold down timer
 	pm->ps->stats[bitFlags] &= ~STATBIT_ALTER_PL;
 	pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
 	return qfalse;
@@ -465,7 +416,7 @@ static qboolean PM_CheckBoost(void){
 		PM_StopBoost();
 		return qfalse;
 	}
-	if(!pm->ps->powerups[PW_BOOST] && PM_DeductFromHealth(1 )) {
+	if(!pm->ps->powerups[PW_BOOST]) {
 		pm->ps->powerups[PW_BOOST] = 100; // gives you a 100 msec boost
 		pm->ps->pm_flags |= PMF_BOOST_HELD;
 		pm->ps->stats[bitFlags] |= STATBIT_BOOSTING;
@@ -551,7 +502,7 @@ static qboolean PM_CheckJump(void){
 	}
 
 
-	PM_StopDash(); // implicitly stops boost and lightspeed as well
+	PM_StopDash();
 
 	return qtrue;
 }
@@ -566,15 +517,15 @@ PM_Transform
 ===================
 */
 static void PM_Transform(void){
-	// implicitly stops boost and lightspeed as well
 	PM_StopDash();
 	PM_StopBoost();
-	pm->ps->powerups[PW_LIGHTSPEED] = 0;
+	pm->ps->powerups[PW_ZANZOKEN] = 0;
 	PM_ContinueLegsAnim(LEGS_TRANS_UP );
 	pm->ps->eFlags |= EF_AURA;
 	if(pm->ps->powerups[PW_TRANSFORM] > 0){
 		pm->ps->powerups[PW_TRANSFORM] -= pml.msec;
-		if(pm->ps->powerups[PW_TRANSFORM] < 0){
+		if(pm->ps->powerups[PW_TRANSFORM] <= 0){
+			pm->ps->powerups[PW_STATE] = 0;
 			pm->ps->powerups[PW_TRANSFORM] = 0;
 		}
 	}
@@ -594,43 +545,19 @@ static void PM_FlyMove(void){
 	vec3_t	wishdir;
 	float	scale;
 	float	boostFactor;
-
 	// normal slowdown
-	PM_Friction ();
-
-	if(pm->ps->powerups[PW_TRANSFORM] )
+	PM_Friction();
+	if(pm->ps->powerups[PW_TRANSFORM]){
 		return;
-
-	if(PM_CheckPowerLevel()){
-		return;
-	} else if(PM_CheckBoost()){
-		if(pm->ps->stats[tierCurrent] == 8){
-			boostFactor = 7.0f;
-		} else if(pm->ps->stats[tierCurrent] == 7) {
-			boostFactor = 6.5f;
-		} else if(pm->ps->stats[tierCurrent] == 6) {
-			boostFactor = 6.0f;
-		} else if(pm->ps->stats[tierCurrent] == 5) {
-			boostFactor = 5.5f;
-		} else if(pm->ps->stats[tierCurrent] == 4) {
-			boostFactor = 5.0f;
-		} else if(pm->ps->stats[tierCurrent] == 3) {
-			boostFactor = 4.5f;
-		} else if(pm->ps->stats[tierCurrent] == 2) {
-			boostFactor = 4.0f;
-		} else if(pm->ps->stats[tierCurrent] == 1) {
-			boostFactor = 3.5f;
-		} else{
-			boostFactor = 3.0f;
-		}
-	} else if(pm->cmd.buttons & BUTTON_WALKING){
+	}
+	if(PM_CheckBoost()){
+		boostFactor = 3.0f;
+	}else if(pm->cmd.buttons & BUTTON_WALKING){
 		boostFactor = 1.0f;//1.25f;
-	} else{
+	}else{
 		boostFactor = 2.10f;
 	}
-
 	scale = PM_CmdScale(&pm->cmd)* boostFactor;
-
 	//
 	// user intentions
 	//
@@ -638,29 +565,23 @@ static void PM_FlyMove(void){
 		wishvel[0] = 0;
 		wishvel[1] = 0;
 		wishvel[2] = 0;
-	} else{
+	}else{
 		for (i=0 ; i<3 ; i++) {
 			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove +
 			             scale * pml.right[i] * pm->cmd.rightmove +
 						 scale * pml.up[i] * pm->cmd.upmove;
 		}
 	}
-
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
-
 	PM_Accelerate (wishdir, wishspeed, pm_flyaccelerate);
-
 	PM_StepSlideMove(qfalse );
 }
 
 
-/*
-===================
+/*===================
 PM_AirMove
-
-===================
-*/
+===================*/
 static void PM_AirMove(void){
 	int			i;
 	vec3_t		wishvel;
@@ -669,66 +590,38 @@ static void PM_AirMove(void){
 	float		wishspeed;
 	float		scale;
 	usercmd_t	cmd;
-
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
-
 	cmd = pm->cmd;
 	scale = PM_CmdScale(&cmd );
-
-	// set the movementDir so clients can rotate the legs for strafing
 	PM_SetMovementDir();
-
-	// project moves down to flat plane
 	pml.forward[2] = 0;
 	pml.right[2] = 0;
 	VectorNormalize (pml.forward);
 	VectorNormalize (pml.right);
-
 	for (i = 0 ; i < 2 ; i++){
 		wishvel[i] = pml.forward[i]*fmove + pml.right[i]*smove;
 	}
-
 	wishvel[2] = 0;
-
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
-
-	// not on ground, so little effect on velocity
 	PM_Accelerate (wishdir, wishspeed, pm_airaccelerate);
-
-	// we may have a ground plane that is very steep, even
-	// though we don't have a groundentity
-	// slide along the steep plane
 	if(pml.groundPlane){
 		PM_ClipVelocity (pm->ps->velocity, pml.groundTrace.plane.normal,
 			pm->ps->velocity, OVERCLIP );
 	}
-
-	// <-- RiO: less gravity when submerged
 	if(pm->waterlevel == 3){
 		pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
 	}
-	// -->
-
 	PM_StepSlideMove (qtrue );
 }
-
-
-
-
-
-/*
-===================
+/*===================
 PM_GrappleMove
-
-===================
-*/
+===================*/
 static void PM_GrappleMove(void){
 	vec3_t vel, v;
 	float vlen;
-
 	VectorScale(pml.forward, -16, v);
 	VectorAdd(pm->ps->grapplePoint, v, v);
 	VectorSubtract(v, pm->ps->origin, vel);
@@ -766,12 +659,6 @@ static void PM_WalkMove(void){
 		PM_Friction();
 		return;
 	}
-
-	if(PM_CheckPowerLevel()){
-		PM_Friction();
-		return;
-	}
-
 	if(PM_CheckJump ()){
 		// jumped away
 		PM_AirMove();
@@ -842,15 +729,12 @@ static void PM_WalkMove(void){
 		pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
 	}
 	// -->
-
 	PM_StepSlideMove(qfalse );
 }
 
-/*
-=============
+/*=============
 PM_DashMove
-=============
-*/
+=============*/
 static void PM_DashMove(void){
 	int			i;
 	vec3_t		wishvel;
@@ -861,69 +745,37 @@ static void PM_DashMove(void){
 	usercmd_t	cmd;
 	float		boostFactor;
 	float		accelerate;
-
 	if((pm->ps->dashDir[0] && (Q_Sign(pm->ps->dashDir[0])!= Q_Sign(pm->cmd.forwardmove ))) ||
 		(pm->ps->dashDir[1] && (Q_Sign(pm->ps->dashDir[1])!= Q_Sign(pm->cmd.rightmove   ))) ||
 		(pm->cmd.buttons & BUTTON_WALKING )) {
-
-		PM_StopDash(); // implicitly stops boost and lightspeed as well
-
-		if(pml.walking )
+		PM_StopDash();
+		if(pml.walking){
 			PM_WalkMove();
-		else
+		}
+		else{
 			PM_AirMove();
-
+		}
 		return;
 	}
-
 	if(pm->ps->powerups[PW_TRANSFORM]){
 		PM_Friction();
 		return;
 	}
-
-	if(PM_CheckPowerLevel()){
-		PM_Friction();
-		return;
-	}
-
 	if(pm->ps->groundEntityNum != ENTITYNUM_NONE){
 		if(PM_CheckJump()){
-			// jumped away
 			PM_AirMove();
 			return;
 		}
 	}
-
-	pm->cmd.upmove = 0; // ensure proper scaling in PM_CmdScale
-
-	if(PM_CheckBoost()) {
+	pm->cmd.upmove = 0;
+	if(PM_CheckBoost()){
 		pm->ps->pm_flags |= PMF_BOOST_HELD;
-		if(pm->ps->stats[tierCurrent] == 8){
-			boostFactor = 7.0f;
-		} else if(pm->ps->stats[tierCurrent] == 7) {
-			boostFactor = 6.5f;
-		} else if(pm->ps->stats[tierCurrent] == 6) {
-			boostFactor = 6.0f;
-		} else if(pm->ps->stats[tierCurrent] == 5) {
-			boostFactor = 5.5f;
-		} else if(pm->ps->stats[tierCurrent] == 4) {
-			boostFactor = 5.0f;
-		} else if(pm->ps->stats[tierCurrent] == 3) {
-			boostFactor = 4.5f;
-		} else if(pm->ps->stats[tierCurrent] == 2) {
-			boostFactor = 4.0f;
-		} else if(pm->ps->stats[tierCurrent] == 1) {
-			boostFactor = 3.5f;
-		} else{
-			boostFactor = 3.0f;
-		}
-	} else{
+		boostFactor = 3.0f;
+	}
+	else{
 		boostFactor = 1.5f;
 	}
-
-	// Apply friction
 	PM_Friction();
-
 	if(VectorLength(pm->ps->dashDir)== 0.0f){
 		if(pm->cmd.forwardmove > 0){
 			pm->ps->dashDir[0] = 1;
@@ -939,7 +791,6 @@ static void PM_DashMove(void){
 			pm->ps->dashDir[1] = -1;
 		}
 	}
-
 	if(pm->ps->dashDir[0] == 1 && pm->ps->dashDir[1] == 0){
 		pm->cmd.forwardmove = 120;
 		pm->cmd.rightmove = ceil(pm->cmd.rightmove / (boostFactor * 0.75f) );
@@ -956,100 +807,69 @@ static void PM_DashMove(void){
 		pm->cmd.rightmove = -120;
 		pm->cmd.forwardmove = ceil(pm->cmd.forwardmove / (boostFactor * 0.75f) );
 	}
-
 	cmd = pm->cmd;
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
 	scale = PM_CmdScale(&cmd)* boostFactor;
-
-
 	// project moves down to flat plane
 	pml.forward[2] = 0;
 	pml.right[2] = 0;
 	VectorNormalize (pml.forward);
 	VectorNormalize (pml.right);
-
-	for (i = 0 ; i < 2 ; i++){
+	for(i=0;i<2;i++){
 		wishvel[i] = pml.forward[i]*fmove + pml.right[i]*smove;
 	}
 	wishvel[2] = 0;
-
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
-
-	// when a player gets hit, they temporarily lose
-	// full control, which allows them to be moved a bit
 	if((pml.groundTrace.surfaceFlags & SURF_SLICK)|| pm->ps->pm_flags & PMF_TIME_KNOCKBACK){
 		accelerate = pm_airaccelerate;
 	} else{
 		accelerate = pm_dashaccelerate;
 	}
-
-	// not on ground, so little effect on velocity
-	PM_Accelerate (wishdir, wishspeed, accelerate);
-
-	// we may have a ground plane that is very steep, even
-	// though we don't have a groundentity
-	// slide along the steep plane
+	PM_Accelerate(wishdir, wishspeed, accelerate);
 	if(pml.groundPlane){
 		PM_ClipVelocity (pm->ps->velocity, pml.groundTrace.plane.normal,
 			pm->ps->velocity, OVERCLIP );
 	}
-
-	// <-- RiO: less gravity when submerged
 	if(pm->waterlevel == 3){
 		pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
 	}
-	// -->
-
-	PM_StepSlideMove (qtrue );
+	PM_StepSlideMove(qtrue);
 }
 
 void PM_LightSpeedMove(void){
 	vec3_t pre_vel, post_vel;
-
-	// no light speed movement iftransforming
-	if(pm->ps->powerups[PW_TRANSFORM]){
-		return;
+	if(pm->ps->powerups[PW_TRANSFORM]){return;}
+	pm->ps->powerups[PW_ZANZOKEN] -= pml.msec;
+	if(pm->ps->powerups[PW_ZANZOKEN] < 0){
+		pm->ps->powerups[PW_ZANZOKEN] = 0;
 	}
-
-	pm->ps->powerups[PW_LIGHTSPEED] -= pml.msec;
-	if(pm->ps->powerups[PW_LIGHTSPEED] < 0 )
-		pm->ps->powerups[PW_LIGHTSPEED] = 0;
-
-	if(!(pm->cmd.buttons & BUTTON_LIGHTSPEED))
-		pm->ps->powerups[PW_LIGHTSPEED] = 0;
-
-	if(pm->ps->powerups[PW_LIGHTSPEED]){
-		// Move in the direction of the current velocity
+	if(!(pm->cmd.buttons & BUTTON_LIGHTSPEED)){
+		pm->ps->powerups[PW_ZANZOKEN] = 0;
+	}
+	if(pm->ps->powerups[PW_ZANZOKEN]){
 		VectorNormalize(pm->ps->velocity );
 		VectorCopy(pm->ps->velocity, pre_vel );
 		VectorScale(pm->ps->velocity, 4000, pm->ps->velocity );
-
 		PM_StepSlideMove(qfalse );
-		VectorNormalize2(pm->ps->velocity, post_vel );
-
-		// Check ifwe bounced off of something or become stuck against something
+		VectorNormalize2(pm->ps->velocity, post_vel);
 		if((DotProduct(pre_vel, post_vel)< 0.5f)|| (VectorLength(pm->ps->velocity)== 0.0f )) {
-			pm->ps->powerups[PW_LIGHTSPEED] = 0;
+			pm->ps->powerups[PW_ZANZOKEN] = 0;
 		}
 	}
-
-	if(pm->ps->powerups[PW_LIGHTSPEED] == 0){
-		PM_AddEvent(EV_LIGHTSPEED_GHOSTIMAGE );
-		pm->ps->powerups[PW_LIGHTSPEED] = 0;
+	if(pm->ps->powerups[PW_ZANZOKEN] == 0){
+		PM_AddEvent(EV_ZANZOKEN_END);
 		VectorClear(pm->ps->velocity);
 		return;
 	}
 }
 
 
-/*
-==============
+/*==============
 PM_DeadMove
-==============
-*/
+==============*/
 static void PM_DeadMove(void){
 	float	forward;
 
@@ -1399,24 +1219,19 @@ static void PM_GroundTrace(void){
 	// ADDING FOR ZEQ2
 	if(pm->ps->powerups[PW_FLYING]){
 		vec3_t testVec;
-
 		VectorNormalize2(pml.up, testVec);
 		// Keep flying ifnot upright enough, not moving down, or are using boost
-		if((testVec[2] < 0.9f) || (pm->cmd.upmove >= 0) /*|| pm->ps->powerups[PW_BOOST]*/){
-
+		if((testVec[2] < 0.9f) || (pm->cmd.upmove >= 0)){
 			pm->ps->groundEntityNum = ENTITYNUM_NONE;
 			pml.groundPlane = qfalse;
 			pml.walking = qfalse;
 			return;
 		} else{
 			pm->ps->powerups[PW_FLYING] = 0;
-//			pm->ps->powerups[PW_BOOST] = 0;
-			pm->ps->powerups[PW_LIGHTSPEED] = 0;
-//			pm->ps->stats[bitFlags] &= ~STATBIT_BOOSTING;
+			pm->ps->powerups[PW_ZANZOKEN] = 0;
 		}
 	}
 	// END ADDING
-
 	// slopes that are too steep will not be considered onground
 	if(trace.plane.normal[2] < MIN_WALK_NORMAL){
 		if(pm->debugLevel){
@@ -1559,38 +1374,15 @@ static void PM_Footsteps(void){
 	float		bobmove;
 	int			old;
 	qboolean	footstep;
-
-	// ifusing lightspeed, don't change any animations at all.
-	if(pm->ps->powerups[PW_LIGHTSPEED]){
-		return;
-	}
-
-	// iftransforming, don't change any animations at all.
-	if(pm->ps->powerups[PW_TRANSFORM]){
-		return;
-	}
-
-	//
-	// calculate speed and cycle to be used for
-	// all cyclic walking effects
-	//
+	if(pm->ps->powerups[PW_ZANZOKEN]){return;}
+	if(pm->ps->powerups[PW_TRANSFORM]){return;}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
-	// ifchanging PL, the legs' animation has already been set.
-	if(pm->ps->stats[bitFlags] & STATBIT_ALTER_PL){
-		return;
-	}
-
-	// ADDING FOR ZEQ2
-	// ifwe're dashing, fill in correct leg animations.
-	// Leave cycle intact, but don't advance.
 	if(VectorLength(pm->ps->dashDir)> 0.0f && pm->xyspeed >= 500){
-
 		if(pm->ps->running){
 		 	return;
 		}
-
 		if(pm->ps->dashDir[0] > 0){
 			PM_ContinueLegsAnim(LEGS_DASH_FORWARD );
 		} else if(pm->ps->dashDir[0] < 0){
@@ -1599,52 +1391,35 @@ static void PM_Footsteps(void){
 			PM_ContinueLegsAnim(LEGS_DASH_RIGHT );
 		} else if(pm->ps->dashDir[1] < 0){
 			PM_ContinueLegsAnim(LEGS_DASH_LEFT );
-		} else{
-			// This should never happen
-		}
+		} else{}
 		return;
 	}
-
-	// take care of flight
 	if(pm->ps->powerups[PW_FLYING]){
-
 		if((!pm->cmd.forwardmove && !pm->cmd.rightmove)|| (pm->cmd.buttons & BUTTON_WALKING )) {
 			int	tempAnimIndex;
-
-			pm->ps->bobCycle = 0;	// start at beginning of cycle again
-
+			pm->ps->bobCycle = 0;
 			tempAnimIndex = pm->ps->torsoAnim & ~ANIM_TOGGLEBIT;
 			if((tempAnimIndex >= TORSO_KI_ATTACK1_PREPARE) && (tempAnimIndex <= TORSO_KI_ATTACK6_ALT_FIRE)) {
 				tempAnimIndex = tempAnimIndex - TORSO_KI_ATTACK1_PREPARE;
 				tempAnimIndex = LEGS_AIR_KI_ATTACK1_PREPARE + tempAnimIndex;
-				PM_ContinueLegsAnim(tempAnimIndex );
+				PM_ContinueLegsAnim(tempAnimIndex);
 			} else{
 				if(pm->ps->lockedOn){
-					PM_ContinueLegsAnim(LEGS_IDLE_LOCKED );
+					PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);
 				} else{
-					PM_ContinueLegsAnim(LEGS_FLY_IDLE );
+					PM_ContinueLegsAnim(LEGS_FLY_IDLE);
 				}
 			}
-
 			return;
 		}
-
 		if(pm->cmd.forwardmove > 0){
-			if(pm->ps->pm_flags & PMF_BOOST_HELD){
-				PM_ContinueLegsAnim(LEGS_FLY_FORWARD );
-			} else{
-				PM_ContinueLegsAnim(LEGS_DASH_FORWARD );
-			}
+			PM_ContinueLegsAnim(LEGS_DASH_FORWARD);
 		} else if(pm->cmd.forwardmove < 0){
-			if(pm->ps->pm_flags & PMF_BOOST_HELD){
-				PM_ContinueLegsAnim(LEGS_FLY_BACKWARD );
-			} else{
-				PM_ContinueLegsAnim(LEGS_DASH_BACKWARD );
-			}
+			PM_ContinueLegsAnim(LEGS_DASH_BACKWARD);
 		} else if(pm->cmd.rightmove > 0){
-			PM_ContinueLegsAnim(LEGS_DASH_RIGHT );
+			PM_ContinueLegsAnim(LEGS_DASH_RIGHT);
 		} else if(pm->cmd.rightmove < 0){
-			PM_ContinueLegsAnim(LEGS_DASH_LEFT );
+			PM_ContinueLegsAnim(LEGS_DASH_LEFT);
 		}
 
 		return;
@@ -1842,12 +1617,9 @@ static void PM_FinishWeaponChange(void){
 }
 
 
-/*
-==============
+/*==============
 PM_TorsoAnimation
-
-==============
-*/
+==============*/
 static void PM_TorsoAnimation(void){
 	if(pm->ps->weaponstate != WEAPON_READY){
 		return;
@@ -1936,13 +1708,11 @@ static void PM_TorsoAnimation(void){
 }
 
 
-/*
-==============
+/*==============
 PM_Weapon
 
 Generates weapon events and modifes the weapon counter
-==============
-*/
+==============*/
 static void PM_Weapon(void){
 	int					*weaponInfo;
 	int					*alt_weaponInfo;
@@ -2135,32 +1905,21 @@ static void PM_Weapon(void){
 	case WEAPON_CHARGING:
 		{
 			if(!(pm->cmd.buttons & BUTTON_ATTACK)) {
-
 				if(weaponInfo[WPbitFlags] & WPF_READY){
 					weaponInfo[WPbitFlags] &= ~WPF_READY;
-
-					// ifthe weapon is meant to be guided, use WEAPON_GUIDING
-					// and don't set the cooldown time yet.
 					if(weaponInfo[WPbitFlags] & WPF_GUIDED){
 						pm->ps->weaponstate = WEAPON_GUIDING;
 					} else{
 						pm->ps->weaponstate = WEAPON_COOLING;
 						pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 					}
-
-					// NOTE: chargePercentPrimary is still used in this event's handler,
-					// so don't reset it yet.
-					PM_AddEvent(EV_FIRE_WEAPON );
-
-					// Adding the weapon number like this should give us the correct animation
+					PM_AddEvent(EV_FIRE_WEAPON);
 					PM_StartTorsoAnim(TORSO_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
-
 				} else{
 					pm->ps->weaponTime = 0;
 					pm->ps->weaponstate = WEAPON_READY;
 					pm->ps->stats[chargePercentPrimary] = 0;
-
-					PM_StartTorsoAnim(TORSO_STAND );
+					PM_StartTorsoAnim(TORSO_STAND);
 				}
 			}
 		}
@@ -2246,7 +2005,6 @@ static void PM_Weapon(void){
 		}
 		break;
 	default:
-		// Should never happen
 		break;
 	}
 }
@@ -2260,11 +2018,10 @@ PM_Animate
 */
 
 static void PM_Animate(void){
-
 	if(pm->cmd.buttons & BUTTON_GESTURE){ 
 		if(pm->ps->torsoTimer == 0){
 			pm->ps->torsoTimer = 500;
-			PM_AddEvent(EV_TAUNT );
+			PM_AddEvent(EV_TAUNT);
 		}
 	}
 }
@@ -2303,14 +2060,9 @@ static void PM_DropTimers(void){
 }
 
 
-/*
-================
+/*================
 PM_UpdateViewAngles
-
-This can be used as another entry point when only the viewangles
-are being updated instead of a full move
-================
-*/
+================*/
 void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	short		temp;
 	int			i;
@@ -2427,9 +2179,6 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		ps->delta_angles[PITCH] -= ANGLE2SHORT(pitchNorm);
 		ps->delta_angles[PITCH] += ANGLE2SHORT(-180 - pitchNorm);
 	}
-
-	// END ADDING
-
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
 		temp = cmd->angles[i] + ps->delta_angles[i];
@@ -2454,46 +2203,35 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	}
 }
 
-/*
-================
+/*===============
 PM_UpdateViewAngles2
-
-This can be used as another entry point when only the viewangles
-are being updated instead of a full move
-================
-*/
+================*/
 void PM_UpdateViewAngles2(playerState_t *ps, const usercmd_t *cmd){
 	short		temp;
 	int			i;
 	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
-		return;		// no view changes at all
+		return;
 	}
-
 	if(ps->pm_type != PM_SPECTATOR && ps->stats[powerLevel] <= 0){
-		return;		// no view changes at all
+		return;	
 	}
-
 	if(pm->ps->lockedOn ){
 		vec3_t dir;
 		vec3_t angles;
 		VectorSubtract(pm->ps->lockedTarget, ps->origin, dir);
 		vectoangles(dir, angles);
-
 		if(angles[PITCH] > 180) { 
 			angles[PITCH] -= 360;
 		}
-
 		else if(angles[PITCH] < -180) {
 			angles[PITCH] += 360;
 		}
-
 		for (i = 0; i < 3; i++) {
 			if(i == YAW && (angles[PITCH] > 65 || angles[PITCH] < -65)) 
 				continue;
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
 	}
-
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
 		temp = cmd->angles[i] + ps->delta_angles[i];
@@ -2507,12 +2245,9 @@ void PM_UpdateViewAngles2(playerState_t *ps, const usercmd_t *cmd){
 				temp = -16000;
 			}
 		}
-
 		ps->viewangles[i] = SHORT2ANGLE(temp);
 	}
 }
-
-
 /*
 ================
 PmoveSingle
@@ -2520,104 +2255,77 @@ PmoveSingle
 ================
 */
 void trap_SnapVector(float *v ); // <-- forward declaration
-
 void PmoveSingle (pmove_t *pmove) {
 	int state;
 	pm = pmove;
-
-	// this counter lets us debug movement problems with a journal
-	// by setting a conditional breakpoint for the previous frame
 	c_pmove++;
-
-	// clear results
 	pm->numtouch = 0;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
-
 	if(pm->ps->stats[powerLevel] <= 0){
-		pm->tracemask &= ~CONTENTS_BODY;	// corpses can fly through bodies
+		pm->tracemask &= ~CONTENTS_BODY;
 	}
-
-	// reset aura and PL state
 	pm->ps->eFlags &= ~EF_AURA;
-
-	// make sure walking button is clear ifthey are running, to avoid
-	// proxy no-footsteps cheats
 	if(abs(pm->cmd.forwardmove)> 64 || abs(pm->cmd.rightmove)> 64){
 		pm->cmd.buttons &= ~BUTTON_WALKING;
 	}
-
-	// don't allow usage of the ki charge button until all buttons are up
 	if(pm->ps->pm_flags & PMF_RESPAWNED){
 		pm->cmd.buttons &= ~BUTTON_BOOST;
 	}
-
-	// disable PMF_BOOST_HELD ifBUTTON_BOOST is no longer held
 	if(!(pm->cmd.buttons & BUTTON_BOOST)){
 		pm->ps->pm_flags &= ~PMF_BOOST_HELD;
 	}
-
-	// disable PMF_JUMP_HELD ifBUTTON_JUMP is no longer positive
 	if(!(pm->cmd.buttons & BUTTON_JUMP )) {
 		pm->ps->pm_flags &= ~PMF_JUMP_HELD;
 	}
-
-	// disable PMF_LIGHTSPEED HELD ifBUTTON_LIGHTSPEED is no longer held
 	if(!(pm->cmd.buttons & BUTTON_LIGHTSPEED)){
 		pm->ps->pm_flags &= ~PMF_LIGHTSPEED_HELD;
 	}
-
-	// set the talk balloon flag
 	if(pm->cmd.buttons & BUTTON_TALK){
 		pm->ps->eFlags |= EF_TALK;
-	} else{
+	}
+	else{
 		pm->ps->eFlags &= ~EF_TALK;
 	}
-
-	// clear the respawned flag ifattack, alt attack and ki recharge are cleared
 	if(pm->ps->stats[powerLevel] > 0 &&
 		!(pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_ALT_ATTACK | BUTTON_BOOST ))) {
 		pm->ps->pm_flags &= ~PMF_RESPAWNED;
 	}
-
-	// iftalk button is down, dissallow all other input
-	// this is to prevent any possible intercept proxy from
-	// adding fake talk balloons
 	if(pmove->cmd.buttons & BUTTON_TALK){
-		// keep the talk button set tho for when the cmd.serverTime > 66 msec
-		// and the same cmd is used multiple times in Pmove
 		pmove->cmd.buttons = BUTTON_TALK;
 		pmove->cmd.forwardmove = 0;
 		pmove->cmd.rightmove = 0;
 		pmove->cmd.upmove = 0;
 	}
-
-	// ifwe're guiding a weapon, we can't move.
 	if(pmove->ps->weaponstate == WEAPON_GUIDING || pmove->ps->weaponstate == WEAPON_ALTGUIDING){
 		pmove->cmd.forwardmove = 0;
 		pmove->cmd.rightmove = 0;
 		pmove->cmd.upmove = 0;
-
-		// disable dashing, boosting and lightspeed
 		PM_StopDash();
 	}
-
-	// ifwe're moving up a tier, don't allow movement until the transformation is complete
-	if(pm->ps->powerups[PW_TRANSFORM] > 0){
+	if(pm->ps->powerups[PW_TRANSFORM] == 1){
+		pm->ps->powerups[PW_TRANSFORM] = 0;
+		PM_AddEvent(EV_TIERUP);
+	}
+	else if(pm->ps->powerups[PW_TRANSFORM] == -1){
+		pm->ps->powerups[PW_TRANSFORM] = 0;
+		PM_AddEvent(EV_TIERDOWN);
+	}
+	else if(pm->ps->powerups[PW_TRANSFORM] > 0){
+		if(!pm->ps->powerups[PW_STATE]){
+			pm->ps->powerups[PW_STATE] = 1;
+			PM_AddEvent(EV_TIERUP);
+		}
 		pmove->cmd.forwardmove = 0;
 		pmove->cmd.rightmove = 0;
 		pmove->cmd.upmove = 0;
-
-		// disable dashing, boosting and lightspeed
 		PM_StopDash();
 		PM_StopBoost();
 	}
-
-
-	// clear all pmove local vars
+	else{
+		PM_AddEvent(EV_TIERCHECK);
+	}
 	memset (&pml, 0, sizeof(pml));
-
-	// determine the time
 	pml.msec = pmove->cmd.serverTime - pm->ps->commandTime;
 	if(pml.msec < 1){
 		pml.msec = 1;
@@ -2625,113 +2333,65 @@ void PmoveSingle (pmove_t *pmove) {
 		pml.msec = 200;
 	}
 	pm->ps->commandTime = pmove->cmd.serverTime;
-
-	// save old org in case we get stuck
 	VectorCopy (pm->ps->origin, pml.previous_origin);
-
-	// save old velocity for crashlanding
 	VectorCopy (pm->ps->velocity, pml.previous_velocity);
-
 	pml.frametime = pml.msec * 0.001;
-
-	// <-- RiO; Build the powerLevel buffer representing regen rate
 	PM_BuildBufferHealth();
-	// -->
-
-	// update the viewangles
 //	if(pmove->ps->rolling){
 		PM_UpdateViewAngles(pm->ps, &pm->cmd );
 //	} else{
 //		PM_UpdateViewAngles2(pm->ps, &pm->cmd );
 //	}
 	AngleVectors (pm->ps->viewangles, pml.forward, pml.right, pml.up);
-
-
-	// decide ifbackpedaling animations should be used
 	if(pm->cmd.forwardmove < 0){
 		pm->ps->pm_flags |= PMF_BACKWARDS_RUN;
 	} else if(pm->cmd.forwardmove > 0 || (pm->cmd.forwardmove == 0 && pm->cmd.rightmove)) {
 		pm->ps->pm_flags &= ~PMF_BACKWARDS_RUN;
 	}
-
 	if(pm->ps->pm_type >= PM_DEAD){
 		pm->cmd.forwardmove = 0;
 		pm->cmd.rightmove = 0;
 		pm->cmd.upmove = 0;
-
-		// Disable flight to prevent suspended corpses.
 		pmove->ps->powerups[PW_FLYING] = 0;
-
-		PM_StopDash(); // implicitly stops boost and lightspeed as well
+		PM_StopDash();
 		PM_StopBoost();
 	}
-
 	if(pm->ps->pm_type == PM_SPECTATOR){
 		PM_CheckDuck ();
 		PM_FlyMove ();
 		PM_DropTimers ();
 		return;
 	}
-
 	if(pm->ps->pm_type == PM_NOCLIP){
 		PM_NoclipMove ();
 		PM_DropTimers ();
 		return;
 	}
-
-	if(pm->ps->pm_type == PM_FREEZE) {
-		return;		// no movement at all
-	}
-
-	if(pm->ps->pm_type == PM_INTERMISSION || pm->ps->pm_type == PM_SPINTERMISSION) {
-		return;		// no movement at all
-	}
-
-	// set watertype, and waterlevel
+	if(pm->ps->pm_type == PM_FREEZE){}
+	if(pm->ps->pm_type == PM_INTERMISSION || pm->ps->pm_type == PM_SPINTERMISSION){return;}
 	PM_SetWaterLevel();
 	pml.previous_waterlevel = pmove->waterlevel;
-
-	// set mins, maxs, and viewheight
-	PM_CheckDuck ();
-
-	// set groundentity
+	PM_CheckDuck();
 	PM_GroundTrace();
-
-	if(pm->ps->pm_type == PM_DEAD){
-		PM_DeadMove ();
-	}
-
+	if(pm->ps->pm_type == PM_DEAD){PM_DeadMove();}
 	PM_DropTimers();
-
-
-	// Activate flight ifnecessary
 	if(!pm->ps->powerups[PW_FLYING] && (pm->cmd.upmove > 0 || (!pml.walking && pm->cmd.upmove < 0 ))) {
-
-		// Disable any dashing
 		if(VectorLength(pm->ps->dashDir)> 0.0f){
 			PM_StopDash();
 		}
-
 		pm->ps->powerups[PW_FLYING] = 1;
 	}
-
-	// Activate lightspeed ifnecessary
 	if((pm->cmd.buttons & BUTTON_LIGHTSPEED) && 
 		!(pm->ps->pm_flags & PMF_LIGHTSPEED_HELD) && 
 		!(pm->ps->powerups[PW_TRANSFORM]) &&
 		!(pm->ps->weaponstate == WEAPON_GUIDING) && 
 		!(pm->ps->weaponstate == WEAPON_ALTGUIDING)) {
-		if(PM_DeductFromHealth(100)) {
-			// Disable any dashing
-			if(VectorLength(pm->ps->dashDir)> 0.0f){
-				PM_StopDash();
-			}
-			PM_AddEvent(EV_LIGHTSPEED_GHOSTIMAGE );
-			pm->ps->powerups[PW_LIGHTSPEED] = 750; // max 0.75 seconds lightspeed
-			pm->ps->pm_flags |= PMF_LIGHTSPEED_HELD;
+		if(VectorLength(pm->ps->dashDir)> 0.0f){
+			PM_StopDash();
 		}
+		PM_AddEvent(EV_ZANZOKEN_START);
+		pm->ps->pm_flags |= PMF_LIGHTSPEED_HELD;
 	}
-	// Activate transform ifnecessary
 	if(pm->ps->powerups[PW_TRANSFORM]){
 		if(VectorLength(pm->ps->dashDir)> 0.0f){
 			PM_StopDash();
@@ -2739,20 +2399,19 @@ void PmoveSingle (pmove_t *pmove) {
 		}
 		PM_Transform();
 	}
-	else if(pm->ps->powerups[PW_LIGHTSPEED]){
+	else if(pm->ps->powerups[PW_ZANZOKEN]){
 		PM_LightSpeedMove();
 	}
 	else if(pm->ps->powerups[PW_FLYING]){
 		PM_FlyMove();
 	}	
-	else if(VectorLength(pm->ps->dashDir)> 0.0f){
+	else if(VectorLength(pm->ps->dashDir) > 0.0f){
 		PM_DashMove();
 	}
 	else if(pml.walking){
 		pmove->ps->powerups[PW_FLYING] = 0;
 		if(!(pm->cmd.buttons & BUTTON_WALKING) &&
-			  (pm->cmd.forwardmove || pm->cmd.rightmove) &&
-			 !(pm->ps->stats[bitFlags] & STATBIT_ALTER_PL)){
+			  (pm->cmd.forwardmove || pm->cmd.rightmove)){
 			PM_DashMove();
 		} else{
 			PM_WalkMove();
@@ -2772,15 +2431,13 @@ void PmoveSingle (pmove_t *pmove) {
 	if(pm->ps->powerups[PW_BOOST]){
 		pm->ps->eFlags |= EF_AURA;
 	}
-	PM_AddEvent(EV_TIERCHECK);
+	PM_CheckPowerLevel();
 }
 
-/*
-================
+/*================
 Pmove
 
-Can be called by either the server or the client
-================
+Can be called by either the server or the client================
 */
 void Pmove (pmove_t *pmove) {
 	int			finalTime;

@@ -2053,55 +2053,7 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 	if ( !powerups ) {
 		return;
 	}
-
-	// quad gives a dlight
-//	if ( powerups & ( 1 << PW_QUAD ) ) {
-//		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 0.2f, 1 );
-//	}
-
-	// flight plays a looped sound
-//	if ( powerups & ( 1 << PW_FLYING ) ) {
-//		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, cgs.media.flightSound );
-//	}
-
 	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
-	// redflag
-	if ( powerups & ( 1 << PW_REDFLAG ) ) {
-		if (ci->newAnims) {
-			CG_PlayerFlag( cent, cgs.media.redFlagFlapSkin, torso );
-		}
-		else {
-			CG_TrailItem( cent, cgs.media.redFlagModel );
-		}
-		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 1.0, 0.2f, 0.2f );
-	}
-
-	// blueflag
-	if ( powerups & ( 1 << PW_BLUEFLAG ) ) {
-		if (ci->newAnims){
-			CG_PlayerFlag( cent, cgs.media.blueFlagFlapSkin, torso );
-		}
-		else {
-			CG_TrailItem( cent, cgs.media.blueFlagModel );
-		}
-		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 0.2f, 1.0 );
-	}
-
-	// neutralflag
-	if ( powerups & ( 1 << PW_NEUTRALFLAG ) ) {
-		if (ci->newAnims) {
-			CG_PlayerFlag( cent, cgs.media.neutralFlagFlapSkin, torso );
-		}
-		else {
-			CG_TrailItem( cent, cgs.media.neutralFlagModel );
-		}
-		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 1.0, 1.0, 1.0 );
-	}
-
-	// haste leaves smoke trails
-//	if ( powerups & ( 1 << PW_HASTE ) ) {
-//		CG_HasteTrail( cent );
-//	}
 }
 
 
@@ -2467,8 +2419,6 @@ void CG_Player( centity_t *cent ) {
 		tier = cent->currentState.tier;
 		if ( ci->tierCurrent != tier ) {
 			ci->tierCurrent = tier;
-
-			// NOTE: Add 'tier up' cinematic calls here
 			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);
 			CG_PlayerTransformation ( cent );
 		}
@@ -2480,7 +2430,7 @@ void CG_Player( centity_t *cent ) {
 	// -->
 
 	// Don't display anything if the player is moving at ZANZOKEN
-	if ( cent->currentState.powerups & ( 1 << PW_LIGHTSPEED )) {
+	if ( cent->currentState.powerups & ( 1 << PW_ZANZOKEN )) {
 		return;
 	}
 	

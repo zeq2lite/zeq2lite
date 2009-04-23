@@ -24,7 +24,9 @@ void parseTier(char *path,tierConfig_g *tier){
 	char *token,*parse;
 	int fileLength;
 	char fileContents[32000];
+	tier->exists = qfalse;
 	if(trap_FS_FOpenFile(path,0,FS_READ)>0){
+		tier->exists = qtrue;
 		fileLength = trap_FS_FOpenFile(path,&tierCFG,FS_READ);
 		trap_FS_Read(fileContents,fileLength,tierCFG);
 		fileContents[fileLength] = 0;
@@ -72,11 +74,6 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->zanzokenDistance = atoi(token);
-			}
-			else if(!Q_stricmp(token,"powerLevelChargeRate")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->powerLevelChargeRate = atof(token);
 			}
 			else if(!Q_stricmp(token,"powerLevelBreakLimitRate")){
 				token = COM_Parse(&parse);

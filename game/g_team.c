@@ -215,15 +215,6 @@ void Team_SetFlagStatus( int team, flagStatus_t status ) {
 }
 
 void Team_CheckDroppedItem( gentity_t *dropped ) {
-	if( dropped->item->giTag == PW_REDFLAG ) {
-		Team_SetFlagStatus( TEAM_RED, FLAG_DROPPED );
-	}
-	else if( dropped->item->giTag == PW_BLUEFLAG ) {
-		Team_SetFlagStatus( TEAM_BLUE, FLAG_DROPPED );
-	}
-	else if( dropped->item->giTag == PW_NEUTRALFLAG ) {
-		Team_SetFlagStatus( TEAM_FREE, FLAG_DROPPED );
-	}
 }
 
 /*
@@ -279,17 +270,6 @@ void Team_FragBonuses(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker
 		return; // whoever died isn't on a team
 
 	// same team, if the flag at base, check to he has the enemy flag
-	if (team == TEAM_RED) {
-		flag_pw = PW_REDFLAG;
-		enemy_flag_pw = PW_BLUEFLAG;
-	} else {
-		flag_pw = PW_BLUEFLAG;
-		enemy_flag_pw = PW_REDFLAG;
-	}
-
-	if (g_gametype.integer == GT_1FCTF) {
-		enemy_flag_pw = PW_NEUTRALFLAG;
-	} 
 
 	// did the attacker frag the flag carrier?
 	tokens = 0;
@@ -487,11 +467,6 @@ void Team_CheckHurtCarrier(gentity_t *targ, gentity_t *attacker)
 	if (!targ->client || !attacker->client)
 		return;
 
-	if (targ->client->sess.sessionTeam == TEAM_RED)
-		flag_pw = PW_BLUEFLAG;
-	else
-		flag_pw = PW_REDFLAG;
-
 	// flags
 	if (targ->client->ps.powerups[flag_pw] &&
 		targ->client->sess.sessionTeam != attacker->client->sess.sessionTeam)
@@ -634,15 +609,6 @@ void Team_ReturnFlag( int team ) {
 }
 
 void Team_FreeEntity( gentity_t *ent ) {
-	if( ent->item->giTag == PW_REDFLAG ) {
-		Team_ReturnFlag( TEAM_RED );
-	}
-	else if( ent->item->giTag == PW_BLUEFLAG ) {
-		Team_ReturnFlag( TEAM_BLUE );
-	}
-	else if( ent->item->giTag == PW_NEUTRALFLAG ) {
-		Team_ReturnFlag( TEAM_FREE );
-	}
 }
 
 /*
@@ -656,16 +622,6 @@ Flags are unique in that if they are dropped, the base flag must be respawned wh
 */
 void Team_DroppedFlagThink(gentity_t *ent) {
 	int		team = TEAM_FREE;
-
-	if( ent->item->giTag == PW_REDFLAG ) {
-		team = TEAM_RED;
-	}
-	else if( ent->item->giTag == PW_BLUEFLAG ) {
-		team = TEAM_BLUE;
-	}
-	else if( ent->item->giTag == PW_NEUTRALFLAG ) {
-		team = TEAM_FREE;
-	}
 
 	Team_ReturnFlagSound( Team_ResetFlag( team ), team );
 	// Reset Flag will delete this entity
@@ -682,19 +638,6 @@ int Team_TouchOurFlag( gentity_t *ent, gentity_t *other, int team ) {
 	gentity_t	*player;
 	gclient_t	*cl = other->client;
 	int			enemy_flag;
-
-#ifdef MISSIONPACK
-	if( g_gametype.integer == GT_1FCTF ) {
-		enemy_flag = PW_NEUTRALFLAG;
-	}
-	else {
-#endif
-	if (cl->sess.sessionTeam == TEAM_RED) {
-		enemy_flag = PW_BLUEFLAG;
-	} else {
-		enemy_flag = PW_REDFLAG;
-	}
-
 	if ( ent->flags & FL_DROPPED_ITEM ) {
 		// hey, its not home.  return it by teleporting it back
 		PrintMsg( NULL, "%s" S_COLOR_WHITE " returned the %s flag!\n", 
@@ -810,12 +753,6 @@ int Team_TouchEnemyFlag( gentity_t *ent, gentity_t *other, int team ) {
 #endif
 		PrintMsg (NULL, "%s" S_COLOR_WHITE " got the %s flag!\n",
 			other->client->pers.netname, TeamName(team));
-
-		if (team == TEAM_RED)
-			cl->ps.powerups[PW_REDFLAG] = INT_MAX; // flags never expire
-		else
-			cl->ps.powerups[PW_BLUEFLAG] = INT_MAX; // flags never expire
-
 		Team_SetFlagStatus( team, FLAG_TAKEN );
 #ifdef MISSIONPACK
 	}

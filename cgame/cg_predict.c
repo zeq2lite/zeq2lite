@@ -263,65 +263,6 @@ CG_TouchItem
 static void CG_TouchItem( centity_t *cent ) {
 
 	return;
-
-/*
-	gitem_t		*item;
-
-	if ( !cg_predictItems.integer ) {
-		return;
-	}
-	if ( !BG_PlayerTouchesItem( &cg.predictedPlayerState, &cent->currentState, cg.time ) ) {
-		return;
-	}
-
-	// never pick an item up twice in a prediction
-	if ( cent->miscTime == cg.time ) {
-		return;
-	}
-
-	if ( !BG_CanItemBeGrabbed( cgs.gametype, &cent->currentState, &cg.predictedPlayerState ) ) {
-		return;		// can't hold it
-	}
-
-	item = &bg_itemlist[ cent->currentState.modelindex ];
-
-	// Special case for flags.  
-	// We don't predict touching our own flag
-#ifdef MISSIONPACK
-	if( cgs.gametype == GT_1FCTF ) {
-		if( item->giTag != PW_NEUTRALFLAG ) {
-			return;
-		}
-	}
-	if( cgs.gametype == GT_CTF || cgs.gametype == GT_HARVESTER ) {
-#else
-	if( cgs.gametype == GT_CTF ) {
-#endif
-		if (cg.predictedPlayerState.persistant[PERS_TEAM] == TEAM_RED &&
-			item->giTag == PW_REDFLAG)
-			return;
-		if (cg.predictedPlayerState.persistant[PERS_TEAM] == TEAM_BLUE &&
-			item->giTag == PW_BLUEFLAG)
-			return;
-	}
-
-	// grab it
-	BG_AddPredictableEventToPlayerstate( EV_ITEM_PICKUP, cent->currentState.modelindex , &cg.predictedPlayerState);
-
-	// remove it from the frame so it won't be drawn
-	cent->currentState.eFlags |= EF_NODRAW;
-
-	// don't touch it again this prediction
-	cent->miscTime = cg.time;
-
-	// if its a weapon, give them some predicted ammo so the autoswitch will work
-	if ( item->giType == IT_WEAPON ) {
-		cg.predictedPlayerState.stats[ skills ] |= 1 << item->giTag;
-		if ( !cg.predictedPlayerState.ammo[ item->giTag ] ) {
-			cg.predictedPlayerState.ammo[ item->giTag ] = 1;
-		}
-	}
-*/
 }
 
 

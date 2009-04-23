@@ -202,14 +202,6 @@ EntityCarriesFlag
 ==================
 */
 qboolean EntityCarriesFlag(aas_entityinfo_t *entinfo) {
-	if ( entinfo->powerups & ( 1 << PW_REDFLAG ) )
-		return qtrue;
-	if ( entinfo->powerups & ( 1 << PW_BLUEFLAG ) )
-		return qtrue;
-#ifdef MISSIONPACK
-	if ( entinfo->powerups & ( 1 << PW_NEUTRALFLAG ) )
-		return qtrue;
-#endif
 	return qfalse;
 }
 
@@ -1756,8 +1748,6 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_DOUBLER] = 0; //bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_DOUBLER;
 	bs->inventory[INVENTORY_AMMOREGEN] = 0; //bs->cur_ps.stats[STAT_PERSISTANT_POWERUP] == MODELINDEX_AMMOREGEN;
 #endif
-	bs->inventory[INVENTORY_REDFLAG] = bs->cur_ps.powerups[PW_REDFLAG] != 0;
-	bs->inventory[INVENTORY_BLUEFLAG] = bs->cur_ps.powerups[PW_BLUEFLAG] != 0;
 #ifdef MISSIONPACK
 	bs->inventory[INVENTORY_NEUTRALFLAG] = bs->cur_ps.powerups[PW_NEUTRALFLAG] != 0;
 	if (BotTeam(bs) == TEAM_RED) {
@@ -4970,7 +4960,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		case EV_CHANGE_WEAPON:
 		case EV_FIRE_WEAPON:
 		case EV_ALTFIRE_WEAPON:
-		case EV_LIGHTSPEED_GHOSTIMAGE:
+		case EV_ZANZOKEN_END:
 			//FIXME: either add to sound queue or mark player as someone making noise
 			break;
 		case EV_USE_ITEM0:

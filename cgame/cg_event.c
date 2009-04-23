@@ -736,9 +736,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_DETONATE_WEAPON:
 		DEBUGNAME("EV_DETONATE_WEAPON");
 		break;
-
-	case EV_LIGHTSPEED_GHOSTIMAGE:
-		DEBUGNAME("EV_LIGHTSPEED_GHOSTIMAGE");
+	case EV_ZANZOKEN_START:
+	case EV_ZANZOKEN_END:
+		DEBUGNAME("EV_ZANZOKEN");
 		CG_SpawnEffect( position );
 		CG_SpawnLightSpeedGhost( cent );
 		break;
@@ -974,43 +974,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 						CG_AddBufferedSound( cgs.media.captureOpponentSound );
 					break;
 				case GTS_RED_RETURN: // CTF: blue flag returned, 1FCTF: never used
-					if ( cgs.clientinfo[cg.clientNum].team == TEAM_RED )
-						CG_AddBufferedSound( cgs.media.returnYourTeamSound );
-					else
-						CG_AddBufferedSound( cgs.media.returnOpponentSound );
-					//
-					CG_AddBufferedSound( cgs.media.blueFlagReturnedSound );
 					break;
 				case GTS_BLUE_RETURN: // CTF red flag returned, 1FCTF: neutral flag returned
-					if ( cgs.clientinfo[cg.clientNum].team == TEAM_BLUE )
-						CG_AddBufferedSound( cgs.media.returnYourTeamSound );
-					else
-						CG_AddBufferedSound( cgs.media.returnOpponentSound );
-					CG_AddBufferedSound( cgs.media.redFlagReturnedSound );
 					break;
 				case GTS_RED_TAKEN:
-					if (cg.snap->ps.powerups[PW_BLUEFLAG] || cg.snap->ps.powerups[PW_NEUTRALFLAG]) {
-					}
-					else {
-					if (cgs.clientinfo[cg.clientNum].team == TEAM_BLUE) {
-						 	CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
-						}
-						else if (cgs.clientinfo[cg.clientNum].team == TEAM_RED) {
- 							CG_AddBufferedSound( cgs.media.yourTeamTookEnemyFlagSound );
-						}
-					}
 					break;
 				case GTS_BLUE_TAKEN:
-					if (cg.snap->ps.powerups[PW_REDFLAG] || cg.snap->ps.powerups[PW_NEUTRALFLAG]) {
-					}
-					else {
-						if (cgs.clientinfo[cg.clientNum].team == TEAM_RED) {
-							CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
-						}
-						else if (cgs.clientinfo[cg.clientNum].team == TEAM_BLUE) {
-							CG_AddBufferedSound( cgs.media.yourTeamTookEnemyFlagSound );
-						}
-					}
 					break;
 				case GTS_REDOBELISK_ATTACKED: // Overload: red obelisk is being attacked
 					if (cgs.clientinfo[cg.clientNum].team == TEAM_RED) {
@@ -1108,7 +1077,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TIERUP:
 		DEBUGNAME("EV_TIERUP");
-		CG_Printf("Client TierUp Called.\n");
+		//CG_Printf("Client TierUp Called.\n");
 		if((ci->tierCurrent+1)>ci->tierMax){
 			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent+1].soundTransformFirst);
 		}
@@ -1118,6 +1087,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TIERDOWN:
 		DEBUGNAME("EV_TIERDOWN");
+		//CG_Printf("Client TierDown Called.\n");
 		if((ci->tierCurrent-1) > 0){
 			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent-1].soundTransformDown);
 		}

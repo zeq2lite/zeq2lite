@@ -1,55 +1,44 @@
-// Copyright (C) 1999-2000 Id Software, Inc.
-//
 #include "g_local.h"
 #include "bg_local.h"
-void tierUp(gclient_t *client){
-	playerState_t *ps;
-	ps = pm->ps;
-	ps->stats[tierCurrent]++;
-	if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
-		ps->powerups[PW_TRANSFORM] = client->tiers[ps->stats[tierCurrent]].transformTime;
-		ps->stats[tierTotal] = ps->stats[tierCurrent];
-	}
-}
-void tierDown(gclient_t *client){
-	playerState_t *ps;
-	ps = pm->ps;
-	if(ps->stats[tierCurrent] > 0){
-		ps->stats[tierCurrent]--;
-	}
-}
 void tierCheck(gclient_t *client){
 	int tier;
 	playerState_t *ps;
 	tierConfig_g *nextTier,*baseTier;
-	ps = pm->ps;
+	ps = &client->ps;
 	tier = ps->stats[tierCurrent];
-	if(tier+1 < 8){
+	if(ps->powerups[PW_TRANSFORM]){return;}
+	if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
 		nextTier = &client->tiers[tier+1];
 		if((ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) && (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) && (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
-			BG_AddPredictableEventToPlayerstate(EV_TIERUP,0,ps);
+			ps->powerups[PW_TRANSFORM] = 1;
+			if(tier+1 > ps->stats[tierTotal]){
+				ps->powerups[PW_TRANSFORM] = client->tiers[tier+1].transformTime;
+			}
 		}
 	}
 	if(tier > 0){
 		baseTier = &client->tiers[tier];
 		if((ps->stats[powerLevel] <= baseTier->requirementPowerLevelCurrent) || (ps->stats[powerLevelTotal] <= baseTier->requirementPowerLevelTotal) || (ps->persistant[powerLevelMaximum] <= baseTier->requirementPowerLevelMaximum)){
-			BG_AddPredictableEventToPlayerstate(EV_TIERDOWN,0,ps);
+			ps->powerups[PW_TRANSFORM] = -1;
 		}
 	}
 }
-
-
-
-/*
-===============
+void syncTier(gclient_t *client){
+	tierConfig_g *tier;
+	playerState_t *ps;
+	ps = &client->ps;
+	tier = &client->tiers[ps->stats[tierCurrent]];
+	ps->powerlevelChargeScale = tier->powerLevelBreakLimitRate;
+	ps->speed = tier->speed;
+	ps->powerups[PW_MELEE_DEFENSE] = tier->meleeDefense;
+	ps->powerups[PW_MELEE_ATTACK] = tier->meleeAttack;
+	ps->powerups[PW_ENERGY_DEFENSE] = tier->energyDefense;
+	ps->powerups[PW_ENERGY_ATTACK] = tier->energyAttackDamage;
+	ps->powerups[PW_ENERGY_COST] = tier->energyAttackCost;
+}
+/*===============
 P_DamageFeedback
-
-Called just before a snapshot is sent to the given player.
-Totals up all damage and generates both the player_state_t
-damage values to that client for pain blends and kicks, and
-global pain sound events for all clients.
-===============
-*/
+===============*/
 void P_DamageFeedback( gentity_t *player ) {
 	gclient_t	*client;
 	float	count;
@@ -132,54 +121,6 @@ void P_WorldEffects( gentity_t *ent ) {
 	// <-- RiO: Drowning in ZEQ2 needs to become PL-cap dependent
 
 	ent->client->airOutTime = level.time + 12000;
-
-	/*
-	//
-	// check for drowning
-	//
-	if ( waterlevel == 3 ) {
-		// envirosuit give air
-		if ( envirosuit ) {
-			ent->client->airOutTime = level.time + 10000;
-		}
-
-		// if out of air, start drowning
-		if ( ent->client->airOutTime < level.time) {
-			// drown!
-			ent->client->airOutTime += 1000;
-			if ( ent->powerLevel > 0 ) {
-				// take more damage the longer underwater
-				ent->damage += 2;
-				if (ent->damage > 15)
-					ent->damage = 15;
-
-				// play a gurp sound instead of a normal pain sound
-				if (ent->powerLevel <= ent->damage) {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("*drown.ogg"));
-				} else if (rand()&1) {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp1.ogg"));
-				} else {
-					G_Sound(ent, CHAN_VOICE, G_SoundIndex("sound/player/gurp2.ogg"));
-				}
-
-				// don't play a normal pain sound
-				ent->pain_debounce_time = level.time + 200;
-
-				G_Damage (ent, NULL, NULL, NULL, NULL, 
-					ent->damage, DAMAGE_NO_ARMOR, MOD_WATER);
-			}
-		}
-	} else {
-		ent->client->airOutTime = level.time + 12000;
-		ent->damage = 2;
-	}
-
-	-->
-	*/
-
-	//
-	// check for sizzle damage (move to pmove?)
-	//
 	if (waterlevel && 
 		(ent->watertype&(CONTENTS_LAVA|CONTENTS_SLIME)) ) {
 		if (ent->powerLevel > 0
@@ -555,6 +496,7 @@ but any server game effects are handled here
 void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int			i, j;
 	int			event;
+	int 		tier;
 	gclient_t	*client;
 	int			damage;
 	vec3_t		dir;
@@ -562,18 +504,18 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 //	qboolean	fired;
 	gitem_t		*item;
 	gentity_t	*drop;
+	playerState_t *ps;
 	// ADDING FOR ZEQ2
 	gentity_t	*missile;
 	// END ADDING
-
 	client = ent->client;
-
+	ps = &client->ps;
+	tier = ps->stats[tierCurrent];
 	if ( oldEventSequence < client->ps.eventSequence - MAX_PS_EVENTS ) {
 		oldEventSequence = client->ps.eventSequence - MAX_PS_EVENTS;
 	}
 	for ( i = oldEventSequence ; i < client->ps.eventSequence ; i++ ) {
 		event = client->ps.events[ i & (MAX_PS_EVENTS-1) ];
-
 		switch ( event ) {
 		case EV_FALL_MEDIUM:
 		case EV_FALL_FAR:
@@ -590,21 +532,14 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			}
 			VectorSet (dir, 0, 0, 1);
 			ent->pain_debounce_time = level.time + 200;	// no normal pain sound
-			
-			// ADDING FOR ZEQ2
-			
-			// We have no falling damage, but will have knockback smash damage instead later on...
-			// G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
-
-			// END ADDING
 			break;
-
 		case EV_FIRE_WEAPON:
 			FireWeapon( ent, qfalse );
 			break;
-
-		// <-- RiO; ZEQ2 specific events
-		
+		case EV_ZANZOKEN_START:
+			ps->stats[powerLevelTotal] -= client->tiers[tier].zanzokenCost;
+			ps->powerups[PW_ZANZOKEN] = client->tiers[tier].zanzokenDistance;
+			break;
 		case EV_ALTFIRE_WEAPON:
 			FireWeapon( ent, qtrue );
 			break;
@@ -613,33 +548,27 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			G_RemoveUserWeapon( missile );
 			break;
 		case EV_TIERCHECK:
+			//ps->stats[powerLevel] += client->tiers[tier].powerLevelDrain;
+			//ps->stats[powerLevelTotal] += client->tiers[tier].powerLevelTotalDrain;
+			//ps->persistant[powerLevelMaximum] += client->tiers[tier].powerLevelMaximumDrain;
 			tierCheck(client);
 			break;
 		case EV_TIERUP:
-			tierUp(client);
+			++ps->stats[tierCurrent];
+			if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
+				ps->stats[tierTotal] = ps->stats[tierCurrent];
+			}
+			syncTier(client);
 			break;
 		case EV_TIERDOWN:
-			tierDown(client);
+			--ps->stats[tierCurrent];
+			syncTier(client);
 			break;
-		case EV_USE_ITEM1:		// teleporter
-			// drop flags in CTF
+		case EV_USE_ITEM1:
 			item = NULL;
 			j = 0;
-
-			if ( ent->client->ps.powerups[ PW_REDFLAG ] ) {
-				item = BG_FindItemForPowerup( PW_REDFLAG );
-				j = PW_REDFLAG;
-			} else if ( ent->client->ps.powerups[ PW_BLUEFLAG ] ) {
-				item = BG_FindItemForPowerup( PW_BLUEFLAG );
-				j = PW_BLUEFLAG;
-			} else if ( ent->client->ps.powerups[ PW_NEUTRALFLAG ] ) {
-				item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
-				j = PW_NEUTRALFLAG;
-			}
-
 			if ( item ) {
 				drop = Drop_Item( ent, item, 0 );
-				// decide how many seconds it has left
 				drop->count = ( ent->client->ps.powerups[ j ] - level.time ) / 1000;
 				if ( drop->count < 1 ) {
 					drop->count = 1;
@@ -647,108 +576,18 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 
 				ent->client->ps.powerups[ j ] = 0;
 			}
-
-#ifdef MISSIONPACK
-			if ( g_gametype.integer == GT_HARVESTER ) {
-				if ( ent->client->ps.generic1 > 0 ) {
-					if ( ent->client->sess.sessionTeam == TEAM_RED ) {
-						item = BG_FindItem( "Blue Cube" );
-					} else {
-						item = BG_FindItem( "Red Cube" );
-					}
-					if ( item ) {
-						for ( j = 0; j < ent->client->ps.generic1; j++ ) {
-							drop = Drop_Item( ent, item, 0 );
-							if ( ent->client->sess.sessionTeam == TEAM_RED ) {
-								drop->spawnflags = TEAM_BLUE;
-							} else {
-								drop->spawnflags = TEAM_RED;
-							}
-						}
-					}
-					ent->client->ps.generic1 = 0;
-				}
-			}
-#endif
 			SelectSpawnPoint( ent->client->ps.origin, origin, angles );
 			TeleportPlayer( ent, origin, angles );
 			break;
-
-		case EV_USE_ITEM2:		// medkit
+		case EV_USE_ITEM2:
 			ent->powerLevel = ent->client->ps.stats[powerLevelTotal] + 25;
-
 			break;
-
-#ifdef MISSIONPACK
-		case EV_USE_ITEM3:		// kamikaze
-			// make sure the invulnerability is off
-			ent->client->invulnerabilityTime = 0;
-			// start the kamikze
-			G_StartKamikaze( ent );
-			break;
-
-		case EV_USE_ITEM4:		// portal
-			if( ent->client->portalID ) {
-				DropPortalSource( ent );
-			}
-			else {
-				DropPortalDestination( ent );
-			}
-			break;
-		case EV_USE_ITEM5:		// invulnerability
-			ent->client->invulnerabilityTime = level.time + 10000;
-			break;
-#endif
-
 		default:
 			break;
 		}
 	}
 
 }
-
-#ifdef MISSIONPACK
-/*
-==============
-StuckInOtherClient
-==============
-*/
-static int StuckInOtherClient(gentity_t *ent) {
-	int i;
-	gentity_t	*ent2;
-
-	ent2 = &g_entities[0];
-	for ( i = 0; i < MAX_CLIENTS; i++, ent2++ ) {
-		if ( ent2 == ent ) {
-			continue;
-		}
-		if ( !ent2->inuse ) {
-			continue;
-		}
-		if ( !ent2->client ) {
-			continue;
-		}
-		if ( ent2->powerLevel <= 0 ) {
-			continue;
-		}
-		//
-		if (ent2->r.absmin[0] > ent->r.absmax[0])
-			continue;
-		if (ent2->r.absmin[1] > ent->r.absmax[1])
-			continue;
-		if (ent2->r.absmin[2] > ent->r.absmax[2])
-			continue;
-		if (ent2->r.absmax[0] < ent->r.absmin[0])
-			continue;
-		if (ent2->r.absmax[1] < ent->r.absmin[1])
-			continue;
-		if (ent2->r.absmax[2] < ent->r.absmin[2])
-			continue;
-		return qtrue;
-	}
-	return qfalse;
-}
-#endif
 void SetTargetPos(gentity_t* ent) {
 	gentity_t* theTarget;
 	int targetNum;
@@ -912,16 +751,10 @@ void ClientThink_real( gentity_t *ent ) {
 		//if (ucmd->serverTime - client->ps.commandTime <= 0)
 		//	return;
 	}
-
-	//
-	// check for exiting intermission
-	//
-	if ( level.intermissiontime ) {
+	if(level.intermissiontime){
 		ClientIntermissionThink( client );
 		return;
 	}
-
-	// spectators don't do much
 	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 			return;
@@ -929,17 +762,7 @@ void ClientThink_real( gentity_t *ent ) {
 		SpectatorThink( ent, ucmd );
 		return;
 	}
-
-	// check for inactivity timer, but never drop the local client of a non-dedicated server
-	if ( !ClientInactivityTimer( client ) ) {
-		return;
-	}
-
-	// clear the rewards if time
-	if ( level.time > client->rewardTime ) {
-		client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
-	}
-
+	if (!ClientInactivityTimer(client)){return;}
 	if ( client->noclip ) {
 		client->ps.pm_type = PM_NOCLIP;
 	} else if ( client->ps.stats[powerLevel] <= 0 ) {
@@ -949,27 +772,10 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 
 	client->ps.gravity = g_gravity.value;
-
-	// set the initial power level
-//	client->ps.powerLevel = g_powerLevel.value;
-	
-	// set the power level charge speed
-//	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
-
-	// set player rolling
 	client->ps.rolling = g_rolling.value;
-
-	// set player running value
 	client->ps.running = g_running.value;
-
-	// set speed
 	client->ps.speed = g_speed.value;
-
-	// <-- RiO; Link the weapon information
 	G_LinkUserWeaponData( &(client->ps) );
-	// -->
-
-	// Let go of the hook if we aren't firing
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
 		Weapon_HookFree(client->hook);
@@ -979,48 +785,10 @@ void ClientThink_real( gentity_t *ent ) {
 	oldEventSequence = client->ps.eventSequence;
 
 	memset (&pm, 0, sizeof(pm));
-
-	/*
-	// check for the hit-scan gauntlet, don't let the action
-	// go through as an attack unless it actually hits something
-	if ( client->ps.weapon == WP_GAUNTLET && !( ucmd->buttons & BUTTON_TALK ) &&
-		( ucmd->buttons & BUTTON_ATTACK ) && client->ps.weaponTime <= 0 ) {
-		pm.gauntletHit = CheckGauntletAttack( ent );
-	}
-	*/
-
 	if ( ent->flags & FL_FORCE_GESTURE ) {
 		ent->flags &= ~FL_FORCE_GESTURE;
 		ent->client->pers.cmd.buttons |= BUTTON_GESTURE;
 	}
-
-#ifdef MISSIONPACK
-	// check for invulnerability expansion before doing the Pmove
-	if (client->ps.powerups[PW_INVULNERABILITY] ) {
-		if ( !(client->ps.pm_flags & PMF_INVULEXPAND) ) {
-			vec3_t mins = { -42, -42, -42 };
-			vec3_t maxs = { 42, 42, 42 };
-			vec3_t oldmins, oldmaxs;
-
-			VectorCopy (ent->r.mins, oldmins);
-			VectorCopy (ent->r.maxs, oldmaxs);
-			// expand
-			VectorCopy (mins, ent->r.mins);
-			VectorCopy (maxs, ent->r.maxs);
-			trap_LinkEntity(ent);
-			// check if this would get anyone stuck in this player
-			if ( !StuckInOtherClient(ent) ) {
-				// set flag so the expanded size will be set in PM_CheckDuck
-				client->ps.pm_flags |= PMF_INVULEXPAND;
-			}
-			// set back
-			VectorCopy (oldmins, ent->r.mins);
-			VectorCopy (oldmaxs, ent->r.maxs);
-			trap_LinkEntity(ent);
-		}
-	}
-#endif
-
 	pm.ps = &client->ps;
 	pm.cmd = *ucmd;
 	if ( pm.ps->pm_type == PM_DEAD ) {
@@ -1041,30 +809,9 @@ void ClientThink_real( gentity_t *ent ) {
 	pm.pmove_msec = pmove_msec.integer;
 
 	VectorCopy( client->ps.origin, client->oldOrigin );
-
-#ifdef MISSIONPACK
-		if (level.intermissionQueued != 0 && g_singlePlayer.integer) {
-			if ( level.time - level.intermissionQueued >= 1000  ) {
-				pm.cmd.buttons = 0;
-				pm.cmd.forwardmove = 0;
-				pm.cmd.rightmove = 0;
-				pm.cmd.upmove = 0;
-				if ( level.time - level.intermissionQueued >= 2000 && level.time - level.intermissionQueued <= 2500 ) {
-					trap_SendConsoleCommand( EXEC_APPEND, "centerview\n");
-				}
-				ent->client->ps.pm_type = PM_SPINTERMISSION;
-			}
-		}
-#endif
-
-	Pmove (&pm);
-	
-	// <-- RiO; Update altered powerLevel value
+	Pmove(&pm);
 	ent->powerLevel = client->ps.stats[powerLevel];
-	// -->
 	GetTarget(ent);
-
-	// save results of pmove
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}
@@ -1075,30 +822,19 @@ void ClientThink_real( gentity_t *ent ) {
 		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
 	}
 	SendPendingPredictableEvents( &ent->client->ps );
-
 	if ( !( ent->client->ps.eFlags & EF_FIRING ) ) {
 		client->fireHeld = qfalse;		// for grapple
 	}
-
-	// use the snapped origin for linking so it matches client predicted versions
 	VectorCopy( ent->s.pos.trBase, ent->r.currentOrigin );
-
 	VectorCopy (pm.mins, ent->r.mins);
 	VectorCopy (pm.maxs, ent->r.maxs);
-
 	ent->waterlevel = pm.waterlevel;
 	ent->watertype = pm.watertype;
-
-	// execute client events
-	ClientEvents( ent, oldEventSequence );
-
-	// link entity now, after any personal teleporters have been used
+	ClientEvents(ent,oldEventSequence);
 	trap_LinkEntity (ent);
 	if ( !ent->client->noclip ) {
 		G_TouchTriggers( ent );
 	}
-
-	// NOTE: now copy the exact origin over otherwise clients can be snapped into solid
 	VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
 
 	//test for solid areas in the AAS file
@@ -1237,19 +973,6 @@ void ClientEndFrame( gentity_t *ent ) {
 	}
 
 	pers = &ent->client->pers;
-
-/*
-	// turn off any expired powerups
-	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		if (i != PW_FLYING) {
-			if ( ent->client->ps.powerups[ i ] < level.time ) {
-				ent->client->ps.powerups[ i ] = 0;
-			}
-		}
-	}
-*/
-
-	// save network bandwidth
 #if 0
 	if ( !g_synchronousClients->integer && ent->client->ps.pm_type == PM_NORMAL ) {
 		// FIXME: this must change eventually for non-sync demo recording

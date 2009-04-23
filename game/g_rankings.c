@@ -864,12 +864,6 @@ void G_RankPickupPowerup( int self, int powerup )
 	}
 	
 	// ctf flags are treated as powerups
-	if( (powerup == PW_REDFLAG) || (powerup == PW_BLUEFLAG) )
-	{
-		trap_RankReportInt( self, -1, QGR_KEY_FLAG_PICKUP, 1, 1 );
-		return;
-	}
-
 	trap_RankReportInt( self, -1, QGR_KEY_POWERUP, 1, 1 );
 	
 	switch( powerup )
