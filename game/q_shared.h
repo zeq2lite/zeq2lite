@@ -2,6 +2,7 @@
 //
 #ifndef __Q_SHARED_H
 #define __Q_SHARED_H
+
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
 
@@ -1133,86 +1134,83 @@ typedef struct {
 typedef struct playerState_s {
 	int			commandTime;	// cmd->serverTime of last executed command
 	int			pm_type;
+	int			bobCycle;		// for view bobbing and footstep generation
 	int			pm_flags;		// ducked, jump_held, etc
 	int			pm_time;
-	int			bobCycle;		// for view bobbing and footstep generation
+
 	vec3_t		origin;
 	vec3_t		velocity;
 	int			weaponTime;
 	int			gravity;
-	int			delta_angles[3];
+	int			speed;
+	int			delta_angles[3];	// add to command angles to get view direction
+									// changed by spawns, rotating objects, and teleporters
+
 	int			groundEntityNum;// ENTITYNUM_NONE = in air
+
 	int			legsTimer;		// don't change low priority animations until this runs out
 	int			legsAnim;		// mask off ANIM_TOGGLEBIT
+
 	int			torsoTimer;		// don't change low priority animations until this runs out
 	int			torsoAnim;		// mask off ANIM_TOGGLEBIT
-	int			movementDir;
+
+	int			movementDir;	// a number 0 to 7 that represents the reletive angle
+								// of movement to the view angle (axial and diagonals)
+								// when at rest, the value will remain unchanged
+								// used to twist the legs during strafing
+
 	vec3_t		grapplePoint;	// location of grapple to pull towards if PMF_GRAPPLE_PULL
+
 	int			eFlags;			// copied to entityState_t->eFlags
+
 	int			eventSequence;	// pmove generated events
 	int			events[MAX_PS_EVENTS];
 	int			eventParms[MAX_PS_EVENTS];
+
 	int			externalEvent;	// events set on player from another source
 	int			externalEventParm;
 	int			externalEventTime;
+
 	int			clientNum;		// ranges from 0 to MAX_CLIENTS-1
 	int			weapon;			// copied to entityState_t->weapon
 	int			weaponstate;
+
 	vec3_t		viewangles;		// for fixed views
 	int			viewheight;
-	// 	ZEQ2
+
+	// <-- RiO
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
-	qboolean 	struggling;
-	qboolean 	customWeapons;
-	qboolean 	permanent;
-	qboolean 	nextRequirementPowerLevelButton;
-	int 		nextRequirementPowerLevelCurrent;
-	int			nextRequirementPowerLevelTotal;
-	int 		nextRequirementPowerLevelMaximum;
-	qboolean 	previousRequirementPowerLevelButton;
-	int 		previousRequirementPowerLevelCurrent;
-	int			previousRequirementPowerLevelTotal;
-	int 		previousRequirementPowerLevelMaximum;
-	float 		nextTransformTime;
-	int 		zanzokenCost;
-	int 		zanzokenDistance;
-	int 		speed;
-	float 		meleeAttack;
-	float 		meleeDefense;
-	float 		energyDefense;
-	float		energyAttackDamage;
-	float 		energyAttackCost;
-	int			powerLevel;
-	int			powerLevelChargeScale;
-	float 		powerLevelDrain;
-	float 		powerLevelTotalDrain;
-	float 		powerLevelMaximumDrain;
-	float 		powerLevelChargeRate;
-	float 		powerLevelBreakLimitRate;
+	int			powerlevel;
+	int			powerlevelChargeScale;
 	int			rolling;
 	int			running;
-	int			lockedTarget;
-	vec3_t		lockedTargetPosition;
 	qboolean	lockedOn;
+	vec3_t		lockedTarget;
+	// RiO -->
+
 	// damage feedback
 	int			damageEvent;	// when it changes, latch the other parms
 	int			damageYaw;
 	int			damagePitch;
 	int			damageCount;
+
 	int			stats[MAX_STATS];
+
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
 	int			ammo[MAX_WEAPONS];
+
 	int			generic1;
 	int			loopSound;
 	int			jumppad_ent;	// jumppad entity hit this frame
+
 	// not communicated over the net at all
 	int			ping;			// server to game info for scoreboard
 	int			pmove_framecount;	// FIXME: don't transmit over the network
 	int			jumppad_frame;
 	int			entityEventSequence;
-}playerState_t;
+} playerState_t;
 
 
 //====================================================================
@@ -1247,7 +1245,7 @@ typedef struct playerState_s {
 #define BUTTON_ROLL_LEFT	32			// Roll to the left when flying
 #define BUTTON_ROLL_RIGHT	64			// Roll to the right when flying
 #define BUTTON_BOOST		128			// Boost while held down
-#define BUTTON_LIGHTSPEED	512			// Activate ZANZOKEN movement (Zanzoken)
+#define BUTTON_LIGHTSPEED	512			// Activate lightspeed movement (Zanzoken)
 #define BUTTON_ALT_ATTACK	1024		// Alternate fire
 #define BUTTON_POWER_UP		4096		// Raise power level
 #define BUTTON_POWER_DOWN	8192		// Lower power level
