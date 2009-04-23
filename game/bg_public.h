@@ -169,7 +169,7 @@ typedef enum {
 #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
 #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
 #define PMF_BOOST_HELD		1024	// boost key still held
-#define PMF_LIGHTSPEED_HELD 2048	// lightspeed key still held (NOTE: Not like we're using grappling anyway...)
+#define PMF_LIGHTSPEED_HELD 2048	// ZANZOKEN key still held (NOTE: Not like we're using grappling anyway...)
 
 #define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
 
@@ -414,6 +414,7 @@ typedef enum {
 	// ADDING FOR ZEQ2
 	EV_DETONATE_WEAPON,
 	EV_ALTFIRE_WEAPON,
+	EV_TIERCHECK,
 	EV_TIERUP,
 	EV_TIERDOWN,
 	EV_LIGHTSPEED_GHOSTIMAGE,

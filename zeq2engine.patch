@@ -3048,7 +3048,7 @@ Index: code/game/bg_public.h
  #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
  #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
 +#define PMF_BOOST_HELD		1024	// boost key still held
-+#define PMF_LIGHTSPEED_HELD 2048	// lightspeed key still held (NOTE: Not like we're using grappling anyway...)
++#define PMF_LIGHTSPEED_HELD 2048	// ZANZOKEN key still held (NOTE: Not like we're using grappling anyway...)
  
  #define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
  
@@ -14004,7 +14004,7 @@ Index: code/qcommon/q_shared.h
 +	// <-- RiO
 +	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 +	vec3_t		dashDir;	// Direction in which the player is dashing
-+	int			powerlevel;
++	int			powerLevel;
 +	int			powerlevelChargeScale;
 +	int			rolling;
 +	int			running;
@@ -14065,7 +14065,7 @@ Index: code/qcommon/q_shared.h
 +#define BUTTON_ROLL_LEFT	32			// Roll to the left when flying
 +#define BUTTON_ROLL_RIGHT	64			// Roll to the right when flying
 +#define BUTTON_BOOST		128			// Boost while held down
-+#define BUTTON_LIGHTSPEED	512			// Activate lightspeed movement (Zanzoken)
++#define BUTTON_LIGHTSPEED	512			// Activate ZANZOKEN movement (Zanzoken)
 +#define BUTTON_ALT_ATTACK	1024		// Alternate fire
 +#define BUTTON_POWER_UP		4096		// Raise power level
 +#define BUTTON_POWER_DOWN	8192		// Lower power level

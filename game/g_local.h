@@ -321,6 +321,7 @@ extern struct gclient_s {
 	gentity_t	*guidetarget;		// guided weapon when firing one
 	gentity_t	*playerEntity;
 	char		*modelName;
+	tierConfig_g tiers[8];
 	
 	// END ADDING
 
@@ -822,7 +823,7 @@ extern	vmCvar_t	g_proxMineTimeout;
 // ADDING FOR ZEQ2
 extern	vmCvar_t	g_verboseParse;
 extern	vmCvar_t	g_powerLevel;
-extern	vmCvar_t	g_powerLevelChargeScale;
+extern	vmCvar_t	g_powerlevelChargeScale;
 extern	vmCvar_t	g_rolling;
 extern	vmCvar_t	g_running;
 // END ADDING

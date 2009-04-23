@@ -55,7 +55,7 @@ void PM_BuildBufferHealth(void){
 PM_AddEvent
 ===============*/
 void PM_AddEvent(int newEvent){
-	BG_AddPredictableEventToPlayerstate(newEvent, 0, pm->ps );
+	BG_AddPredictableEventToPlayerstate(newEvent,0,pm->ps);
 }
 /*===============
 PM_AddTouchEnt
@@ -86,27 +86,19 @@ static void PM_StartTorsoAnim(int anim){
 	if(pm->ps->pm_type >= PM_DEAD){
 		return;
 	}
-	pm->ps->torsoAnim = ((pm->ps->torsoAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT )
-		| anim;
+	pm->ps->torsoAnim = ((pm->ps->torsoAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT) | anim;
 }
 static void PM_StartLegsAnim(int anim){
 	if(pm->ps->pm_type >= PM_DEAD){
 		return;
 	}
-//	if(pm->ps->legsTimer > 0){
-//		return;		// a high priority animation is running
-//	}
-	pm->ps->legsAnim = ((pm->ps->legsAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT )
-		| anim;
+	pm->ps->legsAnim = ((pm->ps->legsAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT ) | anim;
 }
 
 static void PM_ContinueLegsAnim(int anim){
 	if((pm->ps->legsAnim & ~ANIM_TOGGLEBIT)== anim){
 		return;
 	}
-//	if(pm->ps->legsTimer > 0){
-//		return;		// a high priority animation is running
-//	}
 	PM_StartLegsAnim(anim );
 }
 
@@ -114,9 +106,6 @@ static void PM_ContinueTorsoAnim(int anim){
 	if((pm->ps->torsoAnim & ~ANIM_TOGGLEBIT)== anim){
 		return;
 	}
-//	if(pm->ps->torsoTimer > 0){
-//		return;		// a high priority animation is running
-//	}
 	PM_StartTorsoAnim(anim );
 }
 
@@ -137,15 +126,12 @@ void PM_ClipVelocity(vec3_t in, vec3_t normal, vec3_t out, float overbounce){
 	float	backoff;
 	float	change;
 	int		i;
-
 	backoff = DotProduct (in, normal);
-
 	if(backoff < 0){
 		backoff *= overbounce;
 	} else{
 		backoff /= overbounce;
 	}
-
 	for (i=0 ; i<3 ; i++){
 		change = normal[i]*backoff;
 		out[i] = in[i] - change;
@@ -235,7 +221,7 @@ static void PM_Accelerate(vec3_t wishdir, float wishspeed, float accel){
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
 
-	// clamp the speed lower ifwading or moving underwater.
+	// clamp the speed lower if wading or moving underwater.
 	if(pm->waterlevel){
 		float waterScale;
 
@@ -351,29 +337,13 @@ static void PM_SetMovementDir(void){
 		}
 	}
 }
-
 static void PM_StopBoost(void){
 	pm->ps->stats[bitFlags] &= ~STATBIT_BOOSTING;
 	pm->ps->powerups[PW_BOOST] = 0;
 }
-
 static void PM_StopDash(void){
 	VectorClear(pm->ps->dashDir );
-//	PM_StopBoost();
 }
-
-/*============
-PM_CheckTier
-============*/
-static void PM_CheckTier(void){
-	int tier, lowBreak, highBreak;
-	tier = pm->ps->stats[tierCurrent];
-	lowBreak = (32000 / 9) * (tier);
-	highBreak = (32000 / 9) * (tier + 1);
-	if((pm->ps->stats[powerLevel] < lowBreak) && tier > 0){PM_AddEvent(EV_TIERDOWN);}
-	else if((pm->ps->stats[powerLevel] > highBreak)&& tier < 7){PM_AddEvent(EV_TIERUP );}
-}
-
 /*
 ==================
 PM_CheckPowerLevel
@@ -384,7 +354,7 @@ static qboolean PM_CheckPowerLevel(void){
 	tier = pm->ps->stats[tierCurrent];
 	lowBreak = 1000;
 	highBreak = (32000 / 9) * (tier + 1);
-	chargeScale = pm->ps->powerLevelChargeScale * 10;
+	chargeScale = pm->ps->powerlevelChargeScale * 10;
 	pm->ps->stats[powerLevelTimer2] += pml.msec;
 	while(pm->ps->stats[powerLevelTimer2] >= 50){
 		pm->ps->stats[powerLevelTimer2] -= 50;
@@ -2367,7 +2337,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		vec3_t dir;
 		vec3_t angles;
 
-		VectorSubtract(pm->ps->lockedTargetPosition, ps->origin, dir);
+		VectorSubtract(pm->ps->lockedTarget, ps->origin, dir);
 		vectoangles(dir, angles);
 
 		if(angles[PITCH] > 180) { 
@@ -2506,7 +2476,7 @@ void PM_UpdateViewAngles2(playerState_t *ps, const usercmd_t *cmd){
 	if(pm->ps->lockedOn ){
 		vec3_t dir;
 		vec3_t angles;
-		VectorSubtract(pm->ps->lockedTargetPosition, ps->origin, dir);
+		VectorSubtract(pm->ps->lockedTarget, ps->origin, dir);
 		vectoangles(dir, angles);
 
 		if(angles[PITCH] > 180) { 
@@ -2552,7 +2522,7 @@ PmoveSingle
 void trap_SnapVector(float *v ); // <-- forward declaration
 
 void PmoveSingle (pmove_t *pmove) {
-
+	int state;
 	pm = pmove;
 
 	// this counter lets us debug movement problems with a journal
@@ -2751,19 +2721,16 @@ void PmoveSingle (pmove_t *pmove) {
 		!(pm->ps->powerups[PW_TRANSFORM]) &&
 		!(pm->ps->weaponstate == WEAPON_GUIDING) && 
 		!(pm->ps->weaponstate == WEAPON_ALTGUIDING)) {
-		if(PM_DeductFromHealth(100 )) {
-
+		if(PM_DeductFromHealth(100)) {
 			// Disable any dashing
 			if(VectorLength(pm->ps->dashDir)> 0.0f){
 				PM_StopDash();
 			}
-
 			PM_AddEvent(EV_LIGHTSPEED_GHOSTIMAGE );
 			pm->ps->powerups[PW_LIGHTSPEED] = 750; // max 0.75 seconds lightspeed
 			pm->ps->pm_flags |= PMF_LIGHTSPEED_HELD;
 		}
 	}
-
 	// Activate transform ifnecessary
 	if(pm->ps->powerups[PW_TRANSFORM]){
 		if(VectorLength(pm->ps->dashDir)> 0.0f){
@@ -2771,13 +2738,17 @@ void PmoveSingle (pmove_t *pmove) {
 			PM_StopBoost();
 		}
 		PM_Transform();
-	} else if(pm->ps->powerups[PW_LIGHTSPEED]){
+	}
+	else if(pm->ps->powerups[PW_LIGHTSPEED]){
 		PM_LightSpeedMove();
-	} else if(pm->ps->powerups[PW_FLYING]){
+	}
+	else if(pm->ps->powerups[PW_FLYING]){
 		PM_FlyMove();
-	} else if(VectorLength(pm->ps->dashDir)> 0.0f){
+	}	
+	else if(VectorLength(pm->ps->dashDir)> 0.0f){
 		PM_DashMove();
-	} else if(pml.walking){
+	}
+	else if(pml.walking){
 		pmove->ps->powerups[PW_FLYING] = 0;
 		if(!(pm->cmd.buttons & BUTTON_WALKING) &&
 			  (pm->cmd.forwardmove || pm->cmd.rightmove) &&
@@ -2786,41 +2757,23 @@ void PmoveSingle (pmove_t *pmove) {
 		} else{
 			PM_WalkMove();
 		}
-	} else{
-		// airborne
+	}
+	else{
 		PM_AirMove();
 	}
-
 	PM_Animate();
-
-	// set groundentity, watertype, and waterlevel
 	PM_GroundTrace();
 	PM_SetWaterLevel();
-
-	// weapons
 	PM_Weapon();
-
-	// footstep events / legs animations
 	PM_Footsteps();
-
-	// torso animation
 	PM_TorsoAnimation();
-
-	// entering / leaving water splashes
 	PM_WaterEvents();
-
-	// snap some parts of playerstate to save network bandwidth
 	trap_SnapVector(pm->ps->velocity );
-
-	// set boost aura state
 	if(pm->ps->powerups[PW_BOOST]){
 		pm->ps->eFlags |= EF_AURA;
 	}
-
-	// set tier
-	PM_CheckTier();
+	PM_AddEvent(EV_TIERCHECK);
 }
-
 
 /*
 ================

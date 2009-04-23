@@ -507,6 +507,7 @@ char *eventnames[] = {
 	
 	"EV_DETONATE_WEAPON",
 	"EV_ALTFIRE_WEAPON",
+	"EV_TIERCHECK",
 	"EV_TIERUP",
 	"EV_TIERDOWN",
 	"EV_LIGHTSPEED_GHOSTIMAGE",
@@ -593,7 +594,7 @@ Handles the sequence numbers
 
 void	trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 
-void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps ) {
+extern void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps ) {
 
 #ifdef _DEBUG
 	{

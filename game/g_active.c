@@ -1,29 +1,43 @@
 // Copyright (C) 1999-2000 Id Software, Inc.
 //
-
 #include "g_local.h"
-
-void P_TierUp( gclient_t *client ) {
+#include "bg_local.h"
+void tierUp(gclient_t *client){
 	playerState_t *ps;
 	ps = &client->ps;
-	if(ps->stats[tierCurrent] < 7){
-		ps->stats[tierCurrent]++;
-		if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
-			ps->powerups[PW_TRANSFORM] = 2700 + (ps->stats[tierCurrent] * 800);
-			ps->stats[tierTotal] = ps->stats[tierCurrent];
-			//trap_S_StartSound(client->playerEntity->pos1,ENTITYNUM_NONE,CHAN_BODY,client->tiers[tierCurrent].soundTransformFirst);
-		}
-		else{
-			//G_Sound(client->playerEntity,CHAN_VOICE,G_SoundIndex(strcat(tierPath,"transform.ogg")));
-		}
+	ps->stats[tierCurrent]++;
+	if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
+		ps->powerups[PW_TRANSFORM] = client->tiers[ps->stats[tierCurrent]].transformTime;
+		ps->stats[tierTotal] = ps->stats[tierCurrent];
 	}
 }
-
-void P_TierDown( playerState_t *ps ) {
-	if (ps->stats[tierCurrent] > 0){
+void tierDown(gclient_t *client){
+	playerState_t *ps;
+	ps = &client->ps;
+	if(ps->stats[tierCurrent] > 0){
 		ps->stats[tierCurrent]--;
 	}
 }
+void tierCheck(gclient_t *client){
+	int tier;
+	tierConfig_g *nextTier,*baseTier;
+	playerState_t *ps;
+	ps = &client->ps;
+	tier = ps->stats[tierCurrent];
+	if(tier+1 < 8){
+		nextTier = &client->tiers[tier+1];
+		if((ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) && (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) && (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
+			BG_AddPredictableEventToPlayerstate(EV_TIERUP,0,pm->ps);
+		}
+	}
+	if(tier > 0){
+		baseTier = &client->tiers[tier];
+		if((ps->stats[powerLevel] <= baseTier->requirementPowerLevelCurrent) || (ps->stats[powerLevelTotal] <= baseTier->requirementPowerLevelTotal) || (ps->persistant[powerLevelMaximum] <= baseTier->requirementPowerLevelMaximum)){
+			BG_AddPredictableEventToPlayerstate(EV_TIERDOWN,0,pm->ps);
+		}
+	}
+}
+
 
 
 /*
@@ -594,20 +608,19 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_ALTFIRE_WEAPON:
 			FireWeapon( ent, qtrue );
 			break;
-
 		case EV_DETONATE_WEAPON:
 			missile = client->guidetarget;
 			G_RemoveUserWeapon( missile );
 			break;
-
+		case EV_TIERCHECK:
+			tierCheck(client);
+			break;
 		case EV_TIERUP:
-			P_TierUp( client );
+			tierUp(client);
 			break;
-
 		case EV_TIERDOWN:
-			P_TierDown( &client->ps );
+			tierDown(client);
 			break;
-
 		case EV_USE_ITEM1:		// teleporter
 			// drop flags in CTF
 			item = NULL;
@@ -941,7 +954,7 @@ void ClientThink_real( gentity_t *ent ) {
 //	client->ps.powerLevel = g_powerLevel.value;
 	
 	// set the power level charge speed
-//	client->ps.powerLevelChargeScale = g_powerLevelChargeScale.value;
+//	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 
 	// set player rolling
 	client->ps.rolling = g_rolling.value;

@@ -1247,7 +1247,7 @@ typedef struct playerState_s {
 #define BUTTON_ROLL_LEFT	32			// Roll to the left when flying
 #define BUTTON_ROLL_RIGHT	64			// Roll to the right when flying
 #define BUTTON_BOOST		128			// Boost while held down
-#define BUTTON_LIGHTSPEED	512			// Activate lightspeed movement (Zanzoken)
+#define BUTTON_LIGHTSPEED	512			// Activate ZANZOKEN movement (Zanzoken)
 #define BUTTON_ALT_ATTACK	1024		// Alternate fire
 #define BUTTON_POWER_UP		4096		// Raise power level
 #define BUTTON_POWER_DOWN	8192		// Lower power level

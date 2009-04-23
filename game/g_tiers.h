@@ -20,6 +20,3 @@ typedef struct{
 	float powerLevelChargeRate;
 	float powerLevelBreakLimitRate;
 }tierConfig_g;
-typedef struct{
-	tierConfig_g tiers[8];
-}tierList;

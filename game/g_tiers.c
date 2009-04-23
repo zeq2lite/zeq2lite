@@ -1,16 +1,15 @@
 #include "g_local.h"
-static tierList tierInfos[MAX_CLIENTS];
 void parseTier(char *path,tierConfig_g *tier);
-void setupTiers(int clientNum,char *modelName){
+void setupTiers(gclient_t *client){
 	int	i;
-	tierList *list;
 	tierConfig_g *tier;
+	char *modelName;
 	char filename[MAX_QPATH * 2];
 	char tierPath[MAX_QPATH];
 	char tempPath[MAX_QPATH];
-	list = &tierInfos[clientNum];
+	modelName = client->modelName;
 	for(i=0;i<8;i++){
-		tier = &list->tiers[i];
+		tier = &client->tiers[i];
 		memset(tier,0,sizeof(tierConfig_g));
 		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",modelName,i+1);

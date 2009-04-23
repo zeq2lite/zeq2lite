@@ -646,12 +646,16 @@ static void CG_DrawStatusBar( void ) {
 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
 	if(tier){	
-		tierLast = (3640 * tier) / (float)ps->persistant[powerLevelMaximum];
-		CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
+		tierLast = (float)ci->tierConfig[ci->tierCurrent].requirementPowerLevel / (float)ps->persistant[powerLevelMaximum];
+		if(tierLast > 0){
+			CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
+		}
 	}
 	if(tier < ps->stats[tierTotal]){
-		tierNext = (3640 * (tier + 1)) / (float)ps->persistant[powerLevelMaximum];
-		CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
+		tierNext = (float)ci->tierConfig[ci->tierCurrent+1].requirementPowerLevel / (float)ps->persistant[powerLevelMaximum];
+		if(tierNext < 1.0){
+			CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
+		}
 	}
 	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
 	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
@@ -2005,9 +2009,9 @@ static void CG_ScanForCrosshairEntity( void ) {
 	cg.crosshairClientNum = trace.entityNum;
 	cg.crosshairClientTime = cg.time;
 	VectorCopy(cg_entities[trace.entityNum].lerpOrigin,targetPosition);
-	ps->lockedTargetPosition[0] = targetPosition[0];
-	ps->lockedTargetPosition[1] = targetPosition[1];
-	ps->lockedTargetPosition[2] = targetPosition[2];
+	ps->lockedTarget[0] = targetPosition[0];
+	ps->lockedTarget[1] = targetPosition[1];
+	ps->lockedTarget[2] = targetPosition[2];
 }
 
 
