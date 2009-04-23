@@ -489,7 +489,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 			}
 		}
 		else{
-			target->powerLevel = target->powerLevel - 1.0f;
+			target->powerLevel = target->powerLevel - damage;
 			G_Printf(va("Attack Powerlevel = %i\n",target->powerLevel));
 			G_Printf(va("Attack Damage = %i\n",damage));
 			if(target->powerLevel <= 0){
@@ -1400,7 +1400,8 @@ static void G_BounceUserMissile( gentity_t *self, trace_t *trace ) {
 void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 // Handles impact of the weapon with map geometry or entities.
 	gentity_t		*other;
-	qboolean		hitClient = qfalse;		
+	qboolean		hitClient = qfalse;	
+	vec3_t	velocity;
 	G_Printf(va("G_ImpactUserWeapon\n"));
 	
 	other = &g_entities[trace->entityNum];
@@ -1414,15 +1415,12 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 	}
 
 	self->takedamage = qtrue;
-
 	// Can the target take damage?
 	if (other->takedamage) {
-		G_Printf(va("other->takedamage = qtrue\n"));
 		// FIXME: wrong damage direction?
 		// Does the missile do damage?
 		if ( self->damage ) {
-			vec3_t	velocity;
-			G_Printf(va("self->damage = qtrue\n"));
+
 
 			// Log accuracy hits
 			if( LogAccuracyHit( other, &g_entities[self->s.clientNum] ) ) {
@@ -1461,14 +1459,16 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
 	}
 	if((self->s.eType == ET_MISSILE) || (self->s.eType == ET_BEAMHEAD)){
-		self->s.pos.trTime = 0;
-		self->s.pos.trDuration = 0;
+		//self->s.pos.trTime = 0;
+		//self->s.pos.trDuration = 0;
+		vec3_t forward;
 		self->struggling = qtrue;
 		//self->speed *= self->powerLevel;
 		//VectorClear( self->s.pos.trDelta );
-		VectorScale( self->movedir, self->powerLevel, self->s.pos.trDelta );
+		VectorScale( velocity, self->powerLevel * 0.5f, forward );
+		VectorCopy(forward,self->s.pos.trDelta);
 		// This saves network bandwidth.
-		//SnapVector( self->s.pos.trDelta );
+		SnapVector( self->s.pos.trDelta );
 		//VectorCopy( trace->endpos,self->s.pos.trBase );
 		//VectorCopy( self->r.currentOrigin,other->r.currentOrigin );
 	}
