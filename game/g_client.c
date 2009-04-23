@@ -740,7 +740,7 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	// set max powerLevel
 	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-	client->ps.stats[powerLevelTotal] = client->ps.stats[powerLevelTotal];//g_powerlevel.value;
+	client->ps.stats[powerLevelTotal] = client->ps.stats[powerLevelTotal];//g_powerLevel.value;
 	client->playerEntity = ent;
 
 	// setup tier information
@@ -982,7 +982,7 @@ void ClientBegin( int clientNum ) {
 
 	// ADDING FOR ZEQ2
 	// Set the starting cap
-	client->ps.persistant[powerLevelMaximum] = g_powerlevel.value;//1000;
+	client->ps.persistant[powerLevelMaximum] = g_powerLevel.value;//1000;
 	// END ADDING
 
 	// locate ent at a spawn point
@@ -1109,16 +1109,16 @@ void ClientSpawn(gentity_t *ent) {
 		client->pers.maxHealth = 100;
 	}
 	// clear entity values
-	if ( g_powerlevel.value > 32768 ) {
-		g_powerlevel.value = 32768;
+	if ( g_powerLevel.value > 32768 ) {
+		g_powerLevel.value = 32768;
 	}
-	if ( g_powerlevelChargeScale.value < 0.1 ) {
-		g_powerlevelChargeScale.value = 0.1;
+	if ( g_powerLevelChargeScale.value < 0.1 ) {
+		g_powerLevelChargeScale.value = 0.1;
 	}
-	if ( g_powerlevelChargeScale.value > 5 ) {
-		g_powerlevelChargeScale.value = 5;
+	if ( g_powerLevelChargeScale.value > 5 ) {
+		g_powerLevelChargeScale.value = 5;
 	}
-	client->ps.stats[powerLevelTotal] = g_powerlevel.value;
+	client->ps.stats[powerLevelTotal] = g_powerLevel.value;
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1147,7 +1147,7 @@ void ClientSpawn(gentity_t *ent) {
 	// END ADDING
 
 	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
-	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
+	client->ps.powerLevelChargeScale = g_powerLevelChargeScale.value;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
 

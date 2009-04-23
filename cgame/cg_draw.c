@@ -2005,9 +2005,9 @@ static void CG_ScanForCrosshairEntity( void ) {
 	cg.crosshairClientNum = trace.entityNum;
 	cg.crosshairClientTime = cg.time;
 	VectorCopy(cg_entities[trace.entityNum].lerpOrigin,targetPosition);
-	ps->lockedTarget[0] = targetPosition[0];
-	ps->lockedTarget[1] = targetPosition[1];
-	ps->lockedTarget[2] = targetPosition[2];
+	ps->lockedTargetPosition[0] = targetPosition[0];
+	ps->lockedTargetPosition[1] = targetPosition[1];
+	ps->lockedTargetPosition[2] = targetPosition[2];
 }
 
 

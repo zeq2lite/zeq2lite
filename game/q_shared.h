@@ -1133,9 +1133,9 @@ typedef struct {
 typedef struct playerState_s {
 	int			commandTime;	// cmd->serverTime of last executed command
 	int			pm_type;
-	int			bobCycle;		// for view bobbing and footstep generation
 	int			pm_flags;		// ducked, jump_held, etc
 	int			pm_time;
+	int			bobCycle;		// for view bobbing and footstep generation
 	vec3_t		origin;
 	vec3_t		velocity;
 	int			weaponTime;
@@ -1163,6 +1163,7 @@ typedef struct playerState_s {
 	// 	ZEQ2
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
+	qboolean 	struggling;
 	qboolean 	customWeapons;
 	qboolean 	permanent;
 	qboolean 	nextRequirementPowerLevelButton;
@@ -1173,8 +1174,7 @@ typedef struct playerState_s {
 	int 		previousRequirementPowerLevelCurrent;
 	int			previousRequirementPowerLevelTotal;
 	int 		previousRequirementPowerLevelMaximum;
-	int			powerlevel;
-	int			powerlevelChargeScale;
+	float 		nextTransformTime;
 	int 		zanzokenCost;
 	int 		zanzokenDistance;
 	int 		speed;
@@ -1183,7 +1183,8 @@ typedef struct playerState_s {
 	float 		energyDefense;
 	float		energyAttackDamage;
 	float 		energyAttackCost;
-	float 		transformTime;
+	int			powerLevel;
+	int			powerLevelChargeScale;
 	float 		powerLevelDrain;
 	float 		powerLevelTotalDrain;
 	float 		powerLevelMaximumDrain;
