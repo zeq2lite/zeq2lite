@@ -1165,12 +1165,16 @@ typedef struct playerState_s {
 	vec3_t		dashDir;	// Direction in which the player is dashing
 	qboolean 	customWeapons;
 	qboolean 	permanent;
-	qboolean 	requirementPowerLevelButton;
+	qboolean 	nextRequirementPowerLevelButton;
+	int 		nextRequirementPowerLevelCurrent;
+	int			nextRequirementPowerLevelTotal;
+	int 		nextRequirementPowerLevelMaximum;
+	qboolean 	previousRequirementPowerLevelButton;
+	int 		previousRequirementPowerLevelCurrent;
+	int			previousRequirementPowerLevelTotal;
+	int 		previousRequirementPowerLevelMaximum;
 	int			powerlevel;
 	int			powerlevelChargeScale;
-	int 		requirementPowerLevelCurrent;
-	int			requirementPowerLevelTotal;
-	int 		requirementPowerLevelMaximum;
 	int 		zanzokenCost;
 	int 		zanzokenDistance;
 	int 		speed;
