@@ -1928,6 +1928,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\cg_tiers.h"
+				>
+			</File>
+			<File
 				RelativePath="cg_userweapons.h"
 				>
 			</File>

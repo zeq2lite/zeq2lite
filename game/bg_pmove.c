@@ -2009,7 +2009,35 @@ static void PM_Weapon(void){
 	}
 }
 
+/*
+==================
+PM_LockOn
+==================
+*/
+void PM_LockOn(void){
+	vec3_t		start,end,minSize,maxSize,forward,up;
+	trace_t		trace;
 
+	AngleVectors( pm->ps->viewangles, forward, NULL, up );
+	VectorCopy( pm->ps->origin, start );
+	VectorMA( start, 131072, forward, end );
+	
+	//pm->ps->lockReady = qfalse;
+
+	minSize[0] = -5;
+	minSize[1] = -5;
+	minSize[2] = -5;
+	maxSize[0] = -minSize[0];
+	maxSize[1] = -minSize[1];
+	maxSize[2] = -minSize[2];
+	pm->trace( &trace, start, minSize, maxSize, end, pm->ps->clientNum, CONTENTS_BODY );
+	if((trace.entityNum >= MAX_CLIENTS) || (pm->ps->lockedOn)){return;}
+
+	//pm->ps->lockReady = qtrue;
+
+	// Change trace.endpos below with the actual clientNum's position. Something like: g_entities[trace.entityNum].lerpOrigin
+	VectorCopy(trace.endpos,pm->ps->lockedTarget);
+}
 
 /*
 ================
@@ -2022,6 +2050,11 @@ static void PM_Animate(void){
 		if(pm->ps->torsoTimer == 0){
 			pm->ps->torsoTimer = 500;
 			PM_AddEvent(EV_TAUNT);
+			if (pm->ps->lockedOn) {
+				pm->ps->lockedOn = qfalse;
+			} else {
+				pm->ps->lockedOn = qtrue;
+			}
 		}
 	}
 }
@@ -2059,7 +2092,6 @@ static void PM_DropTimers(void){
 	}
 }
 
-
 /*================
 PM_UpdateViewAngles
 ================*/
@@ -2084,6 +2116,8 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	if(ps->pm_type != PM_SPECTATOR && ps->stats[powerLevel] <= 0){
 		return;		// no view changes at all
 	}
+
+	PM_LockOn();
 
 	if(pm->ps->lockedOn ){
 		vec3_t dir;
