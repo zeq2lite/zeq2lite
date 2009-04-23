@@ -1186,6 +1186,7 @@ typedef struct playerState_s {
 	int			rolling;
 	int			running;
 	qboolean	lockedOn;
+	qboolean	lockReady;
 	vec3_t		lockedTarget;
 	// RiO -->
 

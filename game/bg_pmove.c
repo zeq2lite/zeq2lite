@@ -693,7 +693,7 @@ static void PM_WalkMove(void){
 
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
-	wishspeed *= scale * 0.30f; // * 0.30f is a fix for ZEQ2's walking speed
+	wishspeed *= scale * 0.60f; // * 0.60f is a fix for ZEQ2's walking speed
 
 	// when a player gets hit, they temporarily lose
 	// full control, which allows them to be moved a bit
@@ -2014,15 +2014,15 @@ static void PM_Weapon(void){
 PM_LockOn
 ==================
 */
-void PM_LockOn(void){
+void PM_LockOn(playerState_t *ps){
 	vec3_t		start,end,minSize,maxSize,forward,up;
 	trace_t		trace;
 
-	AngleVectors( pm->ps->viewangles, forward, NULL, up );
-	VectorCopy( pm->ps->origin, start );
+	AngleVectors( ps->viewangles, forward, NULL, up );
+	VectorCopy( ps->origin, start );
 	VectorMA( start, 131072, forward, end );
 	
-	//pm->ps->lockReady = qfalse;
+	ps->lockReady = qfalse;
 
 	minSize[0] = -5;
 	minSize[1] = -5;
@@ -2030,13 +2030,15 @@ void PM_LockOn(void){
 	maxSize[0] = -minSize[0];
 	maxSize[1] = -minSize[1];
 	maxSize[2] = -minSize[2];
-	pm->trace( &trace, start, minSize, maxSize, end, pm->ps->clientNum, CONTENTS_BODY );
-	if((trace.entityNum >= MAX_CLIENTS) || (pm->ps->lockedOn)){return;}
 
-	//pm->ps->lockReady = qtrue;
+	pm->trace( &trace, start, minSize, maxSize, end, ps->clientNum, CONTENTS_BODY );
+
+	if((trace.entityNum >= MAX_CLIENTS)/* || (ps->lockedOn)*/) {return;}
+
+	ps->lockReady = qtrue;
 
 	// Change trace.endpos below with the actual clientNum's position. Something like: g_entities[trace.entityNum].lerpOrigin
-	VectorCopy(trace.endpos,pm->ps->lockedTarget);
+	VectorCopy(trace.endpos,ps->lockedTarget);
 }
 
 /*
@@ -2050,10 +2052,12 @@ static void PM_Animate(void){
 		if(pm->ps->torsoTimer == 0){
 			pm->ps->torsoTimer = 500;
 			PM_AddEvent(EV_TAUNT);
-			if (pm->ps->lockedOn) {
-				pm->ps->lockedOn = qfalse;
-			} else {
-				pm->ps->lockedOn = qtrue;
+			if ( pm->ps->lockReady ) {
+				if (pm->ps->lockedOn) {
+					pm->ps->lockedOn = qfalse;
+				} else {
+					pm->ps->lockedOn = qtrue;
+				}
 			}
 		}
 	}
@@ -2116,8 +2120,6 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	if(ps->pm_type != PM_SPECTATOR && ps->stats[powerLevel] <= 0){
 		return;		// no view changes at all
 	}
-
-	PM_LockOn();
 
 	if(pm->ps->lockedOn ){
 		vec3_t dir;
@@ -2371,6 +2373,7 @@ void PmoveSingle (pmove_t *pmove) {
 	VectorCopy (pm->ps->velocity, pml.previous_velocity);
 	pml.frametime = pml.msec * 0.001;
 	PM_BuildBufferHealth();
+	PM_LockOn(pm->ps);
 //	if(pmove->ps->rolling){
 		PM_UpdateViewAngles(pm->ps, &pm->cmd );
 //	} else{

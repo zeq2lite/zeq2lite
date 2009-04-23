@@ -6,7 +6,7 @@
 
 #define	STEPSIZE		18
 
-#define	JUMP_VELOCITY	270
+#define	JUMP_VELOCITY	400
 #define POWERJUMP_TIME 2500
 
 #define	TIMER_LAND		130
