@@ -567,7 +567,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_LOCKON_START:
 			G_Printf(va("%i",ps->lockedTarget));
 			if(ps->lockedTarget>0){
-				pm->ps->lockedPosition = &g_entities[ps->lockedTarget].pos1;
+				pm->ps->lockedPosition = &g_entities[ps->lockedTarget].r.currentOrigin;
 			}
 			break;
 		case EV_USE_ITEM1:
