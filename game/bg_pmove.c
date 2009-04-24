@@ -2114,7 +2114,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 				continue;
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
-		Com_Printf(va("%i\n",pm->ps->lockedTarget));
+//		Com_Printf(va("%i\n",pm->ps->lockedTarget));
 	}
 	// ADDING FOR ZEQ2
 	if(pm->ps->powerups[PW_FLYING]) {
