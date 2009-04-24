@@ -1911,40 +1911,33 @@ static void CG_DrawCrosshair(void) {
 CG_ScanForCrosshairEntity
 =================
 */
-static void CG_ScanForCrosshairEntity( void ) {
-	trace_t			trace;
-	vec3_t			start,end,minSize,maxSize,muzzle,forward,up,targetPosition;
+static void CG_ScanForCrosshairEntity(void) {
+	trace_t			trace,trace2;
+	vec3_t			start,end,muzzle,forward,up,minSize,maxSize;
 	playerState_t	*ps;
-	int				content;
 
-	/*
 	ps = &cg.predictedPlayerState;
 
-	AngleVectors( ps->viewangles, forward, NULL, up );
-	VectorCopy( ps->origin, muzzle );
-	VectorMA( muzzle, ps->viewheight, up, muzzle );
-	VectorMA( muzzle, 14, forward, muzzle );
-		
-	VectorCopy( muzzle, start );
-	VectorMA( start, 131072, forward, end );
-	
-	cg.lockReady = qfalse;
+	AngleVectors(ps->viewangles,forward,NULL,up);
+	VectorCopy(ps->origin, muzzle );
+	VectorMA(muzzle,ps->viewheight,up,muzzle);
+	VectorMA(muzzle,14,forward,muzzle);
+	VectorCopy(muzzle,start);
+	VectorMA(start,131072,forward,end);
+
 	minSize[0] = -(float)cg_lockonDistance.value;
 	minSize[1] = -(float)cg_lockonDistance.value;
 	minSize[2] = -(float)cg_lockonDistance.value;
 	maxSize[0] = -minSize[0];
 	maxSize[1] = -minSize[1];
 	maxSize[2] = -minSize[2];
-	if((trace.entityNum >= MAX_CLIENTS) || (ps->lockedOn)){return;}
-	content = trap_CM_PointContents( trace.endpos, 0 );
-	cg.lockReady = qtrue;
-	cg.crosshairClientNum = trace.entityNum;
-	cg.crosshairClientTime = cg.time;
-	VectorCopy(cg_entities[trace.entityNum].lerpOrigin,targetPosition);
-	ps->lockedTarget[0] = targetPosition[0];
-	ps->lockedTarget[1] = targetPosition[1];
-	ps->lockedTarget[2] = targetPosition[2];
-	*/
+	
+	CG_Trace(&trace,start,minSize,maxSize,end,cg.snap->ps.clientNum,CONTENTS_BODY);
+
+	if (trace.entityNum>=MAX_CLIENTS){return;}
+
+	cg.crosshairClientNum=trace.entityNum;
+	cg.crosshairClientTime=cg.time;
 }
 
 
