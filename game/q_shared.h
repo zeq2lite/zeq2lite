@@ -1185,9 +1185,8 @@ typedef struct playerState_s {
 	int			powerlevelChargeScale;
 	int			rolling;
 	int			running;
-	qboolean	lockedOn;
-	qboolean	lockReady;
-	vec3_t		lockedTarget;
+	int			lockedTarget;
+	vec3_t		lockedPosition;
 	// RiO -->
 
 	// damage feedback
