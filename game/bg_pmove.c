@@ -1334,9 +1334,6 @@ Sets mins, maxs, and pm->ps->viewheight
 */
 static void PM_CheckDuck (void)
 {
-	// FIXME: No longer need this?
-	pm->ps->pm_flags &= ~PMF_INVULEXPAND;
-
 	pm->mins[0] = -15;
 	pm->mins[1] = -15;
 	pm->mins[2] = MINS_Z;
@@ -2012,27 +2009,29 @@ static void PM_Lockon(void){
 	int	lockBox;
 	trace_t	trace;
 	vec3_t minSize,maxSize,forward,up,end;
-	if(pm->cmd.buttons & BUTTON_GESTURE){ 
-		if(pm->ps->lockTimer == 0){
-			pm->ps->lockTimer = 500;
-			if(pm->ps->lockedTarget>0){
-				pm->ps->lockedTarget = 0;
-				return;
-			} 
-			AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
-			VectorMA(pm->ps->origin,131072,forward,end);
-			lockBox = 250;
-			minSize[0] = -lockBox;
-			minSize[1] = -lockBox;
-			minSize[2] = -lockBox;
-			maxSize[0] = -minSize[0];
-			maxSize[1] = -minSize[1];
-			maxSize[2] = -minSize[2];
-			pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
-			if((trace.entityNum >= MAX_CLIENTS)){return;}
-			PM_AddEvent(EV_LOCKON_START);
-			pm->ps->lockedTarget = trace.entityNum+1;
-		}
+	if(pm->cmd.buttons & BUTTON_GESTURE){
+		if(pm->ps->pm_flags & PMF_LOCK_HELD){return;}
+		pm->ps->pm_flags |= PMF_LOCK_HELD;
+		if(pm->ps->lockedTarget>0){
+			pm->ps->lockedTarget = 0;
+			return;
+		} 
+		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
+		VectorMA(pm->ps->origin,131072,forward,end);
+		lockBox = 250;
+		minSize[0] = -lockBox;
+		minSize[1] = -lockBox;
+		minSize[2] = -lockBox;
+		maxSize[0] = -minSize[0];
+		maxSize[1] = -minSize[1];
+		maxSize[2] = -minSize[2];
+		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
+		if((trace.entityNum >= MAX_CLIENTS)){return;}
+		PM_AddEvent(EV_LOCKON_START);
+		pm->ps->lockedTarget = trace.entityNum+1;
+	}
+	else{
+		pm->ps->pm_flags &= ~PMF_LOCK_HELD;
 	}
 }
 /*

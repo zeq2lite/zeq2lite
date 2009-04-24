@@ -281,22 +281,8 @@ static void CG_OffsetThirdPersonView( void ) {
 	ps = &cg.predictedPlayerState;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
-	/*
-	if (ps->lockedTarget>0) {
-		float oldRoll;
-		VectorSubtract( *(ps->lockedPosition), ps->origin, forward );
-		VectorNormalize( forward );
-		oldRoll = cg.refdefViewAngles[ROLL];
-		vectoangles( forward, cg.refdefViewAngles );
-		cg.refdefViewAngles[ROLL] = oldRoll;
-		VectorCopy( ps->origin, *(ps->lockedPosition));
-//		AngleVectors(cg.lockedTarget, forward, right, up);
-		Com_Printf("Target locked!\n");
-		return;
-	}
-	*/
-	if (cg_beamControl.value == 0) {
-		if (((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
+	if(cg_beamControl.value == 0){
+		if(((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
 			float oldRoll;
 			VectorSubtract( cg.guide_target, ps->origin, forward );
 			VectorNormalize( forward );
@@ -306,7 +292,7 @@ static void CG_OffsetThirdPersonView( void ) {
 			// cg.guide_target is updated every guided frame by prediction,
 			// so disabling it can be done every frame (if necessary it will
 			// automagically be re-enabled.
-			VectorCopy( ps->origin, cg.guide_target);
+			VectorCopy( ps->origin,cg.guide_target);
 			cg.guide_view = qfalse;
 		}	
 	}
@@ -324,6 +310,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	VectorCopy( cg.refdef.vieworg, view );	
 	cg.refdefViewAngles[PITCH] *= 0.5;
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
+	// TRANSFORMATIONS
 	if(ps->powerups[PW_TRANSFORM] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
