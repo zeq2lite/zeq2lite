@@ -281,6 +281,20 @@ static void CG_OffsetThirdPersonView( void ) {
 	ps = &cg.predictedPlayerState;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
+	/*
+	if (ps->lockedTarget>0) {
+		float oldRoll;
+		VectorSubtract( *(ps->lockedPosition), ps->origin, forward );
+		VectorNormalize( forward );
+		oldRoll = cg.refdefViewAngles[ROLL];
+		vectoangles( forward, cg.refdefViewAngles );
+		cg.refdefViewAngles[ROLL] = oldRoll;
+		VectorCopy( ps->origin, *(ps->lockedPosition));
+//		AngleVectors(cg.lockedTarget, forward, right, up);
+		Com_Printf("Target locked!\n");
+		return;
+	}
+	*/
 	if (cg_beamControl.value == 0) {
 		if (((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
 			float oldRoll;

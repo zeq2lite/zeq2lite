@@ -727,6 +727,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 
 	s->weapon = ps->weapon;
 	s->weaponstate = ps->weaponstate;
+	s->lockedTarget = ps->lockedTarget;
 
 	s->charge1.chBase = ps->stats[chargePercentPrimary];
 	s->charge2.chBase = ps->stats[chargePercentSecondary];
@@ -832,6 +833,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 
 	s->weapon = ps->weapon;
 	s->weaponstate = ps->weaponstate;
+	s->lockedTarget = ps->lockedTarget;
 
 	s->charge1.chBase = ps->stats[chargePercentPrimary];
 	s->charge2.chBase = ps->stats[chargePercentSecondary];

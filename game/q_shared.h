@@ -1154,6 +1154,8 @@ typedef struct playerState_s {
 	int			torsoTimer;		// don't change low priority animations until this runs out
 	int			torsoAnim;		// mask off ANIM_TOGGLEBIT
 
+	int			lockTimer;		// timer for toggle lock on/off.
+
 	int			movementDir;	// a number 0 to 7 that represents the reletive angle
 								// of movement to the view angle (axial and diagonals)
 								// when at rest, the value will remain unchanged
@@ -1356,6 +1358,7 @@ typedef struct entityState_s {
 	int		weaponstate;
 	int		tier;
 	// -->
+	int		lockedTarget;
 	
 	int		legsAnim;		// mask off ANIM_TOGGLEBIT
 	int		torsoAnim;		// mask off ANIM_TOGGLEBIT

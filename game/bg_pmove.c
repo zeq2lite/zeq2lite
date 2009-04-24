@@ -2017,24 +2017,27 @@ static void PM_Lockon(void){
 	int	lockBox;
 	trace_t	trace;
 	vec3_t minSize,maxSize,forward,up,end;
-	if(pm->cmd.buttons & BUTTON_GESTURE){ 
-		if(pm->ps->lockedTarget!=-1){
-			pm->ps->lockedTarget = -1;
-			return;
-		} 
-		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
-		VectorMA(pm->ps->origin,131072,forward,end);
-		lockBox = 250;
-		minSize[0] = -lockBox;
-		minSize[1] = -lockBox;
-		minSize[2] = -lockBox;
-		maxSize[0] = -minSize[0];
-		maxSize[1] = -minSize[1];
-		maxSize[2] = -minSize[2];
-		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
-		if((trace.entityNum >= MAX_CLIENTS)){return;}
-		PM_AddEvent(EV_LOCKON_START);
-		pm->ps->lockedTarget = trace.entityNum;
+	if(pm->cmd.buttons & BUTTON_GESTURE){
+		if(pm->ps->lockTimer == 0){
+			pm->ps->lockTimer = 500;
+			if(pm->ps->lockedTarget!=-1){
+				pm->ps->lockedTarget = -1;
+				return;
+			} 
+			AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
+			VectorMA(pm->ps->origin,131072,forward,end);
+			lockBox = 250;
+			minSize[0] = -lockBox;
+			minSize[1] = -lockBox;
+			minSize[2] = -lockBox;
+			maxSize[0] = -minSize[0];
+			maxSize[1] = -minSize[1];
+			maxSize[2] = -minSize[2];
+			pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
+			if((trace.entityNum >= MAX_CLIENTS)){return;}
+			PM_AddEvent(EV_LOCKON_START);
+			pm->ps->lockedTarget = trace.entityNum;
+		}
 	}
 }
 /*
@@ -2065,6 +2068,13 @@ static void PM_DropTimers(void){
 		pm->ps->torsoTimer -= pml.msec;
 		if(pm->ps->torsoTimer < 0){
 			pm->ps->torsoTimer = 0;
+		}
+	}
+
+	if(pm->ps->lockTimer > 0){
+		pm->ps->lockTimer -= pml.msec;
+		if(pm->ps->lockTimer < 0){
+			pm->ps->lockTimer = 0;
 		}
 	}
 }
@@ -2109,7 +2119,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 				continue;
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
-		Com_Printf(va("%i",pm->ps->lockedTarget),"\n");
+		Com_Printf(va("%i\n",pm->ps->lockedTarget));
 	}
 	// ADDING FOR ZEQ2
 	if(pm->ps->powerups[PW_FLYING]) {
