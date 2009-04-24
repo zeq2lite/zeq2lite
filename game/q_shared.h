@@ -1186,7 +1186,7 @@ typedef struct playerState_s {
 	int			rolling;
 	int			running;
 	int			lockedTarget;
-	vec3_t		lockedPosition;
+	vec3_t		*lockedPosition;
 	// RiO -->
 
 	// damage feedback

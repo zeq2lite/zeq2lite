@@ -1404,7 +1404,7 @@ static void PM_Footsteps(void){
 				tempAnimIndex = LEGS_AIR_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim(tempAnimIndex);
 			} else{
-				if(pm->ps->lockedOn){
+				if(pm->ps->lockedTarget>0){
 					PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);
 				} else{
 					PM_ContinueLegsAnim(LEGS_FLY_IDLE);
@@ -1455,7 +1455,7 @@ static void PM_Footsteps(void){
 					tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
 					PM_ContinueLegsAnim(tempAnimIndex );
 				} else{
-					if(pm->ps->lockedOn){
+					if(pm->ps->lockedTarget>0){
 						PM_ContinueLegsAnim(LEGS_IDLE_LOCKED );
 					} else{
 						PM_ContinueLegsAnim(LEGS_IDLE );
@@ -1698,7 +1698,7 @@ static void PM_TorsoAnimation(void){
 	default:
 		// ifwe're not doing anything special with the legs, then
 		// we default to the stand still animation
-		if(pm->ps->lockedOn){
+		if(pm->ps->lockedTarget>0){
 			PM_ContinueTorsoAnim(TORSO_STAND_LOCKED );
 		} else{
 			PM_ContinueTorsoAnim(TORSO_STAND );
@@ -2008,71 +2008,35 @@ static void PM_Weapon(void){
 		break;
 	}
 }
-
-/*
-==================
-PM_LockOn
-==================
-*/
-void PM_LockOn(playerState_t *ps){
-	vec3_t		start,end,minSize,maxSize,forward,up;
-	int			lockBox;
-	trace_t		trace;
-
-	AngleVectors( ps->viewangles, forward, NULL, NULL );
-	VectorMA( ps->origin, 131072, forward, end );
-	
-	lockBox = 250;
-
-	minSize[0] = -lockBox;
-	minSize[1] = -lockBox;
-	minSize[2] = -lockBox;
-	maxSize[0] = -minSize[0];
-	maxSize[1] = -minSize[1];
-	maxSize[2] = -minSize[2];
-
-//	Uncomment this once we have the real targets position. This will make targeting from a large distance easier.
-//	if ( ps->lockReady ) {
-//		pm->trace( &trace, ps->origin, minSize, maxSize, end, ps->clientNum, CONTENTS_BODY );
-//	} else {
-		pm->trace( &trace, ps->origin, vec3_origin, vec3_origin, end, ps->clientNum, CONTENTS_BODY );
-//	}
-
-	if ( (trace.entityNum >= MAX_CLIENTS) || (ps->lockedOn) ) {
-		return;
-	}
-
-	ps->lockReady = qtrue;
-
-	// Change trace.endpos below with the actual clientNum's position. Something like: g_entities[trace.entityNum].lerpOrigin
-	VectorCopy(trace.endpos,ps->lockedTarget);
-}
-
 /*
 ================
-PM_Animate
+PM_Lockon
 ================
 */
-
-static void PM_Animate(void){
+static void PM_Lockon(void){
+	int	lockBox;
+	trace_t	trace;
+	vec3_t minSize,maxSize,forward,up,end;
 	if(pm->cmd.buttons & BUTTON_GESTURE){ 
-		if(pm->ps->torsoTimer == 0){
-			pm->ps->torsoTimer = 500;
-			PM_AddEvent(EV_TAUNT);
-			if ( pm->ps->lockReady ) {
-				if (pm->ps->lockedOn) {
-					pm->ps->lockedOn = qfalse;
-				} else {
-					pm->ps->lockedOn = qtrue;
-				}
-			} else {
-				pm->ps->lockedOn = qfalse;
-			}
-		}
+		if(pm->ps->lockedTarget!=-1){
+			pm->ps->lockedTarget = -1;
+			return;
+		} 
+		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
+		VectorMA(pm->ps->origin,131072,forward,end);
+		lockBox = 250;
+		minSize[0] = -lockBox;
+		minSize[1] = -lockBox;
+		minSize[2] = -lockBox;
+		maxSize[0] = -minSize[0];
+		maxSize[1] = -minSize[1];
+		maxSize[2] = -minSize[2];
+		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
+		if((trace.entityNum >= MAX_CLIENTS)){return;}
+		PM_AddEvent(EV_LOCKON_START);
+		pm->ps->lockedTarget = trace.entityNum;
 	}
 }
-
-
 /*
 ================
 PM_DropTimers
@@ -2129,42 +2093,32 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	if(ps->pm_type != PM_SPECTATOR && ps->stats[powerLevel] <= 0){
 		return;		// no view changes at all
 	}
-
-	if( pm->ps->lockedOn ){
+	if(pm->ps->lockedTarget>0){
 		vec3_t dir;
 		vec3_t angles;
-
-		VectorSubtract(pm->ps->lockedTarget, ps->origin, dir);
+		VectorSubtract(*(ps->lockedPosition),ps->origin,dir);
 		vectoangles(dir, angles);
-
 		if(angles[PITCH] > 180) { 
 			angles[PITCH] -= 360;
 		}
-
 		else if(angles[PITCH] < -180) {
 			angles[PITCH] += 360;
 		}
-
 		for (i = 0; i < 3; i++) {
 			if(i == YAW && (angles[PITCH] > 65 || angles[PITCH] < -65)) 
 				continue;
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
-		Com_Printf("Target locked! Position: %i %i %i\n", pm->ps->lockedTarget[0], pm->ps->lockedTarget[1], pm->ps->lockedTarget[2]);
+		Com_Printf(va("%i",pm->ps->lockedTarget),"\n");
 	}
 	// ADDING FOR ZEQ2
-	// ifwe're flying, use quaternion multiplication to work on player's
-	// local axes.
 	if(pm->ps->powerups[PW_FLYING]) {
-		// See ifwe need to add degrees for rolling.
-			
 		if(cmd->buttons & BUTTON_ROLL_LEFT) {
 			roll -= 28 * (pml.msec / 200.0f);
 		}
 		if(cmd->buttons & BUTTON_ROLL_RIGHT) {
 			roll += 28 * (pml.msec / 200.0f);
 		}
-
 		for (i=0; i<3; i++) {
 			// Get the offsets for the angles
 			oldCmdAngle = ps->viewangles[i] - SHORT2ANGLE(ps->delta_angles[i]);
@@ -2261,10 +2215,10 @@ void PM_UpdateViewAngles2(playerState_t *ps, const usercmd_t *cmd){
 	if(ps->pm_type != PM_SPECTATOR && ps->stats[powerLevel] <= 0){
 		return;	
 	}
-	if(pm->ps->lockedOn ){
+	if((pm->ps->lockedTarget>0) && (pm->ps->lockedPosition)){
 		vec3_t dir;
 		vec3_t angles;
-		VectorSubtract(pm->ps->lockedTarget, ps->origin, dir);
+		VectorSubtract(*(ps->lockedPosition), ps->origin, dir);
 		vectoangles(dir, angles);
 		if(angles[PITCH] > 180) { 
 			angles[PITCH] -= 360;
@@ -2383,7 +2337,6 @@ void PmoveSingle (pmove_t *pmove) {
 	VectorCopy (pm->ps->velocity, pml.previous_velocity);
 	pml.frametime = pml.msec * 0.001;
 	PM_BuildBufferHealth();
-	PM_LockOn(pm->ps);
 //	if(pmove->ps->rolling){
 		PM_UpdateViewAngles(pm->ps, &pm->cmd );
 //	} else{
@@ -2467,7 +2420,7 @@ void PmoveSingle (pmove_t *pmove) {
 	else{
 		PM_AirMove();
 	}
-	PM_Animate();
+	PM_Lockon();
 	PM_GroundTrace();
 	PM_SetWaterLevel();
 	PM_Weapon();

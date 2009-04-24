@@ -4949,7 +4949,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		case EV_JUMP_PAD:
 		case EV_HIGHJUMP:
 		case EV_JUMP:
-		case EV_TAUNT:
+		case EV_LOCKON_START:
 		case EV_WATER_TOUCH:
 		case EV_WATER_LEAVE:
 		case EV_WATER_UNDER:

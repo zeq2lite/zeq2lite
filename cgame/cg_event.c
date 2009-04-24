@@ -589,37 +589,33 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_JUMP");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
 		break;
-	case EV_TAUNT:
-		DEBUGNAME("EV_TAUNT");
-		cg.predictedPlayerState.lockedOn = qfalse;
-		if(cg.lockReady){
-			cg.predictedPlayerState.lockedOn = qtrue;
-			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
-		}
+	case EV_LOCKON_START:
+		DEBUGNAME("EV_LOCKON_START");
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
 		break;
 #ifdef MISSIONPACK
-	case EV_TAUNT_YES:
-		DEBUGNAME("EV_TAUNT_YES");
+	case EV_LOCKON_START_YES:
+		DEBUGNAME("EV_LOCKON_START_YES");
 		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_YES);
 		break;
-	case EV_TAUNT_NO:
-		DEBUGNAME("EV_TAUNT_NO");
+	case EV_LOCKON_START_NO:
+		DEBUGNAME("EV_LOCKON_START_NO");
 		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_NO);
 		break;
-	case EV_TAUNT_FOLLOWME:
-		DEBUGNAME("EV_TAUNT_FOLLOWME");
+	case EV_LOCKON_START_FOLLOWME:
+		DEBUGNAME("EV_LOCKON_START_FOLLOWME");
 		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_FOLLOWME);
 		break;
-	case EV_TAUNT_GETFLAG:
-		DEBUGNAME("EV_TAUNT_GETFLAG");
+	case EV_LOCKON_START_GETFLAG:
+		DEBUGNAME("EV_LOCKON_START_GETFLAG");
 		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_ONGETFLAG);
 		break;
-	case EV_TAUNT_GUARDBASE:
-		DEBUGNAME("EV_TAUNT_GUARDBASE");
+	case EV_LOCKON_START_GUARDBASE:
+		DEBUGNAME("EV_LOCKON_START_GUARDBASE");
 		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_ONDEFENSE);
 		break;
-	case EV_TAUNT_PATROL:
-		DEBUGNAME("EV_TAUNT_PATROL");
+	case EV_LOCKON_START_PATROL:
+		DEBUGNAME("EV_LOCKON_START_PATROL");
 		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_ONPATROL);
 		break;
 #endif

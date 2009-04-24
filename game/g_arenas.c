@@ -196,11 +196,11 @@ static void CelebrateStart( gentity_t *player ) {
 	player->think = CelebrateStop;
 
 	/*
-	player->client->ps.events[player->client->ps.eventSequence & (MAX_PS_EVENTS-1)] = EV_TAUNT;
+	player->client->ps.events[player->client->ps.eventSequence & (MAX_PS_EVENTS-1)] = EV_LOCKON_START;
 	player->client->ps.eventParms[player->client->ps.eventSequence & (MAX_PS_EVENTS-1)] = 0;
 	player->client->ps.eventSequence++;
 	*/
-	G_AddEvent(player, EV_TAUNT, 0);
+	G_AddEvent(player, EV_LOCKON_START, 0);
 }
 
 

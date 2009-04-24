@@ -1204,24 +1204,6 @@ void ClientSpawn(gentity_t *ent) {
 
 	if ( level.intermissiontime ) {
 		MoveClientToIntermission( ent );
-	} else {
-		/*
-		// fire the targets of the spawn point
-		G_UseTargets( spawnPoint, ent );
-
-		// select the highest weapon number available, after any
-		// spawn given items have fired
-		client->ps.weapon = 1;
-		for ( i = WP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
-			if ( client->ps.stats[skills] & ( 1 << i ) ) {
-				client->ps.weapon = i;
-				// ADDING FOR ZEQ2
-				client->ps.weaponstate = WEAPON_READY;
-				// END ADDING
-				break;
-			}
-		}
-		*/
 	}
 
 	// run a client frame to drop exactly to the floor,
@@ -1241,7 +1223,7 @@ void ClientSpawn(gentity_t *ent) {
 	ClientEndFrame( ent );
 
 	// clear entity state values
-	BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
+	BG_PlayerStateToEntityState(&client->ps,&ent->s,qtrue);
 }
 
 
