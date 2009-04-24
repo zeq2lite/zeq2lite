@@ -1279,10 +1279,6 @@ static void CG_AddCEntity( centity_t *cent ) {
 	default:
 		CG_Error( "Bad entity type: %i\n", cent->currentState.eType );
 		break;
-	case ET_INVISIBLE:
-	case ET_PUSH_TRIGGER:
-	case ET_TELEPORT_TRIGGER:
-		break;
 	case ET_GENERAL:
 		CG_General( cent );
 		break;
@@ -1308,6 +1304,12 @@ static void CG_AddCEntity( centity_t *cent ) {
 	case ET_SPEAKER:
 		CG_Speaker( cent );
 		break;
+	case ET_INVISIBLE:
+		break;
+	case ET_PUSH_TRIGGER:
+		break;
+	case ET_TELEPORT_TRIGGER:
+		break;
 	case ET_GRAPPLE:
 		CG_Grapple( cent );
 		break;
@@ -1316,6 +1318,9 @@ static void CG_AddCEntity( centity_t *cent ) {
 		break;
 	// ADDING FOR ZEQ2
 	case ET_BEAMHEAD:
+		CG_Missile( cent );
+		break;
+	case ET_FORCEFIELD:
 		CG_Missile( cent );
 		break;
 	case ET_SKIMMER:

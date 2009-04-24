@@ -315,6 +315,24 @@ void	Svcmd_EntityList_f (void) {
 		case ET_GRAPPLE:
 			G_Printf("ET_GRAPPLE          ");
 			break;
+		case ET_TEAM:
+			G_Printf("ET_TEAM	          ");
+			break;
+		case ET_BEAMHEAD:
+			G_Printf("ET_BEAMHEAD          ");
+			break;
+		case ET_FORCEFIELD:
+			G_Printf("ET_FORCEFIELD          ");
+			break;
+		case ET_TORCH:
+			G_Printf("ET_TORCH          ");
+			break;
+		case ET_SKIMMER:
+			G_Printf("ET_SKIMMER          ");
+			break;
+		case ET_RIFT:
+			G_Printf("ET_RIFT          ");
+			break;
 		default:
 			G_Printf("%3i                 ", check->s.eType);
 			break;

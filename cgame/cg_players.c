@@ -749,7 +749,8 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	clientNum = ci - cgs.clientinfo;
 	for ( i = 0 ; i < MAX_GENTITIES ; i++ ) {
 		if ( cg_entities[i].currentState.clientNum == clientNum
-			&& cg_entities[i].currentState.eType == ET_PLAYER ) {
+			&& (cg_entities[i].currentState.eType == ET_INVISIBLE
+			|| cg_entities[i].currentState.eType == ET_PLAYER) ) {
 			CG_ResetPlayerEntity( &cg_entities[i] );
 		}
 	}
@@ -1452,7 +1453,7 @@ static void CG_PlayerAnimation( centity_t *cent,
 			legsAnimNum = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
 			if ( 0 ) {
 			} else {
-				if ( cg.predictedPlayerState.lockedTarget >= 0) {
+				if ( cg.predictedPlayerState.lockedTarget >0 ) {
 					CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE_LOCKED, speedScale );
 				} else {
 					CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE, speedScale );

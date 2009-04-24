@@ -21,7 +21,7 @@ gentity_t *GetMissileOwnerEntity (gentity_t *missile) {
 	gentity_t *parent;
 
 	parent = missile->parent;
-	while ( parent->s.eType != ET_PLAYER ) {
+	while((parent->s.eType != ET_PLAYER)&&(parent->s.eType != ET_INVISIBLE)) {
 		parent = GetMissileOwnerEntity( parent );
 	}
 	return parent;
