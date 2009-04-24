@@ -350,36 +350,37 @@ PM_CheckPowerLevel
 ==================
 */
 static qboolean PM_CheckPowerLevel(void){
-	int plSpeed,tier,chargeScale,amount;
+	int plSpeed,amount;
+	int tier,level,total,maximum;
+	float recovery;
 	tier = pm->ps->stats[tierCurrent];
-	chargeScale = pm->ps->powerlevelChargeScale * 13;
+	total = pm->ps->stats[powerLevelTotal];
+	level = pm->ps->stats[powerLevel];
+	maximum = pm->ps->persistant[powerLevelMaximum];
 	pm->ps->stats[powerLevelTimer2] += pml.msec;
-	while(pm->ps->stats[powerLevelTimer2] >= 50){
-		pm->ps->stats[powerLevelTimer2] -= 50;
-		if(pm->ps->stats[powerLevel] > pm->ps->stats[powerLevelTotal]){
-			pm->ps->stats[powerLevel] -= 6 * (pm->ps->stats[tierCurrent] + 1);
+	while(pm->ps->stats[powerLevelTimer2] >= 10){
+		pm->ps->stats[powerLevelTimer2] -= 10;
+		recovery = ((float)maximum * 0.0001);
+		if(level > total){
+			pm->ps->stats[powerLevel] -= 6 * (tier + 1);
 		}
-		if(pm->ps->stats[powerLevelTotal] < pm->ps->persistant[powerLevelMaximum]){
-			pm->ps->stats[powerLevelTotal] += (float)pm->ps->persistant[powerLevelMaximum] * 0.001;
-		}
+		pm->ps->stats[powerLevelTotal] = (total + recovery < maximum) ? total + recovery : maximum;
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_UP){
 		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
 		pm->ps->eFlags |= EF_AURA;
 		//PM_ContinueLegsAnim(LEGS_PL_UP);
 		pm->ps->stats[powerLevelTimer] += pml.msec;
-		while(pm->ps->stats[powerLevelTimer] >= 85){
-			pm->ps->stats[powerLevelTimer] -= 85;
-			if((pm->ps->stats[powerLevel] + 85) > 32768){continue;}
-			if(pm->ps->stats[powerLevel] < pm->ps->stats[powerLevelTotal]){
-				pm->ps->stats[powerLevel] += 85;
-			}
-			else if(pm->ps->stats[powerLevelTotal] == pm->ps->persistant[powerLevelMaximum]){
-				if(pm->ps->stats[powerLevelTotal] <= pm->ps->persistant[powerLevelMaximum]){
-					pm->ps->stats[powerLevelTotal] += chargeScale;
+		while(pm->ps->stats[powerLevelTimer] >= 10){
+			pm->ps->stats[powerLevelTimer] -= 10;
+			if((level + 10) > 32768){continue;}
+			pm->ps->stats[powerLevel] = (level + 10 < total) ? level + 10 : total;
+			if(total == maximum){
+				if(total <= maximum){
+					pm->ps->stats[powerLevelTotal] += pm->ps->powerlevelChargeScale;
 				}
-				if(pm->ps->stats[powerLevelTotal] >= pm->ps->persistant[powerLevelMaximum]){
-					pm->ps->persistant[powerLevelMaximum] = pm->ps->stats[powerLevelTotal];
+				if(total >= maximum){
+					pm->ps->persistant[powerLevelMaximum] = total;
 				}
 			}
 		}
@@ -387,16 +388,10 @@ static qboolean PM_CheckPowerLevel(void){
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_DOWN){
 		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
-		if(pm->ps->stats[powerLevel] - 20 > 50){
-			pm->ps->stats[powerLevel] -= 20;
-		}
-		else{
-			pm->ps->stats[powerLevel] = 50;
-		}
+		pm->ps->stats[powerLevel] = (level - 20 > 50) ? level - 20 : 50;
 		return qtrue;
 	}
 	pm->ps->stats[bitFlags] &= ~STATBIT_ALTER_PL;
-	pm->ps->stats[STAT_POWERBUTTONS_TIMER] = 0;
 	return qfalse;
 }
 
@@ -2017,11 +2012,11 @@ static void PM_Lockon(void){
 	int	lockBox;
 	trace_t	trace;
 	vec3_t minSize,maxSize,forward,up,end;
-	if(pm->cmd.buttons & BUTTON_GESTURE){
+	if(pm->cmd.buttons & BUTTON_GESTURE){ 
 		if(pm->ps->lockTimer == 0){
 			pm->ps->lockTimer = 500;
-			if(pm->ps->lockedTarget!=-1){
-				pm->ps->lockedTarget = -1;
+			if(pm->ps->lockedTarget>0){
+				pm->ps->lockedTarget = 0;
 				return;
 			} 
 			AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
@@ -2036,7 +2031,7 @@ static void PM_Lockon(void){
 			pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
 			if((trace.entityNum >= MAX_CLIENTS)){return;}
 			PM_AddEvent(EV_LOCKON_START);
-			pm->ps->lockedTarget = trace.entityNum;
+			pm->ps->lockedTarget = trace.entityNum+1;
 		}
 	}
 }
