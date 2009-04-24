@@ -2016,24 +2016,31 @@ PM_LockOn
 */
 void PM_LockOn(playerState_t *ps){
 	vec3_t		start,end,minSize,maxSize,forward,up;
+	int			lockBox;
 	trace_t		trace;
 
-	AngleVectors( ps->viewangles, forward, NULL, up );
-	VectorCopy( ps->origin, start );
-	VectorMA( start, 131072, forward, end );
+	AngleVectors( ps->viewangles, forward, NULL, NULL );
+	VectorMA( ps->origin, 131072, forward, end );
 	
-	ps->lockReady = qfalse;
+	lockBox = 250;
 
-	minSize[0] = -5;
-	minSize[1] = -5;
-	minSize[2] = -5;
+	minSize[0] = -lockBox;
+	minSize[1] = -lockBox;
+	minSize[2] = -lockBox;
 	maxSize[0] = -minSize[0];
 	maxSize[1] = -minSize[1];
 	maxSize[2] = -minSize[2];
 
-	pm->trace( &trace, start, minSize, maxSize, end, ps->clientNum, CONTENTS_BODY );
+//	Uncomment this once we have the real targets position. This will make targeting from a large distance easier.
+//	if ( ps->lockReady ) {
+//		pm->trace( &trace, ps->origin, minSize, maxSize, end, ps->clientNum, CONTENTS_BODY );
+//	} else {
+		pm->trace( &trace, ps->origin, vec3_origin, vec3_origin, end, ps->clientNum, CONTENTS_BODY );
+//	}
 
-	if((trace.entityNum >= MAX_CLIENTS)/* || (ps->lockedOn)*/) {return;}
+	if ( (trace.entityNum >= MAX_CLIENTS) || (ps->lockedOn) ) {
+		return;
+	}
 
 	ps->lockReady = qtrue;
 
@@ -2058,6 +2065,8 @@ static void PM_Animate(void){
 				} else {
 					pm->ps->lockedOn = qtrue;
 				}
+			} else {
+				pm->ps->lockedOn = qfalse;
 			}
 		}
 	}
@@ -2121,7 +2130,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		return;		// no view changes at all
 	}
 
-	if(pm->ps->lockedOn ){
+	if( pm->ps->lockedOn ){
 		vec3_t dir;
 		vec3_t angles;
 
@@ -2141,6 +2150,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 				continue;
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
+		Com_Printf("Target locked! Position: %i %i %i\n", pm->ps->lockedTarget[0], pm->ps->lockedTarget[1], pm->ps->lockedTarget[2]);
 	}
 	// ADDING FOR ZEQ2
 	// ifwe're flying, use quaternion multiplication to work on player's
