@@ -170,6 +170,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ui_camera.c"
+				>
+			</File>
+			<File
 				RelativePath=".\ui_cdkey.c"
 				>
 			</File>
