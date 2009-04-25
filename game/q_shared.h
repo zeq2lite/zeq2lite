@@ -1183,7 +1183,7 @@ typedef struct playerState_s {
 	// <-- RiO
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
-	int			powerLevel;
+	int			powerLevelBurn;
 	float		powerLevelBreakLimitRate;
 	int			drainPowerLevel;
 	int			drainPowerLevelTotal;
@@ -1192,6 +1192,11 @@ typedef struct playerState_s {
 	int			running;
 	int			lockedTarget;
 	vec3_t		*lockedPosition;
+	int			meleeDefense;
+	int			meleeAttack;
+	int			energyDefense;
+	int			energyAttack;
+	int			energyCost;
 	// RiO -->
 
 	// damage feedback
