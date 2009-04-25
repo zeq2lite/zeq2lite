@@ -1047,6 +1047,21 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
 
+		{
+			float radius;
+			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
+			radius = sqrt((radius * radius) / 3); // inverse of Pythagoras
+
+			VectorSet( bolt->r.mins, -radius, -radius, -radius );
+			VectorSet( bolt->r.maxs, radius, radius, radius );
+			VectorCopy( bolt->r.mins, bolt->r.absmin );
+			VectorCopy( bolt->r.maxs, bolt->r.absmax );
+
+			bolt->r.contents = CONTENTS_CORPSE; // So we can pass through a missile, but can still fire at it.
+
+			bolt->die = G_DieUserWeapon;			
+		}
+
 		bolt->speed = weaponInfo->physics_speed;
 		bolt->accel = 0;
 		bolt->bounceFrac = 0;
