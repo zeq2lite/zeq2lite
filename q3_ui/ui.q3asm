@@ -39,6 +39,7 @@ ui_loadconfig
 ui_saveconfig
 ui_cdkey
 ui_mods
+ui_camera
 bg_misc
 bg_lib
 q_math

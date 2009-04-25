@@ -28,7 +28,7 @@ SETUP MENU
 #define ID_SAVE					16
 #define ID_DEFAULTS				17
 #define ID_BACK					18
-
+#define	ID_CAMERA				19
 
 typedef struct {
 	menuframework_s	menu;
@@ -41,6 +41,7 @@ typedef struct {
 	menutext_s		setupsystem;
 	menutext_s		game;
 	menutext_s		cdkey;
+	menutext_s		camera;
 //	menutext_s		load;
 //	menutext_s		save;
 	menutext_s		defaults;
@@ -101,6 +102,10 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 
 	case ID_GAME:
 		UI_PreferencesMenu();
+		break;
+
+	case ID_CAMERA:
+		UI_CameraMenu();
 		break;
 
 	case ID_CDKEY:
@@ -208,6 +213,17 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.game.style						= UI_CENTER|UI_DROPSHADOW;
 
 	y += SETUP_MENU_VERTICAL_SPACING;
+	setupMenuInfo.camera.generic.type				= MTYPE_PTEXT;
+	setupMenuInfo.camera.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	setupMenuInfo.camera.generic.x					= 320;
+	setupMenuInfo.camera.generic.y					= y;
+	setupMenuInfo.camera.generic.id					= ID_CAMERA;
+	setupMenuInfo.camera.generic.callback			= UI_SetupMenu_Event;
+	setupMenuInfo.camera.string						= "CAMERA OPTIONS";
+	setupMenuInfo.camera.color						= color_lightBlue;
+	setupMenuInfo.camera.style						= UI_CENTER|UI_DROPSHADOW;
+
+	y += SETUP_MENU_VERTICAL_SPACING;
 	setupMenuInfo.cdkey.generic.type				= MTYPE_PTEXT;
 	setupMenuInfo.cdkey.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	setupMenuInfo.cdkey.generic.x					= 320;
@@ -273,6 +289,7 @@ static void UI_SetupMenu_Init( void ) {
 	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.setupcontrols );
 	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.setupsystem );
 	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.game );
+	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.camera );
 //	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.cdkey );
 //	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.load );
 //	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.save );

@@ -343,6 +343,12 @@ extern void TeamMain_Cache( void );
 extern void UI_DrawConnectScreen( qboolean overlay );
 
 //
+// ui_camera.c
+//
+extern void UI_CameraMenu( void );
+extern void Camera_Cache( void );
+
+//
 // ui_controls2.c
 //
 extern void UI_ControlsMenu( void );
