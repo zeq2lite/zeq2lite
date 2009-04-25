@@ -92,6 +92,8 @@ rem @if errorlevel 1 goto quit
 @if errorlevel 1 goto quit
 %cc% ../ui_camera.c
 @if errorlevel 1 goto quit
+%cc% ../ui_music.c
+@if errorlevel 1 goto quit
 
 ..\..\q3asm -f ../q3_ui
 del *.asm

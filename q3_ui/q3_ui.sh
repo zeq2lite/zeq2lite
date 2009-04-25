@@ -50,6 +50,7 @@ $CC ../ui_saveconfig.c
 $CC ../ui_teamorders.c
 $CC ../ui_mods.c
 $CC ../ui_camera.c
+$CC ../ui_music.c
 
 q3asm -f ../q3_ui
 

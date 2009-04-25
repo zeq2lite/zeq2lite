@@ -40,6 +40,7 @@ ui_saveconfig
 ui_cdkey
 ui_mods
 ui_camera
+ui_music
 bg_misc
 bg_lib
 q_math
