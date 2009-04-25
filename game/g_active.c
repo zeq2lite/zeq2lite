@@ -23,19 +23,6 @@ void tierCheck(gclient_t *client){
 		}
 	}
 }
-void syncTier(gclient_t *client){
-	tierConfig_g *tier;
-	playerState_t *ps;
-	ps = &client->ps;
-	tier = &client->tiers[ps->stats[tierCurrent]];
-	ps->powerlevelChargeScale = tier->powerLevelBreakLimitRate;
-	ps->speed = tier->speed;
-	ps->powerups[PW_MELEE_DEFENSE] = tier->meleeDefense;
-	ps->powerups[PW_MELEE_ATTACK] = tier->meleeAttack;
-	ps->powerups[PW_ENERGY_DEFENSE] = tier->energyDefense;
-	ps->powerups[PW_ENERGY_ATTACK] = tier->energyAttackDamage;
-	ps->powerups[PW_ENERGY_COST] = tier->energyAttackCost;
-}
 /*===============
 P_DamageFeedback
 ===============*/
@@ -548,9 +535,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			G_RemoveUserWeapon( missile );
 			break;
 		case EV_TIERCHECK:
-			//ps->stats[powerLevel] += client->tiers[tier].powerLevelEffect;
-			//ps->stats[powerLevelTotal] += client->tiers[tier].powerLevelTotalEffect;
-			//ps->persistant[powerLevelMaximum] += client->tiers[tier].powerLevelMaximumEffect;
 			tierCheck(client);
 			break;
 		case EV_TIERUP:

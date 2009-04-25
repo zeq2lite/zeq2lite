@@ -745,7 +745,7 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	// setup tier information
 	client->modelName = model;
-	// setupTiers(client);
+	setupTiers(client);
 
 	// ADDING FOR ZEQ2
 	// REFPOINT: Loading the serverside weaponscripts here.
@@ -1112,11 +1112,11 @@ void ClientSpawn(gentity_t *ent) {
 	if ( g_powerLevel.value > 32768 ) {
 		g_powerLevel.value = 32768;
 	}
-	if ( g_powerlevelChargeScale.value < 0.1 ) {
-		g_powerlevelChargeScale.value = 0.1;
+	if ( g_powerLevelBreakLimitRate.value < 0.1 ) {
+		g_powerLevelBreakLimitRate.value = 0.1;
 	}
-	if ( g_powerlevelChargeScale.value > 5 ) {
-		g_powerlevelChargeScale.value = 5;
+	if ( g_powerLevelBreakLimitRate.value > 5) {
+		g_powerLevelBreakLimitRate.value = 5;
 	}
 	client->ps.stats[powerLevelTotal] = g_powerLevel.value;
 	client->ps.eFlags = flags;
@@ -1147,7 +1147,6 @@ void ClientSpawn(gentity_t *ent) {
 	// END ADDING
 
 	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
-	client->ps.powerlevelChargeScale = g_powerlevelChargeScale.value;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
 

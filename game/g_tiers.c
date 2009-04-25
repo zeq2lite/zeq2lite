@@ -1,5 +1,21 @@
 #include "g_local.h"
 void parseTier(char *path,tierConfig_g *tier);
+void syncTier(gclient_t *client){
+	tierConfig_g *tier;
+	playerState_t *ps;
+	ps = &client->ps;
+	tier = &client->tiers[ps->stats[tierCurrent]];
+	ps->powerLevelBreakLimitRate = tier->powerLevelBreakLimitRate;
+	ps->drainPowerLevel = tier->powerLevelEffect;
+	ps->drainPowerLevelTotal = tier->powerLevelTotalEffect;
+	ps->drainPowerLevelMaximum = tier->powerLevelMaximumEffect;
+	ps->speed = tier->speed;
+	ps->powerups[PW_MELEE_DEFENSE] = tier->meleeDefense;
+	ps->powerups[PW_MELEE_ATTACK] = tier->meleeAttack;
+	ps->powerups[PW_ENERGY_DEFENSE] = tier->energyDefense;
+	ps->powerups[PW_ENERGY_ATTACK] = tier->energyAttackDamage;
+	ps->powerups[PW_ENERGY_COST] = tier->energyAttackCost;
+}
 void setupTiers(gclient_t *client){
 	int	i;
 	tierConfig_g *tier;
@@ -17,6 +33,7 @@ void setupTiers(gclient_t *client){
 		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",modelName,i+1);
 		parseTier(filename,tier);
 	}
+	syncTier(client);
 }
 void parseTier(char *path,tierConfig_g *tier){
 	fileHandle_t tierCFG;

@@ -22,33 +22,12 @@ float	pm_waterfriction = 1.0f;
 float	pm_flightfriction = 6.0f; // 3.0f
 float	pm_spectatorfriction = 7.0f;
 int		c_pmove = 0;
-//=====================
-//  PM_DeductFromHealth
-//=====================
-qboolean PM_DeductFromHealth(int wanted){
-	int newBuf;
-	newBuf = pml.bufferHealth - wanted;
-	if(newBuf >= 0){
-		pml.bufferHealth = newBuf;
-		return qtrue;
+void PM_UsePowerLevel(int amount){
+	if(pm->ps->stats[powerLevel] - amount > 0){
+		pm->ps->stats[powerLevel] -= amount;
 	}
 	else{
-		if((pm->ps->stats[powerLevelTotal] + newBuf) > 50){
-			pml.bufferHealth = 0;
-			pm->ps->stats[powerLevelTotal] += newBuf;
-			return qtrue;
-		}
-	}
-	return qfalse;
-}
-//=====================
-//  PM_BuildBufferHealth
-//=====================
-void PM_BuildBufferHealth(void){
-	float capRatio, maxRatio;
-	if(pm->ps->stats[powerLevelTotal] > pm->ps->persistant[powerLevelMaximum]){
-		pml.bufferHealth = 0;
-		return;
+		pm->ps->stats[powerLevel] = 0;
 	}
 }
 /*===============
@@ -351,47 +330,60 @@ PM_CheckPowerLevel
 */
 static qboolean PM_CheckPowerLevel(void){
 	int plSpeed,amount;
-	int tier,level,total,maximum;
-	float recovery;
-	tier = pm->ps->stats[tierCurrent];
-	total = pm->ps->stats[powerLevelTotal];
-	level = pm->ps->stats[powerLevel];
-	maximum = pm->ps->persistant[powerLevelMaximum];
-	pm->ps->stats[powerLevelTimer2] += pml.msec;
-	while(pm->ps->stats[powerLevelTimer2] >= 10){
-		pm->ps->stats[powerLevelTimer2] -= 10;
-		recovery = ((float)maximum * 0.0001);
-		if(level > total){
-			pm->ps->stats[powerLevel] -= 6 * (tier + 1);
+	int *stats;
+	float lower,raise;
+	float check;
+	float pushLimit;
+	stats = pm->ps->stats;
+	stats[powerLevelTimer2] += pml.msec;
+	while(stats[powerLevelTimer2] >= 100){
+		stats[powerLevelTimer2] -= 100;
+		lower = stats[powerLevelTotal] * 0.05;
+		if(stats[powerLevel] > stats[powerLevelTotal]){
+			if(stats[powerLevel] - lower > 50){stats[powerLevel] -= lower;}
+			else{stats[powerLevel] = 50;}
 		}
-		pm->ps->stats[powerLevelTotal] = (total + recovery < maximum) ? total + recovery : maximum;
+		if(stats[powerLevel] + pm->ps->drainPowerLevel < pm->ps->persistant[powerLevelTotal]){
+			stats[powerLevel] += pm->ps->drainPowerLevel;
+		}
+		if(stats[powerLevelTotal] + pm->ps->drainPowerLevelTotal < pm->ps->persistant[powerLevelMaximum]){
+			stats[powerLevelTotal] += pm->ps->drainPowerLevelTotal;
+		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_UP){
-		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
+		stats[bitFlags] |= STATBIT_ALTER_PL;
 		pm->ps->eFlags |= EF_AURA;
 		//PM_ContinueLegsAnim(LEGS_PL_UP);
-		pm->ps->stats[powerLevelTimer] += pml.msec;
-		while(pm->ps->stats[powerLevelTimer] >= 10){
-			pm->ps->stats[powerLevelTimer] -= 10;
-			if((level + 10) > 32768){continue;}
-			pm->ps->stats[powerLevel] = (level + 10 < total) ? level + 10 : total;
-			if(total == maximum){
-				if(total <= maximum){
-					pm->ps->stats[powerLevelTotal] += pm->ps->powerlevelChargeScale;
+		stats[powerLevelTimer] += pml.msec;
+		while(stats[powerLevelTimer] >= 13){
+			stats[powerLevelTimer] -= 13;
+			raise = stats[powerLevelTotal] * 0.008;
+			if((stats[powerLevel] + raise) > 32768){continue;}
+			if(stats[powerLevel] <= stats[powerLevelTotal]){
+				if(stats[powerLevel] + raise < stats[powerLevelTotal]){stats[powerLevel] += raise;}
+				else{stats[powerLevel] = stats[powerLevelTotal];}
+			}
+			else{
+				stats[powerLevelTotal] += (float)stats[powerLevel] * 0.005;
+			}
+			if(stats[powerLevel] == pm->ps->persistant[powerLevelMaximum]){
+				pushLimit = pm->ps->powerLevelBreakLimitRate;
+				if(stats[powerLevelTotal] + pushLimit < 32768){
+					stats[powerLevelTotal] += pushLimit;
 				}
-				if(total >= maximum){
-					pm->ps->persistant[powerLevelMaximum] = total;
-				}
+			}
+			if(stats[powerLevelTotal] > pm->ps->persistant[powerLevelMaximum]){
+				pm->ps->persistant[powerLevelMaximum] = stats[powerLevelTotal];
 			}
 		}
 		return qtrue;
 	}
 	if(pm->cmd.buttons & BUTTON_POWER_DOWN){
-		pm->ps->stats[bitFlags] |= STATBIT_ALTER_PL;
-		pm->ps->stats[powerLevel] = (level - 20 > 50) ? level - 20 : 50;
+		stats[bitFlags] |= STATBIT_ALTER_PL;
+		stats[powerLevel] = (stats[powerLevel] - 20 > 50) ? stats[powerLevel] - 20 : 50;
 		return qtrue;
 	}
-	pm->ps->stats[bitFlags] &= ~STATBIT_ALTER_PL;
+	stats[bitFlags] &= ~STATBIT_ALTER_PL;
 	return qfalse;
 }
 
@@ -836,7 +828,6 @@ static void PM_DashMove(void){
 
 void PM_LightSpeedMove(void){
 	vec3_t pre_vel, post_vel;
-	if(pm->ps->powerups[PW_TRANSFORM]){return;}
 	pm->ps->powerups[PW_ZANZOKEN] -= pml.msec;
 	if(pm->ps->powerups[PW_ZANZOKEN] < 0){
 		pm->ps->powerups[PW_ZANZOKEN] = 0;
@@ -1367,7 +1358,6 @@ static void PM_Footsteps(void){
 	int			old;
 	qboolean	footstep;
 	if(pm->ps->powerups[PW_ZANZOKEN]){return;}
-	if(pm->ps->powerups[PW_TRANSFORM]){return;}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
@@ -1810,21 +1800,12 @@ static void PM_Weapon(void){
 
 			// Starting a primary attack
 			if(pm->cmd.buttons & BUTTON_ATTACK) {
-				// Does the weapon require a charge?
 				if(weaponInfo[WPbitFlags] & WPF_NEEDSCHARGE){
 					pm->ps->weaponstate = WEAPON_CHARGING;
-
-					// Adding the weapon number like this should give us the correct animation
 					PM_StartTorsoAnim(TORSO_KI_ATTACK1_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
-
-				// See ifwe have enough in reserve to start firing the weapon
-				if(!PM_DeductFromHealth(weaponInfo[WPSTAT_KICOST] )) {
-					break;
-				}
-
-				// Is the weapon a continuous fire weapon?
+				PM_UsePowerLevel(weaponInfo[WPSTAT_KICOST]);
 				if(weaponInfo[WPbitFlags] & WPF_CONTINUOUS){
 					PM_AddEvent(EV_FIRE_WEAPON );
 					pm->ps->weaponstate = WEAPON_FIRING;
@@ -1833,32 +1814,16 @@ static void PM_Weapon(void){
 					pm->ps->weaponstate = WEAPON_COOLING;
 					pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 				}
-
-				// Adding the weapon number like this should give us the correct animation
 				PM_StartTorsoAnim(TORSO_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
 				break;
 			}
-
-			// NOTE: Primary attack always takes precedence over alternate attack this way,
-			//       which is exactly what we want.
-
-			// Starting an alternate attack
-			if(pm->cmd.buttons & BUTTON_ALT_ATTACK) {
-				// Does the weapon require a charge?
+			if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
 				if(alt_weaponInfo[WPbitFlags] & WPF_NEEDSCHARGE){
 					pm->ps->weaponstate = WEAPON_ALTCHARGING;
-
-					// Adding the weapon number like this should give us the correct animation
 					PM_StartTorsoAnim(TORSO_KI_ATTACK1_ALT_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
-
-				// See ifwe have enough in reserve to start firing the weapon
-				if(!PM_DeductFromHealth(alt_weaponInfo[WPSTAT_KICOST] )) {
-					break;
-				}
-
-				// Is the weapon a continuous fire weapon?
+				PM_UsePowerLevel(alt_weaponInfo[WPSTAT_KICOST]);
 				if(alt_weaponInfo[WPbitFlags] & WPF_CONTINUOUS){
 					pm->ps->weaponstate = WEAPON_ALTFIRING;
 					PM_AddEvent(EV_ALTFIRE_WEAPON );
@@ -1867,12 +1832,9 @@ static void PM_Weapon(void){
 					pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
 					PM_AddEvent(EV_ALTFIRE_WEAPON );
 				}
-
-				// Adding the weapon number like this should give us the correct animation
 				PM_StartTorsoAnim(TORSO_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
 				break;
 			}
-
 			PM_ContinueTorsoAnim(TORSO_STAND );
 		}
 		break;
@@ -1957,18 +1919,9 @@ static void PM_Weapon(void){
 				PM_StartTorsoAnim(TORSO_STAND );
 				break;
 			}
-
-			// Hijacked weaponTime as a timer for costs
 			pm->ps->weaponTime += pml.msec;
 			while(pm->ps->weaponTime > 100){
-
-				// Couldn't afford upkeep for the weapon any longer
-				if(!PM_DeductFromHealth(weaponInfo[WPSTAT_KICOST] )) {
-					pm->ps->weaponstate = WEAPON_COOLING;
-					pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
-					PM_StartTorsoAnim(TORSO_STAND );
-					break;
-				}
+				PM_UsePowerLevel(weaponInfo[WPSTAT_KICOST]);
 			}
 
 		}
@@ -1981,19 +1934,10 @@ static void PM_Weapon(void){
 				PM_StartTorsoAnim(TORSO_STAND );
 				break;
 			}
-
-			// Hijacked weaponTime as a timer for costs
 			pm->ps->weaponTime += pml.msec;
 			while(pm->ps->weaponTime > 100){
-				// Couldn't afford upkeep for the weapon any longer
-				if(!PM_DeductFromHealth(alt_weaponInfo[WPSTAT_KICOST] )) {
-					pm->ps->weaponstate = WEAPON_COOLING;
-					pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-					PM_StartTorsoAnim(TORSO_STAND );
-					break;
-				}
+				PM_UsePowerLevel(alt_weaponInfo[WPSTAT_KICOST]);
 			}
-
 		}
 		break;
 	default:
@@ -2340,7 +2284,6 @@ void PmoveSingle (pmove_t *pmove) {
 	VectorCopy (pm->ps->origin, pml.previous_origin);
 	VectorCopy (pm->ps->velocity, pml.previous_velocity);
 	pml.frametime = pml.msec * 0.001;
-	PM_BuildBufferHealth();
 //	if(pmove->ps->rolling){
 		PM_UpdateViewAngles(pm->ps, &pm->cmd );
 //	} else{
@@ -2403,9 +2346,6 @@ void PmoveSingle (pmove_t *pmove) {
 		}
 		PM_Transform();
 	}
-	else if(pm->ps->powerups[PW_ZANZOKEN]){
-		PM_LightSpeedMove();
-	}
 	else if(pm->ps->powerups[PW_FLYING]){
 		PM_FlyMove();
 	}	
@@ -2424,18 +2364,23 @@ void PmoveSingle (pmove_t *pmove) {
 	else{
 		PM_AirMove();
 	}
-	PM_Lockon();
 	PM_GroundTrace();
 	PM_SetWaterLevel();
 	PM_Weapon();
-	PM_Footsteps();
 	PM_TorsoAnimation();
 	PM_WaterEvents();
 	trap_SnapVector(pm->ps->velocity );
 	if(pm->ps->powerups[PW_BOOST]){
 		pm->ps->eFlags |= EF_AURA;
 	}
-	PM_CheckPowerLevel();
+	if(!pm->ps->powerups[PW_TRANSFORM]){
+		if(pm->ps->powerups[PW_ZANZOKEN]){
+			PM_LightSpeedMove();
+		}
+		PM_Footsteps();
+		PM_Lockon();
+		PM_CheckPowerLevel();
+	}
 }
 
 /*================
