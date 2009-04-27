@@ -593,6 +593,22 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_LOCKON_START");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
 		break;
+	case EV_STUNNED:
+		DEBUGNAME("EV_STUNNED");
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
+		break;
+	case EV_BLOCK:
+		DEBUGNAME("EV_BLOCK");
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
+		break;
+	case EV_PUSH:
+		DEBUGNAME("EV_PUSH");
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
+		break;
+	case EV_SWAT:
+		DEBUGNAME("EV_SWAT");
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
+		break;
 #ifdef MISSIONPACK
 	case EV_LOCKON_START_YES:
 		DEBUGNAME("EV_LOCKON_START_YES");

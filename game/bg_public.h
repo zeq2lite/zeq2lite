@@ -168,7 +168,8 @@ typedef enum {
 #define PMF_GRAPPLE_PULL	2048	// pull towards grapple location
 #define PMF_FOLLOW			4096	// spectate following another player
 #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
-#define PMF_LOCK_HELD		16384
+#define PMF_LOCK_HELD		16384	// 
+#define PMF_BLOCK_HELD		32768	// Block, swat, push etc.
 
 #define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
 
@@ -471,6 +472,10 @@ typedef enum {
 	EV_LOCKON_START_GETFLAG,
 	EV_LOCKON_START_GUARDBASE,
 	EV_LOCKON_START_PATROL,
+	EV_STUNNED,
+	EV_BLOCK,
+	EV_PUSH,
+	EV_SWAT,
 	// ADDING FOR ZEQ2
 	EV_BEAM_FADE,
 	EV_EARTHQUAKE

@@ -99,7 +99,7 @@ typedef struct
 #define ID_ROLLRIGHT	36
 #define ID_BOOST		37
 #define ID_CHARGEPL		38
-#define ID_DRAINPL		39
+#define ID_BLOCK		39
 #define ID_ZANZOKEN		40
 #define ID_JUMP			41
 
@@ -151,6 +151,7 @@ typedef struct
 #define ANIM_FLY_IDLE	33
 #define ANIM_FLY_FORWARD	34
 #define ANIM_FLY_BACKWARD	35
+#define ANIM_BLOCK		36
 // End adding
 
 typedef struct
@@ -229,7 +230,7 @@ typedef struct
 	menuaction_s		rollleft;
 	menuaction_s		rollright;
 	menuaction_s		chargepl;
-	menuaction_s		drainpl;
+	menuaction_s		block;
 	// End added
 
 	menubitmap_s		back;
@@ -281,7 +282,7 @@ static bind_t g_bindings[] =
 	{"+button6",		"roll right",		ID_ROLLRIGHT,	ANIM_IDLE,			-1,				-1,		-1, -1},
 	{"+button7",		"ki boost",			ID_BOOST,		ANIM_KI_CHARGE,		-1,				-1,		-1, -1},
 	{"+button12",		"charge power",		ID_CHARGEPL,	ANIM_PL_UP,			-1,				-1,		-1, -1},
-	{"+button13",		"lower power",		ID_DRAINPL,		ANIM_PL_DOWN,		-1,				-1,		-1, -1},
+	{"+button13",		"block",			ID_BLOCK,		ANIM_BLOCK,			-1,				-1,		-1, -1},
 	{"+button9",		"zanzoken",			ID_ZANZOKEN,	ANIM_IDLE,			-1,				-1,		-1, -1},
 	{"+button14",		"jump",				ID_JUMP,		ANIM_JUMP,			-1,				-1,		-1, -1},
 	{(char*)NULL,		(char*)NULL,		0,				0,					-1,				-1,		-1,	-1},
@@ -358,7 +359,7 @@ static menucommon_s *g_looking_controls[] = {
 static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.showscores, 
 	(menucommon_s *)&s_controls.chargepl,
-	(menucommon_s *)&s_controls.drainpl,
+	(menucommon_s *)&s_controls.block,
 	(menucommon_s *)&s_controls.useitem,
 	(menucommon_s *)&s_controls.chat,
 	(menucommon_s *)&s_controls.chat2,
@@ -601,6 +602,11 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_PL_DOWN:
 		s_controls.playerLegs = LEGS_PL_DOWN;
 		s_controls.playerTorso = TORSO_PL_DOWN;
+		break;
+
+	case ANIM_BLOCK:
+		s_controls.playerLegs = LEGS_BLOCK;
+		s_controls.playerTorso = TORSO_BLOCK;
 		break;
 
 	case ANIM_FLY_IDLE:
@@ -1652,11 +1658,11 @@ static void Controls_MenuInit( void )
 	s_controls.chargepl.generic.ownerdraw	= Controls_DrawKeyBinding;
 	s_controls.chargepl.generic.id			= ID_CHARGEPL;
 
-	s_controls.drainpl.generic.type			= MTYPE_ACTION;
-	s_controls.drainpl.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.drainpl.generic.callback		= Controls_ActionEvent;
-	s_controls.drainpl.generic.ownerdraw	= Controls_DrawKeyBinding;
-	s_controls.drainpl.generic.id			= ID_DRAINPL;
+	s_controls.block.generic.type			= MTYPE_ACTION;
+	s_controls.block.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.block.generic.callback		= Controls_ActionEvent;
+	s_controls.block.generic.ownerdraw		= Controls_DrawKeyBinding;
+	s_controls.block.generic.id				= ID_BLOCK;
 
 	s_controls.chat.generic.type	  = MTYPE_ACTION;
 	s_controls.chat.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1766,7 +1772,7 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
 	Menu_AddItem( &s_controls.menu, &s_controls.chargepl );
-	Menu_AddItem( &s_controls.menu, &s_controls.drainpl );
+	Menu_AddItem( &s_controls.menu, &s_controls.block );
 	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat2 );

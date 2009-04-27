@@ -378,11 +378,13 @@ static qboolean PM_CheckPowerLevel(void){
 		}
 		return qtrue;
 	}
+/*
 	if(pm->cmd.buttons & BUTTON_POWER_DOWN){
 		stats[bitFlags] |= STATBIT_ALTER_PL;
 		stats[powerLevel] = (stats[powerLevel] - 20 > 50) ? stats[powerLevel] - 20 : 50;
 		return qtrue;
 	}
+*/
 	stats[bitFlags] &= ~STATBIT_ALTER_PL;
 	return qfalse;
 }
@@ -495,6 +497,40 @@ static qboolean PM_CheckJump(void){
 }
 
 
+/*
+=============
+PM_CheckBlock
+=============
+*/
+static qboolean PM_CheckBlock(void){
+
+	if(pm->ps->pm_flags & PMF_RESPAWNED){
+		return qfalse;		// don't allow block until all buttons are up
+	}
+
+	if(!(pm->cmd.buttons & BUTTON_BLOCK )) {
+		// not holding block
+		return qfalse;
+	}
+
+	pm->ps->pm_flags |= PMF_BLOCK_HELD;
+
+	pm->ps->velocity[0] = 0.0f;
+	pm->ps->velocity[1] = 0.0f;
+	pm->ps->velocity[2] = 0.0f;
+
+//	PM_AddEvent(EV_BLOCK);
+	pm->ps->energyDefense = 2;
+	pm->ps->meleeDefense = 2;
+
+	PM_ForceLegsAnim(LEGS_BLOCK);
+	pm->ps->pm_flags |= PMF_BLOCK_HELD;
+
+	PM_StopDash();
+
+	return qtrue;
+}
+
 //============================================================================
 
 /*
@@ -535,6 +571,9 @@ static void PM_FlyMove(void){
 	// normal slowdown
 	PM_Friction();
 	if(pm->ps->powerups[PW_TRANSFORM]){
+		return;
+	}
+	if(PM_CheckBlock ()){
 		return;
 	}
 	if(PM_CheckBoost()){
@@ -651,7 +690,9 @@ static void PM_WalkMove(void){
 		PM_AirMove();
 		return;
 	}
-
+	if(PM_CheckBlock ()){
+		return;
+	}
 	PM_Friction();
 
 	fmove = pm->cmd.forwardmove;
@@ -732,6 +773,9 @@ static void PM_DashMove(void){
 	usercmd_t	cmd;
 	float		boostFactor;
 	float		accelerate;
+	if(PM_CheckBlock()){
+		return;
+	}
 	if((pm->ps->dashDir[0] && (Q_Sign(pm->ps->dashDir[0])!= Q_Sign(pm->cmd.forwardmove ))) ||
 		(pm->ps->dashDir[1] && (Q_Sign(pm->ps->dashDir[1])!= Q_Sign(pm->cmd.rightmove   ))) ||
 		(pm->cmd.buttons & BUTTON_WALKING )) {
@@ -1358,6 +1402,7 @@ static void PM_Footsteps(void){
 	int			old;
 	qboolean	footstep;
 	if(pm->ps->powerups[PW_ZANZOKEN]){return;}
+	if(pm->cmd.buttons & BUTTON_BLOCK){PM_ContinueLegsAnim(LEGS_BLOCK );return;}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
@@ -1439,12 +1484,11 @@ static void PM_Footsteps(void){
 				} else{
 					if(pm->ps->lockedTarget>0){
 						PM_ContinueLegsAnim(LEGS_IDLE_LOCKED );
-					} else{
+					} else {
 						PM_ContinueLegsAnim(LEGS_IDLE );
 					}
 				}
 			}
-
 		}
 		return;
 	}
@@ -1647,6 +1691,18 @@ static void PM_TorsoAnimation(void){
 	case LEGS_LAND:
 		PM_ContinueTorsoAnim(TORSO_LAND );
 		break;
+	case LEGS_STUNNED:
+		PM_ContinueTorsoAnim(TORSO_STUNNED );
+		break;
+	case LEGS_PUSH:
+		PM_ContinueTorsoAnim(TORSO_PUSH );
+		break;
+	case LEGS_DEFLECT:
+		PM_ContinueTorsoAnim(TORSO_DEFLECT );
+		break;
+	case LEGS_BLOCK:
+		PM_ContinueTorsoAnim(TORSO_BLOCK );
+		break;
 	case LEGS_JUMPB:
 		PM_ContinueTorsoAnim(TORSO_JUMPB );
 		break;
@@ -1709,8 +1765,8 @@ static void PM_Weapon(void){
 		return;
 	}
 
-	// ignore ifcharging, or transforming
-	if(pm->cmd.buttons & BUTTON_POWER_UP || pm->ps->powerups[PW_TRANSFORM] > 0){
+	// ignore if charging, transforming or blocking
+	if(pm->cmd.buttons & BUTTON_POWER_UP || pm->ps->powerups[PW_TRANSFORM] > 0 || pm->cmd.buttons & BUTTON_BLOCK){
 		if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
 			PM_AddEvent(EV_DETONATE_WEAPON );
 		}
@@ -1845,6 +1901,9 @@ static void PM_Weapon(void){
 				pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 				PM_StartTorsoAnim(TORSO_STAND );
 			}
+			pm->ps->velocity[0] = 0.0f;
+			pm->ps->velocity[1] = 0.0f;
+			pm->ps->velocity[2] = 0.0f;
 		}
 		break;
 	case WEAPON_ALTGUIDING:
@@ -1854,6 +1913,9 @@ static void PM_Weapon(void){
 				pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
 				PM_StartTorsoAnim(TORSO_STAND );
 			}
+			pm->ps->velocity[0] = 0.0f;
+			pm->ps->velocity[1] = 0.0f;
+			pm->ps->velocity[2] = 0.0f;
 		}
 		break;
 	case WEAPON_CHARGING:
@@ -2226,6 +2288,9 @@ void PmoveSingle (pmove_t *pmove) {
 	if(!(pm->cmd.buttons & BUTTON_JUMP )) {
 		pm->ps->pm_flags &= ~PMF_JUMP_HELD;
 	}
+	if(!(pm->cmd.buttons & BUTTON_BLOCK )) {
+		pm->ps->pm_flags &= ~PMF_BLOCK_HELD;
+	}
 	if(!(pm->cmd.buttons & BUTTON_LIGHTSPEED)){
 		pm->ps->pm_flags &= ~PMF_LIGHTSPEED_HELD;
 	}
@@ -2236,11 +2301,17 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->ps->eFlags &= ~EF_TALK;
 	}
 	if(pm->ps->stats[powerLevel] > 0 &&
-		!(pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_ALT_ATTACK | BUTTON_BOOST ))) {
+		!(pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_ALT_ATTACK | BUTTON_BOOST | BUTTON_BLOCK))) {
 		pm->ps->pm_flags &= ~PMF_RESPAWNED;
 	}
 	if(pmove->cmd.buttons & BUTTON_TALK){
 		pmove->cmd.buttons = BUTTON_TALK;
+		pmove->cmd.forwardmove = 0;
+		pmove->cmd.rightmove = 0;
+		pmove->cmd.upmove = 0;
+	}
+	if(pmove->cmd.buttons & BUTTON_BLOCK){
+		pmove->cmd.buttons = BUTTON_BLOCK;
 		pmove->cmd.forwardmove = 0;
 		pmove->cmd.rightmove = 0;
 		pmove->cmd.upmove = 0;
@@ -2373,7 +2444,7 @@ void PmoveSingle (pmove_t *pmove) {
 	if(pm->ps->powerups[PW_BOOST]){
 		pm->ps->eFlags |= EF_AURA;
 	}
-	if(!pm->ps->powerups[PW_TRANSFORM]){
+	if(!pm->ps->powerups[PW_TRANSFORM] || !pm->cmd.buttons & BUTTON_BLOCK){
 		if(pm->ps->powerups[PW_ZANZOKEN]){
 			PM_LightSpeedMove();
 		}
@@ -2425,6 +2496,10 @@ void Pmove (pmove_t *pmove) {
 
 		if(pmove->ps->pm_flags & PMF_JUMP_HELD){
 			pmove->cmd.buttons |= BUTTON_JUMP;
+		}
+
+		if(pmove->ps->pm_flags & PMF_BLOCK_HELD){
+			pmove->cmd.buttons |= BUTTON_BLOCK;
 		}
 
 		if(pmove->ps->pm_flags & PMF_BOOST_HELD){

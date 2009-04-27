@@ -1415,13 +1415,18 @@ static void G_BounceUserMissile( gentity_t *self, trace_t *trace ) {
 void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 // Handles impact of the weapon with map geometry or entities.
 	gentity_t		*other;
-	qboolean		hitClient = qfalse;	
+	qboolean		hitClient = qfalse;
+	int				energyDefense;
 	vec3_t	velocity;
 	G_Printf(va("G_ImpactUserWeapon\n"));
 	
 	other = &g_entities[trace->entityNum];
+	energyDefense = 1;
 
-	
+	if (g_entities[other->s.clientNum].client->ps.energyDefense > 0){
+		energyDefense = g_entities[other->s.clientNum].client->ps.energyDefense;
+	}
+
 	if ( !other->takedamage && self->bounceFrac && self->bouncesLeft) {
 		G_BounceUserMissile( self, trace );
 		G_AddEvent( self, EV_GRENADE_BOUNCE, 0 );
@@ -1435,7 +1440,6 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 		// FIXME: wrong damage direction?
 		// Does the missile do damage?
 		if ( self->damage ) {
-
 
 			// Log accuracy hits
 			if( LogAccuracyHit( other, &g_entities[self->s.clientNum] ) ) {
@@ -1462,7 +1466,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 				weaponInfo = G_FindUserWeaponData( self->s.clientNum, self->s.weapon );
 				G_Printf(va("G_UserWeaponDamage"));
 				G_UserWeaponDamage( other, self, &g_entities[self->r.ownerNum], velocity, self->s.origin,
-									weaponInfo->damage_damage, 0,
+									weaponInfo->damage_damage / energyDefense, 0,
 									MOD_KI + weaponInfo->damage_meansOfDeath,
 									weaponInfo->damage_extraKnockback );
 			}
@@ -1505,7 +1509,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 		G_SetOrigin( self, trace->endpos );
 	
 
-		if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
+		if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage / energyDefense, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
 			if( !hitClient ) {
 				g_entities[self->s.clientNum].client->accuracy_hits++;
 			}
