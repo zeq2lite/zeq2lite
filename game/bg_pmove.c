@@ -504,6 +504,9 @@ PM_CheckBlock
 */
 static qboolean PM_CheckBlock(void){
 
+	pm->ps->energyDefense = 1;
+	pm->ps->meleeDefense = 1;
+
 	if(pm->ps->pm_flags & PMF_RESPAWNED){
 		return qfalse;		// don't allow block until all buttons are up
 	}
