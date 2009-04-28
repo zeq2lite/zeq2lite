@@ -496,16 +496,12 @@ static qboolean PM_CheckJump(void){
 	return qtrue;
 }
 
-
 /*
 =============
 PM_CheckBlock
 =============
 */
 static qboolean PM_CheckBlock(void){
-
-	pm->ps->energyDefense = 1;
-	pm->ps->meleeDefense = 1;
 
 	if(pm->ps->pm_flags & PMF_RESPAWNED){
 		return qfalse;		// don't allow block until all buttons are up
@@ -516,17 +512,15 @@ static qboolean PM_CheckBlock(void){
 		return qfalse;
 	}
 
-	pm->ps->pm_flags |= PMF_BLOCK_HELD;
-
 	pm->ps->velocity[0] = 0.0f;
 	pm->ps->velocity[1] = 0.0f;
 	pm->ps->velocity[2] = 0.0f;
 
 //	PM_AddEvent(EV_BLOCK);
-	pm->ps->energyDefense = 2;
-	pm->ps->meleeDefense = 2;
+	pm->ps->powerups[PW_ENERGY_DEFENSE] = pm->ps->energyDefense = 2;
+	pm->ps->powerups[PW_MELEE_DEFENSE] = pm->ps->meleeDefense = 2;
 
-	PM_ForceLegsAnim(LEGS_BLOCK);
+	//PM_ContinueLegsAnim(LEGS_BLOCK );
 	pm->ps->pm_flags |= PMF_BLOCK_HELD;
 
 	PM_StopDash();
@@ -555,6 +549,16 @@ static void PM_Transform(void){
 			pm->ps->powerups[PW_TRANSFORM] = 0;
 		}
 	}
+}
+
+/*
+===================
+PM_Block
+
+===================
+*/
+static void PM_Block(void){
+	PM_ContinueLegsAnim(LEGS_BLOCK);
 }
 
 /*
@@ -1405,7 +1409,7 @@ static void PM_Footsteps(void){
 	int			old;
 	qboolean	footstep;
 	if(pm->ps->powerups[PW_ZANZOKEN]){return;}
-	if(pm->cmd.buttons & BUTTON_BLOCK){PM_ContinueLegsAnim(LEGS_BLOCK );return;}
+//	if(pm->cmd.buttons & BUTTON_BLOCK){PM_ContinueLegsAnim(LEGS_BLOCK );return;}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
@@ -1436,7 +1440,9 @@ static void PM_Footsteps(void){
 			} else{
 				if(pm->ps->lockedTarget>0){
 					PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);
-				} else{
+				} else if (pm->ps->powerups[PW_ENERGY_DEFENSE] > 1){
+					PM_Block();
+				} else {
 					PM_ContinueLegsAnim(LEGS_FLY_IDLE);
 				}
 			}
@@ -1487,6 +1493,8 @@ static void PM_Footsteps(void){
 				} else{
 					if(pm->ps->lockedTarget>0){
 						PM_ContinueLegsAnim(LEGS_IDLE_LOCKED );
+					} else if (pm->ps->powerups[PW_ENERGY_DEFENSE] > 1){
+						PM_Block();
 					} else {
 						PM_ContinueLegsAnim(LEGS_IDLE );
 					}
@@ -2275,6 +2283,8 @@ void PmoveSingle (pmove_t *pmove) {
 	pm->numtouch = 0;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
+	pm->ps->powerups[PW_ENERGY_DEFENSE] = pm->ps->energyDefense = 1;
+	pm->ps->powerups[PW_MELEE_DEFENSE] = pm->ps->meleeDefense = 1;
 	if(pm->ps->stats[powerLevel] <= 0){
 		pm->tracemask &= ~CONTENTS_BODY;
 	}
