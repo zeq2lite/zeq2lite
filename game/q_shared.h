@@ -1197,6 +1197,7 @@ typedef struct playerState_s {
 	int			energyDefense;
 	int			energyAttack;
 	int			energyCost;
+	vec3_t      *meleePosition;
 	// RiO -->
 
 	// damage feedback
