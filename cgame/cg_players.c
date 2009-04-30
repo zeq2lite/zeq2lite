@@ -2706,50 +2706,52 @@ void CG_Player( centity_t *cent ) {
 		CG_AuraEnd(cent);
 	}
 	CG_AddAuraToScene(cent);
-
+	CG_Printf(ci->auraConfig[tier]->showLightning ? "Lightning on\n" : "Lightning off\n");
 	// Lightning bolt code below, yay!
+	if(ci->auraConfig[tier]->showLightning){
+		r = random() * 60;
+		r1 = random() * 24 + 8;
+		r2 = random() * 24 + 8;
+		r3 = random() * 32 + 16;
+		r4 = random() * 24 + 8;
+		r5 = random() * 24 + 8;
+		r6 = random() * 40;
+		if (r > 58) {
+			localEntity_t	*le;
+			refEntity_t		*re;
 
-	r = random() * 60;
-	r1 = random() * 24 + 8;
-	r2 = random() * 24 + 8;
-	r3 = random() * 32 + 16;
-	r4 = random() * 24 + 8;
-	r5 = random() * 24 + 8;
-	r6 = random() * 40;
-	if (r > 58) {
-		localEntity_t	*le;
-		refEntity_t		*re;
+			le = CG_AllocLocalEntity();
 
-		le = CG_AllocLocalEntity();
+			le->leFlags = 0;
+			le->leType = LE_FADE_RGB;
+			le->startTime = cg.time;
+			le->endTime = cg.time + 250;
+			le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+			le->radius = 16;
+			le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
 
-		le->leFlags = 0;
-		le->leType = LE_FADE_RGB;
-		le->startTime = cg.time;
-		le->endTime = cg.time + 250;
-		le->lifeRate = 1.0 / ( le->endTime - le->startTime );
-		le->radius = 16;
-		le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
+			re = &le->refEntity;
 
-		re = &le->refEntity;
+			re->reType = RT_SPRITE;
+			re->radius = le->radius;
+			re->shaderRGBA[0] = 0xff;
+			re->shaderRGBA[1] = 0xff;
+			re->shaderRGBA[2] = 0xff;
+			re->shaderRGBA[3] = 0xff;
 
-		re->reType = RT_SPRITE;
-		re->radius = le->radius;
-		re->shaderRGBA[0] = 0xff;
-		re->shaderRGBA[1] = 0xff;
-		re->shaderRGBA[2] = 0xff;
-		re->shaderRGBA[3] = 0xff;
-		re->customShader = cgs.media.boltEffectShader;
+			re->customShader = ci->auraConfig[tier]->lightningShader;
 
-		AxisClear( re->axis );
+			AxisClear( re->axis );
 
-		VectorCopy( cent->lerpOrigin, re->origin );
+			VectorCopy( cent->lerpOrigin, re->origin );
 
-		re->origin[0] += r1;
-		re->origin[1] += r2;
-		re->origin[2] += r3;
-		re->origin[0] -= r4;
-		re->origin[1] -= r5;
-		re->origin[2] -= r6;
+			re->origin[0] += r1;
+			re->origin[1] += r2;
+			re->origin[2] += r3;
+			re->origin[0] -= r4;
+			re->origin[1] -= r5;
+			re->origin[2] -= r6;
+		}
 	}
 	// -->
 }

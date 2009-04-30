@@ -1034,6 +1034,16 @@ void parseAura(char *path,auraConfig_t *aura){
 				if(!token[0]){break;}
 				aura->lightGrowthRate = atoi(token);
 			}
+			else if(!Q_stricmp(token,"showLightning")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->showLightning = token == "True" ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"lightningShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->lightningShader = trap_R_RegisterShaderNoMip(token);
+			}
 		}
 	}
 }
