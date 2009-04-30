@@ -157,7 +157,7 @@ void CG_SpawnEffect( vec3_t org ) {
 	le->leFlags = 0;
 	le->leType = LE_FADE_RGB;
 	le->startTime = cg.time;
-	le->endTime = cg.time + 500;
+	le->endTime = cg.time + 250;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 	le->radius = 64;
 
@@ -168,8 +168,6 @@ void CG_SpawnEffect( vec3_t org ) {
 //	re->reType = RT_MODEL;
 	re->reType = RT_SPRITE;
 	re->radius = le->radius;
-
-	re->shaderTime = cg.time / 1000.0f;
 
 	re->shaderRGBA[0] = le->color[0] * 0xff;
 	re->shaderRGBA[1] = le->color[1] * 0xff;

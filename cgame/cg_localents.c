@@ -318,9 +318,10 @@ void CG_AddFadeRGB( localEntity_t *le ) {
 	c = ( le->endTime - cg.time ) * le->lifeRate;
 	c *= 0xff;
 
-	re->shaderRGBA[0] = le->color[0] * c;
-	re->shaderRGBA[1] = le->color[1] * c;
-	re->shaderRGBA[2] = le->color[2] * c;
+	// We don't want the colors to fade down to black too, do we?
+//	re->shaderRGBA[0] = le->color[0] * c;
+//	re->shaderRGBA[1] = le->color[1] * c;
+//	re->shaderRGBA[2] = le->color[2] * c;
 	re->shaderRGBA[3] = le->color[3] * c;
 
 	trap_R_AddRefEntityToScene( re );

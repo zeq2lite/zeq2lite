@@ -1410,7 +1410,43 @@ static void G_BounceUserMissile( gentity_t *self, trace_t *trace ) {
 	self->s.pos.trTime = level.time;
 }
 
+static void G_StruggleUserMissile( gentity_t *self, trace_t *trace ) {
+	vec3_t	velocity;
+	float	dot;
+	int		hitTime;
 
+	// reflect the velocity on the trace plane
+	hitTime = level.previousTime + ( level.time - level.previousTime ) * trace->fraction;
+	BG_EvaluateTrajectoryDelta( &self->s, &self->s.pos, hitTime, velocity );
+	dot = DotProduct( velocity, trace->plane.normal );
+	VectorMA( velocity, -2 * dot, trace->plane.normal, self->s.pos.trDelta );
+
+	VectorScale( self->s.pos.trDelta, self->bounceFrac, self->s.pos.trDelta );
+
+	// check for stop
+	if ( trace->plane.normal[2] > 0.2 && VectorLength( self->s.pos.trDelta ) < 40 ) {
+		G_ExplodeUserWeapon ( self );
+		return;
+	}
+
+	VectorAdd( self->r.currentOrigin, trace->plane.normal, self->r.currentOrigin);
+	VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
+	self->s.pos.trTime = level.time;
+/*
+	//self->s.pos.trTime = 0;
+	//self->s.pos.trDuration = 0;
+	vec3_t forward;
+	self->struggling = qtrue;
+	//self->speed *= self->powerLevel;
+	//VectorClear( self->s.pos.trDelta );
+	VectorScale( velocity, self->powerLevel * 0.5f, forward );
+	VectorCopy(forward,self->s.pos.trDelta);
+	// This saves network bandwidth.
+	SnapVector( self->s.pos.trDelta );
+	//VectorCopy( trace->endpos,self->s.pos.trBase );
+	//VectorCopy( self->r.currentOrigin,other->r.currentOrigin );
+*/
+}
 
 void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 // Handles impact of the weapon with map geometry or entities.
@@ -1478,18 +1514,9 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
 	}
 	if((self->s.eType == ET_MISSILE) || (self->s.eType == ET_BEAMHEAD)){
-		//self->s.pos.trTime = 0;
-		//self->s.pos.trDuration = 0;
-		vec3_t forward;
-		self->struggling = qtrue;
-		//self->speed *= self->powerLevel;
-		//VectorClear( self->s.pos.trDelta );
-		VectorScale( velocity, self->powerLevel * 0.5f, forward );
-		VectorCopy(forward,self->s.pos.trDelta);
-		// This saves network bandwidth.
-		SnapVector( self->s.pos.trDelta );
-		//VectorCopy( trace->endpos,self->s.pos.trBase );
-		//VectorCopy( self->r.currentOrigin,other->r.currentOrigin );
+		G_StruggleUserMissile(self, trace);
+		//G_AddEvent( self, EV_POWER_STRUGGLE, 0 );
+		return;
 	}
 	if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER) ){
 	// Add the explosion event to the entity, and make it free itself after event.
