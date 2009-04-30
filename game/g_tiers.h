@@ -6,7 +6,10 @@ typedef struct{
 	int requirementPowerLevelCurrent;
 	int requirementPowerLevelTotal;
 	int requirementPowerLevelMaximum;
+	int sustainPowerLevelCurrent;
+	int sustainPowerLevelTotal;
 	int zanzokenCost;
+	int zanzokenSpeed;
 	int zanzokenDistance;
 	int speed;
 	float meleeAttack;

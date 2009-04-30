@@ -1184,6 +1184,7 @@ typedef struct playerState_s {
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
 	int			powerLevelBurn;
+	int			powerLevelMeleeBurn;
 	float		powerLevelBreakLimitRate;
 	int			drainPowerLevel;
 	int			drainPowerLevelTotal;
@@ -1192,12 +1193,12 @@ typedef struct playerState_s {
 	int			running;
 	int			lockedTarget;
 	vec3_t		*lockedPosition;
+	vec3_t		*meleePosition;
 	int			meleeDefense;
 	int			meleeAttack;
 	int			energyDefense;
 	int			energyAttack;
 	int			energyCost;
-	vec3_t      *meleePosition;
 	// RiO -->
 
 	// damage feedback
@@ -1258,7 +1259,7 @@ typedef struct playerState_s {
 #define BUTTON_BOOST		128			// Boost while held down
 #define BUTTON_LIGHTSPEED	512			// Activate lightspeed movement (Zanzoken)
 #define BUTTON_ALT_ATTACK	1024		// Alternate fire
-#define BUTTON_POWER_UP		4096		// Raise power level
+#define BUTTON_POWERLEVEL	4096		// Raise power level
 #define BUTTON_BLOCK		8192		// Lower power level
 #define BUTTON_JUMP			16384		// jump, seperated from up move
 // END ADDING

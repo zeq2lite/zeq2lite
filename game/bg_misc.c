@@ -499,6 +499,10 @@ char *eventnames[] = {
 	"EV_TIERCHECK",
 	"EV_TIERUP",
 	"EV_TIERDOWN",
+	"EV_MELEE_SPEED",
+	"EV_MELEE_KNOCKBACK",
+	"EV_MELEE_STUN",
+	"EV_MELEE_CHECK",
 	"EV_ZANZOKEN_END",
 	"EV_ZANZOKEN_START",
 	"EV_DRAIN",
@@ -544,6 +548,7 @@ char *eventnames[] = {
 	"EV_BULLET",				// otherEntity is the shooter
 
 	"EV_PAIN",
+	"EV_DEATH",
 	"EV_DEATH1",
 	"EV_DEATH2",
 	"EV_DEATH3",
@@ -569,7 +574,7 @@ char *eventnames[] = {
 	"EV_DEBUG_LINE",
 	"EV_STOPLOOPINGSOUND",
 	"EV_LOCKON_START",
-	"EV_LOCKON_UPDATE",
+	"EV_LOCKON_CHECK",
 	"EV_LOCKON_END",
 	// ADDING FOR ZEQ2
 	"EV_BEAM_FADE"
@@ -618,11 +623,6 @@ void BG_TouchJumpPad( playerState_t *ps, entityState_t *jumppad ) {
 
 	// spectators don't use jump pads
 	if ( ps->pm_type != PM_NORMAL ) {
-		return;
-	}
-
-	// flying characters don't hit bounce pads
-	if ( ps->powerups[PW_FLYING] ) {
 		return;
 	}
 
@@ -680,24 +680,12 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 	// ADDING FOR ZEQ2
 	
 	// We only alter the model's viewangles if we are NOT guiding a weapon.
-	if ( ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING ) {
+	if ( ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING && ps->lockedTarget < 1) {
 		VectorCopy( ps->viewangles, s->apos.trBase );
 		if ( snap ) {
 			SnapVector( s->apos.trBase );
 		}
 	}
-
-	/* Altering this code
-
-	VectorCopy( ps->viewangles, s->apos.trBase );
-	if ( snap ) {
-		SnapVector( s->apos.trBase );
-	}
-
-	End altered code */
-
-	// END ADDING
-
 	s->angles2[YAW] = ps->movementDir;
 	s->legsAnim = ps->legsAnim;
 	s->torsoAnim = ps->torsoAnim;
@@ -785,7 +773,7 @@ void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s
 	// ADDING FOR ZEQ2
 	
 	// We only alter the model's viewangles if we are NOT guiding a weapon.
-	if ( ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING ) {
+	if ( ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING && ps->lockedTarget < 1) {
 		VectorCopy( ps->viewangles, s->apos.trBase );
 		if ( snap ) {
 			SnapVector( s->apos.trBase );

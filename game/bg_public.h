@@ -162,12 +162,12 @@ typedef enum {
 #define	PMF_TIME_LAND		32		// pm_time is time before rejump
 #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
 #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
-#define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
+#define	PMF_CAN_MOVE		512		// clear after attack and jump buttons come up
 #define PMF_BOOST_HELD		1024	// boost key still held
-#define PMF_LIGHTSPEED_HELD 2048	// ZANZOKEN key still held (NOTE: Not like we're using grappling anyway...)
+#define PMF_ZANZOKEN		2048	// ZANZOKEN key still held
 #define PMF_GRAPPLE_PULL	2048	// pull towards grapple location
 #define PMF_FOLLOW			4096	// spectate following another player
-#define PMF_SCOREBOARD		8192	// spectate as a scoreboard
+#define PMF_SCOREBOARD		8192	// spectate as a scoreboa0rd
 #define PMF_LOCK_HELD		16384	// 
 #define PMF_BLOCK_HELD		32768	// Block, swat, push etc.
 
@@ -222,41 +222,44 @@ void Pmove (pmove_t *pmove);
 typedef enum {
 	powerLevel,
 	powerLevelTotal,
-	powerLevelCounter,		// Used to calculate the remainder time for PL changing
-	powerLevelTimer,		// Used to calculate the time between updating of the powerLevel cap
-	powerLevelTimer2,		// Used to calculate the time between decrementing powerLevel over the cap
+	powerLevelTimer,
+	powerLevelTimerAuto,
 	skills,					// 16 bit bitmask
-	target,					// used to hold currect locked on target
-	// ADDING FOR ZEQ2
 	tierCurrent,
 	tierTotal,
 	chargePercentPrimary,	// % of primary attack charged
 	chargePercentSecondary,	// % of secondary attack charged
 	bitFlags,				// Set of bitflags for player
-	STAT_POWERBUTTONS_TIMER	// Used to store how long BUTTON_POWER_UP and BUTTON_POWER_DOWN
-							// have been held down in one go. Throttles power up / down speed.
-	// END ADDING
+	target
 } statIndex_t;
 
 
 // ADDING FOR ZEQ2
-
 // Player stat bits
-// NOTE: These can not be body states, since their return state is ambiguous.
-//       For instance; Would we return to BODY_WALKING or BODY_FLYING from
-//       a speculative BODY_KI_CHARGING?
-#define STATBIT_HOVERING	0x00000001
-#define STATBIT_BOOSTING	0x00000002
-#define STATBIT_ALTER_PL	0x00000004
-#define STATBIT_STUNNED		0x00000008
-#define STATBIT_FLIPOFFSET	0x00000010
-#define STATBIT_LIGHTSPEED	0x00000020
-
-// END ADDING
+#define hasFlipOffset	0x00000001
+#define usingBoost		0x00000002
+#define usingBlock		0x00000004
+#define usingAlter		0x00000008
+#define usingJump		0x00000010
+#define usingZanzoken	0x00000020
+#define usingWeapon		0x00000040
+#define usingFlight		0x00000080
+#define usingMelee		0x00000100
+#define usingTap		0x00000200
+#define keyTierUp		0x00000400
+#define keyTierDown		0x00000800
+#define keyTapLeft		0x00001000
+#define keyTapForward	0x00002000
+#define keyTapRight		0x00004000
+#define keyTapBack		0x00008000
+#define keyTapDown		0x00010000
+#define keyTapUp		0x00020000
+#define isTransforming	0x00040000
+#define isStruggling	0x00080000
+#define isUnconcious	0x00100000
+#define isDead			0x00200000
 
 // player_state->persistant[] indexes
-// these fields are the only part of player_state that isn't
-// cleared on respawn
 // NOTE: may not have more than 16
 typedef enum {
 	PERS_SCORE,						// !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
@@ -281,9 +284,6 @@ typedef enum {
 
 // entityState_t->eFlags
 #define	EF_DEAD				0x00000001		// don't draw a foe marker over players with EF_DEAD
-#ifdef MISSIONPACK
-#define EF_TICKING			0x00000002		// used to make players play the prox mine ticking sound
-#endif
 #define	EF_TELEPORT_BIT		0x00000004		// toggled every time the origin abruptly changes
 #define	EF_AWARD_EXCELLENT	0x00000008		// draw an excellent sprite
 #define EF_PLAYER_EVENT		0x00000010
@@ -303,27 +303,24 @@ typedef enum {
 #define	EF_AWARD_ASSIST		0x00020000		// draw a assist sprite
 #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
-//ADDING FOR ZEQ2
 #define EF_GUIDED			0x00004000		// To distinguish a guided missile (Missiles can't vote anyway)
 #define EF_AURA				0x00000010		// used to make players display their aura
-//END ADDING
 
 // NOTE: may not have more than 16
 typedef enum {
 	PW_NONE,
 	PW_BOOST,
-	PW_FLYING,
-	PW_FULLFLIGHT,
-	PW_INVIS,
 	PW_INVULNERABILITY,
 	PW_ZANZOKEN,
 	PW_TRANSFORM,
-	PW_MELEE_DEFENSE,
-	PW_MELEE_ATTACK,
-	PW_ENERGY_DEFENSE,
-	PW_ENERGY_ATTACK,
-	PW_ENERGY_COST,
-	PW_STATE,
+	PW_MELEE,
+	PW_MELEE_STATE,
+	PW_DEFENSE,
+	PW_ATTACK1,
+	PW_ATTACK2,
+	PW_STUN,
+	PW_KNOCKBACK,
+	PW_SENSITIVITY,
 	PW_NUM_POWERUPS
 }powerup_t;
 
@@ -415,6 +412,10 @@ typedef enum {
 	EV_TIERCHECK,
 	EV_TIERUP,
 	EV_TIERDOWN,
+	EV_MELEE_SPEED,
+	EV_MELEE_KNOCKBACK,
+	EV_MELEE_STUN,
+	EV_MELEE_CHECK,
 	EV_ZANZOKEN_END,
 	EV_ZANZOKEN_START,
 	// END ADDING
@@ -452,6 +453,7 @@ typedef enum {
 	EV_SHOTGUN,
 	EV_BULLET,				// otherEntity is the shooter
 	EV_PAIN,
+	EV_DEATH,
 	EV_DEATH1,
 	EV_DEATH2,
 	EV_DEATH3,
@@ -464,7 +466,7 @@ typedef enum {
 	EV_DEBUG_LINE,
 	EV_STOPLOOPINGSOUND,
 	EV_LOCKON_START,
-	EV_LOCKON_UPDATE,
+	EV_LOCKON_CHECK,
 	EV_LOCKON_END,
 	EV_LOCKON_START_YES,
 	EV_LOCKON_START_NO,

@@ -933,17 +933,17 @@ void parseAura(char *path,auraConfig_t *aura){
 			else if(!Q_stricmp(token,"hasAuraLight")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				aura->showLight = token == "True" ? qtrue : qfalse;
+				aura->showLight = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"hasAuraTrail")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				aura->showTrail = token == "True" ? qtrue : qfalse;
+				aura->showTrail = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"hasAuraDebris")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				aura->generatesDebris = token == "True" ? qtrue : qfalse;
+				aura->generatesDebris = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp( token, "auraTagCount")){
 				for(i = 0;i < 3;i++){

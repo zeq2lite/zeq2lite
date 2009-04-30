@@ -710,16 +710,6 @@ static void UI_PlayerAngles( playerInfo_t *pi, vec3_t legs[3], vec3_t torso[3], 
 		legsAngles[PITCH] = 0.0f;
 		legsAngles[ROLL] = 0.0f;
 //	}
-/*
-	// ADDING FOR ZEQ2
-	// We're flying, so we change the entire body's directions altogether.
-	if ( pi->powerups & ( 1 << PW_FLYING ) ) {
-		VectorCopy( pi->lerpAngles, headAngles );
-		VectorCopy( pi->lerpAngles, torsoAngles );
-		VectorCopy( pi->lerpAngles, legsAngles );
-	}
-	// END ADDING
-*/
 	// pull the angles back out of the hierarchial chain
 	AnglesSubtract( headAngles, torsoAngles, headAngles );
 	AnglesSubtract( torsoAngles, legsAngles, torsoAngles );

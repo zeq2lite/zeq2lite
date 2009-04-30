@@ -190,10 +190,30 @@ void parseTier(char *path,tierConfig_cg *tier){
 					tier->transformCameraPan[i] = atoi(token);
 				}
 			}
+			else if(!Q_stricmp(token,"sustainPowerLevelCurrent")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainPowerLevel = atoi(token);
+			}
+			else if(!Q_stricmp(token,"sustainPowerLevelTotal")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainPowerLevelTotal = atoi(token);
+			}
 			else if(!Q_stricmp(token,"requirementPowerLevelCurrent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->requirementPowerLevel = atoi(token);
+			}
+			else if(!Q_stricmp(token,"requirementPowerLevelTotal")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementPowerLevelTotal = atoi(token);
+			}
+			else if(!Q_stricmp(token,"requirementPowerLevelMaximum")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementPowerLevelMaximum = atoi(token);
 			}
 		}
 	}

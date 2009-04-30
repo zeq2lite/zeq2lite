@@ -326,13 +326,6 @@ extern struct gclient_s {
 	// END ADDING
 
 	int			switchTeamTime;		// time the player switched teams
-
-	// timeResidual is used to handle events that happen every second
-	// like powerLevel / armor countdowns and regeneration
-	int			timeResidual;
-	int			timeResidualPriCharge;
-	int			timeResidualSecCharge;
-
 	char		*areabits;
 };
 

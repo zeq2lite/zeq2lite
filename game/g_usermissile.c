@@ -373,12 +373,6 @@ void Think_NormalMissile (gentity_t *self) {
 	//}
 	self->nextthink = level.time + FRAMETIME;
 }
-int CheckFortitude (gentity_t *ent, int damage, int dflags){
-	gclient_t *client;
-	client = ent->client;
-	if(!client || !client->ps.stats[tierTotal]) {return 0;}
-	return (client->ps.stats[tierTotal] * 0.1) * damage;
-}
 
 /*
 ====================
@@ -405,7 +399,8 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	if(!dir){dflags |= DAMAGE_NO_KNOCKBACK;}
 	else{
 		VectorNormalize(dir);
-	}	
+	}
+	damage *= ((float)attacker->client->ps.persistant[powerLevelMaximum] * 0.0001);
 	if(inflictor == &g_entities[ENTITYNUM_WORLD]){
 		knockback = damage;
 	}
@@ -444,11 +439,6 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		attacker->client->ps.persistant[PERS_HITS] += OnSameTeam(target,attacker) ? -1 : 1;
 		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->powerLevel<<8)|0;
 	}
-	if(target == attacker){
-		damage *= 0.2;
-	}
-	asave = CheckFortitude(target,damage,dflags);
-	damage -= asave;
 	// add to the damage inflicted on a player this frame
 	// the total will be turned into screen blends and view angle kicks
 	// at the end of the frame
@@ -474,26 +464,18 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	}
 	if(damage){
 		if(tgClient){
-			tgClient->ps.stats[powerLevelTotal] = tgClient->ps.stats[powerLevelTotal] - damage;
-			newPower = tgClient->ps.persistant[powerLevelMaximum] + (damage*0.5);
-			if(newPower < 32768){
-				tgClient->ps.persistant[powerLevelMaximum] = newPower;
+			if(target == attacker){damage *= 0.2;}
+			else{
+				attacker->client->ps.powerLevelBurn -= attacker->client->ps.stats[powerLevel] / tgClient->ps.stats[powerLevel];
 			}
-			if(target->powerLevel <= 0 && tgClient->ps.stats[powerLevelTotal] <= 0){
-				target->enemy = attacker;
-				target->flags |= FL_NO_KNOCKBACK;
-				target->die(target,inflictor,attacker,damage,methodOfDeath);
-			}
-			if(target->pain){
-				target->pain(target,attacker,damage);
-			}
+			tgClient->ps.powerLevelBurn += damage;
 		}
 		else{
 			target->powerLevel = target->powerLevel - damage;
-			G_Printf(va("Attack Powerlevel = %i\n",target->powerLevel));
-			G_Printf(va("Attack Damage = %i\n",damage));
+			//G_Printf(va("Attack Powerlevel = %i\n",target->powerLevel));
+			//G_Printf(va("Attack Damage = %i\n",damage));
 			if(target->powerLevel <= 0){
-				G_Printf(va("Dead"));
+				//G_Printf(va("Dead"));
 				target->die(target,inflictor,attacker,damage,methodOfDeath);
 			}
 		}
@@ -586,18 +568,12 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNum, vec3_t muzzle, vec3_t forward ) {
 	trace_t		tr;
 	vec3_t		end;
-
 	gentity_t	*tempEnt;
 	gentity_t	*tempEnt2;
 	gentity_t	*traceEnt;
 	int			i, passent;
 	float		rnd;
 	float		physics_range;
-
-#ifdef MISSIONPACK
-	vec3_t		impactpoint, bouncedir;
-#endif
-
 	// Get the end point
 	if ( weaponInfo->physics_range_min != weaponInfo->physics_range_max ) {
 		rnd = crandom();
@@ -661,38 +637,11 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 			return;
 		}
 		
-
 		if ( traceEnt->takedamage) {
-
-/*
-#ifdef MISSIONPACK
-			if ( traceEnt->client && traceEnt->client->invulnerabilityTime > level.time ) {
-				if (G_InvulnerabilityEffect( traceEnt, forward, tr.endpos, impactpoint, bouncedir )) {
-					G_BounceProjectile( muzzle, impactpoint, bouncedir, end );
-					VectorCopy( impactpoint, muzzle );
-					// the player can hit him/herself with the bounced rail
-					passent = ENTITYNUM_NONE;
-				}
-				else {
-					VectorCopy( tr.endpos, muzzle );
-					passent = traceEnt->s.number;
-				}
-				continue;
-			}
-			else {
-#endif
-*/
-		
 		G_UserWeaponDamage( traceEnt, self, self, forward, tr.endpos,
 							weaponInfo->damage_damage, 0,
 							MOD_KI + weaponInfo->damage_meansOfDeath,
 							weaponInfo->damage_extraKnockback );
-
-/*
-#ifdef MISSIONPACK
-			}
-#endif
-*/
 		}
 		break;
 	}
@@ -753,7 +702,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_angleW = ( 1.0f - rnd ) * weaponInfo->firing_angleW_min + rnd * weaponInfo->firing_angleW_max;
 
-		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetWFlip ) {
+		if ( ( self->client->ps.stats[bitFlags] & hasFlipOffset ) && weaponInfo->firing_offsetWFlip ) {
 			RotatePointAroundVector( temp, up, firingDir, firing_angleW );
 		} else {
 			RotatePointAroundVector( temp, up, firingDir, -firing_angleW );
@@ -768,7 +717,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_angleH = ( 1.0f - rnd ) * weaponInfo->firing_angleH_min + rnd * weaponInfo->firing_angleH_max;
 
-		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetHFlip ) {
+		if ( ( self->client->ps.stats[bitFlags] & hasFlipOffset ) && weaponInfo->firing_offsetHFlip ) {
 			RotatePointAroundVector( temp, right, firingDir, firing_angleH );
 		} else {
 			RotatePointAroundVector( temp, right, firingDir, -firing_angleH );
@@ -785,7 +734,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_offsetW = ( 1.0f - rnd ) * weaponInfo->firing_offsetW_min + rnd * weaponInfo->firing_offsetW_max;
 
-		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetWFlip ) {
+		if ( ( self->client->ps.stats[bitFlags] & hasFlipOffset ) && weaponInfo->firing_offsetWFlip ) {
 			VectorMA( firingStart, -firing_offsetW, right, firingStart );
 		} else {
 			VectorMA( firingStart, firing_offsetW, right, firingStart );
@@ -798,7 +747,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_offsetH = ( 1.0f - rnd ) * weaponInfo->firing_offsetH_min + rnd * weaponInfo->firing_offsetH_max;
 
-		if ( ( self->client->ps.stats[bitFlags] & STATBIT_FLIPOFFSET ) && weaponInfo->firing_offsetHFlip ) {
+		if ( ( self->client->ps.stats[bitFlags] & hasFlipOffset ) && weaponInfo->firing_offsetHFlip ) {
 			VectorMA( firingStart, -firing_offsetH, up, firingStart );
 		} else {
 			VectorMA( firingStart, firing_offsetH, up, firingStart );
@@ -837,15 +786,15 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
 			bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[chargePercentSecondary];
-			G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
-			G_Printf(va("charge percent = %i\n",self->client->ps.stats[chargePercentSecondary]));
+			//G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
+			//G_Printf(va("charge percent = %i\n",self->client->ps.stats[chargePercentSecondary]));
 			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
 		} else {
 			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
 			bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[chargePercentPrimary];
-			G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
-			G_Printf(va("charge percent = %i\n",self->client->ps.stats[chargePercentPrimary]));
+			//G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
+			//G_Printf(va("charge percent = %i\n",self->client->ps.stats[chargePercentPrimary]));
 			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
 		}
 		
@@ -855,11 +804,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
-
 		bolt->takedamage = qtrue;
-		//bolt->powerLevel = 1; // <-- We need to enter _something_ here, or the missile will die
-						  //     instantly.
-
 		{
 			float radius;
 			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
@@ -1454,7 +1399,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 	qboolean		hitClient = qfalse;
 	int				energyDefense;
 	vec3_t	velocity;
-	G_Printf(va("G_ImpactUserWeapon\n"));
+	//G_Printf(va("G_ImpactUserWeapon\n"));
 	
 	other = &g_entities[trace->entityNum];
 	energyDefense = 1;
@@ -1500,7 +1445,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 				g_userWeapon_t	*weaponInfo;
 
 				weaponInfo = G_FindUserWeaponData( self->s.clientNum, self->s.weapon );
-				G_Printf(va("G_UserWeaponDamage"));
+				//G_Printf(va("G_UserWeaponDamage"));
 				G_UserWeaponDamage( other, self, &g_entities[self->r.ownerNum], velocity, self->s.origin,
 									weaponInfo->damage_damage / energyDefense, 0,
 									MOD_KI + weaponInfo->damage_meansOfDeath,

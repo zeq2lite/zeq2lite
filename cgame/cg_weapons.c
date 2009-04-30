@@ -1059,25 +1059,7 @@ static float	CG_MachinegunSpinAngle( centity_t *cent ) {
 CG_AddWeaponWithPowerups
 ========================
 */
-static void CG_AddWeaponWithPowerups( refEntity_t *gun, int powerups ) {
-	// add powerup effects
-//	if ( powerups & ( 1 << PW_INVIS ) ) {
-//		gun->customShader = cgs.media.invisShader;
-//		trap_R_AddRefEntityToScene( gun );
-//	} else {
-//		trap_R_AddRefEntityToScene( gun );
-
-//		if ( powerups & ( 1 << PW_BATTLESUIT ) ) {
-//			gun->customShader = cgs.media.battleWeaponShader;
-//			trap_R_AddRefEntityToScene( gun );
-//		}
-
-//		if ( powerups & ( 1 << PW_QUAD ) ) {
-//			gun->customShader = cgs.media.quadWeaponShader;
-//			trap_R_AddRefEntityToScene( gun );
-//		}
-//	}
-}
+static void CG_AddWeaponWithPowerups( refEntity_t *gun, int powerups ) {}
 
 
 /*
@@ -1626,8 +1608,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 
 //		w = CG_DrawStrlen( name ) * MEDIUMCHAR_WIDTH; //BIGCHAR_WIDTH;
 //		x = ( SCREEN_WIDTH - w ) / 2;
-		//CG_DrawBigStringColor(x, y - 22, name, color);
-		CG_DrawSmallStringColor(6, y - 30, name, color);
+		//CG_DrawSmallStringColor(6, y - 30, name, color);
 	}
 
 	trap_R_SetColor( NULL );
@@ -1673,7 +1654,7 @@ void CG_NextWeapon_f( void ) {
 	int		i;
 	int		original;
 
-	if ( !cg.snap ) {
+	if ( !cg.snap || cg.snap->ps.powerups[PW_MELEE] ) {
 		return;
 	}
 	if ( cg.snap->ps.pm_flags & PMF_FOLLOW ) {

@@ -576,10 +576,9 @@ static void CG_DrawStatusBar( void ) {
 	float 		tierLast,tierNext,tier;
 	clientInfo_t *ci;
 	cg_userWeapon_t	*weaponGraphics;
+	tierConfig_cg *activeTier;
 	ci = &cgs.clientinfo[cg.snap->ps.clientNum];
 	if(cg_drawStatus.integer == 0){return;}
-	// draw the team background
-	CG_DrawTeamBackground( 0, 420, 640, 60, 0.33f, cg.snap->ps.persistant[PERS_TEAM] );
 	cent = &cg_entities[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
 	VectorClear( angles );
@@ -610,6 +609,10 @@ static void CG_DrawStatusBar( void ) {
 	tier = (float)ps->stats[tierCurrent];
 	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
 	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];
+	if(currentPercent < 0){currentPercent = 0;}
+	if(maxPercent <0){maxPercent = 0;}
+	if(currentPercent > 1.0){currentPercent = 1.0;}
+	if(maxPercent > 1.0){maxPercent = 1.0;}
 	multiplier = ci->tierConfig[ci->tierCurrent].hudMultiplier;
 	if(multiplier <= 0){
 		multiplier = ((tier*tier*tier*tier)+1.0);
@@ -623,15 +626,26 @@ static void CG_DrawStatusBar( void ) {
 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
 	if(tier){	
-		tierLast = (float)ci->tierConfig[ci->tierCurrent].requirementPowerLevel / (float)ps->persistant[powerLevelMaximum];
-		if(tierLast > 0){
+		activeTier = &ci->tierConfig[ci->tierCurrent];
+		tierLast = 32768;
+		if(activeTier->sustainPowerLevel && activeTier->sustainPowerLevel < tierLast){tierLast = (float)activeTier->sustainPowerLevel;}
+		if(activeTier->sustainPowerLevelTotal && activeTier->sustainPowerLevelTotal < tierLast){tierLast = (float)activeTier->sustainPowerLevelTotal;}
+		if(tierLast < 32768){
+			tierLast = tierLast / (float)ps->persistant[powerLevelMaximum];
 			CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
 		}
 	}
 	if(tier < ps->stats[tierTotal]){
-		tierNext = (float)ci->tierConfig[ci->tierCurrent+1].requirementPowerLevel / (float)ps->persistant[powerLevelMaximum];
-		if(tierNext < 1.0){
-			CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
+		activeTier = &ci->tierConfig[ci->tierCurrent+1];
+		tierNext = 0;
+		if(activeTier->requirementPowerLevel && activeTier->requirementPowerLevel > tierNext){tierNext = (float)activeTier->requirementPowerLevel;}
+		if(activeTier->requirementPowerLevelTotal && activeTier->requirementPowerLevelTotal > tierNext){tierNext = (float)activeTier->requirementPowerLevel;}
+		if(activeTier->requirementPowerLevelMaximum && activeTier->requirementPowerLevelMaximum > tierNext){tierNext = (float)activeTier->requirementPowerLevelMaximum;}
+		if(tierNext){
+			tierNext = tierNext / (float)ps->persistant[powerLevelMaximum];
+			if(tierNext < 1.0){
+				CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
+			}
 		}
 	}
 	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
@@ -645,54 +659,6 @@ static void CG_DrawStatusBar( void ) {
 
 ===========================================================================================
 */
-
-/*
-================
-CG_DrawAttacker
-
-================
-*/
-static float CG_DrawAttacker( float y ) {
-	int			t;
-	float		size;
-	vec3_t		angles;
-	const char	*info;
-	const char	*name;
-	int			clientNum;
-
-	if ( cg.predictedPlayerState.stats[powerLevel] <= 0 ) {
-		return y;
-	}
-
-	if ( !cg.attackerTime ) {
-		return y;
-	}
-
-	clientNum = cg.predictedPlayerState.persistant[PERS_ATTACKER];
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS || clientNum == cg.snap->ps.clientNum ) {
-		return y;
-	}
-
-	t = cg.time - cg.attackerTime;
-	if ( t > ATTACKER_HEAD_TIME ) {
-		cg.attackerTime = 0;
-		return y;
-	}
-
-	size = ICON_SIZE * 1.25;
-
-	angles[PITCH] = 0;
-	angles[YAW] = 180;
-	angles[ROLL] = 0;
-	CG_DrawHead( 640 - size, y, size, size, clientNum, angles );
-
-	info = CG_ConfigString( CS_PLAYERS + clientNum );
-	name = Info_ValueForKey(  info, "n" );
-	y += size;
-	CG_DrawBigString( 640 - ( Q_PrintStrlen( name ) * BIGCHAR_WIDTH), y, name, 0.5 );
-
-	return y + BIGCHAR_HEIGHT + 2;
-}
 
 /*
 ==================
@@ -988,10 +954,6 @@ static void CG_DrawUpperRight( void ) {
 	if ( cg_drawTimer.integer ) {
 		y = CG_DrawTimer( y );
 	}
-	if ( cg_drawAttacker.integer ) {
-		y = CG_DrawAttacker( y );
-	}
-
 }
 
 /*
@@ -1897,7 +1859,7 @@ static void CG_DrawCrosshair(void) {
 		ca = 0;
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
-
+	if(ps->lockedTarget > 0){hShader = cgs.media.crosshairLockedShader;}
 	CG_DrawPic( x - 0.5f * w, y - 0.5f * h, w, h, hShader );
 	trap_R_SetColor( NULL );
 
@@ -2699,97 +2661,46 @@ CG_Draw2D
 =================
 */
 static void CG_Draw2D( void ) {
-#ifdef MISSIONPACK
-	if (cgs.orderPending && cg.time > cgs.orderTime) {
-		CG_CheckOrderPending();
-	}
-#endif
 	// if we are taking a levelshot for the menu, don't draw anything
 	if ( cg.levelShot ) {
 		return;
 	}
-
 	if ( cg_draw2D.integer == 0 ) {
 		return;
 	}
-
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
 		CG_DrawIntermission();
 		return;
 	}
-
-/*
-	if (cg.cameraMode) {
-		return;
-	}
-*/
-
-
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		CG_DrawSpectator();
 		CG_DrawCrosshair();
 		CG_DrawCrosshairNames();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if ( !cg.showScores && cg.snap->ps.stats[powerLevel] > 0 ) {
-
-#ifdef MISSIONPACK
-			if ( cg_drawStatus.integer ) {
-				Menu_PaintAll();
-				CG_DrawTimedMenus();
-			}
-#else
+		if (!cg.showScores && !(cg.snap->ps.powerups[PW_TRANSFORM] > 1) && !(cg.snap->ps.powerups[PW_STUN]) && !(cg.snap->ps.stats[bitFlags] & isUnconcious)){
 			CG_DrawStatusBar();
 			CG_DrawRadar();
-#endif
-      
-			CG_DrawAmmoWarning();
-
-#ifdef MISSIONPACK
-			CG_DrawProxWarning();
-#endif      
+			CG_DrawAmmoWarning();  
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
 			CG_DrawWeaponSelect();
-
-#ifndef MISSIONPACK
 			CG_DrawHoldableItem();
-#else
-			//CG_DrawPersistantPowerup();
-#endif
 			CG_DrawReward();
 		}
-    
 		if ( cgs.gametype >= GT_TEAM ) {
-#ifndef MISSIONPACK
 			CG_DrawTeamInfo();
-#endif
 		}
 	}
-
 	CG_DrawVote();
 	CG_DrawTeamVote();
-
 	CG_DrawLagometer();
-
-#ifdef MISSIONPACK
-	if (!cg_paused.integer) {
-		CG_DrawUpperRight();
-	}
-#else
 	CG_DrawUpperRight();
-#endif
-
-#ifndef MISSIONPACK
 	CG_DrawLowerRight();
 	CG_DrawLowerLeft();
-#endif
-
-	if ( !CG_DrawFollow() ) {
+	if (!CG_DrawFollow()){
 		CG_DrawWarmup();
 	}
-
-	// don't draw center string if scoreboard is up
 	cg.scoreBoardShowing = CG_DrawScoreboard();
 	if ( !cg.scoreBoardShowing) {
 		CG_DrawCenterString();
@@ -2798,10 +2709,7 @@ static void CG_Draw2D( void ) {
 
 
 static void CG_DrawTourneyScoreboard() {
-#ifdef MISSIONPACK
-#else
 	CG_DrawOldTourneyScoreboard();
-#endif
 }
 
 

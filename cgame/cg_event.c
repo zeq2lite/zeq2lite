@@ -589,9 +589,15 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_JUMP");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
 		break;
+	case EV_LOCKON_CHECK:
+		DEBUGNAME("EV_LOCKON_CHECK");
+		break;
 	case EV_LOCKON_START:
 		DEBUGNAME("EV_LOCKON_START");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
+		break;
+	case EV_LOCKON_END:
+		DEBUGNAME("EV_LOCKON_END");
 		break;
 	case EV_STUNNED:
 		DEBUGNAME("EV_STUNNED");
@@ -609,32 +615,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_SWAT");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
 		break;
-#ifdef MISSIONPACK
-	case EV_LOCKON_START_YES:
-		DEBUGNAME("EV_LOCKON_START_YES");
-		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_YES);
-		break;
-	case EV_LOCKON_START_NO:
-		DEBUGNAME("EV_LOCKON_START_NO");
-		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_NO);
-		break;
-	case EV_LOCKON_START_FOLLOWME:
-		DEBUGNAME("EV_LOCKON_START_FOLLOWME");
-		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_FOLLOWME);
-		break;
-	case EV_LOCKON_START_GETFLAG:
-		DEBUGNAME("EV_LOCKON_START_GETFLAG");
-		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_ONGETFLAG);
-		break;
-	case EV_LOCKON_START_GUARDBASE:
-		DEBUGNAME("EV_LOCKON_START_GUARDBASE");
-		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_ONDEFENSE);
-		break;
-	case EV_LOCKON_START_PATROL:
-		DEBUGNAME("EV_LOCKON_START_PATROL");
-		CG_VoiceChatLocal(SAY_TEAM, qfalse, es->number, COLOR_CYAN, VOICECHAT_ONPATROL);
-		break;
-#endif
 	case EV_WATER_TOUCH:
 		DEBUGNAME("EV_WATER_TOUCH");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrInSound );
@@ -651,7 +631,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_WATER_CLEAR");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.ogg" ) );
 		break;
-
 	case EV_ITEM_PICKUP:
 		DEBUGNAME("EV_ITEM_PICKUP");
 		{
@@ -670,22 +649,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			if ( item->giType == IT_POWERUP || item->giType == IT_TEAM) {
 				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.n_powerLevelSound );
 			} else if (item->giType == IT_PERSISTANT_POWERUP) {
-#ifdef MISSIONPACK
-				switch (item->giTag ) {
-/*					case PW_SCOUT:
-						trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.scoutSound );
-					break;
-					case PW_GUARD:
-						trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.guardSound );
-					break;
-					case PW_DOUBLER:
-						trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.doublerSound );
-					break;
-					case PW_AMMOREGEN:
-						trap_S_StartSound (NULL, es->number, CHAN_AUTO,	cgs.media.ammoregenSound );
-					break;
-*/				}
-#endif
 			} else {
 				trap_S_StartSound (NULL, es->number, CHAN_AUTO,	trap_S_RegisterSound( item->pickup_sound, qfalse ) );
 			}
@@ -733,7 +696,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_CHANGE_WEAPON:
 		DEBUGNAME("EV_CHANGE_WEAPON");
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.selectSound );
+		//trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.selectSound );
 		break;
 	case EV_FIRE_WEAPON:
 		DEBUGNAME("EV_FIRE_WEAPON");
@@ -743,8 +706,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_ALTFIRE_WEAPON");
 		CG_FireWeapon( cent, qtrue );
 		break;
-
-		// ADDING FOR ZEQ2
 	case EV_DETONATE_WEAPON:
 		DEBUGNAME("EV_DETONATE_WEAPON");
 		break;
@@ -754,73 +715,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		CG_SpawnEffect( position );
 		CG_SpawnLightSpeedGhost( cent );
 		break;
-
-	// END ADDING
-
-	case EV_USE_ITEM0:
-		DEBUGNAME("EV_USE_ITEM0");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM1:
-		DEBUGNAME("EV_USE_ITEM1");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM2:
-		DEBUGNAME("EV_USE_ITEM2");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM3:
-		DEBUGNAME("EV_USE_ITEM3");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM4:
-		DEBUGNAME("EV_USE_ITEM4");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM5:
-		DEBUGNAME("EV_USE_ITEM5");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM6:
-		DEBUGNAME("EV_USE_ITEM6");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM7:
-		DEBUGNAME("EV_USE_ITEM7");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM8:
-		DEBUGNAME("EV_USE_ITEM8");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM9:
-		DEBUGNAME("EV_USE_ITEM9");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM10:
-		DEBUGNAME("EV_USE_ITEM10");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM11:
-		DEBUGNAME("EV_USE_ITEM11");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM12:
-		DEBUGNAME("EV_USE_ITEM12");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM13:
-		DEBUGNAME("EV_USE_ITEM13");
-		CG_UseItem( cent );
-		break;
-	case EV_USE_ITEM14:
-		DEBUGNAME("EV_USE_ITEM14");
-		CG_UseItem( cent );
-		break;
-	//=================================================================
-	//
-	// other events
-	//
 	case EV_PLAYER_TELEPORT_IN:
 		DEBUGNAME("EV_PLAYER_TELEPORT_IN");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.teleInSound );
@@ -848,72 +742,25 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.hgrenb2aSound );
 		}
 		break;
-#ifdef MISSIONPACK
-	case EV_PROXIMITY_MINE_STICK:
-		DEBUGNAME("EV_PROXIMITY_MINE_STICK");
-		if( es->eventParm & SURF_FLESH ) {
-			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.wstbimplSound );
-		} else 	if( es->eventParm & SURF_METALSTEPS ) {
-			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.wstbimpmSound );
-		} else {
-			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.wstbimpdSound );
-		}
-		break;
-	case EV_PROXIMITY_MINE_TRIGGER:
-		DEBUGNAME("EV_PROXIMITY_MINE_TRIGGER");
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.wstbactvSound );
-		break;
-	case EV_KAMIKAZE:
-		DEBUGNAME("EV_KAMIKAZE");
-		CG_KamikazeEffect( cent->lerpOrigin );
-		break;
-	case EV_OBELISKEXPLODE:
-		DEBUGNAME("EV_OBELISKEXPLODE");
-		CG_ObeliskExplode( cent->lerpOrigin, es->eventParm );
-		break;
-	case EV_OBELISKPAIN:
-		DEBUGNAME("EV_OBELISKPAIN");
-		CG_ObeliskPain( cent->lerpOrigin );
-		break;
-	case EV_INVUL_IMPACT:
-		DEBUGNAME("EV_INVUL_IMPACT");
-		CG_InvulnerabilityImpact( cent->lerpOrigin, cent->currentState.angles );
-		break;
-	case EV_JUICED:
-		DEBUGNAME("EV_JUICED");
-		CG_InvulnerabilityJuiced( cent->lerpOrigin );
-		break;
-	case EV_LIGHTNINGBOLT:
-		DEBUGNAME("EV_LIGHTNINGBOLT");
-		CG_LightningBoltBeam(es->origin2, es->pos.trBase);
-		break;
-#endif
 	case EV_SCOREPLUM:
 		DEBUGNAME("EV_SCOREPLUM");
 		CG_ScorePlum( cent->currentState.otherEntityNum, cent->lerpOrigin, cent->currentState.time );
 		break;
-	//
-	// missile impacts
-	//
 	case EV_MISSILE_HIT:
 		DEBUGNAME("EV_MISSILE_HIT");
 		ByteToDir( es->eventParm, dir );
-		//CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum );
 		CG_UserMissileHitPlayer( es->weapon, es->clientNum, position, dir, es->otherEntityNum );
 		break;
 	case EV_MISSILE_MISS:
 		DEBUGNAME("EV_MISSILE_MISS");
 		ByteToDir( es->eventParm, dir );
-		//CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
 		CG_UserMissileHitWall( es->weapon, es->clientNum, position, dir, qfalse );
 		break;
 	case EV_MISSILE_MISS_METAL:
 		DEBUGNAME("EV_MISSILE_MISS_METAL");
 		ByteToDir( es->eventParm, dir );
-		//CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_METAL );
 		CG_UserMissileHitWall( es->weapon, es->clientNum, position, dir, qfalse );
 		break;
-	// ADDING FOR ZEQ2
 	case EV_MISSILE_MISS_AIR:
 		DEBUGNAME("EV_MISSILE_MISS_AIR");
 		ByteToDir( es->eventParm, dir );
@@ -924,19 +771,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_RAILTRAIL:
 		CG_UserRailTrail( es->weapon, es->clientNum, es->origin2, es->pos.trBase );
 		break;
-	// END ADDING
-/*
-	case EV_RAILTRAIL:
-		DEBUGNAME("EV_RAILTRAIL");
-		cent->currentState.weapon = WP_RAILGUN;
-		// if the end was on a nomark surface, don't make an explosion
-		CG_RailTrail( ci, es->origin2, es->pos.trBase );
-		if ( es->eventParm != 255 ) {
-			ByteToDir( es->eventParm, dir );
-			CG_MissileHitWall( es->weapon, es->clientNum, position, dir, IMPACTSOUND_DEFAULT );
-		}
-		break;
-*/
 	case EV_BULLET_HIT_WALL:
 		DEBUGNAME("EV_BULLET_HIT_WALL");
 		ByteToDir( es->eventParm, dir );
@@ -1042,12 +876,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			CG_PainEvent( cent, es->eventParm );
 		}
 		break;
-	case EV_DEATH1:
-	case EV_DEATH2:
-	case EV_DEATH3:
-		DEBUGNAME("EV_DEATHx");
-		trap_S_StartSound( NULL, es->number, CHAN_VOICE, 
-				CG_CustomSound( es->number, va("*death%i.ogg", event - EV_DEATH1 + 1) ) );
+	case EV_DEATH:
+		DEBUGNAME("EV_DEATH");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*death1.ogg"));
 		break;
 	case EV_OBITUARY:
 		DEBUGNAME("EV_OBITUARY");
@@ -1084,12 +915,27 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_DEBUG_LINE");
 		CG_Beam( cent );
 		break;
+	case EV_MELEE_SPEED:
+		DEBUGNAME("EV_MELEE_SPEED");
+		trap_S_StartSound(NULL,es->number,CHAN_BODY,cgs.media.speedMeleeSound);
+		//trap_S_AddLoopingSound(es->number,NULL,NULL,cgs.media.speedMeleeSound);
+		break;
+	case EV_MELEE_KNOCKBACK:
+		DEBUGNAME("EV_MELEE_KNOCKBACK");
+		trap_S_StartSound(NULL,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
+		break;
+	case EV_MELEE_STUN:
+		DEBUGNAME("EV_MELEE_STUN");
+		break;
+	case EV_MELEE_CHECK:
+		DEBUGNAME("EV_MELEE_CHECK");
+		break;
 	case EV_TIERCHECK:
 		DEBUGNAME("EV_TIERCHECK");
 		break;
 	case EV_TIERUP:
 		DEBUGNAME("EV_TIERUP");
-		//CG_Printf("Client TierUp Called.\n");
+		if(cg.snap->ps.powerups[PW_TRANSFORM] > 0){break;}
 		if((ci->tierCurrent+1)>ci->tierMax){
 			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent+1].soundTransformFirst);
 		}
@@ -1099,12 +945,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TIERDOWN:
 		DEBUGNAME("EV_TIERDOWN");
-		//CG_Printf("Client TierDown Called.\n");
 		if((ci->tierCurrent-1) > 0){
 			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent-1].soundTransformDown);
 		}
 		break;
-
 	default:
 		DEBUGNAME("UNKNOWN");
 		CG_Error( "Unknown event: %i", event );

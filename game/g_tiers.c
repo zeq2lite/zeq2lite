@@ -5,16 +5,16 @@ void syncTier(gclient_t *client){
 	playerState_t *ps;
 	ps = &client->ps;
 	tier = &client->tiers[ps->stats[tierCurrent]];
-	ps->powerLevelBreakLimitRate = tier->powerLevelBreakLimitRate;
+	ps->powerLevelBreakLimitRate = tier->powerLevelBreakLimitRate * g_powerLevelBreakLimitRate.value;
 	ps->drainPowerLevel = tier->powerLevelEffect;
 	ps->drainPowerLevelTotal = tier->powerLevelTotalEffect;
 	ps->drainPowerLevelMaximum = tier->powerLevelMaximumEffect;
 	ps->speed = tier->speed;
-	ps->powerups[PW_MELEE_DEFENSE] = tier->meleeDefense;
-	ps->powerups[PW_MELEE_ATTACK] = tier->meleeAttack;
-	ps->powerups[PW_ENERGY_DEFENSE] = tier->energyDefense;
-	ps->powerups[PW_ENERGY_ATTACK] = tier->energyAttackDamage;
-	ps->powerups[PW_ENERGY_COST] = tier->energyAttackCost;
+	ps->meleeDefense = tier->meleeDefense;
+	ps->meleeAttack = tier->meleeAttack;
+	ps->energyDefense = tier->energyDefense;
+	ps->energyAttack = tier->energyAttackDamage;
+	ps->energyCost = tier->energyAttackCost;
 }
 void setupTiers(gclient_t *client){
 	int	i;
@@ -57,27 +57,27 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->speed = atoi(token);
 			}
-			else if(!Q_stricmp(token,"tierMeleeAttack")){
+			else if(!Q_stricmp(token,"percentMeleeAttack")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->meleeAttack = atof(token);
 			}
-			else if(!Q_stricmp(token,"tierMeleeDefense")){
+			else if(!Q_stricmp(token,"percentMeleeDefense")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->meleeDefense = atoi(token);
 			}
-			else if(!Q_stricmp(token,"tierEnergyDefense")){
+			else if(!Q_stricmp(token,"percentEnergyDefense")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->energyDefense = atoi(token);
 			}
-			else if(!Q_stricmp(token,"tierEnergyAttackDamage")){
+			else if(!Q_stricmp(token,"percentEnergyAttackDamage")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->energyAttackDamage = atof(token);
 			}
-			else if(!Q_stricmp(token,"tierEnergyAttackCost")){
+			else if(!Q_stricmp(token,"percentEnergyAttackCost")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->energyAttackCost = atof(token);
@@ -86,6 +86,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->zanzokenCost = atoi(token);
+			}
+			else if(!Q_stricmp(token,"tierZanzokenSpeed")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->zanzokenSpeed = atoi(token);
 			}
 			else if(!Q_stricmp(token,"tierZanzokenDistance")){
 				token = COM_Parse(&parse);
@@ -127,6 +132,16 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->requirementPowerLevelMaximum = atoi(token);
 			}
+			else if(!Q_stricmp(token,"sustainPowerLevelCurrent")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainPowerLevelCurrent = atoi(token);
+			}
+			else if(!Q_stricmp(token,"sustainPowerLevelTotal")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainPowerLevelTotal = atoi(token);
+			}
 			else if(!Q_stricmp(token,"transformTime")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
@@ -135,17 +150,17 @@ void parseTier(char *path,tierConfig_g *tier){
 			else if(!Q_stricmp(token,"requirementPowerLevelButton")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementPowerLevelButton = token == "True" ? qtrue : qfalse;
+				tier->requirementPowerLevelButton = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"tierPermanent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->permanent = token == "True" ? qtrue : qfalse;
+				tier->permanent = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"tierCustomWeapons")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->customWeapons = token == "True" ? qtrue : qfalse;
+				tier->customWeapons = strlen(token) == 4 ? qtrue : qfalse;
 			}
 		}
 	}

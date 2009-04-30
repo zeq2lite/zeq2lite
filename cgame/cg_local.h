@@ -765,9 +765,6 @@ typedef struct {
 	char		testModelName[MAX_QPATH];
 	qboolean	testGun;
 
-	// ADDING FOR ZEQ2
-	qboolean	lockReady;
-	vec3_t		lockedTarget;
 
 	qboolean	guide_view;
 	vec3_t		guide_target;	// where to look for guided missiles
@@ -809,19 +806,6 @@ typedef struct {
 	qhandle_t	redFlagBaseModel;
 	qhandle_t	blueFlagBaseModel;
 	qhandle_t	neutralFlagBaseModel;
-
-#ifdef MISSIONPACK
-	qhandle_t	overloadBaseModel;
-	qhandle_t	overloadTargetModel;
-	qhandle_t	overloadLightsModel;
-	qhandle_t	overloadEnergyModel;
-
-	qhandle_t	harvesterModel;
-	qhandle_t	harvesterRedSkin;
-	qhandle_t	harvesterBlueSkin;
-	qhandle_t	harvesterNeutralModel;
-#endif
-
 	qhandle_t	armorModel;
 	qhandle_t	armorIcon;
 
@@ -871,6 +855,7 @@ typedef struct {
 	qhandle_t	viewBloodShader;
 	qhandle_t	tracerShader;
 	qhandle_t	crosshairShader[NUM_CROSSHAIRS];
+	qhandle_t	crosshairLockedShader;
 	qhandle_t	lagometerShader;
 	qhandle_t	backTileShader;
 	qhandle_t	noammoShader;
@@ -881,11 +866,6 @@ typedef struct {
 	qhandle_t	plasmaBallShader;
 	qhandle_t	waterBubbleShader;
 	qhandle_t	bloodTrailShader;
-#ifdef MISSIONPACK
-	qhandle_t	nailPuffShader;
-	qhandle_t	blueProxMine;
-#endif
-
 	qhandle_t	bfgLFGlare;	// JUHOX
 	qhandle_t	bfgLFDisc;	// JUHOX
 	qhandle_t	bfgLFRing;	// JUHOX
@@ -937,21 +917,6 @@ typedef struct {
 	qhandle_t	teleportEffectModel;
 	qhandle_t	teleportEffectShader;
 	qhandle_t	boltEffectShader;
-#ifdef MISSIONPACK
-	qhandle_t	kamikazeEffectModel;
-	qhandle_t	kamikazeShockWave;
-	qhandle_t	kamikazeHeadModel;
-	qhandle_t	kamikazeHeadTrail;
-	qhandle_t	guardPowerupModel;
-	qhandle_t	scoutPowerupModel;
-	qhandle_t	doublerPowerupModel;
-	qhandle_t	ammoRegenPowerupModel;
-	qhandle_t	invulnerabilityImpactModel;
-	qhandle_t	invulnerabilityJuicedModel;
-	qhandle_t	medkitUsageModel;
-	qhandle_t	dustPuffShader;
-	qhandle_t	heartShader;
-#endif
 	qhandle_t	invulnerabilityPowerupModel;
 
 	// scoreboard headers
@@ -984,30 +949,6 @@ typedef struct {
 	sfxHandle_t	sfx_railg;
 	sfxHandle_t	sfx_rockexp;
 	sfxHandle_t	sfx_plasmaexp;
-#ifdef MISSIONPACK
-	sfxHandle_t	sfx_proxexp;
-	sfxHandle_t	sfx_nghit;
-	sfxHandle_t	sfx_nghitflesh;
-	sfxHandle_t	sfx_nghitmetal;
-	sfxHandle_t	sfx_chghit;
-	sfxHandle_t	sfx_chghitflesh;
-	sfxHandle_t	sfx_chghitmetal;
-	sfxHandle_t kamikazeExplodeSound;
-	sfxHandle_t kamikazeImplodeSound;
-	sfxHandle_t kamikazeFarSound;
-	sfxHandle_t useInvulnerabilitySound;
-	sfxHandle_t invulnerabilityImpactSound1;
-	sfxHandle_t invulnerabilityImpactSound2;
-	sfxHandle_t invulnerabilityImpactSound3;
-	sfxHandle_t invulnerabilityJuicedSound;
-	sfxHandle_t obeliskHitSound1;
-	sfxHandle_t obeliskHitSound2;
-	sfxHandle_t obeliskHitSound3;
-	sfxHandle_t	obeliskRespawnSound;
-	sfxHandle_t	winnerSound;
-	sfxHandle_t	loserSound;
-	sfxHandle_t	youSuckSound;
-#endif
 	sfxHandle_t	gibSound;
 	sfxHandle_t	gibBounce1Sound;
 	sfxHandle_t	gibBounce2Sound;
@@ -1020,15 +961,12 @@ typedef struct {
 	sfxHandle_t landSound;
 	sfxHandle_t fallSound;
 	sfxHandle_t jumpPadSound;
-
 	sfxHandle_t oneMinuteSound;
 	sfxHandle_t fiveMinuteSound;
 	sfxHandle_t suddenDeathSound;
-
 	sfxHandle_t threeFragSound;
 	sfxHandle_t twoFragSound;
 	sfxHandle_t oneFragSound;
-
 	sfxHandle_t hitSound;
 	sfxHandle_t hitSoundHighArmor;
 	sfxHandle_t hitSoundLowArmor;
@@ -1042,24 +980,18 @@ typedef struct {
 	sfxHandle_t firstImpressiveSound;
 	sfxHandle_t firstExcellentSound;
 	sfxHandle_t firstHumiliationSound;
-
 	sfxHandle_t takenLeadSound;
 	sfxHandle_t tiedLeadSound;
 	sfxHandle_t lostLeadSound;
-
 	sfxHandle_t voteNow;
 	sfxHandle_t votePassed;
 	sfxHandle_t voteFailed;
-
 	sfxHandle_t watrInSound;
 	sfxHandle_t watrOutSound;
 	sfxHandle_t watrUnSound;
-
 	sfxHandle_t flightSound;
 	sfxHandle_t medkitSound;
-
 	sfxHandle_t weaponHoverSound;
-
 	// teamplay sounds
 	sfxHandle_t captureAwardSound;
 	sfxHandle_t redScoredSound;
@@ -1067,14 +999,12 @@ typedef struct {
 	sfxHandle_t redLeadsSound;
 	sfxHandle_t blueLeadsSound;
 	sfxHandle_t teamsTiedSound;
-
 	sfxHandle_t	captureYourTeamSound;
 	sfxHandle_t	captureOpponentSound;
 	sfxHandle_t	returnYourTeamSound;
 	sfxHandle_t	returnOpponentSound;
 	sfxHandle_t	takenYourTeamSound;
 	sfxHandle_t	takenOpponentSound;
-
 	sfxHandle_t redFlagReturnedSound;
 	sfxHandle_t blueFlagReturnedSound;
 	sfxHandle_t neutralFlagReturnedSound;
@@ -1085,36 +1015,15 @@ typedef struct {
 	sfxHandle_t	youHaveFlagSound;
 	sfxHandle_t yourBaseIsUnderAttackSound;
 	sfxHandle_t holyShitSound;
-
 	// tournament sounds
 	sfxHandle_t	count3Sound;
 	sfxHandle_t	count2Sound;
 	sfxHandle_t	count1Sound;
 	sfxHandle_t	countFightSound;
 	sfxHandle_t	countPrepareSound;
-
-#ifdef MISSIONPACK
-	// new stuff
-	qhandle_t patrolShader;
-	qhandle_t assaultShader;
-	qhandle_t campShader;
-	qhandle_t followShader;
-	qhandle_t defendShader;
-	qhandle_t teamLeaderShader;
-	qhandle_t retrieveShader;
-	qhandle_t escortShader;
-	qhandle_t flagShaders[3];
-	sfxHandle_t	countPrepareTeamSound;
-
-	sfxHandle_t ammoregenSound;
-	sfxHandle_t doublerSound;
-	sfxHandle_t guardSound;
-	sfxHandle_t scoutSound;
-#endif
 	qhandle_t cursor;
 	qhandle_t selectCursor;
 	qhandle_t sizeCursor;
-
 	sfxHandle_t	regenSound;
 	sfxHandle_t	protectSound;
 	sfxHandle_t	n_powerLevelSound;
@@ -1124,10 +1033,19 @@ typedef struct {
 	sfxHandle_t	wstbimpmSound;
 	sfxHandle_t	wstbimpdSound;
 	sfxHandle_t	wstbactvSound;
-
 	// ADDING FOR ZEQ2
 	sfxHandle_t	radarwarningSound;
 	sfxHandle_t	lightspeedSound;
+	sfxHandle_t	blockSound;
+	sfxHandle_t	knockbackSound;
+	sfxHandle_t	knockbackLoopSound;
+	sfxHandle_t	stunSound;
+	sfxHandle_t	speedMeleeSound;
+	sfxHandle_t	speedMissSound;
+	sfxHandle_t	speedBlockSound;
+	sfxHandle_t	powerMeleeSound;
+	sfxHandle_t	powerStunSound;
+	sfxHandle_t	powerMissSound;
 	// END ADDING
 
 } cgMedia_t;
@@ -1316,7 +1234,6 @@ extern	vmCvar_t		cg_thirdPersonHeight;
 extern	vmCvar_t		cg_thirdPerson;
 extern	vmCvar_t		cg_stereoSeparation;
 extern	vmCvar_t		cg_lagometer;
-extern	vmCvar_t		cg_drawAttacker;
 extern	vmCvar_t		cg_synchronousClients;
 extern	vmCvar_t		cg_teamChatTime;
 extern	vmCvar_t		cg_teamChatHeight;

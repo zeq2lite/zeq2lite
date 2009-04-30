@@ -6,7 +6,7 @@
 
 #define	STEPSIZE		18
 
-#define	JUMP_VELOCITY	400
+#define	JUMP_VELOCITY	1000
 #define POWERJUMP_TIME 2500
 
 #define	TIMER_LAND		130
@@ -20,22 +20,14 @@
 typedef struct {
 	vec3_t		forward, right, up;
 	float		frametime;
-
 	int			msec;
-
-	qboolean	walking;
+	qboolean	onGround;
 	qboolean	groundPlane;
 	trace_t		groundTrace;
-
 	float		impactSpeed;
-
 	vec3_t		previous_origin;
 	vec3_t		previous_velocity;
 	int			previous_waterlevel;
-
-	// <-- RiO: Buffered powerLevel that is used up first for firing/charging weapons
-	//          Only after it runs out, is actual powerLevel deducted.
-	int			bufferHealth;
 	// -->
 } pml_t;
 

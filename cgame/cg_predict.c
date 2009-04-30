@@ -199,60 +199,41 @@ Generates cg.predictedPlayerState by interpolating between
 cg.snap->player_state and cg.nextFrame->player_state
 ========================
 */
-static void CG_InterpolatePlayerState( qboolean grabAngles ) {
+static void CG_InterpolatePlayerState(qboolean grabAngles) {
 	float			f;
 	int				i;
 	playerState_t	*out;
 	snapshot_t		*prev, *next;
-
 	out = &cg.predictedPlayerState;
 	prev = cg.snap;
 	next = cg.nextSnap;
-
 	*out = cg.snap->ps;
-
 	// if we are still allowing local input, short circuit the view angles
-	if ( grabAngles ) {
+	if(grabAngles){
 		usercmd_t	cmd;
-		int			cmdNum;
-
+		int	cmdNum;
 		cmdNum = trap_GetCurrentCmdNumber();
-		trap_GetUserCmd( cmdNum, &cmd );
-
-//		if ( out->rolling ) {
-			PM_UpdateViewAngles( out, &cmd );
-//		} else {
-//			PM_UpdateViewAngles2( out, &cmd );
-//		}
-	}
-
-	// if the next frame is a teleport, we can't lerp to it
-	if ( cg.nextFrameTeleport ) {
-		return;
-	}
-
-	if ( !next || next->serverTime <= prev->serverTime ) {
-		return;
-	}
-
-	f = (float)( cg.time - prev->serverTime ) / ( next->serverTime - prev->serverTime );
-
-	i = next->ps.bobCycle;
-	if ( i < prev->ps.bobCycle ) {
-		i += 256;		// handle wraparound
-	}
-	out->bobCycle = prev->ps.bobCycle + f * ( i - prev->ps.bobCycle );
-
-	for ( i = 0 ; i < 3 ; i++ ) {
-		out->origin[i] = prev->ps.origin[i] + f * (next->ps.origin[i] - prev->ps.origin[i] );
-		if ( !grabAngles ) {
-			out->viewangles[i] = LerpAngle( 
-				prev->ps.viewangles[i], next->ps.viewangles[i], f );
+		trap_GetUserCmd(cmdNum,&cmd);
+		if(out->rolling){
+			PM_UpdateViewAngles(out,&cmd);
 		}
-		out->velocity[i] = prev->ps.velocity[i] + 
-			f * (next->ps.velocity[i] - prev->ps.velocity[i] );
+		else{
+			PM_UpdateViewAngles2(out,&cmd);
+		}
 	}
-
+	if(cg.nextFrameTeleport){return;}
+	if(!next || next->serverTime <= prev->serverTime){return;}
+	f = (float)( cg.time - prev->serverTime ) / ( next->serverTime - prev->serverTime );
+	i = next->ps.bobCycle;
+	if(i<prev->ps.bobCycle){i += 256;}
+	out->bobCycle = prev->ps.bobCycle + f * ( i - prev->ps.bobCycle );
+	for(i=0;i<3;i++){
+		out->origin[i] = prev->ps.origin[i] + f * (next->ps.origin[i] - prev->ps.origin[i]);
+		if(!grabAngles){
+			out->viewangles[i] = LerpAngle(prev->ps.viewangles[i],next->ps.viewangles[i],f);
+		}
+		out->velocity[i] = prev->ps.velocity[i] + f * (next->ps.velocity[i] - prev->ps.velocity[i]);
+	}
 }
 
 /*
@@ -261,7 +242,6 @@ CG_TouchItem
 ===================
 */
 static void CG_TouchItem( centity_t *cent ) {
-
 	return;
 }
 
@@ -371,42 +351,25 @@ void CG_PredictPlayerState( void ) {
 	usercmd_t	oldestCmd;
 	usercmd_t	latestCmd;
 
-	cg.hyperspace = qfalse;	// will be set if touching a trigger_teleport
-
-	// if this is the first frame we must guarantee
-	// predictedPlayerState is valid even if there is some
-	// other error condition
-	if ( !cg.validPPS ) {
+	cg.hyperspace = qfalse;
+	if(!cg.validPPS){
 		cg.validPPS = qtrue;
 		cg.predictedPlayerState = cg.snap->ps;
 	}
-
-
-	// demo playback just copies the moves
-	if ( cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) ) {
-		CG_InterpolatePlayerState( qfalse );
+	if(cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) ) {
+		CG_InterpolatePlayerState(qfalse);
 		return;
 	}
-
-	// non-predicting local movement will grab the latest angles
-	if ( cg_nopredict.integer || cg_synchronousClients.integer ) {
-		CG_InterpolatePlayerState( qtrue );
+	if(cg_nopredict.integer || cg_synchronousClients.integer ) {
+		CG_InterpolatePlayerState(qtrue);
 		return;
 	}
-
-	
-	// prepare for pmove
 	cg_pmove.ps = &cg.predictedPlayerState;
 	cg_pmove.trace = CG_Trace;
 	cg_pmove.pointcontents = CG_PointContents;
-	if ( cg_pmove.ps->pm_type == PM_DEAD ) {
-		cg_pmove.tracemask = MASK_PLAYERSOLID & ~CONTENTS_BODY;
-	}
-	else {
-		cg_pmove.tracemask = MASK_PLAYERSOLID;
-	}
-	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
-		cg_pmove.tracemask &= ~CONTENTS_BODY;	// spectators can fly through bodies
+	cg_pmove.tracemask = MASK_PLAYERSOLID;
+	if(cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+		cg_pmove.tracemask &= ~CONTENTS_BODY;
 	}
 #if MAPLENSFLARES	// JUHOX: set player tracemask for lens flare editor
 	if (cgs.editMode == EM_mlf) {
@@ -414,12 +377,8 @@ void CG_PredictPlayerState( void ) {
 	}
 #endif
 	cg_pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
-
-	// save the state before the pmove so we can detect transitions
 	oldPlayerState = cg.predictedPlayerState;
-
 	current = trap_GetCurrentCmdNumber();
-
 	// if we don't have the commands right after the snapshot, we
 	// can't accurately predict a current position, so just freeze at
 	// the last good position we had
@@ -465,11 +424,12 @@ void CG_PredictPlayerState( void ) {
 		trap_GetUserCmd( cmdNum, &cg_pmove.cmd );
 
 		if ( cg_pmove.pmove_fixed ) {
-//			if ( cg_pmove.ps->rolling ) {
+			if(cg_pmove.ps->rolling ) {
 				PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd );
-//			} else {
-//				PM_UpdateViewAngles2( cg_pmove.ps, &cg_pmove.cmd );
-//			}
+			}
+			else{
+				PM_UpdateViewAngles2( cg_pmove.ps, &cg_pmove.cmd );
+			}
 		}
 
 		// don't do anything if the time is before the snapshot player time

@@ -345,10 +345,6 @@ just like the existing corpse to leave behind.
 =============
 */
 void CopyToBodyQue( gentity_t *ent ) {
-#ifdef MISSIONPACK
-	gentity_t	*e;
-	int i;
-#endif
 	gentity_t		*body;
 	int			contents;
 
@@ -368,24 +364,6 @@ void CopyToBodyQue( gentity_t *ent ) {
 
 	body->s = ent->s;
 	body->s.eFlags = EF_DEAD;		// clear EF_TALK, etc
-#ifdef MISSIONPACK
-	if ( ent->s.eFlags & EF_KAMIKAZE ) {
-		body->s.eFlags |= EF_KAMIKAZE;
-
-		// check if there is a kamikaze timer around for this owner
-		for (i = 0; i < MAX_GENTITIES; i++) {
-			e = &g_entities[i];
-			if (!e->inuse)
-				continue;
-			if (e->activator != ent)
-				continue;
-			if (strcmp(e->classname, "kamikaze timer"))
-				continue;
-			e->activator = body;
-			break;
-		}
-	}
-#endif
 	body->s.powerups = 0;	// clear powerups
 	body->s.loopSound = 0;	// clear lava burning
 	body->s.number = body - g_entities;
@@ -690,7 +668,6 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	ent = g_entities + clientNum;
 	client = ent->client;
-
 	trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
 
 	// check for malformed or illegal info strings
@@ -875,7 +852,6 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	ent = &g_entities[ clientNum ];
 
 	trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
-
 	// check to see if they are on the banned IP list
 	value = Info_ValueForKey (userinfo, "ip");
 	if ( G_FilterPacket( value ) ) {
@@ -928,15 +904,7 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		client->sess.sessionTeam != TEAM_SPECTATOR ) {
 		BroadcastTeamChange( client, -1 );
 	}
-
-	// count current clients and rank for scoreboard
 	CalculateRanks();
-
-	// for statistics
-//	client->areabits = areabits;
-//	if ( !client->areabits )
-//		client->areabits = G_Alloc( (trap_AAS_PointReachabilityAreaIndex( NULL ) + 7) / 8 );
-
 	return NULL;
 }
 
@@ -954,7 +922,6 @@ void ClientBegin( int clientNum ) {
 	gclient_t	*client;
 	gentity_t	*tent;
 	int			flags;
-
 	ent = g_entities + clientNum;
 
 	client = level.clients + clientNum;
@@ -970,7 +937,7 @@ void ClientBegin( int clientNum ) {
 	client->pers.connected = CON_CONNECTED;
 	client->pers.enterTime = level.time;
 	client->pers.teamState.state = TEAM_BEGIN;
-
+	client->ps.gravity = g_gravity.value;
 	// save eflags around this, because changing teams will
 	// cause this to happen with a valid entity, and we
 	// want to make sure the teleport bit is set right
@@ -1001,6 +968,7 @@ void ClientBegin( int clientNum ) {
 
 	// count current clients and rank for scoreboard
 	CalculateRanks();
+	trap_Cvar_Set("g_synchronousClients",(clientNum > 0) ? "1" : "0");
 }
 
 /*
@@ -1027,9 +995,9 @@ void ClientSpawn(gentity_t *ent) {
 	int		eventSequence;
 	char	model[MAX_QPATH];
 	char	userinfo[MAX_INFO_STRING];
-
 	index = ent - g_entities;
 	client = ent->client;
+	client->ps.gravity = g_gravity.value;
 	// find a spawn point
 	// do it before setting powerLevel back up, so farthest
 	// ranging doesn't count this client
@@ -1109,16 +1077,12 @@ void ClientSpawn(gentity_t *ent) {
 		client->pers.maxHealth = 100;
 	}
 	// clear entity values
-	if ( g_powerLevel.value > 32768 ) {
+	if(g_powerLevel.value > 32768){
 		g_powerLevel.value = 32768;
 	}
-	if ( g_powerLevelBreakLimitRate.value < 0.1 ) {
-		g_powerLevelBreakLimitRate.value = 0.1;
-	}
-	if ( g_powerLevelBreakLimitRate.value > 5) {
-		g_powerLevelBreakLimitRate.value = 5;
-	}
-	client->ps.stats[powerLevelTotal] = g_powerLevel.value;
+	if(g_powerLevelBreakLimitRate.value < 0.1 ){g_powerLevelBreakLimitRate.value = 0.1;}
+	if(g_powerLevelBreakLimitRate.value > 10){g_powerLevelBreakLimitRate.value = 10;}
+	client->ps.stats[powerLevelTotal] = client->ps.persistant[powerLevelMaximum] > g_powerLevel.value ? client->ps.persistant[powerLevelMaximum] * 0.75 : g_powerLevel.value;
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1140,10 +1104,10 @@ void ClientSpawn(gentity_t *ent) {
 
 	// ADDING FOR ZEQ2
 	client->modelName = model;
-	setupTiers(client);
 	client->ps.stats[skills] = *G_FindUserWeaponMask( index );
 	client->ps.stats[chargePercentPrimary] = 0;
 	client->ps.stats[chargePercentSecondary] = 0;
+	setupTiers(client);
 	// END ADDING
 
 	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
@@ -1160,10 +1124,6 @@ void ClientSpawn(gentity_t *ent) {
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
-
-	// the respawned flag will be cleared after the attack and jump keys come up
-	client->ps.pm_flags |= PMF_RESPAWNED;
-
 	trap_GetUsercmd( client - level.clients, &ent->client->pers.cmd );
 	SetClientViewAngle( ent, spawn_angles );
 
@@ -1270,15 +1230,7 @@ void ClientDisconnect( int clientNum ) {
 		// They don't get to take powerups with them!
 		// Especially important for stuff like CTF flags
 		TossClientItems( ent );
-#ifdef MISSIONPACK
-		//TossClientPersistantPowerups( ent );
-		if( g_gametype.integer == GT_HARVESTER ) {
-			TossClientCubes( ent );
-		}
-#endif
-
-	}
-
+}
 	G_LogPrintf( "ClientDisconnect: %i\n", clientNum );
 
 	// if we are playing in tourney mode and losing, give a win to the other player

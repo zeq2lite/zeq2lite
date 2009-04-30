@@ -232,23 +232,13 @@ void PM_StepSlideMove( qboolean gravity ) {
 	pm->trace (&trace, start_o, pm->mins, pm->maxs, down, pm->ps->clientNum, pm->tracemask);
 	VectorSet(up, 0, 0, 1);
 	// never step up when you still have up velocity
-	if ( pm->ps->velocity[2] > 0 && (trace.fraction == 1.0 ||
-										DotProduct(trace.plane.normal, up) < 0.7)) {
-		return;
-	}
-
+	if(pm->ps->velocity[2] > 0 && (trace.fraction == 1.0 || DotProduct(trace.plane.normal, up) < 0.7)) {return;}
 	VectorCopy (pm->ps->origin, down_o);
 	VectorCopy (pm->ps->velocity, down_v);
-
 	VectorCopy (start_o, up);
 	up[2] += STEPSIZE;
-
-	// test the player position if they were a stepheight higher
 	pm->trace (&trace, start_o, pm->mins, pm->maxs, up, pm->ps->clientNum, pm->tracemask);
-	if ( trace.allsolid ) {
-		if ( pm->debugLevel ) {
-			Com_Printf("%i:bend can't step\n", c_pmove);
-		}
+	if(trace.allsolid){
 		return;		// can't step up
 	}
 
@@ -270,22 +260,8 @@ void PM_StepSlideMove( qboolean gravity ) {
 		PM_ClipVelocity( pm->ps->velocity, trace.plane.normal, pm->ps->velocity, OVERCLIP );
 	}
 
-#if 0
-	// if the down trace can trace back to the original position directly, don't step
-	pm->trace( &trace, pm->ps->origin, pm->mins, pm->maxs, start_o, pm->ps->clientNum, pm->tracemask);
-	if ( trace.fraction == 1.0 ) {
-		// use the original move
-		VectorCopy (down_o, pm->ps->origin);
-		VectorCopy (down_v, pm->ps->velocity);
-		if ( pm->debugLevel ) {
-			Com_Printf("%i:bend\n", c_pmove);
-		}
-	} else 
-#endif
 	{
-		// use the step move
 		float	delta;
-
 		delta = pm->ps->origin[2] - start_o[2];
 		if ( delta > 2 ) {
 			if ( delta < 7 ) {

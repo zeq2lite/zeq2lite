@@ -289,9 +289,6 @@ static void CG_OffsetThirdPersonView( void ) {
 			oldRoll = cg.refdefViewAngles[ROLL];
 			vectoangles( forward, cg.refdefViewAngles );
 			cg.refdefViewAngles[ROLL] = oldRoll;
-			// cg.guide_target is updated every guided frame by prediction,
-			// so disabling it can be done every frame (if necessary it will
-			// automagically be re-enabled.
 			VectorCopy( ps->origin,cg.guide_target);
 			cg.guide_view = qfalse;
 		}	
@@ -369,11 +366,12 @@ static void CG_OffsetThirdPersonView( void ) {
 	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
 	// ADDING FOR ZEQ2
 	if (cg_thirdPersonCamera.value == 0) {
-		if ( cg.snap->ps.powerups[PW_FLYING] ) {
+		if(cg.snap->ps.stats[bitFlags] & usingFlight){
 			VectorCopy( overrideAngles, cg.refdefViewAngles );
 			// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
 			if ( cg_thirdPersonAngle.value != 0 ) {
 				rotationOffsetAngles[PITCH] = 0;
+				rotationOffsetAngles[YAW] = -cg_thirdPersonAngle.value;
 				rotationOffsetAngles[ROLL] = 0;
 				AnglesToQuat(cg.refdefViewAngles, quatOrient);
 				AnglesToQuat(rotationOffsetAngles, quatRot);
@@ -387,12 +385,14 @@ static void CG_OffsetThirdPersonView( void ) {
 			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
 			VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
 			VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
+			VectorMA( overrideOrg, 8 + cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
+			VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
 			if (!cg_cameraMode.integer) {
 				CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, clientNum, MASK_SOLID );
 				if ( trace.fraction != 1.0f ) {
 					VectorCopy( trace.endpos, cg.refdef.vieworg );
 					VectorMA(cg.refdef.vieworg, (1.0f - trace.fraction) * 32, up, cg.refdef.vieworg);
-					CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, clientNum, MASK_SOLID );
+
 					VectorCopy( trace.endpos, cg.refdef.vieworg );
 				}
 			}

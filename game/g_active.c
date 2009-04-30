@@ -9,7 +9,11 @@ void tierCheck(gclient_t *client){
 	if(ps->powerups[PW_TRANSFORM]){return;}
 	if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
 		nextTier = &client->tiers[tier+1];
-		if((ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) && (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) && (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
+		if(((nextTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierUp) ||
+		   (!nextTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierUp))) &&
+		   (ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) &&
+		   (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) &&
+		   (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
 			ps->powerups[PW_TRANSFORM] = 1;
 			if(tier+1 > ps->stats[tierTotal]){
 				ps->powerups[PW_TRANSFORM] = client->tiers[tier+1].transformTime;
@@ -18,7 +22,10 @@ void tierCheck(gclient_t *client){
 	}
 	if(tier > 0){
 		baseTier = &client->tiers[tier];
-		if((ps->stats[powerLevel] <= baseTier->requirementPowerLevelCurrent) || (ps->stats[powerLevelTotal] <= baseTier->requirementPowerLevelTotal) || (ps->persistant[powerLevelMaximum] <= baseTier->requirementPowerLevelMaximum)){
+		if(((baseTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierDown) ||
+		   (!baseTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierDown))) ||
+		   (ps->stats[powerLevel] < baseTier->sustainPowerLevelCurrent) ||
+		   (ps->stats[powerLevelTotal] < baseTier->sustainPowerLevelTotal)){
 			ps->powerups[PW_TRANSFORM] = -1;
 		}
 	}
@@ -32,10 +39,6 @@ void P_DamageFeedback( gentity_t *player ) {
 	vec3_t	angles;
 
 	client = player->client;
-	if ( client->ps.pm_type == PM_DEAD ) {
-		return;
-	}
-
 	// total points of damage shot at the player this frame
 	count = client->damage_blood; // + client->damage_armor;
 	if ( count == 0 ) { // didn't take any damage
@@ -102,11 +105,7 @@ void P_WorldEffects( gentity_t *ent ) {
 
 	waterlevel = ent->waterlevel;
 
-	envirosuit = qfalse; //ent->client->ps.powerups[PW_BATTLESUIT] > level.time;
-
-	
-	// <-- RiO: Drowning in ZEQ2 needs to become PL-cap dependent
-
+	envirosuit = qfalse;
 	ent->client->airOutTime = level.time + 12000;
 	if (waterlevel && 
 		(ent->watertype&(CONTENTS_LAVA|CONTENTS_SLIME)) ) {
@@ -213,12 +212,6 @@ void	G_TouchTriggers( gentity_t *ent ) {
 #if MAPLENSFLARES	// JUHOX: never touch triggers in lens flare editor
 	if (g_editmode.integer == EM_mlf) return;
 #endif
-
-	// dead clients don't activate triggers!
-	if ( ent->client->ps.stats[powerLevel] <= 0 ) {
-		return;
-	}
-
 	VectorSubtract( ent->client->ps.origin, range, mins );
 	VectorAdd( ent->client->ps.origin, range, maxs );
 
@@ -322,7 +315,6 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 		VectorCopy( client->ps.origin, ent->s.origin );
 
 		// ADDING FOR ZEQ2
-		// Update altered powerLevel value
 		ent->powerLevel = client->ps.stats[powerLevel];
 		// END ADDING
 
@@ -374,84 +366,6 @@ qboolean ClientInactivityTimer( gclient_t *client ) {
 }
 
 /*
-==================
-ClientTimerActions
-
-Actions that happen once a second
-==================
-*/
-void ClientTimerActions( gentity_t *ent, int msec ) {
-	gclient_t	*client;
-	g_userWeapon_t *weaponInfo;
-	g_userWeapon_t *alt_weaponInfo;
-
-	client = ent->client;
-
-	// Retrieve our weapon's settings
-	weaponInfo = G_FindUserWeaponData( client->ps.clientNum, client->ps.weapon );
-	if ( weaponInfo->general_bitflags & WPF_ALTWEAPONPRESENT ) {
-		alt_weaponInfo = G_FindUserAltWeaponData( client->ps.clientNum, client->ps.weapon );
-	} else {
-		alt_weaponInfo = weaponInfo;
-	}
-	
-
-	client->timeResidual += msec; // standard events
-	client->timeResidualPriCharge += msec; // Weapon primary charging
-	client->timeResidualSecCharge += msec; // Weapon secondary charging
-
-	while ( client->timeResidual >= 1000 ) {
-		client->timeResidual -= 1000;
-
-		// count down powerLevel when over max
-		if ( ent->powerLevel > client->ps.stats[powerLevelTotal] ) {
-			ent->powerLevel--;
-		}
-	}
-	
-	while ( (client->timeResidualPriCharge >= weaponInfo->costs_chargeTime) && (weaponInfo->costs_chargeTime > 0) ) {
-		client->timeResidualPriCharge -= weaponInfo->costs_chargeTime;
-
-		if ( client->ps.weaponstate == WEAPON_CHARGING ) {
-
-			if ( (client->ps.stats[powerLevel] > weaponInfo->costs_ki) && (client->ps.stats[chargePercentPrimary] < 100)) {
-				client->ps.stats[powerLevel] -= weaponInfo->costs_ki;
-				client->ps.stats[chargePercentPrimary] += 1; //weaponInfo->chargeRatio;
-				if (client->ps.stats[chargePercentPrimary] > 100) {
-					client->ps.stats[chargePercentPrimary] = 100;
-				}
-			}
-		}
-	}
-	// If we're not capable of charging, don't let there be any residual time left to charge!
-	if ( (client->ps.weaponstate != WEAPON_CHARGING) || (weaponInfo->costs_chargeTime == 0)) {
-		client->timeResidualPriCharge = 0;
-	}
-
-
-	while ( (client->timeResidualSecCharge >= alt_weaponInfo->costs_chargeTime) && (alt_weaponInfo->costs_chargeTime > 0) ) {
-		client->timeResidualSecCharge -= alt_weaponInfo->costs_chargeTime;
-		
-		if ( client->ps.weaponstate == WEAPON_ALTCHARGING ) {
-
-			if ((client->ps.stats[powerLevel] > alt_weaponInfo->costs_ki) && (client->ps.stats[chargePercentSecondary] < 100)) {
-				client->ps.stats[powerLevel] -= alt_weaponInfo->costs_ki;
-				client->ps.stats[chargePercentSecondary] += 1; //alt_weaponInfo->chargeRatio;
-				if (client->ps.stats[chargePercentSecondary] > 100) {
-					client->ps.stats[chargePercentSecondary] = 100;
-				}
-			}
-		}
-
-	}
-	// If we're not capable of charging, don't let there be any residual time left to charge!
-	if ( (client->ps.weaponstate != WEAPON_ALTCHARGING) || (alt_weaponInfo->costs_chargeTime == 0)) {
-		client->timeResidualSecCharge = 0;
-	}
-}
-
-
-/*
 ====================
 ClientIntermissionThink
 ====================
@@ -484,6 +398,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int			i, j;
 	int			event;
 	int 		tier;
+	int 		enemyMelee,playerMelee;
 	gclient_t	*client;
 	int			damage;
 	vec3_t		dir;
@@ -492,11 +407,15 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	gitem_t		*item;
 	gentity_t	*drop;
 	playerState_t *ps;
+	playerState_t *enemyPS;
 	// ADDING FOR ZEQ2
 	gentity_t	*missile;
 	// END ADDING
 	client = ent->client;
 	ps = &client->ps;
+	if(ps->lockedTarget>0){
+		enemyPS = &g_entities[ps->lockedTarget-1].client->ps;
+	}
 	tier = ps->stats[tierCurrent];
 	if ( oldEventSequence < client->ps.eventSequence - MAX_PS_EVENTS ) {
 		oldEventSequence = client->ps.eventSequence - MAX_PS_EVENTS;
@@ -532,7 +451,30 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_DETONATE_WEAPON:
 			missile = client->guidetarget;
-			G_RemoveUserWeapon( missile );
+			G_RemoveUserWeapon(missile);
+			break;
+		case EV_MELEE_SPEED:
+			break;
+		case EV_MELEE_KNOCKBACK:
+			break;
+		case EV_MELEE_STUN:
+			break;
+		case EV_MELEE_CHECK:
+			if(ps->lockedTarget>0){
+				enemyMelee = enemyPS->powerups[PW_MELEE_STATE];
+				playerMelee = ps->powerups[PW_MELEE_STATE];
+				if(enemyMelee == 2 || enemyMelee == 3){
+					if(ps->stats[bitFlags] & usingBlock){
+						ps->powerups[PW_MELEE_STATE] = 6;
+						enemyPS->powerLevelMeleeBurn = ps->persistant[powerLevelMaximum] * 0.004;
+					}
+					else if(playerMelee < 2){
+						ps->powerups[PW_STUN] = -150;
+						ps->powerups[PW_MELEE_STATE] = 5;
+						ps->powerLevelMeleeBurn = enemyPS->persistant[powerLevelMaximum] * 0.004;
+					}
+				}
+			}
 			break;
 		case EV_TIERCHECK:
 			tierCheck(client);
@@ -548,10 +490,19 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			--ps->stats[tierCurrent];
 			syncTier(client);
 			break;
+		case EV_LOCKON_CHECK:
+			if(ps->lockedTarget>0){
+				if(enemyPS->stats[bitFlags] & isDead){
+					ps->lockedTarget = -1;
+				}
+			}
+			break;
 		case EV_LOCKON_START:
 			if(ps->lockedTarget>0){
-				pm->ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
+				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
 			}
+			break;
+		case EV_LOCKON_END:
 			break;
 		case EV_USE_ITEM1:
 			item = NULL;
@@ -698,72 +649,45 @@ void ClientThink_real( gentity_t *ent ) {
 	int			oldEventSequence;
 	int			msec;
 	usercmd_t	*ucmd;
-
 	client = ent->client;
-
 	// don't think if the client is not yet connected (and thus not yet spawned in)
-	if (client->pers.connected != CON_CONNECTED) {
-		return;
-	}
+	if (client->pers.connected != CON_CONNECTED){return;}
 	// mark the time, so the connection sprite can be removed
 	ucmd = &ent->client->pers.cmd;
-
 	// sanity check the command time to prevent speedup cheating
-	if ( ucmd->serverTime > level.time + 200 ) {
-		ucmd->serverTime = level.time + 200;
-//		G_Printf("serverTime <<<<<\n" );
-	}
-	if ( ucmd->serverTime < level.time - 1000 ) {
-		ucmd->serverTime = level.time - 1000;
-//		G_Printf("serverTime >>>>>\n" );
-	} 
-
+	if ( ucmd->serverTime > level.time + 200 ) {ucmd->serverTime = level.time + 200;}
+	if ( ucmd->serverTime < level.time - 1000 ) {ucmd->serverTime = level.time - 1000;} 
 	msec = ucmd->serverTime - client->ps.commandTime;
 	// following others may result in bad times, but we still want
 	// to check for follow toggles
-	if ( msec < 1 && client->sess.spectatorState != SPECTATOR_FOLLOW ) {
-		return;
-	}
-	if ( msec > 200 ) {
-		msec = 200;
-	}
-
-	if ( pmove_msec.integer < 8 ) {
-		trap_Cvar_Set("pmove_msec", "8");
-	}
-	else if (pmove_msec.integer > 33) {
-		trap_Cvar_Set("pmove_msec", "33");
-	}
-
-	if ( pmove_fixed.integer || client->pers.pmoveFixed ) {
+	if(msec < 1 && client->sess.spectatorState != SPECTATOR_FOLLOW){return;}
+	if(msec > 200){msec = 200;}
+	if(pmove_msec.integer < 8 ){trap_Cvar_Set("pmove_msec", "8");}
+	else if(pmove_msec.integer > 33){trap_Cvar_Set("pmove_msec", "33");}
+	if(pmove_fixed.integer || client->pers.pmoveFixed){
 		ucmd->serverTime = ((ucmd->serverTime + pmove_msec.integer-1) / pmove_msec.integer) * pmove_msec.integer;
-		//if (ucmd->serverTime - client->ps.commandTime <= 0)
-		//	return;
 	}
 	if(level.intermissiontime){
 		ClientIntermissionThink( client );
 		return;
 	}
-	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
+	if(client->sess.sessionTeam == TEAM_SPECTATOR){
 		if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 			return;
 		}
 		SpectatorThink( ent, ucmd );
 		return;
 	}
-	if (!ClientInactivityTimer(client)){return;}
-	if ( client->noclip ) {
+	if(!ClientInactivityTimer(client)){return;}
+	if(client->noclip){
 		client->ps.pm_type = PM_NOCLIP;
-	} else if ( client->ps.stats[powerLevel] <= 0 ) {
-		client->ps.pm_type = PM_DEAD;
-	} else {
+	}
+	else{
 		client->ps.pm_type = PM_NORMAL;
 	}
-
-	client->ps.gravity = g_gravity.value;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
-	client->ps.speed = g_speed.value;
+	client->ps.speed = client->tiers[client->ps.stats[tierCurrent]].speed;
 	G_LinkUserWeaponData( &(client->ps) );
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
@@ -780,10 +704,7 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 	pm.ps = &client->ps;
 	pm.cmd = *ucmd;
-	if ( pm.ps->pm_type == PM_DEAD ) {
-		pm.tracemask = MASK_PLAYERSOLID & ~CONTENTS_BODY;
-	}
-	else if ( ent->r.svFlags & SVF_BOT ) {
+	if ( ent->r.svFlags & SVF_BOT ) {
 		pm.tracemask = MASK_PLAYERSOLID | CONTENTS_BOTCLIP;
 	}
 	else {
@@ -841,7 +762,6 @@ void ClientThink_real( gentity_t *ent ) {
 	client->oldbuttons = client->buttons;
 	client->buttons = ucmd->buttons;
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
-
 	// check for respawning
 	if ( client->ps.stats[powerLevel] <= 0 ) {
 		// wait for the attack button to be pressed
@@ -860,9 +780,6 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 		return;
 	}
-
-	// perform once-a-second actions
-	ClientTimerActions( ent, msec );
 }
 
 /*
@@ -897,12 +814,9 @@ void G_RunClient( gentity_t *ent ) {
 }
 
 
-/*
-==================
+/*==================
 SpectatorClientEndFrame
-
-==================
-*/
+==================*/
 void SpectatorClientEndFrame( gentity_t *ent ) {
 	gclient_t	*cl;
 
@@ -955,20 +869,12 @@ while a slow client may have multiple ClientEndFrame between ClientThink.
 void ClientEndFrame( gentity_t *ent ) {
 //	int			i;
 	clientPersistant_t	*pers;
-
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		SpectatorClientEndFrame( ent );
 		return;
 	}
 
 	pers = &ent->client->pers;
-#if 0
-	if ( !g_synchronousClients->integer && ent->client->ps.pm_type == PM_NORMAL ) {
-		// FIXME: this must change eventually for non-sync demo recording
-		VectorClear( ent->client->ps.viewangles );
-	}
-#endif
-
 	//
 	// If the end of unit layout is displayed, don't give
 	// the player any normal movement attributes

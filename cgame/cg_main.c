@@ -45,10 +45,6 @@ int vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int a
 		CG_KeyEvent(arg0, arg1);
 		return 0;
 	case CG_MOUSE_EVENT:
-#ifdef MISSIONPACK
-		cgDC.cursorx = cgs.cursorX;
-		cgDC.cursory = cgs.cursorY;
-#endif
 		CG_MouseEvent(arg0, arg1);
 		return 0;
 	case CG_EVENT_HANDLING:
@@ -125,7 +121,6 @@ vmCvar_t	cg_thirdPersonAngle;
 vmCvar_t	cg_thirdPersonHeight;
 vmCvar_t	cg_stereoSeparation;
 vmCvar_t	cg_lagometer;
-vmCvar_t	cg_drawAttacker;
 vmCvar_t	cg_synchronousClients;
 vmCvar_t 	cg_teamChatTime;
 vmCvar_t 	cg_teamChatHeight;
@@ -219,7 +214,6 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_draw3dIcons, "cg_draw3dIcons", "1", CVAR_ARCHIVE  },
 	{ &cg_drawIcons, "cg_drawIcons", "1", CVAR_ARCHIVE  },
 	{ &cg_drawAmmoWarning, "cg_drawAmmoWarning", "1", CVAR_ARCHIVE  },
-	{ &cg_drawAttacker, "cg_drawAttacker", "1", CVAR_ARCHIVE  },
 	{ &cg_drawCrosshair, "cg_drawCrosshair", "4", CVAR_ARCHIVE },
 	{ &cg_drawCrosshairNames, "cg_drawCrosshairNames", "1", CVAR_ARCHIVE },
 	{ &cg_drawRewards, "cg_drawRewards", "1", CVAR_ARCHIVE },
@@ -652,6 +646,16 @@ static void CG_RegisterSounds( void ) {
 
 	cgs.media.radarwarningSound = trap_S_RegisterSound( "interface/radar/warning.ogg", qfalse );
 	cgs.media.lightspeedSound = trap_S_RegisterSound( "effects/zanzoken/zanzoken.ogg", qfalse );
+	cgs.media.blockSound = trap_S_RegisterSound( "effects/melee/block.ogg", qfalse );
+	cgs.media.knockbackSound = trap_S_RegisterSound( "effects/melee/knockback.ogg", qfalse );
+	cgs.media.knockbackLoopSound = trap_S_RegisterSound( "effects/melee/knockbackLoop.ogg", qfalse );
+	cgs.media.speedMeleeSound = trap_S_RegisterSound( "effects/melee/speedHit1.ogg", qfalse );
+	cgs.media.speedMissSound = trap_S_RegisterSound( "effects/melee/speedMiss1.ogg", qfalse );
+	cgs.media.speedBlockSound = trap_S_RegisterSound( "effects/melee/speedBlock1.ogg", qfalse );
+	cgs.media.stunSound = trap_S_RegisterSound( "effects/melee/stun1.ogg", qfalse );
+	cgs.media.powerStunSound = trap_S_RegisterSound( "effects/melee/powerStun1.ogg", qfalse );
+	cgs.media.powerMeleeSound = trap_S_RegisterSound( "effects/melee/powerHit1.ogg", qfalse );
+	cgs.media.powerMissSound = trap_S_RegisterSound( "effects/melee/powerMiss1.ogg", qfalse );
 
 	// END ADDING
 
@@ -1487,7 +1491,7 @@ static void CG_RegisterGraphics( void ) {
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
 		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("interface/hud/crosshair%c", 'a'+i) );
 	}
-
+	cgs.media.crosshairLockedShader = trap_R_RegisterShader("crosshairLock");
 	cgs.media.backTileShader = trap_R_RegisterShader( "gfx/2d/backtile" );
 	cgs.media.noammoShader = trap_R_RegisterShader( "icons/noammo" );
 
@@ -1842,11 +1846,7 @@ void CG_StartMusic( void ) {
 	char	*t;
 	int	r;
 
-	if ( cg_music.value > 0 && cg_music.value < 11 ) {
-		r = cg_music.value - 1;
-	} else {
-		r = random() * 10;
-	}
+	r = random() * 10;
 	s = cg_backgroundMusic[r];
 	t = va("music/%s", s + 1);
 

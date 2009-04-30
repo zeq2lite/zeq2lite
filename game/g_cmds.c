@@ -449,7 +449,6 @@ void Cmd_Kill_f( gentity_t *ent ) {
 		return;
 	}
 	ent->flags &= ~FL_GODMODE;
-	ent->client->ps.stats[powerLevel] = ent->powerLevel = -999;
 	player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 }
 
@@ -566,23 +565,13 @@ void SetTeam( gentity_t *ent, char *s ) {
 	if ( team == oldTeam && team != TEAM_SPECTATOR ) {
 		return;
 	}
-
-	//
-	// execute the team change
-	//
-
-	// if the player was dead leave the body
-	if ( client->ps.stats[powerLevel] <= 0 ) {
-		CopyToBodyQue(ent);
-	}
-
 	// he starts at 'base'
 	client->pers.teamState.state = TEAM_BEGIN;
 	if ( oldTeam != TEAM_SPECTATOR ) {
 		// Kill him (makes sure he loses flags, etc)
 		ent->flags &= ~FL_GODMODE;
 		ent->client->ps.stats[powerLevel] = ent->powerLevel = 0;
-		player_die (ent, ent, ent, 100000, MOD_SUICIDE);
+		player_die(ent,ent,ent,100000,MOD_SUICIDE);
 
 	}
 	// they go to the end of the line for tournements
@@ -1078,7 +1067,6 @@ static void Cmd_VoiceTaunt_f( gentity_t *ent ) {
 
 	// insult someone who just killed you
 	if (ent->enemy && ent->enemy->client && ent->enemy->client->lastkilled_client == ent->s.number) {
-		// i am a dead corpse
 		if (!(ent->enemy->r.svFlags & SVF_BOT)) {
 			G_Voice( ent, ent->enemy, SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
 		}

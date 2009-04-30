@@ -1451,13 +1451,10 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, torsoAnimNum - TORSO_KI_ATTACK1_PREPARE + HEAD_KI_ATTACK1_PREPARE, speedScale );
 		} else {
 			legsAnimNum = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
-			if ( 0 ) {
+			if ( cg.predictedPlayerState.lockedTarget >0 ) {
+				CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE_LOCKED, speedScale );
 			} else {
-				if ( cg.predictedPlayerState.lockedTarget >0 ) {
-					CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE_LOCKED, speedScale );
-				} else {
-					CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE, speedScale );
-				}
+				CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE, speedScale );
 			}
 		}
 	}
@@ -1584,7 +1581,6 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 //	float		speed;
 	int			dir, clientNum;
 	clientInfo_t	*ci;
-
 	clientNum = cent->currentState.clientNum;
 	if ( clientNum < 0 || clientNum > MAX_CLIENTS ) {
 		CG_Error( "Bad clientNum on player entity" );
@@ -1633,11 +1629,6 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	torsoAngles[YAW] = cent->pe.torso.yawAngle;
 	legsAngles[YAW] = cent->pe.legs.yawAngle;
-
-
-	// --------- pitch -------------
-
-	// only show a fraction of the pitch angle in the torso
 	if ( headAngles[PITCH] > 180 ) {
 		dest = (-360 + headAngles[PITCH]) * 0.75f;
 	} else {
@@ -1645,44 +1636,17 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
 	torsoAngles[PITCH] = cent->pe.torso.pitchAngle;
-
-	// torso rotation locked?
 	if ( ci->fixedtorso ) {
 		torsoAngles[PITCH] = 0.0f;
 	}
-
-	// --------- roll -------------
-
-	// NOTE: No velocity rolling in ZEQ2
-/*
-	// lean towards the direction of travel
-	VectorCopy( cent->currentState.pos.trDelta, velocity );
-	speed = VectorNormalize( velocity );
-	if ( speed ) {
-		vec3_t	axis[3];
-		float	side;
-
-		speed *= 0.07f;
-
-		AnglesToAxis( legsAngles, axis );
-		side = speed * DotProduct( velocity, axis[1] );
-		legsAngles[ROLL] -= side;
-
-		side = speed * DotProduct( velocity, axis[0] );
-		legsAngles[PITCH] += side;
-	}
-*/
-
 	if ( ci->fixedlegs ) {
 		legsAngles[YAW] = torsoAngles[YAW];
 		legsAngles[PITCH] = 0.0f;
 		legsAngles[ROLL] = 0.0f;
 	}
-
-
 	// ADDING FOR ZEQ2
 	// We're flying, so we change the entire body's directions altogether.
-	if ( cent->currentState.powerups & ( 1 << PW_FLYING ) ) {
+	if((&cg.predictedPlayerState)->stats[bitFlags] & usingFlight){
 		VectorCopy( cent->lerpAngles, headAngles );
 		VectorCopy( cent->lerpAngles, torsoAngles );
 		VectorCopy( cent->lerpAngles, legsAngles );
@@ -2166,18 +2130,10 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	vec3_t		end, mins = {-15, -15, 0}, maxs = {15, 15, 2};
 	trace_t		trace;
 	float		alpha;
-
 	*shadowPlane = 0;
-
 	if ( cg_shadows.integer == 0 ) {
 		return qfalse;
 	}
-
-	// no shadows when invisible
-	if ( cent->currentState.powerups & ( 1 << PW_INVIS ) ) {
-		return qfalse;
-	}
-
 	// send a trace down from the player to the ground
 	VectorCopy( cent->lerpOrigin, end );
 	end[2] -= SHADOW_DISTANCE;
@@ -2308,13 +2264,7 @@ Also called by CG_Missile for quad rockets, but nobody can tell...
 ===============
 */
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team ) {
-
-	if ( state->powerups & ( 1 << PW_INVIS ) ) {
-		ent->customShader = cgs.media.invisShader;
-		trap_R_AddRefEntityToScene( ent );
-	} else {
-		trap_R_AddRefEntityToScene( ent );
-	}
+	trap_R_AddRefEntityToScene( ent );
 }
 
 /*
@@ -2378,18 +2328,11 @@ void CG_Player( centity_t *cent ) {
 	refEntity_t		legs;
 	refEntity_t		torso;
 	refEntity_t		head;
+	playerState_t	*ps;
 	int				clientNum;
 	int				renderfx;
 	qboolean		shadow;
 	float			shadowPlane;
-#ifdef MISSIONPACK
-	refEntity_t		skull;
-	refEntity_t		powerup;
-	int				t;
-	float			c;
-	float			angle;
-	vec3_t			dir, angles;
-#endif
 	qboolean		onBodyQue;
 	int				tier;
 	int r;
@@ -2399,30 +2342,14 @@ void CG_Player( centity_t *cent ) {
 	int r4;
 	int r5;
 	int r6;
-	// the client number is stored in clientNum.  It can't be derived
-	// from the entity number, because a single client may have
-	// multiple corpses on the level using the same clientinfo
+	ps = &cg.snap->ps;
 	clientNum = cent->currentState.clientNum;
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
-	}
-	ci = &cgs.clientinfo[ clientNum ];
-
-	// it is possible to see corpses from disconnected players that may
-	// not have valid clientinfo
-	if ( !ci->infoValid ) {
-		return;
-	}
-
-	// <-- RiO:  Check if we're dealing with the actual client entity (and not
-	//           a dead body from the body queue)
+	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ){CG_Error( "Bad clientNum on player entity" );}
+	ci = &cgs.clientinfo[clientNum];
+	if (!ci->infoValid){return;}
 	onBodyQue = (cent->currentState.number != cent->currentState.clientNum);
-	// -->
-	
-	// <-- RiO: Check the tier
-	if (onBodyQue) {
-		tier = 0;
-	} else {
+	if(onBodyQue){tier = 0;}
+	else{
 		tier = cent->currentState.tier;
 		if ( ci->tierCurrent != tier ) {
 			ci->tierCurrent = tier;
@@ -2433,280 +2360,86 @@ void CG_Player( centity_t *cent ) {
 	if(ci->tierCurrent > ci->tierMax){
 		ci->tierMax = ci->tierCurrent;
 	}
-
-	// -->
-
-	// Don't display anything if the player is moving at ZANZOKEN
-	if ( cent->currentState.powerups & ( 1 << PW_ZANZOKEN )) {
-		return;
-	}
-	
-	// get the player model information
+	if(ps->powerups[PW_ZANZOKEN] > 0){return;}
 	renderfx = 0;
-	if ( cent->currentState.number == cg.snap->ps.clientNum) {
-		if (!cg.renderingThirdPerson) {
-			renderfx |= RF_THIRD_PERSON;			// only draw in mirrors
-		} else {
-			if (cg_cameraMode.integer) {
-				return;
-			}
-		}
+	if(cent->currentState.number == cg.snap->ps.clientNum){
+		if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
+		else if(cg_cameraMode.integer){return;}
 	}
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
 	memset( &head, 0, sizeof(head) );
-
-	// get the rotation information
 	CG_PlayerAngles( cent, legs.axis, torso.axis, head.axis );
-	
-	// get the animation state (after rotation, to allow feet shuffle)
 	CG_PlayerAnimation( cent, &legs.oldframe, &legs.frame, &legs.backlerp,
 							  &torso.oldframe, &torso.frame, &torso.backlerp,
 							  &head.oldframe, &head.frame, &head.backlerp );
-
-	// add the talk baloon or disconnect icon
-	CG_PlayerSprites( cent );
-
-	// add the shadow
-	shadow = CG_PlayerShadow( cent, &shadowPlane );
-
-	// add a water splash if partially in and out of water
+	CG_PlayerSprites(cent);
+	shadow = CG_PlayerShadow(cent,&shadowPlane);
 	CG_PlayerSplash( cent );
-
-	if ( cg_shadows.integer == 3 && shadow ) {
+	if (cg_shadows.integer == 3 && shadow){
 		renderfx |= RF_SHADOW_PLANE;
 	}
 	renderfx |= RF_LIGHTING_ORIGIN;			// use the same origin for all
-#ifdef MISSIONPACK
-	if( cgs.gametype == GT_HARVESTER ) {
-		CG_PlayerTokens( cent, renderfx );
-	}
-#endif
-
-	//
-	// add the legs
-	//
 	legs.hModel = ci->legsModel[tier];
 	legs.customSkin = ci->legsSkin[tier];
-
-	VectorCopy( cent->lerpOrigin, legs.origin );
-
-	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
+	VectorCopy(cent->lerpOrigin,legs.origin);
+	VectorCopy(cent->lerpOrigin,legs.lightingOrigin);
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
-
 	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team );
-
-	// if the model failed, allow the default nullmodel to be displayed
-	if (!legs.hModel) {
-		return;
-	}
-
-	//
-	// add the torso
-	//
+	if (!legs.hModel){return;}
 	torso.hModel = ci->torsoModel[tier];
 	torso.customSkin = ci->torsoSkin[tier];
-	
-	if (!torso.hModel) {
-		return;
-	}
-
+	if(!torso.hModel){return;}
 	VectorCopy( cent->lerpOrigin, torso.lightingOrigin );
-
 	//CG_PositionRotatedEntityOnTag( &torso, &legs, ci->legsModel, "tag_torso");
 	CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel, "tag_torso");
-
 	torso.shadowPlane = shadowPlane;
 	torso.renderfx = renderfx;
-
 	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team );
-
-#ifdef MISSIONPACK
-	if ( cent->currentState.eFlags & EF_KAMIKAZE ) {
-		memset( &skull, 0, sizeof(skull) );
-		VectorCopy( cent->lerpOrigin, skull.lightingOrigin );
-		skull.shadowPlane = shadowPlane;
-		skull.renderfx = renderfx;
-		if ( cent->currentState.eFlags & EF_DEAD ) {
-			angle = ((cg.time / 7) & 255) * (M_PI * 2) / 255;
-			if (angle > M_PI * 2)
-				angle -= (float)M_PI * 2;
-			dir[0] = sin(angle) * 20;
-			dir[1] = cos(angle) * 20;
-			angle = ((cg.time / 4) & 255) * (M_PI * 2) / 255;
-			dir[2] = 15 + sin(angle) * 8;
-			VectorAdd(torso.origin, dir, skull.origin);
-			
-			dir[2] = 0;
-			VectorCopy(dir, skull.axis[1]);
-			VectorNormalize(skull.axis[1]);
-			VectorSet(skull.axis[2], 0, 0, 1);
-			CrossProduct(skull.axis[1], skull.axis[2], skull.axis[0]);
-
-			skull.hModel = cgs.media.kamikazeHeadModel;
-			trap_R_AddRefEntityToScene( &skull );
-			skull.hModel = cgs.media.kamikazeHeadTrail;
-			trap_R_AddRefEntityToScene( &skull );
-		}
-		else {
-			// three skulls spinning around the player
-			angle = ((cg.time / 4) & 255) * (M_PI * 2) / 255;
-			dir[0] = cos(angle) * 20;
-			dir[1] = sin(angle) * 20;
-			dir[2] = cos(angle) * 20;
-			VectorAdd(torso.origin, dir, skull.origin);
-
-			angles[0] = sin(angle) * 30;
-			angles[1] = (angle * 180 / M_PI) + 90;
-			if (angles[1] > 360)
-				angles[1] -= 360;
-			angles[2] = 0;
-			AnglesToAxis( angles, skull.axis );
-			skull.hModel = cgs.media.kamikazeHeadModel;
-			trap_R_AddRefEntityToScene( &skull );
-			// flip the trail because this skull is spinning in the other direction
-			VectorInverse(skull.axis[1]);
-			skull.hModel = cgs.media.kamikazeHeadTrail;
-			trap_R_AddRefEntityToScene( &skull );
-			angle = ((cg.time / 4) & 255) * (M_PI * 2) / 255 + M_PI;
-			if (angle > M_PI * 2)
-				angle -= (float)M_PI * 2;
-			dir[0] = sin(angle) * 20;
-			dir[1] = cos(angle) * 20;
-			dir[2] = cos(angle) * 20;
-			VectorAdd(torso.origin, dir, skull.origin);
-
-			angles[0] = cos(angle - 0.5 * M_PI) * 30;
-			angles[1] = 360 - (angle * 180 / M_PI);
-			if (angles[1] > 360)
-				angles[1] -= 360;
-			angles[2] = 0;
-			AnglesToAxis( angles, skull.axis );
-			skull.hModel = cgs.media.kamikazeHeadModel;
-			trap_R_AddRefEntityToScene( &skull );
-			skull.hModel = cgs.media.kamikazeHeadTrail;
-			trap_R_AddRefEntityToScene( &skull );
-
-			angle = ((cg.time / 3) & 255) * (M_PI * 2) / 255 + 0.5 * M_PI;
-			if (angle > M_PI * 2)
-				angle -= (float)M_PI * 2;
-			dir[0] = sin(angle) * 20;
-			dir[1] = cos(angle) * 20;
-			dir[2] = 0;
-			VectorAdd(torso.origin, dir, skull.origin);
-			
-			VectorCopy(dir, skull.axis[1]);
-			VectorNormalize(skull.axis[1]);
-			VectorSet(skull.axis[2], 0, 0, 1);
-			CrossProduct(skull.axis[1], skull.axis[2], skull.axis[0]);
-
-			skull.hModel = cgs.media.kamikazeHeadModel;
-			trap_R_AddRefEntityToScene( &skull );
-			skull.hModel = cgs.media.kamikazeHeadTrail;
-			trap_R_AddRefEntityToScene( &skull );
-		}
-	}
-	if ( cent->currentState.powerups & ( 1 << PW_INVULNERABILITY ) ) {
-		if ( !ci->invulnerabilityStartTime ) {
-			ci->invulnerabilityStartTime = cg.time;
-		}
-		ci->invulnerabilityStopTime = cg.time;
-	}
-	else {
-		ci->invulnerabilityStartTime = 0;
-	}
-	if ( (cent->currentState.powerups & ( 1 << PW_INVULNERABILITY ) ) ||
-		cg.time - ci->invulnerabilityStopTime < 250 ) {
-
-		memcpy(&powerup, &torso, sizeof(torso));
-		powerup.hModel = cgs.media.invulnerabilityPowerupModel;
-		powerup.customSkin = 0;
-		// always draw
-		powerup.renderfx &= ~RF_THIRD_PERSON;
-		VectorCopy(cent->lerpOrigin, powerup.origin);
-
-		if ( cg.time - ci->invulnerabilityStartTime < 250 ) {
-			c = (float) (cg.time - ci->invulnerabilityStartTime) / 250;
-		}
-		else if (cg.time - ci->invulnerabilityStopTime < 250 ) {
-			c = (float) (250 - (cg.time - ci->invulnerabilityStopTime)) / 250;
-		}
-		else {
-			c = 1;
-		}
-		VectorSet( powerup.axis[0], c, 0, 0 );
-		VectorSet( powerup.axis[1], 0, c, 0 );
-		VectorSet( powerup.axis[2], 0, 0, c );
-		trap_R_AddRefEntityToScene( &powerup );
-	}
-
-	t = cg.time - ci->medkitUsageTime;
-	if ( ci->medkitUsageTime && t < 500 ) {
-		memcpy(&powerup, &torso, sizeof(torso));
-		powerup.hModel = cgs.media.medkitUsageModel;
-		powerup.customSkin = 0;
-		// always draw
-		powerup.renderfx &= ~RF_THIRD_PERSON;
-		VectorClear(angles);
-		AnglesToAxis(angles, powerup.axis);
-		VectorCopy(cent->lerpOrigin, powerup.origin);
-		powerup.origin[2] += -24 + (float) t * 80 / 500;
-		if ( t > 400 ) {
-			c = (float) (t - 1000) * 0xff / 100;
-			powerup.shaderRGBA[0] = 0xff - c;
-			powerup.shaderRGBA[1] = 0xff - c;
-			powerup.shaderRGBA[2] = 0xff - c;
-			powerup.shaderRGBA[3] = 0xff - c;
-		}
-		else {
-			powerup.shaderRGBA[0] = 0xff;
-			powerup.shaderRGBA[1] = 0xff;
-			powerup.shaderRGBA[2] = 0xff;
-			powerup.shaderRGBA[3] = 0xff;
-		}
-		trap_R_AddRefEntityToScene( &powerup );
-	}
-#endif // MISSIONPACK
-
-	//
-	// add the head
-	//
 	head.hModel = ci->headModel[tier];
 	head.customSkin = ci->headSkin[tier];
-	
-	if (!head.hModel) {
-		return;
-	}
-
+	if(!head.hModel){return;}
 	VectorCopy( cent->lerpOrigin, head.lightingOrigin );
-
 	CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
-
 	head.shadowPlane = shadowPlane;
 	head.renderfx = renderfx;
-
 	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team );
-
-	// Copying the refEntities to a place for keeping. Have to save them to
-	// access tag locations outside of CG_Player()
 	memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
 	memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
 	memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
-
 	memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
 	if(onBodyQue){return;}
-	CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
-	CG_PlayerPowerups( cent, &torso );
-	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
-		CG_AuraStart(cent);
+	CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
+	CG_PlayerPowerups(cent,&torso);
+	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){CG_AuraStart(cent);}
+	else{CG_AuraEnd(cent);}
+	CG_AddAuraToScene(cent);
+	if(ps->powerups[PW_KNOCKBACK]){
+		if(ps->powerups[PW_KNOCKBACK] > 0){
+			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
+			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
+		}
+		return;
 	}
-	else{
-		CG_AuraEnd(cent);
+	if(ps->powerups[PW_MELEE] != 0){
+		if(ps->powerups[PW_DEFENSE]){
+			if(ps->powerups[PW_DEFENSE] < 0){
+				trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMissSound);
+			}
+			else{
+				trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedBlockSound);
+			}
+		}
+		else if(ps->powerups[PW_MELEE] < 0){
+			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
+		}
+		else if(ps->powerups[PW_MELEE_STATE] == 3){
+			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.powerMeleeSound);
+		}
 	}
 	CG_AddAuraToScene(cent);
-
 	// Lightning bolt code below, yay!
 	if(ci->auraConfig[tier]->showLightning){
 		r = random() * 60;
@@ -2755,8 +2488,6 @@ void CG_Player( centity_t *cent ) {
 	}
 	// -->
 }
-
-
 qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *tagName, orientation_t *tagOrient ) {
 	int				i, clientNum;
 	orientation_t	lerped;

@@ -390,32 +390,13 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	int			killer;
 	int			i;
 	char		*killerName, *obit;
-
-	if ( self->client->ps.pm_type == PM_DEAD ) {
-		return;
-	}
-
-	if ( level.intermissiontime ) {
-		return;
-	}
-
-	// check for an almost capture
-	CheckAlmostCapture( self, attacker );
-	// check for a player that almost brought in cubes
-	CheckAlmostScored( self, attacker );
-
-	if (self->client && self->client->hook)
+	if(self->client->ps.pm_type == PM_DEAD){return;}
+	if(level.intermissiontime){return;}
+	if(self->client && self->client->hook){
 		Weapon_HookFree(self->client->hook);
-#ifdef MISSIONPACK
-	if ((self->client->ps.eFlags & EF_TICKING) && self->activator) {
-		self->client->ps.eFlags &= ~EF_TICKING;
-		self->activator->think = G_FreeEntity;
-		self->activator->nextthink = level.time;
 	}
-#endif
 	self->client->ps.pm_type = PM_DEAD;
-
-	if ( attacker ) {
+	if(attacker){
 		killer = attacker->s.number;
 		if ( attacker->client ) {
 			killerName = attacker->client->pers.netname;
@@ -426,98 +407,37 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		killer = ENTITYNUM_WORLD;
 		killerName = "<world>";
 	}
-
 	if ( killer < 0 || killer >= MAX_CLIENTS ) {
 		killer = ENTITYNUM_WORLD;
 		killerName = "<world>";
 	}
-
-	if ( meansOfDeath < 0 || meansOfDeath >= sizeof( modNames ) / sizeof( modNames[0] ) ) {
-		obit = "<bad obituary>";
-	} else {
-		obit = modNames[ meansOfDeath ];
-	}
-
+	obit = modNames[ meansOfDeath ];
 	G_LogPrintf("Kill: %i %i %i: %s killed %s by %s\n", 
-		killer, self->s.number, meansOfDeath, killerName, 
-		self->client->pers.netname, obit );
-
-	// broadcast the death event to everyone
+	killer, self->s.number, meansOfDeath, killerName, 
+	self->client->pers.netname, obit );
 	ent = G_TempEntity( self->r.currentOrigin, EV_OBITUARY );
 	ent->s.eventParm = meansOfDeath;
 	ent->s.otherEntityNum = self->s.number;
 	ent->s.otherEntityNum2 = killer;
-	ent->r.svFlags = SVF_BROADCAST;	// send to everyone
-
+	ent->r.svFlags = SVF_BROADCAST;
 	self->enemy = attacker;
-
 	self->client->ps.persistant[PERS_KILLED]++;
-
 	if (attacker && attacker->client) {
 		attacker->client->lastkilled_client = self->s.number;
-
 		if ( attacker == self || OnSameTeam (self, attacker ) ) {
 			AddScore( attacker, self->r.currentOrigin, -1 );
 		} else {
 			AddScore( attacker, self->r.currentOrigin, 1 );
-
-			if( meansOfDeath == MOD_GAUNTLET ) {
-				
-				// play humiliation on player
-				attacker->client->ps.persistant[PERS_GAUNTLET_FRAG_COUNT]++;
-
-				// add the sprite over the player's head
-				attacker->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
-				attacker->client->ps.eFlags |= EF_AWARD_GAUNTLET;
-				attacker->client->rewardTime = level.time + REWARD_SPRITE_TIME;
-
-				// also play humiliation on target
-				self->client->ps.persistant[PERS_PLAYEREVENTS] ^= PLAYEREVENT_GAUNTLETREWARD;
-			}
-
-			// check for two kills in a short amount of time
-			// if this is close enough to the last kill, give a reward sound
-			if ( level.time - attacker->client->lastKillTime < CARNAGE_REWARD_TIME ) {
-				// play excellent on player
-				attacker->client->ps.persistant[PERS_EXCELLENT_COUNT]++;
-
-				// add the sprite over the player's head
-				attacker->client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
-				attacker->client->ps.eFlags |= EF_AWARD_EXCELLENT;
-				attacker->client->rewardTime = level.time + REWARD_SPRITE_TIME;
-			}
 			attacker->client->lastKillTime = level.time;
-
 		}
 	} else {
 		AddScore( self, self->r.currentOrigin, -1 );
 	}
-
-	// Add team bonuses
 	Team_FragBonuses(self, inflictor, attacker);
-
-	// if I committed suicide, the flag does not fall, it returns.
-	if (meansOfDeath == MOD_SUICIDE) {
-	}
-
-	// if client is in a nodrop area, don't drop anything (but return CTF flags!)
 	contents = trap_PointContents( self->r.currentOrigin, -1 );
-	if ( !( contents & CONTENTS_NODROP )) {
-		TossClientItems( self );
-	}
-#ifdef MISSIONPACK
-	// TossClientPersistantPowerups( self );
-	if( g_gametype.integer == GT_HARVESTER ) {
-		TossClientCubes( self );
-	}
-#endif
-
-	Cmd_Score_f( self );		// show scores
-	// send updated scores to any clients that are following this one,
-	// or they would get stale scoreboards
+	Cmd_Score_f(self);
 	for ( i = 0 ; i < level.maxclients ; i++ ) {
 		gclient_t	*client;
-
 		client = &level.clients[i];
 		if ( client->pers.connected != CON_CONNECTED ) {
 			continue;
@@ -529,85 +449,36 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			Cmd_Score_f( g_entities + i );
 		}
 	}
-
-	self->takedamage = qtrue;	// can still be gibbed
-
 	self->s.weapon = WP_NONE;
 	self->s.powerups = 0;
 	self->r.contents = CONTENTS_CORPSE;
-
 	self->s.angles[0] = 0;
 	self->s.angles[2] = 0;
 	LookAtKiller (self, inflictor, attacker);
-
 	VectorCopy( self->s.angles, self->client->ps.viewangles );
-
 	self->s.loopSound = 0;
-
 	self->r.maxs[2] = -8;
-
-	// don't allow respawn until the death anim is done
-	// g_forcerespawn may force spawning at some later time
 	self->client->respawnTime = level.time + 1700;
-
-	// remove powerups
 	memset( self->client->ps.powerups, 0, sizeof(self->client->ps.powerups) );
-
-	// never gib in a nodrop
-	if ( (self->powerLevel <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || meansOfDeath == MOD_SUICIDE) {
-		// gib death
-		GibEntity( self, killer );
-	} else {
-		// normal death
-		static int i;
-
-		switch ( i ) {
-		case 0:
-			anim = BOTH_DEATH1;
-			break;
-		case 1:
-			anim = BOTH_DEATH2;
-			break;
-		case 2:
-		default:
-			anim = BOTH_DEATH3;
-			break;
-		}
-
-		// for the no-blood option, we need to prevent the powerLevel
-		// from going to gib level
-		if ( self->powerLevel <= GIB_HEALTH ) {
-			self->powerLevel = GIB_HEALTH+1;
-		}
-
-		self->client->ps.legsAnim = 
-			( ( self->client->ps.legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
-		self->client->ps.torsoAnim = 
-			( ( self->client->ps.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
-
-		G_AddEvent( self, EV_DEATH1 + i, killer );
-
-		// the body can still be gibbed
-		self->die = body_die;
-
-		// globally cycle through the different death animations
-		i = ( i + 1 ) % 3;
-
-#ifdef MISSIONPACK
-		if (self->s.eFlags & EF_KAMIKAZE) {
-			Kamikaze_DeathTimer( self );
-		}
-#endif
+	switch ( i ) {
+	case 0:
+		anim = BOTH_DEATH1;
+		break;
+	case 1:
+		anim = BOTH_DEATH2;
+		break;
+	case 2:
+	default:
+		anim = BOTH_DEATH3;
+		break;
 	}
-
+	self->client->ps.legsAnim = ( ( self->client->ps.legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+	self->client->ps.torsoAnim = ( ( self->client->ps.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+	G_AddEvent( self, EV_DEATH1 + i, killer );
+	self->die = body_die;
+	i = ( i + 1 ) % 3;
 	trap_LinkEntity (self);
-
 }
-/*
-================
-RaySphereIntersections
-================
-*/
 int RaySphereIntersections( vec3_t origin, float radius, vec3_t point, vec3_t dir, vec3_t intersections[2] ) {
 	float b, c, d, t;
 
@@ -638,48 +509,7 @@ int RaySphereIntersections( vec3_t origin, float radius, vec3_t point, vec3_t di
 		return 1;
 	}
 	return 0;
-}
-
-#ifdef MISSIONPACK
-/*
-================
-G_InvulnerabilityEffect
-================
-*/
-int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t impactpoint, vec3_t bouncedir ) {
-	gentity_t	*impact;
-	vec3_t		intersections[2], vec;
-	int			n;
-
-	if ( !targ->client ) {
-		return qfalse;
-	}
-	VectorCopy(dir, vec);
-	VectorInverse(vec);
-	// sphere model radius = 42 units
-	n = RaySphereIntersections( targ->client->ps.origin, 42, point, vec, intersections);
-	if (n > 0) {
-		impact = G_TempEntity( targ->client->ps.origin, EV_INVUL_IMPACT );
-		VectorSubtract(intersections[0], targ->client->ps.origin, vec);
-		vectoangles(vec, impact->s.angles);
-		impact->s.angles[0] += 90;
-		if (impact->s.angles[0] > 360)
-			impact->s.angles[0] -= 360;
-		if ( impactpoint ) {
-			VectorCopy( intersections[0], impactpoint );
-		}
-		if ( bouncedir ) {
-			VectorCopy( vec, bouncedir );
-			VectorNormalize( bouncedir );
-		}
-		return qtrue;
-	}
-	else {
-		return qfalse;
-	}
-}
-#endif
-/*
+}/*
 ============
 G_Damage
 
@@ -711,9 +541,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	int			asave;
 	int			knockback;
 	int			max;
-#ifdef MISSIONPACK
-	vec3_t		bouncedir, impactpoint;
-#endif
 	if (!targ->takedamage){
 		return;
 	}

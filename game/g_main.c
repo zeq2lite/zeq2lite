@@ -110,7 +110,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_timelimit, "timelimit", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_capturelimit, "capturelimit", "8", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 
-	{ &g_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO, 0, qfalse  },
+	{ &g_synchronousClients, "g_synchronousClients", "0", CVAR_ARCHIVE, 0, qfalse  },
 
 	{ &g_friendlyFire, "g_friendlyFire", "0", CVAR_ARCHIVE, 0, qtrue  },
 
@@ -174,7 +174,7 @@ static cvarTable_t		gameCvarTable[] = {
 	// ADDING FOR ZEQ2
 	{ &g_verboseParse, "g_verboseParse", "0", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_powerLevel, "g_powerLevel", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
-	{ &g_powerLevelBreakLimitRate, "g_powerLevelBreakLimitRate", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
+	{ &g_powerLevelBreakLimitRate, "g_powerLevelBreakLimitRate", "1.0", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
 	{ &g_rolling, "g_rolling", "1", CVAR_ARCHIVE, 0, qtrue },
 	{ &g_running, "g_running", "0", CVAR_ARCHIVE, 0, qtrue }
 	// END ADDING
