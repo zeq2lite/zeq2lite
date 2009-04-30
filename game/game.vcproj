@@ -2167,6 +2167,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\g_tiers.c"
+				>
+			</File>
+			<File
 				RelativePath="g_trigger.c"
 				>
 				<FileConfiguration
@@ -2801,6 +2805,10 @@
 			</File>
 			<File
 				RelativePath="g_team.h"
+				>
+			</File>
+			<File
+				RelativePath=".\g_tiers.h"
 				>
 			</File>
 			<File

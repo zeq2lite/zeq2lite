@@ -1516,7 +1516,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 	if((self->s.eType == ET_MISSILE) || (self->s.eType == ET_BEAMHEAD)){
 		G_StruggleUserMissile(self, trace);
 		//G_AddEvent( self, EV_POWER_STRUGGLE, 0 );
-		return;
+		//return;
 	}
 	if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER) ){
 	// Add the explosion event to the entity, and make it free itself after event.
