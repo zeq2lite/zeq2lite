@@ -2706,7 +2706,7 @@ void CG_Player( centity_t *cent ) {
 		CG_AuraEnd(cent);
 	}
 	CG_AddAuraToScene(cent);
-	CG_Printf(ci->auraConfig[tier]->showLightning ? "Lightning on\n" : "Lightning off\n");
+
 	// Lightning bolt code below, yay!
 	if(ci->auraConfig[tier]->showLightning){
 		r = random() * 60;

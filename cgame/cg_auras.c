@@ -1037,7 +1037,7 @@ void parseAura(char *path,auraConfig_t *aura){
 			else if(!Q_stricmp(token,"showLightning")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				aura->showLightning = token == "True" ? qtrue : qfalse;
+				aura->showLightning = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"lightningShader")){
 				token = COM_Parse(&parse);
