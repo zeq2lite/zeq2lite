@@ -86,7 +86,7 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	char		*token;
 	float		fps;
 	int			skip;
-	char		text[20000];
+	char		text[30000];
 	fileHandle_t	f;
 	animation_t *animations;
 
