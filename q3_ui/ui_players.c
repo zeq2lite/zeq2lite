@@ -507,18 +507,30 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_BLOCK );
 		} else if ( TORSO_SPEED_MELEE_HIT == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_HIT );
-		} else if ( TORSO_POWER_MELEE_1 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_1 );
-		} else if ( TORSO_POWER_MELEE_2 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_2 );
-		} else if ( TORSO_POWER_MELEE_3 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_3 );
-		} else if ( TORSO_POWER_MELEE_4 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_4 );
-		} else if ( TORSO_POWER_MELEE_5 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_5 );
-		} else if ( TORSO_POWER_MELEE_6 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_6 );
+		} else if ( TORSO_POWER_MELEE_1_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_1_CHARGE );
+		} else if ( TORSO_POWER_MELEE_2_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_2_CHARGE );
+		} else if ( TORSO_POWER_MELEE_3_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_3_CHARGE );
+		} else if ( TORSO_POWER_MELEE_4_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_4_CHARGE );
+		} else if ( TORSO_POWER_MELEE_5_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_5_CHARGE );
+		} else if ( TORSO_POWER_MELEE_6_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_6_CHARGE );
+		} else if ( TORSO_POWER_MELEE_1_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_1_HIT );
+		} else if ( TORSO_POWER_MELEE_2_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_2_HIT );
+		} else if ( TORSO_POWER_MELEE_3_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_3_HIT );
+		} else if ( TORSO_POWER_MELEE_4_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_4_HIT );
+		} else if ( TORSO_POWER_MELEE_5_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_5_HIT );
+		} else if ( TORSO_POWER_MELEE_6_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_6_HIT );
 		} else if ( TORSO_KNOCKBACK == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK );
 		} else if ( TORSO_KNOCKBACK_RECOVER_1 == torsoAnimNum ) {

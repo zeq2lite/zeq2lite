@@ -1277,23 +1277,41 @@ void PM_TorsoAnimation(void){
 		return;
 	}
 	switch(pm->ps->legsAnim & ~ANIM_TOGGLEBIT){
-	case LEGS_POWER_MELEE_1:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_1);
+	case LEGS_POWER_MELEE_1_CHARGE:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_1_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_2:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_2);
+	case LEGS_POWER_MELEE_2_CHARGE:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_2_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_3:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_3);
+	case LEGS_POWER_MELEE_3_CHARGE:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_3_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_4:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_4);
+	case LEGS_POWER_MELEE_4_CHARGE:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_4_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_5:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_5);
+	case LEGS_POWER_MELEE_5_CHARGE:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_5_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_6:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_6);
+	case LEGS_POWER_MELEE_6_CHARGE:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_6_CHARGE);
+		break;
+	case LEGS_POWER_MELEE_1_HIT:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_1_HIT);
+		break;
+	case LEGS_POWER_MELEE_2_HIT:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_2_HIT);
+		break;
+	case LEGS_POWER_MELEE_3_HIT:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_3_HIT);
+		break;
+	case LEGS_POWER_MELEE_4_HIT:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_4_HIT);
+		break;
+	case LEGS_POWER_MELEE_5_HIT:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_5_HIT);
+		break;
+	case LEGS_POWER_MELEE_6_HIT:
+		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_6_HIT);
 		break;
 	case LEGS_SPEED_MELEE_ATTACK:
 		PM_ContinueTorsoAnim(TORSO_SPEED_MELEE_ATTACK);
@@ -1443,7 +1461,7 @@ void PM_Melee(void){
 			}
 			melee -= pml.msec;
 			choice = random() * 6;
-			PM_ContinueLegsAnim(LEGS_POWER_MELEE_1 + choice);
+			PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_HIT + choice);
 			if(melee <= 0){
 				melee = 0;
 				pm->ps->powerups[PW_MELEE_STATE] = 1;
