@@ -183,25 +183,10 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		return qtrue;
 
 	case IT_ARMOR:
-		// if ( ps->stats[STAT_ARMOR] >= ps->stats[powerLevelTotal] * 2 ) {
-			return qfalse;
-		//}
+		return qfalse;
 		//return qtrue;
 
 	case IT_HEALTH:
-		// small and mega powerLevels will go over the max, otherwise
-		// don't pick up if already at max
-
-		if ( item->quantity == 5 || item->quantity == 100 ) {
-			if ( ps->stats[powerLevel] >= ps->stats[powerLevelTotal] * 2 ) {
-				return qfalse;
-			}
-			return qtrue;
-		}
-
-		if ( ps->stats[powerLevel] >= ps->stats[powerLevelTotal] ) {
-			return qfalse;
-		}
 		return qtrue;
 
 	case IT_POWERUP:
@@ -654,189 +639,53 @@ This is done after each set of usercmd_t on the server,
 and after local prediction on the client
 ========================
 */
-void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean snap ) {
-	int		i;
-
-	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR ) {
-		s->eType = ET_INVISIBLE;
-	} else if ( ps->stats[powerLevel] <= GIB_HEALTH ) {
-		s->eType = ET_INVISIBLE;
-	} else {
-		s->eType = ET_PLAYER;
-	}
-
+void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean snap ) {
+	int	i;
+	int time;
+	time = ps->commandTime;
+	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR){s->eType = ET_INVISIBLE;}
+	else{s->eType = ET_PLAYER;}
 	s->number = ps->clientNum;
-
 	s->pos.trType = TR_INTERPOLATE;
 	VectorCopy( ps->origin, s->pos.trBase );
-	if ( snap ) {
-		SnapVector( s->pos.trBase );
+	if(snap){
+		SnapVector(s->pos.trBase);
 	}
-	// set the trDelta for flag direction
-	VectorCopy( ps->velocity, s->pos.trDelta );
-
-	s->apos.trType = TR_INTERPOLATE;
-
-	// ADDING FOR ZEQ2
-	
-	// We only alter the model's viewangles if we are NOT guiding a weapon.
-	if ( ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING && ps->lockedTarget < 1) {
-		VectorCopy( ps->viewangles, s->apos.trBase );
-		if ( snap ) {
-			SnapVector( s->apos.trBase );
-		}
-	}
-	s->angles2[YAW] = ps->movementDir;
-	s->legsAnim = ps->legsAnim;
-	s->torsoAnim = ps->torsoAnim;
-	s->clientNum = ps->clientNum;		// ET_PLAYER looks here instead of at number
-										// so corpses can also reference the proper config
-	s->eFlags = ps->eFlags;
-	if ( ps->stats[powerLevel] <= 0 ) {
-		s->eFlags |= EF_DEAD;
-	} else {
-		s->eFlags &= ~EF_DEAD;
-	}
-
-	if ( ps->externalEvent ) {
-		s->event = ps->externalEvent;
-		s->eventParm = ps->externalEventParm;
-	} else if ( ps->entityEventSequence < ps->eventSequence ) {
-		int		seq;
-
-		if ( ps->entityEventSequence < ps->eventSequence - MAX_PS_EVENTS) {
-			ps->entityEventSequence = ps->eventSequence - MAX_PS_EVENTS;
-		}
-		seq = ps->entityEventSequence & (MAX_PS_EVENTS-1);
-		s->event = ps->events[ seq ] | ( ( ps->entityEventSequence & 3 ) << 8 );
-		s->eventParm = ps->eventParms[ seq ];
-		ps->entityEventSequence++;
-	}
-
-	s->weapon = ps->weapon;
-	s->weaponstate = ps->weaponstate;
-	s->lockedTarget = ps->lockedTarget;
-
-	s->charge1.chBase = ps->stats[chargePercentPrimary];
-	s->charge2.chBase = ps->stats[chargePercentSecondary];
-
-	s->groundEntityNum = ps->groundEntityNum;
-
-	s->powerups = 0;
-	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		if ( ps->powerups[ i ] ) {
-			s->powerups |= 1 << i;
-		}
-	}
-
-	s->tier = ps->stats[tierCurrent];
-
-	s->loopSound = ps->loopSound;
-	s->generic1 = ps->generic1;
-}
-
-/*
-========================
-BG_PlayerStateToEntityStateExtraPolate
-
-This is done after each set of usercmd_t on the server,
-and after local prediction on the client
-========================
-*/
-void BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s, int time, qboolean snap ) {
-	int		i;
-
-	if ( ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR ) {
-		s->eType = ET_INVISIBLE;
-	} else if ( ps->stats[powerLevel] <= GIB_HEALTH ) {
-		s->eType = ET_INVISIBLE;
-	} else {
-		s->eType = ET_PLAYER;
-	}
-
-	s->number = ps->clientNum;
-
-	s->pos.trType = TR_LINEAR_STOP;
-	VectorCopy( ps->origin, s->pos.trBase );
-	if ( snap ) {
-		SnapVector( s->pos.trBase );
-	}
-	// set the trDelta for flag direction and linear prediction
-	VectorCopy( ps->velocity, s->pos.trDelta );
-	// set the time for linear prediction
+	VectorCopy(ps->velocity,s->pos.trDelta);
 	s->pos.trTime = time;
-	// set maximum extra polation time
-	s->pos.trDuration = 50; // 1000 / sv_fps (default = 20)
-
+	s->pos.trDuration = 50;
 	s->apos.trType = TR_INTERPOLATE;
-
-	// ADDING FOR ZEQ2
-	
-	// We only alter the model's viewangles if we are NOT guiding a weapon.
-	if ( ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING && ps->lockedTarget < 1) {
-		VectorCopy( ps->viewangles, s->apos.trBase );
-		if ( snap ) {
-			SnapVector( s->apos.trBase );
-		}
+	if(ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING && !(ps->stats[bitFlags] & usingMelee)){
+		VectorCopy(ps->viewangles,s->apos.trBase);
+		if(snap){SnapVector(s->apos.trBase);}
 	}
-
-	/* Altering this code
-
-	VectorCopy( ps->viewangles, s->apos.trBase );
-	if ( snap ) {
-		SnapVector( s->apos.trBase );
-	}
-
-	End altered code */
-
-	// END ADDING
-	VectorCopy( ps->viewangles, s->apos.trBase );
-
 	s->angles2[YAW] = ps->movementDir;
 	s->legsAnim = ps->legsAnim;
 	s->torsoAnim = ps->torsoAnim;
-	s->clientNum = ps->clientNum;		// ET_PLAYER looks here instead of at number
-										// so corpses can also reference the proper config
+	s->clientNum = ps->clientNum;
 	s->eFlags = ps->eFlags;
-	if ( ps->stats[powerLevel] <= 0 ) {
-		s->eFlags |= EF_DEAD;
-	} else {
-		s->eFlags &= ~EF_DEAD;
-	}
-
-	if ( ps->externalEvent ) {
+	if(ps->externalEvent){
 		s->event = ps->externalEvent;
 		s->eventParm = ps->externalEventParm;
-	} else if ( ps->entityEventSequence < ps->eventSequence ) {
-		int		seq;
-
-		if ( ps->entityEventSequence < ps->eventSequence - MAX_PS_EVENTS) {
+	}
+	else if(ps->entityEventSequence < ps->eventSequence){
+		int	seq;
+		if(ps->entityEventSequence < ps->eventSequence - MAX_PS_EVENTS){
 			ps->entityEventSequence = ps->eventSequence - MAX_PS_EVENTS;
 		}
 		seq = ps->entityEventSequence & (MAX_PS_EVENTS-1);
-		s->event = ps->events[ seq ] | ( ( ps->entityEventSequence & 3 ) << 8 );
+		s->event = ps->events[seq] | ((ps->entityEventSequence & 3 ) << 8);
 		s->eventParm = ps->eventParms[ seq ];
 		ps->entityEventSequence++;
 	}
-
 	s->weapon = ps->weapon;
 	s->weaponstate = ps->weaponstate;
 	s->lockedTarget = ps->lockedTarget;
-
 	s->charge1.chBase = ps->stats[chargePercentPrimary];
 	s->charge2.chBase = ps->stats[chargePercentSecondary];
-
 	s->groundEntityNum = ps->groundEntityNum;
-
-	s->powerups = 0;
-	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		if ( ps->powerups[ i ] ) {
-			s->powerups |= 1 << i;
-		}
-	}
-
+	s->powerups = *(ps->powerups);
 	s->tier = ps->stats[tierCurrent];
-
 	s->loopSound = ps->loopSound;
 	s->generic1 = ps->generic1;
 }

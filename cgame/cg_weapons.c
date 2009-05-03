@@ -1615,15 +1615,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 }
 
 void CG_DrawWeaponSelect( void ) {
-
-	// don't display if dead
-	if ( cg.predictedPlayerState.stats[powerLevel] <= 0 ) {
-		return;
-	}
-
-	// showing weapon select clears pickup item display, but not the blend blob
 	cg.itemPickupTime = 0;
-
 	CG_DrawWeaponSelectHorCenterBar();
 	//CG_DrawWeaponSelectQuarterFan();
 }

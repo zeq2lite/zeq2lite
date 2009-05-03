@@ -313,9 +313,6 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 		Pmove (&pm);
 		// save results of pmove
 		VectorCopy( client->ps.origin, ent->s.origin );
-
-		// ADDING FOR ZEQ2
-		ent->powerLevel = client->ps.stats[powerLevel];
 		// END ADDING
 
 		G_TouchTriggers( ent );
@@ -520,7 +517,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			TeleportPlayer( ent, origin, angles );
 			break;
 		case EV_USE_ITEM2:
-			ent->powerLevel = ent->client->ps.stats[powerLevelTotal] + 25;
 			break;
 		default:
 			break;
@@ -619,7 +615,7 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 		// create temporary entity for event
 		t = G_TempEntity( ps->origin, event );
 		number = t->s.number;
-		BG_PlayerStateToEntityState( ps, &t->s, qtrue );
+		BG_PlayerStateToEntityState( ps, &t->s,qtrue );
 		t->s.number = number;
 		t->s.eType = ET_EVENTS + event;
 		t->s.eFlags |= EF_PLAYER_EVENT;
@@ -650,16 +646,11 @@ void ClientThink_real( gentity_t *ent ) {
 	int			msec;
 	usercmd_t	*ucmd;
 	client = ent->client;
-	// don't think if the client is not yet connected (and thus not yet spawned in)
 	if (client->pers.connected != CON_CONNECTED){return;}
-	// mark the time, so the connection sprite can be removed
 	ucmd = &ent->client->pers.cmd;
-	// sanity check the command time to prevent speedup cheating
 	if ( ucmd->serverTime > level.time + 200 ) {ucmd->serverTime = level.time + 200;}
 	if ( ucmd->serverTime < level.time - 1000 ) {ucmd->serverTime = level.time - 1000;} 
 	msec = ucmd->serverTime - client->ps.commandTime;
-	// following others may result in bad times, but we still want
-	// to check for follow toggles
 	if(msec < 1 && client->sess.spectatorState != SPECTATOR_FOLLOW){return;}
 	if(msec > 200){msec = 200;}
 	if(pmove_msec.integer < 8 ){trap_Cvar_Set("pmove_msec", "8");}
@@ -685,8 +676,6 @@ void ClientThink_real( gentity_t *ent ) {
 	else{
 		client->ps.pm_type = PM_NORMAL;
 	}
-	client->ps.rolling = g_rolling.value;
-	client->ps.running = g_running.value;
 	client->ps.speed = client->tiers[client->ps.stats[tierCurrent]].speed;
 	G_LinkUserWeaponData( &(client->ps) );
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
@@ -720,20 +709,14 @@ void ClientThink_real( gentity_t *ent ) {
 
 	VectorCopy( client->ps.origin, client->oldOrigin );
 	Pmove(&pm);
-	ent->powerLevel = client->ps.stats[powerLevel];
 	GetTarget(ent);
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}
-	if (g_smoothClients.integer) {
-		BG_PlayerStateToEntityStateExtraPolate( &ent->client->ps, &ent->s, ent->client->ps.commandTime, qtrue );
-	}
-	else {
-		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
-	}
-	SendPendingPredictableEvents( &ent->client->ps );
+	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s,qtrue );
+	SendPendingPredictableEvents(&ent->client->ps);
 	if ( !( ent->client->ps.eFlags & EF_FIRING ) ) {
-		client->fireHeld = qfalse;		// for grapple
+		client->fireHeld = qfalse;
 	}
 	VectorCopy( ent->s.pos.trBase, ent->r.currentOrigin );
 	VectorCopy (pm.mins, ent->r.mins);
@@ -746,23 +729,14 @@ void ClientThink_real( gentity_t *ent ) {
 		G_TouchTriggers( ent );
 	}
 	VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
-
-	//test for solid areas in the AAS file
 	BotTestAAS(ent->r.currentOrigin);
-
-	// touch other objects
-	ClientImpacts( ent, &pm );
-
-	// save results of triggers and client events
-	if (ent->client->ps.eventSequence != oldEventSequence) {
+	ClientImpacts(ent,&pm);
+	if(ent->client->ps.eventSequence != oldEventSequence) {
 		ent->eventTime = level.time;
 	}
-
-	// swap and latch button actions
 	client->oldbuttons = client->buttons;
 	client->buttons = ucmd->buttons;
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
-	// check for respawning
 	if ( client->ps.stats[powerLevel] <= 0 ) {
 		// wait for the attack button to be pressed
 		if ( level.time > client->respawnTime ) {
@@ -772,7 +746,6 @@ void ClientThink_real( gentity_t *ent ) {
 				respawn( ent );
 				return;
 			}
-		
 			// pressing attack or use is the normal respawn method
 			if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) ) {
 				respawn( ent );
@@ -895,18 +868,8 @@ void ClientEndFrame( gentity_t *ent ) {
 	} else {
 		ent->s.eFlags &= ~EF_CONNECTION;
 	}
-
-	ent->client->ps.stats[powerLevel] = ent->powerLevel;	// FIXME: get rid of ent->powerLevel...
-
 	G_SetClientSound (ent);
-
-	// set the latest infor
-	if (g_smoothClients.integer) {
-		BG_PlayerStateToEntityStateExtraPolate( &ent->client->ps, &ent->s, ent->client->ps.commandTime, qtrue );
-	}
-	else {
-		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
-	}
+	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s,qtrue );
 	SendPendingPredictableEvents( &ent->client->ps );
 
 	// set the bit for the reachability area the client is currently in

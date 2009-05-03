@@ -387,100 +387,35 @@ point = origin of attack
 */
 void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int extraKnockback){
 	gclient_t *tgClient;
-	int	asave;
-	int	knockback;
-	int newPower;
 	if(!target->takedamage){return;}
 	if(level.intermissionQueued){return;}
 	if(!inflictor){inflictor = &g_entities[ENTITYNUM_WORLD];}
 	if(!attacker){attacker = &g_entities[ENTITYNUM_WORLD];}
 	tgClient = target->client;
 	if(tgClient && tgClient->noclip){return;}
-	if(!dir){dflags |= DAMAGE_NO_KNOCKBACK;}
-	else{
-		VectorNormalize(dir);
-	}
-	damage *= ((float)attacker->client->ps.persistant[powerLevelMaximum] * 0.0001);
-	if(inflictor == &g_entities[ENTITYNUM_WORLD]){
-		knockback = damage;
-	}
-	else{
-		knockback = damage + extraKnockback;
-	}
-	if((target->flags & FL_NO_KNOCKBACK) || (dflags & DAMAGE_NO_KNOCKBACK)){
-		knockback = 0;
-	}
-	
-	if(knockback && tgClient){
-		vec3_t	kvel;
-		float	mass;
-		mass = 200;
-		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
-		//VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
-		// set the timer so that the other client can't cancel
-		// out the movement immediately
-		if(!tgClient->ps.pm_time){
-			int	t;
-			t = knockback * 2;
-			if(t < 50){
-				t = 50;
-			}
-			if(t > 200 ) {
-				t = 200;
-			}
-			tgClient->ps.pm_time = t;
-			tgClient->ps.pm_flags |= PMF_TIME_KNOCKBACK;
-		}
-	}
-	if(!(dflags & DAMAGE_NO_PROTECTION)){
-		if(((target != attacker && OnSameTeam(target, attacker)) && !g_friendlyFire.integer) || (target->flags & FL_GODMODE)){return;}
-	}
-	if(attacker->client && target != attacker && target->powerLevel > 0	&& target->s.eType != ET_MISSILE && target->s.eType != ET_GENERAL){
-		attacker->client->ps.persistant[PERS_HITS] += OnSameTeam(target,attacker) ? -1 : 1;
-		attacker->client->ps.persistant[PERS_ATTACKEE_ARMOR] = (target->powerLevel<<8)|0;
-	}
-	// add to the damage inflicted on a player this frame
-	// the total will be turned into screen blends and view angle kicks
-	// at the end of the frame
-	if ( tgClient ) {
-		if ( attacker ) {
-			tgClient->ps.persistant[PERS_ATTACKER] = attacker->s.number;
-		} else {
-			tgClient->ps.persistant[PERS_ATTACKER] = ENTITYNUM_WORLD;
-		}
-		tgClient->damage_blood += damage;
-		tgClient->damage_knockback += knockback;
-		if ( dir ) {
-			VectorCopy ( dir, tgClient->damage_from );
-			tgClient->damage_fromWorld = qfalse;
-		} else {
-			VectorCopy ( target->r.currentOrigin, tgClient->damage_from );
-			tgClient->damage_fromWorld = qtrue;
-		}
-	}
+	if(dir){VectorNormalize(dir);}
+	damage *= ((float)attacker->client->ps.persistant[powerLevelMaximum] * 0.0003) * attacker->client->ps.energyAttack;
 	if(tgClient){
+		//VectorCopy(dir ? dir : target->r.currentOrigin,tgClient->damage_from);
+		tgClient->ps.persistant[PERS_ATTACKER] = attacker ? attacker->s.number : ENTITYNUM_WORLD;
+		tgClient->damage_fromWorld = dir ? qfalse : qtrue;
 		tgClient->lasthurt_client = attacker->s.number;
 		tgClient->lasthurt_mod = methodOfDeath;
 	}
 	if(damage){
 		if(tgClient){
 			if(target == attacker){damage *= 0.2;}
-			else{
-				attacker->client->ps.powerLevelBurn -= attacker->client->ps.stats[powerLevel] / tgClient->ps.stats[powerLevel];
-			}
 			tgClient->ps.powerLevelBurn += damage;
 		}
 		else{
 			target->powerLevel = target->powerLevel - damage;
 			//G_Printf(va("Attack Powerlevel = %i\n",target->powerLevel));
-			//G_Printf(va("Attack Damage = %i\n",damage));
 			if(target->powerLevel <= 0){
 				//G_Printf(va("Dead"));
 				target->die(target,inflictor,attacker,damage,methodOfDeath);
 			}
 		}
 	}
-
 }
 
 
@@ -542,18 +477,14 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 
 		realDamage = centerDamage * ( 1.0 - distance / radius );
 
-		if( CanDamage (ent, origin) ) {
-			if( LogAccuracyHit( ent, attacker ) ) {
-				hitClient = qtrue;
-			}
+		if(CanDamage(ent, origin)){
 			VectorSubtract (ent->r.currentOrigin, origin, dir);
 			// push the center of mass higher than the origin so players
 			// get knocked into the air more
 			dir[2] += 24;
-			G_UserWeaponDamage( ent, NULL, attacker, dir, origin, (int)realDamage, DAMAGE_RADIUS, methodOfDeath, extraKnockback );
+			G_UserWeaponDamage(ent,NULL,attacker,dir,origin,(int)realDamage,DAMAGE_RADIUS,methodOfDeath,extraKnockback);
 		}
 	}
-
 	return hitClient;
 }
 
@@ -1377,100 +1308,51 @@ static void G_StruggleUserMissile( gentity_t *self, trace_t *trace ) {
 	VectorAdd( self->r.currentOrigin, trace->plane.normal, self->r.currentOrigin);
 	VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
 	self->s.pos.trTime = level.time;
-/*
-	//self->s.pos.trTime = 0;
-	//self->s.pos.trDuration = 0;
-	vec3_t forward;
-	self->struggling = qtrue;
-	//self->speed *= self->powerLevel;
-	//VectorClear( self->s.pos.trDelta );
-	VectorScale( velocity, self->powerLevel * 0.5f, forward );
-	VectorCopy(forward,self->s.pos.trDelta);
-	// This saves network bandwidth.
-	SnapVector( self->s.pos.trDelta );
-	//VectorCopy( trace->endpos,self->s.pos.trBase );
-	//VectorCopy( self->r.currentOrigin,other->r.currentOrigin );
-*/
 }
 
-void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
+void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 // Handles impact of the weapon with map geometry or entities.
 	gentity_t		*other;
 	qboolean		hitClient = qfalse;
-	int				energyDefense;
 	vec3_t	velocity;
 	//G_Printf(va("G_ImpactUserWeapon\n"));
-	
 	other = &g_entities[trace->entityNum];
-	energyDefense = 1;
-
-	if (g_entities[other->s.clientNum].client->ps.energyDefense > 0){
-		energyDefense = g_entities[other->s.clientNum].client->ps.energyDefense;
-	}
-
-	if ( !other->takedamage && self->bounceFrac && self->bouncesLeft) {
+	if(!other->takedamage && self->bounceFrac && self->bouncesLeft){
 		G_BounceUserMissile( self, trace );
 		G_AddEvent( self, EV_GRENADE_BOUNCE, 0 );
 		self->bouncesLeft--;
 		return;
 	}
-
 	self->takedamage = qtrue;
-	// Can the target take damage?
-	if (other->takedamage) {
-		// FIXME: wrong damage direction?
-		// Does the missile do damage?
-		if ( self->damage ) {
-
-			// Log accuracy hits
-			if( LogAccuracyHit( other, &g_entities[self->s.clientNum] ) ) {
-				g_entities[self->s.clientNum].client->accuracy_hits++;
-				hitClient = qtrue;
+	if(other->takedamage) {
+		if(self->damage){
+			BG_EvaluateTrajectoryDelta(&self->s, &self->s.pos, level.time, velocity);
+			if(VectorLength( velocity ) == 0){
+				velocity[2] = 1;
 			}
-
-			// Determine impact's knockback direction
-			BG_EvaluateTrajectoryDelta( &self->s, &self->s.pos, level.time, velocity );
-			if ( VectorLength( velocity ) == 0 ) {
-				velocity[2] = 1;	// stepped on a grenade
-			}
-
-			/*
-			// Do the damage
-			G_Damage (other, self, &g_entities[self->r.ownerNum], velocity,
-				self->s.origin, self->damage, 
-				0, self->methodOfDeath);
-			*/
-
 			{
 				g_userWeapon_t	*weaponInfo;
-
 				weaponInfo = G_FindUserWeaponData( self->s.clientNum, self->s.weapon );
-				//G_Printf(va("G_UserWeaponDamage"));
-				G_UserWeaponDamage( other, self, &g_entities[self->r.ownerNum], velocity, self->s.origin,
-									weaponInfo->damage_damage / energyDefense, 0,
-									MOD_KI + weaponInfo->damage_meansOfDeath,
-									weaponInfo->damage_extraKnockback );
+				G_UserWeaponDamage(other,self,&g_entities[self->r.ownerNum],velocity,self->s.origin,weaponInfo->damage_damage, 0,MOD_KI + weaponInfo->damage_meansOfDeath,weaponInfo->damage_extraKnockback);
 			}
 		}
 	}
-
 	// Terminate guidance
-	if ( self->guided ) {
-		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
-	}
+	if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
 	if((self->s.eType == ET_MISSILE) || (self->s.eType == ET_BEAMHEAD)){
 		G_StruggleUserMissile(self, trace);
 		//G_AddEvent( self, EV_POWER_STRUGGLE, 0 );
 		//return;
 	}
-	if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER) ){
-	// Add the explosion event to the entity, and make it free itself after event.
-		if ( other->takedamage && other->client ) {
+	if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
+		if(other->takedamage && other->client){
 			G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
 			self->s.otherEntityNum = other->s.number;
-		} else if( trace->surfaceFlags & SURF_METALSTEPS ) {
+		}
+		else if(trace->surfaceFlags & SURF_METALSTEPS){
 			G_AddEvent( self, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
-		} else {
+		}
+		else{
 			G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
 		}
 		self->freeAfterEvent = qtrue;
@@ -1481,7 +1363,7 @@ void G_ImpactUserWeapon (gentity_t *self, trace_t *trace) {
 		G_SetOrigin( self, trace->endpos );
 	
 
-		if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage / energyDefense, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
+		if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
 			if( !hitClient ) {
 				g_entities[self->s.clientNum].client->accuracy_hits++;
 			}
@@ -1514,16 +1396,12 @@ void G_RunUserMissile( gentity_t *ent ) {
 	vec3_t		origin;
 	trace_t		trace;
 	int			pass_ent;
-
 	// get current position
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
-
 	// ignore interactions with the missile owner
 	pass_ent = ent->r.ownerNum;
-
 	// trace a line from the previous position to the current position
 	trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, pass_ent, ent->clipmask );
-
 	if ( trace.startsolid || trace.allsolid ) {
 		// make sure the trace.entityNum is set to the entity we're stuck in
 		trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, pass_ent, ent->clipmask );
@@ -1532,18 +1410,15 @@ void G_RunUserMissile( gentity_t *ent ) {
 	else {
 		VectorCopy( trace.endpos, ent->r.currentOrigin );
 	}
-
-	trap_LinkEntity( ent );
-
-	if ( trace.fraction != 1 ) {
+	trap_LinkEntity(ent);
+	//G_Printf("%i\n",ent->r.currentOrigin);
+	if(trace.fraction != 1){
 		// never explode or bounce on sky
 		if ( trace.surfaceFlags & SURF_NOIMPACT ) {
 			G_RemoveUserWeapon( ent );
 			return;
 		}
-
-		G_ImpactUserWeapon( ent, &trace );
-
+		G_ImpactUserWeapon(ent, &trace);
 		if ( (ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD) && ((ent->powerLevel <= 0)||(g_entities[trace.entityNum].powerLevel <=0)) ) {
 			// Missile has changed to ET_GENERAL and has exploded, so we don't want
 			// to run the think function!

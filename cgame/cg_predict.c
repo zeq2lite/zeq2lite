@@ -214,7 +214,7 @@ static void CG_InterpolatePlayerState(qboolean grabAngles) {
 		int	cmdNum;
 		cmdNum = trap_GetCurrentCmdNumber();
 		trap_GetUserCmd(cmdNum,&cmd);
-		if(out->rolling){
+		if(out->rolling && out->lockedTarget <= 0){
 			PM_UpdateViewAngles(out,&cmd);
 		}
 		else{
@@ -384,17 +384,14 @@ void CG_PredictPlayerState( void ) {
 	// the last good position we had
 	cmdNum = current - CMD_BACKUP + 1;
 	trap_GetUserCmd( cmdNum, &oldestCmd );
-	if ( oldestCmd.serverTime > cg.snap->ps.commandTime 
-		&& oldestCmd.serverTime < cg.time ) {	// special check for map_restart
-		if ( cg_showmiss.integer ) {
+	if (oldestCmd.serverTime > cg.snap->ps.commandTime && oldestCmd.serverTime < cg.time){
+		if(cg_showmiss.integer){
 			CG_Printf ("exceeded PACKET_BACKUP on commands\n");
 		}
 		return;
 	}
-
 	// get the latest command so we can know which commands are from previous map_restarts
 	trap_GetUserCmd( current, &latestCmd );
-
 	// get the most recent information we have, even if
 	// the server time is beyond our current cg.time,
 	// because predicted player positions are going to 
@@ -424,7 +421,7 @@ void CG_PredictPlayerState( void ) {
 		trap_GetUserCmd( cmdNum, &cg_pmove.cmd );
 
 		if ( cg_pmove.pmove_fixed ) {
-			if(cg_pmove.ps->rolling ) {
+			if(cg_pmove.ps->rolling && (cg_pmove.ps->lockedTarget <= 0)) {
 				PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd );
 			}
 			else{
@@ -603,38 +600,32 @@ void CG_PredictPlayerState( void ) {
 				cg.lfEditor.editTarget = qfalse;
 				VectorCopy(cg.refdef.vieworg, cg.lfEditor.targetPosition);
 			}
-			else if (
+			else if(
 				cg.lfEditor.selectedLFEnt &&
 				cg.lfEditor.editMode == LFEEM_target &&
 				!cg.lfEditor.editTarget &&
 				cg.lfEditor.lastClick < cg.time - 100 &&
 				(cg.lfEditor.oldButtons & BUTTON_ATTACK) == 0 &&
 				(cg_pmove.cmd.buttons & BUTTON_ATTACK)
-			) {
-				if (Distance(cg.refdef.vieworg, cg.lfEditor.targetPosition) >= 1) {
+			){
+				if(Distance(cg.refdef.vieworg, cg.lfEditor.targetPosition) >= 1){
 					vec3_t origin;
 					vec3_t dir;
-
 					CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, origin);
 					VectorSubtract(cg.refdef.vieworg, origin, dir);
-					if (VectorNormalize(dir) > 0.1) {
+					if (VectorNormalize(dir) > 0.1){
 						cg.lfEditor.selectedLFEnt->angle = acos(DotProduct(dir, cg.lfEditor.selectedLFEnt->dir)) * (180.0 / M_PI);
 					}
 				}
-				else {
+				else{
 					cg.lfEditor.selectedLFEnt->angle = -1;
 				}
 				CG_ComputeMaxVisAngle(cg.lfEditor.selectedLFEnt);
 				cg.lfEditor.editMode = LFEEM_none;
 				CG_SetLFEdMoveMode(LFEMM_coarse);
 			}
-
-			if (
-				cg.lfEditor.selectedLFEnt &&
-				cg.lfEditor.editMode == LFEEM_radius
-			) {
+			if(cg.lfEditor.selectedLFEnt && cg.lfEditor.editMode == LFEEM_radius){
 				float move;
-				
 				if (cg_pmove.cmd.buttons & BUTTON_ATTACK) {
 					move = cg_pmove.cmd.forwardmove * (cg_pmove.cmd.serverTime - cg_pmove.ps->commandTime) / 2000.0;
 					cg.lfEditor.fmm_distance -= move;
@@ -661,13 +652,11 @@ void CG_PredictPlayerState( void ) {
 					if (cg.lfEditor.selectedLFEnt->radius < 2.5) cg.lfEditor.selectedLFEnt->radius = 2.5;
 					if (cg.lfEditor.selectedLFEnt->radius > 100) cg.lfEditor.selectedLFEnt->radius = 100;
 				}
-
 				cg_pmove.cmd.forwardmove = 0;
 				cg_pmove.cmd.rightmove = 0;
 				cg_pmove.cmd.upmove = 0;
 			}
-
-			if (cg.lfEditor.oldButtons != cg_pmove.cmd.buttons) {
+			if(cg.lfEditor.oldButtons != cg_pmove.cmd.buttons){
 				cg.lfEditor.lastClick = cg.time;
 			}
 			cg.lfEditor.oldButtons = cg_pmove.cmd.buttons;
@@ -701,19 +690,14 @@ void CG_PredictPlayerState( void ) {
 	}
 
 	// adjust for the movement of the groundentity
-	CG_AdjustPositionForMover( cg.predictedPlayerState.origin, 
-		cg.predictedPlayerState.groundEntityNum, 
-		cg.physicsTime, cg.time, cg.predictedPlayerState.origin );
-
-	if ( cg_showmiss.integer ) {
-		if (cg.predictedPlayerState.eventSequence > oldPlayerState.eventSequence + MAX_PS_EVENTS) {
+	CG_AdjustPositionForMover(cg.predictedPlayerState.origin,cg.predictedPlayerState.groundEntityNum,cg.physicsTime, cg.time, cg.predictedPlayerState.origin);
+	if(cg_showmiss.integer){
+		if(cg.predictedPlayerState.eventSequence > oldPlayerState.eventSequence + MAX_PS_EVENTS){
 			CG_Printf("WARNING: dropped event\n");
 		}
 	}
-
 	// fire events and other transition triggered things
-	CG_TransitionPlayerState( &cg.predictedPlayerState, &oldPlayerState );
-
+	CG_TransitionPlayerState(&cg.predictedPlayerState,&oldPlayerState);
 	if ( cg_showmiss.integer ) {
 		if (cg.eventSequence > cg.predictedPlayerState.eventSequence) {
 			CG_Printf("WARNING: double event\n");

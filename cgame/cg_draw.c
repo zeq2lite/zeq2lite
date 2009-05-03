@@ -1341,7 +1341,7 @@ static void CG_DrawTeamInfo( void ) {
 		hcolor[3] = 1.0f;
 
 		for (i = cgs.teamChatPos - 1; i >= cgs.teamLastChatPos; i--) {
-			CG_DrawStringExt( CHATLOC_X + TINYCHAR_WIDTH, 
+			CG_DrawStringExt(CHATLOC_X + TINYCHAR_WIDTH, 
 				CHATLOC_Y - (cgs.teamChatPos - i)*TINYCHAR_HEIGHT, 
 				cgs.teamChatMsgs[i % chatHeight], hcolor, qfalse, qfalse,
 				TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
@@ -2678,7 +2678,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawCrosshairNames();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if (!cg.showScores && !(cg.snap->ps.powerups[PW_TRANSFORM] > 1) && !(cg.snap->ps.powerups[PW_STUN]) && !(cg.snap->ps.stats[bitFlags] & isUnconcious)){
+		if (!cg.showScores && !(cg.snap->ps.powerups[PW_TRANSFORM] > 1) && !(cg.snap->ps.stats[bitFlags] & isUnconcious)){
 			CG_DrawStatusBar();
 			CG_DrawRadar();
 			CG_DrawAmmoWarning();  

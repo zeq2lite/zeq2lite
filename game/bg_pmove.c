@@ -31,6 +31,40 @@ void PM_StopDash(void);
 void PM_StopMovement(void);
 void PM_ContinueLegsAnim(int anim);
 void PM_ContinueTorsoAnim(int anim);
+/*===================
+PM_StartTorsoAnim
+===================*/
+void PM_StartTorsoAnim(int anim){
+	pm->ps->torsoAnim = ((pm->ps->torsoAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT) | anim;
+}
+void PM_StartLegsAnim(int anim){
+	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
+	pm->ps->legsAnim = ((pm->ps->legsAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT ) | anim;
+}
+
+void PM_ContinueLegsAnim(int anim){
+	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
+	if((pm->ps->legsAnim & ~ANIM_TOGGLEBIT)== anim){
+		return;
+	}
+	PM_StartLegsAnim(anim );
+}
+
+void PM_ContinueTorsoAnim(int anim){
+	if((pm->ps->torsoAnim & ~ANIM_TOGGLEBIT)== anim){
+		return;
+	}
+	PM_StartTorsoAnim(anim );
+}
+void PM_ForceTorsoAnim(int anim){
+	pm->ps->torsoTimer = 0;
+	PM_StartTorsoAnim(anim);
+}
+void PM_ForceLegsAnim(int anim){
+	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
+	pm->ps->legsTimer = 0;
+	PM_StartLegsAnim(anim );
+}
 /*===============
 ZANZOKEN
 ===============*/
@@ -80,12 +114,13 @@ void PM_BurnPowerLevel(qboolean melee){
 	float percent;
 	int defense;
 	int burn;
+	int newValue;
 	burn = melee ? pm->ps->powerLevelMeleeBurn : pm->ps->powerLevelBurn;
 	if(!burn){return;}
 	defense = melee ? pm->ps->meleeDefense : pm->ps->energyDefense;
 	percent = 1.0 - ((float)pm->ps->stats[powerLevel] / (float)pm->ps->persistant[powerLevelMaximum]);
 	burn -= ((float)pm->ps->persistant[powerLevelMaximum] * 0.01) * defense;
-	if(pm->ps->stats[powerLevelTotal] - burn > 0){
+	if(burn > 0 && (pm->ps->stats[powerLevelTotal] - burn > 0)){
 		pm->ps->stats[powerLevelTotal] -= burn;
 		pm->ps->persistant[powerLevelMaximum] += ((float)burn * percent) * 4;
 	}
@@ -147,7 +182,8 @@ void PM_CheckPowerLevel(void){
 		if(pm->ps->powerups[PW_MELEE_STATE] == 5){PM_BurnPowerLevel(qtrue);}
 		if(pm->ps->stats[bitFlags] & usingBoost || pm->ps->stats[bitFlags] & usingAlter){recovery = 0;}
 		if((stats[powerLevel] > stats[powerLevelTotal]) || (stats[powerLevelTotal] <= 0)){
-			stats[powerLevel] -= pm->ps->persistant[powerLevelMaximum] * 0.005;
+			newValue = stats[powerLevel] - (pm->ps->persistant[powerLevelMaximum] * 0.005);
+			stats[powerLevel] = (stats[powerLevel] - newValue >= 0) ? newValue : 0;
 		}
 		newValue = stats[powerLevel] + pm->ps->drainPowerLevel;
 		if(newValue < stats[powerLevelTotal] && newValue > 0){stats[powerLevel] = newValue;}
@@ -168,6 +204,7 @@ void PM_CheckPowerLevel(void){
 		stats[bitFlags] &= ~keyTierUp;
 		if(pm->cmd.upmove < 0){
 			stats[bitFlags] &= ~usingFlight;
+			PM_ForceLegsAnim(LEGS_JUMP);
 		}
 		if(pm->cmd.rightmove < 0){
 			stats[bitFlags] |= usingAlter;
@@ -193,7 +230,7 @@ void PM_CheckPowerLevel(void){
 				stats[powerLevelTimer] -= 25;
 				raise = stats[powerLevelTotal] * 0.009;
 				newValue = stats[powerLevel] + raise;
-				if(newValue > 32768){continue;}
+				if(newValue > 32768){newValue = 32768;}
 				if(newValue < stats[powerLevelTotal]){stats[powerLevel] = newValue;}
 				else{stats[powerLevel] = stats[powerLevelTotal];}
 				if(stats[powerLevel] == pm->ps->persistant[powerLevelMaximum]){
@@ -248,6 +285,7 @@ void PM_CheckBoost(void){
 	}
 }
 /*===============
+/*===============
 PM_AddEvent
 ===============*/
 void PM_AddEvent(int newEvent){
@@ -274,42 +312,6 @@ void PM_AddTouchEnt(int entityNum){
 	pm->touchents[pm->numtouch] = entityNum;
 	pm->numtouch++;
 }
-
-/*===================
-PM_StartTorsoAnim
-===================*/
-void PM_StartTorsoAnim(int anim){
-	pm->ps->torsoAnim = ((pm->ps->torsoAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT) | anim;
-}
-void PM_StartLegsAnim(int anim){
-//	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
-	pm->ps->legsAnim = ((pm->ps->legsAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT ) | anim;
-}
-
-void PM_ContinueLegsAnim(int anim){
-//	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
-	if((pm->ps->legsAnim & ~ANIM_TOGGLEBIT)== anim){
-		return;
-	}
-	PM_StartLegsAnim(anim );
-}
-
-void PM_ContinueTorsoAnim(int anim){
-	if((pm->ps->torsoAnim & ~ANIM_TOGGLEBIT)== anim){
-		return;
-	}
-	PM_StartTorsoAnim(anim );
-}
-void PM_ForceTorsoAnim(int anim){
-	pm->ps->torsoTimer = 0;
-	PM_StartTorsoAnim(anim);
-}
-void PM_ForceLegsAnim(int anim){
-//	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
-	pm->ps->legsTimer = 0;
-	PM_StartLegsAnim(anim );
-}
-
 
 /*
 ==================
@@ -455,25 +457,7 @@ Determine the rotation of the legs relative
 to the facing dir
 ================*/
 void PM_SetMovementDir(void){
-	if(pm->cmd.forwardmove || pm->cmd.rightmove){
-		if(pm->cmd.rightmove == 0 && pm->cmd.forwardmove > 0){pm->ps->movementDir = 0;}
-		else if(pm->cmd.rightmove < 0 && pm->cmd.forwardmove > 0){pm->ps->movementDir = 1;}
-		else if(pm->cmd.rightmove < 0 && pm->cmd.forwardmove == 0){pm->ps->movementDir = 2;}
-		else if(pm->cmd.rightmove < 0 && pm->cmd.forwardmove < 0){pm->ps->movementDir = 3;}
-		else if(pm->cmd.rightmove == 0 && pm->cmd.forwardmove < 0){pm->ps->movementDir = 4;}
-		else if(pm->cmd.rightmove > 0 && pm->cmd.forwardmove < 0){pm->ps->movementDir = 5;}
-		else if(pm->cmd.rightmove > 0 && pm->cmd.forwardmove == 0){pm->ps->movementDir = 6;}
-		else if(pm->cmd.rightmove > 0 && pm->cmd.forwardmove > 0){pm->ps->movementDir = 7;}
-	} else{
-		// ifthey aren't actively going directly sideways,
-		// change the animation to the diagonal so they
-		// don't stop too crooked
-		if(pm->ps->movementDir == 2){
-			pm->ps->movementDir = 1;
-		} else if(pm->ps->movementDir == 6){
-			pm->ps->movementDir = 7;
-		}
-	}
+
 }
 /*=============
 PM_CheckJump
@@ -535,8 +519,7 @@ void PM_FlyMove(void){
 	float	wishspeed;
 	float	scale;
 	float	boostFactor;
-	if((pm->ps->stats[bitFlags] & usingAlter) && VectorLength(pm->ps->velocity) < 10){return;}
-	if(pm->cmd.upmove > 0 || (!pml.onGround && pm->cmd.upmove < 0)){
+	if(pm->cmd.upmove > 0){
 		pm->ps->stats[bitFlags] |= usingFlight;
 		PM_StopDash();
 		PM_StopJump();
@@ -579,7 +562,6 @@ void PM_AirMove(void){
 	float		scale;
 	usercmd_t	cmd;
 	if(pml.onGround){return;}
-	if(pm->ps->stats[bitFlags] & usingAlter){return;}
 	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
@@ -620,7 +602,6 @@ void PM_WalkMove(void){
 	float		accelerate;
 	float		vel;
 	if(!pml.onGround || VectorLength(pm->ps->dashDir)){return;}
-	if(pm->ps->stats[bitFlags] & usingAlter){return;}
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
 	cmd = pm->cmd;
@@ -668,7 +649,6 @@ void PM_DashMove(void){
 	float		accelerate;
 	usercmd_t	cmd;
 	dashAmount = VectorLength(pm->ps->dashDir);
-	if((pm->ps->stats[bitFlags] & usingAlter) && VectorLength(pm->ps->velocity) < 10){return;}
 	if((pml.onGround && !(pm->cmd.buttons & BUTTON_WALKING) && (pm->cmd.forwardmove || pm->cmd.rightmove))){
 		pm->cmd.upmove = 0;
 		boostFactor = (pm->ps->stats[bitFlags] & usingBoost) ? 4.4 : 1.1;
@@ -693,11 +673,11 @@ void PM_DashMove(void){
 		cmd = pm->cmd;
 		fmove = pm->cmd.forwardmove;
 		smove = pm->cmd.rightmove;
-		scale = PM_CmdScale(&cmd)* boostFactor;
+		scale = PM_CmdScale(&cmd) * boostFactor;
 		pml.forward[2] = 0;
 		pml.right[2] = 0;
-		VectorNormalize (pml.forward);
-		VectorNormalize (pml.right);
+		VectorNormalize(pml.forward);
+		VectorNormalize(pml.right);
 		for(i=0;i<2;i++){
 			wishvel[i] = pml.forward[i]*fmove + pml.right[i]*smove;
 		}
@@ -705,14 +685,9 @@ void PM_DashMove(void){
 		VectorCopy (wishvel, wishdir);
 		wishspeed = VectorNormalize(wishdir);
 		wishspeed *= scale;
-		if((pml.groundTrace.surfaceFlags & SURF_SLICK)|| pm->ps->pm_flags & PMF_TIME_KNOCKBACK){
-			accelerate = pm_airaccelerate;
-		} else{
-			accelerate = pm_dashaccelerate;
-		}
-		PM_Accelerate(wishdir, wishspeed, accelerate);
+		PM_Accelerate(wishdir,wishspeed,pm_dashaccelerate);
 		if(pml.groundPlane){
-			PM_ClipVelocity (pm->ps->velocity,pml.groundTrace.plane.normal,pm->ps->velocity, OVERCLIP);
+			PM_ClipVelocity(pm->ps->velocity,pml.groundTrace.plane.normal,pm->ps->velocity,OVERCLIP);
 		}
 		if(pm->waterlevel == 3){
 			pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
@@ -896,10 +871,10 @@ void PM_GroundTraceMissed(void){
 		pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 		if(trace.fraction == 1.0){
 			if(pm->cmd.forwardmove >= 0){
-				PM_ForceLegsAnim(LEGS_JUMP );
+				PM_ForceLegsAnim(LEGS_JUMP);
 				pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 			} else{
-				PM_ForceLegsAnim(LEGS_JUMPB );
+				PM_ForceLegsAnim(LEGS_JUMPB);
 				pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 			}
 			PM_StopDash();
@@ -923,7 +898,7 @@ void PM_GroundTrace(void){
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
 	if(trace.allsolid && (!PM_CorrectAllSolid(&trace))){return;}
-	// ifthe trace didn't hit anything, we are in free fall
+	// if the trace didn't hit anything, we are in free fall
 	if(trace.fraction == 1.0){
 		PM_GroundTraceMissed();
 		pml.groundPlane = qfalse;
@@ -945,7 +920,6 @@ void PM_GroundTrace(void){
 		PM_NotOnGround();
 		return;
 	}
-
 	// ADDING FOR ZEQ2
 	if(pm->ps->stats[bitFlags] & usingFlight){
 		vec3_t testVec;
@@ -965,32 +939,15 @@ void PM_GroundTrace(void){
 		pml.groundPlane = qtrue;
 		return;
 	}
-
 	pml.groundPlane = qtrue;
 	pml.onGround = qtrue;
-
-	// hitting solid ground will end a waterjump
-	if(pm->ps->pm_flags & PMF_TIME_WATERJUMP){
-		pm->ps->pm_flags &= ~(PMF_TIME_WATERJUMP | PMF_TIME_LAND);
-		pm->ps->pm_time = 0;
-	}
 	if(pm->ps->groundEntityNum == ENTITYNUM_NONE){
 		pm->ps->stats[bitFlags] &= ~usingJump;
 		pm->ps->stats[bitFlags] &= ~usingFlight;
-		if(VectorLength(pm->ps->dashDir) == 0.0f){
-			PM_CrashLand();
-		}
-		if(pml.previous_velocity[2] < -200){
-			pm->ps->pm_flags |= PMF_TIME_LAND;
-			pm->ps->pm_time = 250;
-		}
 	}
-
 	pm->ps->groundEntityNum = trace.entityNum;
-
 	// don't reset the z velocity for slopes
-//	pm->ps->velocity[2] = 0;
-
+	pm->ps->velocity[2] = 0;
 	PM_AddTouchEnt(trace.entityNum );
 }
 
@@ -1054,22 +1011,11 @@ void PM_Footsteps(void){
 	qboolean	footstep;
 	if((pm->ps->stats[bitFlags] & usingZanzoken) || (pm->ps->powerups[PW_MELEE] < 0)){return;}
 	if((pm->ps->stats[bitFlags] & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
-		pm->ps->stats[powerLevel] == pm->ps->persistant[powerLevelMaximum] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);
+		if(pm->ps->stats[powerLevel] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
+		else{pm->ps->stats[powerLevel] == pm->ps->persistant[powerLevelMaximum] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
-	if(VectorLength(pm->ps->dashDir)> 0.0f && pm->xyspeed >= 500){
-		if(pm->ps->dashDir[0] > 0){
-			pm->ps->running ? PM_ContinueLegsAnim(LEGS_RUN) : PM_ContinueLegsAnim(LEGS_DASH_FORWARD);
-		} else if(pm->ps->dashDir[0] < 0){
-			pm->ps->running ? PM_ContinueLegsAnim(LEGS_BACK) : PM_ContinueLegsAnim(LEGS_DASH_BACKWARD);
-		} else if(pm->ps->dashDir[1] > 0){
-			PM_ContinueLegsAnim(LEGS_DASH_RIGHT);
-		} else if(pm->ps->dashDir[1] < 0){
-			PM_ContinueLegsAnim(LEGS_DASH_LEFT );
-		} else{}
-		return;
-	}
 	if(pm->ps->stats[bitFlags] & usingFlight){
 		if((!pm->cmd.forwardmove && !pm->cmd.rightmove) || (pm->cmd.buttons & BUTTON_WALKING )) {
 			int	tempAnimIndex;
@@ -1102,17 +1048,15 @@ void PM_Footsteps(void){
 		}
 		return;
 	}
-
-	// ifnot trying to move
 	if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
-		if( pm->xyspeed < 5){
+		if(pm->xyspeed < 5){
 			int	tempAnimIndex;
 			pm->ps->bobCycle = 0;	// start at beginning of cycle again
 			tempAnimIndex = pm->ps->torsoAnim & ~ANIM_TOGGLEBIT;
 			if((tempAnimIndex >= TORSO_KI_ATTACK1_PREPARE) && (tempAnimIndex <= TORSO_KI_ATTACK6_ALT_FIRE)) {
 				tempAnimIndex = tempAnimIndex - TORSO_KI_ATTACK1_PREPARE;
 				tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
-				PM_ContinueLegsAnim(tempAnimIndex );
+				PM_ContinueLegsAnim(tempAnimIndex);
 			} else{
 				if(pm->ps->lockedTarget>0 && !pm->ps->powerups[PW_MELEE_STATE]){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
 				else{PM_ContinueLegsAnim(LEGS_IDLE);}
@@ -1122,22 +1066,22 @@ void PM_Footsteps(void){
 	}
 	footstep = qfalse;
 	if(!(pm->cmd.buttons & BUTTON_WALKING)){
-		bobmove = 0.4f;	// faster speeds bob faster
-		if(!pm->ps->running){ 
+		bobmove = 0.4f;
+		if(!pm->ps->running){
 			if(pm->cmd.forwardmove < 0) {
-				PM_ContinueLegsAnim(LEGS_DASH_BACKWARD );
+				PM_ContinueLegsAnim(LEGS_DASH_BACKWARD);
 			} else if(pm->cmd.forwardmove > 0){
-				PM_ContinueLegsAnim(LEGS_DASH_FORWARD );
+				PM_ContinueLegsAnim(LEGS_DASH_FORWARD);
 			} else if(pm->cmd.rightmove > 0){
-				PM_ContinueLegsAnim(LEGS_DASH_RIGHT );
+				PM_ContinueLegsAnim(LEGS_DASH_RIGHT);
 			} else if(pm->cmd.rightmove < 0){
-				PM_ContinueLegsAnim(LEGS_DASH_LEFT );
+				PM_ContinueLegsAnim(LEGS_DASH_LEFT);
 			}
-		} else{
-			if(pm->cmd.forwardmove < 0) {
-				PM_ContinueLegsAnim(LEGS_BACK );
+		}else{
+			if(pm->cmd.forwardmove < 0){
+				PM_ContinueLegsAnim(LEGS_BACK);
 			} else if(pm->cmd.forwardmove > 0){
-				PM_ContinueLegsAnim(LEGS_RUN );
+				PM_ContinueLegsAnim(LEGS_RUN);
 			} else if(pm->cmd.rightmove > 0){
 				PM_ContinueLegsAnim(LEGS_DASH_RIGHT );
 			} else if(pm->cmd.rightmove < 0){
@@ -1145,8 +1089,8 @@ void PM_Footsteps(void){
 			}
 		}
 		footstep = qtrue;
-	} else{
-		bobmove = 0.3f;	// walking bobs slow
+	}else{
+		bobmove = 0.3f;
 		if(pm->cmd.forwardmove < 0){
 			PM_ContinueLegsAnim(LEGS_BACKWALK );
 		}
@@ -1154,27 +1098,18 @@ void PM_Footsteps(void){
 			PM_ContinueLegsAnim(LEGS_WALK);
 		}
 	}
-
-	// check for footstep / splash sounds
 	old = pm->ps->bobCycle;
 	pm->ps->bobCycle = (int)(old + bobmove * pml.msec)& 255;
-
-	// ifwe just crossed a cycle boundary, play an apropriate footstep event
 	if(((old + 64)^ (pm->ps->bobCycle + 64)) & 128){
 		if(pm->waterlevel == 0){
-			// on ground will only play sounds ifrunning
 			if(footstep && !pm->noFootsteps){
 				PM_AddEvent(PM_FootstepForSurface());
 			}
 		} else if(pm->waterlevel == 1){
-			// splashing
 			PM_AddEvent(EV_FOOTSPLASH );
 		} else if(pm->waterlevel == 2){
-			// wading / swimming at surface
 			PM_AddEvent(EV_SWIM );
 		} else if(pm->waterlevel == 3){
-			// no sound when completely underwater
-
 		}
 	}
 }
@@ -1383,7 +1318,7 @@ void PM_TorsoAnimation(void){
 		PM_ContinueTorsoAnim(TORSO_PL_UP );
 		break;
 	case LEGS_TRANS_UP:
-		PM_ContinueTorsoAnim(TORSO_TRANS_UP );
+		PM_ContinueTorsoAnim(TORSO_TRANS_UP);
 		break;
 	case LEGS_TRANS_BACK:
 		PM_ContinueTorsoAnim(TORSO_TRANS_BACK );
@@ -1395,7 +1330,7 @@ void PM_TorsoAnimation(void){
 		PM_ContinueTorsoAnim(TORSO_FLY_FORWARD );
 		break;
 	case LEGS_FLY_BACKWARD:
-		PM_ContinueTorsoAnim(TORSO_FLY_BACKWARD );
+		PM_ContinueTorsoAnim(TORSO_FLY_BACKWARD);
 		break;
 	default:
 		(pm->ps->lockedTarget>0) ? PM_ContinueTorsoAnim(TORSO_STAND_LOCKED) : PM_ContinueTorsoAnim(TORSO_STAND);
@@ -2001,7 +1936,7 @@ void PmoveSingle(pmove_t *pmove){
 	else if(pml.msec > 200){pml.msec = 200;}
 	if(abs(pm->cmd.forwardmove)> 64 || abs(pm->cmd.rightmove)> 64){pm->cmd.buttons &= ~BUTTON_WALKING;}
 	PM_CheckTransform();
-	if(!(pm->ps->stats[bitFlags] & isTransforming) || (pm->ps->powerups[PW_TRANSFORM])){
+	if(!(pm->ps->stats[bitFlags] & isTransforming)){
 		PM_BurnPowerLevel(qfalse);
 		PM_CheckBoost();
 		PM_CheckJump();
@@ -2047,10 +1982,12 @@ void PmoveSingle(pmove_t *pmove){
 	PM_WaterEvents();
 	PM_DropTimers();
 	PM_GroundTrace();
-	PM_FlyMove();
-	PM_DashMove();
-	PM_WalkMove();
-	PM_AirMove();
+	if(!((pm->ps->stats[bitFlags] & usingAlter) && VectorLength(pm->ps->velocity) < 10)){
+		PM_FlyMove();
+		PM_DashMove();
+		PM_WalkMove();
+		PM_AirMove();
+	}
 	PM_Friction();
 	PM_GroundTrace();
 	trap_SnapVector(pm->ps->velocity );

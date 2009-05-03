@@ -1332,14 +1332,6 @@ static void CG_PlayerAnimation( centity_t *cent,
 	} else {
 		tier = cent->currentState.tier;
 	}
-
-	/*
-	if ( cent->currentState.powerups & ( 1 << PW_HASTE ) ) {
-		speedScale = 1.5;
-	} else {
-		speedScale = 1;
-	}
-	*/
 	speedScale = 1;
 
 	ci = &cgs.clientinfo[ clientNum ];
@@ -1463,7 +1455,7 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, torsoAnimNum - TORSO_KI_ATTACK1_PREPARE + HEAD_KI_ATTACK1_PREPARE, speedScale );
 		} else {
 			legsAnimNum = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
-			if ( cg.predictedPlayerState.lockedTarget >0 ) {
+			if (cg.predictedPlayerState.lockedTarget >0) {
 				CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE_LOCKED, speedScale );
 			} else {
 				CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE, speedScale );
@@ -2372,7 +2364,7 @@ void CG_Player( centity_t *cent ) {
 	if(ci->tierCurrent > ci->tierMax){
 		ci->tierMax = ci->tierCurrent;
 	}
-	if(ps->powerups[PW_ZANZOKEN] > 0){return;}
+	if(cent->currentState.powerups & PW_ZANZOKEN){return;}
 	renderfx = 0;
 	if(cent->currentState.number == cg.snap->ps.clientNum){
 		if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}

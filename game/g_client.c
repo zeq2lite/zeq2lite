@@ -723,6 +723,8 @@ void ClientUserinfoChanged( int clientNum ) {
 	// setup tier information
 	client->modelName = model;
 	setupTiers(client);
+	client->ps.rolling = g_rolling.value;
+	client->ps.running = g_running.value;
 
 	// ADDING FOR ZEQ2
 	// REFPOINT: Loading the serverside weaponscripts here.
@@ -1077,12 +1079,6 @@ void ClientSpawn(gentity_t *ent) {
 		client->pers.maxHealth = 100;
 	}
 	// clear entity values
-	if(g_powerLevel.value > 32768){
-		g_powerLevel.value = 32768;
-	}
-	if(g_powerLevelBreakLimitRate.value < 0.1 ){g_powerLevelBreakLimitRate.value = 0.1;}
-	if(g_powerLevelBreakLimitRate.value > 10){g_powerLevelBreakLimitRate.value = 10;}
-	client->ps.stats[powerLevelTotal] = client->ps.persistant[powerLevelMaximum] > g_powerLevel.value ? client->ps.persistant[powerLevelMaximum] * 0.75 : g_powerLevel.value;
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1110,12 +1106,16 @@ void ClientSpawn(gentity_t *ent) {
 	setupTiers(client);
 	// END ADDING
 
-	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
 
 	// ADDING FOR ZEQ2
 	client->ps.stats[tierCurrent] = 0;
+	if(g_powerLevel.value > 32768){
+		g_powerLevel.value = 32768;
+	}
+	client->ps.stats[powerLevelTotal] = client->ps.persistant[powerLevelMaximum] > g_powerLevel.value ? client->ps.persistant[powerLevelMaximum] * 0.75 : g_powerLevel.value;
+	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
 
 	// make sure all bitFlags are OFF, and explicitly turn off the aura
 	client->ps.stats[bitFlags] = 0;

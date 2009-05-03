@@ -17,23 +17,17 @@ If the ammo has gone low enough to generate the warning, play a sound
 void CG_CheckAmmo( void ) {
 	int		total;
 	int		previous;
-
 	total = cg.snap->ps.stats[powerLevelTotal];
 	if ( total >= 500 ) {
 		cg.lowAmmoWarning = 0;
 		return;
 	}
-	// END ADDING
-
 	previous = cg.lowAmmoWarning;
-
 	if ( total == 0 ) {
 		cg.lowAmmoWarning = 2;
 	} else {
 		cg.lowAmmoWarning = 1;
 	}
-
-	// play a sound on transitions
 	if ( cg.lowAmmoWarning != previous ) {
 		trap_S_StartLocalSound( cgs.media.noAmmoSound, CHAN_LOCAL_SOUND );
 	}
@@ -370,51 +364,28 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	}
 }
 
-/*
-===============
+/*===============
 CG_TransitionPlayerState
-
-===============
-*/
+===============*/
 void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
-	// check for changing follow mode
-	if ( ps->clientNum != ops->clientNum ) {
+	if(ps->clientNum != ops->clientNum){
 		cg.thisFrameTeleport = qtrue;
-		// make sure we don't get any unwanted transition effects
 		*ops = *ps;
 	}
-
-	// damage events (player is getting wounded)
-	if ( ps->damageEvent != ops->damageEvent && ps->damageCount ) {
-		CG_DamageFeedback( ps->damageYaw, ps->damagePitch, ps->damageCount );
-	}
-
-	// respawning
-	if ( ps->persistant[PERS_SPAWN_COUNT] != ops->persistant[PERS_SPAWN_COUNT] ) {
+	if(ps->persistant[PERS_SPAWN_COUNT] != ops->persistant[PERS_SPAWN_COUNT]){
 		CG_Respawn();
 	}
-
-	if ( cg.mapRestart ) {
+	if(cg.mapRestart){
 		CG_Respawn();
 		cg.mapRestart = qfalse;
 	}
-
-	if ( cg.snap->ps.pm_type != PM_INTERMISSION 
-		 && ps->persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
-		CG_CheckLocalSounds( ps, ops );
+	if(cg.snap->ps.pm_type != PM_INTERMISSION && ps->persistant[PERS_TEAM] != TEAM_SPECTATOR){
+		CG_CheckLocalSounds(ps,ops);
 	}
-
-
-	// check for going low on ammo
 	CG_CheckAmmo();
-
-	// run events
-	CG_CheckPlayerstateEvents( ps, ops );
-
-	// smooth the ducking viewheight change
-	if ( ps->viewheight != ops->viewheight ) {
+	CG_CheckPlayerstateEvents(ps,ops);
+	if(ps->viewheight != ops->viewheight){
 		cg.duckChange = ps->viewheight - ops->viewheight;
 		cg.duckTime = cg.time;
 	}
 }
-
