@@ -214,12 +214,12 @@ static void CG_InterpolatePlayerState(qboolean grabAngles) {
 		int	cmdNum;
 		cmdNum = trap_GetCurrentCmdNumber();
 		trap_GetUserCmd(cmdNum,&cmd);
-		if(out->rolling && out->lockedTarget <= 0){
-			PM_UpdateViewAngles(out,&cmd);
-		}
-		else{
+//		if(out->rolling && out->lockedTarget <= 0){
+//			PM_UpdateViewAngles(out,&cmd);
+//		}
+//		else{
 			PM_UpdateViewAngles2(out,&cmd);
-		}
+//		}
 	}
 	if(cg.nextFrameTeleport){return;}
 	if(!next || next->serverTime <= prev->serverTime){return;}
@@ -421,12 +421,12 @@ void CG_PredictPlayerState( void ) {
 		trap_GetUserCmd( cmdNum, &cg_pmove.cmd );
 
 		if ( cg_pmove.pmove_fixed ) {
-			if(cg_pmove.ps->rolling && (cg_pmove.ps->lockedTarget <= 0)) {
-				PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd );
-			}
-			else{
+//			if(cg_pmove.ps->rolling && (cg_pmove.ps->lockedTarget <= 0)) {
+//				PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd );
+//			}
+//			else{
 				PM_UpdateViewAngles2( cg_pmove.ps, &cg_pmove.cmd );
-			}
+//			}
 		}
 
 		// don't do anything if the time is before the snapshot player time

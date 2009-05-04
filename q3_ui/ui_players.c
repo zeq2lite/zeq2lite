@@ -491,6 +491,10 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_FORWARD );
 		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_BACKWARD );
+		} else if ( TORSO_FLY_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_UP );
+		} else if ( TORSO_FLY_DOWN == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_DOWN );
 		} else if ( TORSO_STUNNED == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_STUNNED );
 		} else if ( TORSO_PUSH == torsoAnimNum ) {

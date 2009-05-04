@@ -151,7 +151,9 @@ typedef struct
 #define ANIM_FLY_IDLE	33
 #define ANIM_FLY_FORWARD	34
 #define ANIM_FLY_BACKWARD	35
-#define ANIM_BLOCK		36
+#define ANIM_FLY_UP		36
+#define ANIM_FLY_DOWN	37
+#define ANIM_BLOCK		38
 // End adding
 
 typedef struct
@@ -250,8 +252,8 @@ static bind_t g_bindings[] =
 	{"+back", 			"move backward",	ID_BACKPEDAL,	ANIM_DASH_BACKWARD,	K_DOWNARROW,	-1,		-1, -1},
 	{"+moveleft", 		"move left",		ID_MOVELEFT,	ANIM_DASH_LEFT,		',',			-1,		-1, -1},
 	{"+moveright", 		"move right",		ID_MOVERIGHT,	ANIM_DASH_RIGHT,	'.',			-1,		-1, -1},
-	{"+moveup",			"fly up",			ID_MOVEUP,		ANIM_FLY_IDLE,		K_SPACE,		-1,		-1, -1},
-	{"+movedown",		"fly down",			ID_MOVEDOWN,	ANIM_FLY_IDLE,		'c',			-1,		-1, -1},
+	{"+moveup",			"fly up",			ID_MOVEUP,		ANIM_FLY_UP,		K_SPACE,		-1,		-1, -1},
+	{"+movedown",		"fly down",			ID_MOVEDOWN,	ANIM_FLY_DOWN,		'c',			-1,		-1, -1},
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,		K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,		K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,			K_ALT,			-1,		-1, -1},
@@ -622,6 +624,16 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_FLY_BACKWARD:
 		s_controls.playerLegs = LEGS_FLY_BACKWARD;
 		s_controls.playerTorso = TORSO_FLY_BACKWARD;
+		break;
+
+	case ANIM_FLY_UP:
+		s_controls.playerLegs = LEGS_FLY_UP;
+		s_controls.playerTorso = TORSO_FLY_UP;
+		break;
+
+	case ANIM_FLY_DOWN:
+		s_controls.playerLegs = LEGS_FLY_DOWN;
+		s_controls.playerTorso = TORSO_FLY_DOWN;
 		break;
 /*
 	case ANIM_GESTURE:

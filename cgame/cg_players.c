@@ -1405,6 +1405,10 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_FORWARD, speedScale );
 		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_BACKWARD, speedScale );
+		} else if ( TORSO_FLY_UP == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_UP, speedScale );
+		} else if ( TORSO_FLY_DOWN == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_DOWN, speedScale );
 		} else if ( TORSO_STUNNED == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_STUNNED, speedScale );
 		} else if ( TORSO_PUSH == torsoAnimNum ) {

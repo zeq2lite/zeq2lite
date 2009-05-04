@@ -1363,6 +1363,8 @@ typedef struct entityState_s {
 
 	// for players
 	int		powerups;		// bit flags
+	int     *playerPowerups;
+	int     *playerBitFlags;
 	int		weapon;			// determines weapon and flash model, etc
 	// <-- RiO: Communicate weaponstate and tier as well (but 4bits only!)
 	int		weaponstate;

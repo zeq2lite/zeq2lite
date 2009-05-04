@@ -1027,6 +1027,8 @@ void PM_Footsteps(void){
 				PM_ContinueLegsAnim(tempAnimIndex);
 			} else{
 				if(pm->ps->lockedTarget>0 && !pm->ps->powerups[PW_MELEE_STATE]){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
+				else if(pm->cmd.upmove > 0){PM_ContinueLegsAnim(LEGS_FLY_UP);} 
+				else if(pm->cmd.upmove < 0){PM_ContinueLegsAnim(LEGS_FLY_DOWN);}
 				else{PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
 			}
 			return;
@@ -1331,6 +1333,12 @@ void PM_TorsoAnimation(void){
 		break;
 	case LEGS_FLY_BACKWARD:
 		PM_ContinueTorsoAnim(TORSO_FLY_BACKWARD);
+		break;
+	case LEGS_FLY_UP:
+		PM_ContinueTorsoAnim(TORSO_FLY_UP );
+		break;
+	case LEGS_FLY_DOWN:
+		PM_ContinueTorsoAnim(TORSO_FLY_DOWN);
 		break;
 	default:
 		(pm->ps->lockedTarget>0) ? PM_ContinueTorsoAnim(TORSO_STAND_LOCKED) : PM_ContinueTorsoAnim(TORSO_STAND);
@@ -1961,12 +1969,12 @@ void PmoveSingle(pmove_t *pmove){
 	VectorCopy (pm->ps->origin, pml.previous_origin);
 	VectorCopy (pm->ps->velocity, pml.previous_velocity);
 	pml.frametime = pml.msec * 0.001;
-	if(pmove->ps->rolling){
-		PM_UpdateViewAngles(pm->ps, &pm->cmd);
-	}
-	else{
+//	if(pmove->ps->rolling){
+//		PM_UpdateViewAngles(pm->ps, &pm->cmd);
+//	}
+//	else{
 		PM_UpdateViewAngles2(pm->ps, &pm->cmd);
-	}
+//	}
 	AngleVectors(pm->ps->viewangles, pml.forward, pml.right, pml.up);
 	if(pm->ps->pm_type == PM_SPECTATOR){
 		PM_FlyMove();
