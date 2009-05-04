@@ -1970,10 +1970,10 @@ void PmoveSingle(pmove_t *pmove){
 	VectorCopy (pm->ps->velocity, pml.previous_velocity);
 	pml.frametime = pml.msec * 0.001;
 //	if(pmove->ps->rolling){
-//		PM_UpdateViewAngles(pm->ps, &pm->cmd);
+		PM_UpdateViewAngles(pm->ps, &pm->cmd);
 //	}
 //	else{
-		PM_UpdateViewAngles2(pm->ps, &pm->cmd);
+//		PM_UpdateViewAngles2(pm->ps, &pm->cmd);
 //	}
 	AngleVectors(pm->ps->viewangles, pml.forward, pml.right, pml.up);
 	if(pm->ps->pm_type == PM_SPECTATOR){

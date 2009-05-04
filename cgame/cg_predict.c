@@ -215,10 +215,10 @@ static void CG_InterpolatePlayerState(qboolean grabAngles) {
 		cmdNum = trap_GetCurrentCmdNumber();
 		trap_GetUserCmd(cmdNum,&cmd);
 //		if(out->rolling && out->lockedTarget <= 0){
-//			PM_UpdateViewAngles(out,&cmd);
+			PM_UpdateViewAngles(out,&cmd);
 //		}
 //		else{
-			PM_UpdateViewAngles2(out,&cmd);
+//			PM_UpdateViewAngles2(out,&cmd);
 //		}
 	}
 	if(cg.nextFrameTeleport){return;}
@@ -422,10 +422,10 @@ void CG_PredictPlayerState( void ) {
 
 		if ( cg_pmove.pmove_fixed ) {
 //			if(cg_pmove.ps->rolling && (cg_pmove.ps->lockedTarget <= 0)) {
-//				PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd );
+				PM_UpdateViewAngles( cg_pmove.ps, &cg_pmove.cmd );
 //			}
 //			else{
-				PM_UpdateViewAngles2( cg_pmove.ps, &cg_pmove.cmd );
+//				PM_UpdateViewAngles2( cg_pmove.ps, &cg_pmove.cmd );
 //			}
 		}
 
