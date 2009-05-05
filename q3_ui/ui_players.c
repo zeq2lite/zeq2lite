@@ -823,9 +823,6 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 		pi->lastWeapon = pi->pendingWeapon;
 		pi->pendingWeapon = -1;
 		pi->weaponTimer = 0;
-		if( pi->currentWeapon != pi->weapon ) {
-			trap_S_StartLocalSound( weaponChangeSound, CHAN_LOCAL );
-		}
 	}
 
 	UI_AdjustFrom640( &x, &y, &w, &h );

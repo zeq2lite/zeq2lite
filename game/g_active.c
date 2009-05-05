@@ -5,29 +5,37 @@ void tierCheck(gclient_t *client){
 	playerState_t *ps;
 	tierConfig_g *nextTier,*baseTier;
 	ps = &client->ps;
-	tier = ps->stats[tierCurrent];
 	if(ps->powerups[PW_TRANSFORM]){return;}
-	if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
-		nextTier = &client->tiers[tier+1];
-		if(((nextTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierUp) ||
-		   (!nextTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierUp))) &&
-		   (ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) &&
-		   (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) &&
-		   (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
-			ps->powerups[PW_TRANSFORM] = 1;
-			if(tier+1 > ps->stats[tierTotal]){
-				ps->powerups[PW_TRANSFORM] = client->tiers[tier+1].transformTime;
+	while(1){
+		tier = ps->stats[tierCurrent];
+		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
+			nextTier = &client->tiers[tier+1];
+			if(((nextTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierUp) ||
+			   (!nextTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierUp))) &&
+			   (ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) &&
+			   (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) &&
+			   (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
+				ps->powerups[PW_TRANSFORM] = 1;
+				++ps->stats[tierCurrent];
+				if(tier + 1 > ps->stats[tierTotal]){
+					ps->stats[tierTotal] = ps->stats[tierCurrent];
+					ps->powerups[PW_TRANSFORM] = client->tiers[tier+1].transformTime;
+				}
+				continue;
 			}
 		}
-	}
-	if(tier > 0){
-		baseTier = &client->tiers[tier];
-		if(((baseTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierDown) ||
-		   (!baseTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierDown))) ||
-		   (ps->stats[powerLevel] < baseTier->sustainPowerLevelCurrent) ||
-		   (ps->stats[powerLevelTotal] < baseTier->sustainPowerLevelTotal)){
-			ps->powerups[PW_TRANSFORM] = -1;
+		if(tier > 0){
+			baseTier = &client->tiers[tier];
+			if(((baseTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierDown) ||
+			   (!baseTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierDown))) ||
+			   (ps->stats[powerLevel] < baseTier->sustainPowerLevelCurrent) ||
+			   (ps->stats[powerLevelTotal] < baseTier->sustainPowerLevelTotal)){
+				ps->powerups[PW_TRANSFORM] = -1;
+				--ps->stats[tierCurrent];
+				continue;
+			}
 		}
+		break;
 	}
 }
 /*===============
@@ -422,29 +430,16 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		switch ( event ) {
 		case EV_FALL_MEDIUM:
 		case EV_FALL_FAR:
-			if ( ent->s.eType != ET_PLAYER ) {
-				break;		// not in the player model
-			}
-			if ( g_dmflags.integer & DF_NO_FALLING ) {
-				break;
-			}
-			if ( event == EV_FALL_FAR ) {
-				damage = 10;
-			} else {
-				damage = 5;
-			}
-			VectorSet (dir, 0, 0, 1);
-			ent->pain_debounce_time = level.time + 200;	// no normal pain sound
 			break;
 		case EV_FIRE_WEAPON:
-			FireWeapon( ent, qfalse );
+			FireWeapon(ent,qfalse);
 			break;
 		case EV_ZANZOKEN_START:
 			ps->stats[powerLevelTotal] -= client->tiers[tier].zanzokenCost;
 			ps->powerups[PW_ZANZOKEN] = client->tiers[tier].zanzokenDistance;
 			break;
 		case EV_ALTFIRE_WEAPON:
-			FireWeapon( ent, qtrue );
+			FireWeapon(ent,qtrue);
 			break;
 		case EV_DETONATE_WEAPON:
 			missile = client->guidetarget;
@@ -477,14 +472,12 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			tierCheck(client);
 			break;
 		case EV_TIERUP:
-			++ps->stats[tierCurrent];
-			if(ps->stats[tierCurrent] > ps->stats[tierTotal]){
-				ps->stats[tierTotal] = ps->stats[tierCurrent];
-			}
+			//if(ps->powerups[PW_TRANSFORM] > 1){	trap_S_StartSound(NULL,client->playerEntity->s.number,CHAN_BODY,client->tiers[tier].soundTransformFirst);}
+			//else{trap_S_StartSound(NULL,client->playerEntity->s.number,CHAN_BODY,client->tiers[tier].soundTransformUp);}
 			syncTier(client);
 			break;
 		case EV_TIERDOWN:
-			--ps->stats[tierCurrent];
+			//trap_S_StartSound(NULL,client->playerEntity->s.number,CHAN_BODY,client->tiers[tier].soundTransformDown);
 			syncTier(client);
 			break;
 		case EV_LOCKON_CHECK:
@@ -513,8 +506,8 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 
 				ent->client->ps.powerups[ j ] = 0;
 			}
-			SelectSpawnPoint( ent->client->ps.origin, origin, angles );
-			TeleportPlayer( ent, origin, angles );
+			SelectSpawnPoint(ent->client->ps.origin,origin,angles);
+			TeleportPlayer(ent,origin,angles);
 			break;
 		case EV_USE_ITEM2:
 			break;
@@ -676,6 +669,8 @@ void ClientThink_real( gentity_t *ent ) {
 	else{
 		client->ps.pm_type = PM_NORMAL;
 	}
+	ent->s.playerPowerups = client->ps.powerups;
+	ent->s.playerBitFlags = client->ps.stats[bitFlags];
 	client->ps.speed = client->tiers[client->ps.stats[tierCurrent]].speed;
 	G_LinkUserWeaponData( &(client->ps) );
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&

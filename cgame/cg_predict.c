@@ -214,12 +214,7 @@ static void CG_InterpolatePlayerState(qboolean grabAngles) {
 		int	cmdNum;
 		cmdNum = trap_GetCurrentCmdNumber();
 		trap_GetUserCmd(cmdNum,&cmd);
-//		if(out->rolling && out->lockedTarget <= 0){
-			PM_UpdateViewAngles(out,&cmd);
-//		}
-//		else{
-//			PM_UpdateViewAngles2(out,&cmd);
-//		}
+		PM_UpdateViewAngles(out,&cmd);
 	}
 	if(cg.nextFrameTeleport){return;}
 	if(!next || next->serverTime <= prev->serverTime){return;}
@@ -360,7 +355,7 @@ void CG_PredictPlayerState( void ) {
 		CG_InterpolatePlayerState(qfalse);
 		return;
 	}
-	if(cg_nopredict.integer || cg_synchronousClients.integer ) {
+	if(cg.snap->ps.lockedTarget > 0){
 		CG_InterpolatePlayerState(qtrue);
 		return;
 	}

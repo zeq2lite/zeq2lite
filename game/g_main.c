@@ -110,7 +110,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_timelimit, "timelimit", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_capturelimit, "capturelimit", "8", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 
-	{ &g_synchronousClients, "g_synchronousClients", "0", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_synchronousClients, "g_synchronousClients", "1", CVAR_ARCHIVE, 0, qfalse  },
 
 	{ &g_friendlyFire, "g_friendlyFire", "0", CVAR_ARCHIVE, 0, qtrue  },
 
@@ -493,22 +493,17 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// Parse the weapon lists.
 	// FIXME: As soon as these become variable, move them
 	// to the client spawning functions!
-	G_Printf ("-----------------------------------\n");
-
 	if( g_gametype.integer == GT_SINGLE_PLAYER || trap_Cvar_VariableIntegerValue( "com_buildScript" ) ) {
 		G_ModelIndex( SP_PODIUM_MODEL );
 		G_SoundIndex( "sound/player/gurp1.ogg" );
 		G_SoundIndex( "sound/player/gurp2.ogg" );
 	}
-
 	if ( trap_Cvar_VariableIntegerValue( "bot_enable" ) ) {
 		BotAISetup( restart );
 		BotAILoadMap( restart );
 		G_InitBots( restart );
 	}
-
 	G_RemapTeamShaders();
-
 }
 
 

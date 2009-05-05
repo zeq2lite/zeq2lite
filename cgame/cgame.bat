@@ -143,6 +143,4 @@ call compile TA cg_newDraw.c
 q3asm -f ../cgame_ta
 
 :quit
-del *.asm
-cd ..
-rd vm
+cd..

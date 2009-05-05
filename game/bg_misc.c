@@ -643,7 +643,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 	int	i;
 	int time;
 	time = ps->commandTime;
-	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR){s->eType = ET_INVISIBLE;}
+	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPECTATOR || ps->stats[bitFlags] & usingZanzoken){s->eType = ET_INVISIBLE;}
 	else{s->eType = ET_PLAYER;}
 	s->number = ps->clientNum;
 	s->pos.trType = TR_INTERPOLATE;
@@ -684,8 +684,13 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 	s->charge1.chBase = ps->stats[chargePercentPrimary];
 	s->charge2.chBase = ps->stats[chargePercentSecondary];
 	s->groundEntityNum = ps->groundEntityNum;
-	s->powerups = *(ps->powerups);
 	s->tier = ps->stats[tierCurrent];
+	s->powerups = 0;
+	for(i = 0;i < MAX_POWERUPS;i++){
+		if ( ps->powerups[ i ] ) {
+			s->powerups |= 1 << i;
+		}
+	}
 	s->loopSound = ps->loopSound;
 	s->generic1 = ps->generic1;
 }

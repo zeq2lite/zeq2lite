@@ -94,7 +94,6 @@ void PM_CheckZanzoken(void){
 	}
 	if((pm->cmd.buttons & BUTTON_LIGHTSPEED) && !(pm->ps->stats[bitFlags] & usingZanzoken) && (pm->ps->powerups[PW_ZANZOKEN] == -1)){
 		PM_StopDash();
-		pm->ps->powerups[PW_ZANZOKEN] = 9001; // It's over 9000!
 		pm->ps->stats[bitFlags] |= usingZanzoken;
 		PM_AddEvent(EV_ZANZOKEN_START);
 	}	
@@ -142,18 +141,17 @@ void PM_CheckTransform(void){
 		PM_AddEvent(EV_TIERDOWN);
 	}
 	else if(pm->ps->powerups[PW_TRANSFORM] > 0){
-		if(!(pm->ps->stats[bitFlags] & isTransforming)){
+		if(pm->ps->stats[bitFlags] & isTransforming){
+			PM_ContinueLegsAnim(LEGS_TRANS_UP);
+			pm->ps->eFlags |= EF_AURA;
+			pm->ps->powerups[PW_TRANSFORM] -= pml.msec;
+			if(pm->ps->powerups[PW_TRANSFORM] <= 0){pm->ps->powerups[PW_TRANSFORM] = 0;}
+			PM_StopMovement();
+		}
+		else{
 			pm->ps->stats[bitFlags] |= isTransforming;
 			PM_AddEvent(EV_TIERUP);
 		}
-		PM_ContinueLegsAnim(LEGS_TRANS_UP);
-		pm->ps->eFlags |= EF_AURA;
-		pm->ps->powerups[PW_TRANSFORM] -= pml.msec;
-		if(pm->ps->powerups[PW_TRANSFORM] <= 0){
-			pm->ps->powerups[PW_TRANSFORM] = 0;
-			pm->ps->stats[bitFlags] &= ~isTransforming;
-		}
-		PM_StopMovement();
 	}
 	else if(pm->ps->powerups[PW_TRANSFORM] < 0){
 		pm->ps->powerups[PW_TRANSFORM] += pml.msec;
@@ -163,6 +161,9 @@ void PM_CheckTransform(void){
 	}
 	else{
 		PM_AddEvent(EV_TIERCHECK);
+	}
+	if(pm->ps->powerups[PW_TRANSFORM] == 0){
+		pm->ps->stats[bitFlags] &= ~isTransforming;
 	}
 }
 void PM_CheckPowerLevel(void){
@@ -198,33 +199,28 @@ void PM_CheckPowerLevel(void){
 			stats[powerLevelTotal] = pm->ps->persistant[powerLevelMaximum];
 		}
 	}
-	if(stats[bitFlags] & usingBoost || pm->ps->powerups[PW_TRANSFORM] < 0){return;}
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
 		stats[bitFlags] &= ~keyTierDown;
 		stats[bitFlags] &= ~keyTierUp;
+		stats[bitFlags] |= usingAlter;
+		if(stats[bitFlags] & usingBoost || pm->ps->powerups[PW_TRANSFORM] < 0){return;}
 		if(pm->cmd.upmove < 0){
 			stats[bitFlags] &= ~usingFlight;
-			PM_ForceLegsAnim(LEGS_JUMP);
+			PM_ForceLegsAnim(LEGS_FLY_DOWN);
 		}
 		if(pm->cmd.rightmove < 0){
-			stats[bitFlags] |= usingAlter;
 			pm->ps->eFlags &= ~EF_AURA;
-			pm->cmd.rightmove = 0;
 			lower = stats[powerLevelTotal] * 0.01;
 			stats[powerLevel] = (stats[powerLevel] - lower > 50) ? stats[powerLevel] - lower : 50;
 		}
 		else if(pm->cmd.forwardmove > 0){
 			stats[bitFlags] |= keyTierUp;
-			pm->cmd.forwardmove = 0;
 		}
 		else if(pm->cmd.forwardmove < 0){
 			stats[bitFlags] |= keyTierDown;
-			pm->cmd.forwardmove = 0;
 		}
 		else if((pm->cmd.rightmove > 0) /*|| VectorLength(pm->ps->velocity) < 10*/){
 			pm->ps->eFlags |= EF_AURA;
-			stats[bitFlags] |= usingAlter;
-			pm->cmd.rightmove = 0;
 			stats[powerLevelTimer] += pml.msec;
 			while(stats[powerLevelTimer] >= 25){
 				stats[powerLevelTimer] -= 25;
@@ -243,6 +239,9 @@ void PM_CheckPowerLevel(void){
 					pm->ps->persistant[powerLevelMaximum] = stats[powerLevelTotal];
 				}
 			}
+		}
+		else{
+			stats[bitFlags] &= ~usingAlter;
 		}
 	}
 	else{
@@ -767,9 +766,9 @@ int PM_FootstepForSurface(void){
 	return EV_FOOTSTEP;
 }
 /*=================
-PM_CrashLand
+PM_Land
 =================*/
-void PM_CrashLand(void){
+void PM_Land(void){
 	float		delta;
 	float		dist;
 	float		vel, acc;
@@ -871,10 +870,10 @@ void PM_GroundTraceMissed(void){
 		pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 		if(trace.fraction == 1.0){
 			if(pm->cmd.forwardmove >= 0){
-				PM_ForceLegsAnim(LEGS_JUMP);
+				PM_ContinueLegsAnim(LEGS_JUMP);
 				pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 			} else{
-				PM_ForceLegsAnim(LEGS_JUMPB);
+				PM_ContinueLegsAnim(LEGS_JUMPB);
 				pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 			}
 			PM_StopDash();
@@ -907,14 +906,10 @@ void PM_GroundTrace(void){
 	}
 	if(pm->ps->velocity[2] > 0 && DotProduct(pm->ps->velocity, trace.plane.normal)> 10){
 		if(pm->cmd.forwardmove >= 0){
-			if(VectorLength(pm->ps->dashDir) == 0.0f){
-				PM_ForceLegsAnim(LEGS_JUMP);
-			}
+			PM_ForceLegsAnim(LEGS_JUMP);
 			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-		} else{
-			if(VectorLength(pm->ps->dashDir) == 0.0f){
-				PM_ForceLegsAnim(LEGS_JUMPB );
-			}
+		}else{
+			PM_ForceLegsAnim(LEGS_JUMPB );
 			pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 		}
 		PM_NotOnGround();
@@ -941,9 +936,10 @@ void PM_GroundTrace(void){
 	}
 	pml.groundPlane = qtrue;
 	pml.onGround = qtrue;
-	if(pm->ps->groundEntityNum == ENTITYNUM_NONE){
+	if(pm->ps->groundEntityNum == ENTITYNUM_NONE && (pm->ps->stats[bitFlags] & usingJump || pm->ps->stats[bitFlags] & usingFlight)){
 		pm->ps->stats[bitFlags] &= ~usingJump;
 		pm->ps->stats[bitFlags] &= ~usingFlight;
+		PM_Land();
 	}
 	pm->ps->groundEntityNum = trace.entityNum;
 	// don't reset the z velocity for slopes
@@ -1008,11 +1004,13 @@ PM_Footsteps
 void PM_Footsteps(void){
 	float bobmove;
 	int	old;
-	qboolean	footstep;
-	if((pm->ps->stats[bitFlags] & usingZanzoken) || (pm->ps->powerups[PW_MELEE] < 0)){return;}
+	qboolean footstep;
+	if((pm->ps->stats[bitFlags] & usingZanzoken) || (pm->ps->powerups[PW_MELEE])){return;}
 	if((pm->ps->stats[bitFlags] & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
-		if(pm->ps->stats[powerLevel] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
-		else{pm->ps->stats[powerLevel] == pm->ps->persistant[powerLevelMaximum] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
+		if(pm->ps->eFlags & EF_AURA){
+			if(pm->ps->stats[powerLevel] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
+			else{pm->ps->stats[powerLevel] == pm->ps->persistant[powerLevelMaximum] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
+		}
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
@@ -1045,8 +1043,9 @@ void PM_Footsteps(void){
 		return;
 	}
 	if(pm->ps->groundEntityNum == ENTITYNUM_NONE){
+		//if(pm->ps->velocity[2] <= 0){PM_ForceLegsAnim(LEGS_FLY_DOWN);}
 		if(pm->waterlevel > 1){
-			PM_ContinueLegsAnim(LEGS_SWIM );
+			PM_ContinueLegsAnim(LEGS_SWIM);
 		}
 		return;
 	}
@@ -1791,8 +1790,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
 	}
-	// ADDING FOR ZEQ2
-	if(pm->ps->stats[bitFlags] & usingFlight) {
+	else if(pm->ps->stats[bitFlags] & usingFlight) {
 		if(cmd->buttons & BUTTON_ROLL_LEFT){
 			roll -= 28 * (pml.msec / 200.0f);
 		}

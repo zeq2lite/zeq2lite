@@ -20,18 +20,18 @@ void setupTiers(gclient_t *client){
 	int	i;
 	tierConfig_g *tier;
 	char *modelName;
-	char filename[MAX_QPATH * 2];
-	char tierPath[MAX_QPATH];
+	char *tierPath;
 	char tempPath[MAX_QPATH];
 	modelName = client->modelName;
 	for(i=0;i<8;i++){
 		tier = &client->tiers[i];
 		memset(tier,0,sizeof(tierConfig_g));
-		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
-		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",modelName,i+1);
-		parseTier(filename,tier);
-		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",modelName,i+1);
-		parseTier(filename,tier);
+		tierPath = va("players/%s/tier%i/",modelName,i+1);
+		//tier->soundTransformFirst = syscall(34,strcat(tierPath,"transformFirst.ogg"),qfalse);
+		//tier->soundTransformDown = syscall(34,strcat(tierPath,"transformDown.ogg"),qfalse);
+		//tier->soundTransformUp = syscall(34,strcat(tierPath,"transformUp.ogg"),qfalse);
+		parseTier("players/tierDefault.cfg",tier);
+		parseTier(strcat(tierPath,"tier.cfg"),tier);
 	}
 	syncTier(client);
 }
@@ -162,6 +162,23 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->customWeapons = strlen(token) == 4 ? qtrue : qfalse;
 			}
+			/*
+			else if(!Q_stricmp(token,"transformSoundFirst")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformFirst = syscall(34,token,qfalse);
+			}
+			else if(!Q_stricmp(token,"transformSoundUp")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformUp = syscall(34,token,qfalse);
+			}
+			else if(!Q_stricmp(token,"transformSoundDown")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformDown = syscall(34,token,qfalse);
+			}
+			*/
 		}
 	}
 }

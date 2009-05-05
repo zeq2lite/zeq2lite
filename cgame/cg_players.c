@@ -1406,9 +1406,9 @@ static void CG_PlayerAnimation( centity_t *cent,
 		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_BACKWARD, speedScale );
 		} else if ( TORSO_FLY_UP == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_UP, speedScale );
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
 		} else if ( TORSO_FLY_DOWN == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_DOWN, speedScale );
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
 		} else if ( TORSO_STUNNED == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_STUNNED, speedScale );
 		} else if ( TORSO_PUSH == torsoAnimNum ) {
@@ -2362,13 +2362,11 @@ void CG_Player( centity_t *cent ) {
 		if ( ci->tierCurrent != tier ) {
 			ci->tierCurrent = tier;
 			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);
-			CG_PlayerTransformation ( cent );
 		}
 	}
 	if(ci->tierCurrent > ci->tierMax){
 		ci->tierMax = ci->tierCurrent;
 	}
-	if(cent->currentState.powerups & PW_ZANZOKEN){return;}
 	renderfx = 0;
 	if(cent->currentState.number == cg.snap->ps.clientNum){
 		if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}

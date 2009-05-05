@@ -1397,6 +1397,7 @@ void G_RunUserMissile( gentity_t *ent ) {
 	trace_t		trace;
 	int			pass_ent;
 	// get current position
+	G_Printf("%i\n",&ent->s.pos);
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
 	// ignore interactions with the missile owner
 	pass_ent = ent->r.ownerNum;
@@ -1404,7 +1405,7 @@ void G_RunUserMissile( gentity_t *ent ) {
 	trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, pass_ent, ent->clipmask );
 	if ( trace.startsolid || trace.allsolid ) {
 		// make sure the trace.entityNum is set to the entity we're stuck in
-		trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, pass_ent, ent->clipmask );
+		trap_Trace(&trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, pass_ent, ent->clipmask );
 		trace.fraction = 0;
 	}
 	else {

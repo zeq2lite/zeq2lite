@@ -22,4 +22,7 @@ typedef struct{
 	float powerLevelTotalEffect;
 	float powerLevelMaximumEffect;
 	float powerLevelBreakLimitRate;
+	sfxHandle_t soundTransformFirst;
+	sfxHandle_t soundTransformUp;
+	sfxHandle_t soundTransformDown;
 }tierConfig_g;
