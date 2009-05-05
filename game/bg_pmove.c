@@ -38,12 +38,10 @@ void PM_StartTorsoAnim(int anim){
 	pm->ps->torsoAnim = ((pm->ps->torsoAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT) | anim;
 }
 void PM_StartLegsAnim(int anim){
-	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
 	pm->ps->legsAnim = ((pm->ps->legsAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT ) | anim;
 }
 
 void PM_ContinueLegsAnim(int anim){
-	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
 	if((pm->ps->legsAnim & ~ANIM_TOGGLEBIT)== anim){
 		return;
 	}
@@ -61,7 +59,6 @@ void PM_ForceTorsoAnim(int anim){
 	PM_StartTorsoAnim(anim);
 }
 void PM_ForceLegsAnim(int anim){
-	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
 	pm->ps->legsTimer = 0;
 	PM_StartLegsAnim(anim );
 }
@@ -1024,9 +1021,9 @@ void PM_Footsteps(void){
 				tempAnimIndex = LEGS_AIR_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim(tempAnimIndex);
 			} else{
-				if(pm->ps->lockedTarget>0 && !pm->ps->powerups[PW_MELEE_STATE]){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
-				else if(pm->cmd.upmove > 0){PM_ContinueLegsAnim(LEGS_FLY_UP);} 
+				if(pm->cmd.upmove > 0){PM_ContinueLegsAnim(LEGS_FLY_UP);} 
 				else if(pm->cmd.upmove < 0){PM_ContinueLegsAnim(LEGS_FLY_DOWN);}
+				else if(pm->ps->lockedTarget>0 && !pm->ps->powerups[PW_MELEE_STATE]){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
 				else{PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
 			}
 			return;
