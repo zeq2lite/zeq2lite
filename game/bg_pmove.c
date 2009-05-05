@@ -1878,48 +1878,6 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	}
 }
 
-/*===============
-PM_UpdateViewAngles2
-================*/
-void PM_UpdateViewAngles2(playerState_t *ps, const usercmd_t *cmd){
-	short		temp;
-	int			i;
-	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
-		return;
-	}
-	if((pm->ps->lockedTarget>0) && (pm->ps->lockedPosition)){
-		vec3_t dir;
-		vec3_t angles;
-		VectorSubtract(*(ps->lockedPosition), ps->origin, dir);
-		vectoangles(dir, angles);
-		if(angles[PITCH] > 180) { 
-			angles[PITCH] -= 360;
-		}
-		else if(angles[PITCH] < -180) {
-			angles[PITCH] += 360;
-		}
-		for (i = 0; i < 3; i++) {
-			if(i == YAW && (angles[PITCH] > 65 || angles[PITCH] < -65)) 
-				continue;
-			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
-		}
-	}
-	// circularly clamp the angles with deltas
-	for (i=0 ; i<3 ; i++) {
-		temp = cmd->angles[i] + ps->delta_angles[i];
-		if(i == PITCH){
-			// don't let the player look up or down more than 90 degrees
-			if(temp > 16000){
-				ps->delta_angles[i] = 16000 - cmd->angles[i];
-				temp = 16000;
-			} else if(temp < -16000){
-				ps->delta_angles[i] = -16000 - cmd->angles[i];
-				temp = -16000;
-			}
-		}
-		ps->viewangles[i] = SHORT2ANGLE(temp);
-	}
-}
 /*================
 PmoveSingle
 ================*/
@@ -1964,12 +1922,7 @@ void PmoveSingle(pmove_t *pmove){
 	VectorCopy (pm->ps->origin, pml.previous_origin);
 	VectorCopy (pm->ps->velocity, pml.previous_velocity);
 	pml.frametime = pml.msec * 0.001;
-//	if(pmove->ps->rolling){
-		PM_UpdateViewAngles(pm->ps, &pm->cmd);
-//	}
-//	else{
-//		PM_UpdateViewAngles2(pm->ps, &pm->cmd);
-//	}
+	PM_UpdateViewAngles(pm->ps, &pm->cmd);
 	AngleVectors(pm->ps->viewangles, pml.forward, pml.right, pml.up);
 	if(pm->ps->pm_type == PM_SPECTATOR){
 		PM_FlyMove();
