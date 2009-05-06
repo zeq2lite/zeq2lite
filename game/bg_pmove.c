@@ -1002,7 +1002,7 @@ void PM_Footsteps(void){
 	float bobmove;
 	int	old;
 	qboolean footstep;
-	if((pm->ps->stats[bitFlags] & usingZanzoken) || (pm->ps->powerups[PW_MELEE])){return;}
+	if((pm->ps->stats[bitFlags] & usingZanzoken) || (pm->ps->powerups[PW_MELEE_STATE])){return;}
 	if((pm->ps->stats[bitFlags] & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
 		if(pm->ps->eFlags & EF_AURA){
 			if(pm->ps->stats[powerLevel] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
@@ -1159,7 +1159,7 @@ void PM_BeginWeaponChange(int weapon){
 	if(weapon <= WP_NONE || weapon >= WP_NUM_WEAPONS){
 		return;
 	}
-	if(pm->ps->powerups[PW_MELEE] || pm->ps->powerups[PW_TRANSFORM]){
+	if(pm->ps->powerups[PW_MELEE_STATE] || pm->ps->powerups[PW_TRANSFORM]){
 		return;
 	}
 	if(!(pm->ps->stats[skills] & (1 << weapon))){
@@ -1199,10 +1199,10 @@ void PM_FinishWeaponChange(void){
 PM_TorsoAnimation
 ==============*/
 void PM_TorsoAnimation(void){
-	if((pm->ps->weaponstate != WEAPON_READY) && (pm->ps->powerups[PW_MELEE] == 0)){
+	if((pm->ps->weaponstate != WEAPON_READY) && (pm->ps->powerups[PW_MELEE_STATE])){
 		return;
 	}
-	if(pm->ps->stats[bitFlags] & usingBlock && !pm->ps->powerups[PW_MELEE]){
+	if(pm->ps->stats[bitFlags] & usingBlock && !pm->ps->powerups[PW_MELEE_STATE]){
 		PM_ContinueTorsoAnim(TORSO_BLOCK);
 		if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
 			PM_ContinueLegsAnim(LEGS_BLOCK);	
@@ -1357,7 +1357,7 @@ void PM_Melee(void){
 	int melee;
 	PM_AddEvent(EV_MELEE_CHECK);
 	if((pm->ps->powerups[PW_MELEE_STATE] > 0) && (pm->ps->weaponstate == WEAPON_READY) && (pm->ps->lockedTarget > 0)){
-		melee = pm->ps->powerups[PW_MELEE];
+		melee = pm->ps->powerups[PW_MELEE1];
 		if(pm->ps->powerups[PW_MELEE_STATE] == 5){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_HIT);
 		}
@@ -1406,7 +1406,7 @@ void PM_Melee(void){
 				pm->ps->powerups[PW_MELEE_STATE] = 1;
 			}
 		}
-		pm->ps->powerups[PW_MELEE] = melee;
+		pm->ps->powerups[PW_MELEE1] = melee;
 	}
 }
 /*==============
@@ -1677,7 +1677,8 @@ void PM_CheckLockon(void){
 		}
 		else{
 			pm->ps->powerups[PW_MELEE_STATE] = 0;	
-			pm->ps->powerups[PW_MELEE] = 0;
+			pm->ps->powerups[PW_MELEE1] = 0;
+			pm->ps->powerups[PW_MELEE2] = 0;
 			pm->ps->weapon = pm->cmd.weapon;
 		}
 	}

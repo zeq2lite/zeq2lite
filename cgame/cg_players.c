@@ -2429,7 +2429,7 @@ void CG_Player( centity_t *cent ) {
 		}
 		return;
 	}
-	if(ps->powerups[PW_MELEE] != 0){
+	if(ps->powerups[PW_MELEE_STATE] != 0){
 		if(ps->powerups[PW_DEFENSE]){
 			if(ps->powerups[PW_DEFENSE] < 0){
 				trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMissSound);
@@ -2438,7 +2438,7 @@ void CG_Player( centity_t *cent ) {
 				trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedBlockSound);
 			}
 		}
-		else if(ps->powerups[PW_MELEE] < 0){
+		else if(ps->powerups[PW_MELEE_STATE] < 0){
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
 		}
 		else if(ps->powerups[PW_MELEE_STATE] == 3){

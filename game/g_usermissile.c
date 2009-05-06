@@ -1397,7 +1397,6 @@ void G_RunUserMissile( gentity_t *ent ) {
 	trace_t		trace;
 	int			pass_ent;
 	// get current position
-	G_Printf("%i\n",&ent->s.pos);
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
 	// ignore interactions with the missile owner
 	pass_ent = ent->r.ownerNum;

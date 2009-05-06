@@ -452,21 +452,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_MELEE_STUN:
 			break;
 		case EV_MELEE_CHECK:
-			if(ps->lockedTarget>0){
-				enemyMelee = enemyPS->powerups[PW_MELEE_STATE];
-				playerMelee = ps->powerups[PW_MELEE_STATE];
-				if(enemyMelee == 2 || enemyMelee == 3){
-					if(ps->stats[bitFlags] & usingBlock){
-						ps->powerups[PW_MELEE_STATE] = 6;
-						enemyPS->powerLevelMeleeBurn = ps->persistant[powerLevelMaximum] * 0.004;
-					}
-					else if(playerMelee < 2){
-						ps->powerups[PW_STUN] = -150;
-						ps->powerups[PW_MELEE_STATE] = 5;
-						ps->powerLevelMeleeBurn = enemyPS->persistant[powerLevelMaximum] * 0.004;
-					}
-				}
-			}
 			break;
 		case EV_TIERCHECK:
 			tierCheck(client);
