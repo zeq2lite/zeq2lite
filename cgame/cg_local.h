@@ -916,6 +916,8 @@ typedef struct {
 	// special effects models
 	qhandle_t	teleportEffectModel;
 	qhandle_t	teleportEffectShader;
+	qhandle_t	meleeSpeedEffectShader;
+	qhandle_t	meleePowerEffectShader;
 	qhandle_t	boltEffectShader;
 	qhandle_t	invulnerabilityPowerupModel;
 
@@ -1567,6 +1569,8 @@ localEntity_t *CG_SmokePuff( const vec3_t p,
 				   qhandle_t hShader );
 void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing );
 void CG_SpawnEffect( vec3_t org );
+void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier );
+void CG_MeleeEffect( vec3_t org, qboolean speed );
 #ifdef MISSIONPACK
 void CG_KamikazeEffect( vec3_t org );
 void CG_ObeliskExplode( vec3_t org, int entityNum );
