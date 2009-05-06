@@ -2343,6 +2343,7 @@ void CG_Player( centity_t *cent ) {
 	float			shadowPlane;
 	qboolean		onBodyQue;
 	int				tier;
+	int				state,enemyState;
 	int r;
 	int r1;
 	int r2;
@@ -2429,21 +2430,18 @@ void CG_Player( centity_t *cent ) {
 		}
 		return;
 	}
-	if(ps->powerups[PW_MELEE_STATE] != 0){
-		if(ps->powerups[PW_DEFENSE]){
-			if(ps->powerups[PW_DEFENSE] < 0){
-				trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMissSound);
-			}
-			else{
-				trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedBlockSound);
-			}
+	state = ps->powerups[PW_MELEE_STATE];
+	if(state != 0){
+		enemyState = ps->lockedPlayer->powerups[PW_MELEE_STATE];
+		if(enemyState == 2 && state == 5){
+			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMissSound);
 		}
-		else if(ps->powerups[PW_MELEE_STATE] < 0){
+		else if(state == 2 && enemyState != 4){
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
 		}
-		else if(ps->powerups[PW_MELEE_STATE] == 3){
+		/*else if(ps->powerups[PW_MELEE_STATE] == 3){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.powerMeleeSound);
-		}
+		}*/
 	}
 	CG_AddAuraToScene(cent);
 	// Lightning bolt code below, yay!

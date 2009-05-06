@@ -663,8 +663,8 @@ static void CG_Missile( centity_t *cent ) {
 	cg_userWeapon_t		*weaponGraphics;
 	float				missileScale;
 	int					missileChargeLvl;
-	
-
+	playerState_t		*ps;
+	ps = &cg.predictedPlayerState;
 	s1 = &cent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
 
@@ -705,12 +705,14 @@ static void CG_Missile( centity_t *cent ) {
 	 VectorCopy( s1->angles, cent->lerpAngles);
 	
 	// If it's a guided missile, and belongs to this client, return its position to cg.
-	if ((cent->currentState.clientNum == cg.clientNum) && (cent->currentState.eFlags & EF_GUIDED)) {
+	if((cent->currentState.clientNum == cg.clientNum) && (cent->currentState.eFlags & EF_GUIDED)){
 		VectorCopy(cent->lerpOrigin, cg.guide_target);
 		cg.guide_view = qtrue;
 	}
-
-
+	else if(ps->lockedTarget > 0 && ps->powerups[PW_MELEE_STATE]){
+		VectorCopy(ps->lockedPosition,cg.guide_target);
+		cg.guide_view = qtrue;
+	}
 	// add trails
 	if ( weaponGraphics->missileTrailShader && weaponGraphics->missileTrailRadius ) {
 		if ( cent->currentState.eType == ET_MISSILE ) {

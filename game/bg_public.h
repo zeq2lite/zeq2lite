@@ -319,6 +319,7 @@ typedef enum {
 	PW_ATTACK1,
 	PW_ATTACK2,
 	PW_STUN,
+	PW_FREEZE,
 	PW_KNOCKBACK,
 	PW_NUM_POWERUPS
 }powerup_t;

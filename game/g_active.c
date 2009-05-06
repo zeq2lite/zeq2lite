@@ -466,15 +466,11 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			syncTier(client);
 			break;
 		case EV_LOCKON_CHECK:
-			if(ps->lockedTarget>0){
-				if(enemyPS->stats[bitFlags] & isDead){
-					ps->lockedTarget = -1;
-				}
-			}
 			break;
 		case EV_LOCKON_START:
 			if(ps->lockedTarget>0){
 				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
+				ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
 			}
 			break;
 		case EV_LOCKON_END:
