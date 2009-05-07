@@ -38,12 +38,12 @@ void PM_StartTorsoAnim(int anim){
 	pm->ps->torsoAnim = ((pm->ps->torsoAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT) | anim;
 }
 void PM_StartLegsAnim(int anim){
-	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
+	if((pm->ps->weaponstate == WEAPON_GUIDING) && (pm->cmd.buttons & BUTTON_ANY)){return;}
 	pm->ps->legsAnim = ((pm->ps->legsAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT ) | anim;
 }
 
 void PM_ContinueLegsAnim(int anim){
-	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
+	if((pm->ps->weaponstate == WEAPON_GUIDING) && (pm->cmd.buttons & BUTTON_ANY)){return;}
 	if((pm->ps->legsAnim & ~ANIM_TOGGLEBIT)== anim){
 		return;
 	}
@@ -61,7 +61,7 @@ void PM_ForceTorsoAnim(int anim){
 	PM_StartTorsoAnim(anim);
 }
 void PM_ForceLegsAnim(int anim){
-	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
+	if((pm->ps->weaponstate == WEAPON_GUIDING) && (pm->cmd.buttons & BUTTON_ANY)){return;}
 	pm->ps->legsTimer = 0;
 	PM_StartLegsAnim(anim );
 }
