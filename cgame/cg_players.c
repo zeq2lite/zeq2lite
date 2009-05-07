@@ -2344,7 +2344,6 @@ void CG_Player( centity_t *cent ) {
 	qboolean		onBodyQue;
 	int				tier;
 	int				state,enemyState;
-	qboolean speed;
 	ps = &cg.snap->ps;
 	clientNum = cent->currentState.clientNum;
 	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ){CG_Error( "Bad clientNum on player entity" );}
@@ -2421,8 +2420,7 @@ void CG_Player( centity_t *cent ) {
 		if(ps->powerups[PW_KNOCKBACK] > 0){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
-			speed = qfalse;
-			CG_MeleeEffect(cent->lerpOrigin, speed);
+			CG_PowerMeleeEffect(cent->lerpOrigin);
 		}
 		return;
 	}
@@ -2434,13 +2432,11 @@ void CG_Player( centity_t *cent ) {
 		}
 		else if(state == 2 && enemyState != 4){
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
-			speed = qtrue;
-			CG_MeleeEffect(cent->lerpOrigin, speed);
+			CG_SpeedMeleeEffect(cent->lerpOrigin);
 		}
 		else if(state != 4 && enemyState == 2){
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
-			speed = qtrue;
-			CG_MeleeEffect(cent->lerpOrigin, speed);
+			CG_SpeedMeleeEffect(cent->lerpOrigin);
 		}
 		/*else if(ps->powerups[PW_MELEE_STATE] == 3){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.powerMeleeSound);

@@ -318,10 +318,27 @@ void CG_AddFadeRGB( localEntity_t *le ) {
 	c = ( le->endTime - cg.time ) * le->lifeRate;
 	c *= 0xff;
 
-	// We don't want the colors to fade down to black too, do we?
-//	re->shaderRGBA[0] = le->color[0] * c;
-//	re->shaderRGBA[1] = le->color[1] * c;
-//	re->shaderRGBA[2] = le->color[2] * c;
+	re->shaderRGBA[0] = le->color[0] * c;
+	re->shaderRGBA[1] = le->color[1] * c;
+	re->shaderRGBA[2] = le->color[2] * c;
+
+	trap_R_AddRefEntityToScene( re );
+}
+
+/*
+====================
+CG_AddFadeAlpha
+====================
+*/
+void CG_AddFadeAlpha( localEntity_t *le ) {
+	refEntity_t *re;
+	float c;
+
+	re = &le->refEntity;
+
+	c = ( le->endTime - cg.time ) * le->lifeRate;
+	c *= 0xff;
+
 	re->shaderRGBA[3] = le->color[3] * c;
 
 	trap_R_AddRefEntityToScene( re );
@@ -405,6 +422,33 @@ static void CG_AddScaleFade( localEntity_t *le ) {
 	trap_R_AddRefEntityToScene( re );
 }
 
+static void CG_AddScaleFadeRGB( localEntity_t *le ) {
+	refEntity_t	*re;
+	float		c;
+	vec3_t		delta;
+	float		len;
+
+	re = &le->refEntity;
+
+	// fade / grow time
+	c = ( le->endTime - cg.time ) * le->lifeRate;
+
+	re->shaderRGBA[0] = 0xff * c * le->color[0];
+	re->shaderRGBA[1] = 0xff * c * le->color[1];
+	re->shaderRGBA[2] = 0xff * c * le->color[2];
+	re->radius = le->radius * ( 1.0 - c ) + 8;
+
+	// if the view would be "inside" the sprite, kill the sprite
+	// so it doesn't add too much overdraw
+	VectorSubtract( re->origin, cg.refdef.vieworg, delta );
+	len = VectorLength( delta );
+	if ( len < le->radius ) {
+		CG_FreeLocalEntity( le );
+		return;
+	}
+
+	trap_R_AddRefEntityToScene( re );
+}
 
 /*
 =================
@@ -953,12 +997,20 @@ void CG_AddLocalEntities( void ) {
 			CG_AddFadeRGB( le );
 			break;
 
+		case LE_FADE_ALPHA:				// teleporters, railtrails
+			CG_AddFadeAlpha( le );
+			break;
+
 		case LE_FALL_SCALE_FADE: // gib blood trails
 			CG_AddFallScaleFade( le );
 			break;
 
 		case LE_SCALE_FADE:		// rocket trails
 			CG_AddScaleFade( le );
+			break;
+
+		case LE_SCALE_FADE_RGB:		// rocket trails
+			CG_AddScaleFadeRGB( le );
 			break;
 
 		case LE_SCOREPLUM:

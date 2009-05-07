@@ -225,17 +225,13 @@ typedef enum {
 	LE_MOVE_SCALE_FADE,
 	LE_FALL_SCALE_FADE,
 	LE_FADE_RGB,
+	LE_FADE_ALPHA,
 	LE_SCALE_FADE,
+	LE_SCALE_FADE_RGB,
 	LE_SCOREPLUM,
 	LE_ZEQEXPLOSION,
 	LE_ZEQSMOKE,
-	LE_STRAIGHTBEAM_FADE,
-#ifdef MISSIONPACK
-	LE_KAMIKAZE,
-	LE_INVULIMPACT,
-	LE_INVULJUICED,
-	LE_SHOWREFENTITY
-#endif
+	LE_STRAIGHTBEAM_FADE
 } leType_t;
 
 typedef enum {
@@ -1570,7 +1566,8 @@ localEntity_t *CG_SmokePuff( const vec3_t p,
 void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing );
 void CG_SpawnEffect( vec3_t org );
 void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier );
-void CG_MeleeEffect( vec3_t org, qboolean speed );
+void CG_SpeedMeleeEffect( vec3_t org );
+void CG_PowerMeleeEffect( vec3_t org );
 #ifdef MISSIONPACK
 void CG_KamikazeEffect( vec3_t org );
 void CG_ObeliskExplode( vec3_t org, int entityNum );
