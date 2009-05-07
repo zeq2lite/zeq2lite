@@ -2445,6 +2445,7 @@ void CG_Player( centity_t *cent ) {
 		/*else if(ps->powerups[PW_MELEE_STATE] == 3){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.powerMeleeSound);
 		}*/
+		CG_Printf("States : %i | %i\n",state,enemyState);
 	}
 	CG_AddAuraToScene(cent);
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}

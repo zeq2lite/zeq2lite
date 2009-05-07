@@ -257,7 +257,7 @@ void CG_MeleeEffect( vec3_t org, qboolean speed ) {
 	r4 = random() * 24 + 8;
 	r5 = random() * 24 + 8;
 	r6 = random() * 40;
-	if (r > 58) {
+	if (r > 57) {
 		le = CG_AllocLocalEntity();
 		le->leFlags = 0;
 		le->leType = LE_FADE_RGB;
