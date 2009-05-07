@@ -86,11 +86,13 @@ void PM_Knockback(void){
 	float scale,wishspeed;
 	int i;
 	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
+		PM_ContinueLegsAnim(LEGS_KNOCKBACK);
 		pm->ps->powerups[PW_KNOCKBACK] -= pml.msec;
 		pm->cmd.forwardmove = -1;
 		pm->cmd.upmove = 0;
 		pm->cmd.rightmove = 0;
 		scale = PM_CmdScale(&pm->cmd);
+		Com_Printf("Knockback : %i\n",pm->ps->powerups[PW_KNOCKBACK]);
 		for(i=0;i<3;i++){
 			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
 		}
@@ -1259,6 +1261,9 @@ void PM_TorsoAnimation(void){
 		return;
 	}
 	switch(pm->ps->legsAnim & ~ANIM_TOGGLEBIT){
+	case LEGS_KNOCKBACK:
+		PM_ContinueTorsoAnim(TORSO_BACK);
+		break;
 	case LEGS_POWER_MELEE_1_CHARGE:
 		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_1_CHARGE);
 		break;
@@ -1294,6 +1299,9 @@ void PM_TorsoAnimation(void){
 		break;
 	case LEGS_POWER_MELEE_6_HIT:
 		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_6_HIT);
+		break;
+	case LEGS_SPEED_MELEE_DODGE:
+		PM_ContinueTorsoAnim(TORSO_SPEED_MELEE_DODGE);
 		break;
 	case LEGS_SPEED_MELEE_ATTACK:
 		PM_ContinueTorsoAnim(TORSO_SPEED_MELEE_ATTACK);
