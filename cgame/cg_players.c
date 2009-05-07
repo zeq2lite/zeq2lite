@@ -2420,6 +2420,9 @@ void CG_Player( centity_t *cent ) {
 		if(ps->powerups[PW_KNOCKBACK] > 0){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
+		}
+		if(ps->powerups[PW_KNOCKBACK] == 1200){
+			ps->powerups[PW_KNOCKBACK] = 1199;
 			CG_PowerMeleeEffect(cent->lerpOrigin);
 		}
 		return;
