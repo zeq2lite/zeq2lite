@@ -2431,10 +2431,13 @@ void CG_Player( centity_t *cent ) {
 		enemyState = ps->lockedPlayer->powerups[PW_MELEE_STATE];
 		if(enemyState == 2 && state == 5){
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMissSound);
+		}
+		else if(state == 2 && enemyState != 4){
+			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
 			speed = qtrue;
 			CG_MeleeEffect(cent->lerpOrigin, speed);
 		}
-		else if(state == 2 && enemyState != 4){
+		else if(state != 4 && enemyState == 2){
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
 			speed = qtrue;
 			CG_MeleeEffect(cent->lerpOrigin, speed);

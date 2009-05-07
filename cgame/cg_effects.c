@@ -249,44 +249,58 @@ Player receiving hit melee effect
 void CG_MeleeEffect( vec3_t org, qboolean speed ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
+	int r,r1,r2,r3,r4,r5,r6;
+	r = random() * 60;
+	r1 = random() * 24 + 8;
+	r2 = random() * 24 + 8;
+	r3 = random() * 32 + 16;
+	r4 = random() * 24 + 8;
+	r5 = random() * 24 + 8;
+	r6 = random() * 40;
+	if (r > 58) {
+		le = CG_AllocLocalEntity();
+		le->leFlags = 0;
+		le->leType = LE_FADE_RGB;
+		le->startTime = cg.time;
 
-	le = CG_AllocLocalEntity();
-	le->leFlags = 0;
-	le->leType = LE_FADE_RGB;
-	le->startTime = cg.time;
+		if(speed){
+			le->endTime = cg.time + 100;
+			le->radius = 32;
+		} else {
+			le->endTime = cg.time + 250;
+			le->radius = 64;
+		}
 
-	if(speed){
-		le->endTime = cg.time + 100;
-		le->radius = 32;
-	} else {
-		le->endTime = cg.time + 250;
-		le->radius = 64;
+		le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+		le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
+
+		re = &le->refEntity;
+
+		re->reType = RT_SPRITE;
+		re->radius = le->radius;
+
+		re->shaderRGBA[0] = le->color[0] * 0xff;
+		re->shaderRGBA[1] = le->color[1] * 0xff;
+		re->shaderRGBA[2] = le->color[2] * 0xff;
+		re->shaderRGBA[3] = 0xff;
+
+		if(speed){
+			re->customShader = cgs.media.meleeSpeedEffectShader;
+		} else {
+			re->customShader = cgs.media.meleePowerEffectShader;
+		}
+
+		AxisClear( re->axis );
+
+		VectorCopy( org, re->origin );
+
+		re->origin[0] += r1;
+		re->origin[1] += r2;
+		re->origin[2] += r3;
+		re->origin[0] -= r4;
+		re->origin[1] -= r5;
+		re->origin[2] -= r6;
 	}
-
-	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
-	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
-
-	re = &le->refEntity;
-
-	re->reType = RT_SPRITE;
-	re->radius = le->radius;
-
-	re->shaderRGBA[0] = le->color[0] * 0xff;
-	re->shaderRGBA[1] = le->color[1] * 0xff;
-	re->shaderRGBA[2] = le->color[2] * 0xff;
-	re->shaderRGBA[3] = 0xff;
-
-	if(speed){
-		re->customShader = cgs.media.meleeSpeedEffectShader;
-	} else {
-		re->customShader = cgs.media.meleePowerEffectShader;
-	}
-
-	AxisClear( re->axis );
-
-	VectorCopy( org, re->origin );
-
-	re->origin[2] += 16;
 }
 /*
 ==================
