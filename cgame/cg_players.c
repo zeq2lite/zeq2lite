@@ -2421,6 +2421,8 @@ void CG_Player( centity_t *cent ) {
 		if(ps->powerups[PW_KNOCKBACK] > 0){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
+			speed = qfalse;
+			CG_MeleeEffect(cent->lerpOrigin, speed);
 		}
 		return;
 	}
@@ -2429,9 +2431,13 @@ void CG_Player( centity_t *cent ) {
 		enemyState = ps->lockedPlayer->powerups[PW_MELEE_STATE];
 		if(enemyState == 2 && state == 5){
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMissSound);
+			speed = qtrue;
+			CG_MeleeEffect(cent->lerpOrigin, speed);
 		}
 		else if(state == 2 && enemyState != 4){
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
+			speed = qtrue;
+			CG_MeleeEffect(cent->lerpOrigin, speed);
 		}
 		/*else if(ps->powerups[PW_MELEE_STATE] == 3){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.powerMeleeSound);
@@ -2439,14 +2445,6 @@ void CG_Player( centity_t *cent ) {
 	}
 	CG_AddAuraToScene(cent);
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
-	if(ps->powerups[PW_MELEE_STATE] == 2 && ps->lockedPlayer->powerups[PW_MELEE_STATE] !=5){
-		if (ps->lockedPlayer->powerups[PW_MELEE_STATE] == 2) {
-			speed = qtrue;
-		}else{
-			speed = qfalse;
-		}
-		CG_MeleeEffect(cent->lerpOrigin, speed);
-	}
 	// -->
 }
 qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *tagName, orientation_t *tagOrient ) {
