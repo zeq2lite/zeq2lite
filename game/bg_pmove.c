@@ -31,6 +31,8 @@ void PM_StopDash(void);
 void PM_StopMovement(void);
 void PM_ContinueLegsAnim(int anim);
 void PM_ContinueTorsoAnim(int anim);
+void PM_Accelerate(vec3_t wishdir,float wishspeed,float accel);
+float PM_CmdScale(usercmd_t *cmd);
 /*===================
 PM_StartTorsoAnim
 ===================*/
@@ -74,6 +76,46 @@ void PM_Freeze(void){
 		VectorClear(pm->ps->velocity);
 		//pm->cmd.forwardmove = 0;
 		if(pm->ps->powerups[PW_FREEZE]<0){pm->ps->powerups[PW_FREEZE] -= 0;}
+	}
+}
+/*===================
+KNOCKBACK
+===================*/
+void PM_Knockback(void){
+	vec3_t pre_vel,post_vel,wishvel,wishdir;	
+	float scale,wishspeed;
+	int i;
+	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
+		pm->ps->powerups[PW_KNOCKBACK] -= pml.msec;
+		pm->cmd.forwardmove = -1;
+		pm->cmd.upmove = 0;
+		pm->cmd.rightmove = 0;
+		scale = PM_CmdScale(&pm->cmd);
+		for(i=0;i<3;i++){
+			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
+		}
+		VectorCopy(wishvel,wishdir);
+		wishspeed = VectorNormalize(wishdir);
+		PM_Accelerate(wishdir,wishspeed,50);
+		VectorNormalize(pm->ps->velocity);
+		VectorCopy(pm->ps->velocity,pre_vel);
+		VectorScale(pm->ps->velocity,2500,pm->ps->velocity);
+		PM_StepSlideMove(qfalse);
+		VectorNormalize2(pm->ps->velocity,post_vel);
+		if((DotProduct(pre_vel,post_vel)< 0.5f) || (VectorLength(pm->ps->velocity)== 0.0f) || (pm->ps->powerups[PW_ZANZOKEN] < 0)){
+			pm->ps->powerups[PW_KNOCKBACK] = 0;
+		}
+	}
+}
+/*===================
+TALK
+===================*/
+void PM_CheckTalk(void){
+	if(pm->cmd.buttons & BUTTON_TALK){pm->ps->eFlags |= EF_TALK;}
+	else{pm->ps->eFlags &= ~EF_TALK;}
+	if(pm->cmd.buttons & BUTTON_TALK){
+		pm->cmd.buttons = BUTTON_TALK;
+		PM_StopMovement();
 	}
 }
 /*===============
@@ -126,13 +168,10 @@ void PM_BurnPowerLevel(qboolean melee){
 	int burn;
 	int newValue;
 	burn = melee ? pm->ps->powerLevelMeleeBurn : pm->ps->powerLevelBurn;
-	if(pm->ps->powerLevelMeleeBurn){
-		Com_Printf("Burn :%i | %i\n",pm->ps->powerLevelMeleeBurn,burn);
-	}
 	if(!burn){return;}
 	defense = melee ? pm->ps->meleeDefense : pm->ps->energyDefense;
 	percent = 1.0 - ((float)pm->ps->stats[powerLevel] / (float)pm->ps->persistant[powerLevelMaximum]);
-	burn -= ((float)pm->ps->persistant[powerLevelMaximum] * 0.01) * defense;
+	burn -= (int)(((float)pm->ps->persistant[powerLevelMaximum] * 0.01) * defense);
 	if(burn > 0 && (pm->ps->stats[powerLevelTotal] - burn > 0)){
 		pm->ps->stats[powerLevelTotal] -= burn;
 		pm->ps->persistant[powerLevelMaximum] += ((float)burn * percent) * 4;
@@ -373,13 +412,9 @@ void PM_Friction(void){
 	pm->ps->velocity[1] *= newspeed;
 	pm->ps->velocity[2] *= newspeed;
 }
-/*
-==============
+/*==============
 PM_Accelerate
-
-Handles user intended acceleration
-==============
-*/
+==============*/
 void PM_Accelerate(vec3_t wishdir, float wishspeed, float accel){
 #if 1
 	// q2 style
@@ -1367,6 +1402,8 @@ void PM_TorsoAnimation(void){
 // MELEE STATE 6 - Zanzoken Held
 void PM_Melee(void){
 	int melee1,melee2,enemyState,state,option,damage;
+	qboolean knockback;
+	knockback = qfalse;
 	state = pm->ps->powerups[PW_MELEE_STATE];
 	if((state > 0) && (pm->ps->weaponstate == WEAPON_READY) && (pm->ps->lockedTarget > 0)){
 		enemyState = pm->ps->lockedPlayer->powerups[PW_MELEE_STATE];
@@ -1375,85 +1412,95 @@ void PM_Melee(void){
 		damage = 0;
 		// Release Power Melee
 		if(state == 3 && !(pm->cmd.buttons & BUTTON_ALT_ATTACK)){
-				damage = ((float)melee2 / 1500.0) * (pm->ps->stats[powerLevel] * 0.15) * pm->ps->meleeAttack;
+				damage = ((float)melee2 / 1500.0) * (pm->ps->stats[powerLevel] * 0.25) * pm->ps->meleeAttack;
+				if(melee2 >= 1000){knockback = qtrue;}
 				melee2 = -600;
 				state = 4;
 		}
+		// Cooldown Speed Melee
 		if(melee1 < 0){
-			state = 2;
 			melee1 += pml.msec;
-			if(melee1 >= 0){melee1 = 0;}
+			if(melee1 >= 0){
+				melee1 = 0;
+				state = 1;
+			}
 		}
-		else if(melee2 >= 0){
+		// Cooldown Power Melee
+		else if(melee2 < 0){
+			melee2 += pml.msec;
+			if(melee2 >= 0){melee2 = 0;}
+		}
+		else if(melee1 >=0 || melee2 >= 0){
 			// Charging Power Melee
 			if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
 				state = 3;
 				melee2 += pml.msec;
-				if(melee2 >= 1000){
-					melee2 = 1000;
-				}
+				if(melee2 >= 1000){melee2 = 1000;}
 			}
 			// Using Speed Melee
 			else if(pm->cmd.buttons & BUTTON_ATTACK){
-				damage = (pm->ps->stats[powerLevel] * 0.01) * pm->ps->meleeAttack;
+				damage = (pm->ps->stats[powerLevelTotal] * 0.013) * pm->ps->meleeAttack;
 				melee1 += pml.msec;
 				state = 2;
 			}
-			else if(!(pm->cmd.buttons & BUTTON_ATTACK) && state == 2){
-				melee1 = -500;
+			else if(state == 2){
+				melee1 = -800;
 			}
 			// Using Block
 			else if(pm->cmd.buttons & BUTTON_BLOCK){state = 5;}
 			// Using Zanzoken
 			else if(pm->cmd.buttons & BUTTON_LIGHTSPEED){state = 6;}
-			else{
-				state = 1;
-				if(pm->ps->stats[bitFlags] & usingFlight){PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
-				else{PM_ContinueLegsAnim(LEGS_IDLE);}
-			}
-		}
-		// Cooldown Power Melee
-		else{
-			melee2 += pml.msec;
-			if(melee2 >= 0){
-				state = 1;
-				melee2 = 0;
-			}
+			else{state = 1;}
 		}
 		// Set Reaction Events
 		if(enemyState == 2 && (state == 6 || state <= 1)){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_HIT);
 		}
-		else if(enemyState == 2 && state == 5){
-			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_BLOCK);
+		else if(enemyState == 4 && state == 5){
+			PM_ContinueLegsAnim(LEGS_BLOCK);
 		}
-		else if(state == 2 && enemyState != 4){
+		else if(enemyState == 2 && state == 5){
+			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_DODGE);
+		}
+		else if(state == 2){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_ATTACK);
 			if(enemyState == 5){damage *= 0.1;}
 			while(melee1 >= 100){
 				melee1 -= 100;
-				if(enemyState == 5){PM_UsePowerLevel(pm->ps->stats[powerLevel] * 0.02);}
+				if(enemyState == 5){PM_UsePowerLevel(pm->ps->stats[powerLevel] * 0.01);}
 				pm->ps->lockedPlayer->powerLevelMeleeBurn += damage;
 			}
 		}
 		else if(state == 3){
 			option = random() * 6;
-			PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_CHARGE);
+			PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_CHARGE);
 		}
 		else if(state == 4){
-			PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_HIT);
+			PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_HIT);
+			if(enemyState == 5){damage *= 0.6;}
+			if(knockback && enemyState < 5){
+				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 1200;
+				pm->ps->lockedPlayer->powerups[PW_FREEZE] = 0;
+				pm->ps->powerups[PW_FREEZE] = 0;
+			}
+			if(enemyState != 6){
+				pm->ps->lockedPlayer->powerLevelMeleeBurn += damage;
+			}
+		}
+		else if(state == 1){
+			if(pm->ps->stats[bitFlags] & usingFlight){PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
+			else{PM_ContinueLegsAnim(LEGS_IDLE);}
 		}
 		// Set Melee Position Mode
 		if(state > 1 || enemyState > 1){
 			if(enemyState == 0){
-				pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1; 
+				pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
 				pm->ps->lockedPlayer->lockedPosition = &pm->ps->origin;
 				pm->ps->lockedPlayer->lockedPlayer = pm->ps;
 				pm->ps->lockedPlayer->powerups[PW_MELEE_STATE] = 1;
-				pm->ps->lockedPlayer->powerups[PW_FREEZE] = 1000;
 			}
 			pm->ps->stats[bitFlags] |= usingMelee;
-			pm->ps->powerups[PW_FREEZE] = 1000;
+			pm->ps->powerups[PW_FREEZE] = 500;
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
 		pm->ps->powerups[PW_MELEE1] = melee1;
@@ -1469,6 +1516,10 @@ void PM_Weapon(void){
 	int	*alt_weaponInfo;
 	int costPrimary,costSecondary;
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;	}
+	if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
+		PM_StopMovement();
+		PM_StopDash();
+	}
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL || pm->ps->powerups[PW_TRANSFORM] > 0){
 		if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
 			PM_AddEvent(EV_DETONATE_WEAPON );
@@ -1949,8 +2000,9 @@ void PmoveSingle(pmove_t *pmove){
 	if(pml.msec < 1){pml.msec = 1;}
 	else if(pml.msec > 200){pml.msec = 200;}
 	if(abs(pm->cmd.forwardmove)> 64 || abs(pm->cmd.rightmove)> 64){pm->cmd.buttons &= ~BUTTON_WALKING;}
+	PM_Knockback();
 	PM_CheckTransform();
-	if(!(pm->ps->stats[bitFlags] & isTransforming)){
+	if(!(pm->ps->stats[bitFlags] & isTransforming) && !(pm->ps->powerups[PW_KNOCKBACK])){
 		PM_BurnPowerLevel(qtrue);
 		PM_BurnPowerLevel(qfalse);
 		PM_CheckBoost();
@@ -1964,16 +2016,7 @@ void PmoveSingle(pmove_t *pmove){
 			PM_Footsteps();
 		}
 	}
-	if(pm->cmd.buttons & BUTTON_TALK){pm->ps->eFlags |= EF_TALK;}
-	else{pm->ps->eFlags &= ~EF_TALK;}
-	if(pmove->cmd.buttons & BUTTON_TALK){
-		pmove->cmd.buttons = BUTTON_TALK;
-		PM_StopMovement();
-	}
-	if(pmove->ps->weaponstate == WEAPON_GUIDING || pmove->ps->weaponstate == WEAPON_ALTGUIDING){
-		PM_StopMovement();
-		PM_StopDash();
-	}
+	PM_CheckTalk();
 	pm->ps->commandTime = pmove->cmd.serverTime;
 	VectorCopy(pm->ps->origin, pml.previous_origin);
 	VectorCopy(pm->ps->velocity, pml.previous_velocity);
@@ -1988,14 +2031,16 @@ void PmoveSingle(pmove_t *pmove){
 	pml.previous_waterlevel = pmove->waterlevel;
 	PM_SetView();
 	PM_SetWaterLevel();
-	PM_Melee();
-	PM_Weapon();
+	if(!pm->ps->powerups[PW_KNOCKBACK]){
+		PM_Melee();
+		PM_Weapon();
+	}
 	PM_TorsoAnimation();
 	PM_WaterEvents();
 	PM_DropTimers();
 	PM_Freeze();
 	PM_GroundTrace();
-	if(!((pm->ps->stats[bitFlags] & usingAlter) && VectorLength(pm->ps->velocity) < 10) && !pm->ps->powerups[PW_FREEZE]){
+	if(!((pm->ps->stats[bitFlags] & usingAlter) && VectorLength(pm->ps->velocity) < 10) && !pm->ps->powerups[PW_FREEZE] && !pm->ps->powerups[PW_KNOCKBACK]){
 		PM_FlyMove();
 		PM_DashMove();
 		PM_WalkMove();
@@ -2018,7 +2063,7 @@ void Pmove(pmove_t *pmove){
 	}
 	pmove->ps->pmove_framecount = (pmove->ps->pmove_framecount+1) & ((1<<PS_PMOVEFRAMECOUNTBITS)-1);
 	while(pmove->ps->commandTime != finalTime){
-		int		msec;
+		int	msec;
 		msec = finalTime - pmove->ps->commandTime;
 		if(pmove->pmove_fixed){
 			if(msec > pmove->pmove_msec){
