@@ -81,7 +81,7 @@ void PM_Freeze(void){
 /*===================
 KNOCKBACK
 ===================*/
-void PM_Knockback(void){
+void PM_CheckKnockback(void){
 	vec3_t pre_vel,post_vel,wishvel,wishdir;	
 	float scale,wishspeed;
 	int i;
@@ -92,7 +92,6 @@ void PM_Knockback(void){
 		pm->cmd.upmove = 0;
 		pm->cmd.rightmove = 0;
 		scale = PM_CmdScale(&pm->cmd);
-		Com_Printf("Knockback : %i\n",pm->ps->powerups[PW_KNOCKBACK]);
 		for(i=0;i<3;i++){
 			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
 		}
@@ -104,7 +103,7 @@ void PM_Knockback(void){
 		VectorScale(pm->ps->velocity,2500,pm->ps->velocity);
 		PM_StepSlideMove(qfalse);
 		VectorNormalize2(pm->ps->velocity,post_vel);
-		if((DotProduct(pre_vel,post_vel)< 0.5f) || (VectorLength(pm->ps->velocity)== 0.0f) || (pm->ps->powerups[PW_ZANZOKEN] < 0)){
+		if((DotProduct(pre_vel,post_vel)< 0.5f) || (VectorLength(pm->ps->velocity)== 0.0f) || (pm->ps->powerups[PW_KNOCKBACK] < 0)){
 			pm->ps->powerups[PW_KNOCKBACK] = 0;
 		}
 	}
@@ -2008,7 +2007,7 @@ void PmoveSingle(pmove_t *pmove){
 	if(pml.msec < 1){pml.msec = 1;}
 	else if(pml.msec > 200){pml.msec = 200;}
 	if(abs(pm->cmd.forwardmove)> 64 || abs(pm->cmd.rightmove)> 64){pm->cmd.buttons &= ~BUTTON_WALKING;}
-	PM_Knockback();
+	PM_CheckKnockback();
 	PM_CheckTransform();
 	if(!(pm->ps->stats[bitFlags] & isTransforming) && !(pm->ps->powerups[PW_KNOCKBACK])){
 		PM_BurnPowerLevel(qtrue);
