@@ -92,6 +92,7 @@ void PM_CheckKnockback(void){
 		pm->cmd.upmove = 0;
 		pm->cmd.rightmove = 0;
 		scale = PM_CmdScale(&pm->cmd);
+		Com_Printf("Knockback :%i\n",pm->ps->powerups[PW_KNOCKBACK]);
 		for(i=0;i<3;i++){
 			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
 		}
@@ -103,9 +104,11 @@ void PM_CheckKnockback(void){
 		VectorScale(pm->ps->velocity,2500,pm->ps->velocity);
 		PM_StepSlideMove(qfalse);
 		VectorNormalize2(pm->ps->velocity,post_vel);
+		/*
 		if((DotProduct(pre_vel,post_vel)< 0.5f) || (VectorLength(pm->ps->velocity)== 0.0f) || (pm->ps->powerups[PW_KNOCKBACK] < 0)){
 			pm->ps->powerups[PW_KNOCKBACK] = 0;
 		}
+		*/
 	}
 }
 /*===================
@@ -123,6 +126,11 @@ void PM_CheckTalk(void){
 ZANZOKEN
 ===============*/
 void PM_StopZanzoken(void){
+	if(pm->ps->powerups[PW_ZANZOKEN]){
+		pm->ps->stats[bitFlags] &= ~usingZanzoken;
+		PM_AddEvent(EV_ZANZOKEN_END);
+		VectorClear(pm->ps->velocity);
+	}
 	pm->ps->powerups[PW_ZANZOKEN] = 0;
 }
 void PM_CheckZanzoken(void){
@@ -131,9 +139,7 @@ void PM_CheckZanzoken(void){
 		pm->ps->powerups[PW_ZANZOKEN] = -1;
 	}
 	if((pm->ps->stats[bitFlags] & usingZanzoken) && (pm->ps->powerups[PW_ZANZOKEN] <= 0)){
-		PM_AddEvent(EV_ZANZOKEN_END);
-		pm->ps->stats[bitFlags] &= ~usingZanzoken;
-		VectorClear(pm->ps->velocity);
+		PM_StopZanzoken();
 	}
 	if(pm->ps->powerups[PW_ZANZOKEN] > 0){
 		pm->ps->powerups[PW_ZANZOKEN] -= pml.msec;
@@ -2021,6 +2027,9 @@ void PmoveSingle(pmove_t *pmove){
 			PM_CheckJump();
 			PM_CheckBlock();
 			PM_Footsteps();
+		}
+		else{
+			PM_StopMovement();
 		}
 	}
 	PM_CheckTalk();
