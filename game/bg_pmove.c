@@ -1468,9 +1468,11 @@ void PM_Melee(void){
 		// Set Reaction Events
 		if(enemyState == 2 && (state == 6 || state <= 1)){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_HIT);
+			PM_AddEvent(EV_MELEE_SPEED);
 		}
 		else if(enemyState == 4 && state == 5){
 			PM_ContinueLegsAnim(LEGS_BLOCK);
+			PM_AddEvent(EV_MELEE_SPEED);
 		}
 		else if(enemyState == 2 && state == 5){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_DODGE);
@@ -1495,7 +1497,14 @@ void PM_Melee(void){
 				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 1200;
 				pm->ps->lockedPlayer->powerups[PW_FREEZE] = 0;
 				pm->ps->powerups[PW_FREEZE] = 0;
+				PM_AddEvent(EV_MELEE_KNOCKBACK);
 			}
+			/*
+			if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] == 1200){
+				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 1199;
+				PM_AddEvent(EV_MELEE_KNOCKBACK);
+			}
+			*/
 			if(enemyState != 6){
 				pm->ps->lockedPlayer->powerLevelMeleeBurn += damage;
 			}

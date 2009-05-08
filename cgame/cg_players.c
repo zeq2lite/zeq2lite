@@ -2416,36 +2416,6 @@ void CG_Player( centity_t *cent ) {
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){CG_AuraStart(cent);}
 	else{CG_AuraEnd(cent);}
 	CG_AddAuraToScene(cent);
-	if(ps->powerups[PW_KNOCKBACK]){
-		if(ps->powerups[PW_KNOCKBACK] > 0){
-			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
-			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
-		}
-		if(ps->powerups[PW_KNOCKBACK] == 1200){
-			ps->powerups[PW_KNOCKBACK] = 1199;
-			CG_PowerMeleeEffect(cent->lerpOrigin);
-		}
-		return;
-	}
-	state = ps->powerups[PW_MELEE_STATE];
-	if(state != 0){
-		enemyState = ps->lockedPlayer->powerups[PW_MELEE_STATE];
-		if(enemyState == 2 && state == 5){
-			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMissSound);
-		}
-		else if(state == 2 && enemyState != 4){
-			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
-			CG_SpeedMeleeEffect(cent->lerpOrigin);
-		}
-		else if(state != 4 && enemyState == 2){
-			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
-			CG_SpeedMeleeEffect(cent->lerpOrigin);
-		}
-		/*else if(ps->powerups[PW_MELEE_STATE] == 3){
-			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.powerMeleeSound);
-		}*/
-		CG_Printf("States : %i | %i | %i |\n",state,enemyState,cg.predictedPlayerState.lockedPlayer->powerups[PW_MELEE_STATE]);
-	}
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
 	// -->
 }

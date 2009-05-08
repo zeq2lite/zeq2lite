@@ -918,11 +918,13 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MELEE_SPEED:
 		DEBUGNAME("EV_MELEE_SPEED");
 		trap_S_StartSound(NULL,es->number,CHAN_BODY,cgs.media.speedMeleeSound);
+		CG_SpeedMeleeEffect(cent->lerpOrigin);
 		//trap_S_AddLoopingSound(es->number,NULL,NULL,cgs.media.speedMeleeSound);
 		break;
 	case EV_MELEE_KNOCKBACK:
 		DEBUGNAME("EV_MELEE_KNOCKBACK");
 		trap_S_StartSound(NULL,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
+		CG_PowerMeleeEffect(cent->lerpOrigin);
 		break;
 	case EV_MELEE_STUN:
 		DEBUGNAME("EV_MELEE_STUN");
