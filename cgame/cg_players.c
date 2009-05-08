@@ -2446,7 +2446,6 @@ void CG_Player( centity_t *cent ) {
 		}*/
 		CG_Printf("States : %i | %i | %i |\n",state,enemyState,cg.predictedPlayerState.lockedPlayer->powerups[PW_MELEE_STATE]);
 	}
-	CG_AddAuraToScene(cent);
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
 	// -->
 }
