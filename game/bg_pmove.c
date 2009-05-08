@@ -1463,7 +1463,7 @@ void PM_Melee(void){
 			else if(pm->cmd.buttons & BUTTON_BLOCK){state = 5;}
 			// Using Zanzoken
 			else if(pm->cmd.buttons & BUTTON_LIGHTSPEED){state = 6;}
-			else{state = 1;}
+			else{state = 1;PM_AddEvent(EV_STOPLOOPINGSOUND);}
 		}
 		// Set Reaction Events
 		if(enemyState == 2 && (state == 6 || state <= 1)){
@@ -1476,6 +1476,7 @@ void PM_Melee(void){
 		}
 		else if(enemyState == 2 && state == 5){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_DODGE);
+			PM_AddEvent(EV_MELEE_MISS);
 		}
 		else if(state == 2){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_ATTACK);
@@ -1499,12 +1500,6 @@ void PM_Melee(void){
 				pm->ps->powerups[PW_FREEZE] = 0;
 				PM_AddEvent(EV_MELEE_KNOCKBACK);
 			}
-			/*
-			if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] == 1200){
-				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 1199;
-				PM_AddEvent(EV_MELEE_KNOCKBACK);
-			}
-			*/
 			if(enemyState != 6){
 				pm->ps->lockedPlayer->powerLevelMeleeBurn += damage;
 			}

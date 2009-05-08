@@ -447,6 +447,8 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_MELEE_SPEED:
 			break;
+		case EV_MELEE_MISS:
+			break;
 		case EV_MELEE_KNOCKBACK:
 			break;
 		case EV_MELEE_STUN:

@@ -2355,7 +2355,7 @@ void CG_Player( centity_t *cent ) {
 		tier = cent->currentState.tier;
 		if ( ci->tierCurrent != tier ) {
 			ci->tierCurrent = tier;
-			CG_AddEarthquake(NULL, -1, 1, 0, 1, 400);
+			CG_AddEarthquake(cent->lerpOrigin, 400, 1, 0, 1, 400);
 		}
 	}
 	if(ci->tierCurrent > ci->tierMax){
@@ -2416,6 +2416,13 @@ void CG_Player( centity_t *cent ) {
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){CG_AuraStart(cent);}
 	else{CG_AuraEnd(cent);}
 	CG_AddAuraToScene(cent);
+	if(ps->powerups[PW_KNOCKBACK]){
+		if(ps->powerups[PW_KNOCKBACK] > 0){
+			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
+			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
+		}
+		return;
+	}
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
 	// -->
 }
