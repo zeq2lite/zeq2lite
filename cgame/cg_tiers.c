@@ -20,6 +20,12 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		memset(&ci->tierConfig[i],0,sizeof(tierConfig_cg));
 		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 		ci->tierConfig[i].icon = trap_R_RegisterShaderNoMip(strcat(tierPath,"icon.png"));
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+		ci->tierConfig[i].soundTransformFirst = trap_S_RegisterSound(strcat(tierPath,"transformFirst.ogg"),qfalse);
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+		ci->tierConfig[i].soundTransformUp = trap_S_RegisterSound(strcat(tierPath,"transformUp.ogg"),qfalse);
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+		ci->tierConfig[i].soundTransformDown = trap_S_RegisterSound(strcat(tierPath,"transformDown.ogg"),qfalse);
 		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",modelName,i+1);
 		parseTier(filename,&ci->tierConfig[i]);
 		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",modelName,i+1);
@@ -188,6 +194,21 @@ void parseTier(char *path,tierConfig_cg *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->requirementPowerLevelMaximum = atoi(token);
+			}
+			else if(!Q_stricmp(token,"transformSoundFirst")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformFirst = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"transformSoundUp")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformUp = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"transformSoundDown")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundTransformDown = trap_S_RegisterSound(token,qfalse);
 			}
 		}
 	}

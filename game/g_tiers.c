@@ -27,9 +27,6 @@ void setupTiers(gclient_t *client){
 		tier = &client->tiers[i];
 		memset(tier,0,sizeof(tierConfig_g));
 		tierPath = va("players/%s/tier%i/",modelName,i+1);
-		//tier->soundTransformFirst = syscall(34,strcat(tierPath,"transformFirst.ogg"),qfalse);
-		//tier->soundTransformDown = syscall(34,strcat(tierPath,"transformDown.ogg"),qfalse);
-		//tier->soundTransformUp = syscall(34,strcat(tierPath,"transformUp.ogg"),qfalse);
 		parseTier("players/tierDefault.cfg",tier);
 		parseTier(strcat(tierPath,"tier.cfg"),tier);
 	}
@@ -162,23 +159,6 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->customWeapons = strlen(token) == 4 ? qtrue : qfalse;
 			}
-			/*
-			else if(!Q_stricmp(token,"transformSoundFirst")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->soundTransformFirst = syscall(34,token,qfalse);
-			}
-			else if(!Q_stricmp(token,"transformSoundUp")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->soundTransformUp = syscall(34,token,qfalse);
-			}
-			else if(!Q_stricmp(token,"transformSoundDown")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->soundTransformDown = syscall(34,token,qfalse);
-			}
-			*/
 		}
 	}
 }
