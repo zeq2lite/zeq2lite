@@ -1,43 +1,5 @@
 #include "g_local.h"
 #include "bg_local.h"
-void tierCheck(gclient_t *client){
-	int tier;
-	playerState_t *ps;
-	tierConfig_g *nextTier,*baseTier;
-	ps = &client->ps;
-	if(ps->powerups[PW_TRANSFORM]){return;}
-	while(1){
-		tier = ps->stats[tierCurrent];
-		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
-			nextTier = &client->tiers[tier+1];
-			if(((nextTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierUp) ||
-			   (!nextTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierUp))) &&
-			   (ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) &&
-			   (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) &&
-			   (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
-				ps->powerups[PW_TRANSFORM] = 1;
-				++ps->stats[tierCurrent];
-				if(tier + 1 > ps->stats[tierTotal]){
-					ps->stats[tierTotal] = ps->stats[tierCurrent];
-					ps->powerups[PW_TRANSFORM] = client->tiers[tier+1].transformTime;
-				}
-				continue;
-			}
-		}
-		if(tier > 0){
-			baseTier = &client->tiers[tier];
-			if(((baseTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierDown) ||
-			   (!baseTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierDown))) ||
-			   (ps->stats[powerLevel] < baseTier->sustainPowerLevelCurrent) ||
-			   (ps->stats[powerLevelTotal] < baseTier->sustainPowerLevelTotal)){
-				ps->powerups[PW_TRANSFORM] = -1;
-				--ps->stats[tierCurrent];
-				continue;
-			}
-		}
-		break;
-	}
-}
 /*===============
 P_DamageFeedback
 ===============*/
@@ -406,6 +368,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int 		enemyMelee,playerMelee;
 	gclient_t	*client;
 	int			damage;
+	int			amount;
 	vec3_t		dir;
 	vec3_t		origin, angles;
 //	qboolean	fired;
@@ -435,7 +398,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			FireWeapon(ent,qfalse);
 			break;
 		case EV_ZANZOKEN_START:
-			ps->stats[powerLevelTotal] -= client->tiers[tier].zanzokenCost;
+			amount = client->tiers[tier].zanzokenCost;
+			if(ps->stats[powerLevelTotal] - amount > 0){ps->stats[powerLevelTotal] -= amount;}
+			else{ps->stats[powerLevelTotal] = 0;}
 			ps->powerups[PW_ZANZOKEN] = client->tiers[tier].zanzokenDistance;
 			break;
 		case EV_ALTFIRE_WEAPON:
@@ -456,24 +421,21 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_MELEE_CHECK:
 			break;
 		case EV_TIERCHECK:
-			tierCheck(client);
+			checkTier(client);
 			break;
 		case EV_TIERUP:
-			//if(ps->powerups[PW_TRANSFORM] > 1){	trap_S_StartSound(NULL,client->playerEntity->s.number,CHAN_BODY,client->tiers[tier].soundTransformFirst);}
-			//else{trap_S_StartSound(NULL,client->playerEntity->s.number,CHAN_BODY,client->tiers[tier].soundTransformUp);}
 			syncTier(client);
 			break;
 		case EV_TIERDOWN:
-			//trap_S_StartSound(NULL,client->playerEntity->s.number,CHAN_BODY,client->tiers[tier].soundTransformDown);
 			syncTier(client);
 			break;
 		case EV_LOCKON_CHECK:
-			break;
-		case EV_LOCKON_START:
 			if(ps->lockedTarget>0){
 				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
 				ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
 			}
+			break;
+		case EV_LOCKON_START:
 			break;
 		case EV_LOCKON_END:
 			break;

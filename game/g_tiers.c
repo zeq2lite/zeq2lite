@@ -16,6 +16,44 @@ void syncTier(gclient_t *client){
 	ps->energyAttack = tier->energyAttackDamage;
 	ps->energyCost = tier->energyAttackCost;
 }
+void checkTier(gclient_t *client){
+	int tier;
+	playerState_t *ps;
+	tierConfig_g *nextTier,*baseTier;
+	ps = &client->ps;
+	if(ps->powerups[PW_TRANSFORM]){return;}
+	while(1){
+		tier = ps->stats[tierCurrent];
+		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
+			nextTier = &client->tiers[tier+1];
+			if(((nextTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierUp) ||
+			   (!nextTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierUp))) &&
+			   (ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) &&
+			   (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) &&
+			   (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
+				ps->powerups[PW_TRANSFORM] = 1;
+				++ps->stats[tierCurrent];
+				if(tier + 1 > ps->stats[tierTotal]){
+					ps->stats[tierTotal] = ps->stats[tierCurrent];
+					ps->powerups[PW_TRANSFORM] = client->tiers[tier+1].transformTime;
+				}
+				continue;
+			}
+		}
+		if(tier > 0){
+			baseTier = &client->tiers[tier];
+			if(((baseTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierDown) ||
+			   (!baseTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierDown))) ||
+			   (ps->stats[powerLevel] < baseTier->sustainPowerLevelCurrent) ||
+			   (ps->stats[powerLevelTotal] < baseTier->sustainPowerLevelTotal)){
+				ps->powerups[PW_TRANSFORM] = -1;
+				--ps->stats[tierCurrent];
+				continue;
+			}
+		}
+		break;
+	}
+}
 void setupTiers(gclient_t *client){
 	int	i;
 	tierConfig_g *tier;
