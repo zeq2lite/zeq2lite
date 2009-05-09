@@ -126,7 +126,7 @@ void PM_CheckTalk(void){
 ZANZOKEN
 ===============*/
 void PM_StopZanzoken(void){
-	if(pm->ps->powerups[PW_ZANZOKEN]){
+	if(pm->ps->stats[bitFlags] & usingZanzoken){
 		pm->ps->stats[bitFlags] &= ~usingZanzoken;
 		PM_AddEvent(EV_ZANZOKEN_END);
 		VectorClear(pm->ps->velocity);
