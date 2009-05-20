@@ -127,7 +127,7 @@ static char* netnames[] = {
 	NULL
 };
 
-static char quake3worldMessage[] = "Visit www.quake3world.com - News, Community, Events, Files";
+static char quake3worldMessage[] = "Visit www.zeq2.com - News, Community, Events, Files";
 
 typedef struct {
 	char	adrstr[MAX_ADDRESSLENGTH];
@@ -322,7 +322,7 @@ static void ArenaServers_UpdatePicture( void ) {
 	}
 	else {
 		servernodeptr = g_arenaservers.table[g_arenaservers.list.curvalue].servernode;
-		Com_sprintf( picname, sizeof(picname), "maps/%s.tga", servernodeptr->mapname );
+		Com_sprintf( picname, sizeof(picname), "maps/%s.png", servernodeptr->mapname );
 		g_arenaservers.mappic.generic.name = picname;
 	
 	}
@@ -1401,7 +1401,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.remove.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	g_arenaservers.remove.generic.callback	= ArenaServers_Event;
 	g_arenaservers.remove.generic.id		= ID_REMOVE;
-	g_arenaservers.remove.generic.x			= 450;
+	g_arenaservers.remove.generic.x			= 512;
 	g_arenaservers.remove.generic.y			= 86;
 	g_arenaservers.remove.width				= 96;
 	g_arenaservers.remove.height			= 48;

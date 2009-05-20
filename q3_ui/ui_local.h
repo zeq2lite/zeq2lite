@@ -15,16 +15,24 @@
 
 extern vmCvar_t	ui_ffa_fraglimit;
 extern vmCvar_t	ui_ffa_timelimit;
+extern vmCvar_t	ui_ffa_powerlevel;
+extern vmCvar_t	ui_ffa_powerlevelBreakLimitRate;
 
 extern vmCvar_t	ui_tourney_fraglimit;
 extern vmCvar_t	ui_tourney_timelimit;
+extern vmCvar_t	ui_tourney_powerlevel;
+extern vmCvar_t	ui_tourney_powerlevelBreakLimitRate;
 
 extern vmCvar_t	ui_team_fraglimit;
 extern vmCvar_t	ui_team_timelimit;
+extern vmCvar_t	ui_team_powerlevel;
+extern vmCvar_t	ui_team_powerlevelBreakLimitRate;
 extern vmCvar_t	ui_team_friendly;
 
 extern vmCvar_t	ui_ctf_capturelimit;
 extern vmCvar_t	ui_ctf_timelimit;
+extern vmCvar_t	ui_ctf_powerlevel;
+extern vmCvar_t	ui_ctf_powerlevelBreakLimitRate;
 extern vmCvar_t	ui_ctf_friendly;
 
 extern vmCvar_t	ui_arenasFile;

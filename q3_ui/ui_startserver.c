@@ -564,7 +564,7 @@ void StartServer_Cache( void )
 		s_startserver.mapGamebits[i] = GametypeBits( Info_ValueForKey( info, "type") );
 
 		if( precache ) {
-			Com_sprintf( picname, sizeof(picname), "levelshots/%s", s_startserver.maplist[i] );
+			Com_sprintf( picname, sizeof(picname), "maps/%s", s_startserver.maplist[i] );
 			trap_R_RegisterShaderNoMip(picname);
 		}
 	}
@@ -612,6 +612,8 @@ typedef struct {
 	menubitmap_s		picframe;
 
 	menulist_s			dedicated;
+	menufield_s			powerlevel;
+	menufield_s			powerlevelBreakLimitRate;
 	menufield_s			timelimit;
 	menufield_s			fraglimit;
 	menufield_s			flaglimit;
@@ -656,8 +658,8 @@ static const char *playerType_list[] = {
 };
 
 static const char *playerTeam_list[] = {
-	"Blue",
-	"Red",
+	"Z Fighters",
+	"HFIL Fighters",
 	0
 };
 
@@ -704,6 +706,8 @@ ServerOptions_Start
 static void ServerOptions_Start( void ) {
 	int		timelimit;
 	int		fraglimit;
+	int		powerlevel;
+	int		powerlevelBreakLimitRate;
 	int		maxclients;
 	int		dedicated;
 	int		friendlyfire;
@@ -716,6 +720,8 @@ static void ServerOptions_Start( void ) {
 
 	timelimit	 = atoi( s_serveroptions.timelimit.field.buffer );
 	fraglimit	 = atoi( s_serveroptions.fraglimit.field.buffer );
+	powerlevel	 = atoi( s_serveroptions.powerlevel.field.buffer );
+	powerlevelBreakLimitRate	 = atoi( s_serveroptions.powerlevelBreakLimitRate.field.buffer );
 	flaglimit	 = atoi( s_serveroptions.flaglimit.field.buffer );
 	dedicated	 = s_serveroptions.dedicated.curvalue;
 	friendlyfire = s_serveroptions.friendlyfire.curvalue;
@@ -739,22 +745,30 @@ static void ServerOptions_Start( void ) {
 	default:
 		trap_Cvar_SetValue( "ui_ffa_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_ffa_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_ffa_powerlevel", powerlevel );
+		trap_Cvar_SetValue( "ui_ffa_powerlevelBreakLimitRate", powerlevelBreakLimitRate );
 		break;
 
 	case GT_TOURNAMENT:
 		trap_Cvar_SetValue( "ui_tourney_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_tourney_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_tourney_powerlevel", powerlevel );
+		trap_Cvar_SetValue( "ui_tourney_powerlevelBreakLimitRate", powerlevelBreakLimitRate );
 		break;
 
 	case GT_TEAM:
 		trap_Cvar_SetValue( "ui_team_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_team_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_team_powerlevel", powerlevel );
+		trap_Cvar_SetValue( "ui_team_powerlevelBreakLimitRate", powerlevelBreakLimitRate );
 		trap_Cvar_SetValue( "ui_team_friendlt", friendlyfire );
 		break;
 
 	case GT_CTF:
 		trap_Cvar_SetValue( "ui_ctf_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_ctf_timelimit", timelimit );
+		trap_Cvar_SetValue( "ui_ctf_powerlevel", powerlevel );
+		trap_Cvar_SetValue( "ui_ctf_powerlevelBreakLimitRate", powerlevelBreakLimitRate );
 		trap_Cvar_SetValue( "ui_ctf_friendlt", friendlyfire );
 		break;
 	}
@@ -766,6 +780,8 @@ static void ServerOptions_Start( void ) {
 	trap_Cvar_SetValue( "dedicated", Com_Clamp( 0, 2, dedicated ) );
 	trap_Cvar_SetValue ("timelimit", Com_Clamp( 0, timelimit, timelimit ) );
 	trap_Cvar_SetValue ("fraglimit", Com_Clamp( 0, fraglimit, fraglimit ) );
+	trap_Cvar_SetValue ("g_powerlevel", Com_Clamp( 1, 32767, powerlevel ) );
+	trap_Cvar_SetValue ("g_powerLevelBreakLimitRate", Com_Clamp( 1, 100, powerlevelBreakLimitRate ) );
 	trap_Cvar_SetValue ("capturelimit", Com_Clamp( 0, flaglimit, flaglimit ) );
 	trap_Cvar_SetValue( "g_friendlyfire", friendlyfire );
 	trap_Cvar_SetValue( "sv_pure", pure );
@@ -984,8 +1000,8 @@ ServerOptions_LevelshotDraw
 */
 static void ServerOptions_LevelshotDraw( void *self ) {
 	menubitmap_s	*b;
-	int				x;
-	int				y;
+//	int				x;
+//	int				y;
 
 	// strange place for this, but it works
 	if( s_serveroptions.newBot ) {
@@ -1000,13 +1016,14 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 	x = b->generic.x;
 	y = b->generic.y + b->height;
 	UI_FillRect( x, y, b->width, 40, colorBlack );
-*/
+
 	x += b->width / 2;
 	y += 4;
 	UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 
 	y += SMALLCHAR_HEIGHT;
 	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+*/
 }
 
 
@@ -1020,10 +1037,10 @@ static void ServerOptions_InitBotNames( void ) {
 	char		bots[MAX_INFO_STRING];
 
 	if( s_serveroptions.gametype >= GT_TEAM ) {
-		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "grunt", 16 );
-		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "major", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "goku", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "vegeta", 16 );
 		if( s_serveroptions.gametype == GT_TEAM ) {
-			Q_strncpyz( s_serveroptions.playerNameBuffers[3], "visor", 16 );
+			Q_strncpyz( s_serveroptions.playerNameBuffers[3], "goku", 16 );
 		}
 		else {
 			s_serveroptions.playerType[3].curvalue = 2;
@@ -1031,11 +1048,11 @@ static void ServerOptions_InitBotNames( void ) {
 		s_serveroptions.playerType[4].curvalue = 2;
 		s_serveroptions.playerType[5].curvalue = 2;
 
-		Q_strncpyz( s_serveroptions.playerNameBuffers[6], "sarge", 16 );
-		Q_strncpyz( s_serveroptions.playerNameBuffers[7], "grunt", 16 );
-		Q_strncpyz( s_serveroptions.playerNameBuffers[8], "major", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[6], "goku", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[7], "vegeta", 16 );
+		Q_strncpyz( s_serveroptions.playerNameBuffers[8], "goku", 16 );
 		if( s_serveroptions.gametype == GT_TEAM ) {
-			Q_strncpyz( s_serveroptions.playerNameBuffers[9], "visor", 16 );
+			Q_strncpyz( s_serveroptions.playerNameBuffers[9], "vegeta", 16 );
 		}
 		else {
 			s_serveroptions.playerType[9].curvalue = 2;
@@ -1114,22 +1131,30 @@ static void ServerOptions_SetMenuItems( void ) {
 	default:
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ffa_fraglimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ffa_timelimit" ) ) );
+		Com_sprintf( s_serveroptions.powerlevel.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_ffa_powerlevel" ) ) );
+		Com_sprintf( s_serveroptions.powerlevelBreakLimitRate.field.buffer, 4, "%i", (int)Com_Clamp( 1, 100, trap_Cvar_VariableValue( "ui_ffa_powerlevelBreakLimitRate" ) ) );
 		break;
 
 	case GT_TOURNAMENT:
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_tourney_fraglimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_tourney_timelimit" ) ) );
+		Com_sprintf( s_serveroptions.powerlevel.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_tourney_powerlevel" ) ) );
+		Com_sprintf( s_serveroptions.powerlevelBreakLimitRate.field.buffer, 4, "%i", (int)Com_Clamp( 1, 100, trap_Cvar_VariableValue( "ui_tourney_powerlevelBreakLimitRate" ) ) );
 		break;
 
 	case GT_TEAM:
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_team_fraglimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_team_timelimit" ) ) );
+		Com_sprintf( s_serveroptions.powerlevel.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_team_powerlevel" ) ) );
+		Com_sprintf( s_serveroptions.powerlevelBreakLimitRate.field.buffer, 4, "%i", (int)Com_Clamp( 1, 100, trap_Cvar_VariableValue( "ui_team_powerlevelBreakLimitRate" ) ) );
 		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_team_friendly" ) );
 		break;
 
 	case GT_CTF:
 		Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 100, trap_Cvar_VariableValue( "ui_ctf_capturelimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ctf_timelimit" ) ) );
+		Com_sprintf( s_serveroptions.powerlevel.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_ctf_powerlevel" ) ) );
+		Com_sprintf( s_serveroptions.powerlevelBreakLimitRate.field.buffer, 4, "%i", (int)Com_Clamp( 1, 100, trap_Cvar_VariableValue( "ui_ctf_powerlevelBreakLimitRate" ) ) );
 		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ctf_friendly" ) );
 		break;
 	}
@@ -1206,7 +1231,7 @@ static void PlayerName_Draw( void *item ) {
 ServerOptions_MenuInit
 =================
 */
-#define OPTIONS_X	456
+#define OPTIONS_X	420
 
 static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	int		y;
@@ -1230,10 +1255,10 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 
 	s_serveroptions.mappic.generic.type			= MTYPE_BITMAP;
 	s_serveroptions.mappic.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	s_serveroptions.mappic.generic.x			= 352;
+	s_serveroptions.mappic.generic.x			= 290;
 	s_serveroptions.mappic.generic.y			= 80;
-	s_serveroptions.mappic.width				= 160;
-	s_serveroptions.mappic.height				= 120;
+	s_serveroptions.mappic.width				= 256;
+	s_serveroptions.mappic.height				= 196;
 	s_serveroptions.mappic.errorpic				= GAMESERVER_UNKNOWNMAP;
 	s_serveroptions.mappic.generic.ownerdraw	= ServerOptions_LevelshotDraw;
 
@@ -1245,10 +1270,20 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.picframe.height  			= 320;
 	s_serveroptions.picframe.focuspic			= GAMESERVER_SELECT;
 
-	y = 272;
+	y = 290;
+	if( s_serveroptions.multiplayer ) {
+		s_serveroptions.hostname.generic.type       = MTYPE_FIELD;
+		s_serveroptions.hostname.generic.name       = "Hostname     :";
+		s_serveroptions.hostname.generic.flags      = QMF_SMALLFONT;
+		s_serveroptions.hostname.generic.x          = OPTIONS_X;
+		s_serveroptions.hostname.generic.y	        = y;
+		s_serveroptions.hostname.field.widthInChars = 24;
+		s_serveroptions.hostname.field.maxchars     = 64;
+		y += BIGCHAR_HEIGHT+2;
+	}
 	if( s_serveroptions.gametype != GT_CTF ) {
 		s_serveroptions.fraglimit.generic.type       = MTYPE_FIELD;
-		s_serveroptions.fraglimit.generic.name       = "Frag Limit:";
+		s_serveroptions.fraglimit.generic.name       = "KO Limit     :";
 		s_serveroptions.fraglimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 		s_serveroptions.fraglimit.generic.x	         = OPTIONS_X;
 		s_serveroptions.fraglimit.generic.y	         = y;
@@ -1269,13 +1304,33 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 
 	y += BIGCHAR_HEIGHT+2;
 	s_serveroptions.timelimit.generic.type       = MTYPE_FIELD;
-	s_serveroptions.timelimit.generic.name       = "Time Limit:";
+	s_serveroptions.timelimit.generic.name       = "Time Limit   :";
 	s_serveroptions.timelimit.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_serveroptions.timelimit.generic.x	         = OPTIONS_X;
 	s_serveroptions.timelimit.generic.y	         = y;
 	s_serveroptions.timelimit.generic.statusbar  = ServerOptions_StatusBar;
 	s_serveroptions.timelimit.field.widthInChars = 3;
 	s_serveroptions.timelimit.field.maxchars     = 3;
+
+	y += BIGCHAR_HEIGHT+2;
+	s_serveroptions.powerlevel.generic.type       = MTYPE_FIELD;
+	s_serveroptions.powerlevel.generic.name       = "Power Level  :";
+	s_serveroptions.powerlevel.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_serveroptions.powerlevel.generic.x	         = OPTIONS_X;
+	s_serveroptions.powerlevel.generic.y	         = y;
+	s_serveroptions.powerlevel.generic.statusbar  = ServerOptions_StatusBar;
+	s_serveroptions.powerlevel.field.widthInChars = 5;
+	s_serveroptions.powerlevel.field.maxchars     = 5;
+
+	y += BIGCHAR_HEIGHT+2;
+	s_serveroptions.powerlevelBreakLimitRate.generic.type       = MTYPE_FIELD;
+	s_serveroptions.powerlevelBreakLimitRate.generic.name       = "Charge Speed :";
+	s_serveroptions.powerlevelBreakLimitRate.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_serveroptions.powerlevelBreakLimitRate.generic.x	         = OPTIONS_X;
+	s_serveroptions.powerlevelBreakLimitRate.generic.y	         = y;
+	s_serveroptions.powerlevelBreakLimitRate.generic.statusbar  = ServerOptions_StatusBar;
+	s_serveroptions.powerlevelBreakLimitRate.field.widthInChars = 3;
+	s_serveroptions.powerlevelBreakLimitRate.field.maxchars     = 3;
 
 	if( s_serveroptions.gametype >= GT_TEAM ) {
 		y += BIGCHAR_HEIGHT+2;
@@ -1291,7 +1346,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.pure.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_serveroptions.pure.generic.x				= OPTIONS_X;
 	s_serveroptions.pure.generic.y				= y;
-	s_serveroptions.pure.generic.name			= "Pure Server:";
+	s_serveroptions.pure.generic.name			= "Pure Server  :";
 
 	if( s_serveroptions.multiplayer ) {
 		y += BIGCHAR_HEIGHT+2;
@@ -1301,19 +1356,8 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.dedicated.generic.callback	= ServerOptions_Event;
 		s_serveroptions.dedicated.generic.x			= OPTIONS_X;
 		s_serveroptions.dedicated.generic.y			= y;
-		s_serveroptions.dedicated.generic.name		= "Dedicated:";
+		s_serveroptions.dedicated.generic.name		= "Dedicated    :";
 		s_serveroptions.dedicated.itemnames			= dedicated_list;
-	}
-
-	if( s_serveroptions.multiplayer ) {
-		y += BIGCHAR_HEIGHT+2;
-		s_serveroptions.hostname.generic.type       = MTYPE_FIELD;
-		s_serveroptions.hostname.generic.name       = "Hostname:";
-		s_serveroptions.hostname.generic.flags      = QMF_SMALLFONT;
-		s_serveroptions.hostname.generic.x          = OPTIONS_X;
-		s_serveroptions.hostname.generic.y	        = y;
-		s_serveroptions.hostname.field.widthInChars = 18;
-		s_serveroptions.hostname.field.maxchars     = 64;
 	}
 
 	y = 80;
@@ -1424,6 +1468,8 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.flaglimit );
 	}
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.powerlevel );
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.powerlevelBreakLimitRate );
 	if( s_serveroptions.gametype >= GT_TEAM ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.friendlyfire );
 	}
