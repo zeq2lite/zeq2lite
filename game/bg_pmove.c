@@ -1836,7 +1836,7 @@ void PM_CheckLockon(void){
 	int	lockBox;
 	trace_t	trace;
 	vec3_t minSize,maxSize,forward,up,end;
-	if(pm->ps->lockedTarget>0){
+	if(pm->ps->lockedTarget>0 && pm->ps->powerups[PW_MELEESTATE] != 4){
 		PM_AddEvent(EV_LOCKON_CHECK);
 		if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=45){
 			if(!pm->ps->powerups[PW_MELEE_STATE]){
