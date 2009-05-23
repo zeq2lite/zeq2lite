@@ -93,12 +93,32 @@ void PM_CheckKnockback(void){
 		PM_ContinueLegsAnim(LEGS_KNOCKBACK);
 		pm->ps->powerups[PW_KNOCKBACK] -= pml.msec;
 		if(pm->ps->powerups[PW_KNOCKBACK] > 4900){
-			pm->cmd.forwardmove = -127;
+			if(pm->ps->knockBackDirection == 1){
+				pm->cmd.upmove = 127;
+				pm->cmd.forwardmove = 0;
+				pm->cmd.rightmove = 0;
+			}else if(pm->ps->knockBackDirection == 2){
+				pm->cmd.upmove = -127;
+				pm->cmd.forwardmove = 0;
+				pm->cmd.rightmove = 0;
+			}else if(pm->ps->knockBackDirection == 3){
+				pm->cmd.rightmove = -127;
+				pm->cmd.forwardmove = 0;
+				pm->cmd.upmove = 0;
+			}else if(pm->ps->knockBackDirection == 4){
+				pm->cmd.rightmove = 127;
+				pm->cmd.forwardmove = 0;
+				pm->cmd.upmove = 0;
+			}else if(pm->ps->knockBackDirection == 5){
+				pm->cmd.forwardmove = -127;
+				pm->cmd.upmove = 0;
+				pm->cmd.rightmove = 0;
+			}
 		}else{
 			pm->cmd.forwardmove = 0;
+			pm->cmd.upmove = 0;
+			pm->cmd.rightmove = 0;
 		}
-		pm->cmd.upmove = 0;
-		pm->cmd.rightmove = 0;
 		scale = PM_CmdScale(&pm->cmd);
 		for(i=0;i<3;i++){
 			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
@@ -1558,18 +1578,23 @@ void PM_Melee(void){
 		else if(state == 4){
 			if(pm->cmd.forwardmove > 0){
 				PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_HIT);
+				pm->ps->lockedPlayer->knockBackDirection = 1;
 			} else if(pm->cmd.forwardmove < 0){
 				PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_HIT);
+				pm->ps->lockedPlayer->knockBackDirection = 2;
 			} else if(pm->cmd.rightmove > 0){
 				PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_HIT);
+				pm->ps->lockedPlayer->knockBackDirection = 3;
 			} else if(pm->cmd.rightmove < 0){
 				PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_HIT);
+				pm->ps->lockedPlayer->knockBackDirection = 4;
 			} else {
 				if(pm->cmd.buttons & BUTTON_BOOST){
 					PM_ContinueLegsAnim(LEGS_POWER_MELEE_3_HIT);
 				} else {
 					PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_HIT);
 				}
+				pm->ps->lockedPlayer->knockBackDirection = 5;
 			}
 			if(enemyState == 5){damage *= 0.6;}
 			if(knockback && enemyState < 5){
