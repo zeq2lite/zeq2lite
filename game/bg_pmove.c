@@ -1517,7 +1517,7 @@ void PM_Melee(void){
 				melee1 = -800;
 			}
 			// Using Block
-			else if(pm->cmd.buttons & BUTTON_BLOCK){state = 5;}
+			else if(pm->cmd.buttons & BUTTON_BLOCK){PM_ContinueLegsAnim(LEGS_BLOCK);state = 5;}
 			// Using Zanzoken
 			else if(pm->cmd.buttons & BUTTON_LIGHTSPEED){state = 6;}
 			else{
@@ -1617,7 +1617,15 @@ void PM_Melee(void){
 				pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
 			}
 			pm->ps->stats[bitFlags] |= usingMelee;
-			pm->ps->powerups[PW_FREEZE] = 500;
+			if(state == 2 || enemyState == 2){
+				pm->cmd.forwardmove = 127;
+			}else if(state == 3 || enemyState == 3){
+				pm->cmd.forwardmove = 127;
+				pm->cmd.forwardmove = 0;
+				pm->cmd.rightmove = 0;
+			}else{
+				pm->ps->powerups[PW_FREEZE] = 500;
+			}
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
 		pm->ps->powerups[PW_MELEE1] = melee1;
@@ -1656,7 +1664,12 @@ void PM_Weapon(void){
 		pm->ps->weapon = WP_NONE;
 		return;
 	}
-	if(pm->ps->weapon == WP_NONE || pm->ps->stats[bitFlags] & usingMelee){return;}
+	if(pm->ps->weapon == WP_NONE || pm->ps->stats[bitFlags] & usingMelee){
+			if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
+			PM_AddEvent(EV_DETONATE_WEAPON );
+		}
+		return;
+	}
 	// Retrieve our weapon's settings
 	weaponInfo = pm->ps->ammo;
 	if(weaponInfo[WPbitFlags] & WPF_ALTWEAPONPRESENT){
@@ -1896,10 +1909,16 @@ void PM_CheckLockon(void){
 	vec3_t minSize,maxSize,forward,up,end;
 	if(pm->ps->lockedTarget>0 && pm->ps->powerups[PW_MELEE_STATE] != 4){
 		PM_AddEvent(EV_LOCKON_CHECK);
-		if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=45){
+		if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=96){
 			if(!pm->ps->powerups[PW_MELEE_STATE]){
 				pm->ps->powerups[PW_MELEE_STATE] = 1;
 			}
+			if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
+				PM_AddEvent(EV_DETONATE_WEAPON );
+			}
+			pm->ps->weaponstate = WEAPON_READY;
+			pm->ps->stats[chargePercentPrimary] = 0;
+			pm->ps->stats[chargePercentSecondary] = 0;
 		}
 		else{
 			pm->ps->powerups[PW_MELEE_STATE] = 0;	
