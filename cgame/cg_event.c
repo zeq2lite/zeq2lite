@@ -927,6 +927,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MELEE_KNOCKBACK:
 		DEBUGNAME("EV_MELEE_KNOCKBACK");
 		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
+		CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
 		CG_PowerMeleeEffect(cent->lerpOrigin);
 		break;
 	case EV_MELEE_STUN:

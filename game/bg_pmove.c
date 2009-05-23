@@ -83,8 +83,8 @@ KNOCKBACK
 ===================*/
 void PM_StopKnockback(void){
 	pm->ps->powerups[PW_KNOCKBACK] = 0;
-	
 }
+
 void PM_CheckKnockback(void){
 	vec3_t pre_vel,post_vel,wishvel,wishdir;	
 	float scale,wishspeed;
@@ -92,7 +92,7 @@ void PM_CheckKnockback(void){
 	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
 		PM_ContinueLegsAnim(LEGS_KNOCKBACK);
 		pm->ps->powerups[PW_KNOCKBACK] -= pml.msec;
-		pm->cmd.forwardmove = -1;
+		pm->cmd.forwardmove = -127;
 		pm->cmd.upmove = 0;
 		pm->cmd.rightmove = 0;
 		scale = PM_CmdScale(&pm->cmd);
@@ -104,13 +104,37 @@ void PM_CheckKnockback(void){
 		PM_Accelerate(wishdir,wishspeed,50);
 		VectorNormalize(pm->ps->velocity);
 		VectorCopy(pm->ps->velocity,pre_vel);
-		VectorScale(pm->ps->velocity,2500,pm->ps->velocity);
-		PM_StepSlideMove(qfalse);
-		VectorNormalize2(pm->ps->velocity,post_vel);
-		if((DotProduct(pre_vel,post_vel)< 0.5f) || (VectorLength(pm->ps->velocity)== 0.0f) || (pm->ps->powerups[PW_KNOCKBACK] <= 0)){
+		// Fast recovery (possible after the first second of knockback, for half a second only)
+		if((pm->cmd.buttons & BUTTON_ALT_ATTACK) && (pm->ps->powerups[PW_KNOCKBACK] <= 4000) && (pm->ps->powerups[PW_KNOCKBACK] >= 3500)){
+			pm->ps->powerups[PW_KNOCKBACK] -= 200;
+			VectorScale(pm->ps->velocity,10,pm->ps->velocity);
+			PM_StepSlideMove(qfalse);
+			VectorNormalize2(pm->ps->velocity,post_vel);
+			if(pm->ps->powerups[PW_KNOCKBACK] < 0){
+				PM_StopKnockback();
+			}
+			PM_ContinueLegsAnim(LEGS_KNOCKBACK_RECOVER_2);
+		// Slow recovery (possible after a second and a half upon getting knockback)
+		}else if((pm->cmd.buttons & BUTTON_ATTACK) && (pm->ps->powerups[PW_KNOCKBACK] <= 3500)){
+			pm->ps->powerups[PW_KNOCKBACK] -= 100;
+			VectorScale(pm->ps->velocity,500,pm->ps->velocity);
+			PM_StepSlideMove(qfalse);
+			VectorNormalize2(pm->ps->velocity,post_vel);
+			if(pm->ps->powerups[PW_KNOCKBACK] < 0){
+				PM_StopKnockback();
+			}
+			PM_ContinueLegsAnim(LEGS_KNOCKBACK_RECOVER_1);
+		// No recovery
+		}else{
+			VectorScale(pm->ps->velocity,1000,pm->ps->velocity);
+			PM_StepSlideMove(qfalse);
+			VectorNormalize2(pm->ps->velocity,post_vel);
+		}
+		if(/*(DotProduct(pre_vel,post_vel)< 0.5f) || (VectorLength(pm->ps->velocity)== 0.0f) || */(pm->ps->powerups[PW_KNOCKBACK] <= 0)){
 			PM_StopKnockback();
 		}
 	}
+	//Com_Printf("Knockback:  %i\n",pm->ps->powerups[PW_KNOCKBACK]);
 }
 /*===================
 TALK
@@ -1265,7 +1289,13 @@ void PM_TorsoAnimation(void){
 	}
 	switch(pm->ps->legsAnim & ~ANIM_TOGGLEBIT){
 	case LEGS_KNOCKBACK:
-		PM_ContinueTorsoAnim(TORSO_BACK);
+		PM_ContinueTorsoAnim(TORSO_KNOCKBACK);
+		break;
+	case LEGS_KNOCKBACK_RECOVER_1:
+		PM_ContinueTorsoAnim(TORSO_KNOCKBACK_RECOVER_1);
+		break;
+	case LEGS_KNOCKBACK_RECOVER_2:
+		PM_ContinueTorsoAnim(TORSO_KNOCKBACK_RECOVER_2);
 		break;
 	case LEGS_POWER_MELEE_1_CHARGE:
 		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_1_CHARGE);
@@ -1510,7 +1540,7 @@ void PM_Melee(void){
 			PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_HIT);
 			if(enemyState == 5){damage *= 0.6;}
 			if(knockback && enemyState < 5){
-				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 1200;
+				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 5000;
 				pm->ps->lockedPlayer->powerups[PW_FREEZE] = 0;
 				pm->ps->powerups[PW_FREEZE] = 0;
 				PM_AddEvent(EV_MELEE_KNOCKBACK);
@@ -2075,7 +2105,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_DropTimers();
 	PM_Freeze();
 	PM_GroundTrace();
-	if(!(pm->ps->stats[bitFlags] & usingAlter) && !pm->ps->powerups[PW_FREEZE] && !pm->ps->powerups[PW_KNOCKBACK]){
+	if(!(pm->ps->stats[bitFlags] & usingAlter) && !pm->ps->powerups[PW_FREEZE]){
 		PM_FlyMove();
 		PM_DashMove();
 		PM_WalkMove();

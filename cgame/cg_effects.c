@@ -265,7 +265,11 @@ void CG_SpeedMeleeEffect( vec3_t org ) {
 		le->startTime = cg.time;
 		le->leType = LE_SCALE_FADE_RGB;
 		le->endTime = cg.time + 100;
-		le->radius = 32;
+		if (r > 75){
+			le->radius = 64;
+		}else{
+			le->radius = 32;
+		}
 		le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 		le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
 
