@@ -92,7 +92,11 @@ void PM_CheckKnockback(void){
 	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
 		PM_ContinueLegsAnim(LEGS_KNOCKBACK);
 		pm->ps->powerups[PW_KNOCKBACK] -= pml.msec;
-		pm->cmd.forwardmove = -127;
+		if(pm->ps->powerups[PW_KNOCKBACK] > 4900){
+			pm->cmd.forwardmove = -127;
+		}else{
+			pm->cmd.forwardmove = 0;
+		}
 		pm->cmd.upmove = 0;
 		pm->cmd.rightmove = 0;
 		scale = PM_CmdScale(&pm->cmd);
@@ -134,7 +138,6 @@ void PM_CheckKnockback(void){
 			PM_StopKnockback();
 		}
 	}
-	//Com_Printf("Knockback:  %i\n",pm->ps->powerups[PW_KNOCKBACK]);
 }
 /*===================
 TALK
@@ -432,6 +435,9 @@ void PM_Friction(void){
 	}
 	if(pm->ps->stats[bitFlags] & usingFlight || pml.onGround){
 		drop = speed*15*pml.frametime;
+	}
+	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
+		drop = speed*0*pml.frametime;
 	}
 	newspeed = speed - drop;
 	if(newspeed < 0) {newspeed = 0;}
@@ -1533,11 +1539,38 @@ void PM_Melee(void){
 			}
 		}
 		else if(state == 3){
-			option = random() * 6;
-			PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_CHARGE);
+			if(pm->cmd.forwardmove > 0){
+				PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_CHARGE); // Uppercut
+			} else if(pm->cmd.forwardmove < 0){
+				PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_CHARGE); // Axehandle
+			} else if(pm->cmd.rightmove > 0){
+				PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_CHARGE); // Left hook
+			} else if(pm->cmd.rightmove < 0){
+				PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_CHARGE); // Right hook
+			} else {
+				if(pm->cmd.buttons & BUTTON_BOOST){
+					PM_ContinueLegsAnim(LEGS_POWER_MELEE_3_CHARGE); // Drop kick
+				} else {
+					PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_CHARGE); // Straight Punch
+				}
+			}
 		}
 		else if(state == 4){
-			PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_HIT);
+			if(pm->cmd.forwardmove > 0){
+				PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_HIT);
+			} else if(pm->cmd.forwardmove < 0){
+				PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_HIT);
+			} else if(pm->cmd.rightmove > 0){
+				PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_HIT);
+			} else if(pm->cmd.rightmove < 0){
+				PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_HIT);
+			} else {
+				if(pm->cmd.buttons & BUTTON_BOOST){
+					PM_ContinueLegsAnim(LEGS_POWER_MELEE_3_HIT);
+				} else {
+					PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_HIT);
+				}
+			}
 			if(enemyState == 5){damage *= 0.6;}
 			if(knockback && enemyState < 5){
 				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 5000;

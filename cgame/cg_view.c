@@ -435,6 +435,7 @@ CG_OffsetFirstPersonView
 
 ===============
 */
+static playerEntity_t	playerInfoDuplicate[MAX_GENTITIES];
 static void CG_OffsetFirstPersonView( void ) {
 	float			*origin;
 	float			*angles;
@@ -445,13 +446,44 @@ static void CG_OffsetFirstPersonView( void ) {
 	float			f;
 	vec3_t			predictedVelocity;
 	int				timeDelta;
-	
+	int 			clientNum;
+	int				i;
+	orientation_t	*tagOrient;
+	orientation_t	lerped;
+	playerEntity_t	*pe;
+	vec3_t			tempAxis[3];
+	clientNum = cg.predictedPlayerState.clientNum;
+
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
 		return;
 	}
 
-	origin = cg.refdef.vieworg;
-	angles = cg.refdefViewAngles;
+	// HACK: Use this copy, which is sure to be stored correctly, unlike
+	//       reading it from cg_entities, which tends to clear out its
+	//       fields every now and then. WTF?!
+	pe = &playerInfoDuplicate[clientNum];
+	
+	// Prepare the destination orientation_t
+	//AxisClear( tagOrient->axis );
+
+	// Try to find the tag and return its coordinates
+	if ( trap_R_LerpTag( &lerped, pe->headRef.hModel, pe->head.oldFrame, pe->head.frame, 1.0 - pe->head.backlerp, "tag_eyes" ) ) {
+		VectorCopy( pe->headRef.origin, tagOrient->origin );
+		for ( i = 0 ; i < 3 ; i++ ) {
+			VectorMA( tagOrient->origin, lerped.origin[i], pe->headRef.axis[i], tagOrient->origin );
+		}
+
+		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
+		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
+
+		VectorCopy( tagOrient->origin, origin);
+		//origin = cg.refdef.vieworg;
+		angles = cg.refdefViewAngles;
+	} else {
+		origin = cg.refdef.vieworg;
+		angles = cg.refdefViewAngles;
+	}
+
 /*
 	// if dead, fix the angle and don't add any kick
 	if ( cg.snap->ps.stats[powerLevel] <= 0 ) {

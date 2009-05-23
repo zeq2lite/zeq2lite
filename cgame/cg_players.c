@@ -2363,8 +2363,8 @@ void CG_Player( centity_t *cent ) {
 	}
 	renderfx = 0;
 	if(cent->currentState.number == cg.snap->ps.clientNum){
-		if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
-		else if(cg_cameraMode.integer){return;}
+		//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
+		//else if(cg_cameraMode.integer){return;}
 	}
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
