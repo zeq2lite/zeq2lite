@@ -1916,7 +1916,6 @@ void PM_CheckLockon(void){
 			if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
 				PM_AddEvent(EV_DETONATE_WEAPON );
 			}
-			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->stats[chargePercentPrimary] = 0;
 			pm->ps->stats[chargePercentSecondary] = 0;
 		}
