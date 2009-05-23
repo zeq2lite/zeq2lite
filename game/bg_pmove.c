@@ -170,7 +170,6 @@ void PM_CheckZanzoken(void){
 		VectorNormalize(pm->ps->velocity);
 		VectorCopy(pm->ps->velocity,pre_vel);
 		VectorScale(pm->ps->velocity,4000,pm->ps->velocity);
-		PM_StepSlideMove(qfalse);
 		VectorNormalize2(pm->ps->velocity,post_vel);
 		if((DotProduct(pre_vel, post_vel)< 0.5f)|| (VectorLength(pm->ps->velocity)== 0.0f) || (pm->ps->powerups[PW_ZANZOKEN] < 0)){
 			pm->ps->powerups[PW_ZANZOKEN] = 0;
@@ -622,7 +621,6 @@ void PM_FlyMove(void){
 	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	PM_Accelerate(wishdir,wishspeed,pm_flyaccelerate);
-	PM_StepSlideMove(qfalse);
 }
 
 
@@ -662,7 +660,9 @@ void PM_AirMove(void){
 	if(pm->waterlevel == 3){
 		pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
 	}
+	if(pm->ps->stats[bitFlags] & usingZanzoken){pm->tracemask = CONTENTS_SOLID;}
 	PM_StepSlideMove(pm->ps->stats[bitFlags] & usingFlight ? qfalse : qtrue);
+	if(pm->ps->stats[bitFlags] & usingZanzoken){pm->tracemask = MASK_PLAYERSOLID;}
 }
 /*===================
 PM_WalkMove
@@ -2064,21 +2064,23 @@ void PmoveSingle(pmove_t *pmove){
 	if(abs(pm->cmd.forwardmove)> 64 || abs(pm->cmd.rightmove)> 64){pm->cmd.buttons &= ~BUTTON_WALKING;}
 	PM_CheckKnockback();
 	PM_CheckTransform();
-	if(!(pm->ps->stats[bitFlags] & isTransforming) && !(pm->ps->powerups[PW_KNOCKBACK])){
+	if(!(pm->ps->stats[bitFlags] & isTransforming)){
 		PM_BurnPowerLevel(qtrue);
 		PM_BurnPowerLevel(qfalse);
-		PM_CheckBoost();
-		PM_CheckStatus();
-		PM_CheckPowerLevel();
-		PM_CheckLockon();
-		if(!pm->ps->powerups[PW_MELEE_STATE]){
-			PM_CheckZanzoken();
-			PM_CheckJump();
-			PM_CheckBlock();
-			PM_Footsteps();
-		}
-		else{
-			PM_StopMovement();
+		if(!pm->ps->powerups[PW_KNOCKBACK]){
+			PM_CheckBoost();
+			PM_CheckStatus();
+			PM_CheckPowerLevel();
+			PM_CheckLockon();
+			if(!pm->ps->powerups[PW_MELEE_STATE]){
+				PM_CheckZanzoken();
+				PM_CheckJump();
+				PM_CheckBlock();
+				PM_Footsteps();
+			}
+			else{
+				PM_StopMovement();
+			}
 		}
 	}
 	PM_CheckTalk();
