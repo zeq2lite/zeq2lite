@@ -141,6 +141,7 @@ void PM_CheckKnockback(void){
 		// Slow recovery (possible after a second and a half upon getting knockback)
 		}else if((pm->cmd.buttons & BUTTON_ATTACK) && (pm->ps->powerups[PW_KNOCKBACK] <= 3500)){
 			pm->ps->powerups[PW_KNOCKBACK] -= 100;
+			pm->ps->weaponTime = 500;
 			VectorScale(pm->ps->velocity,500,pm->ps->velocity);
 			PM_StepSlideMove(qfalse);
 			VectorNormalize2(pm->ps->velocity,post_vel);
@@ -1475,6 +1476,8 @@ void PM_Melee(void){
 	qboolean knockback;
 	knockback = qfalse;
 	state = pm->ps->powerups[PW_MELEE_STATE];
+	if(pm->ps->powerups[PW_KNOCKBACK] > 0){return;};
+	if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] > 4000){return;};
 	if((state > 0) && (pm->ps->weaponstate == WEAPON_READY) && (pm->ps->lockedTarget > 0)){
 		enemyState = pm->ps->lockedPlayer->powerups[PW_MELEE_STATE];
 		melee1 = pm->ps->powerups[PW_MELEE1];
@@ -1482,10 +1485,13 @@ void PM_Melee(void){
 		damage = 0;
 		// Release Power Melee
 		if(state == 3 && !(pm->cmd.buttons & BUTTON_ALT_ATTACK)){
-				damage = ((float)melee2 / 1500.0) * (pm->ps->stats[powerLevel] * 0.25) * pm->ps->meleeAttack;
-				if(melee2 >= 1000){knockback = qtrue;}
-				melee2 = -600;
-				state = 4;
+			PM_AddEvent(EV_STOPLOOPINGSOUND);
+			damage = ((float)melee2 / 1500.0) * (pm->ps->stats[powerLevel] * 0.25) * pm->ps->meleeAttack;
+			if(melee2 >= 500){
+				knockback = qtrue;PM_AddEvent(EV_MELEE_KNOCKBACK);}
+			PM_AddEvent(EV_MELEE_SPEED);
+			melee2 = -250;
+			state = 4;
 		}
 		// Cooldown Speed Melee
 		if(melee1 < 0){
@@ -1505,7 +1511,7 @@ void PM_Melee(void){
 			if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
 				state = 3;
 				melee2 += pml.msec;
-				if(melee2 >= 1000){melee2 = 1000;}
+				if(melee2 >= 500){melee2 = 500;}
 			}
 			// Using Speed Melee
 			else if(pm->cmd.buttons & BUTTON_ATTACK){
@@ -1517,7 +1523,31 @@ void PM_Melee(void){
 				melee1 = -800;
 			}
 			// Using Block
-			else if(pm->cmd.buttons & BUTTON_BLOCK){PM_ContinueLegsAnim(LEGS_BLOCK);state = 5;}
+			else if(pm->cmd.buttons & BUTTON_BLOCK){
+				if(enemyState == 3 || enemyState == 4){
+					if(pm->cmd.forwardmove > 0 && pm->ps->knockBackDirection == 1){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else if(pm->cmd.forwardmove < 0 && pm->ps->knockBackDirection == 2){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else if(pm->cmd.rightmove > 0 && pm->ps->knockBackDirection == 3){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else if(pm->cmd.rightmove < 0 && pm->ps->knockBackDirection == 4){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else if(pm->cmd.forwardmove == 0 && pm->cmd.rightmove == 0 && pm->ps->knockBackDirection == 5){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else {
+						state = 1;
+					}
+				} else {
+					PM_ContinueLegsAnim(LEGS_BLOCK);
+					state = 5;
+				}
+			}
 			// Using Zanzoken
 			else if(pm->cmd.buttons & BUTTON_LIGHTSPEED){state = 6;}
 			else{
@@ -1532,10 +1562,9 @@ void PM_Melee(void){
 		}
 		else if(enemyState == 4 && state == 5){
 			PM_ContinueLegsAnim(LEGS_BLOCK);
-			PM_AddEvent(EV_MELEE_SPEED);
 		}
 		else if(enemyState == 2 && state == 5){
-			if(pm->ps->lockedPlayer->stats[bitFlags] & usingBoost){
+			if(pm->ps->stats[bitFlags] & usingBoost){
 				PM_ContinueLegsAnim(LEGS_SPEED_MELEE_BLOCK);
 				PM_AddEvent(EV_MELEE_SPEED);
 			}
@@ -1561,18 +1590,23 @@ void PM_Melee(void){
 		else if(state == 3){
 			if(pm->cmd.forwardmove > 0){
 				PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_CHARGE); // Uppercut
+				pm->ps->lockedPlayer->knockBackDirection = 1;
 			} else if(pm->cmd.forwardmove < 0){
 				PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_CHARGE); // Axehandle
+				pm->ps->lockedPlayer->knockBackDirection = 2;
 			} else if(pm->cmd.rightmove > 0){
 				PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_CHARGE); // Left hook
+				pm->ps->lockedPlayer->knockBackDirection = 3;
 			} else if(pm->cmd.rightmove < 0){
 				PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_CHARGE); // Right hook
+				pm->ps->lockedPlayer->knockBackDirection = 4;
 			} else {
 				if(pm->cmd.buttons & BUTTON_BOOST){
 					PM_ContinueLegsAnim(LEGS_POWER_MELEE_3_CHARGE); // Drop kick
 				} else {
 					PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_CHARGE); // Straight Punch
 				}
+				pm->ps->lockedPlayer->knockBackDirection = 5;
 			}
 		}
 		else if(state == 4){
@@ -1601,7 +1635,6 @@ void PM_Melee(void){
 				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 5000;
 				pm->ps->lockedPlayer->powerups[PW_FREEZE] = 0;
 				pm->ps->powerups[PW_FREEZE] = 0;
-				PM_AddEvent(EV_MELEE_KNOCKBACK);
 			}
 			if(enemyState != 6){
 				pm->ps->lockedPlayer->powerLevelMeleeBurn += damage;
@@ -1617,15 +1650,15 @@ void PM_Melee(void){
 				pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
 			}
 			pm->ps->stats[bitFlags] |= usingMelee;
-			if(state == 2 || enemyState == 2){
-				pm->cmd.forwardmove = 127;
-			}else if(state == 3 || enemyState == 3){
-				pm->cmd.forwardmove = 127;
-				pm->cmd.forwardmove = 0;
-				pm->cmd.rightmove = 0;
-			}else{
+			//if(state == 2 || enemyState == 2){
+			//	pm->cmd.forwardmove = 127;
+			//}else if(state == 3 || enemyState == 3){
+			//	pm->cmd.forwardmove = 127;
+			//	pm->cmd.upmove = 0;
+			//	pm->cmd.rightmove = 0;
+			//}else{
 				pm->ps->powerups[PW_FREEZE] = 500;
-			}
+//			}
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
 		pm->ps->powerups[PW_MELEE1] = melee1;
@@ -1909,7 +1942,7 @@ void PM_CheckLockon(void){
 	vec3_t minSize,maxSize,forward,up,end;
 	if(pm->ps->lockedTarget>0 && pm->ps->powerups[PW_MELEE_STATE] != 4){
 		PM_AddEvent(EV_LOCKON_CHECK);
-		if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=96){
+		if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=64){
 			if(!pm->ps->powerups[PW_MELEE_STATE]){
 				pm->ps->powerups[PW_MELEE_STATE] = 1;
 			}
@@ -1933,7 +1966,7 @@ void PM_CheckLockon(void){
 		if(pm->ps->lockedTarget>0){
 			PM_StopLockon();
 			return;
-		} 
+		}
 		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
 		VectorMA(pm->ps->origin,131072,forward,end);
 		lockBox = 250;
