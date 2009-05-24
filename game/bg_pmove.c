@@ -149,6 +149,12 @@ void PM_CheckKnockback(void){
 				PM_StopKnockback();
 			}
 			PM_ContinueLegsAnim(LEGS_KNOCKBACK_RECOVER_1);
+		// Player has caught up to you, so slow down for melee to register.
+		}else if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=64 && (pm->ps->powerups[PW_KNOCKBACK] <= 3500)){
+			pm->ps->powerups[PW_KNOCKBACK] -= 50;
+			VectorScale(pm->ps->velocity,1,pm->ps->velocity);
+			PM_StepSlideMove(qfalse);
+			VectorNormalize2(pm->ps->velocity,post_vel);
 		// No recovery
 		}else{
 			VectorScale(pm->ps->velocity,1000,pm->ps->velocity);
@@ -458,7 +464,11 @@ void PM_Friction(void){
 		drop = speed*15*pml.frametime;
 	}
 	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
-		drop = speed*0*pml.frametime;
+		if(speed < 100){
+			drop = speed*15*pml.frametime;
+		} else {
+			drop = speed*0*pml.frametime;
+		}
 	}
 	newspeed = speed - drop;
 	if(newspeed < 0) {newspeed = 0;}
@@ -1109,7 +1119,7 @@ void PM_Footsteps(void){
 	float bobmove;
 	int	old;
 	qboolean footstep;
-	if((pm->ps->stats[bitFlags] & usingZanzoken) || (pm->ps->powerups[PW_MELEE_STATE])){return;}
+	if((pm->ps->stats[bitFlags] & usingZanzoken)/* || (pm->ps->powerups[PW_MELEE_STATE])*/){return;}
 	if((pm->ps->stats[bitFlags] & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
 		if(pm->ps->stats[powerLevel] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
 		else{pm->ps->stats[powerLevel] == pm->ps->persistant[powerLevelMaximum] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
@@ -1650,15 +1660,13 @@ void PM_Melee(void){
 				pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
 			}
 			pm->ps->stats[bitFlags] |= usingMelee;
-			//if(state == 2 || enemyState == 2){
-			//	pm->cmd.forwardmove = 127;
-			//}else if(state == 3 || enemyState == 3){
-			//	pm->cmd.forwardmove = 127;
-			//	pm->cmd.upmove = 0;
-			//	pm->cmd.rightmove = 0;
-			//}else{
+			if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] == 0){
 				pm->ps->powerups[PW_FREEZE] = 500;
-//			}
+			} else {
+				pm->cmd.forwardmove = 127;
+				pm->cmd.rightmove = 0;
+				pm->cmd.upmove = 0;
+			}
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
 		pm->ps->powerups[PW_MELEE1] = melee1;
@@ -1942,7 +1950,7 @@ void PM_CheckLockon(void){
 	vec3_t minSize,maxSize,forward,up,end;
 	if(pm->ps->lockedTarget>0 && pm->ps->powerups[PW_MELEE_STATE] != 4){
 		PM_AddEvent(EV_LOCKON_CHECK);
-		if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=64){
+		if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=32 || (pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] > 0 && Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=64)){
 			if(!pm->ps->powerups[PW_MELEE_STATE]){
 				pm->ps->powerups[PW_MELEE_STATE] = 1;
 			}
@@ -1980,9 +1988,24 @@ void PM_CheckLockon(void){
 		if((trace.entityNum >= MAX_CLIENTS)){return;}
 		PM_AddEvent(EV_LOCKON_START);
 		pm->ps->lockedTarget = trace.entityNum+1;
-	}
-	else{
+	}else{
 		pm->ps->pm_flags &= ~PMF_LOCK_HELD;
+	}
+	if(pm->ps->lockedTarget==0){
+		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
+		VectorMA(pm->ps->origin,131072,forward,end);
+		lockBox = 16;
+		minSize[0] = -lockBox;
+		minSize[1] = -lockBox;
+		minSize[2] = -lockBox;
+		maxSize[0] = -minSize[0];
+		maxSize[1] = -minSize[1];
+		maxSize[2] = -minSize[2];
+		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
+		if((trace.entityNum >= MAX_CLIENTS)){return;}
+		if((trace.fraction > 0.0005)){return;}
+		PM_AddEvent(EV_LOCKON_START);
+		pm->ps->lockedTarget = trace.entityNum+1;
 	}
 	if(pm->ps->lockedTarget == -1){PM_StopLockon();} 
 }
@@ -2047,7 +2070,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	if(ps->stats[powerLevel] <= 0 && ps->stats[powerLevelTotal] <= 0){
 		return;
 	}
-	if(pm->ps->lockedTarget>0 /*&& !(pm->ps->powerups[PW_MELEE_STATE])*/){
+	if(pm->ps->lockedTarget>0 && (pm->ps->powerups[PW_MELEE_STATE] < 2 || ( pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] > 0 && pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] < 3500))){
 		vec3_t dir;
 		vec3_t angles;
 		VectorSubtract(*(ps->lockedPosition),ps->origin,dir);
