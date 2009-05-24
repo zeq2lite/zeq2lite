@@ -1991,7 +1991,8 @@ void PM_CheckLockon(void){
 	}else{
 		pm->ps->pm_flags &= ~PMF_LOCK_HELD;
 	}
-	if(pm->ps->lockedTarget==0){
+	if(pm->ps->lockedTarget == 0){
+		if(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING){return;}
 		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
 		VectorMA(pm->ps->origin,131072,forward,end);
 		lockBox = 16;
@@ -2002,8 +2003,8 @@ void PM_CheckLockon(void){
 		maxSize[1] = -minSize[1];
 		maxSize[2] = -minSize[2];
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
-		if((trace.entityNum >= MAX_CLIENTS)){return;}
-		if((trace.fraction > 0.0005)){return;}
+		if(trace.entityNum >= MAX_CLIENTS){return;}
+		if(trace.fraction > 0.0005){return;}
 		PM_AddEvent(EV_LOCKON_START);
 		pm->ps->lockedTarget = trace.entityNum+1;
 	}
