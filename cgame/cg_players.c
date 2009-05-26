@@ -2729,7 +2729,7 @@ void CG_ResetPlayerEntity( centity_t *cent ) {
 }
 
 void CG_SpawnLightSpeedGhost( centity_t *cent ) {
-	/*if (random() < 0.2){
+	if (random() < 0.2){
 		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound1 );
 	}else if (random() < 0.4){
 		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound2 );
@@ -2739,7 +2739,6 @@ void CG_SpawnLightSpeedGhost( centity_t *cent ) {
 		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound4 );
 	} else {
 		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound5 );
-	}*/
-	trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound5 );
+	}
 }
 

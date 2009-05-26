@@ -642,7 +642,7 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.lightspeedSound2 = trap_S_RegisterSound( "effects/zanzoken/zanzoken2.ogg", qfalse );
 	cgs.media.lightspeedSound3 = trap_S_RegisterSound( "effects/zanzoken/zanzoken3.ogg", qfalse );
 	cgs.media.lightspeedSound4 = trap_S_RegisterSound( "effects/zanzoken/zanzoken4.ogg", qfalse );
-	cgs.media.lightspeedSound4 = trap_S_RegisterSound( "effects/zanzoken/zanzoken5.ogg", qfalse );
+	cgs.media.lightspeedSound5 = trap_S_RegisterSound( "effects/zanzoken/zanzoken5.ogg", qfalse );
 	cgs.media.blockSound = trap_S_RegisterSound( "effects/melee/block.ogg", qfalse );
 	cgs.media.knockbackSound = trap_S_RegisterSound( "effects/melee/knockback.ogg", qfalse );
 	cgs.media.knockbackLoopSound = trap_S_RegisterSound( "effects/melee/knockbackLoop.ogg", qfalse );
