@@ -9,6 +9,11 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*death3.ogg",
 	"*jump1.ogg",
 	"*highjump1.ogg",
+	"*pain1.ogg",
+	"*pain2.ogg",
+	"*pain3.ogg",
+	"*pain4.ogg",
+	"*pain5.ogg",
 	"*pain25_1.ogg",
 	"*pain50_1.ogg",
 	"*pain75_1.ogg",
@@ -2724,11 +2729,17 @@ void CG_ResetPlayerEntity( centity_t *cent ) {
 }
 
 void CG_SpawnLightSpeedGhost( centity_t *cent ) {
-	
-	// Play the ZANZOKEN sound at the teleport effect's position for other players
-	trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound );
-
-	// But play the ZANZOKEN sound effect for the local client too
-	trap_S_StartSound( NULL, cent->currentState.number, CHAN_LOCAL, cgs.media.lightspeedSound );
+	/*if (random() < 0.2){
+		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound1 );
+	}else if (random() < 0.4){
+		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound2 );
+	}else if (random() < 0.6){
+		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound3 );
+	}else if ( random() < 0.8){
+		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound4 );
+	} else {
+		trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound5 );
+	}*/
+	trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, cgs.media.lightspeedSound5 );
 }
 

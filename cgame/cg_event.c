@@ -876,6 +876,26 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			CG_PainEvent( cent, es->eventParm );
 		}
 		break;
+	case EV_PAIN1:
+		DEBUGNAME("EV_PAIN1");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain1.ogg"));
+		break;
+	case EV_PAIN2:
+		DEBUGNAME("EV_PAIN2");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain2.ogg"));
+		break;
+	case EV_PAIN3:
+		DEBUGNAME("EV_PAIN3");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain3.ogg"));
+		break;
+	case EV_PAIN4:
+		DEBUGNAME("EV_PAIN4");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain4.ogg"));
+		break;
+	case EV_PAIN5:
+		DEBUGNAME("EV_PAIN5");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain5.ogg"));
+		break;
 	case EV_DEATH:
 		DEBUGNAME("EV_DEATH");
 		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*death1.ogg"));

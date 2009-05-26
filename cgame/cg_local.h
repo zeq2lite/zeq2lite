@@ -1033,7 +1033,11 @@ typedef struct {
 	sfxHandle_t	wstbactvSound;
 	// ADDING FOR ZEQ2
 	sfxHandle_t	radarwarningSound;
-	sfxHandle_t	lightspeedSound;
+	sfxHandle_t	lightspeedSound1;
+	sfxHandle_t	lightspeedSound2;
+	sfxHandle_t	lightspeedSound3;
+	sfxHandle_t	lightspeedSound4;
+	sfxHandle_t	lightspeedSound5;
 	sfxHandle_t	blockSound;
 	sfxHandle_t	knockbackSound;
 	sfxHandle_t	knockbackLoopSound;
