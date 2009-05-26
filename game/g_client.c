@@ -951,7 +951,7 @@ void ClientBegin( int clientNum ) {
 
 	// ADDING FOR ZEQ2
 	// Set the starting cap
-	client->ps.persistant[powerLevelMaximum] = g_powerLevel.value;//1000;
+	client->ps.persistant[powerLevelMaximum] = g_powerLevel.value;
 	// END ADDING
 
 	// locate ent at a spawn point

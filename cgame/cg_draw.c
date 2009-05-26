@@ -768,7 +768,7 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 	gitem_t	*item;
 	int ret_y, count;
 
-	if ( !cg_drawTeamOverlay.integer ) {
+	if ( !cg_drawTeamOverlay.integer){
 		return y;
 	}
 
@@ -2684,9 +2684,10 @@ static void CG_Draw2D( void ) {
 			CG_DrawAmmoWarning();  
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
-			CG_DrawWeaponSelect();
+			if(!cg.snap->ps.powerups[PW_MELEE_STATE]){
+				CG_DrawWeaponSelect();
+			}
 			CG_DrawHoldableItem();
-			CG_DrawReward();
 		}
 		if ( cgs.gametype >= GT_TEAM ) {
 			CG_DrawTeamInfo();

@@ -589,9 +589,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_JUMP");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
 		break;
-	case EV_LOCKON_CHECK:
-		DEBUGNAME("EV_LOCKON_CHECK");
-		break;
 	case EV_LOCKON_START:
 		DEBUGNAME("EV_LOCKON_START");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
@@ -916,9 +913,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 	case EV_GIB_PLAYER:
 		DEBUGNAME("EV_GIB_PLAYER");
-		// don't play gib sound when using the kamikaze because it interferes
-		// with the kamikaze sound, downside is that the gib sound will also
-		// not be played when someone is gibbed while just carrying the kamikaze
 		if ( !(es->eFlags & EF_KAMIKAZE) ) {
 			trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.gibSound );
 		}
@@ -962,10 +956,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_TIERUP:
 		DEBUGNAME("EV_TIERUP");
 		if((ci->tierCurrent+1)>ci->tierMax){
-			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent+1].soundTransformFirst);
+			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent].soundTransformFirst);
 		}
 		else{
-			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent+1].soundTransformUp);
+			trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent].soundTransformUp);
 		}
 		break;
 	case EV_TIERDOWN:

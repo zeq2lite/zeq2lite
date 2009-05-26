@@ -410,6 +410,12 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			missile = client->guidetarget;
 			G_RemoveUserWeapon(missile);
 			break;
+		case EV_MELEE_CHECK:
+			if(ps->lockedTarget>0){
+				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
+				ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
+			}
+			break;
 		case EV_MELEE_SPEED:
 			break;
 		case EV_MELEE_MISS:
@@ -417,8 +423,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_MELEE_KNOCKBACK:
 			break;
 		case EV_MELEE_STUN:
-			break;
-		case EV_MELEE_CHECK:
 			break;
 		case EV_TIERCHECK:
 			checkTier(client);
@@ -428,12 +432,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_TIERDOWN:
 			syncTier(client);
-			break;
-		case EV_LOCKON_CHECK:
-			if(ps->lockedTarget>0){
-				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
-				ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
-			}
 			break;
 		case EV_LOCKON_START:
 			break;
