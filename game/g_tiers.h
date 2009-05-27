@@ -11,6 +11,8 @@ typedef struct{
 	int zanzokenCost;
 	int zanzokenSpeed;
 	int zanzokenDistance;
+	int airBrakeCost;
+	int knockBackPower;
 	int speed;
 	float meleeAttack;
 	float meleeDefense;

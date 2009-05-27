@@ -653,7 +653,8 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.powerStunSound = trap_S_RegisterSound( "effects/melee/powerStun1.ogg", qfalse );
 	cgs.media.powerMeleeSound = trap_S_RegisterSound( "effects/melee/powerHit1.ogg", qfalse );
 	cgs.media.powerMissSound = trap_S_RegisterSound( "effects/melee/powerMiss1.ogg", qfalse );
-
+	cgs.media.airBrake1 = trap_S_RegisterSound( "effects/airBrake1.ogg", qfalse );
+	cgs.media.airBrake2 = trap_S_RegisterSound( "effects/airBrake2.ogg", qfalse );
 	// END ADDING
 
 }

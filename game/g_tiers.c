@@ -117,6 +117,16 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->energyAttackCost = atof(token);
 			}
+			else if(!Q_stricmp(token,"tierKnockBackPower")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->knockBackPower = atoi(token);
+			}
+			else if(!Q_stricmp(token,"tierAirBrakeCost")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->airBrakeCost = atoi(token);
+			}
 			else if(!Q_stricmp(token,"tierZanzokenCost")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}

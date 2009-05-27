@@ -92,7 +92,7 @@ void PM_CheckKnockback(void){
 	if(pm->ps->powerups[PW_KNOCKBACK] < 0){
 		pm->ps->powerups[PW_KNOCKBACK] += pml.msec;
 		PM_ContinueLegsAnim(LEGS_KNOCKBACK_RECOVER_2);
-		if(pm->ps->powerups[PW_KNOCKBACK] > 0){
+		if(pm->ps->powerups[PW_KNOCKBACK] >= 0){
 			pm->ps->powerups[PW_KNOCKBACK] = 0;
 		}
 	}
@@ -122,14 +122,14 @@ void PM_CheckKnockback(void){
 		VectorNormalize(pm->ps->velocity);
 		VectorCopy(pm->ps->velocity,pre_vel);
 		speed = 1500;
-		if(pm->cmd.buttons & BUTTON_ATTACK){
+		if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
+			PM_AddEvent(EV_AIRBRAKE);
+			speed = 0;
+		}
+		else if(pm->cmd.buttons & BUTTON_ATTACK){
 			pm->ps->powerups[PW_KNOCKBACK] -= pml.msec;
 			PM_ContinueLegsAnim(LEGS_KNOCKBACK_RECOVER_1);
 			speed = 750;
-		}
-		else if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
-			pm->ps->powerups[PW_KNOCKBACK] = -500;
-			speed = 0;
 		}
 		else if(Distance(pm->ps->origin,*(pm->ps->lockedPosition))<=256){
 			speed = 375;

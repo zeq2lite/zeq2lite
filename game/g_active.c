@@ -397,6 +397,33 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_FIRE_WEAPON:
 			FireWeapon(ent,qfalse);
 			break;
+		case EV_AIRBRAKE:
+			if(ps->powerups[PW_KNOCKBACK] >= 4500) {
+				amount = client->tiers[tier].airBrakeCost * 2;
+				if(ps->stats[powerLevelTotal] - amount > 0){ps->stats[powerLevelTotal] -= amount;}
+				else{ps->stats[powerLevelTotal] = 0;}
+				Com_Printf("Very Costly AirBrake!\n");
+			} else if((pm->ps->powerups[PW_KNOCKBACK] < 4500) && (pm->ps->powerups[PW_KNOCKBACK] > 4000)){
+				Com_Printf("Free AirBrake!\n");
+			} else if(ps->powerups[PW_KNOCKBACK] <= 4000){
+				if(ps->powerups[PW_KNOCKBACK] <= 1000){
+					amount = client->tiers[tier].airBrakeCost / 6;
+				}
+				else if(ps->powerups[PW_KNOCKBACK] <= 2000){
+					amount = client->tiers[tier].airBrakeCost / 4;
+				}
+				else if(ps->powerups[PW_KNOCKBACK] <= 3000){
+					amount = client->tiers[tier].airBrakeCost / 2;
+				}
+				else {
+					amount = client->tiers[tier].airBrakeCost;
+				}
+				if(ps->stats[powerLevelTotal] - amount > 0){ps->stats[powerLevelTotal] -= amount;}
+				else{ps->stats[powerLevelTotal] = 0;}
+				Com_Printf("Costly AirBrake!\n");
+			}
+			pm->ps->powerups[PW_KNOCKBACK] = -500;
+			break;
 		case EV_ZANZOKEN_START:
 			amount = client->tiers[tier].zanzokenCost;
 			if(ps->stats[powerLevelTotal] - amount > 0){ps->stats[powerLevelTotal] -= amount;}

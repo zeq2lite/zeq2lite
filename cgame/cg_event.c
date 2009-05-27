@@ -867,6 +867,16 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		}
 		break;
 #endif
+	case EV_AIRBRAKE:
+		DEBUGNAME("EV_AIRBRAKE");
+		if((cg.snap->ps.powerups[PW_KNOCKBACK] <= 4500) && (cg.snap->ps.powerups[PW_KNOCKBACK] >= 4000)){
+			trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake1);
+		} else {
+			trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake2);
+		}
+		CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
+		CG_PowerMeleeEffect(cent->lerpOrigin);
+		break;
 	case EV_PAIN:
 		DEBUGNAME("EV_PAIN");
 		if (cent->currentState.number != cg.snap->ps.clientNum){

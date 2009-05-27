@@ -453,6 +453,7 @@ typedef enum {
 	EV_RAILTRAIL,
 	EV_SHOTGUN,
 	EV_BULLET,				// otherEntity is the shooter
+	EV_AIRBRAKE,
 	EV_PAIN,
 	EV_PAIN1,
 	EV_PAIN2,
