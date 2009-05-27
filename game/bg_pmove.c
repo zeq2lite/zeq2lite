@@ -122,7 +122,7 @@ void PM_CheckKnockback(void){
 		VectorNormalize(pm->ps->velocity);
 		VectorCopy(pm->ps->velocity,pre_vel);
 		speed = 1500;
-		if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
+		if((pm->cmd.buttons & BUTTON_ALT_ATTACK) && (pm->ps->powerups[PW_KNOCKBACK] < 4500)){
 			PM_AddEvent(EV_AIRBRAKE);
 			speed = 0;
 		}

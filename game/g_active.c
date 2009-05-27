@@ -398,21 +398,21 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			FireWeapon(ent,qfalse);
 			break;
 		case EV_AIRBRAKE:
-			if(ps->powerups[PW_KNOCKBACK] >= 4500) {
+			if(ps->powerups[PW_KNOCKBACK] >= 4000) {
 				amount = client->tiers[tier].airBrakeCost * 2;
 				if(ps->stats[powerLevelTotal] - amount > 0){ps->stats[powerLevelTotal] -= amount;}
 				else{ps->stats[powerLevelTotal] = 0;}
 				Com_Printf("Very Costly AirBrake!\n");
-			} else if((pm->ps->powerups[PW_KNOCKBACK] < 4500) && (pm->ps->powerups[PW_KNOCKBACK] > 4000)){
+			} else if((pm->ps->powerups[PW_KNOCKBACK] < 4000) && (pm->ps->powerups[PW_KNOCKBACK] > 3500)){
 				Com_Printf("Free AirBrake!\n");
-			} else if(ps->powerups[PW_KNOCKBACK] <= 4000){
+			} else if(ps->powerups[PW_KNOCKBACK] <= 3500){
 				if(ps->powerups[PW_KNOCKBACK] <= 1000){
 					amount = client->tiers[tier].airBrakeCost / 6;
 				}
-				else if(ps->powerups[PW_KNOCKBACK] <= 2000){
+				else if(ps->powerups[PW_KNOCKBACK] <= 1500){
 					amount = client->tiers[tier].airBrakeCost / 4;
 				}
-				else if(ps->powerups[PW_KNOCKBACK] <= 3000){
+				else if(ps->powerups[PW_KNOCKBACK] <= 2500){
 					amount = client->tiers[tier].airBrakeCost / 2;
 				}
 				else {
