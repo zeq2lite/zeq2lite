@@ -1521,7 +1521,31 @@ void PM_Melee(void){
 				melee1 = -400;
 			}
 			// Using Block
-			else if(pm->cmd.buttons & BUTTON_BLOCK){state = 5;}
+			else if(pm->cmd.buttons & BUTTON_BLOCK){
+				if(enemyState == 3 || enemyState == 4){
+					if(pm->cmd.forwardmove > 0 && pm->ps->knockBackDirection == 1){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else if(pm->cmd.forwardmove < 0 && pm->ps->knockBackDirection == 2){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else if(pm->cmd.rightmove > 0 && pm->ps->knockBackDirection == 3){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else if(pm->cmd.rightmove < 0 && pm->ps->knockBackDirection == 4){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else if(pm->cmd.forwardmove == 0 && pm->cmd.rightmove == 0 && pm->ps->knockBackDirection == 5){
+						PM_ContinueLegsAnim(LEGS_BLOCK);
+						state = 5;
+					} else {
+						state = 1;
+					}
+				} else {
+					PM_ContinueLegsAnim(LEGS_BLOCK);
+					state = 5;
+				}
+			}
 			// Using Zanzoken
 			else if(pm->cmd.buttons & BUTTON_LIGHTSPEED){state = 6;}
 			else{
@@ -1562,32 +1586,29 @@ void PM_Melee(void){
 			}
 		}
 		else if(state == 3){
-			if(pm->cmd.forwardmove > 0){PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_CHARGE);} // Uppercut
-			else if(pm->cmd.forwardmove < 0){PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_CHARGE);} // Axehandle
-			else if(pm->cmd.rightmove > 0)	{PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_CHARGE);} // Left hook
-			else if(pm->cmd.rightmove < 0)	{PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_CHARGE);} // Right hook
+			if(pm->cmd.forwardmove > 0){PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_CHARGE);
+				pm->ps->lockedPlayer->knockBackDirection = 1;} // Uppercut
+			else if(pm->cmd.forwardmove < 0){PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_CHARGE);
+				pm->ps->lockedPlayer->knockBackDirection = 2;} // Axehandle
+			else if(pm->cmd.rightmove > 0)	{PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_CHARGE);
+				pm->ps->lockedPlayer->knockBackDirection = 3;} // Left hook
+			else if(pm->cmd.rightmove < 0)	{PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_CHARGE);
+				pm->ps->lockedPlayer->knockBackDirection = 4;} // Right hook
 			else{
 				if(pm->cmd.buttons & BUTTON_BOOST){PM_ContinueLegsAnim(LEGS_POWER_MELEE_3_CHARGE);} // Drop kick
 				else{PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_CHARGE);} // Straight Punch
+				pm->ps->lockedPlayer->knockBackDirection = 5;
 			}
 		}
 		else if(state == 4){
-			if(pm->cmd.forwardmove > 0){
-				PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_HIT);
-				pm->ps->lockedPlayer->knockBackDirection = 1;
-			}
-			else if(pm->cmd.forwardmove < 0){
-				PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_HIT);
-				pm->ps->lockedPlayer->knockBackDirection = 2;
-			}
-			else if(pm->cmd.rightmove > 0){
-				PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_HIT);
-				pm->ps->lockedPlayer->knockBackDirection = 3;
-			}
-			else if(pm->cmd.rightmove < 0){
-				PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_HIT);
-				pm->ps->lockedPlayer->knockBackDirection = 4;
-			}
+			if(pm->cmd.forwardmove > 0){PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_HIT);
+				pm->ps->lockedPlayer->knockBackDirection = 1;}
+			else if(pm->cmd.forwardmove < 0){PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_HIT);
+				pm->ps->lockedPlayer->knockBackDirection = 2;}
+			else if(pm->cmd.rightmove > 0){PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_HIT);
+				pm->ps->lockedPlayer->knockBackDirection = 3;}
+			else if(pm->cmd.rightmove < 0){PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_HIT);
+				pm->ps->lockedPlayer->knockBackDirection = 4;}
 			else{
 				if(pm->cmd.buttons & BUTTON_BOOST){PM_ContinueLegsAnim(LEGS_POWER_MELEE_3_HIT);}
 				else{PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_HIT);}
