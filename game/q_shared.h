@@ -1116,8 +1116,9 @@ typedef struct {
 #define	MAX_PERSISTANT			16
 #define	MAX_POWERUPS			16
 #define	MAX_WEAPONS				16		
+#define MAX_TIMERS				16
 
-#define	MAX_PS_EVENTS			4
+#define	MAX_PS_EVENTS			2
 
 #define PS_PMOVEFRAMECOUNTBITS	6
 
@@ -1217,6 +1218,7 @@ typedef struct playerState_s {
 
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
+	int			timers[MAX_TIMERS];
 	int			ammo[MAX_WEAPONS];
 
 	int			generic1;
