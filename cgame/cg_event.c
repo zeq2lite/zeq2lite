@@ -869,7 +869,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 #endif
 	case EV_AIRBRAKE:
 		DEBUGNAME("EV_AIRBRAKE");
-		if((cg.snap->ps.powerups[PW_KNOCKBACK] <= 4500) && (cg.snap->ps.powerups[PW_KNOCKBACK] >= 4000)){
+		if(r > 2.5){
 			trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake1);
 		} else {
 			trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake2);

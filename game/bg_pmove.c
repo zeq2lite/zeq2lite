@@ -2041,7 +2041,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
 		return;		// no view changes at all
 	}
-	if(pm->ps->lockedTarget > 0){
+	if(pm->ps->lockedTarget > 0 && (pm->ps->powerups[PW_MELEE_STATE] < 2)){
 		vec3_t dir;
 		vec3_t angles;
 		VectorSubtract(*(ps->lockedPosition),ps->origin,dir);

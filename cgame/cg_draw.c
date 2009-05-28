@@ -1822,6 +1822,10 @@ static void CG_DrawCrosshair(void) {
 
 	ps = &cg.predictedPlayerState;
 
+	if ( ps->powerups[PW_MELEE_STATE] ) {
+		return;
+	}
+
 	AngleVectors( ps->viewangles, forward, NULL, up );
 	VectorCopy( ps->origin, muzzle );
 	VectorMA( muzzle, ps->viewheight, up, muzzle );
@@ -1859,7 +1863,9 @@ static void CG_DrawCrosshair(void) {
 		ca = 0;
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
-	if(ps->lockedTarget > 0){hShader = cgs.media.crosshairLockedShader;}
+	if((cg.crosshairClientNum > 0 && cg.crosshairClientNum < MAX_CLIENTS) || (ps->lockedTarget > 0)){
+		hShader = cgs.media.crosshairLockedShader;
+	}
 	CG_DrawPic( x - 0.5f * w, y - 0.5f * h, w, h, hShader );
 	trap_R_SetColor( NULL );
 
@@ -1896,7 +1902,7 @@ static void CG_ScanForCrosshairEntity(void) {
 	
 	CG_Trace(&trace,start,minSize,maxSize,end,cg.snap->ps.clientNum,CONTENTS_BODY);
 
-	if (trace.entityNum>=MAX_CLIENTS){return;}
+	if (trace.entityNum>=MAX_CLIENTS){cg.crosshairClientNum=0;return;}
 
 	cg.crosshairClientNum=trace.entityNum;
 	cg.crosshairClientTime=cg.time;
