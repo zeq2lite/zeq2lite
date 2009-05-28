@@ -6,6 +6,7 @@ void syncTier(gclient_t *client){
 	ps = &client->ps;
 	tier = &client->tiers[ps->stats[tierCurrent]];
 	ps->powerLevelBreakLimitRate = tier->powerLevelBreakLimitRate * g_powerLevelBreakLimitRate.value;
+	ps->zanzokenSpeed = tier->zanzokenSpeed;
 	ps->drainPowerLevel = tier->powerLevelEffect;
 	ps->drainPowerLevelTotal = tier->powerLevelTotalEffect;
 	ps->drainPowerLevelMaximum = tier->powerLevelMaximumEffect;
