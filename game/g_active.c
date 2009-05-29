@@ -365,6 +365,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int			i, j;
 	int			event;
 	int 		tier;
+	int			distance;
 	int 		enemyMelee,playerMelee;
 	gclient_t	*client;
 	int			damage;
@@ -400,11 +401,8 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_AIRBRAKE:
 			if(ps->powerups[PW_KNOCKBACK] >= 4000) {
 				amount = client->tiers[tier].airBrakeCost * 2;
-				if(ps->stats[powerLevelTotal] - amount > 0){ps->stats[powerLevelTotal] -= amount;}
-				else{ps->stats[powerLevelTotal] = 0;}
-				Com_Printf("Very Costly AirBrake!\n");
+				ps->powerLevelTotalUse += amount;
 			} else if((pm->ps->powerups[PW_KNOCKBACK] < 4000) && (pm->ps->powerups[PW_KNOCKBACK] > 3500)){
-				Com_Printf("Free AirBrake!\n");
 			} else if(ps->powerups[PW_KNOCKBACK] <= 3500){
 				if(ps->powerups[PW_KNOCKBACK] <= 1000){
 					amount = client->tiers[tier].airBrakeCost / 6;
@@ -418,17 +416,15 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 				else {
 					amount = client->tiers[tier].airBrakeCost;
 				}
-				if(ps->stats[powerLevelTotal] - amount > 0){ps->stats[powerLevelTotal] -= amount;}
-				else{ps->stats[powerLevelTotal] = 0;}
-				Com_Printf("Costly AirBrake!\n");
+				ps->powerLevelTotalUse += amount;
 			}
 			pm->ps->powerups[PW_KNOCKBACK] = -500;
 			break;
 		case EV_ZANZOKEN_START:
-			amount = client->tiers[tier].zanzokenCost;
-			if(ps->stats[powerLevelTotal] - amount > 0){ps->stats[powerLevelTotal] -= amount;}
-			else{ps->stats[powerLevelTotal] = 0;}
 			ps->powerups[PW_ZANZOKEN] = client->tiers[tier].zanzokenDistance;
+			ps->powerLevelTotalUse += client->tiers[tier].zanzokenCost;
+			if(!ps->stats[bitFlags] & usingMelee){
+			}
 			break;
 		case EV_ALTFIRE_WEAPON:
 			FireWeapon(ent,qtrue);
@@ -506,12 +502,6 @@ static void GetTarget(gentity_t* ent) {
 	trace_t tr;
 	vec3_t forward, right, up, muzzle, end;
 	gentity_t* theTarget;
-
-	if (ent->client->ps.stats[powerLevel] <= 0) {
-		ent->client->ps.stats[target] = -1;
-		return;
-	}
-
 	// set aiming directions
 	AngleVectors(ent->client->ps.viewangles, forward, right, up);
 
@@ -528,8 +518,7 @@ static void GetTarget(gentity_t* ent) {
 			theTarget->client &&
 			!OnSameTeam(ent, theTarget) &&
 			theTarget->client->sess.sessionTeam != TEAM_SPECTATOR &&
-			theTarget->client->ps.pm_type != PM_SPECTATOR &&
-			theTarget->client->ps.stats[powerLevel] > 0
+			theTarget->client->ps.pm_type != PM_SPECTATOR
 		)
 	{
 		ent->client->ps.stats[target] = tr.entityNum;
@@ -702,7 +691,7 @@ void ClientThink_real( gentity_t *ent ) {
 	client->oldbuttons = client->buttons;
 	client->buttons = ucmd->buttons;
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
-	if ( client->ps.stats[powerLevel] <= 0 ) {
+	if ( client->ps.stats[powerLevelTotal] <= 0 ) {
 		// wait for the attack button to be pressed
 		if ( level.time > client->respawnTime ) {
 			// forcerespawn is to prevent users from waiting out powerups
