@@ -204,7 +204,7 @@ void PM_BurnPowerLevel(qboolean melee){
 	if(!burn){return;}
 	defense = melee ? pm->ps->meleeDefense : pm->ps->energyDefense;
 	percent = 1.0 - ((float)pm->ps->stats[powerLevel] / (float)pm->ps->persistant[powerLevelMaximum]);
-	burn -= (int)(((float)(pm->ps->persistant[powerLevelMaximum] - (pm->ps->stats[powerLevelTotal]/2)) * 0.01) * defense);
+	burn -= (int)(((float)pm->ps->stats[powerLevelTotal] * 0.01) * defense);
 	newValue = pm->ps->stats[powerLevelTotal] - burn;
 	if(burn > 0 && newValue >= 0){
 		pm->ps->stats[powerLevelTotal] = newValue > 0 ? newValue : 0;
@@ -264,6 +264,7 @@ void PM_CheckPowerLevel(void){
 	stats = pm->ps->stats;
 	stats[powerLevelTimerAuto] += pml.msec;
 	stats[bitFlags] &= ~usingAlter;
+	
 	while(stats[powerLevelTimerAuto] >= 100){
 		stats[powerLevelTimerAuto] -= 100;
 		recovery = (float)pm->ps->persistant[powerLevelMaximum] * 0.002;
@@ -306,7 +307,7 @@ void PM_CheckPowerLevel(void){
 		else if(pm->cmd.forwardmove < 0){
 			stats[bitFlags] |= keyTierDown;
 		}
-		else if((pm->cmd.rightmove > 0) /*|| VectorLength(pm->ps->velocity) < 10*/){
+		else if((pm->cmd.rightmove > 0)){
 			pm->ps->eFlags |= EF_AURA;
 			stats[powerLevelTimer] += pml.msec;
 			while(stats[powerLevelTimer] >= 25){
@@ -1472,17 +1473,16 @@ void PM_Melee(void){
 		distance = Distance(pm->ps->origin,*(pm->ps->lockedPosition));
 		inRange = distance <= 64 ? qtrue : qfalse;
 		if(state != 4 && distance <= 512){
-			if(!state){state = pm->ps->powerups[PW_MELEE_STATE] = 1;}
+			if(!state){pm->ps->powerups[PW_MELEE_STATE] = 1;}
 		}
 		else if(state != 4){
 			PM_StopMelee();
-			state = 0;
 		}
 	}
 	else if(!pm->ps->lockedTarget){
 		PM_StopMelee();
-		state = 0;
 	}
+	state = pm->ps->powerups[PW_MELEE_STATE];
 	if((state > 0) && (pm->ps->weaponstate != WEAPON_CHARGING && pm->ps->weaponstate != WEAPON_ALTCHARGING) && (pm->ps->lockedTarget > 0)){
 		enemyState = pm->ps->lockedPlayer->powerups[PW_MELEE_STATE];
 		melee1 = pm->ps->powerups[PW_MELEE1];
@@ -1491,6 +1491,7 @@ void PM_Melee(void){
 		// Knockback Halt
 		if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] && distance <= 96 && melee2 >= 0 && !(pm->ps->stats[bitFlags] & usingZanzoken)){
 			pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 0;
+			melee2 = 499;
 		}
 		// Auto Close-in
 		if(pm->cmd.forwardmove != -127){
@@ -1504,6 +1505,10 @@ void PM_Melee(void){
 			}
 		}
 		// Release Power Melee
+		if(state == 3){
+			if(inRange){PM_StopMovement();}
+			else{pm->cmd.rightmove = 0;}
+		}
 		if(state == 3 && (!(pm->cmd.buttons & BUTTON_ALT_ATTACK) || melee2 >= 500) && distance <= 96){
 			damage = ((float)melee2 / 1500.0) * (pm->ps->stats[powerLevel] * 0.25) * pm->ps->meleeAttack;
 			if(melee2 >= 500){
@@ -1542,6 +1547,7 @@ void PM_Melee(void){
 				state = 2;
 			}
 			else if(state == 2){
+				PM_AddEvent(EV_STOPLOOPINGSOUND);
 				melee1 = -400;
 			}
 			// Using Block
@@ -1572,7 +1578,6 @@ void PM_Melee(void){
 		}
 		if(enemyState == 2 && (state == 6 || state <= 1)){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_HIT);
-			PM_AddEvent(EV_MELEE_SPEED);
 		}
 		else if(enemyState == 4 && state == 5){
 			PM_ContinueLegsAnim(LEGS_BLOCK);
@@ -1594,6 +1599,9 @@ void PM_Melee(void){
 				else{
 					damage = 0;
 				}
+			}
+			else{
+				PM_AddEvent(EV_MELEE_SPEED);
 			}
 			while(melee1 >= 100){
 				melee1 -= 100;
@@ -2041,7 +2049,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
 		return;		// no view changes at all
 	}
-	if(pm->ps->lockedTarget > 0 && (pm->ps->powerups[PW_MELEE_STATE] < 2)){
+	if(pm->ps->lockedTarget > 0){
 		vec3_t dir;
 		vec3_t angles;
 		VectorSubtract(*(ps->lockedPosition),ps->origin,dir);
@@ -2181,7 +2189,7 @@ void PmoveSingle(pmove_t *pmove){
 			PM_CheckPowerLevel();
 			PM_CheckLockon();
 			PM_CheckZanzoken();
-			if(!meleeRange){
+			if(!meleeRange && !(pm->ps->stats[bitFlags] & usingAlter)){
 				PM_CheckJump();
 				PM_CheckBlock();
 				PM_Footsteps();
