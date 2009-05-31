@@ -1507,6 +1507,7 @@ void PM_Melee(void){
 	}
 	state = pm->ps->powerups[PW_MELEE_STATE];
 	if((state > 0) && !charging && (pm->ps->lockedTarget > 0)){
+		if(!inRange){PM_AddEvent(EV_STOPLOOPINGSOUND);}
 		enemyState = pm->ps->lockedPlayer->powerups[PW_MELEE_STATE];
 		melee1 = pm->ps->powerups[PW_MELEE1];
 		melee2 = pm->ps->powerups[PW_MELEE2];
@@ -1991,6 +1992,7 @@ void PM_CheckLockon(void){
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
 		if(trace.entityNum >= MAX_CLIENTS){return;}
 		if(trace.fraction > 0.0005){return;}
+		PM_AddEvent(EV_LOCKON_START);
 		pm->ps->lockedTarget = trace.entityNum+1;
 	}
 	if(pm->ps->lockedTarget == -1){PM_StopLockon();} 
