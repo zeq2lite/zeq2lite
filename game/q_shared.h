@@ -1379,7 +1379,8 @@ typedef struct entityState_s {
 	int		tier;
 	// -->
 	int		lockedTarget;
-	
+	vec3_t	*lockedPosition;
+
 	int		legsAnim;		// mask off ANIM_TOGGLEBIT
 	int		torsoAnim;		// mask off ANIM_TOGGLEBIT
 

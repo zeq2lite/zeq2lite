@@ -174,6 +174,9 @@ vmCvar_t	cg_soundAttenuation;
 vmCvar_t	cg_thirdPersonCamera;
 vmCvar_t	cg_beamControl;
 vmCvar_t	cg_music;
+vmCvar_t	cg_particlesQuality;
+vmCvar_t	cg_particlesStop;
+vmCvar_t	cg_particlesMaximum;
 //END ADDING
 #if MAPLENSFLARES
 vmCvar_t	cg_lensFlare;		// JUHOX
@@ -315,7 +318,10 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_soundAttenuation, "cg_soundAttenuation", "0.0001", CVAR_CHEAT},
 	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "0", CVAR_ARCHIVE},
 	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE},
-	{ &cg_music, "cg_music", "1", CVAR_ARCHIVE}
+	{ &cg_music, "cg_music", "1", CVAR_ARCHIVE},
+	{ &cg_particlesQuality, "cg_particlesQuality", "1", CVAR_ARCHIVE},
+	{ &cg_particlesStop, "cg_particlesStop", "0", CVAR_ARCHIVE},
+	{ &cg_particlesMaximum, "cg_particlesMaximum", "1024", CVAR_ARCHIVE}
 	// END ADDING
 //	{ &cg_pmove_fixed, "cg_pmove_fixed", "0", CVAR_USERINFO | CVAR_ARCHIVE }
 };

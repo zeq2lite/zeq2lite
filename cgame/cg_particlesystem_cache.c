@@ -220,6 +220,57 @@ static qboolean PSys_ParseParticleTemplate( char **text_pp, PSys_ParticleTemplat
 				cachePtcl->rgba.endTime = 0;
 			}
 
+		} else if ( !Q_stricmp( token, "rotate" )) {
+			if ( !PSys_ParseVector( text_pp, 4, cachePtcl->rotate.midVal, qtrue )) {
+				return qfalse;
+			}
+			cachePtcl->rotate.midVal[0] *= 255;
+			cachePtcl->rotate.midVal[1] *= 255;
+			cachePtcl->rotate.midVal[2] *= 255;
+			cachePtcl->rotate.midVal[3] *= 255;
+
+		} else if ( !Q_stricmp( token, "inRotate" )) {
+			if ( !PSys_ParseVector( text_pp, 4, cachePtcl->rotate.startVal, qtrue )) {
+				return qfalse;
+			}
+			cachePtcl->rotate.startVal[0] *= 255;
+			cachePtcl->rotate.startVal[1] *= 255;
+			cachePtcl->rotate.startVal[2] *= 255;
+			cachePtcl->rotate.startVal[3] *= 255;
+
+			token = COM_Parse( text_pp );
+
+			if ( !token[0] ) {
+				CG_Printf( S_COLOR_RED "ERROR: unexpected end of file\n" );
+				return qfalse;
+			}
+
+			if ( (cachePtcl->rotate.startTime = atoi(token)) < 0 ) {
+				CG_Printf( S_COLOR_YELLOW "WARNING: negative int not allowed, clamped to 0\n" );
+				cachePtcl->rotate.startTime = 0;
+			}
+
+		} else if ( !Q_stricmp( token, "outRotate" )) {
+			if ( !PSys_ParseVector( text_pp, 4, cachePtcl->rotate.endVal, qtrue )) {
+				return qfalse;
+			}
+			cachePtcl->rotate.endVal[0] *= 255;
+			cachePtcl->rotate.endVal[1] *= 255;
+			cachePtcl->rotate.endVal[2] *= 255;
+			cachePtcl->rotate.endVal[3] *= 255;
+
+			token = COM_Parse( text_pp );
+
+			if ( !token[0] ) {
+				CG_Printf( S_COLOR_RED "ERROR: unexpected end of file\n" );
+				return qfalse;
+			}
+
+			if ( (cachePtcl->rotate.endTime = atoi(token)) < 0 ) {
+				CG_Printf( S_COLOR_YELLOW "WARNING: negative int not allowed, clamped to 0\n" );
+				cachePtcl->rotate.endTime = 0;
+			}
+
 		} else if ( !Q_stricmp( token, "life" )) {
 			token = COM_Parse( text_pp );
 

@@ -77,6 +77,7 @@ typedef struct PSys_ParticleTemplate_s {
 	qhandle_t				shader;
 	qhandle_t				model;
 	PSys_FloatTimeLerp_t	scale;
+	PSys_Vec4TimeLerp_t		rotate;
 	PSys_Vec4TimeLerp_t		rgba;
 } PSys_ParticleTemplate_t;
 
@@ -211,6 +212,7 @@ typedef struct PSys_Particle_s {
 	qhandle_t				shader;
 	qhandle_t				model;
 	PSys_FloatTimeLerp_t	scale;
+	PSys_Vec4TimeLerp_t		rotate;
 	PSys_Vec4TimeLerp_t		rgba;
 
 	// Ray information

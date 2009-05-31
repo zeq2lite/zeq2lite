@@ -1863,7 +1863,7 @@ static void CG_DrawCrosshair(void) {
 		ca = 0;
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
-	if(cg.crosshairClientNum > 0){
+	if(cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS){
 		hShader = cgs.media.crosshairLockedShader;
 	}
 	CG_DrawPic( x - 0.5f * w, y - 0.5f * h, w, h, hShader );

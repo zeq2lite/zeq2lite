@@ -276,6 +276,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	float		orbit,pan,zoom;
 	int 		clientNum;
 	float		newAngle,newRange,newHeight;
+	entityState_t		*ent;
 	clientInfo_t *ci;
 	tierConfig_cg *tier;
 	ps = &cg.predictedPlayerState;
@@ -307,6 +308,18 @@ static void CG_OffsetThirdPersonView( void ) {
 	VectorCopy( cg.refdef.vieworg, view );	
 	cg.refdefViewAngles[PITCH] *= 0.5;
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
+	// MELEE
+	if(ps->powerups[PW_MELEE_STATE] > 0){
+		if(!ci->transformStart){
+			ci->transformStart = qtrue;
+			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
+			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
+			ci->cameraBackup[2] = cg_thirdPersonRange.value;
+		}
+		cg_thirdPersonAngle.value = -45;
+		cg_thirdPersonHeight.value = -10;
+		cg_thirdPersonRange.value = 64;
+	} else
 	// TRANSFORMATIONS
 	if(ps->powerups[PW_TRANSFORM] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
@@ -413,7 +426,6 @@ static void CG_OffsetThirdPersonView( void ) {
 		}	
 	}
 	// END ADDING
-	
 }
 
 

@@ -1989,7 +1989,6 @@ void PM_CheckLockon(void){
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
 		if(trace.entityNum >= MAX_CLIENTS){return;}
 		if(trace.fraction > 0.0005){return;}
-		PM_AddEvent(EV_LOCKON_START);
 		pm->ps->lockedTarget = trace.entityNum+1;
 	}
 	if(pm->ps->lockedTarget == -1){PM_StopLockon();} 

@@ -652,6 +652,7 @@ static void PSys_UpdateEmitters( PSys_System_t *system ) {
 				particle->shader = emitter->particleTemplates[templateIndex].shader;
 				particle->model = emitter->particleTemplates[templateIndex].model;
 				memcpy( &(particle->scale), &(emitter->particleTemplates[templateIndex].scale), sizeof(PSys_FloatTimeLerp_t));
+				memcpy( &(particle->rotate), &(emitter->particleTemplates[templateIndex].rotate), sizeof(PSys_Vec4TimeLerp_t));
 				memcpy( &(particle->rgba), &(emitter->particleTemplates[templateIndex].rgba), sizeof(PSys_Vec4TimeLerp_t));
 				
 				// If the particle is a ray, and the emitter is not a ground type, set the point of origin as well.
@@ -1046,6 +1047,7 @@ static qboolean PSys_ApplyPlaneConstraint( PSys_System_t *system, float value ) 
 	PSys_Particle_t	*particle, *next;
 	qboolean		retval;
 	trace_t			trace;
+	float			angle;
 
 	retval = qtrue;
 	particle = system->particles.prev_local;
@@ -1062,6 +1064,11 @@ static qboolean PSys_ApplyPlaneConstraint( PSys_System_t *system, float value ) 
 			trace.fraction = 0.0f;
 		}
 
+		if ( trace.surfaceFlags & SURF_NOIMPACT ) {
+			PSys_FreeParticle( particle );
+			continue;
+		}
+
 		// If the particle moved the whole frame without encountering a solid, then
 		// everything is okay, else we have to do some math to bounce the particle.
 		if ( trace.fraction < 1.0f ) {
@@ -1072,8 +1079,17 @@ static qboolean PSys_ApplyPlaneConstraint( PSys_System_t *system, float value ) 
 			// it 'slide' along the ground indefinately.
 			// FIXME: Should probably put in surface friction and make it slide to a halt...
 			if ( value == 0.0f ) {
-				PSys_FreeParticle( particle );
-				continue;
+
+				angle = rand() % 360;
+
+				VectorSet(particle->rotate.startVal, angle, angle, angle);
+				VectorSet(particle->rotate.midVal, angle, angle, angle);
+				VectorSet(particle->rotate.endVal, angle, angle, angle);
+
+				if ( cg_particlesStop.value ) {
+					PSys_FreeParticle( particle );
+					continue;
+				}
 			}
 
 			// Get the velocity and bounce it
@@ -1084,11 +1100,23 @@ static qboolean PSys_ApplyPlaneConstraint( PSys_System_t *system, float value ) 
 			VectorScale( v, value, v );
 			
 			// check for stop
-			if ( trace.plane.normal[2] > 0.2 && VectorLength( v ) < MIN_BOUNCE_DELTA ) {
-				PSys_FreeParticle( particle );
-				continue;
+			if ( trace.plane.normal[2] > 0.2 && VectorLength( v ) < MIN_BOUNCE_DELTA) {
+
+				if (VectorLength( v ) > 0.0 && VectorLength( v ) < 0.6){
+					VectorSet(v, 0, 0, 0);
+					particle->mass = 0.0f;
+					angle = rand() % 360;
+					VectorSet(particle->rotate.startVal, angle, angle, angle);
+					VectorSet(particle->rotate.midVal, angle, angle, angle);
+					VectorSet(particle->rotate.endVal, angle, angle, angle);
+				}
+
+				if ( cg_particlesStop.value ) {
+					PSys_FreeParticle( particle );
+					continue;
+				}
 			}
-		
+
 			// NOTE: Though a bit inaccurate, we have to perform this shift of the particle's
 			//       position to prevent a trace.startsolid when re-evaluating constraints.
 			VectorAdd( trace.endpos, trace.plane.normal, particle->position );
@@ -1172,8 +1200,11 @@ static void PSys_RenderSystems( void ) {
 
 	float			lerp;
 	vec4_t			lerpedRGBA;
+	vec4_t			lerpedRotation;
 	float			lerpedScale;
 	
+	static int	seed = 0x92;
+	vec3_t			angles;
 
 	system = PSys_Systems_inuse.prev;
 	for ( ; system != &(PSys_Systems_inuse) ; system = next_s ) {
@@ -1188,14 +1219,18 @@ static void PSys_RenderSystems( void ) {
 			lifetime_end = particle->lifeTime;
 			lifetime_cur = cg.time - particle->spawnTime;
 			
-			
-			
 			lerpedScale = particle->scale.midVal;			
 			lerpedRGBA[0] = particle->rgba.midVal[0];
 			lerpedRGBA[1] = particle->rgba.midVal[1];
 			lerpedRGBA[2] = particle->rgba.midVal[2];
 			lerpedRGBA[3] = particle->rgba.midVal[3];
 
+			lerpedRotation[0] = particle->rotate.midVal[0];
+			lerpedRotation[1] = particle->rotate.midVal[1];
+			lerpedRotation[2] = particle->rotate.midVal[2];
+			lerpedRotation[3] = particle->rotate.midVal[3];
+
+			// Lerp scale
 			if ( lifetime_cur < particle->scale.startTime ) {
 				if ( particle->scale.startTime != 0 ) {
 					lerp = (float)lifetime_cur / (float)particle->scale.startTime;
@@ -1217,6 +1252,7 @@ static void PSys_RenderSystems( void ) {
 				lerpedScale = lerp * lerpedScale + particle->scale.endVal * (1.0f - lerp );
 			}
 
+			// Lerp rgba
 			if ( lifetime_cur < particle->rgba.startTime ) {
 				if ( particle->rgba.startTime != 0 ) {
 					lerp = (float)lifetime_cur / (float)particle->rgba.startTime;
@@ -1244,6 +1280,34 @@ static void PSys_RenderSystems( void ) {
 				lerpedRGBA[3] = lerp * lerpedRGBA[3] + particle->rgba.endVal[3] * (1.0f - lerp);
 			}
 
+			// Lerp rotation
+			if ( lifetime_cur < particle->rotate.startTime ) {
+				if ( particle->rotate.startTime != 0 ) {
+					lerp = (float)lifetime_cur / (float)particle->rotate.startTime;
+				} else {
+					lerp = 1;
+				}
+				if ( lerp < 0 ) lerp = 0;
+				if ( lerp > 1 ) lerp = 1;
+				lerpedRotation[0] = lerp * lerpedRotation[0] + particle->rotate.startVal[0] * (1.0f - lerp);
+				lerpedRotation[1] = lerp * lerpedRotation[1] + particle->rotate.startVal[1] * (1.0f - lerp);
+				lerpedRotation[2] = lerp * lerpedRotation[2] + particle->rotate.startVal[2] * (1.0f - lerp);
+				lerpedRotation[3] = lerp * lerpedRotation[3] + particle->rotate.startVal[3] * (1.0f - lerp);
+			
+			} else if ( lifetime_cur > (lifetime_end - particle->rotate.endTime)) {
+				if ( particle->rotate.endTime != 0 ) {
+					lerp = (float)(lifetime_end - lifetime_cur) / (float)particle->rotate.endTime;
+				} else {
+					lerp = 1;
+				}
+				if ( lerp < 0 ) lerp = 0;
+				if ( lerp > 1 ) lerp = 1;
+				lerpedRotation[0] = lerp * lerpedRotation[0] + particle->rotate.endVal[0] * (1.0f - lerp);
+				lerpedRotation[1] = lerp * lerpedRotation[1] + particle->rotate.endVal[1] * (1.0f - lerp);
+				lerpedRotation[2] = lerp * lerpedRotation[2] + particle->rotate.endVal[2] * (1.0f - lerp);
+				lerpedRotation[3] = lerp * lerpedRotation[3] + particle->rotate.endVal[3] * (1.0f - lerp);
+			}
+
 			switch ( particle->rType ) {
 			case RTYPE_DEFAULT:
 				memset( &ent, 0, sizeof( ent ));
@@ -1257,10 +1321,20 @@ static void PSys_RenderSystems( void ) {
 					ent.reType = RT_MODEL;
 
 					AxisClear( ent.axis );
+
+					if (particle->oldPosition != particle->position){
+						lerpedRotation[0] = lerpedRotation[0]/* * rand()*/;
+						lerpedRotation[1] = lerpedRotation[1]/* * rand()*/;
+						lerpedRotation[2] = lerpedRotation[2]/* * rand()*/;
+					}
+
+					VectorCopy( lerpedRotation, angles );
+					AnglesToAxis( angles, ent.axis );
+
 					ent.nonNormalizedAxes = qtrue;
 					VectorScale( ent.axis[0], lerpedScale, ent.axis[0] );
 					VectorScale( ent.axis[1], lerpedScale, ent.axis[1] );
-					VectorScale( ent.axis[2], lerpedScale, ent.axis[2] );					
+					VectorScale( ent.axis[2], lerpedScale, ent.axis[2] );
 				}
 
 				ent.customShader = particle->shader;
@@ -1268,7 +1342,7 @@ static void PSys_RenderSystems( void ) {
 				ent.shaderRGBA[1] = lerpedRGBA[1];
 				ent.shaderRGBA[2] = lerpedRGBA[2];
 				ent.shaderRGBA[3] = lerpedRGBA[3];
-				
+
 				trap_R_AddRefEntityToScene( &ent );
 				break;
 			

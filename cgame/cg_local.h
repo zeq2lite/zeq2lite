@@ -1293,6 +1293,9 @@ extern	vmCvar_t		cg_soundAttenuation;
 extern	vmCvar_t		cg_thirdPersonCamera;
 extern	vmCvar_t		cg_beamControl;
 extern	vmCvar_t		cg_music;
+extern	vmCvar_t		cg_particlesQuality;
+extern	vmCvar_t		cg_particlesStop;
+extern  vmCvar_t		cg_particlesMaximum;
 // END ADDING
 #if MAPLENSFLARES
 extern	vmCvar_t		cg_lensFlare;		// JUHOX
