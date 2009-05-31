@@ -460,6 +460,11 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_LOCKON_END:
 			break;
+		case EV_DEATH:
+			client->respawnTime = level.time + 10000;
+			break;
+		case EV_UNCONCIOUS:
+			break;
 		case EV_USE_ITEM1:
 			item = NULL;
 			j = 0;
@@ -691,20 +696,8 @@ void ClientThink_real( gentity_t *ent ) {
 	client->oldbuttons = client->buttons;
 	client->buttons = ucmd->buttons;
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
-	if ( client->ps.stats[powerLevelTotal] <= 0 ) {
-		// wait for the attack button to be pressed
-		if ( level.time > client->respawnTime ) {
-			// forcerespawn is to prevent users from waiting out powerups
-			if ( g_forcerespawn.integer > 0 && 
-				( level.time - client->respawnTime ) > g_forcerespawn.integer * 1000 ) {
-				respawn( ent );
-				return;
-			}
-			// pressing attack or use is the normal respawn method
-			if ( ucmd->buttons & ( BUTTON_ATTACK | BUTTON_USE_HOLDABLE ) ) {
-				respawn( ent );
-			}
-		}
+	if (client->ps.stats[bitFlags] & isDead){
+		if(level.time > client->respawnTime){respawn(ent);}
 		return;
 	}
 }

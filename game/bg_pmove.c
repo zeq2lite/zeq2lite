@@ -28,7 +28,10 @@ DECLARATIONS
 void PM_StopBoost(void);
 void PM_StopZanzoken(void);
 void PM_StopDash(void);
+void PM_StopJump(void);
+void PM_StopFlight(void);
 void PM_StopMovement(void);
+void PM_StopDirections(void);
 void PM_ContinueLegsAnim(int anim);
 void PM_ContinueTorsoAnim(int anim);
 void PM_Accelerate(vec3_t wishdir,float wishspeed,float accel);
@@ -85,7 +88,11 @@ void PM_StopKnockback(void){
 	pm->ps->powerups[PW_KNOCKBACK] = 0;
 	pm->ps->knockBackDirection = 0;
 }
-
+void PM_StopDirections(void){
+	pm->cmd.forwardmove = 0;
+	pm->cmd.upmove = 0;
+	pm->cmd.rightmove = 0;
+}
 void PM_CheckKnockback(void){
 	vec3_t pre_vel,post_vel,wishvel,wishdir;	
 	float scale,wishspeed;
@@ -100,9 +107,7 @@ void PM_CheckKnockback(void){
 	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
 		PM_ContinueLegsAnim(LEGS_KNOCKBACK);
 		pm->ps->powerups[PW_KNOCKBACK] -= pml.msec;
-		pm->cmd.forwardmove = 0;
-		pm->cmd.upmove = 0;
-		pm->cmd.rightmove = 0;
+		PM_StopDirections();
 		if(pm->ps->powerups[PW_KNOCKBACK] > 0){
 			if(pm->ps->knockBackDirection == 1){pm->cmd.upmove = 127;}
 			else if(pm->ps->knockBackDirection == 2){pm->cmd.upmove = -127;}
@@ -206,7 +211,7 @@ void PM_UsePowerLevel(qboolean useTotal){
 	stat = useTotal ? pm->ps->stats[powerLevelTotal] : pm->ps->stats[powerLevel];
 	amount = useTotal ? pm->ps->powerLevelTotalUse : pm->ps->powerLevelUse;
 	newValue = (stat - amount) > 32768 ? 32768 : stat - amount;
-	newValue = newValue < 0 ? 0 : newValue;
+	newValue = newValue < -32768 ? -32768 : newValue;
 	if(useTotal){
 		pm->ps->stats[powerLevelTotal] = newValue;
 		pm->ps->powerLevelTotalUse = 0;
@@ -224,6 +229,7 @@ void PM_BurnPowerLevel(qboolean melee){
 	burn = melee ? pm->ps->powerLevelMeleeBurn : pm->ps->powerLevelBurn;
 	if(!burn){return;}
 	defense = melee ? pm->ps->meleeDefense : pm->ps->energyDefense;
+	defense = pm->ps->stats[bitFlags] & usingBlock ? defense * 2.5 : defense;
 	percent = 1.0 - ((float)pm->ps->stats[powerLevel] / (float)pm->ps->persistant[powerLevelMaximum]);
 	burn -= (int)(((float)pm->ps->stats[powerLevelTotal] * 0.01) * defense);
 	newValue = pm->ps->stats[powerLevelTotal] - burn;
@@ -239,7 +245,38 @@ void PM_BurnPowerLevel(qboolean melee){
 }
 void PM_CheckStatus(void){
 	if((pm->ps->stats[powerLevel]<= 0) && (pm->ps->stats[powerLevelTotal] <= 0)){
-		PM_AddEvent(EV_DEATH);
+		if(pm->ps->powerups[PW_STATE] != -2){
+			pm->ps->stats[bitFlags] |= isDead;
+			pm->ps->powerups[PW_STATE] = -2;
+			PM_StopMovement();
+			PM_AddEvent(EV_DEATH);
+		}
+		else{
+			PM_ContinueTorsoAnim(BOTH_DEATH2);
+			PM_ContinueLegsAnim(BOTH_DEATH2);
+		}
+	}
+	else if(pm->ps->stats[powerLevel]<= 0){
+		if(pm->ps->powerups[PW_STATE] != -1){
+			pm->ps->stats[bitFlags] |= isUnconcious;
+			pm->ps->powerups[PW_STATE] = -1;
+			PM_StopMovement();
+			PM_AddEvent(EV_UNCONCIOUS);
+			if(pm->ps->stats[powerLevel] > -2500){
+				pm->ps->stats[powerLevel] = -2500;
+			}
+		}
+		else{
+			pm->ps->stats[powerLevel] += pml.msec / 2;
+			PM_ContinueTorsoAnim(BOTH_DEATH3);
+			PM_ContinueLegsAnim(BOTH_DEATH3);
+			if(pm->ps->stats[powerLevel] > 0){
+				pm->ps->stats[bitFlags] &= ~isUnconcious;	
+			}
+		}
+	}
+	else{
+		pm->ps->powerups[PW_STATE] = 0;
 	}
 }
 void PM_CheckTransform(void){
@@ -315,7 +352,7 @@ void PM_CheckPowerLevel(void){
 		stats[bitFlags] |= usingAlter;
 		if(stats[bitFlags] & usingBoost || pm->ps->powerups[PW_TRANSFORM] < 0){return;}
 		if(pm->cmd.upmove < 0){
-			stats[bitFlags] &= ~usingFlight;
+			PM_StopFlight();
 			PM_ForceLegsAnim(LEGS_FLY_DOWN);
 		}
 		if(pm->cmd.rightmove < 0){
@@ -370,10 +407,14 @@ void PM_StopBoost(void){
 void PM_StopDash(void){
 	VectorClear(pm->ps->dashDir);
 }
-void PM_StopMovement(void){
+void PM_StopMovementTypes(void){
 	PM_StopDash();
+	PM_StopJump();
 	PM_StopZanzoken();
 	PM_StopKnockback();
+}
+void PM_StopMovement(void){
+	PM_StopMovementTypes();
 	VectorClear(pm->ps->velocity);
 }
 void PM_CheckBoost(void){
@@ -560,16 +601,6 @@ float PM_CmdScale(usercmd_t *cmd){
 
 	return scale;
 }
-
-/*================
-PM_SetMovementDir
-
-Determine the rotation of the legs relative
-to the facing dir
-================*/
-void PM_SetMovementDir(void){
-
-}
 /*=============
 PM_CheckJump
 =============*/
@@ -623,6 +654,9 @@ void PM_CheckBlock(void){
 /*===================
 PM_FlyMove
 ===================*/
+void PM_StopFlight(void){
+	pm->ps->stats[bitFlags] &= ~usingFlight;
+}
 void PM_FlyMove(void){
 	int		i;
 	vec3_t	wishvel;
@@ -677,7 +711,6 @@ void PM_AirMove(void){
 	smove = pm->cmd.rightmove;
 	cmd = pm->cmd;
 	scale = PM_CmdScale(&cmd);
-	PM_SetMovementDir();
 	pml.forward[2] = 0;
 	pml.right[2] = 0;
 	VectorNormalize (pml.forward);
@@ -719,7 +752,6 @@ void PM_WalkMove(void){
 	cmd = pm->cmd;
 	scale = PM_CmdScale(&cmd);
 	// set the movementDir so clients can rotate the legs for strafing
-	PM_SetMovementDir();
 	pml.forward[2] = 0;
 	pml.right[2] = 0;
 	PM_ClipVelocity (pml.forward, pml.groundTrace.plane.normal, pml.forward, OVERCLIP );
@@ -1032,7 +1064,7 @@ void PM_GroundTrace(void){
 			PM_NotOnGround();
 			return;
 		} else{
-			pm->ps->stats[bitFlags] &= ~usingFlight;
+			PM_StopFlight();
 			pm->ps->powerups[PW_ZANZOKEN] = 0;
 		}
 	}
@@ -1045,8 +1077,8 @@ void PM_GroundTrace(void){
 	pml.groundPlane = qtrue;
 	pml.onGround = qtrue;
 	if(pm->ps->groundEntityNum == ENTITYNUM_NONE && (pm->ps->stats[bitFlags] & usingJump || pm->ps->stats[bitFlags] & usingFlight)){
-		pm->ps->stats[bitFlags] &= ~usingJump;
-		pm->ps->stats[bitFlags] &= ~usingFlight;
+		PM_StopJump();
+		PM_StopFlight();
 		PM_Land();
 	}
 	pm->ps->groundEntityNum = trace.entityNum;
@@ -1316,7 +1348,7 @@ void PM_TorsoAnimation(void){
 	if(pm->ps->stats[bitFlags] & usingBlock && !(pm->ps->stats[bitFlags] & usingMelee)){
 		PM_ContinueTorsoAnim(TORSO_BLOCK);
 		if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
-			PM_ContinueLegsAnim(LEGS_BLOCK);	
+			PM_ContinueLegsAnim(LEGS_BLOCK);
 		}
 		return;
 	}
@@ -1975,27 +2007,15 @@ void PM_CheckLockon(void){
 		if((trace.entityNum >= MAX_CLIENTS)){return;}
 		PM_AddEvent(EV_LOCKON_START);
 		pm->ps->lockedTarget = trace.entityNum+1;
-	}else{
+	}
+	else{
 		pm->ps->pm_flags &= ~PMF_LOCK_HELD;
 	}
-	if(pm->ps->lockedTarget == 0){
-		if(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING){return;}
-		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
-		VectorMA(pm->ps->origin,131072,forward,end);
-		lockBox = 16;
-		minSize[0] = -lockBox;
-		minSize[1] = -lockBox;
-		minSize[2] = -lockBox;
-		maxSize[0] = -minSize[0];
-		maxSize[1] = -minSize[1];
-		maxSize[2] = -minSize[2];
-		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
-		if(trace.entityNum >= MAX_CLIENTS){return;}
-		if(trace.fraction > 0.0005){return;}
-		PM_AddEvent(EV_LOCKON_START);
-		pm->ps->lockedTarget = trace.entityNum+1;
+	if(pm->ps->lockedTarget > 0){
+		if(pm->ps->lockedPlayer->powerups[PW_STATE] < 0){
+			PM_StopLockon();
+		}
 	}
-	if(pm->ps->lockedTarget == -1){PM_StopLockon();} 
 }
 /*
 ================
@@ -2189,19 +2209,18 @@ void PmoveSingle(pmove_t *pmove){
 		PM_UsePowerLevel(qfalse);
 		PM_BurnPowerLevel(qtrue);
 		PM_BurnPowerLevel(qfalse);
-		if(!pm->ps->powerups[PW_KNOCKBACK]){
+		PM_CheckStatus();
+		if(!pm->ps->powerups[PW_KNOCKBACK] && !(pm->ps->stats[bitFlags] & isUnconcious) && !(pm->ps->stats[bitFlags] & isDead)){
 			PM_CheckBoost();
-			PM_CheckStatus();
 			PM_CheckPowerLevel();
 			PM_CheckLockon();
 			PM_CheckZanzoken();
-			if(!meleeRange && !(pm->ps->stats[bitFlags] & usingAlter)){
-				PM_CheckJump();
-				PM_CheckBlock();
+			if(!meleeRange){
+				if(!(pm->ps->stats[bitFlags] & usingAlter)){
+					PM_CheckJump();
+					PM_CheckBlock();
+				}
 				PM_Footsteps();
-			}
-			else{
-				//PM_StopMovement();
 			}
 		}
 	}
@@ -2210,6 +2229,19 @@ void PmoveSingle(pmove_t *pmove){
 	VectorCopy(pm->ps->origin, pml.previous_origin);
 	VectorCopy(pm->ps->velocity, pml.previous_velocity);
 	pml.frametime = pml.msec * 0.001;
+	PM_DropTimers();
+	AngleVectors(pm->ps->viewangles,pml.forward,pml.right,pml.up);
+	PM_SetView();
+	if(pm->ps->stats[bitFlags] & isUnconcious || pm->ps->stats[bitFlags] & isDead){
+		PM_StopMovementTypes();
+		PM_StopFlight();
+		PM_StopDirections();
+		PM_StopLockon();
+		PM_GroundTrace();
+		PM_AirMove();
+		PM_UpdateViewAngles(pm->ps, &pm->cmd);
+		return;
+	}
 	if(!pm->ps->powerups[PW_KNOCKBACK]){
 		PM_Melee();
 		if(pm->ps->powerups[PW_MELEE_STATE] != 4){
@@ -2219,16 +2251,12 @@ void PmoveSingle(pmove_t *pmove){
 	}
 	if(pm->ps->pm_type == PM_SPECTATOR){
 		PM_FlyMove();
-		PM_DropTimers();
 		return;
 	}
-	AngleVectors(pm->ps->viewangles,pml.forward,pml.right,pml.up);
 	pml.previous_waterlevel = pmove->waterlevel;
-	PM_SetView();
 	PM_SetWaterLevel();
 	PM_TorsoAnimation();
 	PM_WaterEvents();
-	PM_DropTimers();
 	PM_Freeze();
 	PM_GroundTrace();
 	if(!(pm->ps->stats[bitFlags] & usingAlter) && !pm->ps->powerups[PW_FREEZE]){

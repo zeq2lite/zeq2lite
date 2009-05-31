@@ -650,7 +650,6 @@ static void CG_Aura_AddTrail( centity_t *player, auraState_t *state, auraConfig_
 	// NOTE: Give 1.5 second leeway for 'snapping' the tail
 	//       incase we (almost) immediately restart boosting.
 	if(player->lastTrailTime < (cg.time - cg.frametime - 1500)){		
-
 		CG_ResetTrail( player->currentState.clientNum, player->lerpOrigin, 1000,
 			config->trailWidth, config->trailShader, config->trailColor);
 	}
@@ -961,6 +960,11 @@ void parseAura(char *path,auraConfig_t *aura){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				aura->trailShader = trap_R_RegisterShader(token);
+			}
+			else if(!Q_stricmp( token, "auraTrailWidth")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->trailWidth = atoi(token);
 			}
 			else if(!Q_stricmp( token, "auraChargeLoop")){
 				token = COM_Parse(&parse);

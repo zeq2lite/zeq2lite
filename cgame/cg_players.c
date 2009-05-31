@@ -1418,6 +1418,12 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_STUNNED, speedScale );
 		} else if ( TORSO_PUSH == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_PUSH, speedScale );
+		} else if ( BOTH_DEATH1 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, BOTH_DEATH1, speedScale );
+		} else if ( BOTH_DEATH2 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, BOTH_DEATH2, speedScale );
+		} else if ( BOTH_DEATH3 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, BOTH_DEATH3, speedScale );
 		} else if ( TORSO_DEFLECT == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DEFLECT, speedScale );
 		} else if ( TORSO_BLOCK == torsoAnimNum ) {

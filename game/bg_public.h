@@ -247,12 +247,6 @@ typedef enum {
 #define usingTap		0x00000200
 #define keyTierUp		0x00000400
 #define keyTierDown		0x00000800
-#define keyTapLeft		0x00001000
-#define keyTapForward	0x00002000
-#define keyTapRight		0x00004000
-#define keyTapBack		0x00008000
-#define keyTapDown		0x00010000
-#define keyTapUp		0x00020000
 #define isTransforming	0x00040000
 #define isStruggling	0x00080000
 #define isUnconcious	0x00100000
@@ -314,6 +308,7 @@ typedef enum {
 	PW_TRANSFORM,
 	PW_MELEE1,
 	PW_MELEE2,
+	PW_STATE,
 	PW_MELEE_STATE,
 	PW_DEFENSE,
 	PW_ATTACK1,
@@ -464,6 +459,7 @@ typedef enum {
 	EV_DEATH1,
 	EV_DEATH2,
 	EV_DEATH3,
+	EV_UNCONCIOUS,
 	EV_OBITUARY,
 	EV_POWERUP_QUAD,
 	EV_POWERUP_BATTLESUIT,

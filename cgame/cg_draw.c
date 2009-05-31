@@ -2684,7 +2684,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawCrosshairNames();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if (!cg.showScores && !(cg.snap->ps.powerups[PW_TRANSFORM] > 1) && !(cg.snap->ps.stats[bitFlags] & isUnconcious)){
+		if (!cg.showScores && !(cg.snap->ps.powerups[PW_TRANSFORM] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
 			CG_DrawStatusBar();
 			CG_DrawRadar();
 			CG_DrawAmmoWarning();  

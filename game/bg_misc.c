@@ -537,6 +537,7 @@ char *eventnames[] = {
 	"EV_DEATH1",
 	"EV_DEATH2",
 	"EV_DEATH3",
+	"EV_UNCONCIOUS",
 	"EV_OBITUARY",
 
 	"EV_POWERUP_QUAD",
@@ -655,7 +656,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 	s->pos.trTime = time;
 	s->pos.trDuration = 50;
 	s->apos.trType = TR_INTERPOLATE;
-	if(ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING){
+	if(ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING && !(ps->powerups[PW_STATE] < 0)){
 		VectorCopy(ps->viewangles,s->apos.trBase);
 		if(snap){SnapVector(s->apos.trBase);}
 	}

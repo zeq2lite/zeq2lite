@@ -344,85 +344,7 @@ A player is respawning, so make an entity that looks
 just like the existing corpse to leave behind.
 =============
 */
-void CopyToBodyQue( gentity_t *ent ) {
-	gentity_t		*body;
-	int			contents;
-
-	trap_UnlinkEntity (ent);
-
-	// if client is in a nodrop area, don't leave the body
-	contents = trap_PointContents( ent->s.origin, -1 );
-	if ( contents & CONTENTS_NODROP ) {
-		return;
-	}
-
-	// grab a body que and cycle to the next one
-	body = level.bodyQue[ level.bodyQueIndex ];
-	level.bodyQueIndex = (level.bodyQueIndex + 1) % BODY_QUEUE_SIZE;
-
-	trap_UnlinkEntity (body);
-
-	body->s = ent->s;
-	body->s.eFlags = EF_DEAD;		// clear EF_TALK, etc
-	body->s.powerups = 0;	// clear powerups
-	body->s.loopSound = 0;	// clear lava burning
-	body->s.number = body - g_entities;
-	body->timestamp = level.time;
-	body->physicsObject = qtrue;
-	body->physicsBounce = 0;		// don't bounce
-	if ( body->s.groundEntityNum == ENTITYNUM_NONE ) {
-		body->s.pos.trType = TR_GRAVITY;
-		body->s.pos.trTime = level.time;
-		VectorCopy( ent->client->ps.velocity, body->s.pos.trDelta );
-	} else {
-		body->s.pos.trType = TR_STATIONARY;
-	}
-	body->s.event = 0;
-
-	// change the animation to the last-frame only, so the sequence
-	// doesn't repeat anew for the body
-	switch ( body->s.legsAnim & ~ANIM_TOGGLEBIT ) {
-	case BOTH_DEATH1:
-	case BOTH_DEAD1:
-		body->s.torsoAnim = body->s.legsAnim = BOTH_DEAD1;
-		break;
-	case BOTH_DEATH2:
-	case BOTH_DEAD2:
-		body->s.torsoAnim = body->s.legsAnim = BOTH_DEAD2;
-		break;
-	case BOTH_DEATH3:
-	case BOTH_DEAD3:
-	default:
-		body->s.torsoAnim = body->s.legsAnim = BOTH_DEAD3;
-		break;
-	}
-
-	body->r.svFlags = ent->r.svFlags;
-	VectorCopy (ent->r.mins, body->r.mins);
-	VectorCopy (ent->r.maxs, body->r.maxs);
-	VectorCopy (ent->r.absmin, body->r.absmin);
-	VectorCopy (ent->r.absmax, body->r.absmax);
-
-	body->clipmask = CONTENTS_SOLID | CONTENTS_PLAYERCLIP;
-	body->r.contents = CONTENTS_CORPSE;
-	body->r.ownerNum = ent->s.number;
-
-	body->nextthink = level.time + 5000;
-	body->think = BodySink;
-
-	body->die = body_die;
-
-	// don't take more damage if already gibbed
-	if ( ent->powerLevel <= GIB_HEALTH ) {
-		body->takedamage = qfalse;
-	} else {
-		body->takedamage = qtrue;
-	}
-
-
-	VectorCopy ( body->s.pos.trBase, body->r.currentOrigin );
-	trap_LinkEntity (body);
-}
+void CopyToBodyQue( gentity_t *ent ) {}
 
 //======================================================================
 
@@ -455,7 +377,7 @@ respawn
 void respawn( gentity_t *ent ) {
 	gentity_t	*tent;
 
-	CopyToBodyQue (ent);
+	//CopyToBodyQue (ent);
 	ClientSpawn(ent);
 
 	// add a teleportation effect
@@ -1032,10 +954,6 @@ void ClientSpawn(gentity_t *ent) {
 		} while ( 1 );
 	}
 	client->pers.teamState.state = TEAM_ACTIVE;
-
-	// always clear the kamikaze flag
-	ent->s.eFlags &= ~EF_KAMIKAZE;
-
 	// toggle the teleport bit so the client knows to not lerp
 	// and never clear the voted flag
 	flags = ent->client->ps.eFlags & (EF_TELEPORT_BIT | EF_VOTED | EF_TEAMVOTED);
@@ -1074,13 +992,8 @@ void ClientSpawn(gentity_t *ent) {
 	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
 	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
-
-	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
-		client->pers.maxHealth = 100;
-	}
 	// clear entity values
 	client->ps.eFlags = flags;
-
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
 	ent->client = &level.clients[index];
 	ent->takedamage = qtrue;
@@ -1114,13 +1027,12 @@ void ClientSpawn(gentity_t *ent) {
 	if(g_powerLevel.value > 32767){
 		g_powerLevel.value = 32767;
 	}
-	client->ps.stats[powerLevelTotal] = client->ps.persistant[powerLevelMaximum] > g_powerLevel.value ? client->ps.persistant[powerLevelMaximum] * 0.75 : g_powerLevel.value;
-	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
-
 	// make sure all bitFlags are OFF, and explicitly turn off the aura
 	client->ps.stats[bitFlags] = 0;
 	client->ps.eFlags &= ~EF_AURA;
 	// END ADDING
+	client->ps.stats[powerLevelTotal] = client->ps.persistant[powerLevelMaximum] > g_powerLevel.value ? client->ps.persistant[powerLevelMaximum] * 0.75 : g_powerLevel.value;
+	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );

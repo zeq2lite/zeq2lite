@@ -907,6 +907,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_DEATH");
 		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*death1.ogg"));
 		break;
+	case EV_UNCONCIOUS:
+		DEBUGNAME("EV_UNCONCIOUS");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*death3.ogg"));
+		break;
 	case EV_OBITUARY:
 		DEBUGNAME("EV_OBITUARY");
 		CG_Obituary( es );
