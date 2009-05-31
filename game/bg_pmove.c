@@ -83,7 +83,7 @@ KNOCKBACK
 ===================*/
 void PM_StopKnockback(void){
 	pm->ps->powerups[PW_KNOCKBACK] = 0;
-	pm->ps->lockedPlayer->knockBackDirection = 0;
+	pm->ps->knockBackDirection = 0;
 }
 
 void PM_CheckKnockback(void){
@@ -201,10 +201,20 @@ void PM_CheckZanzoken(void){
 /*===============
 POWER LEVEL
 ===============*/
-void PM_UsePowerLevel(int amount){
-	int newValue;
-	newValue = pm->ps->stats[powerLevel] - amount;
-	pm->ps->stats[powerLevel] = newValue > 0 ? newValue : 0;
+void PM_UsePowerLevel(qboolean useTotal){
+	int newValue,amount,stat;
+	stat = useTotal ? pm->ps->stats[powerLevelTotal] : pm->ps->stats[powerLevel];
+	amount = useTotal ? pm->ps->powerLevelTotalUse : pm->ps->powerLevelUse;
+	newValue = (stat - amount) > 32768 ? 32768 : stat - amount;
+	newValue = newValue < 0 ? 0 : newValue;
+	if(useTotal){
+		pm->ps->stats[powerLevelTotal] = newValue;
+		pm->ps->powerLevelTotalUse = 0;
+	}
+	else{
+		pm->ps->stats[powerLevel] = newValue;
+		pm->ps->powerLevelUse = 0;
+	}
 }
 void PM_BurnPowerLevel(qboolean melee){
 	float percent;
@@ -374,7 +384,7 @@ void PM_CheckBoost(void){
 		pm->ps->eFlags |= EF_AURA;
 		pm->ps->powerups[PW_BOOST] += pml.msec;
 		if(pm->ps->powerups[PW_BOOST] > 150){
-			PM_UsePowerLevel(pm->ps->persistant[powerLevelMaximum] * 0.003);
+			pm->ps->powerLevelUse += pm->ps->persistant[powerLevelMaximum] * 0.003;
 			pm->ps->powerups[PW_BOOST] -= 150;
 		}
 	}
@@ -586,12 +596,12 @@ void PM_CheckJump(void){
 	pm->ps->velocity[1] *= fabs(pm->ps->velocity[1]) < jumpPower ? 4.0 : 1.0;
 	if((pm->cmd.forwardmove != 0) || (pm->cmd.rightmove != 0)){
 		pm->ps->velocity[2] = jumpPower * 6;
-		PM_UsePowerLevel(pm->ps->persistant[powerLevelMaximum] * 0.01);
+		pm->ps->powerLevelUse += pm->ps->persistant[powerLevelMaximum] * 0.01;
 		PM_AddEvent(EV_HIGHJUMP);
 	} else{
 		pm->ps->gravity = 6000;
 		pm->ps->velocity[2] = jumpPower * 8;
-		PM_UsePowerLevel(pm->ps->persistant[powerLevelMaximum] * 0.08);
+		pm->ps->powerLevelUse += pm->ps->persistant[powerLevelMaximum] * 0.08;
 		PM_AddEvent(EV_JUMP);
 	}
 	if(pm->cmd.forwardmove >= 0){
@@ -1255,10 +1265,15 @@ PM_BeginWeaponChange
 ===============
 */
 void PM_BeginWeaponChange(int weapon){
+	qboolean charging;
+	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
+	if(pm->ps->weapon == pm->cmd.weapon){
+		return;
+	}
 	if(weapon <= WP_NONE || weapon >= WP_NUM_WEAPONS){
 		return;
 	}
-	if(pm->ps->powerups[PW_MELEE_STATE] || pm->ps->powerups[PW_TRANSFORM]){
+	if(pm->ps->powerups[PW_MELEE_STATE] || pm->ps->powerups[PW_TRANSFORM] || charging){
 		return;
 	}
 	if(!(pm->ps->stats[skills] & (1 << weapon))){
@@ -1268,7 +1283,6 @@ void PM_BeginWeaponChange(int weapon){
 	if(pm->ps->weaponstate == WEAPON_DROPPING){
 		return;
 	}
-
 	PM_AddEvent(EV_CHANGE_WEAPON );
 	pm->ps->weaponstate = WEAPON_DROPPING;
 }
@@ -1298,10 +1312,8 @@ void PM_FinishWeaponChange(void){
 PM_TorsoAnimation
 ==============*/
 void PM_TorsoAnimation(void){
-	if((pm->ps->weaponstate != WEAPON_READY) && (pm->ps->powerups[PW_MELEE_STATE] == 0)){
-		return;
-	}
-	if(pm->ps->stats[bitFlags] & usingBlock && !pm->ps->powerups[PW_MELEE_STATE]){
+	if(pm->ps->weaponstate != WEAPON_READY && !(pm->ps->stats[bitFlags] & usingMelee)){return;}
+	if(pm->ps->stats[bitFlags] & usingBlock && !(pm->ps->stats[bitFlags] & usingMelee)){
 		PM_ContinueTorsoAnim(TORSO_BLOCK);
 		if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
 			PM_ContinueLegsAnim(LEGS_BLOCK);	
@@ -1466,13 +1478,14 @@ void PM_TorsoAnimation(void){
 // MELEE STATE 5 - Block Held
 // MELEE STATE 6 - Zanzoken Held
 void PM_StopMelee(void){
+	qboolean charging;
 	pm->ps->powerups[PW_MELEE_STATE] = 0;	
 	pm->ps->powerups[PW_MELEE1] = 0;
 	pm->ps->powerups[PW_MELEE2] = 0;
-	if(!pm->ps->stats[bitFlags] & usingZanzoken){PM_AddEvent(EV_STOPLOOPINGSOUND);}
-	if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK) && !(pm->cmd.buttons & BUTTON_ATTACK)){
+	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
+	if(!(pm->ps->stats[bitFlags] & usingZanzoken)){PM_AddEvent(EV_STOPLOOPINGSOUND);}
+	if((!(pm->cmd.buttons & BUTTON_ALT_ATTACK) && !(pm->cmd.buttons & BUTTON_ATTACK)) || charging){
 		pm->ps->stats[bitFlags] &= ~usingMelee;
-		pm->ps->weapon = pm->cmd.weapon;
 	}
 }
 void PM_Melee(void){
@@ -1486,14 +1499,8 @@ void PM_Melee(void){
 		PM_AddEvent(EV_MELEE_CHECK);
 		distance = Distance(pm->ps->origin,*(pm->ps->lockedPosition));
 		inRange = distance <= 64 ? qtrue : qfalse;
-		if(state != 4 && !charging){
-			if(distance <= 512){
-				if(!state){pm->ps->powerups[PW_MELEE_STATE] = 1;}
-			}
-			else{
-				PM_StopMelee();
-			}
-		}
+		if(charging || !state || distance > 512){PM_StopMelee();}
+		if(!charging && !state && distance <= 512){pm->ps->powerups[PW_MELEE_STATE] = 1;}
 	}
 	else if(!pm->ps->lockedTarget){
 		PM_StopMelee();
@@ -1507,7 +1514,7 @@ void PM_Melee(void){
 		// Knockback Halt
 		if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] > 5 && distance <= 96 && melee2 >= 0 && !(pm->ps->stats[bitFlags] & usingZanzoken)){
 			pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 1;
-			//melee2 = 749;
+			if(melee2 < 500){melee2 = 500;}
 		}
 		// Auto Close-in
 		if(pm->cmd.forwardmove != -127){
@@ -1532,7 +1539,7 @@ void PM_Melee(void){
 				PM_AddEvent(EV_MELEE_KNOCKBACK);
 			}
 			pm->ps->powerups[PW_FREEZE] = 1000;
-			PM_AddEvent(EV_MELEE_SPEED);
+			//PM_AddEvent(EV_MELEE_SPEED);
 			melee2 = -1000;
 			state = 4;
 		}
@@ -1563,7 +1570,6 @@ void PM_Melee(void){
 				state = 2;
 			}
 			else if(state == 2){
-				PM_AddEvent(EV_STOPLOOPINGSOUND);
 				melee1 = -400;
 			}
 			// Using Block
@@ -1621,7 +1627,7 @@ void PM_Melee(void){
 			}
 			while(melee1 >= 100){
 				melee1 -= 100;
-				if(enemyState == 5){PM_UsePowerLevel(pm->ps->stats[powerLevel] * 0.01);}
+				if(enemyState == 5){pm->ps->powerLevelUse += pm->ps->stats[powerLevel] * 0.01;}
 				pm->ps->lockedPlayer->powerLevelMeleeBurn += damage;
 			}
 		}
@@ -1631,7 +1637,7 @@ void PM_Melee(void){
 			else if(pm->cmd.forwardmove < 0){desired = 2;}
 			else if(pm->cmd.rightmove > 0){desired = 3;} 
 			else if(pm->cmd.rightmove < 0){desired = 4;}
-			if(!pm->ps->lockedPlayer->knockBackDirection){
+			if(!pm->ps->lockedPlayer->knockBackDirection && !pm->ps->lockedPlayer->powerups[PW_KNOCKBACK]){
 				pm->ps->lockedPlayer->knockBackDirection = desired;
 			}
 		}
@@ -1758,11 +1764,7 @@ void PM_Weapon(void){
 				pm->ps->weaponTime = 0;
 				pm->ps->weaponstate = WEAPON_READY;
 			}
-
-			if(pm->ps->weapon != pm->cmd.weapon){
-				PM_BeginWeaponChange(pm->cmd.weapon );
-			}
-
+			PM_BeginWeaponChange(pm->cmd.weapon );
 			if(pm->ps->weaponstate == WEAPON_DROPPING){
 				PM_FinishWeaponChange();
 				break;
@@ -1781,7 +1783,7 @@ void PM_Weapon(void){
 					PM_StartTorsoAnim(TORSO_KI_ATTACK1_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
-				PM_UsePowerLevel(costPrimary);
+				pm->ps->powerLevelUse += costPrimary;
 				if(weaponInfo[WPbitFlags] & WPF_CONTINUOUS){
 					PM_AddEvent(EV_FIRE_WEAPON );
 					pm->ps->weaponstate = WEAPON_FIRING;
@@ -1799,7 +1801,7 @@ void PM_Weapon(void){
 					PM_StartTorsoAnim(TORSO_KI_ATTACK1_ALT_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
-				PM_UsePowerLevel(costSecondary);
+				pm->ps->powerLevelUse += costSecondary;
 				if(alt_weaponInfo[WPbitFlags] & WPF_CONTINUOUS){
 					pm->ps->weaponstate = WEAPON_ALTFIRING;
 					PM_AddEvent(EV_ALTFIRE_WEAPON );
@@ -1848,7 +1850,7 @@ void PM_Weapon(void){
 					if(pm->ps->stats[chargePercentPrimary] > 100){
 						pm->ps->stats[chargePercentPrimary] = 100;
 					}
-					PM_UsePowerLevel(costPrimary);
+					pm->ps->powerLevelUse += costPrimary;
 				}
 			}
 			if(!(pm->cmd.buttons & BUTTON_ATTACK)) {
@@ -1882,7 +1884,7 @@ void PM_Weapon(void){
 					if(pm->ps->stats[chargePercentSecondary] > 100){
 						pm->ps->stats[chargePercentSecondary] = 100;
 					}
-					PM_UsePowerLevel(costSecondary);
+					pm->ps->powerLevelUse += costPrimary;
 				}
 			}
 			if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)) {
@@ -1915,7 +1917,7 @@ void PM_Weapon(void){
 			}
 			pm->ps->weaponTime += pml.msec;
 			while(pm->ps->weaponTime > 100){
-				PM_UsePowerLevel(costPrimary);
+				pm->ps->powerLevelUse += costPrimary;
 			}
 
 		}
@@ -1930,7 +1932,7 @@ void PM_Weapon(void){
 			}
 			pm->ps->weaponTime += pml.msec;
 			while(pm->ps->weaponTime > 100){
-				PM_UsePowerLevel(costSecondary);
+				pm->ps->powerLevelUse += costSecondary;
 			}
 		}
 		break;
@@ -2181,6 +2183,8 @@ void PmoveSingle(pmove_t *pmove){
 		meleeRange = Distance(pm->ps->origin,*(pm->ps->lockedPosition)) <= 32 ? qtrue : qfalse;
 	}
 	if(!(pm->ps->stats[bitFlags] & isTransforming)){
+		PM_UsePowerLevel(qtrue);
+		PM_UsePowerLevel(qfalse);
 		PM_BurnPowerLevel(qtrue);
 		PM_BurnPowerLevel(qfalse);
 		if(!pm->ps->powerups[PW_KNOCKBACK]){
