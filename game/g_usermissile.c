@@ -1288,14 +1288,15 @@ static void G_BounceUserMissile( gentity_t *self, trace_t *trace ) {
 
 static void G_StruggleUserMissile( gentity_t *self, trace_t *trace ) {
 	vec3_t	velocity;
+	vec3_t	dir;
 	float	dot;
 	int		hitTime;
 
-	// reflect the velocity on the trace plane
+	// reflect the velocity on it's angles.
 	hitTime = level.previousTime + ( level.time - level.previousTime ) * trace->fraction;
 	BG_EvaluateTrajectoryDelta( &self->s, &self->s.pos, hitTime, velocity );
-	dot = DotProduct( velocity, trace->plane.normal );
-	VectorMA( velocity, -2 * dot, trace->plane.normal, self->s.pos.trDelta );
+	dot = DotProduct( velocity, self->client->ps.viewangles );
+	VectorMA( velocity, -2 * dot, self->client->ps.viewangles, self->s.pos.trDelta );
 
 	VectorScale( self->s.pos.trDelta, self->bounceFrac, self->s.pos.trDelta );
 
@@ -1305,18 +1306,51 @@ static void G_StruggleUserMissile( gentity_t *self, trace_t *trace ) {
 		return;
 	}
 
-	VectorAdd( self->r.currentOrigin, trace->plane.normal, self->r.currentOrigin);
+	VectorAdd( self->r.currentOrigin, self->client->ps.viewangles, self->r.currentOrigin);
+	VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
+	self->s.pos.trTime = level.time;
+}
+
+static void G_DeflectUserMissile( gentity_t *self, gentity_t *other, trace_t *trace ) {
+	vec3_t	velocity;
+	vec3_t	dir;
+	float	dot;
+	int		hitTime;
+
+	// reflect the velocity based on the other's viewangles.
+	AngleVectors(other->client->ps.viewangles,dir,NULL,NULL);
+	hitTime = level.previousTime + ( level.time - level.previousTime ) * trace->fraction;
+	BG_EvaluateTrajectoryDelta( &self->s, &self->s.pos, hitTime, velocity );
+	dot = DotProduct( velocity, dir );
+	VectorMA( velocity, -2 * dot, dir, self->s.pos.trDelta );
+
+	VectorScale( self->s.pos.trDelta, self->bounceFrac, self->s.pos.trDelta );
+
+	// check for stop
+	if ( trace->plane.normal[2] > 0.2 && VectorLength( self->s.pos.trDelta ) < 40 ) {
+		G_ExplodeUserWeapon ( self );
+		return;
+	}
+
+	VectorAdd( self->r.currentOrigin, dir, self->r.currentOrigin);
 	VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
 	self->s.pos.trTime = level.time;
 }
 
 void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 // Handles impact of the weapon with map geometry or entities.
+	int difference1,difference2,power1,power2,speed1,speed2;
+	float speedScale1,speedScale2;
 	gentity_t		*other;
 	qboolean		hitClient = qfalse;
 	vec3_t	velocity;
-	//G_Printf(va("G_ImpactUserWeapon\n"));
 	other = &g_entities[trace->entityNum];
+	speed1 = self->speed;
+	speed2 = other->speed;
+	power1 = self->powerLevel;
+	power2 = other->powerLevel;
+	difference1 = power1-power2;
+	difference2 = power2-power1;
 	if(!other->takedamage && self->bounceFrac && self->bouncesLeft){
 		G_BounceUserMissile( self, trace );
 		G_AddEvent( self, EV_GRENADE_BOUNCE, 0 );
@@ -1325,25 +1359,72 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	}
 	self->takedamage = qtrue;
 	if(other->takedamage) {
-		if(self->damage){
-			BG_EvaluateTrajectoryDelta(&self->s, &self->s.pos, level.time, velocity);
-			if(VectorLength( velocity ) == 0){
-				velocity[2] = 1;
+		if(other->client->ps.stats[bitFlags] & usingBlock){
+			// Swat
+			if(1){
+				self->bounceFrac = 1;
+				G_DeflectUserMissile(self, other, trace);
+				self->r.ownerNum = other->s.number;
+				return;
 			}
-			{
-				g_userWeapon_t	*weaponInfo;
-				weaponInfo = G_FindUserWeaponData( self->s.clientNum, self->s.weapon );
-				G_UserWeaponDamage(other,self,&g_entities[self->r.ownerNum],velocity,self->s.origin,weaponInfo->damage_damage, 0,MOD_KI + weaponInfo->damage_meansOfDeath,weaponInfo->damage_extraKnockback);
+		}else if(self->damage){
+			if(other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD){
+				// Power Struggle
+				if(1){
+
+					/*
+					// Simple MDave Struggle!
+					if(power1 > power2){speedScale1 = -1;}
+					else if(power2 < power1){speedScale1 = 1;}
+					else{speedScale1 = 0;}
+					*/
+
+					// Complex Brad Struggle!
+					if(difference1 > 0){
+						speedScale1 = ((float)difference1 / (float)power2);
+						speedScale2 = -((float)(speed1 * speedScale1) / (float)speed2);
+					}
+					else if(difference2 > 0){
+						speedScale2 = ((float)difference2 / (float)power1);
+						speedScale1 = -((float)(speed2 * speedScale2) / (float)speed1);
+					}
+					else{
+						speedScale1 = 0;
+						speedScale2 = 0;
+					}
+
+					// Don't go zipping away at light speed now!
+					if(speedScale1 > 1){speedScale1 = 1;}
+					if(speedScale2 > 1){speedScale2 = 1;}
+					if(speedScale1 < -1){speedScale1 = -1;}
+					if(speedScale2 < -1){speedScale2 = -1;}
+					self->bounceFrac = speedScale1;
+					G_StruggleUserMissile(self, trace);
+					G_Printf("Attack Owner: %i Speed Scale %f Speed %f Power: %i Difference: %i\n", self->s.clientNum, self->bounceFrac, self->speed, self->powerLevel, difference1);
+					//G_AddEvent( self, EV_POWER_STRUGGLE, 0 );
+					return;
+				// Bounce off each other
+				} else if (0) {
+					self->bounceFrac = 1;
+					G_BounceUserMissile(self, trace);
+					return;
+				}
+			// Impact and blow up.
+			} else {
+				BG_EvaluateTrajectoryDelta(&self->s, &self->s.pos, level.time, velocity);
+				if(VectorLength( velocity ) == 0){
+					velocity[2] = 1;
+				}
+				{
+					g_userWeapon_t	*weaponInfo;
+					weaponInfo = G_FindUserWeaponData( self->s.clientNum, self->s.weapon );
+					G_UserWeaponDamage(other,self,&g_entities[self->r.ownerNum],velocity,self->s.origin,weaponInfo->damage_damage, 0,MOD_KI + weaponInfo->damage_meansOfDeath,weaponInfo->damage_extraKnockback);
+				}
 			}
 		}
 	}
 	// Terminate guidance
 	if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
-	if((self->s.eType == ET_MISSILE) || (self->s.eType == ET_BEAMHEAD)){
-		G_StruggleUserMissile(self, trace);
-		//G_AddEvent( self, EV_POWER_STRUGGLE, 0 );
-		//return;
-	}
 	if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
 		if(other->takedamage && other->client){
 			G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
@@ -1398,10 +1479,13 @@ void G_RunUserMissile( gentity_t *ent ) {
 	int			pass_ent;
 	// get current position
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
+
 	// ignore interactions with the missile owner
 	pass_ent = ent->r.ownerNum;
+
 	// trace a line from the previous position to the current position
 	trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, pass_ent, ent->clipmask );
+
 	if ( trace.startsolid || trace.allsolid ) {
 		// make sure the trace.entityNum is set to the entity we're stuck in
 		trap_Trace(&trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, pass_ent, ent->clipmask );
@@ -1412,6 +1496,11 @@ void G_RunUserMissile( gentity_t *ent ) {
 	}
 	trap_LinkEntity(ent);
 	//G_Printf("%i\n",ent->r.currentOrigin);
+
+	//if(ent->struggling){
+	//	ent->powerLevel--;
+	//}
+
 	if(trace.fraction != 1){
 		// never explode or bounce on sky
 		if ( trace.surfaceFlags & SURF_NOIMPACT ) {

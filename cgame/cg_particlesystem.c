@@ -1078,18 +1078,9 @@ static qboolean PSys_ApplyPlaneConstraint( PSys_System_t *system, float value ) 
 			// If we don't bounce at all, just remove the particle instead of having
 			// it 'slide' along the ground indefinately.
 			// FIXME: Should probably put in surface friction and make it slide to a halt...
-			if ( value == 0.0f ) {
-
-				angle = rand() % 360;
-
-				VectorSet(particle->rotate.startVal, angle, angle, angle);
-				VectorSet(particle->rotate.midVal, angle, angle, angle);
-				VectorSet(particle->rotate.endVal, angle, angle, angle);
-
-				if ( cg_particlesStop.value ) {
-					PSys_FreeParticle( particle );
-					continue;
-				}
+			if ( value == 0.0f && cg_particlesStop.value) {
+				PSys_FreeParticle( particle );
+				continue;
 			}
 
 			// Get the velocity and bounce it
