@@ -672,7 +672,7 @@ void ClientThink_real( gentity_t *ent ) {
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}
-	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s,qtrue );
+	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
 	SendPendingPredictableEvents(&ent->client->ps);
 	if ( !( ent->client->ps.eFlags & EF_FIRING ) ) {
 		client->fireHeld = qfalse;
@@ -816,7 +816,8 @@ void ClientEndFrame( gentity_t *ent ) {
 		ent->s.eFlags &= ~EF_CONNECTION;
 	}
 	G_SetClientSound (ent);
-	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s,qtrue );
+	// set the latest infor
+	BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
 	SendPendingPredictableEvents( &ent->client->ps );
 
 	// set the bit for the reachability area the client is currently in

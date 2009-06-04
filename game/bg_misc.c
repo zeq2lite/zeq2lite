@@ -660,6 +660,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 		VectorCopy(ps->viewangles,s->apos.trBase);
 		if(snap){SnapVector(s->apos.trBase);}
 	}
+	VectorCopy(ps->viewangles,s->apos.trBase);
 	s->angles2[YAW] = ps->movementDir;
 	s->legsAnim = ps->legsAnim;
 	s->torsoAnim = ps->torsoAnim;

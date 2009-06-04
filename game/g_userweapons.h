@@ -44,7 +44,21 @@ typedef struct {
 	// General
 	userWeaponType_t	general_type;				// Weapon's type
 	int					general_bitflags;			// Bitflag settings for weapon (see above)
-	
+
+	// Requirements
+	int					requirePowerLevelMinimum;
+	int					requirePowerLevelMaximum;
+	int					requirePowerLevelTotalMinimum;
+	int					requirePowerLevelTotalMaximum;
+	int					requireTierMinimum;
+	int					requireTierMaximum;	
+
+	// Reactions
+	qboolean			canStruggle;
+	qboolean			canStruggleFeed;
+	qboolean			isBlockable;
+	qboolean			isSwattable;
+
 	// Homing
 	userWeaponHoming_t	homing_type;				// homing AI for weapon (see above)
 	int					homing_range;				// range within which the weapon scans for targets
@@ -61,9 +75,15 @@ typedef struct {
 
 	// Damage
 	int					damage_damage;				// Amount of damage, done at the impact point.
+	int					damage_burn;
 	int					damage_radius;				// Splash radius of damage. Actual damage linearly decreases the further away you are from the impact point.
 	int					damage_multiplier;			// Damage dealt = damage_damage + multiplier * charge level / 100.
 	int					damage_radiusMultiplier;	// Actual radius = damage_radius + multiplier * charge level / 100.
+	int					damage_playerHitType;
+	int					damage_groundHitType;
+	int					damage_stunTime;
+	int					damage_freezeTime;
+	qboolean			damage_ignoreDefense;	
 	qboolean			damage_piercing;			// Does the attack pierce the target and continue to exist afterwards?
 	qboolean			damage_continuous;			// Does the weapon keep exploding until told otherwise when hitting solid geometry? ( WARNING: Should only be used in conjuction with detonatability! )
 	qboolean			damage_lethal;				// Is the attack a lethal strike?

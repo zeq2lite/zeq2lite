@@ -94,20 +94,7 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 	if ( !traceEnt->takedamage) {
 		return qfalse;
 	}
-
-//	if (ent->client->ps.powerups[PW_QUAD] ) {
-//		G_AddEvent( ent, EV_POWERUP_QUAD, 0 );
-//		s_quadFactor = g_quadfactor.value;
-//	} else {
-		s_quadFactor = 1;
-//	}
-/*
-#ifdef MISSIONPACK
-	if( ent->client->persistantPowerup && ent->client->persistantPowerup->item && ent->client->persistantPowerup->item->giTag == PW_DOUBLER ) {
-		s_quadFactor *= 2;
-	}
-#endif
-*/
+	s_quadFactor = 1;
 
 	damage = 50 * s_quadFactor;
 	G_Damage( traceEnt, ent, ent, forward, tr.endpos,
