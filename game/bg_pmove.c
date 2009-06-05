@@ -106,6 +106,7 @@ void PM_CheckKnockback(void){
 	}
 	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
 		PM_ContinueLegsAnim(LEGS_KNOCKBACK);
+		PM_AddEvent(EV_STOPLOOPINGSOUND);
 		pm->ps->powerups[PW_KNOCKBACK] -= pml.msec;
 		PM_StopDirections();
 		if(pm->ps->powerups[PW_KNOCKBACK] > 0){
@@ -161,7 +162,7 @@ ZANZOKEN
 void PM_StopZanzoken(void){
 	if(pm->ps->stats[bitFlags] & usingZanzoken){
 		pm->ps->stats[bitFlags] &= ~usingZanzoken;
-		PM_AddEvent(EV_ZANZOKEN_END);
+		//PM_AddEvent(EV_ZANZOKEN_END);
 		VectorClear(pm->ps->velocity);
 	}
 	pm->ps->powerups[PW_ZANZOKEN] = 0;
@@ -255,6 +256,7 @@ void PM_CheckStatus(void){
 			PM_ContinueTorsoAnim(BOTH_DEATH2);
 			PM_ContinueLegsAnim(BOTH_DEATH2);
 		}
+		PM_AddEvent(EV_STOPLOOPINGSOUND);
 	}
 	else if(pm->ps->stats[powerLevel]<= 0){
 		if(pm->ps->powerups[PW_STATE] != -1){
@@ -274,9 +276,11 @@ void PM_CheckStatus(void){
 				pm->ps->stats[bitFlags] &= ~isUnconcious;	
 			}
 		}
+		PM_AddEvent(EV_STOPLOOPINGSOUND);
 	}
 	else{
 		pm->ps->powerups[PW_STATE] = 0;
+		PM_AddEvent(EV_STOPLOOPINGSOUND);
 	}
 }
 void PM_CheckTransform(void){
@@ -307,7 +311,7 @@ void PM_CheckTransform(void){
 			pm->ps->powerups[PW_TRANSFORM] = 0;
 		}
 	}
-	else{
+	else/* if(pm->cmd.buttons & BUTTON_POWERLEVEL)*/{
 		PM_AddEvent(EV_TIERCHECK);
 	}
 	if(pm->ps->powerups[PW_TRANSFORM] == 0){
@@ -1579,6 +1583,7 @@ void PM_Melee(void){
 		// Cooldown Speed Melee
 		if(melee1 < 0){
 			melee1 += pml.msec;
+			PM_AddEvent(EV_STOPLOOPINGSOUND);
 			if(melee1 >= 0){
 				melee1 = 0;
 				state = 1;
@@ -1587,7 +1592,10 @@ void PM_Melee(void){
 		// Cooldown Power Melee
 		else if(melee2 < 0){
 			melee2 += pml.msec;
-			if(melee2 >= 0){melee2 = 0;}
+			PM_AddEvent(EV_STOPLOOPINGSOUND);
+			if(melee2 >= 0){
+				melee2 = 0;
+			}
 		}
 		else if(melee1 >=0 || melee2 >= 0){
 			// Charging Power Melee

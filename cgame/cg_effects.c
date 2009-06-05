@@ -236,7 +236,107 @@ void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier ) {
 		re->origin[0] -= r4;
 		re->origin[1] -= r5;
 		re->origin[2] -= r6;
+
+		if ((random() * 7)< 1){
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound1 );
+		}else if ((random() * 7) < 2){
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound2 );
+		}else if ((random() * 7) < 3){
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound3 );
+		}else if ((random() * 7) < 4){
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound4 );
+		}else if ((random() * 7) < 5){
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound5 );
+		}else if ((random() * 7) < 6){
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound6 );
+		} else {
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound7 );
+		}
 	}
+}
+
+/*
+==================
+CG_BigLightningEffect
+
+Lightning sparks for high tiers.
+==================
+*/
+void CG_BigLightningEffect( vec3_t org ) {
+	localEntity_t	*le;
+	refEntity_t		*re;
+	int r,s;
+
+	r = random() * 200;
+
+	if ((r >= 1) && (r <= 198)){
+		return;
+	}
+
+	le = CG_AllocLocalEntity();
+	le->leFlags = 0;
+	le->startTime = cg.time;
+	le->leType = LE_FADE_NO;
+	le->endTime = cg.time + 200;
+	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
+	le->radius = 128;
+	le->light = 200;
+	le->lightColor[0] = 1.0;
+	le->lightColor[1] = 1.0;
+	le->lightColor[2] = 1.0;
+	le->lightColor[3] = 1.0;
+
+	re = &le->refEntity;
+	re->reType = RT_SPRITE;
+	re->radius = le->radius;
+	re->shaderRGBA[0] = le->color[0] * 0xff;
+	re->shaderRGBA[1] = le->color[1] * 0xff;
+	re->shaderRGBA[2] = le->color[2] * 0xff;
+	re->shaderRGBA[3] = 0xff;
+
+	AxisClear( re->axis );
+	VectorCopy( org, re->origin );
+	re->origin[2] += 16;
+
+	if ( r < 2 ) {
+		re->customShader = cgs.media.auraLightningSparks1;
+	}
+	if ( r > 198) {
+		re->customShader = cgs.media.auraLightningSparks2;
+	}
+
+	if ((random() > 0) && (random() < 0.1)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound1 );
+	}
+	if ((random() > 0.1) && (random() < 0.2)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound2 );
+	}
+	if ((random() > 0.2) && (random() < 0.3)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound3 );
+	}
+	if ((random() > 0.3) && (random() < 0.4)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound4 );
+	}
+	if ((random() > 0.4) && (random() < 0.5)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound5 );
+	}
+	if ((random() > 0.5) && (random() < 0.6)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound6 );
+	}
+	if ((random() > 0.6) && (random() < 0.7)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound7 );
+	}
+	if ((random() > 0.7) && (random() < 0.8)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound1 );
+	}
+	if ((random() > 0.8) && (random() < 0.9)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound2 );
+	}
+	if ((random() > 0.9) && (random() < 1)){
+		trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.bigLightningSound3 );
+	}
+	//CG_Printf("%f\n",random());
 }
 
 /*
@@ -265,11 +365,13 @@ void CG_SpeedMeleeEffect( vec3_t org ) {
 		le->startTime = cg.time;
 		le->leType = LE_SCALE_FADE_RGB;
 		le->endTime = cg.time + 100;
+
 		if (r > 75){
 			le->radius = 64;
 		}else{
 			le->radius = 32;
 		}
+
 		le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 		le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
 
@@ -280,6 +382,7 @@ void CG_SpeedMeleeEffect( vec3_t org ) {
 		re->shaderRGBA[1] = le->color[1] * 0xff;
 		re->shaderRGBA[2] = le->color[2] * 0xff;
 		re->shaderRGBA[3] = 0xff;
+
 		re->customShader = cgs.media.meleeSpeedEffectShader;
 
 		AxisClear( re->axis );

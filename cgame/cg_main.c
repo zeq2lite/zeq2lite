@@ -649,6 +649,13 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.lightspeedSound3 = trap_S_RegisterSound( "effects/zanzoken/zanzoken3.ogg", qfalse );
 	cgs.media.lightspeedSound4 = trap_S_RegisterSound( "effects/zanzoken/zanzoken4.ogg", qfalse );
 	cgs.media.lightspeedSound5 = trap_S_RegisterSound( "effects/zanzoken/zanzoken5.ogg", qfalse );
+	cgs.media.bigLightningSound1 = trap_S_RegisterSound( "effects/melee/lightning1.ogg", qfalse );
+	cgs.media.bigLightningSound2 = trap_S_RegisterSound( "effects/melee/lightning2.ogg", qfalse );
+	cgs.media.bigLightningSound3 = trap_S_RegisterSound( "effects/melee/lightning3.ogg", qfalse );
+	cgs.media.bigLightningSound4 = trap_S_RegisterSound( "effects/melee/lightning4.ogg", qfalse );
+	cgs.media.bigLightningSound5 = trap_S_RegisterSound( "effects/melee/lightning5.ogg", qfalse );
+	cgs.media.bigLightningSound6 = trap_S_RegisterSound( "effects/melee/lightning6.ogg", qfalse );
+	cgs.media.bigLightningSound7 = trap_S_RegisterSound( "effects/melee/lightning7.ogg", qfalse );
 	cgs.media.blockSound = trap_S_RegisterSound( "effects/melee/block.ogg", qfalse );
 	cgs.media.knockbackSound = trap_S_RegisterSound( "effects/melee/knockback.ogg", qfalse );
 	cgs.media.knockbackLoopSound = trap_S_RegisterSound( "effects/melee/knockbackLoop.ogg", qfalse );
@@ -1612,6 +1619,8 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.meleePowerEffectShader = trap_R_RegisterShader( "shockwave" );
 	cgs.media.teleportEffectShader = trap_R_RegisterShader( "teleportEffect" );
 	cgs.media.boltEffectShader = trap_R_RegisterShader( "boltEffect" );
+	cgs.media.auraLightningSparks1 = trap_R_RegisterShader( "AuraLightningSparks1" );
+	cgs.media.auraLightningSparks2 = trap_R_RegisterShader( "AuraLightningSparks2" );
 #endif
 #ifdef MISSIONPACK
 	cgs.media.kamikazeEffectModel = trap_R_RegisterModel( "models/weaphits/kamboom2.md3" );

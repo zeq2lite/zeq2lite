@@ -269,6 +269,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	vec3_t		rotationOffsetAngles;
 	vec3_t		focusDirCam;
 	vec3_t		focusDirOrig;
+	vec3_t		lockedPos;
 	vec4_t		quatOrient;
 	vec4_t		quatRot;
 	vec4_t		quatResult;
@@ -276,7 +277,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	float		orbit,pan,zoom;
 	int 		clientNum;
 	float		newAngle,newRange,newHeight;
-	entityState_t		*ent;
+	entityState_t *ent;
 	clientInfo_t *ci;
 	tierConfig_cg *tier;
 	ps = &cg.predictedPlayerState;
@@ -294,6 +295,23 @@ static void CG_OffsetThirdPersonView( void ) {
 			cg.guide_view = qfalse;
 		}	
 	}
+	//if(ps->powerups[PW_MELEE_STATE] > 0){
+	//	VectorCopy(cg.snap->ps.lockedPosition,lockedPos);
+	//	VectorCopy(lockedPos,cg.guide_target);
+	//	cg.guide_view = qtrue;
+	//	//CG_Printf("Locked Position: %f %f %f\n",lockedPos[0],lockedPos[1],lockedPos[2]);
+	//	CG_Printf("Locked Target: %i\n",cg.snap->ps.lockedTarget);
+	//}
+	//if((ps->powerups[PW_MELEE_STATE] > 0) && (cg.guide_view)) {
+	//	float oldRoll;
+	//	VectorSubtract( cg.guide_target, ps->origin, forward );
+	//	VectorNormalize( forward );
+	//	oldRoll = cg.refdefViewAngles[ROLL];
+	//	vectoangles( forward, cg.refdefViewAngles );
+	//	cg.refdefViewAngles[ROLL] = oldRoll;
+	//	VectorCopy( ps->origin,cg.guide_target);
+	//	cg.guide_view = qfalse;
+	//}	
 	// backup for when flying
 	VectorCopy( cg.refdefViewAngles, overrideAngles );
 	VectorCopy( cg.refdef.vieworg, overrideOrg );

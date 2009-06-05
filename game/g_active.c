@@ -633,6 +633,8 @@ void ClientThink_real( gentity_t *ent ) {
 	else{
 		client->ps.pm_type = PM_NORMAL;
 	}
+	ent->s.playerLockedTarget = client->ps.lockedTarget;
+	VectorCopy( client->ps.lockedPosition, ent->s.playerLockedPosition );
 	ent->s.playerPowerups = client->ps.powerups;
 	ent->s.playerBitFlags = client->ps.stats[bitFlags];
 	client->ps.speed = client->tiers[client->ps.stats[tierCurrent]].speed;

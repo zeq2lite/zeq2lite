@@ -2373,9 +2373,15 @@ void CG_Player( centity_t *cent ) {
 		ci->tierMax = ci->tierCurrent;
 	}
 	renderfx = 0;
-	if(cent->currentState.number == cg.snap->ps.clientNum){
+	//CG_Printf("Locked Player: %i\n",ps->lockedTarget);
+	if((cent->currentState.powerups &(1 << PW_MELEE_STATE)) > 0){
+		VectorCopy(cent->currentState.playerLockedPosition, cg.guide_target);
+		cg.guide_view = qtrue;
 		//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
 		//else if(cg_cameraMode.integer){return;}
+	}
+	if (cent->currentState.number == cg.snap->ps.clientNum) {
+		if( ps->stats[bitFlags] & usingZanzoken){return;}
 	}
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
@@ -2435,6 +2441,8 @@ void CG_Player( centity_t *cent ) {
 		return;
 	}
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
+	if(ci->auraConfig[tier]->showLightning && ps->powerups[PW_MELEE_STATE] > 0){CG_BigLightningEffect(cent->lerpOrigin);}
+	//CG_BigLightningEffect(cent->lerpOrigin);
 	// -->
 }
 qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *tagName, orientation_t *tagOrient ) {

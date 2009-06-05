@@ -1047,7 +1047,6 @@ static qboolean PSys_ApplyPlaneConstraint( PSys_System_t *system, float value ) 
 	PSys_Particle_t	*particle, *next;
 	qboolean		retval;
 	trace_t			trace;
-	float			angle;
 
 	retval = qtrue;
 	particle = system->particles.prev_local;
@@ -1096,10 +1095,6 @@ static qboolean PSys_ApplyPlaneConstraint( PSys_System_t *system, float value ) 
 				if (VectorLength( v ) > 0.0 && VectorLength( v ) < 0.6){
 					VectorSet(v, 0, 0, 0);
 					particle->mass = 0.0f;
-					angle = rand() % 360;
-					VectorSet(particle->rotate.startVal, angle, angle, angle);
-					VectorSet(particle->rotate.midVal, angle, angle, angle);
-					VectorSet(particle->rotate.endVal, angle, angle, angle);
 				}
 
 				if ( cg_particlesStop.value ) {
@@ -1194,7 +1189,7 @@ static void PSys_RenderSystems( void ) {
 	vec4_t			lerpedRotation;
 	float			lerpedScale;
 	
-	static int	seed = 0x92;
+	static int		seed = 0x92;
 	vec3_t			angles;
 
 	system = PSys_Systems_inuse.prev;
@@ -1307,6 +1302,13 @@ static void PSys_RenderSystems( void ) {
 				if ( !particle->model ) {
 					ent.reType = RT_SPRITE;
 					ent.radius = lerpedScale;
+
+					if (particle->oldPosition != particle->position){
+						if ((lerpedRotation[0] || lerpedRotation[1] || lerpedRotation[2]) > 0){ 
+							ent.rotation = particle->position[0];
+						}
+					}
+
 				} else {
 					ent.hModel = particle->model;
 					ent.reType = RT_MODEL;
@@ -1314,9 +1316,15 @@ static void PSys_RenderSystems( void ) {
 					AxisClear( ent.axis );
 
 					if (particle->oldPosition != particle->position){
-						lerpedRotation[0] = lerpedRotation[0]/* * rand()*/;
-						lerpedRotation[1] = lerpedRotation[1]/* * rand()*/;
-						lerpedRotation[2] = lerpedRotation[2]/* * rand()*/;
+						if (lerpedRotation[0]){ 
+							lerpedRotation[0] = particle->position[0]/* * lerpedRotation[0] / 100*/;
+						}
+						if (lerpedRotation[1]){ 
+							lerpedRotation[1] = particle->position[1]/* * lerpedRotation[1] / 100*/;
+						}
+						if (lerpedRotation[2]){ 
+							lerpedRotation[2] = particle->position[2]/* * lerpedRotation[2] / 100*/;
+						}
 					}
 
 					VectorCopy( lerpedRotation, angles );

@@ -641,6 +641,8 @@ void ClientUserinfoChanged( int clientNum ) {
 	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	client->ps.stats[powerLevelTotal] = client->ps.stats[powerLevelTotal];//g_powerLevel.value;
 	client->playerEntity = ent;
+	//client->ps.lockedTarget = ent->s.playerLockedTarget;
+	//VectorCopy(ent->s.playerLockedTarget, client->ps.lockedPosition);
 
 	// setup tier information
 	client->modelName = model;

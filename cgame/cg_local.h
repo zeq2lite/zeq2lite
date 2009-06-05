@@ -224,6 +224,7 @@ typedef enum {
 	LE_FRAGMENT,
 	LE_MOVE_SCALE_FADE,
 	LE_FALL_SCALE_FADE,
+	LE_FADE_NO,
 	LE_FADE_RGB,
 	LE_FADE_ALPHA,
 	LE_SCALE_FADE,
@@ -915,6 +916,8 @@ typedef struct {
 	qhandle_t	meleeSpeedEffectShader;
 	qhandle_t	meleePowerEffectShader;
 	qhandle_t	boltEffectShader;
+	qhandle_t	auraLightningSparks1;
+	qhandle_t	auraLightningSparks2;
 	qhandle_t	invulnerabilityPowerupModel;
 
 	// scoreboard headers
@@ -1038,6 +1041,13 @@ typedef struct {
 	sfxHandle_t	lightspeedSound3;
 	sfxHandle_t	lightspeedSound4;
 	sfxHandle_t	lightspeedSound5;
+	sfxHandle_t	bigLightningSound1;
+	sfxHandle_t	bigLightningSound2;
+	sfxHandle_t	bigLightningSound3;
+	sfxHandle_t	bigLightningSound4;
+	sfxHandle_t	bigLightningSound5;
+	sfxHandle_t	bigLightningSound6;
+	sfxHandle_t	bigLightningSound7;
 	sfxHandle_t	blockSound;
 	sfxHandle_t	knockbackSound;
 	sfxHandle_t	knockbackLoopSound;
@@ -1575,6 +1585,7 @@ localEntity_t *CG_SmokePuff( const vec3_t p,
 void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing );
 void CG_SpawnEffect( vec3_t org );
 void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier );
+void CG_BigLightningEffect( vec3_t org );
 void CG_SpeedMeleeEffect( vec3_t org );
 void CG_PowerMeleeEffect( vec3_t org );
 #ifdef MISSIONPACK

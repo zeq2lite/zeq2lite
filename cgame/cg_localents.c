@@ -148,7 +148,6 @@ void CG_FragmentBounceMark( localEntity_t *le, trace_t *trace ) {
 			1,1,1,1, qtrue, radius, qfalse );
 	}
 
-
 	// don't allow a fragment to make multiple marks, or they
 	// pile up while settling
 	le->leMarkType = LEMT_NONE;
@@ -303,6 +302,38 @@ TRIVIAL LOCAL ENTITIES
 These only do simple scaling or modulation before passing to the renderer
 =====================================================================
 */
+
+/*
+====================
+CG_AddFadeNo
+====================
+*/
+void CG_AddFadeNo( localEntity_t *le ) {
+	refEntity_t *re;
+	float		c;
+
+	re = &le->refEntity;
+
+	re->shaderRGBA[0] = le->color[0] * 0xff;
+	re->shaderRGBA[1] = le->color[1] * 0xff;
+	re->shaderRGBA[2] = le->color[2] * 0xff;
+
+	trap_R_AddRefEntityToScene( re );
+
+	// add the dlight
+	if ( le->light ) {
+		float		light;
+
+		light = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime );
+		if ( light < 0.5 ) {
+			light = 1.0;
+		} else {
+			light = 1.0 - ( light - 0.5 ) * 2;
+		}
+		light = le->light * light;
+		trap_R_AddLightToScene(re->origin, light, le->lightColor[0], le->lightColor[1], le->lightColor[2] );
+	}
+}
 
 /*
 ====================
@@ -1001,6 +1032,9 @@ void CG_AddLocalEntities( void ) {
 			break;
 		case LE_SCOREPLUM:
 			CG_AddScorePlum( le );
+			break;
+		case LE_FADE_NO:				// teleporters, railtrails
+			CG_AddFadeNo( le );
 			break;
 		}
 	}

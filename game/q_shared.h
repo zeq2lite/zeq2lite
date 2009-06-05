@@ -1378,8 +1378,8 @@ typedef struct entityState_s {
 	int		weaponstate;
 	int		tier;
 	// -->
-	int		lockedTarget;
-	vec3_t	*lockedPosition;
+	int		playerLockedTarget;
+	vec3_t	playerLockedPosition;
 
 	int		legsAnim;		// mask off ANIM_TOGGLEBIT
 	int		torsoAnim;		// mask off ANIM_TOGGLEBIT

@@ -709,10 +709,6 @@ static void CG_Missile( centity_t *cent ) {
 		VectorCopy(cent->lerpOrigin, cg.guide_target);
 		cg.guide_view = qtrue;
 	}
-	else if(ps->lockedTarget > 0 && ps->powerups[PW_MELEE_STATE]){
-		VectorCopy(ps->lockedPosition,cg.guide_target);
-		cg.guide_view = qtrue;
-	}
 	// add trails
 	if ( weaponGraphics->missileTrailShader && weaponGraphics->missileTrailRadius ) {
 		if ( cent->currentState.eType == ET_MISSILE ) {
