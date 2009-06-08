@@ -1197,8 +1197,7 @@ typedef struct playerState_s {
 	int			running;
 	int			lockedTarget;
 	playerState *lockedPlayer;
-	vec3_t		*lockedPosition;
-	vec3_t		*meleePosition;
+	vec3_t		lockedPosition;
 	int			knockBackDirection;
 	int			zanzokenSpeed;
 	int			meleeDefense;
@@ -1371,15 +1370,12 @@ typedef struct entityState_s {
 
 	// for players
 	int		powerups;		// bit flags
-	int  	*playerPowerups;
 	int		playerBitFlags;
 	int		weapon;			// determines weapon and flash model, etc
 	// <-- RiO: Communicate weaponstate and tier as well (but 4bits only!)
 	int		weaponstate;
 	int		tier;
 	// -->
-	int		playerLockedTarget;
-	vec3_t	playerLockedPosition;
 
 	int		legsAnim;		// mask off ANIM_TOGGLEBIT
 	int		torsoAnim;		// mask off ANIM_TOGGLEBIT

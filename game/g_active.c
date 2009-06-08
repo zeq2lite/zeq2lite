@@ -435,7 +435,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_MELEE_CHECK:
 			if(ps->lockedTarget>0){
-				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
+				VectorCopy(&g_entities[ps->lockedTarget-1].r.currentOrigin, ps->lockedPosition);
 				ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
 			}
 			break;
@@ -633,9 +633,6 @@ void ClientThink_real( gentity_t *ent ) {
 	else{
 		client->ps.pm_type = PM_NORMAL;
 	}
-	ent->s.playerLockedTarget = client->ps.lockedTarget;
-	VectorCopy( client->ps.lockedPosition, ent->s.playerLockedPosition );
-	ent->s.playerPowerups = client->ps.powerups;
 	ent->s.playerBitFlags = client->ps.stats[bitFlags];
 	client->ps.speed = client->tiers[client->ps.stats[tierCurrent]].speed;
 	G_LinkUserWeaponData( &(client->ps) );

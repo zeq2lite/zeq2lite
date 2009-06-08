@@ -627,10 +627,10 @@ static void CG_DrawStatusBar( void ) {
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
 	if(tier){	
 		activeTier = &ci->tierConfig[ci->tierCurrent];
-		tierLast = 32768;
+		tierLast = 32767;
 		if(activeTier->sustainPowerLevel && activeTier->sustainPowerLevel < tierLast){tierLast = (float)activeTier->sustainPowerLevel;}
 		if(activeTier->sustainPowerLevelTotal && activeTier->sustainPowerLevelTotal < tierLast){tierLast = (float)activeTier->sustainPowerLevelTotal;}
-		if(tierLast < 32768){
+		if(tierLast < 32767){
 			tierLast = tierLast / (float)ps->persistant[powerLevelMaximum];
 			CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
 		}
@@ -1863,7 +1863,7 @@ static void CG_DrawCrosshair(void) {
 		ca = 0;
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
-	if(cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS){
+	if(cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS || ps->lockedTarget > 0){
 		hShader = cgs.media.crosshairLockedShader;
 	}
 	CG_DrawPic( x - 0.5f * w, y - 0.5f * h, w, h, hShader );

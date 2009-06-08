@@ -660,7 +660,6 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 		VectorCopy(ps->viewangles,s->apos.trBase);
 		if(snap){SnapVector(s->apos.trBase);}
 	}
-	VectorCopy(ps->viewangles,s->apos.trBase);
 	s->angles2[YAW] = ps->movementDir;
 	s->legsAnim = ps->legsAnim;
 	s->torsoAnim = ps->torsoAnim;
@@ -682,11 +681,6 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 	}
 	s->weapon = ps->weapon;
 	s->weaponstate = ps->weaponstate;
-	s->playerLockedTarget = ps->lockedTarget;
-	//Com_Printf("Locked Player: %i\n",ps->lockedTarget);
-	//Com_Printf("Locked Position: %i %i %i\n",*(ps->lockedPosition)[0],*(ps->lockedPosition)[1],*(ps->lockedPosition)[2]);
-	VectorCopy( *(ps->lockedPosition), s->playerLockedPosition );
-	if(snap){SnapVector(s->playerLockedPosition);}
 	s->charge1.chBase = ps->stats[chargePercentPrimary];
 	s->charge2.chBase = ps->stats[chargePercentSecondary];
 	s->groundEntityNum = ps->groundEntityNum;

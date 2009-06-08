@@ -2373,15 +2373,14 @@ void CG_Player( centity_t *cent ) {
 		ci->tierMax = ci->tierCurrent;
 	}
 	renderfx = 0;
-	//CG_Printf("Locked Player: %i\n",ps->lockedTarget);
-	if((cent->currentState.powerups &(1 << PW_MELEE_STATE)) > 0){
-		VectorCopy(cent->currentState.playerLockedPosition, cg.guide_target);
-		cg.guide_view = qtrue;
-		//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
-		//else if(cg_cameraMode.integer){return;}
+	//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
+	//else if(cg_cameraMode.integer){return;}
+	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == cg.snap->ps.clientNum) && (ps->stats[bitFlags] & usingZanzoken))) {
+		return;
 	}
-	if (cent->currentState.number == cg.snap->ps.clientNum) {
-		if( ps->stats[bitFlags] & usingZanzoken){return;}
+	if((cent->currentState.clientNum == cg.clientNum) && (ps->powerups[PW_MELEE_STATE] > 0)){
+		VectorCopy(ps->lockedPosition, cg.guide_target);
+		cg.guide_view = qtrue;
 	}
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
