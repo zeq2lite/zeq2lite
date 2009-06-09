@@ -435,7 +435,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_MELEE_CHECK:
 			if(ps->lockedTarget>0){
-				VectorCopy(&g_entities[ps->lockedTarget-1].r.currentOrigin, ps->lockedPosition);
+				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
 				ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
 			}
 			break;
@@ -716,8 +716,8 @@ void ClientThink( int clientNum ) {
 
 	// mark the time we got info, so we can display the
 	// phone jack if they don't get any for a while
-	//ent->client->lastCmdTime = level.time;
-	ent->client->pers.cmd.serverTime = level.time;
+	ent->client->lastCmdTime = level.time;
+
 	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer ) {
 		ClientThink_real( ent );
 	}

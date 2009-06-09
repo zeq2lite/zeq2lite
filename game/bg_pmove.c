@@ -1188,7 +1188,7 @@ void PM_Footsteps(void){
 			} else{
 				if(pm->cmd.upmove > 0){PM_ContinueLegsAnim(LEGS_FLY_UP);} 
 				else if(pm->cmd.upmove < 0){PM_ContinueLegsAnim(LEGS_FLY_DOWN);}
-				else if(pm->ps->lockedTarget>0){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
+				else if(pm->ps->clientLockedTarget>0){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
 				else{PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
 			}
 			return;
@@ -1221,7 +1221,7 @@ void PM_Footsteps(void){
 				tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim(tempAnimIndex);
 			} else{
-				if(pm->ps->lockedTarget>0 && !pm->ps->powerups[PW_MELEE_STATE]){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
+				if(pm->ps->clientLockedTarget>0 && !pm->ps->powerups[PW_MELEE_STATE]){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
 				else{PM_ContinueLegsAnim(LEGS_IDLE);}
 			}
 		}
@@ -1519,7 +1519,7 @@ void PM_TorsoAnimation(void){
 		PM_ContinueTorsoAnim(TORSO_STAND);
 		break;
 	default:
-		(pm->ps->lockedTarget>0) ? PM_ContinueTorsoAnim(TORSO_STAND_LOCKED) : PM_ContinueTorsoAnim(TORSO_STAND);
+		(pm->ps->clientLockedTarget>0) ? PM_ContinueTorsoAnim(TORSO_STAND_LOCKED) : PM_ContinueTorsoAnim(TORSO_STAND);
 		break;
 	}
 }
@@ -1556,7 +1556,7 @@ void PM_Melee(void){
 			pm->ps->timers[TM_MELEECHECK] = 0;
 			PM_AddEvent(EV_MELEE_CHECK);
 		}
-		distance = Distance(pm->ps->origin,pm->ps->lockedPosition);
+		distance = Distance(pm->ps->origin,*(pm->ps->lockedPosition));
 		inRange = distance <= 64 ? qtrue : qfalse;
 		if(charging || !state || distance > 512){PM_StopMelee();}
 		if(!charging && !state && distance <= 512){pm->ps->powerups[PW_MELEE_STATE] = 1;}
@@ -1733,6 +1733,7 @@ void PM_Melee(void){
 			if(inRange){
 				if(enemyState == 0){
 					pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
+					pm->ps->lockedPlayer->clientLockedTarget = 1;
 				}
 			}
 			pm->ps->stats[bitFlags] |= usingMelee;
@@ -2006,8 +2007,9 @@ void PM_StopLockon(void){
 	if(pm->ps->lockedTarget>0){
 		PM_AddEvent(EV_LOCKON_END);
 	}
-	VectorCopy(NULL,pm->ps->lockedPosition);
+	pm->ps->lockedPosition = NULL;
 	pm->ps->lockedTarget = 0;
+	pm->ps->clientLockedTarget = 0;
 }
 void PM_CheckLockon(void){
 	int	lockBox;
@@ -2033,6 +2035,7 @@ void PM_CheckLockon(void){
 		if((trace.entityNum >= MAX_CLIENTS)){return;}
 		PM_AddEvent(EV_LOCKON_START);
 		pm->ps->lockedTarget = trace.entityNum+1;
+		pm->ps->clientLockedTarget = 1;
 	}
 	else{
 		pm->ps->pm_flags &= ~PMF_LOCK_HELD;
@@ -2102,7 +2105,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	if(pm->ps->lockedTarget > 0){
 		vec3_t dir;
 		vec3_t angles;
-		VectorSubtract(ps->lockedPosition,ps->origin,dir);
+		VectorSubtract(*(ps->lockedPosition),ps->origin,dir);
 		vectoangles(dir, angles);
 		if(angles[PITCH] > 180) { 
 			angles[PITCH] -= 360;
@@ -2229,7 +2232,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_CheckTransform();
 	PM_CheckLoopingSound();
 	if(pm->ps->lockedTarget > 0){
-		meleeRange = Distance(pm->ps->origin,pm->ps->lockedPosition) <= 32 ? qtrue : qfalse;
+		meleeRange = Distance(pm->ps->origin,*(pm->ps->lockedPosition)) <= 32 ? qtrue : qfalse;
 	}
 	if(!(pm->ps->stats[bitFlags] & isTransforming)){
 		PM_UsePowerLevel(qtrue);

@@ -1196,8 +1196,9 @@ typedef struct playerState_s {
 	int			rolling;
 	int			running;
 	int			lockedTarget;
+	int			clientLockedTarget;
 	playerState *lockedPlayer;
-	vec3_t		lockedPosition;
+	vec3_t		*lockedPosition;
 	int			knockBackDirection;
 	int			zanzokenSpeed;
 	int			meleeDefense;

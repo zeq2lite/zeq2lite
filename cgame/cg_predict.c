@@ -355,7 +355,7 @@ void CG_PredictPlayerState( void ) {
 		CG_InterpolatePlayerState(qfalse);
 		return;
 	}
-	if(cg.snap->ps.lockedTarget > 0){
+	if(cg.snap->ps.clientLockedTarget > 0){
 		CG_InterpolatePlayerState(qtrue);
 		return;
 	}

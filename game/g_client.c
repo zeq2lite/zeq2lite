@@ -892,7 +892,6 @@ void ClientBegin( int clientNum ) {
 
 	// count current clients and rank for scoreboard
 	CalculateRanks();
-	//trap_Cvar_Set("g_synchronousClients",(clientNum > 0) ? "1" : "1");
 }
 
 /*

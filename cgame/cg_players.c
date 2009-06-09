@@ -1470,7 +1470,7 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, torsoAnimNum - TORSO_KI_ATTACK1_PREPARE + HEAD_KI_ATTACK1_PREPARE, speedScale );
 		} else {
 			legsAnimNum = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
-			if (cg.predictedPlayerState.lockedTarget >0) {
+			if (cg.predictedPlayerState.clientLockedTarget >0) {
 				CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE_LOCKED, speedScale );
 			} else {
 				CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE, speedScale );
@@ -2378,10 +2378,10 @@ void CG_Player( centity_t *cent ) {
 	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == cg.snap->ps.clientNum) && (ps->stats[bitFlags] & usingZanzoken))) {
 		return;
 	}
-	if((cent->currentState.clientNum == cg.clientNum) && (ps->powerups[PW_MELEE_STATE] > 0)){
-		VectorCopy(ps->lockedPosition, cg.guide_target);
-		cg.guide_view = qtrue;
-	}
+	//if((cent->currentState.clientNum == cg.clientNum) && (ps->powerups[PW_MELEE_STATE] > 0)){
+	//	VectorCopy(ps->lockedPosition, cg.guide_target);
+	//	cg.guide_view = qtrue;
+	//}
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
 	memset( &head, 0, sizeof(head) );
