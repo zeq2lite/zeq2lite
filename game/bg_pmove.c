@@ -86,14 +86,14 @@ void PM_Freeze(void){
 CHECK LOOPING SOUND
 ===================*/
 void PM_CheckLoopingSound(void){
-	if (pm->ps->powerups[PW_KNOCKBACK] ||
+	if(pm->ps->powerups[PW_KNOCKBACK] ||
 		pm->ps->powerups[PW_MELEE1] < 0 ||
 		pm->ps->powerups[PW_MELEE2] < 0 ||
 		pm->ps->stats[bitFlags] & isUnconcious || 
 		pm->ps->stats[bitFlags] & isDead){
 		PM_AddEvent(EV_STOPLOOPINGSOUND);
 	}
-	if (pm->ps->lockedTarget > 0){
+	if(pm->ps->lockedTarget > 0){
 		if (pm->ps->lockedPlayer->stats[powerLevel] <= 0 || 
 			pm->ps->lockedPlayer->stats[powerLevelTotal] <= 0){
 			PM_AddEvent(EV_STOPLOOPINGSOUND);
@@ -218,6 +218,7 @@ void PM_CheckZanzoken(void){
 	}
 	if((pm->cmd.buttons & BUTTON_LIGHTSPEED) && !(pm->ps->stats[bitFlags] & usingZanzoken) && (pm->ps->powerups[PW_ZANZOKEN] == -1)){
 		PM_StopDash();
+		pm->ps->powerups[PW_ZANZOKEN] = 1000;
 		pm->ps->stats[bitFlags] |= usingZanzoken;
 		PM_AddEvent(EV_ZANZOKEN_START);
 	}	
@@ -299,6 +300,7 @@ void PM_CheckStatus(void){
 	}
 }
 void PM_CheckTransform(void){
+	pm->ps->timers[TM_TIERCHECK] += pml.msec;
 	if(pm->ps->powerups[PW_TRANSFORM] == 1){
 		pm->ps->powerups[PW_TRANSFORM] = -1000;
 		PM_AddEvent(EV_TIERUP);
@@ -326,8 +328,11 @@ void PM_CheckTransform(void){
 			pm->ps->powerups[PW_TRANSFORM] = 0;
 		}
 	}
-	else if(pm->cmd.buttons & BUTTON_POWERLEVEL){
-		PM_AddEvent(EV_TIERCHECK);
+	else{
+		if(pm->ps->timers[TM_TIERCHECK] > 300){
+			pm->ps->timers[TM_TIERCHECK] = 0;
+			PM_AddEvent(EV_TIERCHECK);
+		}
 	}
 	if(pm->ps->powerups[PW_TRANSFORM] == 0){
 		pm->ps->stats[bitFlags] &= ~isTransforming;
@@ -1545,8 +1550,12 @@ void PM_Melee(void){
 	inRange = qfalse;
 	state = pm->ps->powerups[PW_MELEE_STATE];
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
+	pm->ps->timers[TM_MELEECHECK] += pml.msec;
 	if(pm->ps->lockedTarget > 0){
-		PM_AddEvent(EV_MELEE_CHECK);
+		if(pm->ps->timers[TM_MELEECHECK] > 300){
+			pm->ps->timers[TM_MELEECHECK] = 0;
+			PM_AddEvent(EV_MELEE_CHECK);
+		}
 		distance = Distance(pm->ps->origin,pm->ps->lockedPosition);
 		inRange = distance <= 64 ? qtrue : qfalse;
 		if(charging || !state || distance > 512){PM_StopMelee();}

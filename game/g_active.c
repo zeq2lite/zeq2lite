@@ -716,8 +716,8 @@ void ClientThink( int clientNum ) {
 
 	// mark the time we got info, so we can display the
 	// phone jack if they don't get any for a while
-	ent->client->lastCmdTime = level.time;
-
+	//ent->client->lastCmdTime = level.time;
+	ent->client->pers.cmd.serverTime = level.time;
 	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer ) {
 		ClientThink_real( ent );
 	}

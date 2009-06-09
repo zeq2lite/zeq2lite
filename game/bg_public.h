@@ -320,6 +320,11 @@ typedef enum {
 }powerup_t;
 
 typedef enum {
+	TM_TIERCHECK,
+	TM_MELEECHECK
+}timers_t;
+
+typedef enum {
 	HI_NONE,
 
 	HI_TELEPORTER,
