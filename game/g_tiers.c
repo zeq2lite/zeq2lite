@@ -31,6 +31,7 @@ void checkTier(gclient_t *client){
 			   (!nextTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierUp))) &&
 			   (ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) &&
 			   (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) &&
+			   (ps->stats[powerLevelLimit] >= nextTier->requirementPowerLevelLimit) &&
 			   (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
 				ps->powerups[PW_TRANSFORM] = 1;
 				++ps->stats[tierCurrent];
@@ -46,6 +47,7 @@ void checkTier(gclient_t *client){
 			if(((baseTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierDown) ||
 			   (!baseTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierDown))) ||
 			   (ps->stats[powerLevel] < baseTier->sustainPowerLevelCurrent) ||
+			   (ps->stats[powerLevelLimit] < baseTier->sustainPowerLevelLimit) ||
 			   (ps->stats[powerLevelTotal] < baseTier->sustainPowerLevelTotal)){
 				ps->powerups[PW_TRANSFORM] = -1;
 				--ps->stats[tierCurrent];
@@ -153,6 +155,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->powerLevelEffect = atoi(token);
 			}
+			else if(!Q_stricmp(token,"powerLevelLimitEffect")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->powerLevelLimitEffect = atoi(token);
+			}
 			else if(!Q_stricmp(token,"powerLevelTotalEffect")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
@@ -168,6 +175,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->requirementPowerLevelCurrent = atoi(token);
 			}
+			else if(!Q_stricmp(token,"requirementPowerLevelLimit")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementPowerLevelLimit = atoi(token);
+			}
 			else if(!Q_stricmp(token,"requirementPowerLevelTotal")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
@@ -182,6 +194,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->sustainPowerLevelCurrent = atoi(token);
+			}
+			else if(!Q_stricmp(token,"sustainPowerLevelLimit")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainPowerLevelLimit = atoi(token);
 			}
 			else if(!Q_stricmp(token,"sustainPowerLevelTotal")){
 				token = COM_Parse(&parse);

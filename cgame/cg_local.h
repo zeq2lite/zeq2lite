@@ -836,6 +836,7 @@ typedef struct {
 	qhandle_t	hudShader;
 	qhandle_t	markerAscendShader;
 	qhandle_t	markerDescendShader;
+	qhandle_t	breakLimitShader;
 
 	qhandle_t	RadarBlipShader;
 	qhandle_t	RadarBurstShader;

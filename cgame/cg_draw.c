@@ -566,7 +566,7 @@ CG_DrawStatusBar
 static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
-	vec4_t		powerColor,dullColor,limitColor,excessColor,emptyColor;
+	vec4_t		powerColor,dullColor,limitColor,excessColor,emptyColor,fatigueColor;
 	vec3_t		angles;
 	const char	*powerLevelString;
 	int 		powerLevelOffset;
@@ -606,6 +606,10 @@ static void CG_DrawStatusBar( void ) {
 	excessColor[1] = 0.5f;
 	excessColor[2] = 0.0f;
 	excessColor[3] = 1.0f;
+	fatigueColor[0] = 0.4f;
+	fatigueColor[1] = 0.4f;
+	fatigueColor[2] = 0.5f;
+	fatigueColor[3] = 1.0f;
 	tier = (float)ps->stats[tierCurrent];
 	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
 	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];
@@ -621,7 +625,7 @@ static void CG_DrawStatusBar( void ) {
 	powerLevelString = va("%i",powerLevelDisplay);
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	if(currentPercent > 1.0){currentPercent = 1.0;}
-	CG_DrawHorGauge(60,449,200,16,limitColor,emptyColor,1,1,qfalse); 
+	CG_DrawHorGauge(60,449,200,16,fatigueColor,emptyColor,1,1,qfalse); 
 	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 
 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
@@ -647,6 +651,9 @@ static void CG_DrawStatusBar( void ) {
 				CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
 			}
 		}
+	}
+	if(ps->stats[powerLevel] == ps->persistant[powerLevelMaximum] && ps->stats[bitFlags] & usingAlter){
+		CG_DrawPic(243,433,40,44,cgs.media.breakLimitShader);
 	}
 	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
 	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);

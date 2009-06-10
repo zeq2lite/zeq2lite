@@ -348,6 +348,9 @@ void PM_CheckPowerLevel(void){
 	stats = pm->ps->stats;
 	stats[powerLevelTimerAuto] += pml.msec;
 	stats[bitFlags] &= ~usingAlter;
+	if(pm->ps->stats[powerLevelTotal] <= 0 && pm->ps->stats[powerLevel] > 0){
+		pm->ps->stats[powerLevel] = 1;
+	}
 	while(stats[powerLevelTimerAuto] >= 100){
 		stats[powerLevelTimerAuto] -= 100;
 		recovery = (float)pm->ps->persistant[powerLevelMaximum] * 0.002;
@@ -397,11 +400,13 @@ void PM_CheckPowerLevel(void){
 				stats[powerLevelTimer] -= 25;
 				raise = stats[powerLevelTotal] * 0.009;
 				if(raise < 1){raise = 1;}
+				if(stats[powerLevel] > stats[powerLevelTotal]){raise *= 0.6;}
 				newValue = stats[powerLevel] + raise;
+				if(newValue > pm->ps->persistant[powerLevelMaximum]){newValue = pm->ps->persistant[powerLevelMaximum];}
 				if(newValue > 32767){newValue = 32767;}
-				if(newValue < stats[powerLevelTotal]){stats[powerLevel] = newValue;}
-				else if(stats[powerLevelTotal] > 0){stats[powerLevel] = stats[powerLevelTotal];}
+				stats[powerLevel] = newValue;
 				if(stats[powerLevel] == pm->ps->persistant[powerLevelMaximum]){
+					stats[bitFlags] |= isBreakingLimit;
 					pushLimit = stats[powerLevelTotal] + pm->ps->powerLevelBreakLimitRate;
 					if(pushLimit < 32767){
 						stats[powerLevel] = stats[powerLevelTotal] = pushLimit;
@@ -419,6 +424,7 @@ void PM_CheckPowerLevel(void){
 	else{
 		stats[bitFlags] &= ~keyTierDown;
 		stats[bitFlags] &= ~keyTierUp;
+		stats[bitFlags] &= ~isBreakingLimit;
 	}
 }
 /*===============
@@ -434,7 +440,7 @@ void PM_StopDash(void){
 void PM_StopMovementTypes(void){
 	PM_StopDash();
 	PM_StopJump();
-	PM_StopZanzoken();
+	//PM_StopZanzoken();
 	PM_StopKnockback();
 }
 void PM_StopMovement(void){

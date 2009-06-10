@@ -6,7 +6,9 @@ typedef struct{
 	int requirementPowerLevelCurrent;
 	int requirementPowerLevelTotal;
 	int requirementPowerLevelMaximum;
+	int requirementPowerLevelLimit;
 	int sustainPowerLevelCurrent;
+	int sustainPowerLevelLimit;
 	int sustainPowerLevelTotal;
 	int zanzokenCost;
 	int zanzokenSpeed;
@@ -22,6 +24,7 @@ typedef struct{
 	float transformTime;
 	float powerLevelEffect;
 	float powerLevelTotalEffect;
+	float powerLevelLimitEffect;
 	float powerLevelMaximumEffect;
 	float powerLevelBreakLimitRate;
 }tierConfig_g;

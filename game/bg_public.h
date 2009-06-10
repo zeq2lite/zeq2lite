@@ -221,6 +221,7 @@ void Pmove (pmove_t *pmove);
 typedef enum {
 	powerLevel,
 	powerLevelTotal,
+	powerLevelLimit,
 	powerLevelTimer,
 	powerLevelTimerAuto,
 	skills,					// 16 bit bitmask
@@ -251,6 +252,7 @@ typedef enum {
 #define isStruggling	0x00080000
 #define isUnconcious	0x00100000
 #define isDead			0x00200000
+#define isBreakingLimit	0x00400000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16
