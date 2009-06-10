@@ -1187,11 +1187,13 @@ typedef struct playerState_s {
 	vec3_t		dashDir;	// Direction in which the player is dashing
 	int 		powerLevelUse;
 	int			powerLevelTotalUse;
+	int			powerLevelLimitUse;
 	int			powerLevelBurn;
 	int			powerLevelMeleeBurn;
 	float		powerLevelBreakLimitRate;
 	int			drainPowerLevel;
 	int			drainPowerLevelTotal;
+	int			drainPowerLevelLimit;
 	int			drainPowerLevelMaximum;
 	int			rolling;
 	int			running;
