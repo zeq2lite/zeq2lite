@@ -69,7 +69,7 @@ qboolean G_weapPhys_ParseType( g_weapPhysParser_t *parser, g_weapPhysCategoryInd
 	//       sequences of enumeration types in g_userweapons.h !!!
 	char *Physics_strings[] = { "Missile", "Beam", "ForceField", "Torch", "Hitscan", "GroundSkim", "Trigger", "None", "" };
 	char *Detonation_strings[] = { "Ki", "Melee", "Slice", "Pierce", "Stone", "Burn", "Candy", "" };
-	char *Trajectory_strings[] = { "LineOfSight", "ProxBomb", "Guided", "Homing", "Arch", "Drunken", "" };
+	char *Trajectory_strings[] = { "LineOfSight", "ProxBomb", "Guided", "Homing", "Arch", "Drunken", "Cylinder", "" };
 
 	int i;
 

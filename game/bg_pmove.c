@@ -13,13 +13,13 @@ pml_t		pml;
 float	pm_stopspeed = 100.0f;
 float	pm_swimScale = 0.80f;
 float	pm_accelerate = 10.0f;
-float	pm_airaccelerate = 1.0f;
+float	pm_airaccelerate = 15.0f;
 float	pm_wateraccelerate = 4.0f;
 float	pm_flyaccelerate = 15.0f;
 float	pm_dashaccelerate = 15.0f;
-float	pm_friction = 6.0f;
+float	pm_friction = 15.0f;
 float	pm_waterfriction = 1.0f;
-float	pm_flightfriction = 6.0f;
+float	pm_flightfriction = 15.0f;
 float	pm_spectatorfriction = 7.0f;
 int		c_pmove = 0;
 /*===============
@@ -531,7 +531,11 @@ void PM_Friction(void){
 		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
 	}
 	if(pm->ps->stats[bitFlags] & usingFlight || pml.onGround){
-		drop = speed*15*pml.frametime;
+		if (!(pm->ps->pm_flags & PMF_TIME_KNOCKBACK)){
+			control = speed < pm_stopspeed ? pm_stopspeed : speed;
+			drop += control*pm_friction*pml.frametime;
+		}
+//		drop = speed*pm_friction*pml.frametime;
 	}
 	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
 		if(speed < 100){
@@ -794,7 +798,10 @@ void PM_WalkMove(void){
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale * 0.60f;
-	PM_Accelerate (wishdir, wishspeed,pm_accelerate);
+	if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK){accelerate = pm_airaccelerate;} 
+	else{accelerate = pm_accelerate;}
+	PM_Accelerate (wishdir, wishspeed,accelerate);
+//	if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK){pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;}
 	vel = VectorLength(pm->ps->velocity);
 	PM_ClipVelocity(pm->ps->velocity, pml.groundTrace.plane.normal,pm->ps->velocity, OVERCLIP );
 	VectorNormalize(pm->ps->velocity);
@@ -859,7 +866,9 @@ void PM_DashMove(void){
 		VectorCopy (wishvel, wishdir);
 		wishspeed = VectorNormalize(wishdir);
 		wishspeed *= scale;
-		PM_Accelerate(wishdir,wishspeed,pm_dashaccelerate);
+		if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK) {accelerate = pm_airaccelerate;} 
+		else{accelerate = pm_dashaccelerate;}
+		PM_Accelerate(wishdir,wishspeed,accelerate);
 		if(pml.groundPlane){
 			PM_ClipVelocity(pm->ps->velocity,pml.groundTrace.plane.normal,pm->ps->velocity,OVERCLIP);
 		}
@@ -1944,7 +1953,7 @@ void PM_Weapon(void){
 		{
 			pm->ps->powerups[PW_ATTACK2] += pml.msec;
 			if(pm->ps->powerups[PW_ATTACK2] >= weaponInfo[WPSTAT_ALT_CHRGTIME]){
-				pm->ps->powerups[PW_ATTACK1] -= weaponInfo[WPSTAT_ALT_CHRGTIME];
+				pm->ps->powerups[PW_ATTACK2] -= weaponInfo[WPSTAT_ALT_CHRGTIME];
 				if(pm->ps->stats[chargePercentSecondary] < 100){
 					pm->ps->stats[chargePercentSecondary] += 1;
 					if(pm->ps->stats[chargePercentSecondary] > 100){

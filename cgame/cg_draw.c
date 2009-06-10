@@ -1975,7 +1975,77 @@ CG_DrawCrosshairChargeBars
 ==========================
 */
 static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
-	return;
+	float		w, h;
+	float		x_pri, x_sec, y;
+	float		w_bar;
+	float		h_bar;
+	const char	*valueString;
+
+	vec4_t	color_charging = {1.0f, 1.0f, 1.0f, 0.5f};
+	vec4_t	color_empty = {0.5f, 0.5f, 0.5f, 0.25f};
+	vec4_t	color_ready = {0.25f, 0.75f, 1.0f, 0.5f};
+	int		value;
+
+	// No bars possible at all if spectating, or have them turned off by cvar.
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR || !cg_crosshairBars.value) {
+		return;
+	}
+
+	w_bar = 32;
+	h_bar = 64;
+
+	h = 0.5f * h_bar;
+	w = 0.5f * cg_crosshairSize.value + cg_crosshairMargin.value;
+	x_pri = x_cross - w - w_bar;
+	x_sec = x_cross + w;
+	y = y_cross - h; 
+
+	// If the primary weapon can be charged, and atleast 1% is charged, draw the bar.
+	if ( ( cg.snap->ps.ammo[WPbitFlags] && WPF_NEEDSCHARGE) && (cg.snap->ps.stats[chargePercentPrimary] > 0 ) ) {
+
+		// draw bar
+		value = cg.snap->ps.stats[chargePercentPrimary];
+
+		// If the primary weapon is charged far enough to be fire-able,
+		// display the ready glow.
+
+		if ( cg.snap->ps.ammo[WPbitFlags] & WPF_READY ) {
+			CG_DrawVertGauge( x_pri + 14, y + 15, 4, 34, color_ready, color_empty, value, 100, qfalse );	
+		}
+		else {
+			CG_DrawVertGauge( x_pri + 14, y + 15, 4, 34, color_charging, color_empty, value, 100, qfalse );
+		}
+
+		// Print the percentage of charge above the bar.
+		valueString = va("%i%%",value);
+		CG_DrawSmallStringHalfHeight( x_pri, y, valueString, 0.5F);
+	}
+
+	// If the secondary weapon exists, display the charge bar
+	// depending on whether it is chargeable or not.
+	if ( cg.snap->ps.ammo[WPbitFlags] & WPF_ALTWEAPONPRESENT ) {
+
+		// If the secondary weapon can be charged, and atleast 1% is charged, draw the bar.
+		if ( ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) && (cg.snap->ps.stats[chargePercentSecondary] > 0 ) ) {
+
+			// draw bar
+			value = cg.snap->ps.stats[chargePercentSecondary];
+
+			// If the secondary weapon is charged far enough to be fire-able,
+			// display the ready glow.
+
+			if ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_READY ) {
+				CG_DrawVertGauge( x_sec + 14, y + 15, 4, 34, color_ready, color_empty, value, 100, qfalse );
+			}
+			else {
+				CG_DrawVertGauge( x_sec + 14, y + 15, 4, 34, color_charging, color_empty, value, 100, qfalse );
+			}
+
+			// Print the percentage of charge above the bar.
+			valueString = va( "%i%%", value);
+			CG_DrawSmallStringHalfHeight( x_sec, y, valueString, 0.5F);
+		}
+	}
 }
 
 

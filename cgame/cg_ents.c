@@ -546,12 +546,12 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 	
 	// Build segments
 		
-	for (; t <= ent->trailTime; t += step) {
+//	for (; t <= ent->trailTime; t += step) {
 		CG_TrailFunc_SpiralBeam_Helper ( es, ent, t, lastPos2);
 
 		le = CG_AllocLocalEntity();
 		re = &le->refEntity;
-		le->leType = LE_FADE_RGB;
+		le->leType = LE_FADE_NO;
 		le->startTime = t;
 		le->endTime = t + 1000;
 		le->lifeRate = 1.0 / (le->endTime - le->startTime);
@@ -575,13 +575,13 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 		AxisClear( re->axis );
 
 		VectorCopy(lastPos2, lastPos);
-	}
+//	}
 
 	CG_TrailFunc_SpiralBeam_Helper ( es, ent, ent->trailTime, lastPos2);
 
 	le = CG_AllocLocalEntity();
 	re = &le->refEntity;
-	le->leType = LE_FADE_RGB;
+	le->leType = LE_FADE_NO;
 	le->startTime = ent->trailTime;
 	le->endTime = ent->trailTime + 500;
 	le->lifeRate = 1.0 / (le->endTime - le->startTime);
@@ -715,14 +715,16 @@ static void CG_Missile( centity_t *cent ) {
 			CG_TrailFunc_FadeTail( cent );
 
 		} else if ( cent->currentState.eType == ET_BEAMHEAD ) {
-			if ( cent->currentState.eFlags & EF_GUIDED ) {
+			if ( cent->currentState.eFlags & EF_GUIDED  &&
+						!weaponGraphics->missileTrailSpiralShader &&
+				        !weaponGraphics->missileTrailSpiralRadius &&
+						!weaponGraphics->missileTrailSpiralOffset ) {
 				CG_TrailFunc_BendyBeam( cent );
-
-			} else if ( weaponGraphics->missileTrailSpiralShader &&
+			} else if ( cent->currentState.eFlags & EF_GUIDED &&
+						weaponGraphics->missileTrailSpiralShader &&
 				        weaponGraphics->missileTrailSpiralRadius &&
 						weaponGraphics->missileTrailSpiralOffset ) {
 				CG_TrailFunc_SpiralBeam( cent );
-
 			} else {
 				CG_TrailFunc_StraightBeam( cent );
 			}

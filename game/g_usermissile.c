@@ -385,7 +385,7 @@ attacker = entity the inflictor belongs to
 dir = direction for knockback
 point = origin of attack
 */
-void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int extraKnockback){
+void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int knockback){
 	gclient_t *tgClient;
 	if(!target->takedamage){return;}
 	if(level.intermissionQueued){return;}
@@ -393,7 +393,28 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	if(!attacker){attacker = &g_entities[ENTITYNUM_WORLD];}
 	tgClient = target->client;
 	if(tgClient && tgClient->noclip){return;}
-	if(dir){VectorNormalize(dir);}
+	if(!dir){dflags |= DAMAGE_NO_KNOCKBACK;}
+	else{VectorNormalize(dir);}
+	if(knockback > 1000) {knockback = 1000;}
+	if(knockback < 0) {knockback = 0;}
+	if(target == attacker){knockback = 0;}
+	if(target->flags & FL_NO_KNOCKBACK) {knockback = 0;}
+	if(dflags & DAMAGE_NO_KNOCKBACK) {knockback = 0;}
+	if (knockback && tgClient) {
+		vec3_t	kvel;
+		float	mass;
+		mass = 200;
+		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
+		VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
+		if (!tgClient->ps.pm_time) {
+			int		t;
+			t = knockback * 2;
+			if ( t < 50 ) {t = 50;}
+			if ( t > 200 ) {t = 200;}
+			tgClient->ps.pm_time = t;
+			tgClient->ps.pm_flags |= PMF_TIME_KNOCKBACK;
+		}
+	}
 	if(inflictor && inflictor->chargelvl){
 		Com_Printf("Charge Level of %i means a damage of %i / %i\n",inflictor->chargelvl,(int)(damage * (float)inflictor->chargelvl / 100.0),damage);
 		damage = damage * ((float)inflictor->chargelvl / 100.0);

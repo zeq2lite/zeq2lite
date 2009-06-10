@@ -842,6 +842,7 @@ typedef struct {
 	qhandle_t	RadarBurstShader;
 	qhandle_t	RadarWarningShader;
 	qhandle_t	RadarMidpointShader;
+
 	// END ADDING
 
 	qhandle_t	friendShader;
@@ -1215,6 +1216,7 @@ extern	vmCvar_t		cg_crosshairY;
 extern	vmCvar_t		cg_crosshairSize;
 extern	vmCvar_t		cg_crosshairMargin;
 extern	vmCvar_t		cg_crosshairHealth;
+extern	vmCvar_t		cg_crosshairBars;
 extern	vmCvar_t		cg_drawStatus;
 extern	vmCvar_t		cg_draw2D;
 extern	vmCvar_t		cg_animSpeed;
