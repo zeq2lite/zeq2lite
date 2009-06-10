@@ -1859,13 +1859,15 @@ void CG_StartMusic( void ) {
 	char	*s;
 	char	*t;
 	int	r;
+	qtime_t realRandom;
 
-	r = random() * 10;
+	trap_RealTime(&realRandom);
+
+	r = realRandom.tm_sec / 6;
 	s = cg_backgroundMusic[r];
 	t = va("music/%s", s + 1);
 
 	trap_S_StartBackgroundTrack( t, t );
-
 }
 #ifdef MISSIONPACK
 char *CG_GetMenuBuffer(const char *filename) {

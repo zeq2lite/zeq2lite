@@ -2375,7 +2375,7 @@ void CG_Player( centity_t *cent ) {
 	renderfx = 0;
 	//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
 	//else if(cg_cameraMode.integer){return;}
-	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == cg.snap->ps.clientNum) && (ps->stats[bitFlags] & usingZanzoken))) {
+	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == ps->clientNum) && (ps->stats[bitFlags] & usingZanzoken))) {
 		return;
 	}
 	//if((cent->currentState.clientNum == cg.clientNum) && (ps->powerups[PW_MELEE_STATE] > 0)){
