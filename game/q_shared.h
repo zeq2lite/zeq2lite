@@ -1193,6 +1193,7 @@ typedef struct playerState_s {
 	playerState *lockedPlayer;
 	vec3_t		*lockedPosition;
 	int			knockBackDirection;
+	float		breakLimitRate;
 	// RiO -->
 
 	// damage feedback
@@ -1203,7 +1204,6 @@ typedef struct playerState_s {
 
 	int			stats[MAX_STATS];
 
-	float		breakLimitRate;
 	int			powerLevel[MAX_POWERSTATS];
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
