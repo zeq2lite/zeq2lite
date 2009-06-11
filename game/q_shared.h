@@ -1145,7 +1145,6 @@ typedef struct playerState_s {
 	vec3_t		velocity;
 	int			weaponTime;
 	int			gravity;
-	int			speed;
 	int			delta_angles[3];	// add to command angles to get view direction
 									// changed by spawns, rotating objects, and teleporters
 
@@ -1187,8 +1186,6 @@ typedef struct playerState_s {
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
 
-	int			powerLevel[MAX_POWERSTATS];
-
 	int			rolling;
 	int			running;
 	int			lockedTarget;
@@ -1196,12 +1193,6 @@ typedef struct playerState_s {
 	playerState *lockedPlayer;
 	vec3_t		*lockedPosition;
 	int			knockBackDirection;
-	int			zanzokenSpeed;
-	int			meleeDefense;
-	int			meleeAttack;
-	int			energyDefense;
-	int			energyAttack;
-	int			energyCost;
 	// RiO -->
 
 	// damage feedback
@@ -1212,6 +1203,8 @@ typedef struct playerState_s {
 
 	int			stats[MAX_STATS];
 
+	float		breakLimitRate;
+	int			powerLevel[MAX_POWERSTATS];
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
 	int			timers[MAX_TIMERS];

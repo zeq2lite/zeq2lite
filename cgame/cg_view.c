@@ -505,7 +505,7 @@ static void CG_OffsetFirstPersonView( void ) {
 
 /*
 	// if dead, fix the angle and don't add any kick
-	if ( cg.snap->ps.stats[powerLevel] <= 0 ) {
+	if ( cg.snap->ps.powerLevel[current] <= 0 ) {
 		angles[ROLL] = 40;
 		angles[PITCH] = -15;
 		angles[YAW] = cg.snap->ps.stats[deathCameraAngle];
@@ -1975,12 +1975,12 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer ||
-							 (cg.snap->ps.stats[powerLevelTotal] <= 0) ||
+							 (cg.snap->ps.powerLevel[fatigue] <= 0) ||
 							 (cg.snap->ps.weaponstate == WEAPON_GUIDING) ||
 							 (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING);
 /*
 	// decide on third person view
-	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.stats[powerLevel] <= 0);
+	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.powerLevel[current] <= 0);
 */
 
 	// END ADDING

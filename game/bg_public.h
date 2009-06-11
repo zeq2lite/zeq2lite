@@ -215,26 +215,63 @@ void Pmove (pmove_t *pmove);
 
 //===================================================================================
 
-
-// player_state->stats[] indexes
-// NOTE: may not have more than 16
 typedef enum {
-	powerLevel,
-	powerLevelTotal,
-	powerLevelLimit,
-	powerLevelTimer,
-	powerLevelTimerAuto,
-	skills,					// 16 bit bitmask
+	speed,
+	zanzokenSpeed,
+	meleeAttack,
+	meleeDefense,
+	energyAttack,
+	energyDefense,
+	energyCost,
 	tierCurrent,
 	tierTotal,
 	chargePercentPrimary,	// % of primary attack charged
 	chargePercentSecondary,	// % of secondary attack charged
-	bitFlags,				// Set of bitflags for player
-	target
-} statIndex_t;
+	skills,					// 16 bit bitmask
+	bitFlags				// Set of bitflags for player
+}statIndex_t;
 
+typedef enum{
+	current,
+	fatigue,
+	health,
+	maximum,
+	useCurrent,
+	useFatigue,
+	useHealth,
+	drainCurrent,
+	drainFatigue,
+	drainHealth,
+	damageFromEnergy,
+	damageFromMelee
+}powerLevel_t;
 
-// ADDING FOR ZEQ2
+typedef enum{
+	updateTier,
+	updateMelee,
+	powerRaise,
+	powerAuto
+}timers_t;
+
+typedef enum {
+	PW_NONE,
+	PW_BOOST,
+	PW_INVULNERABILITY,
+	PW_ZANZOKEN,
+	PW_TRANSFORM,
+	PW_MELEE1,
+	PW_MELEE2,
+	PW_STATE,
+	PW_MELEE_STATE,
+	PW_DEFENSE,
+	PW_ATTACK1,
+	PW_ATTACK2,
+	PW_STUN,
+	PW_FREEZE,
+	PW_KNOCKBACK,
+	PW_NUM_POWERUPS
+}powerup_t;
+
 // Player stat bits
 #define hasFlipOffset	0x00000001
 #define usingBoost		0x00000002
@@ -266,14 +303,12 @@ typedef enum {
 	PERS_ATTACKER,					// clientnum of last damage inflicter
 	PERS_ATTACKEE_ARMOR,			// powerLevel/armor of last person we attacked
 	PERS_KILLED,					// count of the number of times you died
-	// player awards tracking
 	PERS_IMPRESSIVE_COUNT,			// two railgun hits in a row
 	PERS_EXCELLENT_COUNT,			// two successive kills in a short amount of time
 	PERS_DEFEND_COUNT,				// defend awards
 	PERS_ASSIST_COUNT,				// assist awards
 	PERS_GAUNTLET_FRAG_COUNT,		// kills with the gauntlet
 	PERS_CAPTURES,					// captures
-	powerLevelMaximum				// current powerLevel cap should be saved across spawns
 } persEnum_t;
 
 
@@ -301,43 +336,15 @@ typedef enum {
 #define EF_GUIDED			0x00004000		// To distinguish a guided missile (Missiles can't vote anyway)
 #define EF_AURA				0x00000010		// used to make players display their aura
 
-// NOTE: may not have more than 16
-typedef enum {
-	PW_NONE,
-	PW_BOOST,
-	PW_INVULNERABILITY,
-	PW_ZANZOKEN,
-	PW_TRANSFORM,
-	PW_MELEE1,
-	PW_MELEE2,
-	PW_STATE,
-	PW_MELEE_STATE,
-	PW_DEFENSE,
-	PW_ATTACK1,
-	PW_ATTACK2,
-	PW_STUN,
-	PW_FREEZE,
-	PW_KNOCKBACK,
-	PW_NUM_POWERUPS
-}powerup_t;
-
-typedef enum {
-	TM_TIERCHECK,
-	TM_MELEECHECK
-}timers_t;
-
 typedef enum {
 	HI_NONE,
-
 	HI_TELEPORTER,
 	HI_MEDKIT,
 	HI_KAMIKAZE,
 	HI_PORTAL,
 	HI_INVULNERABILITY,
-
 	HI_NUM_HOLDABLE
 } holdable_t;
-
 
 typedef enum {
 	WP_NONE,
@@ -352,12 +359,6 @@ typedef enum {
 	WP_PLASMAGUN,
 	WP_BFG,
 	WP_GRAPPLING_HOOK,
-#ifdef MISSIONPACK
-	WP_NAILGUN,
-	WP_PROX_LAUNCHER,
-	WP_CHAINGUN,
-#endif
-
 	WP_NUM_WEAPONS
 } weapon_t;
 

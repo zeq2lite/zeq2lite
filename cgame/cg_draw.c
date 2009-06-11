@@ -611,8 +611,8 @@ static void CG_DrawStatusBar( void ) {
 	fatigueColor[2] = 0.5f;
 	fatigueColor[3] = 1.0f;
 	tier = (float)ps->stats[tierCurrent];
-	maxPercent = (float)ps->stats[powerLevelTotal] / (float)ps->persistant[powerLevelMaximum];
-	currentPercent = (float)ps->stats[powerLevel] / (float)ps->persistant[powerLevelMaximum];
+	maxPercent = (float)ps->powerLevel[fatigue] / (float)ps->powerLevel[maximum];
+	currentPercent = (float)ps->powerLevel[current] / (float)ps->powerLevel[maximum];
 	if(currentPercent < 0){currentPercent = 0;}
 	if(maxPercent <0){maxPercent = 0;}
 	if(currentPercent > 1.0){currentPercent = 1.0;}
@@ -621,21 +621,21 @@ static void CG_DrawStatusBar( void ) {
 	if(multiplier <= 0){
 		multiplier = ((tier*tier*tier*tier)+1.0);
 	}
-	powerLevelDisplay = (float)ps->stats[powerLevel] * multiplier;
+	powerLevelDisplay = (float)ps->powerLevel[current] * multiplier;
 	powerLevelString = va("%i",powerLevelDisplay);
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	if(currentPercent > 1.0){currentPercent = 1.0;}
 	CG_DrawHorGauge(60,449,200,16,fatigueColor,emptyColor,1,1,qfalse); 
 	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 
-	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->stats[powerLevel],ps->stats[powerLevelTotal],qfalse);	
+	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->powerLevel[current],ps->powerLevel[fatigue],qfalse);	
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
 	if(tier){	
 		activeTier = &ci->tierConfig[ci->tierCurrent];
 		tierLast = 32767;
 		if(activeTier->sustainPowerLevel && activeTier->sustainPowerLevel < tierLast){tierLast = (float)activeTier->sustainPowerLevel;}
-		if(activeTier->sustainPowerLevelTotal && activeTier->sustainPowerLevelTotal < tierLast){tierLast = (float)activeTier->sustainPowerLevelTotal;}
+		if(activeTier->sustainFatigue && activeTier->sustainFatigue < tierLast){tierLast = (float)activeTier->sustainFatigue;}
 		if(tierLast < 32767){
-			tierLast = tierLast / (float)ps->persistant[powerLevelMaximum];
+			tierLast = tierLast / (float)ps->powerLevel[maximum];
 			CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
 		}
 	}
@@ -643,16 +643,16 @@ static void CG_DrawStatusBar( void ) {
 		activeTier = &ci->tierConfig[ci->tierCurrent+1];
 		tierNext = 0;
 		if(activeTier->requirementPowerLevel && activeTier->requirementPowerLevel > tierNext){tierNext = (float)activeTier->requirementPowerLevel;}
-		if(activeTier->requirementPowerLevelTotal && activeTier->requirementPowerLevelTotal > tierNext){tierNext = (float)activeTier->requirementPowerLevel;}
+		if(activeTier->requirementFatigue && activeTier->requirementFatigue > tierNext){tierNext = (float)activeTier->requirementPowerLevel;}
 		if(activeTier->requirementPowerLevelMaximum && activeTier->requirementPowerLevelMaximum > tierNext){tierNext = (float)activeTier->requirementPowerLevelMaximum;}
 		if(tierNext){
-			tierNext = tierNext / (float)ps->persistant[powerLevelMaximum];
+			tierNext = tierNext / (float)ps->powerLevel[maximum];
 			if(tierNext < 1.0){
 				CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
 			}
 		}
 	}
-	if(ps->stats[powerLevel] == ps->persistant[powerLevelMaximum] && ps->stats[bitFlags] & usingAlter){
+	if(ps->powerLevel[current] == ps->powerLevel[maximum] && ps->stats[bitFlags] & usingAlter){
 		CG_DrawPic(243,433,40,44,cgs.media.breakLimitShader);
 	}
 	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
@@ -1126,7 +1126,7 @@ static float CG_DrawPowerups( float y ) {
 
 	ps = &cg.snap->ps;
 
-	if ( ps->stats[powerLevel] <= 0 ) {
+	if ( ps->powerLevel[current] <= 0 ) {
 		return y;
 	}
 
@@ -1238,7 +1238,7 @@ static int CG_DrawPickupItem( int y ) {
 	int		value;
 	float	*fadeColor;
 
-	if ( cg.snap->ps.stats[powerLevel] <= 0 ) {
+	if ( cg.snap->ps.powerLevel[current] <= 0 ) {
 		return y;
 	}
 

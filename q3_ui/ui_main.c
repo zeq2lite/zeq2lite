@@ -82,23 +82,23 @@ typedef struct {
 vmCvar_t	ui_ffa_fraglimit;
 vmCvar_t	ui_ffa_timelimit;
 vmCvar_t	ui_ffa_powerlevel;
-vmCvar_t	ui_ffa_powerlevelBreakLimitRate;
+vmCvar_t	ui_ffa_breakLimitRate;
 
 vmCvar_t	ui_tourney_fraglimit;
 vmCvar_t	ui_tourney_timelimit;
 vmCvar_t	ui_tourney_powerlevel;
-vmCvar_t	ui_tourney_powerlevelBreakLimitRate;
+vmCvar_t	ui_tourney_breakLimitRate;
 
 vmCvar_t	ui_team_fraglimit;
 vmCvar_t	ui_team_timelimit;
 vmCvar_t	ui_team_powerlevel;
-vmCvar_t	ui_team_powerlevelBreakLimitRate;
+vmCvar_t	ui_team_breakLimitRate;
 vmCvar_t	ui_team_friendly;
 
 vmCvar_t	ui_ctf_capturelimit;
 vmCvar_t	ui_ctf_timelimit;
 vmCvar_t	ui_ctf_powerlevel;
-vmCvar_t	ui_ctf_powerlevelBreakLimitRate;
+vmCvar_t	ui_ctf_breakLimitRate;
 vmCvar_t	ui_ctf_friendly;
 
 vmCvar_t	ui_arenasFile;
@@ -151,23 +151,23 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_ffa_fraglimit, "ui_ffa_fraglimit", "20", CVAR_ARCHIVE },
 	{ &ui_ffa_timelimit, "ui_ffa_timelimit", "0", CVAR_ARCHIVE },
 	{ &ui_ffa_powerlevel, "ui_ffa_powerlevel", "1000", CVAR_ARCHIVE },
-	{ &ui_ffa_powerlevelBreakLimitRate, "ui_ffa_powerlevelBreakLimitRate", "1", CVAR_ARCHIVE },
+	{ &ui_ffa_breakLimitRate, "ui_ffa_breakLimitRate", "1", CVAR_ARCHIVE },
 
 	{ &ui_tourney_fraglimit, "ui_tourney_fraglimit", "0", CVAR_ARCHIVE },
 	{ &ui_tourney_timelimit, "ui_tourney_timelimit", "15", CVAR_ARCHIVE },
 	{ &ui_tourney_powerlevel, "ui_tourney_powerlevel", "1000", CVAR_ARCHIVE },
-	{ &ui_tourney_powerlevelBreakLimitRate, "ui_tourney_powerlevelBreakLimitRate", "1", CVAR_ARCHIVE },
+	{ &ui_tourney_breakLimitRate, "ui_tourney_breakLimitRate", "1", CVAR_ARCHIVE },
 
 	{ &ui_team_fraglimit, "ui_team_fraglimit", "0", CVAR_ARCHIVE },
 	{ &ui_team_timelimit, "ui_team_timelimit", "20", CVAR_ARCHIVE },
 	{ &ui_team_powerlevel, "ui_team_powerlevel", "1000", CVAR_ARCHIVE },
-	{ &ui_team_powerlevelBreakLimitRate, "ui_team_powerlevelBreakLimitRate", "1", CVAR_ARCHIVE },
+	{ &ui_team_breakLimitRate, "ui_team_breakLimitRate", "1", CVAR_ARCHIVE },
 	{ &ui_team_friendly, "ui_team_friendly",  "1", CVAR_ARCHIVE },
 
 	{ &ui_ctf_capturelimit, "ui_ctf_capturelimit", "8", CVAR_ARCHIVE },
 	{ &ui_ctf_timelimit, "ui_ctf_timelimit", "30", CVAR_ARCHIVE },
 	{ &ui_ctf_powerlevel, "ui_ctf_powerlevel", "1000", CVAR_ARCHIVE },
-	{ &ui_ctf_powerlevelBreakLimitRate, "ui_ctf_powerlevelBreakLimitRate", "1", CVAR_ARCHIVE },
+	{ &ui_ctf_breakLimitRate, "ui_ctf_breakLimitRate", "1", CVAR_ARCHIVE },
 	{ &ui_ctf_friendly, "ui_ctf_friendly",  "0", CVAR_ARCHIVE },
 
 	{ &ui_arenasFile, "g_arenasFile", "", CVAR_INIT|CVAR_ROM },

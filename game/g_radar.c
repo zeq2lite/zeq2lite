@@ -38,7 +38,7 @@ void G_RadarUpdateCS(void) {
 				//get and store the client position and information
 				VectorCopy( ps->origin, g_playerOrigins[i].pos );
 
-				g_playerOrigins[i].pl = ps->stats[powerLevel];
+				g_playerOrigins[i].pl = ps->powerLevel[current];
 				g_playerOrigins[i].clientNum = ps->clientNum;
 
 				g_playerOrigins[i].properties = 0;

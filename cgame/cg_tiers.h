@@ -3,9 +3,9 @@ typedef struct{
 	qhandle_t icon;
 	float hudMultiplier;
 	int sustainPowerLevel;
-	int sustainPowerLevelTotal;
+	int sustainFatigue;
 	int requirementPowerLevel;
-	int requirementPowerLevelTotal;
+	int requirementFatigue;
 	int requirementPowerLevelMaximum;
 	int transformCameraDefault[3];
 	int transformCameraOrbit[2];

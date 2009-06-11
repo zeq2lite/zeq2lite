@@ -254,7 +254,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 
 	if ( client->sess.spectatorState != SPECTATOR_FOLLOW ) {
 		client->ps.pm_type = PM_SPECTATOR;
-		client->ps.speed = 400;	// faster than normal
+		client->ps.stats[speed] = 400;	// faster than normal
 
 		// set up for pmove
 		memset (&pm, 0, sizeof(pm));
@@ -268,8 +268,8 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 		if (g_editmode.integer == EM_mlf) {
 			pm.tracemask = 0;
 			if (level.lfeFMM) {
-				client->ps.speed = 30;
-				if (pm.cmd.buttons & BUTTON_WALKING) client->ps.speed = 15;
+				client->ps.stats[speed] = 30;
+				if (pm.cmd.buttons & BUTTON_WALKING) client->ps.stats[speed] = 15;
 			}
 			if (pm.cmd.buttons & BUTTON_ATTACK) {
 				pm.cmd.forwardmove = 0;
@@ -401,7 +401,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_AIRBRAKE:
 			if(ps->powerups[PW_KNOCKBACK] >= 4000) {
 				amount = client->tiers[tier].airBrakeCost * 2;
-				ps->powerLevelTotalUse += amount;
+				ps->powerLevel[useFatigue] += amount;
 			} else if((pm->ps->powerups[PW_KNOCKBACK] < 4000) && (pm->ps->powerups[PW_KNOCKBACK] > 3500)){
 			} else if(ps->powerups[PW_KNOCKBACK] <= 3500){
 				if(ps->powerups[PW_KNOCKBACK] <= 1000){
@@ -416,13 +416,13 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 				else {
 					amount = client->tiers[tier].airBrakeCost;
 				}
-				ps->powerLevelTotalUse += amount;
+				ps->powerLevel[useFatigue] += amount;
 			}
 			pm->ps->powerups[PW_KNOCKBACK] = -500;
 			break;
 		case EV_ZANZOKEN_START:
 			ps->powerups[PW_ZANZOKEN] = client->tiers[tier].zanzokenDistance;
-			ps->powerLevelTotalUse += client->tiers[tier].zanzokenCost;
+			ps->powerLevel[useFatigue] += client->tiers[tier].zanzokenCost;
 			if(!ps->stats[bitFlags] & usingMelee){
 			}
 			break;
@@ -488,66 +488,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	}
 
 }
-void SetTargetPos(gentity_t* ent) {
-	gentity_t* theTarget;
-	int targetNum;
-	float pos;
-	vec3_t dest;
-	
-	targetNum = ent->client->ps.stats[target];
-	if (targetNum < 0 || targetNum >= ENTITYNUM_MAX_NORMAL) return;
-	theTarget = &g_entities[targetNum];
-	if (!theTarget->inuse) return;
-
-	VectorCopy(theTarget->s.pos.trBase, dest);
-	//dest[2] += BG_PlayerTargetOffset(&target->s, pos);
-	VectorCopy(dest, ent->s.origin2);
-}
-static void GetTarget(gentity_t* ent) {
-	trace_t tr;
-	vec3_t forward, right, up, muzzle, end;
-	gentity_t* theTarget;
-	// set aiming directions
-	AngleVectors(ent->client->ps.viewangles, forward, right, up);
-
-	CalcMuzzlePoint(ent, forward, right, up, muzzle);
-
-	VectorMA(muzzle, 10000, forward, end);
-
-	trap_Trace(&tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT);
-	if (tr.fraction >= 1) goto NoTarget;
-	if (tr.surfaceFlags & SURF_NOIMPACT) goto NoTarget;
-
-	theTarget = &g_entities[tr.entityNum];
-	if (
-			theTarget->client &&
-			!OnSameTeam(ent, theTarget) &&
-			theTarget->client->sess.sessionTeam != TEAM_SPECTATOR &&
-			theTarget->client->ps.pm_type != PM_SPECTATOR
-		)
-	{
-		ent->client->ps.stats[target] = tr.entityNum;
-		SetTargetPos(ent);
-		//ent->client->looseTargetTime = 0;
-		return;
-	}
-
-	NoTarget:
-	if (ent->client->ps.stats[target] < 0) return;
-	//if (!ent->client->looseTargetTime) {
-		//ent->client->looseTargetTime = level.time + 200;
-	//}
-	else if (
-		//level.time > ent->client->looseTargetTime ||
-		g_entities[ent->client->ps.stats[target]].powerLevel <= 0
-	) {
-		ent->client->ps.stats[target] = -1;
-		//ent->client->looseTargetTime = 0;
-		return;
-	}
-	SetTargetPos(ent);
-}
-
 void BotTestSolid(vec3_t origin);
 
 /*
@@ -634,7 +574,7 @@ void ClientThink_real( gentity_t *ent ) {
 		client->ps.pm_type = PM_NORMAL;
 	}
 	ent->s.playerBitFlags = client->ps.stats[bitFlags];
-	client->ps.speed = client->tiers[client->ps.stats[tierCurrent]].speed;
+	client->ps.stats[speed] = client->tiers[client->ps.stats[tierCurrent]].speed;
 	G_LinkUserWeaponData( &(client->ps) );
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
@@ -667,7 +607,6 @@ void ClientThink_real( gentity_t *ent ) {
 
 	VectorCopy( client->ps.origin, client->oldOrigin );
 	Pmove(&pm);
-	GetTarget(ent);
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}

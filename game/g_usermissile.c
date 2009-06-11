@@ -419,7 +419,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		Com_Printf("Charge Level of %i means a damage of %i / %i\n",inflictor->chargelvl,(int)(damage * (float)inflictor->chargelvl / 100.0),damage);
 		damage = damage * ((float)inflictor->chargelvl / 100.0);
 	}
-	damage *= ((float)attacker->client->ps.persistant[powerLevelMaximum] * 0.0003) * attacker->client->ps.energyAttack;
+	damage *= ((float)attacker->client->ps.powerLevel[maximum] * 0.0003) * attacker->client->ps.stats[energyAttack];
 	if(tgClient){
 		//VectorCopy(dir ? dir : target->r.currentOrigin,tgClient->damage_from);
 		tgClient->ps.persistant[PERS_ATTACKER] = attacker ? attacker->s.number : ENTITYNUM_WORLD;
@@ -430,7 +430,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	if(damage){
 		if(tgClient){
 			if(target == attacker){damage *= 0.2;}
-			tgClient->ps.powerLevelBurn += damage;
+			tgClient->ps.powerLevel[damageFromEnergy] += damage;
 		}
 		else{
 			target->powerLevel = target->powerLevel - damage;

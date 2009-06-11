@@ -5,17 +5,17 @@ void syncTier(gclient_t *client){
 	playerState_t *ps;
 	ps = &client->ps;
 	tier = &client->tiers[ps->stats[tierCurrent]];
-	ps->powerLevelBreakLimitRate = tier->powerLevelBreakLimitRate * g_powerLevelBreakLimitRate.value;
-	ps->zanzokenSpeed = tier->zanzokenSpeed;
-	ps->drainPowerLevel = tier->powerLevelEffect;
-	ps->drainPowerLevelTotal = tier->powerLevelTotalEffect;
-	ps->drainPowerLevelMaximum = tier->powerLevelMaximumEffect;
-	ps->speed = tier->speed;
-	ps->meleeDefense = tier->meleeDefense;
-	ps->meleeAttack = tier->meleeAttack;
-	ps->energyDefense = tier->energyDefense;
-	ps->energyAttack = tier->energyAttackDamage;
-	ps->energyCost = tier->energyAttackCost;
+	//ps->breakLimitRate = tier->breakLimitRate * g_breakLimitRate.value;
+	ps->stats[speed] = tier->speed;
+	ps->stats[zanzokenSpeed] = tier->zanzokenSpeed;
+	ps->stats[meleeDefense] = tier->meleeDefense;
+	ps->stats[meleeAttack] = tier->meleeAttack;
+	ps->stats[energyDefense] = tier->energyDefense;
+	ps->stats[energyAttack] = tier->energyAttackDamage;
+	ps->stats[energyCost] = tier->energyAttackCost;
+	ps->powerLevel[drainCurrent] = tier->effectCurrent;
+	ps->powerLevel[drainFatigue] = tier->effectFatigue;
+	ps->powerLevel[drainHealth] = tier->effectHealth;
 }
 void checkTier(gclient_t *client){
 	int tier;
@@ -27,12 +27,12 @@ void checkTier(gclient_t *client){
 		tier = ps->stats[tierCurrent];
 		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
 			nextTier = &client->tiers[tier+1];
-			if(((nextTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierUp) ||
-			   (!nextTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierUp))) &&
-			   (ps->stats[powerLevel] >= nextTier->requirementPowerLevelCurrent) &&
-			   (ps->stats[powerLevelTotal] >= nextTier->requirementPowerLevelTotal) &&
-			   (ps->stats[powerLevelLimit] >= nextTier->requirementPowerLevelLimit) &&
-			   (ps->persistant[powerLevelMaximum] >= nextTier->requirementPowerLevelMaximum)){
+			if(((nextTier->requirementButton && ps->stats[bitFlags] & keyTierUp) ||
+			   (!nextTier->requirementButton && !(ps->stats[bitFlags] & keyTierUp))) &&
+			   (ps->powerLevel[current] >= nextTier->requirementPowerLevelCurrent) &&
+			   (ps->powerLevel[fatigue] >= nextTier->requirementFatigue) &&
+			   (ps->powerLevel[health] >= nextTier->requirementHealth) &&
+			   (ps->powerLevel[maximum] >= nextTier->requirementPowerLevelMaximum)){
 				ps->powerups[PW_TRANSFORM] = 1;
 				++ps->stats[tierCurrent];
 				if(tier + 1 > ps->stats[tierTotal]){
@@ -44,11 +44,11 @@ void checkTier(gclient_t *client){
 		}
 		if(tier > 0){
 			baseTier = &client->tiers[tier];
-			if(((baseTier->requirementPowerLevelButton && ps->stats[bitFlags] & keyTierDown) ||
-			   (!baseTier->requirementPowerLevelButton && !(ps->stats[bitFlags] & keyTierDown))) ||
-			   (ps->stats[powerLevel] < baseTier->sustainPowerLevelCurrent) ||
-			   (ps->stats[powerLevelLimit] < baseTier->sustainPowerLevelLimit) ||
-			   (ps->stats[powerLevelTotal] < baseTier->sustainPowerLevelTotal)){
+			if(((baseTier->requirementButton && ps->stats[bitFlags] & keyTierDown) ||
+			   (!baseTier->requirementButton && !(ps->stats[bitFlags] & keyTierDown))) ||
+			   (ps->powerLevel[current] < baseTier->sustainPowerLevel) ||
+			   (ps->powerLevel[health] < baseTier->sustainHealth) ||
+			   (ps->powerLevel[fatigue] < baseTier->sustainFatigue)){
 				ps->powerups[PW_TRANSFORM] = -1;
 				--ps->stats[tierCurrent];
 				continue;
@@ -145,75 +145,75 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->zanzokenDistance = atoi(token);
 			}
-			else if(!Q_stricmp(token,"powerLevelBreakLimitRate")){
+			else if(!Q_stricmp(token,"breakLimitRate")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->powerLevelBreakLimitRate = atof(token);
+				tier->breakLimitRate = atof(token);
 			}
-			else if(!Q_stricmp(token,"powerLevelEffect")){
+			else if(!Q_stricmp(token,"effectCurrent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->powerLevelEffect = atoi(token);
+				tier->effectCurrent = atoi(token);
 			}
-			else if(!Q_stricmp(token,"powerLevelLimitEffect")){
+			else if(!Q_stricmp(token,"effectMaximum")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->powerLevelLimitEffect = atoi(token);
+				tier->effectMaximum = atoi(token);
 			}
-			else if(!Q_stricmp(token,"powerLevelTotalEffect")){
+			else if(!Q_stricmp(token,"effectFatigue")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->powerLevelTotalEffect = atoi(token);
+				tier->effectFatigue = atoi(token);
 			}
-			else if(!Q_stricmp(token,"powerLevelMaximumEffect")){
+			else if(!Q_stricmp(token,"effectHealth")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->powerLevelMaximumEffect = atoi(token);
+				tier->effectHealth = atoi(token);
 			}
 			else if(!Q_stricmp(token,"requirementPowerLevelCurrent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->requirementPowerLevelCurrent = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementPowerLevelLimit")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->requirementPowerLevelLimit = atoi(token);
-			}
-			else if(!Q_stricmp(token,"requirementPowerLevelTotal")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->requirementPowerLevelTotal = atoi(token);
-			}
 			else if(!Q_stricmp(token,"requirementPowerLevelMaximum")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->requirementPowerLevelMaximum = atoi(token);
 			}
-			else if(!Q_stricmp(token,"sustainPowerLevelCurrent")){
+			else if(!Q_stricmp(token,"requirementHealth")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->sustainPowerLevelCurrent = atoi(token);
+				tier->requirementHealth = atoi(token);
 			}
-			else if(!Q_stricmp(token,"sustainPowerLevelLimit")){
+			else if(!Q_stricmp(token,"requirementFatigue")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->sustainPowerLevelLimit = atoi(token);
+				tier->requirementFatigue = atoi(token);
 			}
-			else if(!Q_stricmp(token,"sustainPowerLevelTotal")){
+			else if(!Q_stricmp(token,"sustainPowerLevel")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->sustainPowerLevelTotal = atoi(token);
+				tier->sustainPowerLevel = atoi(token);
+			}
+			else if(!Q_stricmp(token,"sustainHealth")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainHealth = atoi(token);
+			}
+			else if(!Q_stricmp(token,"sustainFatigue")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainFatigue = atoi(token);
 			}
 			else if(!Q_stricmp(token,"transformTime")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->transformTime = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementPowerLevelButton")){
+			else if(!Q_stricmp(token,"requirementButton")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementPowerLevelButton = strlen(token) == 4 ? qtrue : qfalse;
+				tier->requirementButton = strlen(token) == 4 ? qtrue : qfalse;
 			}
 			else if(!Q_stricmp(token,"tierPermanent")){
 				token = COM_Parse(&parse);

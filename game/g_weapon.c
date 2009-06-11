@@ -599,7 +599,7 @@ qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker ) {
 		return qfalse;
 	}
 
-	if( target->client->ps.stats[powerLevel] <= 0 ) {
+	if( target->client->ps.powerLevel[current] <= 0 ) {
 		return qfalse;
 	}
 

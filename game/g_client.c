@@ -68,7 +68,7 @@ qboolean SpotWouldTelefrag( gentity_t *spot ) {
 
 	for (i=0 ; i<num ; i++) {
 		hit = &g_entities[touch[i]];
-		//if ( hit->client && hit->client->ps.stats[powerLevel] > 0 ) {
+		//if ( hit->client && hit->client->ps.powerLevel[current] > 0 ) {
 		if ( hit->client) {
 			return qtrue;
 		}
@@ -639,7 +639,7 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	// set max powerLevel
 	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-	client->ps.stats[powerLevelTotal] = client->ps.stats[powerLevelTotal];//g_powerLevel.value;
+	client->ps.powerLevel[fatigue] = client->ps.powerLevel[fatigue];//g_powerLevel.value;
 	client->playerEntity = ent;
 
 	// setup tier information
@@ -873,7 +873,7 @@ void ClientBegin( int clientNum ) {
 
 	// ADDING FOR ZEQ2
 	// Set the starting cap
-	client->ps.persistant[powerLevelMaximum] = g_powerLevel.value;
+	client->ps.powerLevel[maximum] = g_powerLevel.value;
 	// END ADDING
 
 	// locate ent at a spawn point
@@ -1030,8 +1030,8 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.stats[bitFlags] = 0;
 	client->ps.eFlags &= ~EF_AURA;
 	// END ADDING
-	client->ps.stats[powerLevelTotal] = client->ps.persistant[powerLevelMaximum] > g_powerLevel.value ? client->ps.persistant[powerLevelMaximum] * 0.75 : g_powerLevel.value;
-	ent->powerLevel = client->ps.stats[powerLevel] = client->ps.stats[powerLevelTotal];
+	client->ps.powerLevel[fatigue] = client->ps.powerLevel[maximum] > g_powerLevel.value ? client->ps.powerLevel[maximum] * 0.75 : g_powerLevel.value;
+	ent->powerLevel = client->ps.powerLevel[current] = client->ps.powerLevel[fatigue];
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );

@@ -816,7 +816,7 @@ extern	vmCvar_t	g_proxMineTimeout;
 // ADDING FOR ZEQ2
 extern	vmCvar_t	g_verboseParse;
 extern	vmCvar_t	g_powerLevel;
-extern	vmCvar_t	g_powerLevelBreakLimitRate;
+extern	vmCvar_t	g_breakLimitRate;
 extern	vmCvar_t	g_rolling;
 extern	vmCvar_t	g_running;
 // END ADDING
