@@ -1117,6 +1117,7 @@ typedef struct {
 #define	MAX_POWERUPS			16
 #define	MAX_WEAPONS				16		
 #define MAX_TIMERS				16
+#define MAX_POWERSTATS			16
 
 #define	MAX_PS_EVENTS			2
 
@@ -1185,16 +1186,9 @@ typedef struct playerState_s {
 	// <-- RiO
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
-	int 		powerLevelUse;
-	int			powerLevelTotalUse;
-	int			powerLevelLimitUse;
-	int			powerLevelBurn;
-	int			powerLevelMeleeBurn;
-	float		powerLevelBreakLimitRate;
-	int			drainPowerLevel;
-	int			drainPowerLevelTotal;
-	int			drainPowerLevelLimit;
-	int			drainPowerLevelMaximum;
+
+	int			powerLevel[MAX_POWERSTATS];
+
 	int			rolling;
 	int			running;
 	int			lockedTarget;
