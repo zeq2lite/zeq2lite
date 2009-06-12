@@ -442,7 +442,7 @@ void PM_StopDash(void){
 void PM_StopMovementTypes(void){
 	PM_StopDash();
 	PM_StopJump();
-	//PM_StopZanzoken();
+	PM_StopZanzoken();
 	PM_StopKnockback();
 }
 void PM_StopMovement(void){

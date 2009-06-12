@@ -2333,10 +2333,6 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 	return qtrue;
 }
 
-void CG_PlayerTransformation ( centity_t *cent ) {
-	// Nothing is needed!  Comments are evil also! ~Brad
-}
-
 /*
 ===============
 CG_Player
@@ -2429,7 +2425,12 @@ void CG_Player( centity_t *cent ) {
 	if(onBodyQue){return;}
 	CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
 	CG_PlayerPowerups(cent,&torso);
-	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){CG_AuraStart(cent);}
+	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
+		CG_AuraStart(cent);
+		if(ps->powerLevel[current] == ps->powerLevel[maximum] && ps->stats[bitFlags] & usingAlter){
+			CG_AddEarthquake(cent->lerpOrigin, 400, 1, 1, 1, 25);
+		}
+	}
 	else{CG_AuraEnd(cent);}
 	CG_AddAuraToScene(cent);
 	if(ps->powerups[PW_KNOCKBACK]){
