@@ -521,6 +521,7 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 	refEntity_t		*re;
 	cg_userWeapon_t	*weaponGraphics;
 
+	CG_Printf("spiral beam!\n");
 	// Draw the central beam
 	CG_TrailFunc_StraightBeam( ent );
 
@@ -546,7 +547,7 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 	
 	// Build segments
 		
-//	for (; t <= ent->trailTime; t += step) {
+	//for (; t <= ent->trailTime; t += step) {
 		CG_TrailFunc_SpiralBeam_Helper ( es, ent, t, lastPos2);
 
 		le = CG_AllocLocalEntity();
@@ -575,7 +576,7 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 		AxisClear( re->axis );
 
 		VectorCopy(lastPos2, lastPos);
-//	}
+	//}
 
 	CG_TrailFunc_SpiralBeam_Helper ( es, ent, ent->trailTime, lastPos2);
 
@@ -720,9 +721,8 @@ static void CG_Missile( centity_t *cent ) {
 				        !weaponGraphics->missileTrailSpiralRadius &&
 						!weaponGraphics->missileTrailSpiralOffset ) {
 				CG_TrailFunc_BendyBeam( cent );
-			} else if ( cent->currentState.eFlags & EF_GUIDED &&
-						weaponGraphics->missileTrailSpiralShader &&
-				        weaponGraphics->missileTrailSpiralRadius &&
+			} else if ( weaponGraphics->missileTrailSpiralShader &&
+						weaponGraphics->missileTrailSpiralRadius &&
 						weaponGraphics->missileTrailSpiralOffset ) {
 				CG_TrailFunc_SpiralBeam( cent );
 			} else {
