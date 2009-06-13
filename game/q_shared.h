@@ -1202,6 +1202,8 @@ typedef struct playerState_s {
 	int			damagePitch;
 	int			damageCount;
 
+	int			bitFlags;
+
 	int			stats[MAX_STATS];
 
 	int			powerLevel[MAX_POWERSTATS];
