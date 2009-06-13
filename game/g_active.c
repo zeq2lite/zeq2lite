@@ -423,7 +423,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_ZANZOKEN_START:
 			ps->powerups[PW_ZANZOKEN] = client->tiers[tier].zanzokenDistance;
 			ps->powerLevel[useFatigue] += client->tiers[tier].zanzokenCost;
-			if(!ps->stats[bitFlags] & usingMelee){
+			if(!ps->bitFlags & usingMelee){
 			}
 			break;
 		case EV_ALTFIRE_WEAPON:
@@ -573,7 +573,7 @@ void ClientThink_real( gentity_t *ent ) {
 	else{
 		client->ps.pm_type = PM_NORMAL;
 	}
-	ent->s.playerBitFlags = client->ps.stats[bitFlags];
+	ent->s.playerBitFlags = client->ps.bitFlags;
 	client->ps.stats[speed] = client->tiers[client->ps.stats[tierCurrent]].speed;
 	G_LinkUserWeaponData( &(client->ps) );
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
@@ -634,7 +634,7 @@ void ClientThink_real( gentity_t *ent ) {
 	client->oldbuttons = client->buttons;
 	client->buttons = ucmd->buttons;
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
-	if (client->ps.stats[bitFlags] & isDead){
+	if (client->ps.bitFlags & isDead){
 		if(level.time > client->respawnTime){respawn(ent);}
 		return;
 	}

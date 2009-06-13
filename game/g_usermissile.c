@@ -658,7 +658,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_angleW = ( 1.0f - rnd ) * weaponInfo->firing_angleW_min + rnd * weaponInfo->firing_angleW_max;
 
-		if ( ( self->client->ps.stats[bitFlags] & hasFlipOffset ) && weaponInfo->firing_offsetWFlip ) {
+		if ( ( self->client->ps.bitFlags & hasFlipOffset ) && weaponInfo->firing_offsetWFlip ) {
 			RotatePointAroundVector( temp, up, firingDir, firing_angleW );
 		} else {
 			RotatePointAroundVector( temp, up, firingDir, -firing_angleW );
@@ -673,7 +673,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_angleH = ( 1.0f - rnd ) * weaponInfo->firing_angleH_min + rnd * weaponInfo->firing_angleH_max;
 
-		if ( ( self->client->ps.stats[bitFlags] & hasFlipOffset ) && weaponInfo->firing_offsetHFlip ) {
+		if ( ( self->client->ps.bitFlags & hasFlipOffset ) && weaponInfo->firing_offsetHFlip ) {
 			RotatePointAroundVector( temp, right, firingDir, firing_angleH );
 		} else {
 			RotatePointAroundVector( temp, right, firingDir, -firing_angleH );
@@ -690,7 +690,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_offsetW = ( 1.0f - rnd ) * weaponInfo->firing_offsetW_min + rnd * weaponInfo->firing_offsetW_max;
 
-		if ( ( self->client->ps.stats[bitFlags] & hasFlipOffset ) && weaponInfo->firing_offsetWFlip ) {
+		if ( ( self->client->ps.bitFlags & hasFlipOffset ) && weaponInfo->firing_offsetWFlip ) {
 			VectorMA( firingStart, -firing_offsetW, right, firingStart );
 		} else {
 			VectorMA( firingStart, firing_offsetW, right, firingStart );
@@ -703,7 +703,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		rnd = crandom(); // <-- between 0.0f and 1.0f
 		firing_offsetH = ( 1.0f - rnd ) * weaponInfo->firing_offsetH_min + rnd * weaponInfo->firing_offsetH_max;
 
-		if ( ( self->client->ps.stats[bitFlags] & hasFlipOffset ) && weaponInfo->firing_offsetHFlip ) {
+		if ( ( self->client->ps.bitFlags & hasFlipOffset ) && weaponInfo->firing_offsetHFlip ) {
 			VectorMA( firingStart, -firing_offsetH, up, firingStart );
 		} else {
 			VectorMA( firingStart, firing_offsetH, up, firingStart );
@@ -1384,7 +1384,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	}
 	self->takedamage = qtrue;
 	if(other->takedamage) {
-		if(other->client->ps.stats[bitFlags] & usingBlock){
+		if(other->client->ps.bitFlags & usingBlock){
 			// Swat
 			if(1){
 				self->bounceFrac = 1;

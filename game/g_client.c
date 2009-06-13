@@ -68,7 +68,6 @@ qboolean SpotWouldTelefrag( gentity_t *spot ) {
 
 	for (i=0 ; i<num ; i++) {
 		hit = &g_entities[touch[i]];
-		//if ( hit->client && hit->client->ps.powerLevel[current] > 0 ) {
 		if ( hit->client) {
 			return qtrue;
 		}
@@ -576,7 +575,7 @@ if desired.
 */
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
-	int		teamTask, teamLeader, team, powerLevel;
+	int		teamTask, teamLeader, team, handicap;
 	char	*s;
 	char	model[MAX_QPATH];
 	char	headModel[MAX_QPATH];
@@ -638,8 +637,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 
 	// set max powerLevel
-	powerLevel = atoi( Info_ValueForKey( userinfo, "handicap" ) );
-	client->ps.powerLevel[fatigue] = client->ps.powerLevel[fatigue];//g_powerLevel.value;
+	handicap = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	client->playerEntity = ent;
 
 	// setup tier information
@@ -1027,12 +1025,11 @@ void ClientSpawn(gentity_t *ent) {
 		g_powerLevel.value = 32767;
 	}
 	// make sure all bitFlags are OFF, and explicitly turn off the aura
-	client->ps.stats[bitFlags] = 0;
+	client->ps.bitFlags = 0;
 	client->ps.eFlags &= ~EF_AURA;
 	// END ADDING
-	client->ps.powerLevel[fatigue] = client->ps.powerLevel[maximum] > g_powerLevel.value ? client->ps.powerLevel[maximum] * 0.75 : g_powerLevel.value;
-	ent->powerLevel = client->ps.powerLevel[current] = client->ps.powerLevel[fatigue];
-
+	client->ps.powerLevel[maximum] = client->ps.powerLevel[maximum] > g_powerLevel.value ? client->ps.powerLevel[maximum] * 0.75 : g_powerLevel.value;
+	client->ps.powerLevel[current] = client->ps.powerLevel[health] = client->ps.powerLevel[fatigue] = client->ps.powerLevel[maximum];
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
 	trap_GetUsercmd( client - level.clients, &ent->client->pers.cmd );

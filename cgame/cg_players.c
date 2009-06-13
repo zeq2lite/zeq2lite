@@ -1665,7 +1665,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	// ADDING FOR ZEQ2
 	// We're flying, so we change the entire body's directions altogether.
-	if((&cg.predictedPlayerState)->stats[bitFlags] & usingFlight){
+	if((&cg.predictedPlayerState)->bitFlags & usingFlight){
 		VectorCopy( cent->lerpAngles, headAngles );
 		VectorCopy( cent->lerpAngles, torsoAngles );
 		VectorCopy( cent->lerpAngles, legsAngles );
@@ -2371,7 +2371,7 @@ void CG_Player( centity_t *cent ) {
 	renderfx = 0;
 	//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
 	//else if(cg_cameraMode.integer){return;}
-	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == ps->clientNum) && (ps->stats[bitFlags] & usingZanzoken))) {
+	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == ps->clientNum) && (ps->bitFlags & usingZanzoken))) {
 		return;
 	}
 	//if((cent->currentState.clientNum == cg.clientNum) && (ps->powerups[PW_MELEE_STATE] > 0)){
@@ -2427,7 +2427,7 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerPowerups(cent,&torso);
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
 		CG_AuraStart(cent);
-		if(ps->powerLevel[current] == ps->powerLevel[maximum] && ps->stats[bitFlags] & usingAlter){
+		if(ps->powerLevel[current] == ps->powerLevel[maximum] && ps->bitFlags & usingAlter){
 			CG_AddEarthquake(cent->lerpOrigin, 400, 1, 1, 1, 25);
 		}
 	}

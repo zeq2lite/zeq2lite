@@ -89,8 +89,8 @@ void PM_CheckLoopingSound(void){
 	if(pm->ps->powerups[PW_KNOCKBACK] ||
 		pm->ps->powerups[PW_MELEE1] < 0 ||
 		pm->ps->powerups[PW_MELEE2] < 0 ||
-		pm->ps->stats[bitFlags] & isUnconcious || 
-		pm->ps->stats[bitFlags] & isDead){
+		pm->ps->bitFlags & isUnconcious || 
+		pm->ps->bitFlags & isDead){
 		PM_AddEvent(EV_STOPLOOPINGSOUND);
 	}
 	if(pm->ps->lockedTarget > 0){
@@ -178,8 +178,8 @@ void PM_CheckTalk(void){
 ZANZOKEN
 ===============*/
 void PM_StopZanzoken(void){
-	if(pm->ps->stats[bitFlags] & usingZanzoken){
-		pm->ps->stats[bitFlags] &= ~usingZanzoken;
+	if(pm->ps->bitFlags & usingZanzoken){
+		pm->ps->bitFlags &= ~usingZanzoken;
 		PM_AddEvent(EV_ZANZOKEN_END);
 		VectorClear(pm->ps->velocity);
 	}
@@ -192,7 +192,7 @@ void PM_CheckZanzoken(void){
 	if(!(pm->cmd.buttons & BUTTON_LIGHTSPEED)){
 		pm->ps->powerups[PW_ZANZOKEN] = -1;
 	}
-	if((pm->ps->stats[bitFlags] & usingZanzoken) && (pm->ps->powerups[PW_ZANZOKEN] <= 0)){
+	if((pm->ps->bitFlags & usingZanzoken) && (pm->ps->powerups[PW_ZANZOKEN] <= 0)){
 		minSize[0] = minSize[1] = minSize[2] = -1;
 		maxSize[0] = maxSize[1] = maxSize[2] = 1;
 		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
@@ -216,10 +216,10 @@ void PM_CheckZanzoken(void){
 			pm->ps->powerups[PW_ZANZOKEN] = 0;
 		}
 	}
-	if((pm->cmd.buttons & BUTTON_LIGHTSPEED) && !(pm->ps->stats[bitFlags] & usingZanzoken) && (pm->ps->powerups[PW_ZANZOKEN] == -1)){
+	if((pm->cmd.buttons & BUTTON_LIGHTSPEED) && !(pm->ps->bitFlags & usingZanzoken) && (pm->ps->powerups[PW_ZANZOKEN] == -1)){
 		PM_StopDash();
 		pm->ps->powerups[PW_ZANZOKEN] = 1000;
-		pm->ps->stats[bitFlags] |= usingZanzoken;
+		pm->ps->bitFlags |= usingZanzoken;
 		PM_AddEvent(EV_ZANZOKEN_START);
 	}	
 }
@@ -231,6 +231,12 @@ void PM_UsePowerLevel(qboolean useTotal){
 	stat = useTotal ? pm->ps->powerLevel[fatigue] : pm->ps->powerLevel[current];
 	amount = useTotal ? pm->ps->powerLevel[useFatigue] : pm->ps->powerLevel[useCurrent];
 	newValue = (stat - amount) > 32767 ? 32767 : stat - amount;
+	if(newValue <= 0 && !useTotal && pm->ps->powerLevel[useFatigue] > 0){
+		useTotal = qtrue;
+		newValue = newValue = 
+		pm->ps->powerLevel[current] = newValue;
+		return;
+	}
 	newValue = newValue < -32767 ? -32767 : newValue;
 	if(useTotal){
 		pm->ps->powerLevel[fatigue] = newValue;
@@ -249,13 +255,13 @@ void PM_BurnPowerLevel(qboolean melee){
 	burn = melee ? pm->ps->powerLevel[damageFromMelee] : pm->ps->powerLevel[damageFromEnergy];
 	if(!burn){return;}
 	defense = melee ? pm->ps->stats[meleeDefense] : pm->ps->stats[energyDefense];
-	defense = pm->ps->stats[bitFlags] & usingBlock ? defense * 2.5 : defense;
+	defense = pm->ps->bitFlags & usingBlock ? defense * 2.5 : defense;
 	percent = 1.0 - ((float)pm->ps->powerLevel[current] / (float)pm->ps->powerLevel[maximum]);
 	burn -= (int)(((float)pm->ps->powerLevel[fatigue] * 0.01) * defense);
-	newValue = pm->ps->powerLevel[fatigue] - burn;
+	newValue = pm->ps->powerLevel[health] - burn;
 	if(burn > 0){
 		newValue = newValue > 32767 ? 32767 : newValue;
-		pm->ps->powerLevel[fatigue] = newValue < 0 ? 0 : newValue;
+		pm->ps->powerLevel[health] = newValue < 0 ? 0 : newValue;
 		newValue = pm->ps->powerLevel[maximum] + ((float)burn * percent) * 1.5;
 		newValue = newValue < 0 ? 0 : newValue;
 		pm->ps->powerLevel[maximum] = newValue > 32767 ? 32767 : newValue;
@@ -266,7 +272,7 @@ void PM_BurnPowerLevel(qboolean melee){
 void PM_CheckStatus(void){
 	if((pm->ps->powerLevel[current]<= 0) && (pm->ps->powerLevel[fatigue] <= 0)){
 		if(pm->ps->powerups[PW_STATE] != -2){
-			pm->ps->stats[bitFlags] |= isDead;
+			pm->ps->bitFlags |= isDead;
 			pm->ps->powerups[PW_STATE] = -2;
 			PM_StopMovement();
 			PM_AddEvent(EV_DEATH);
@@ -278,7 +284,7 @@ void PM_CheckStatus(void){
 	}
 	else if(pm->ps->powerLevel[current]<= 0){
 		if(pm->ps->powerups[PW_STATE] != -1){
-			pm->ps->stats[bitFlags] |= isUnconcious;
+			pm->ps->bitFlags |= isUnconcious;
 			pm->ps->powerups[PW_STATE] = -1;
 			PM_StopMovement();
 			PM_AddEvent(EV_UNCONCIOUS);
@@ -291,7 +297,7 @@ void PM_CheckStatus(void){
 			PM_ContinueTorsoAnim(BOTH_DEATH3);
 			PM_ContinueLegsAnim(BOTH_DEATH3);
 			if(pm->ps->powerLevel[current] > 0){
-				pm->ps->stats[bitFlags] &= ~isUnconcious;	
+				pm->ps->bitFlags &= ~isUnconcious;	
 			}
 		}
 	}
@@ -310,7 +316,7 @@ void PM_CheckTransform(void){
 		PM_AddEvent(EV_TIERDOWN);
 	}
 	else if(pm->ps->powerups[PW_TRANSFORM] > 0){
-		if(pm->ps->stats[bitFlags] & isTransforming){
+		if(pm->ps->bitFlags & isTransforming){
 			PM_ContinueLegsAnim(LEGS_TRANS_UP);
 			pm->ps->eFlags |= EF_AURA;
 			pm->ps->powerups[PW_TRANSFORM] -= pml.msec;
@@ -318,7 +324,7 @@ void PM_CheckTransform(void){
 			PM_StopMovement();
 		}
 		else{
-			pm->ps->stats[bitFlags] |= isTransforming;
+			pm->ps->bitFlags |= isTransforming;
 			PM_AddEvent(EV_TIERUP);
 		}
 	}
@@ -335,29 +341,31 @@ void PM_CheckTransform(void){
 		}
 	}
 	if(pm->ps->powerups[PW_TRANSFORM] == 0){
-		pm->ps->stats[bitFlags] &= ~isTransforming;
+		pm->ps->bitFlags &= ~isTransforming;
 	}
 }
 void PM_CheckPowerLevel(void){
 	int plSpeed,amount;
-	int *stats,*timers,*powerLevel;
+	int *bitFlags,*timers,*powerLevel;
 	float lower,raise,recovery;
 	float check;
 	float pushLimit;
 	int newValue;
-	stats = pm->ps->stats;
 	timers = pm->ps->timers;
 	powerLevel = pm->ps->powerLevel;
 	timers[powerAuto] += pml.msec;
-	stats[bitFlags] &= ~usingAlter;
+	pm->ps->bitFlags &= ~usingAlter;
 	if(pm->ps->powerLevel[fatigue] <= 0 && pm->ps->powerLevel[current] > 0){
-		pm->ps->powerLevel[current] = 1;
+		//pm->ps->powerLevel[current] = 1;
 	}
+	Com_Printf("Current : %i / %i\n",pm->ps->powerLevel[current],pm->ps->powerLevel[maximum]);
+	Com_Printf("Fatigue : %i\n",pm->ps->powerLevel[fatigue]);
+	Com_Printf("Health : %i\n",pm->ps->powerLevel[health]);
 	while(timers[powerAuto] >= 100){
 		timers[powerAuto] -= 100;
 		recovery = (float)pm->ps->powerLevel[maximum] * 0.002;
 		recovery *= (1.0 - ((float)pm->ps->powerLevel[current] / (float)pm->ps->powerLevel[maximum]));
-		if(pm->ps->stats[bitFlags] & usingBoost || pm->ps->stats[bitFlags] & usingAlter || pm->ps->powerLevel[current] > pm->ps->powerLevel[fatigue]){recovery = 0;}
+		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->powerLevel[current] > pm->ps->powerLevel[fatigue]){recovery = 0;}
 		if(powerLevel[current] > powerLevel[fatigue]){
 			newValue = powerLevel[current] - (pm->ps->powerLevel[maximum] * 0.005);
 			powerLevel[current] = (powerLevel[current] - newValue >= 0) ? newValue : 0;
@@ -376,10 +384,10 @@ void PM_CheckPowerLevel(void){
 		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
-		stats[bitFlags] &= ~keyTierDown;
-		stats[bitFlags] &= ~keyTierUp;
-		stats[bitFlags] |= usingAlter;
-		if(stats[bitFlags] & usingBoost || pm->ps->powerups[PW_TRANSFORM] < 0){return;}
+		pm->ps->bitFlags &= ~keyTierDown;
+		pm->ps->bitFlags &= ~keyTierUp;
+		pm->ps->bitFlags |= usingAlter;
+		if(pm->ps->bitFlags & usingBoost || pm->ps->powerups[PW_TRANSFORM] < 0){return;}
 		if(pm->cmd.upmove < 0){
 			PM_StopFlight();
 			PM_ForceLegsAnim(LEGS_FLY_DOWN);
@@ -390,10 +398,10 @@ void PM_CheckPowerLevel(void){
 			powerLevel[current] = (powerLevel[current] - lower > 1) ? powerLevel[current] - lower : 1;
 		}
 		else if(pm->cmd.forwardmove > 0){
-			stats[bitFlags] |= keyTierUp;
+			pm->ps->bitFlags |= keyTierUp;
 		}
 		else if(pm->cmd.forwardmove < 0){
-			stats[bitFlags] |= keyTierDown;
+			pm->ps->bitFlags |= keyTierDown;
 		}
 		else if((pm->cmd.rightmove > 0)){
 			pm->ps->eFlags |= EF_AURA;
@@ -408,32 +416,37 @@ void PM_CheckPowerLevel(void){
 				if(newValue > 32767){newValue = 32767;}
 				powerLevel[current] = newValue;
 				if(powerLevel[current] == pm->ps->powerLevel[maximum]){
-					stats[bitFlags] |= isBreakingLimit;
-					//pushLimit = powerLevel[fatigue] + pm->ps->breakLimitRate;
-					//if(pushLimit < 32767){
-					//	powerLevel[current] = powerLevel[fatigue] = pushLimit;
-					//}
+					pm->ps->bitFlags |= isBreakingLimit;
+					pushLimit = powerLevel[current] + pm->ps->breakLimitRate;
+					if(pushLimit < 32767){
+						powerLevel[current] = powerLevel[maximum] = pushLimit;
+						//powerLevel[health] = powerLevel[health] + (int)(pushLimit * 1.5);
+						//if(powerLevel[health] > 32767){powerLevel[health] = 32767;}
+					}
 				}
-				if(powerLevel[fatigue] > pm->ps->powerLevel[maximum]){
-					pm->ps->powerLevel[maximum] = powerLevel[fatigue];
+				if(pm->ps->bitFlags & isBreakingLimit){
+					if(powerLevel[current] < ((float)pm->ps->powerLevel[maximum] * 0.95)){
+						pm->ps->bitFlags &= ~isBreakingLimit;
+					}
 				}
 			}
 		}
 		else{
-			stats[bitFlags] &= ~usingAlter;
+			pm->ps->bitFlags &= ~usingAlter;
+			pm->ps->bitFlags &= ~isBreakingLimit;
 		}
 	}
 	else{
-		stats[bitFlags] &= ~keyTierDown;
-		stats[bitFlags] &= ~keyTierUp;
-		stats[bitFlags] &= ~isBreakingLimit;
+		pm->ps->bitFlags &= ~keyTierDown;
+		pm->ps->bitFlags &= ~keyTierUp;
+		pm->ps->bitFlags &= ~isBreakingLimit;
 	}
 }
 /*===============
 BOOST TYPES
 ===============*/
 void PM_StopBoost(void){
-	pm->ps->stats[bitFlags] &= ~usingBoost;
+	pm->ps->bitFlags &= ~usingBoost;
 	pm->ps->powerups[PW_BOOST] = 0;
 }
 void PM_StopDash(void){
@@ -463,7 +476,7 @@ void PM_CheckBoost(void){
 	}
 	else{
 		pm->ps->powerups[PW_BOOST] = 1;
-		pm->ps->stats[bitFlags] |= usingBoost;
+		pm->ps->bitFlags |= usingBoost;
 	}
 }
 /*===============
@@ -532,7 +545,7 @@ void PM_Friction(void){
 	if(pm->waterlevel){
 		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
 	}
-	if(pm->ps->stats[bitFlags] & usingFlight || pml.onGround){
+	if(pm->ps->bitFlags & usingFlight || pml.onGround){
 		if (!(pm->ps->pm_flags & PMF_TIME_KNOCKBACK)){
 			control = speed < pm_stopspeed ? pm_stopspeed : speed;
 			drop += control*pm_friction*pml.frametime;
@@ -646,17 +659,17 @@ void PM_NotOnGround(void){
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 }
 void PM_StopJump(void){
-	pm->ps->stats[bitFlags] &= ~usingJump;
+	pm->ps->bitFlags &= ~usingJump;
 }
 void PM_CheckJump(void){
 	int jumpPower;
 	float jumpScale;
-	if(pm->ps->stats[bitFlags] & usingJump || pm->ps->stats[bitFlags] & usingAlter || pm->ps->stats[bitFlags] & usingFlight){return;}
+	if(pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight){return;}
 	if(!(pm->cmd.buttons & BUTTON_JUMP)){return;}
 	PM_NotOnGround();
 	PM_StopDash();
-	pm->ps->stats[bitFlags] |= usingJump;
-	jumpScale = pm->ps->stats[bitFlags] & usingBoost ? 1.5 : 1.0;
+	pm->ps->bitFlags |= usingJump;
+	jumpScale = pm->ps->bitFlags & usingBoost ? 1.5 : 1.0;
 	jumpPower = pm->ps->stats[speed] * jumpScale;
 	pm->ps->gravity = 12000;
 	pm->ps->velocity[0] *= fabs(pm->ps->velocity[0]) < jumpPower ? 4.0 : 1.0;
@@ -684,14 +697,14 @@ void PM_CheckJump(void){
 PM_CheckBlock
 =============*/
 void PM_CheckBlock(void){
-	pm->ps->stats[bitFlags] &= ~usingBlock;
-	if((pm->cmd.buttons & BUTTON_BLOCK)){pm->ps->stats[bitFlags] |= usingBlock;}
+	pm->ps->bitFlags &= ~usingBlock;
+	if((pm->cmd.buttons & BUTTON_BLOCK)){pm->ps->bitFlags |= usingBlock;}
 }
 /*===================
 PM_FlyMove
 ===================*/
 void PM_StopFlight(void){
-	pm->ps->stats[bitFlags] &= ~usingFlight;
+	pm->ps->bitFlags &= ~usingFlight;
 }
 void PM_FlyMove(void){
 	int		i;
@@ -701,13 +714,13 @@ void PM_FlyMove(void){
 	float	scale;
 	float	boostFactor;
 	if(pm->cmd.upmove > 0){
-		pm->ps->stats[bitFlags] |= usingFlight;
+		pm->ps->bitFlags |= usingFlight;
 		PM_StopDash();
 		PM_StopJump();
 	}
-	if(!(pm->ps->stats[bitFlags] & usingFlight)){return;}
+	if(!(pm->ps->bitFlags & usingFlight)){return;}
 	boostFactor = 1.8;
-	if(pm->ps->stats[bitFlags] & usingBoost){
+	if(pm->ps->bitFlags & usingBoost){
 		boostFactor = 3.9;
 	}
 	else if(pm->cmd.buttons & BUTTON_WALKING){
@@ -765,9 +778,9 @@ void PM_AirMove(void){
 	if(pm->waterlevel == 3){
 		pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
 	}
-	if(pm->ps->stats[bitFlags] & usingZanzoken){pm->tracemask = CONTENTS_SOLID;}
-	PM_StepSlideMove(pm->ps->stats[bitFlags] & usingFlight ? qfalse : qtrue); 
-	if(pm->ps->stats[bitFlags] & usingZanzoken){pm->tracemask = MASK_PLAYERSOLID;}
+	if(pm->ps->bitFlags & usingZanzoken){pm->tracemask = CONTENTS_SOLID;}
+	PM_StepSlideMove(pm->ps->bitFlags & usingFlight ? qfalse : qtrue); 
+	if(pm->ps->bitFlags & usingZanzoken){pm->tracemask = MASK_PLAYERSOLID;}
 }
 /*===================
 PM_WalkMove
@@ -834,7 +847,7 @@ void PM_DashMove(void){
 	dashAmount = VectorLength(pm->ps->dashDir);
 	if((pml.onGround && !(pm->cmd.buttons & BUTTON_WALKING) && (pm->cmd.forwardmove || pm->cmd.rightmove))){
 		pm->cmd.upmove = 0;
-		boostFactor = (pm->ps->stats[bitFlags] & usingBoost) ? 4.4 : 1.1;
+		boostFactor = (pm->ps->bitFlags & usingBoost) ? 4.4 : 1.1;
 		if(dashAmount == 0){
 			pm->ps->dashDir[0] = 0;
 			pm->ps->dashDir[1] = 0;
@@ -1098,7 +1111,7 @@ void PM_GroundTrace(void){
 		PM_NotOnGround();
 		return;
 	}
-	if(pm->ps->stats[bitFlags] & usingFlight){
+	if(pm->ps->bitFlags & usingFlight){
 		vec3_t testVec;
 		VectorNormalize2(pml.up, testVec);
 		if((testVec[2] < 0.9f) || (pm->cmd.upmove >= 0)){
@@ -1117,7 +1130,7 @@ void PM_GroundTrace(void){
 	}
 	pml.groundPlane = qtrue;
 	pml.onGround = qtrue;
-	if(pm->ps->groundEntityNum == ENTITYNUM_NONE && (pm->ps->stats[bitFlags] & usingJump || pm->ps->stats[bitFlags] & usingFlight)){
+	if(pm->ps->groundEntityNum == ENTITYNUM_NONE && (pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingFlight)){
 		PM_StopJump();
 		PM_StopFlight();
 		PM_Land();
@@ -1186,14 +1199,14 @@ void PM_Footsteps(void){
 	float bobmove;
 	int	old;
 	qboolean footstep;
-	if((pm->ps->stats[bitFlags] & usingZanzoken)){return;}
-	if((pm->ps->stats[bitFlags] & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
+	if((pm->ps->bitFlags & usingZanzoken)){return;}
+	if((pm->ps->bitFlags & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
 		if(pm->ps->powerLevel[current] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
-		else{pm->ps->powerLevel[current] == pm->ps->powerLevel[maximum] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
+		else{pm->ps->powerLevel[current] > pm->ps->powerLevel[fatigue] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
-	if(pm->ps->stats[bitFlags] & usingFlight){
+	if(pm->ps->bitFlags & usingFlight){
 		if((!pm->cmd.forwardmove && !pm->cmd.rightmove) || (pm->cmd.buttons & BUTTON_WALKING )) {
 			int	tempAnimIndex;
 			pm->ps->bobCycle = 0;
@@ -1385,8 +1398,8 @@ void PM_FinishWeaponChange(void){
 PM_TorsoAnimation
 ==============*/
 void PM_TorsoAnimation(void){
-	if(pm->ps->weaponstate != WEAPON_READY && !(pm->ps->stats[bitFlags] & usingMelee)){return;}
-	if(pm->ps->stats[bitFlags] & usingBlock && !(pm->ps->stats[bitFlags] & usingMelee)){
+	if(pm->ps->weaponstate != WEAPON_READY && !(pm->ps->bitFlags & usingMelee)){return;}
+	if(pm->ps->bitFlags & usingBlock && !(pm->ps->bitFlags & usingMelee)){
 		PM_ContinueTorsoAnim(TORSO_BLOCK);
 		if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
 			PM_ContinueLegsAnim(LEGS_BLOCK);
@@ -1557,7 +1570,7 @@ void PM_StopMelee(void){
 	pm->ps->powerups[PW_MELEE2] = 0;
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
 	if((!(pm->cmd.buttons & BUTTON_ALT_ATTACK) && !(pm->cmd.buttons & BUTTON_ATTACK)) || charging){
-		pm->ps->stats[bitFlags] &= ~usingMelee;
+		pm->ps->bitFlags &= ~usingMelee;
 	}
 }
 void PM_Melee(void){
@@ -1588,13 +1601,13 @@ void PM_Melee(void){
 		melee2 = pm->ps->powerups[PW_MELEE2];
 		damage = 0;
 		// Knockback Halt
-		if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] > 5 && distance <= 96 && melee2 >= 0 && !(pm->ps->stats[bitFlags] & usingZanzoken)){
+		if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] > 5 && distance <= 96 && melee2 >= 0 && !(pm->ps->bitFlags & usingZanzoken)){
 			pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 1;
 			if(melee2 < 500){melee2 = 500;}
 		}
 		// Auto Close-in
 		if(pm->cmd.forwardmove != -127){
-			if((state != 4 && distance > 32 && distance < 512) || (pm->ps->stats[bitFlags] & usingZanzoken)){
+			if((state != 4 && distance > 32 && distance < 512) || (pm->ps->bitFlags & usingZanzoken)){
 				if(!pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] && (pm->cmd.buttons & BUTTON_ALT_ATTACK || pm->cmd.buttons & BUTTON_ATTACK)){
 					pm->cmd.forwardmove = 127;
 				}
@@ -1681,7 +1694,7 @@ void PM_Melee(void){
 			PM_ContinueLegsAnim(LEGS_BLOCK);
 		}
 		else if(enemyState == 2 && state == 5){
-			if(pm->ps->stats[bitFlags] & usingBoost){
+			if(pm->ps->bitFlags & usingBoost){
 				PM_ContinueLegsAnim(LEGS_SPEED_MELEE_BLOCK);
 				PM_AddEvent(EV_MELEE_SPEED);
 			}
@@ -1693,7 +1706,7 @@ void PM_Melee(void){
 		else if(state == 2){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_ATTACK);
 			if(enemyState == 5){
-				if(pm->ps->lockedPlayer->stats[bitFlags] & usingBoost){damage *= 0.1;}
+				if(pm->ps->lockedPlayer->bitFlags & usingBoost){damage *= 0.1;}
 				else{
 					damage = 0;
 				}
@@ -1728,7 +1741,7 @@ void PM_Melee(void){
 			}
 		}
 		else if(state == 1 && inRange){
-			if(pm->ps->stats[bitFlags] & usingFlight){PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
+			if(pm->ps->bitFlags & usingFlight){PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
 			else{PM_ContinueLegsAnim(LEGS_IDLE);}
 		}
 		if(state == 3 || state == 4){
@@ -1753,7 +1766,7 @@ void PM_Melee(void){
 					pm->ps->lockedPlayer->clientLockedTarget = 1;
 				}
 			}
-			pm->ps->stats[bitFlags] |= usingMelee;
+			pm->ps->bitFlags |= usingMelee;
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
 		pm->ps->powerups[PW_MELEE1] = melee1;
@@ -1792,7 +1805,7 @@ void PM_Weapon(void){
 		pm->ps->weapon = WP_NONE;
 		return;
 	}
-	if(pm->ps->weapon == WP_NONE || pm->ps->stats[bitFlags] & usingMelee){
+	if(pm->ps->weapon == WP_NONE || pm->ps->bitFlags & usingMelee){
 			if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
 			PM_AddEvent(EV_DETONATE_WEAPON );
 		}
@@ -2134,7 +2147,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
 	}
-	else if(pm->ps->stats[bitFlags] & usingFlight) {
+	else if(pm->ps->bitFlags & usingFlight) {
 		if(cmd->buttons & BUTTON_ROLL_LEFT){
 			roll -= 28 * (pml.msec / 200.0f);
 		}
@@ -2238,7 +2251,7 @@ void PmoveSingle(pmove_t *pmove){
 	pm->numtouch = 0;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
-	pm->ps->gravity = pm->ps->stats[bitFlags] & usingJump ? pm->ps->gravity : 800;
+	pm->ps->gravity = pm->ps->bitFlags & usingJump ? pm->ps->gravity : 800;
 	pm->ps->eFlags &= ~EF_AURA;
 	memset (&pml, 0, sizeof(pml));
 	pml.msec = pmove->cmd.serverTime - pm->ps->commandTime;
@@ -2251,19 +2264,19 @@ void PmoveSingle(pmove_t *pmove){
 	if(pm->ps->lockedTarget > 0){
 		meleeRange = Distance(pm->ps->origin,*(pm->ps->lockedPosition)) <= 32 ? qtrue : qfalse;
 	}
-	if(!(pm->ps->stats[bitFlags] & isTransforming)){
+	if(!(pm->ps->bitFlags & isTransforming)){
 		PM_UsePowerLevel(qtrue);
 		PM_UsePowerLevel(qfalse);
 		PM_BurnPowerLevel(qtrue);
 		PM_BurnPowerLevel(qfalse);
 		PM_CheckStatus();
-		if(!pm->ps->powerups[PW_KNOCKBACK] && !(pm->ps->stats[bitFlags] & isUnconcious) && !(pm->ps->stats[bitFlags] & isDead)){
+		if(!pm->ps->powerups[PW_KNOCKBACK] && !(pm->ps->bitFlags & isUnconcious) && !(pm->ps->bitFlags & isDead)){
 			PM_CheckBoost();
 			PM_CheckPowerLevel();
 			PM_CheckLockon();
 			PM_CheckZanzoken();
 			if(!meleeRange){
-				if(!(pm->ps->stats[bitFlags] & usingAlter)){
+				if(!(pm->ps->bitFlags & usingAlter)){
 					PM_CheckJump();
 					PM_CheckBlock();
 				}
@@ -2279,7 +2292,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_DropTimers();
 	AngleVectors(pm->ps->viewangles,pml.forward,pml.right,pml.up);
 	PM_SetView();
-	if(pm->ps->stats[bitFlags] & isUnconcious || pm->ps->stats[bitFlags] & isDead){
+	if(pm->ps->bitFlags & isUnconcious || pm->ps->bitFlags & isDead){
 		PM_StopMovementTypes();
 		PM_StopFlight();
 		PM_StopDirections();
@@ -2306,7 +2319,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_WaterEvents();
 	PM_Freeze();
 	PM_GroundTrace();
-	if(!(pm->ps->stats[bitFlags] & usingAlter) && !pm->ps->powerups[PW_FREEZE]){
+	if(!(pm->ps->bitFlags & usingAlter) && !pm->ps->powerups[PW_FREEZE]){
 		PM_FlyMove();
 		PM_DashMove();
 		PM_WalkMove();

@@ -386,7 +386,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
 	// ADDING FOR ZEQ2
 	if (cg_thirdPersonCamera.value == 0) {
-		if(cg.snap->ps.stats[bitFlags] & usingFlight){
+		if(cg.snap->ps.bitFlags & usingFlight){
 			VectorCopy( overrideAngles, cg.refdefViewAngles );
 			// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
 			if ( cg_thirdPersonAngle.value != 0 ) {

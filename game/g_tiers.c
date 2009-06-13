@@ -5,7 +5,7 @@ void syncTier(gclient_t *client){
 	playerState_t *ps;
 	ps = &client->ps;
 	tier = &client->tiers[ps->stats[tierCurrent]];
-	//ps->breakLimitRate = tier->breakLimitRate * g_breakLimitRate.value;
+	ps->breakLimitRate = tier->breakLimitRate * g_breakLimitRate.value;
 	ps->stats[speed] = tier->speed;
 	ps->stats[zanzokenSpeed] = tier->zanzokenSpeed;
 	ps->stats[meleeDefense] = tier->meleeDefense;
@@ -27,8 +27,8 @@ void checkTier(gclient_t *client){
 		tier = ps->stats[tierCurrent];
 		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
 			nextTier = &client->tiers[tier+1];
-			if(((nextTier->requirementButton && ps->stats[bitFlags] & keyTierUp) ||
-			   (!nextTier->requirementButton && !(ps->stats[bitFlags] & keyTierUp))) &&
+			if(((nextTier->requirementButton && ps->bitFlags & keyTierUp) ||
+			   (!nextTier->requirementButton && !(ps->bitFlags & keyTierUp))) &&
 			   (ps->powerLevel[current] >= nextTier->requirementPowerLevelCurrent) &&
 			   (ps->powerLevel[fatigue] >= nextTier->requirementFatigue) &&
 			   (ps->powerLevel[health] >= nextTier->requirementHealth) &&
@@ -44,8 +44,8 @@ void checkTier(gclient_t *client){
 		}
 		if(tier > 0){
 			baseTier = &client->tiers[tier];
-			if(((baseTier->requirementButton && ps->stats[bitFlags] & keyTierDown) ||
-			   (!baseTier->requirementButton && !(ps->stats[bitFlags] & keyTierDown))) ||
+			if(((baseTier->requirementButton && ps->bitFlags & keyTierDown) ||
+			   (!baseTier->requirementButton && !(ps->bitFlags & keyTierDown))) ||
 			   (ps->powerLevel[current] < baseTier->sustainPowerLevel) ||
 			   (ps->powerLevel[health] < baseTier->sustainHealth) ||
 			   (ps->powerLevel[fatigue] < baseTier->sustainFatigue)){

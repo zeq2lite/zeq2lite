@@ -652,7 +652,7 @@ static void CG_DrawStatusBar( void ) {
 			}
 		}
 	}
-	if(ps->powerLevel[current] == ps->powerLevel[maximum] && ps->stats[bitFlags] & usingAlter){
+	if(ps->powerLevel[current] == ps->powerLevel[maximum] && ps->bitFlags & usingAlter){
 		CG_DrawPic(243,433,40,44,cgs.media.breakLimitShader);
 	}
 	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);

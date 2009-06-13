@@ -656,5 +656,5 @@ void FireWeapon( gentity_t *ent, qboolean altfire ) {
 	AngleVectors (ent->client->ps.viewangles, forward, right, up);
 	CalcMuzzlePointOrigin ( ent, ent->client->oldOrigin, forward, right, up, muzzle );
 	Fire_UserWeapon ( ent, muzzle, forward, altfire );
-	ent->client->ps.stats[bitFlags] ^= hasFlipOffset;
+	ent->client->ps.bitFlags ^= hasFlipOffset;
 }
