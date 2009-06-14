@@ -1179,6 +1179,7 @@ typedef struct playerState_s {
 	int			weapon;			// copied to entityState_t->weapon
 	int			weaponstate;
 
+	vec3_t		cameraAngles;
 	vec3_t		viewangles;		// for fixed views
 	int			viewheight;
 
