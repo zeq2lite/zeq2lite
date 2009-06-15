@@ -355,10 +355,6 @@ void CG_PredictPlayerState( void ) {
 		CG_InterpolatePlayerState(qfalse);
 		return;
 	}
-	if(cg.snap->ps.clientLockedTarget > 0){
-		CG_InterpolatePlayerState(qtrue);
-		return;
-	}
 	cg_pmove.ps = &cg.predictedPlayerState;
 	cg_pmove.trace = CG_Trace;
 	cg_pmove.pointcontents = CG_PointContents;
@@ -482,7 +478,6 @@ void CG_PredictPlayerState( void ) {
 				}
 			}
 		}
-
 		// don't predict gauntlet firing, which is only supposed to happen
 		// when it actually inflicts damage
 		cg_pmove.gauntletHit = qfalse;
@@ -644,9 +639,7 @@ void CG_PredictPlayerState( void ) {
 		if ( cg_pmove.pmove_fixed ) {
 			cg_pmove.cmd.serverTime = ((cg_pmove.cmd.serverTime + pmove_msec.integer-1) / pmove_msec.integer) * pmove_msec.integer;
 		}
-
 		Pmove (&cg_pmove);
-
 		moved = qtrue;
 
 		// add push trigger movement effects
@@ -675,12 +668,17 @@ void CG_PredictPlayerState( void ) {
 		}
 	}
 	// fire events and other transition triggered things
+
 	CG_TransitionPlayerState(&cg.predictedPlayerState,&oldPlayerState);
 	if ( cg_showmiss.integer ) {
 		if (cg.eventSequence > cg.predictedPlayerState.eventSequence) {
 			CG_Printf("WARNING: double event\n");
 			cg.eventSequence = cg.predictedPlayerState.eventSequence;
 		}
+	}
+	if(cg.snap->ps.clientLockedTarget > 0){
+		CG_InterpolatePlayerState(qfalse);
+		return;
 	}
 }
 

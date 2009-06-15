@@ -521,11 +521,11 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 	refEntity_t		*re;
 	cg_userWeapon_t	*weaponGraphics;
 
-	CG_Printf("spiral beam!\n");
 	// Draw the central beam
 	CG_TrailFunc_StraightBeam( ent );
 
 	step = cg_tailDetail.value / 4;
+	if(step < 1){step =1;}
 
 	es = &ent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics( es->clientNum, es->weapon );
@@ -547,14 +547,14 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 	
 	// Build segments
 		
-	//for (; t <= ent->trailTime; t += step) {
+	for (; t <= ent->trailTime; t += step) {
 		CG_TrailFunc_SpiralBeam_Helper ( es, ent, t, lastPos2);
 
 		le = CG_AllocLocalEntity();
 		re = &le->refEntity;
 		le->leType = LE_FADE_NO;
 		le->startTime = t;
-		le->endTime = t + 1000;
+		le->endTime = t + 15000;
 		le->lifeRate = 1.0 / (le->endTime - le->startTime);
 	
 		re->reType = RT_RAIL_CORE;
@@ -574,9 +574,8 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 		le->color[3] = 1.00f;
 
 		AxisClear( re->axis );
-
 		VectorCopy(lastPos2, lastPos);
-	//}
+	}
 
 	CG_TrailFunc_SpiralBeam_Helper ( es, ent, ent->trailTime, lastPos2);
 
@@ -584,7 +583,7 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 	re = &le->refEntity;
 	le->leType = LE_FADE_NO;
 	le->startTime = ent->trailTime;
-	le->endTime = ent->trailTime + 500;
+	le->endTime = ent->trailTime + 15000;
 	le->lifeRate = 1.0 / (le->endTime - le->startTime);
 	
 	re->reType = RT_RAIL_CORE;

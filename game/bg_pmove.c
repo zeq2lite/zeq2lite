@@ -212,7 +212,7 @@ void PM_CheckZanzoken(void){
 		}
 		VectorScale(pm->ps->velocity,speed,pm->ps->velocity);
 		VectorNormalize2(pm->ps->velocity,post_vel);
-		if((DotProduct(pre_vel, post_vel)< 0.5f)|| (VectorLength(pm->ps->velocity)== 0.0f) || (pm->ps->powerups[PW_ZANZOKEN] < 0)){
+		if(pm->ps->powerups[PW_ZANZOKEN] < 0){
 			pm->ps->powerups[PW_ZANZOKEN] = 0;
 		}
 	}
@@ -231,10 +231,10 @@ void PM_UsePowerLevel(qboolean useTotal){
 	stat = useTotal ? pm->ps->powerLevel[fatigue] : pm->ps->powerLevel[current];
 	amount = useTotal ? pm->ps->powerLevel[useFatigue] : pm->ps->powerLevel[useCurrent];
 	newValue = (stat - amount) > 32767 ? 32767 : stat - amount;
-	if(newValue <= 0 && !useTotal && pm->ps->powerLevel[useFatigue] > 0){
-		useTotal = qtrue;
-		newValue = newValue = 
-		pm->ps->powerLevel[current] = newValue;
+	if(newValue <= 0 && !useTotal && pm->ps->powerLevel[fatigue] > 0){
+		pm->ps->powerLevel[fatigue] -= (amount * 1.5);
+		pm->ps->powerLevel[current] = 1;
+		pm->ps->powerLevel[useCurrent] = 0;
 		return;
 	}
 	newValue = newValue < -32767 ? -32767 : newValue;
@@ -270,7 +270,7 @@ void PM_BurnPowerLevel(qboolean melee){
 	else{pm->ps->powerLevel[damageFromEnergy] = 0;}
 }
 void PM_CheckStatus(void){
-	if((pm->ps->powerLevel[current]<= 0) && (pm->ps->powerLevel[fatigue] <= 0)){
+	if(pm->ps->powerLevel[health] <= 0){
 		if(pm->ps->powerups[PW_STATE] != -2){
 			pm->ps->bitFlags |= isDead;
 			pm->ps->powerups[PW_STATE] = -2;
@@ -282,7 +282,7 @@ void PM_CheckStatus(void){
 			PM_ContinueLegsAnim(BOTH_DEATH2);
 		}
 	}
-	else if(pm->ps->powerLevel[current]<= 0){
+	else if(pm->ps->powerLevel[fatigue]<= 0){
 		if(pm->ps->powerups[PW_STATE] != -1){
 			pm->ps->bitFlags |= isUnconcious;
 			pm->ps->powerups[PW_STATE] = -1;
@@ -325,7 +325,7 @@ void PM_CheckTransform(void){
 		}
 		else{
 			pm->ps->bitFlags |= isTransforming;
-			PM_AddEvent(EV_TIERUP);
+			PM_AddEvent(EV_TIERUP_FIRST);
 		}
 	}
 	else if(pm->ps->powerups[PW_TRANSFORM] < 0){
