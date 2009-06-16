@@ -351,7 +351,7 @@ void CG_PredictPlayerState( void ) {
 		cg.validPPS = qtrue;
 		cg.predictedPlayerState = cg.snap->ps;
 	}
-	if(cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) ) {
+	if(cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) || cg.snap->ps.clientLockedTarget > 0) {
 		CG_InterpolatePlayerState(qfalse);
 		return;
 	}

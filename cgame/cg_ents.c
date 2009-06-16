@@ -496,7 +496,7 @@ void CG_TrailFunc_SpiralBeam_Helper ( entityState_t *es, centity_t *ent, int tim
 	if (VectorNormalize2( es->pos.trDelta, tmpAxis[0] ) == 0 ) {
 		tmpAxis[0][2] = 1;
 	}
-	RotateAroundDirection( tmpAxis, time * 2 );
+	RotateAroundDirection( tmpAxis, time * 10 );
 	
 	// upscale the offset of the coil to the main beam
 	if ( weaponGraphics->missileTrailSpiralOffset ) {
@@ -552,7 +552,7 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 
 		le = CG_AllocLocalEntity();
 		re = &le->refEntity;
-		le->leType = LE_FADE_NO;
+		le->leType = LE_FADE_ALPHA;
 		le->startTime = t;
 		le->endTime = t + 15000;
 		le->lifeRate = 1.0 / (le->endTime - le->startTime);
@@ -581,7 +581,7 @@ void CG_TrailFunc_SpiralBeam( centity_t *ent ) {
 
 	le = CG_AllocLocalEntity();
 	re = &le->refEntity;
-	le->leType = LE_FADE_NO;
+	le->leType = LE_FADE_ALPHA;
 	le->startTime = ent->trailTime;
 	le->endTime = ent->trailTime + 15000;
 	le->lifeRate = 1.0 / (le->endTime - le->startTime);

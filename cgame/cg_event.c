@@ -538,7 +538,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		}
 		// if we are interpolating, we don't need to smooth steps
 		if ( cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) ||
-			cg_nopredict.integer || cg_synchronousClients.integer) {
+			cg_nopredict.integer || cg_synchronousClients.integer ) {
 			break;
 		}
 		// check for stepping up before a previous step is completed
@@ -869,14 +869,16 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 #endif
 	case EV_AIRBRAKE:
 		DEBUGNAME("EV_AIRBRAKE");
-		if(r > 2.5){
-			trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake1);
-		} else {
-			trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake2);
+		{
+			if(r > 2.5){
+				trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake1);
+			} else {
+				trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake2);
+			}
+			CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
+			CG_PowerMeleeEffect(cent->lerpOrigin);
+			break;
 		}
-		CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
-		CG_PowerMeleeEffect(cent->lerpOrigin);
-		break;
 	case EV_PAIN:
 		DEBUGNAME("EV_PAIN");
 		if (cent->currentState.number != cg.snap->ps.clientNum){
@@ -954,10 +956,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_MELEE_KNOCKBACK:
 		DEBUGNAME("EV_MELEE_KNOCKBACK");
-		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
-		CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
-		CG_PowerMeleeEffect(cent->lerpOrigin);
-		break;
+		{
+			trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
+			CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
+			CG_PowerMeleeEffect(cent->lerpOrigin);
+			break;
+		}
 	case EV_MELEE_STUN:
 		DEBUGNAME("EV_MELEE_STUN");
 		break;

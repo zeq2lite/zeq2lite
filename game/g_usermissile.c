@@ -1285,8 +1285,6 @@ void G_ExplodeUserWeapon( gentity_t *self ) {
 	trap_LinkEntity( self );
 }
 
-
-
 static void G_BounceUserMissile( gentity_t *self, trace_t *trace ) {
 	vec3_t	velocity;
 	float	dot;
@@ -1316,24 +1314,31 @@ static void G_StruggleUserMissile( gentity_t *self, trace_t *trace ) {
 	vec3_t	dir;
 	float	dot;
 	int		hitTime;
+	gentity_t *other;
+	other = &g_entities[trace->entityNum];
+
+	if(self->s.eType == ET_MISSILE){
+		VectorCopy(self->s.angles,dir);
+	}else{
+		VectorCopy(self->client->ps.viewangles,dir);
+	}
 
 	// reflect the velocity on it's angles.
 	hitTime = level.previousTime + ( level.time - level.previousTime ) * trace->fraction;
 	BG_EvaluateTrajectoryDelta( &self->s, &self->s.pos, hitTime, velocity );
-	dot = DotProduct( velocity, self->client->ps.viewangles );
-	VectorMA( velocity, -2 * dot, self->client->ps.viewangles, self->s.pos.trDelta );
+	dot = DotProduct( velocity, dir );
+	VectorMA( velocity, -2 * dot, dir, self->s.pos.trDelta );
 
 	VectorScale( self->s.pos.trDelta, self->bounceFrac, self->s.pos.trDelta );
 
-	// check for stop
-	if ( trace->plane.normal[2] > 0.2 && VectorLength( self->s.pos.trDelta ) < 40 ) {
+	VectorAdd( self->r.currentOrigin, dir, self->r.currentOrigin);
+	VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
+	self->s.pos.trTime = level.time;
+
+	if(self->s.eType == ET_MISSILE && other->s.eType == ET_MISSILE && VectorLength( self->s.pos.trDelta ) < 40){
 		G_ExplodeUserWeapon ( self );
 		return;
 	}
-
-	VectorAdd( self->r.currentOrigin, self->client->ps.viewangles, self->r.currentOrigin);
-	VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
-	self->s.pos.trTime = level.time;
 }
 
 static void G_DeflectUserMissile( gentity_t *self, gentity_t *other, trace_t *trace ) {
@@ -1362,6 +1367,30 @@ static void G_DeflectUserMissile( gentity_t *self, gentity_t *other, trace_t *tr
 	self->s.pos.trTime = level.time;
 }
 
+static void G_PushUserMissile( gentity_t *self, trace_t *trace ) {
+	gentity_t *other;
+	other = &g_entities[trace->entityNum];
+	// If the missile has lost against the player
+	if((self->powerLevel / 2) <= other->client->ps.powerLevel[current]){
+		self->bounceFrac = 1;
+		self->struggling = qfalse;
+		G_DeflectUserMissile(self, other, trace);
+		self->r.ownerNum = other->s.number;
+		other->client->ps.bitFlags &= ~isStruggling;
+		G_Printf("Missile Lost!\n");
+		return;
+	}
+	// If the missile has beaten the player
+	if((other->client->ps.powerLevel[current] / 2) <= self->powerLevel){
+		self->bounceFrac = -1;
+		self->struggling = qfalse;
+		G_DeflectUserMissile(self, other, trace);
+		other->client->ps.bitFlags &= ~isStruggling;
+		G_Printf("Missile Won!\n");
+		return;
+	}
+}
+
 void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 // Handles impact of the weapon with map geometry or entities.
 	int difference1,difference2,power1,power2,speed1,speed2;
@@ -1386,10 +1415,19 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	if(other->takedamage) {
 		if(other->client->ps.bitFlags & usingBlock){
 			// Swat
-			if(1){
+			if(self->powerLevel < other->client->ps.powerLevel[current]){
 				self->bounceFrac = 1;
 				G_DeflectUserMissile(self, other, trace);
 				self->r.ownerNum = other->s.number;
+				return;
+			// Struggle
+			}else{
+				self->struggling = qtrue;
+				self->bounceFrac = 0;
+				self->powerLevel -= 1;
+				//other->client->ps.bitFlags |= isStruggling;
+				G_DeflectUserMissile(self, other, trace);
+				G_Printf("Missile Hold!\n");
 				return;
 			}
 		}else if(self->damage){
@@ -1423,9 +1461,11 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 					if(speedScale2 > 1){speedScale2 = 1;}
 					if(speedScale1 < -1){speedScale1 = -1;}
 					if(speedScale2 < -1){speedScale2 = -1;}
+					self->struggling = qtrue;
 					self->bounceFrac = speedScale1;
+					self->r.ownerNum = other->s.number;
 					G_StruggleUserMissile(self, trace);
-					G_Printf("Attack Owner: %i Speed Scale %f Speed %f Power: %i Difference: %i\n", self->s.clientNum, self->bounceFrac, self->speed, self->powerLevel, difference1);
+					//G_Printf("Attack Owner: %i Speed Scale %f Speed %f Power: %i Difference: %i\n", self->s.clientNum, self->bounceFrac, self->speed, self->powerLevel, difference1);
 					//G_AddEvent( self, EV_POWER_STRUGGLE, 0 );
 					return;
 				// Bounce off each other
@@ -1502,6 +1542,7 @@ void G_RunUserMissile( gentity_t *ent ) {
 	vec3_t		origin;
 	trace_t		trace;
 	int			pass_ent;
+
 	// get current position
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
 
@@ -1522,9 +1563,9 @@ void G_RunUserMissile( gentity_t *ent ) {
 	trap_LinkEntity(ent);
 	//G_Printf("%i\n",ent->r.currentOrigin);
 
-	//if(ent->struggling){
-	//	ent->powerLevel--;
-	//}
+	if(ent->struggling){
+		G_PushUserMissile(ent, &trace);
+	}
 
 	if(trace.fraction != 1){
 		// never explode or bounce on sky

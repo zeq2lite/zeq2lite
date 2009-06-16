@@ -383,7 +383,19 @@ void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {
 player_die
 ==================
 */
-void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {}
+void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
+	if (attacker && attacker->client) {
+		attacker->client->lastkilled_client = self->s.number;
+		if ( attacker == self || OnSameTeam (self, attacker ) ) {
+			AddScore( attacker, self->r.currentOrigin, -10 );
+		} else {
+			AddScore( attacker, self->r.currentOrigin, 10 );
+			attacker->client->lastKillTime = level.time;
+		}
+	} else {
+		AddScore( self, self->r.currentOrigin, -10 );
+	}
+}
 int RaySphereIntersections( vec3_t origin, float radius, vec3_t point, vec3_t dir, vec3_t intersections[2] ) {
 	float b, c, d, t;
 

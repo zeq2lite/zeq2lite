@@ -2283,6 +2283,11 @@ Also called by CG_Missile for quad rockets, but nobody can tell...
 ===============
 */
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team ) {
+
+	trap_R_AddRefEntityToScene( ent );
+
+	ent->customShader = cgs.media.globalCelLighting;
+
 	trap_R_AddRefEntityToScene( ent );
 }
 
@@ -2309,7 +2314,7 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 			verts[i].modulate[2] = ambientLight[2];
 			verts[i].modulate[3] = 255;
 			continue;
-		} 
+		}
 		j = ( ambientLight[0] + incoming * directedLight[0] );
 		if ( j > 255 ) {
 			j = 255;

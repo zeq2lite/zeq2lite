@@ -358,9 +358,9 @@ void PM_CheckPowerLevel(void){
 	if(pm->ps->powerLevel[fatigue] <= 0 && pm->ps->powerLevel[current] > 0){
 		//pm->ps->powerLevel[current] = 1;
 	}
-	//Com_Printf("Current : %i / %i\n",pm->ps->powerLevel[current],pm->ps->powerLevel[maximum]);
-	//Com_Printf("Fatigue : %i\n",pm->ps->powerLevel[fatigue]);
-	//Com_Printf("Health : %i\n",pm->ps->powerLevel[health]);
+	Com_Printf("Current : %i / %i\n",pm->ps->powerLevel[current],pm->ps->powerLevel[maximum]);
+	Com_Printf("Fatigue : %i\n",pm->ps->powerLevel[fatigue]);
+	Com_Printf("Health : %i\n",pm->ps->powerLevel[health]);
 	while(timers[powerAuto] >= 100){
 		timers[powerAuto] -= 100;
 		recovery = (float)pm->ps->powerLevel[maximum] * 0.002;
@@ -698,7 +698,13 @@ PM_CheckBlock
 =============*/
 void PM_CheckBlock(void){
 	pm->ps->bitFlags &= ~usingBlock;
-	if((pm->cmd.buttons & BUTTON_BLOCK)){pm->ps->bitFlags |= usingBlock;}
+	if((pm->cmd.buttons & BUTTON_BLOCK)){
+		pm->ps->bitFlags |= usingBlock;
+		if(pm->ps->bitFlags & isStruggling){
+			pm->ps->powerups[PW_FREEZE] = 100;
+			pm->ps->powerLevel[useCurrent] += 1;
+		}
+	}
 }
 /*===================
 PM_FlyMove
@@ -1251,7 +1257,7 @@ void PM_Footsteps(void){
 				tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim(tempAnimIndex);
 			} else{
-				if(pm->ps->clientLockedTarget>0 && !pm->ps->powerups[PW_MELEE_STATE]){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
+				if(pm->ps->clientLockedTarget>0){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
 				else{PM_ContinueLegsAnim(LEGS_IDLE);}
 			}
 		}
@@ -1400,11 +1406,17 @@ PM_TorsoAnimation
 void PM_TorsoAnimation(void){
 	if(pm->ps->weaponstate != WEAPON_READY && !(pm->ps->bitFlags & usingMelee)){return;}
 	if(pm->ps->bitFlags & usingBlock && !(pm->ps->bitFlags & usingMelee)){
-		PM_ContinueTorsoAnim(TORSO_BLOCK);
-		if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
-			PM_ContinueLegsAnim(LEGS_BLOCK);
+		if(pm->ps->bitFlags & isStruggling){
+			PM_ContinueTorsoAnim(TORSO_PUSH);
+			PM_ContinueLegsAnim(LEGS_PUSH);
+			return;
+		}else{
+			PM_ContinueTorsoAnim(TORSO_BLOCK);
+			if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
+				PM_ContinueLegsAnim(LEGS_BLOCK);
+			}
+			return;
 		}
-		return;
 	}
 	switch(pm->ps->legsAnim & ~ANIM_TOGGLEBIT){
 	case LEGS_KNOCKBACK:
@@ -2065,7 +2077,7 @@ void PM_CheckLockon(void){
 		if((trace.entityNum >= MAX_CLIENTS)){return;}
 		PM_AddEvent(EV_LOCKON_START);
 		pm->ps->lockedTarget = trace.entityNum+1;
-		pm->ps->clientLockedTarget = 1;
+		pm->ps->clientLockedTarget = trace.entityNum+1;
 	}
 	else{
 		pm->ps->pm_flags &= ~PMF_LOCK_HELD;

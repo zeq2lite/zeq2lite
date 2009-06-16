@@ -260,7 +260,11 @@ void CG_DrawHorGauge( float x, float y, float w, float h, vec4_t color_bar, vec4
 
 	if (color_empty[3]) {
 		trap_R_SetColor( color_empty );
-		CG_DrawPic( x, y, w, h, cgs.media.whiteShader );
+		if (!reversed) {
+			CG_DrawPic( x + bar_w, y, w - bar_w, h, cgs.media.whiteShader );
+		} else {
+			CG_DrawPic( x - bar_w, y, w + bar_w, h, cgs.media.whiteShader );
+		}
 	}
 	trap_R_SetColor( color_bar );
 
@@ -298,7 +302,11 @@ void CG_DrawVertGauge( float x, float y, float w, float h, vec4_t color_bar, vec
 
 	if (color_empty[3]) {
 		trap_R_SetColor( color_empty );
-		CG_DrawPic( x, y, w, h, cgs.media.whiteShader );
+		if (reversed) {
+			CG_DrawPic( x, y + bar_h, w, h - bar_h, cgs.media.whiteShader );
+		} else {
+			CG_DrawPic( x, y, w, h - bar_h, cgs.media.whiteShader );
+		}
 	}
 	trap_R_SetColor( color_bar );
 
@@ -566,7 +574,7 @@ CG_DrawStatusBar
 static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
-	vec4_t		powerColor,dullColor,limitColor,excessColor,emptyColor,fatigueColor;
+	vec4_t		powerColor,dullColor,limitColor,excessColor,emptyColor,fatigueColor,clearColor;
 	vec3_t		angles;
 	const char	*powerLevelString;
 	int 		powerLevelOffset;
@@ -586,6 +594,10 @@ static void CG_DrawStatusBar( void ) {
 	//
 	// Draw That Hud!
 	//
+	clearColor[0] = 0.0f;
+	clearColor[1] = 0.0f;
+	clearColor[2] = 0.0f;
+	clearColor[3] = 0.0f;
 	emptyColor[0] = 0.3f;
 	emptyColor[1] = 0.3f;
 	emptyColor[2] = 0.3f;
@@ -628,12 +640,12 @@ static void CG_DrawStatusBar( void ) {
 	powerLevelString = va("%i",powerLevelDisplay);
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	if(currentPercent > 1.0){currentPercent = 1.0;}
-	CG_DrawHorGauge(60,449,200,16,fatigueColor,emptyColor,1,1,qfalse); 
-	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 
+	CG_DrawHorGauge(60,449,200,16,fatigueColor,emptyColor,1,1,qfalse);
+	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse);
 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->powerLevel[current],ps->powerLevel[fatigue],qfalse);
-	CG_DrawHorGauge(260,449,-(float)200*healthPercent,16,limitColor,limitColor,1,1,qfalse);
+	CG_DrawHorGauge(60,449,200,16,emptyColor,limitColor,ps->powerLevel[health],ps->powerLevel[maximum],qfalse);
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
-	if(tier){	
+	if(tier){
 		activeTier = &ci->tierConfig[ci->tierCurrent];
 		tierLast = 32767;
 		if(activeTier->sustainPowerLevel && activeTier->sustainPowerLevel < tierLast){tierLast = (float)activeTier->sustainPowerLevel;}

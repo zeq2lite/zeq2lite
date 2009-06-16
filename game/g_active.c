@@ -460,9 +460,12 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_LOCKON_END:
 			break;
 		case EV_DEATH:
+			AddScore( ent, ent->r.currentOrigin, -10 );
 			client->respawnTime = level.time + 10000;
+			//ent = G_TempEntity( ent->r.currentOrigin, EV_OBITUARY );
 			break;
 		case EV_UNCONCIOUS:
+			AddScore( ent, ent->r.currentOrigin, -5 );
 			break;
 		case EV_USE_ITEM1:
 			item = NULL;
@@ -656,14 +659,14 @@ void ClientThink( int clientNum ) {
 	// phone jack if they don't get any for a while
 	ent->client->lastCmdTime = level.time;
 
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer ) {
+	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.clientLockedTarget) {
 		ClientThink_real( ent );
 	}
 }
 
 
 void G_RunClient( gentity_t *ent ) {
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer ) {
+	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.clientLockedTarget) {
 		return;
 	}
 	ent->client->pers.cmd.serverTime = level.time;
