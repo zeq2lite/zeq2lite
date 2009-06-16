@@ -643,7 +643,7 @@ static void CG_DrawStatusBar( void ) {
 	CG_DrawHorGauge(60,449,200,16,fatigueColor,emptyColor,1,1,qfalse);
 	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse);
 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->powerLevel[current],ps->powerLevel[fatigue],qfalse);
-	CG_DrawHorGauge(60,449,200,16,emptyColor,limitColor,ps->powerLevel[health],ps->powerLevel[maximum],qfalse);
+	CG_DrawHorGauge(60,449,200,16,clearColor,limitColor,ps->powerLevel[health],ps->powerLevel[maximum],qfalse);
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
 	if(tier){
 		activeTier = &ci->tierConfig[ci->tierCurrent];
