@@ -358,9 +358,9 @@ void PM_CheckPowerLevel(void){
 	if(pm->ps->powerLevel[fatigue] <= 0 && pm->ps->powerLevel[current] > 0){
 		//pm->ps->powerLevel[current] = 1;
 	}
-	Com_Printf("Current : %i / %i\n",pm->ps->powerLevel[current],pm->ps->powerLevel[maximum]);
-	Com_Printf("Fatigue : %i\n",pm->ps->powerLevel[fatigue]);
-	Com_Printf("Health : %i\n",pm->ps->powerLevel[health]);
+	//Com_Printf("Current : %i / %i\n",pm->ps->powerLevel[current],pm->ps->powerLevel[maximum]);
+	//Com_Printf("Fatigue : %i\n",pm->ps->powerLevel[fatigue]);
+	//Com_Printf("Health : %i\n",pm->ps->powerLevel[health]);
 	while(timers[powerAuto] >= 100){
 		timers[powerAuto] -= 100;
 		recovery = (float)pm->ps->powerLevel[maximum] * 0.002;

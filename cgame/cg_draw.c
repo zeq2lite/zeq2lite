@@ -611,7 +611,7 @@ static void CG_DrawStatusBar( void ) {
 	fatigueColor[2] = 0.5f;
 	fatigueColor[3] = 1.0f;
 	tier = (float)ps->stats[tierCurrent];
-	healthPercent = (float)ps->powerLevel[health] / (float)ps->powerLevel[maximum];
+	healthPercent = 1.0 - ((float)ps->powerLevel[health] / (float)ps->powerLevel[maximum]);
 	maxPercent = (float)ps->powerLevel[fatigue] / (float)ps->powerLevel[maximum];
 	currentPercent = (float)ps->powerLevel[current] / (float)ps->powerLevel[maximum];
 	if(currentPercent < 0){currentPercent = 0;}
@@ -630,8 +630,8 @@ static void CG_DrawStatusBar( void ) {
 	if(currentPercent > 1.0){currentPercent = 1.0;}
 	CG_DrawHorGauge(60,449,200,16,fatigueColor,emptyColor,1,1,qfalse); 
 	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse); 
-	//CG_DrawHorGauge(60,449,(float)200*healthPercent,16,limitColor,dullColor,ps->powerLevel[current],ps->powerLevel[health],qfalse);	
-	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->powerLevel[current],ps->powerLevel[fatigue],qfalse);	
+	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->powerLevel[current],ps->powerLevel[fatigue],qfalse);
+	CG_DrawHorGauge(260,449,-(float)200*healthPercent,16,limitColor,limitColor,1,1,qfalse);
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
 	if(tier){	
 		activeTier = &ci->tierConfig[ci->tierCurrent];
