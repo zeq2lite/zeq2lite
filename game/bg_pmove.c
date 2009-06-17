@@ -116,6 +116,10 @@ void PM_CheckKnockback(void){
 	vec3_t pre_vel,post_vel,wishvel,wishdir;	
 	float scale,wishspeed;
 	int i,speed;
+	if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK){
+		pm->ps->powerups[PW_KNOCKBACK] = 5000; 
+		pm->ps->knockBackDirection = 5;
+	}
 	if(pm->ps->powerups[PW_KNOCKBACK] < 0){
 		pm->ps->powerups[PW_KNOCKBACK] += pml.msec;
 		PM_ContinueLegsAnim(LEGS_KNOCKBACK_RECOVER_2);
@@ -546,11 +550,8 @@ void PM_Friction(void){
 		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
 	}
 	if(pm->ps->bitFlags & usingFlight || pml.onGround){
-		if (!(pm->ps->pm_flags & PMF_TIME_KNOCKBACK)){
-			control = speed < pm_stopspeed ? pm_stopspeed : speed;
-			drop += control*pm_friction*pml.frametime;
-		}
-//		drop = speed*pm_friction*pml.frametime;
+		control = speed < pm_stopspeed ? pm_stopspeed : speed;
+		drop += control*pm_friction*pml.frametime;
 	}
 	if(pm->ps->powerups[PW_KNOCKBACK] > 0){
 		if(speed < 100){
@@ -819,8 +820,7 @@ void PM_WalkMove(void){
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale * 0.60f;
-	if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK){accelerate = pm_airaccelerate;} 
-	else{accelerate = pm_accelerate;}
+	accelerate = pm_accelerate;
 	PM_Accelerate (wishdir, wishspeed,accelerate);
 //	if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK){pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;}
 	vel = VectorLength(pm->ps->velocity);
@@ -887,8 +887,7 @@ void PM_DashMove(void){
 		VectorCopy (wishvel, wishdir);
 		wishspeed = VectorNormalize(wishdir);
 		wishspeed *= scale;
-		if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK) {accelerate = pm_airaccelerate;} 
-		else{accelerate = pm_dashaccelerate;}
+		accelerate = pm_dashaccelerate;
 		PM_Accelerate(wishdir,wishspeed,accelerate);
 		if(pml.groundPlane){
 			PM_ClipVelocity(pm->ps->velocity,pml.groundTrace.plane.normal,pm->ps->velocity,OVERCLIP);
@@ -1588,6 +1587,7 @@ void PM_StopMelee(void){
 void PM_Melee(void){
 	int melee1,melee2,enemyState,state,option,damage,distance;
 	qboolean knockback,inRange,charging;
+	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	knockback = qfalse;
 	inRange = qfalse;
 	state = pm->ps->powerups[PW_MELEE_STATE];
@@ -1793,7 +1793,7 @@ void PM_Weapon(void){
 	int	*weaponInfo;
 	int	*alt_weaponInfo;
 	int costPrimary,costSecondary;
-	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;	}
+	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
 		PM_StopMovement();
 		PM_StopDash();

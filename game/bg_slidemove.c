@@ -196,12 +196,6 @@ qboolean	PM_SlideMove( qboolean gravity ) {
 		VectorCopy( endVelocity, pm->ps->velocity );
 	}
 
-	// don't change velocity if in a timer (FIXME: is this correct?)
-	//if ( pm->ps->pm_time ) {
-	if ( pm->ps->pm_time && (pm->ps->pm_flags & PMF_TIME_KNOCKBACK)) {
-		VectorCopy( primal_velocity, pm->ps->velocity );
-	}
-
 	return ( bumpcount != 0 );
 }
 

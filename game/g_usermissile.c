@@ -402,17 +402,15 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	if(dflags & DAMAGE_NO_KNOCKBACK) {knockback = 0;}
 	if (knockback && tgClient) {
 		vec3_t	kvel;
-		float	mass;
-		mass = 200;
-		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
+		VectorScale (dir, knockback, kvel);
 		VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
 		if (!tgClient->ps.pm_time) {
-			int		t;
-			t = knockback * 2;
-			if ( t < 50 ) {t = 50;}
-			if ( t > 200 ) {t = 200;}
-			tgClient->ps.pm_time = t;
+			tgClient->ps.pm_time = 20;
 			tgClient->ps.pm_flags |= PMF_TIME_KNOCKBACK;
+			if(!tgClient->ps.lockedTarget){
+				tgClient->ps.lockedTarget = attacker->client->ps.clientNum+1;
+				tgClient->ps.clientLockedTarget = attacker->client->ps.clientNum+1;
+			}
 		}
 	}
 	if(inflictor && inflictor->chargelvl){
