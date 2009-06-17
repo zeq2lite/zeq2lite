@@ -290,6 +290,7 @@ typedef enum {
 #define isUnconcious	0x00100000
 #define isDead			0x00200000
 #define isBreakingLimit	0x00400000
+#define isAutoClosing	0x00800000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16

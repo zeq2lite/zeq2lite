@@ -292,16 +292,16 @@ void PM_CheckStatus(void){
 			pm->ps->powerups[PW_STATE] = -1;
 			PM_StopMovement();
 			PM_AddEvent(EV_UNCONCIOUS);
-			if(pm->ps->powerLevel[current] > -2500){
-				pm->ps->powerLevel[current] = -2500;
+			if(pm->ps->powerLevel[fatigue] > -2500){
+				pm->ps->powerLevel[fatigue] = -2500;
 			}
 		}
 		else{
-			pm->ps->powerLevel[current] += pml.msec / 2;
+			pm->ps->powerLevel[fatigue] += pml.msec / 2;
 			PM_ContinueTorsoAnim(BOTH_DEATH3);
 			PM_ContinueLegsAnim(BOTH_DEATH3);
-			if(pm->ps->powerLevel[current] > 0){
-				pm->ps->bitFlags &= ~isUnconcious;	
+			if(pm->ps->powerLevel[fatigue] > 0){
+				pm->ps->bitFlags &= ~isUnconcious;
 			}
 		}
 	}
@@ -360,11 +360,11 @@ void PM_CheckPowerLevel(void){
 	timers[powerAuto] += pml.msec;
 	pm->ps->bitFlags &= ~usingAlter;
 	if(pm->ps->powerLevel[fatigue] <= 0 && pm->ps->powerLevel[current] > 0){
-		//pm->ps->powerLevel[current] = 1;
+		pm->ps->powerLevel[current] = 1;
 	}
-	Com_Printf("Current : %i / %i\n",pm->ps->powerLevel[current],pm->ps->powerLevel[maximum]);
-	Com_Printf("Fatigue : %i\n",pm->ps->powerLevel[fatigue]);
-	Com_Printf("Health : %i\n",pm->ps->powerLevel[health]);
+	//Com_Printf("Current : %i / %i\n",pm->ps->powerLevel[current],pm->ps->powerLevel[maximum]);
+	//Com_Printf("Fatigue : %i\n",pm->ps->powerLevel[fatigue]);
+	//Com_Printf("Health : %i\n",pm->ps->powerLevel[health]);
 	while(timers[powerAuto] >= 100){
 		timers[powerAuto] -= 100;
 		recovery = (float)pm->ps->powerLevel[maximum] * 0.002;
@@ -424,8 +424,10 @@ void PM_CheckPowerLevel(void){
 					pushLimit = powerLevel[current] + pm->ps->breakLimitRate;
 					if(pushLimit < 32767){
 						powerLevel[current] = powerLevel[maximum] = pushLimit;
-						//powerLevel[health] = powerLevel[health] + (int)(pushLimit * 1.5);
-						//if(powerLevel[health] > 32767){powerLevel[health] = 32767;}
+						if(powerLevel[health] + raise * 0.2 < pushLimit){
+							powerLevel[health] += raise * 0.2;
+						}
+						if(powerLevel[health] > 32767){powerLevel[health] = 32767;}
 					}
 				}
 				if(pm->ps->bitFlags & isBreakingLimit){
@@ -474,7 +476,7 @@ void PM_CheckBoost(void){
 		pm->ps->eFlags |= EF_AURA;
 		pm->ps->powerups[PW_BOOST] += pml.msec;
 		if(pm->ps->powerups[PW_BOOST] > 150){
-			pm->ps->powerLevel[useCurrent] += pm->ps->powerLevel[maximum] * 0.003;
+			pm->ps->powerLevel[useFatigue] += pm->ps->powerLevel[maximum] * 0.003;
 			pm->ps->powerups[PW_BOOST] -= 150;
 		}
 	}
@@ -631,6 +633,7 @@ without getting a sqrt(2) distortion in speed.
 */
 float PM_CmdScale(usercmd_t *cmd){
 	int		max;
+	int		totalSpeed;
 	float	total;
 	float	scale;
 
@@ -647,7 +650,9 @@ float PM_CmdScale(usercmd_t *cmd){
 
 	total = sqrt(cmd->forwardmove * cmd->forwardmove + cmd->rightmove * cmd->rightmove + cmd->upmove * cmd->upmove );
 
-	scale = (float)pm->ps->stats[speed] * max / (127.0 * total );
+	totalSpeed = pm->ps->stats[speed];
+	if(pm->ps->bitFlags & isAutoClosing){totalSpeed *= 3;}
+	scale = (float)totalSpeed * max / (127.0 * total );
 
 	return scale;
 }
@@ -1586,14 +1591,19 @@ void PM_StopMelee(void){
 }
 void PM_Melee(void){
 	int melee1,melee2,enemyState,state,option,damage,distance;
-	qboolean knockback,inRange,charging;
+	qboolean knockback,inRange,charging,movingForward;
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	knockback = qfalse;
 	inRange = qfalse;
 	state = pm->ps->powerups[PW_MELEE_STATE];
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
 	pm->ps->timers[updateMelee] += pml.msec;
+	pm->ps->bitFlags &= ~isAutoClosing;
 	if(pm->ps->lockedTarget > 0){
+		if(pm->ps->lockedPlayer->bitFlags & isDead || pm->ps->lockedPlayer->bitFlags & isUnconcious){
+			PM_StopLockon();
+			return;
+		}
 		if(pm->ps->timers[updateMelee] > 300){
 			pm->ps->timers[updateMelee] = 0;
 			PM_AddEvent(EV_MELEE_CHECK);
@@ -1618,8 +1628,10 @@ void PM_Melee(void){
 			if(melee2 < 500){melee2 = 500;}
 		}
 		// Auto Close-in
+		movingForward = pm->cmd.forwardmove == 127 ? qtrue : qfalse;
 		if(pm->cmd.forwardmove != -127){
 			if((state != 4 && distance > 32 && distance < 512) || (pm->ps->bitFlags & usingZanzoken)){
+				pm->ps->bitFlags |= isAutoClosing;
 				if(!pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] && (pm->cmd.buttons & BUTTON_ALT_ATTACK || pm->cmd.buttons & BUTTON_ATTACK)){
 					pm->cmd.forwardmove = 127;
 				}
@@ -1679,7 +1691,7 @@ void PM_Melee(void){
 				direction = pm->ps->knockBackDirection;
 				state = 5;
 				if(enemyState == 4){
-					if(pm->cmd.forwardmove > 0 && direction == 1){}
+					if(movingForward && direction == 1){}
 					else if(pm->cmd.forwardmove < 0 && direction == 2){}
 					else if(pm->cmd.rightmove > 0 && direction == 3){}
 					else if(pm->cmd.rightmove < 0 && direction == 4){}
@@ -1695,16 +1707,19 @@ void PM_Melee(void){
 				state = 1;
 			}
 		}
-		// Set Reaction Events
+		// Reaction Events
 		if(!inRange && (state > 1 && state != 3 && state != 4)){
 			state = 1;
 		}
+		// Speed Melee Hit
 		if(enemyState == 2 && (state == 6 || state <= 1)){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_HIT);
 		}
+		// Block Power Melee
 		else if(enemyState == 4 && state == 5){
 			PM_ContinueLegsAnim(LEGS_BLOCK);
 		}
+		// Block / Dodge Speed Melee
 		else if(enemyState == 2 && state == 5){
 			if(pm->ps->bitFlags & usingBoost){
 				PM_ContinueLegsAnim(LEGS_SPEED_MELEE_BLOCK);
@@ -1715,26 +1730,32 @@ void PM_Melee(void){
 				PM_AddEvent(EV_MELEE_MISS);
 			}
 		}
+		// Speed Melee Using
 		else if(state == 2){
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_ATTACK);
-			if(enemyState == 5){
-				if(pm->ps->lockedPlayer->bitFlags & usingBoost){damage *= 0.1;}
-				else{
-					damage = 0;
-				}
+			if(pm->ps->bitFlags & usingBoost){
+				damage *= 2.2;
 			}
 			else{
 				PM_AddEvent(EV_MELEE_SPEED);
 			}
 			while(melee1 >= 100){
 				melee1 -= 100;
-				if(enemyState == 5){pm->ps->powerLevel[useCurrent] += pm->ps->powerLevel[current] * 0.01;}
-				pm->ps->lockedPlayer->powerLevel[damageFromMelee] += damage;
+				if(enemyState == 5){
+					if(!(pm->ps->lockedPlayer->bitFlags & usingBoost)){
+						pm->ps->lockedPlayer->powerLevel[useCurrent] += damage;
+					}
+					else{
+						pm->ps->lockedPlayer->powerLevel[damageFromMelee] += damage * 0.2;
+					}
+					pm->ps->powerLevel[useFatigue] += damage * 1.5;
+				}
+				else{pm->ps->lockedPlayer->powerLevel[damageFromMelee] += damage;}
 			}
 		}
 		else if(state == 3){
 			int desired = 0;
-			if(pm->cmd.forwardmove > 0 && inRange){desired = 1;}
+			if(movingForward && inRange){desired = 1;}
 			else if(pm->cmd.forwardmove < 0){desired = 2;}
 			else if(pm->cmd.rightmove > 0){desired = 3;} 
 			else if(pm->cmd.rightmove < 0){desired = 4;}
@@ -2094,7 +2115,6 @@ PM_DropTimers
 ================
 */
 void PM_DropTimers(void){
-	// drop misc timing counter
 	if(pm->ps->pm_time){
 		if(pml.msec >= pm->ps->pm_time){
 			pm->ps->pm_flags &= ~PMF_ALL_TIMES;
@@ -2103,22 +2123,18 @@ void PM_DropTimers(void){
 			pm->ps->pm_time -= pml.msec;
 		}
 	}
-
-	// drop animation counter
 	if(pm->ps->legsTimer > 0){
 		pm->ps->legsTimer -= pml.msec;
 		if(pm->ps->legsTimer < 0){
 			pm->ps->legsTimer = 0;
 		}
 	}
-
 	if(pm->ps->torsoTimer > 0){
 		pm->ps->torsoTimer -= pml.msec;
 		if(pm->ps->torsoTimer < 0){
 			pm->ps->torsoTimer = 0;
 		}
 	}
-
 	if(pm->ps->lockTimer > 0){
 		pm->ps->lockTimer -= pml.msec;
 		if(pm->ps->lockTimer < 0){
