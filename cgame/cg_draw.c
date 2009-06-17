@@ -641,7 +641,7 @@ static void CG_DrawStatusBar( void ) {
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	if(currentPercent > 1.0){currentPercent = 1.0;}
 	CG_DrawHorGauge(60,449,200,16,fatigueColor,emptyColor,1,1,qfalse);
-	CG_DrawHorGauge(60,449,(float)200*currentPercent,16,excessColor,excessColor,1,1,qfalse);
+	CG_DrawHorGauge(60,449,200,16,clearColor,excessColor,ps->powerLevel[fatigue],ps->powerLevel[maximum],qfalse);
 	CG_DrawHorGauge(60,449,(float)200*maxPercent,16,powerColor,dullColor,ps->powerLevel[current],ps->powerLevel[fatigue],qfalse);
 	CG_DrawHorGauge(60,449,200,16,clearColor,limitColor,ps->powerLevel[health],ps->powerLevel[maximum],qfalse);
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
