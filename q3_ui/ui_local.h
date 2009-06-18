@@ -474,6 +474,7 @@ typedef struct {
 	// model info
 	qboolean		fixedlegs;		// true if legs yaw is always the same as torso yaw
 	qboolean		fixedtorso;		// true if torso never changes yaw
+	qboolean		overrideHead;
 
 	qhandle_t		legsModel;
 	qhandle_t		legsSkin;

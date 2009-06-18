@@ -1608,6 +1608,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 //	float		speed;
 	int			dir, clientNum;
 	clientInfo_t	*ci;
+	
 	clientNum = cent->currentState.clientNum;
 	if ( clientNum < 0 || clientNum > MAX_CLIENTS ) {
 		CG_Error( "Bad clientNum on player entity" );
@@ -1663,7 +1664,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
 	torsoAngles[PITCH] = cent->pe.torso.pitchAngle;
-	if ( ci->fixedtorso ) {
+	if ( ci->fixedtorso || cent->currentState.weaponstate == WEAPON_CHARGING || cent->currentState.weaponstate == WEAPON_ALTCHARGING) {
 		torsoAngles[PITCH] = 0.0f;
 	}
 	if ( ci->fixedlegs ) {
@@ -1673,7 +1674,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	// ADDING FOR ZEQ2
 	// We're flying, so we change the entire body's directions altogether.
-	if((&cg.predictedPlayerState)->bitFlags & usingFlight){
+	if((&cg.predictedPlayerState)->bitFlags & usingFlight || cent->currentState.playerBitFlags & usingFlight){
 		VectorCopy( cent->lerpAngles, headAngles );
 		VectorCopy( cent->lerpAngles, torsoAngles );
 		VectorCopy( cent->lerpAngles, legsAngles );

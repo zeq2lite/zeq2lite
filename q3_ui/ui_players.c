@@ -451,7 +451,11 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 		// NOTE: Torso animations take precedence over leg animations when deciding which
 		//       head animation to play.
 		torsoAnimNum = pi->torsoAnim & ~ANIM_TOGGLEBIT;
-		if ( TORSO_WALK == torsoAnimNum ) {
+		if ( TORSO_FLY_UP == torsoAnimNum && pi->overrideHead ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_KI_CHARGE );
+		} else if ( TORSO_FLY_DOWN == torsoAnimNum && pi->overrideHead ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_KI_CHARGE );
+		} else if ( TORSO_WALK == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_WALK );
 		} else if ( TORSO_RUN == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_RUN );
@@ -1032,7 +1036,7 @@ static qboolean UI_RegisterClientSkin( playerInfo_t *pi, const char *modelName, 
 UI_ParseAnimationFile
 ======================
 */
-static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animations ) {
+static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animations, playerInfo_t *pi ) {
 	char		*text_p, *prev;
 	int			len;
 	int			i;
@@ -1061,8 +1065,9 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 	text_p = text;
 	skip = 0;	// quite the compiler warning
 
-//	pi->fixedlegs = qfalse;
-//	pi->fixedtorso = qfalse;
+	pi->fixedlegs = qfalse;
+	pi->fixedtorso = qfalse;
+	pi->overrideHead = qfalse;
 
 	// read optional parameters
 	while ( 1 ) {
@@ -1092,10 +1097,13 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 			}
 			continue;
 		} else if ( !Q_stricmp( token, "fixedlegs" ) ) {
-//			pi->fixedlegs = qtrue;
+			pi->fixedlegs = qtrue;
 			continue;
 		} else if ( !Q_stricmp( token, "fixedtorso" ) ) {
-//			pi->fixedtorso = qtrue;
+			pi->fixedtorso = qtrue;
+			continue;
+		} else if ( !Q_stricmp( token, "overrideHead" ) ) {
+			pi->overrideHead = qtrue;
 			continue;
 		}
 
@@ -1236,7 +1244,7 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName
 
 	// load the animations
 	Com_sprintf( filename, sizeof( filename ), "players//%s/animation.cfg", modelName );
-	if ( !UI_ParseAnimationFile( filename, pi->animations ) ) {
+	if ( !UI_ParseAnimationFile( filename, pi->animations, pi ) ) {
 		Com_Printf( "Failed to load animation file %s\n", filename );
 		return qfalse;
 	}
