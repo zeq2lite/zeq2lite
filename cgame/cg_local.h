@@ -343,6 +343,7 @@ typedef struct {
 	qboolean		fixedlegs;		// true if legs yaw is always the same as torso yaw
 	qboolean		fixedtorso;		// true if torso never changes yaw
 	vec3_t			headOffset;		// move head in icon views
+	qboolean		overrideHead;
 	footstep_t		footsteps;
 	gender_t		gender;			// from model
 	qhandle_t		legsModel[8];

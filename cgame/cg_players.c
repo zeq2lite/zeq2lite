@@ -119,6 +119,7 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	ci->gender = GENDER_MALE;
 	ci->fixedlegs = qfalse;
 	ci->fixedtorso = qfalse;
+	ci->overrideHead = qfalse;
 
 	// read optional parameters
 	while ( 1 ) {
@@ -174,8 +175,10 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 		} else if ( !Q_stricmp( token, "fixedtorso" ) ) {
 			ci->fixedtorso = qtrue;
 			continue;
+		} else if ( !Q_stricmp( token, "overrideHead" ) ) {
+			ci->overrideHead = qtrue;
+			continue;
 		}
-
 		// if it is a number, start parsing animations
 		if ( token[0] >= '0' && token[0] <= '9' ) {
 			text_p = prev;	// unget the token
@@ -1366,9 +1369,14 @@ static void CG_PlayerAnimation( centity_t *cent,
 		// NOTE: Torso animations take precedence over leg animations when deciding which
 		//       head animation to play.
 		torsoAnimNum = cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT;
-		if ( cent->currentState.eFlags & EF_AURA ) {
+
+		if ( cent->currentState.eFlags & EF_AURA && ci->overrideHead) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
-		} else if ( ci->auraConfig[tier]->auraAlways ) {
+		} else if ( ci->auraConfig[tier]->auraAlways && ci->overrideHead) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
+		} else if ( TORSO_FLY_UP == torsoAnimNum && ci->overrideHead ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
+		} else if ( TORSO_FLY_DOWN == torsoAnimNum && ci->overrideHead ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
 		} else if ( TORSO_WALK == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_WALK, speedScale );
@@ -1411,9 +1419,9 @@ static void CG_PlayerAnimation( centity_t *cent,
 		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_BACKWARD, speedScale );
 		} else if ( TORSO_FLY_UP == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_UP, speedScale );
 		} else if ( TORSO_FLY_DOWN == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
+			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_DOWN, speedScale );
 		} else if ( TORSO_STUNNED == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_STUNNED, speedScale );
 		} else if ( TORSO_PUSH == torsoAnimNum ) {
