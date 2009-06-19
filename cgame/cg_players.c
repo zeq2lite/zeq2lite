@@ -2281,8 +2281,6 @@ static void CG_PlayerSplash( centity_t *cent ) {
 	trap_R_AddPolyToScene( cgs.media.wakeMarkShader, 4, verts );
 }
 
-
-
 /*
 ===============
 CG_AddRefEntityWithPowerups
@@ -2291,13 +2289,12 @@ Adds a piece with modifications or duplications for powerups
 Also called by CG_Missile for quad rockets, but nobody can tell...
 ===============
 */
-void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team ) {
-
+void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team, qboolean auraAlways ) {
 	trap_R_AddRefEntityToScene( ent );
-
-	ent->customShader = cgs.media.globalCelLighting;
-
-	trap_R_AddRefEntityToScene( ent );
+	if(!auraAlways){
+		ent->customShader = cgs.media.globalCelLighting;
+		trap_R_AddRefEntityToScene( ent );
+	}
 }
 
 /*
@@ -2413,7 +2410,7 @@ void CG_Player( centity_t *cent ) {
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
-	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team );
+	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	if (!legs.hModel){return;}
 	torso.hModel = ci->torsoModel[tier];
 	torso.customSkin = ci->torsoSkin[tier];
@@ -2423,7 +2420,7 @@ void CG_Player( centity_t *cent ) {
 	CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel, "tag_torso");
 	torso.shadowPlane = shadowPlane;
 	torso.renderfx = renderfx;
-	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team );
+	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	head.hModel = ci->headModel[tier];
 	head.customSkin = ci->headSkin[tier];
 	if(!head.hModel){return;}
@@ -2431,7 +2428,7 @@ void CG_Player( centity_t *cent ) {
 	CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
 	head.shadowPlane = shadowPlane;
 	head.renderfx = renderfx;
-	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team );
+	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
 	memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
 	memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
