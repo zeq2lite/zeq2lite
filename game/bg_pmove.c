@@ -651,7 +651,7 @@ float PM_CmdScale(usercmd_t *cmd){
 	total = sqrt(cmd->forwardmove * cmd->forwardmove + cmd->rightmove * cmd->rightmove + cmd->upmove * cmd->upmove );
 
 	totalSpeed = pm->ps->stats[speed];
-	if(pm->ps->bitFlags & isAutoClosing){totalSpeed *= 3;}
+	if(pm->ps->bitFlags & isAutoClosing && pm->ps->lockedPlayer->powerups[PW_KNOCKBACK]){totalSpeed *= 3;}
 	scale = (float)totalSpeed * max / (127.0 * total );
 
 	return scale;
