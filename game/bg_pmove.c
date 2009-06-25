@@ -1623,13 +1623,13 @@ void PM_Melee(void){
 		melee2 = pm->ps->powerups[PW_MELEE2];
 		damage = 0;
 		// Knockback Halt
-		if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] > 5 && distance <= 96 && melee2 >= 0 && !(pm->ps->bitFlags & usingZanzoken)){
-			pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 1;
+		if(pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] > 500 && distance <= 128 && melee2 >= 0 && !(pm->ps->bitFlags & usingZanzoken)){
+			pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] = 250;
 			if(melee2 < 500){melee2 = 500;}
 		}
 		// Auto Close-in
 		movingForward = pm->cmd.forwardmove == 127 ? qtrue : qfalse;
-		if(pm->cmd.forwardmove != -127){
+		if(pm->cmd.forwardmove > 0){
 			if((state != 4 && distance > 32 && distance < 512) || (pm->ps->bitFlags & usingZanzoken)){
 				pm->ps->bitFlags |= isAutoClosing;
 				if(!pm->ps->lockedPlayer->powerups[PW_KNOCKBACK] && (pm->cmd.buttons & BUTTON_ALT_ATTACK || pm->cmd.buttons & BUTTON_ATTACK)){
@@ -1679,6 +1679,7 @@ void PM_Melee(void){
 			// Using Speed Melee
 			else if(pm->cmd.buttons & BUTTON_ATTACK && inRange){
 				damage = (pm->ps->powerLevel[fatigue] * 0.013) * pm->ps->stats[meleeAttack];
+				pm->cmd.forwardmove = 126;
 				melee1 += pml.msec;
 				state = 2;
 			}
@@ -1713,6 +1714,7 @@ void PM_Melee(void){
 		}
 		// Speed Melee Hit
 		if(enemyState == 2 && (state == 6 || state <= 1)){
+			pm->ps->powerups[PW_FREEZE] = 300;
 			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_HIT);
 		}
 		// Block Power Melee
@@ -1726,6 +1728,7 @@ void PM_Melee(void){
 				PM_AddEvent(EV_MELEE_SPEED);
 			}
 			else{
+				pm->ps->powerups[PW_FREEZE] = 300;
 				PM_ContinueLegsAnim(LEGS_SPEED_MELEE_DODGE);
 				PM_AddEvent(EV_MELEE_MISS);
 			}
@@ -1794,12 +1797,19 @@ void PM_Melee(void){
 		// Set Melee Position Mode
 		if((state > 1 || enemyState > 1)){
 			if(inRange){
+				pm->cmd.forwardmove *= 0.5;
+				pm->cmd.rightmove *= 0.5;
+				pm->cmd.upmove *= 0.5;
 				if(enemyState == 0){
 					pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
-					pm->ps->lockedPlayer->clientLockedTarget = 1;
+					pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
 				}
 			}
 			pm->ps->bitFlags |= usingMelee;
+		} else if (!pm->ps->lockedPlayer->powerups[PW_KNOCKBACK]){
+			pm->cmd.forwardmove *= 0.5;
+			pm->cmd.rightmove *= 0.5;
+			pm->cmd.upmove *= 0.5;
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
 		pm->ps->powerups[PW_MELEE1] = melee1;
@@ -2250,9 +2260,36 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 			if(temp > 16000){
 				ps->delta_angles[i] = 16000 - cmd->angles[i];
 				temp = 16000;
+				pm->cmd.rightmove *= 0.1;
+				pm->cmd.upmove *= 0.1;
 			} else if(temp < -16000){
 				ps->delta_angles[i] = -16000 - cmd->angles[i];
 				temp = -16000;
+				pm->cmd.rightmove *= 0.1;
+				pm->cmd.upmove *= 0.1;
+			}
+			// Slow down side movement speed the more pitch we have + or - during lockon.
+			if(pm->ps->lockedTarget > 0){
+				if(temp > 2000 || temp < -2000){
+					pm->cmd.rightmove *= 0.5;
+					pm->cmd.upmove *= 0.5;
+				} else if(temp > 4000 || temp < -4000){
+					pm->cmd.rightmove *= 0.25;
+					pm->cmd.upmove *= 0.25;
+				} else if(temp > 8000 || temp < -8000){
+					pm->cmd.rightmove *= 0.1;
+					pm->cmd.upmove *= 0.1;
+				} else if(temp > 9000){
+					ps->delta_angles[i] = 9000 - cmd->angles[i];
+					temp = 9000;
+					pm->cmd.rightmove *= 0;
+					pm->cmd.upmove *= 0;
+				} else if(temp < -9000){
+					ps->delta_angles[i] = -9000 - cmd->angles[i];
+					temp = -9000;
+					pm->cmd.rightmove *= 0;
+					pm->cmd.upmove *= 0;
+				}
 			}
 		}
 		// ADDING FOR ZEQ2

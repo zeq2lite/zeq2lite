@@ -1948,18 +1948,6 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath="cgame.def"
-			>
-			<FileConfiguration
-				Name="Debug TA|Win32"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-				/>
-			</FileConfiguration>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -4,6 +4,8 @@
 // for a 3D rendering
 #include "cg_local.h"
 
+#define MASK_CAMERACLIP (MASK_SOLID|CONTENTS_PLAYERCLIP)
+#define CAMERA_SIZE	4
 
 /*
 =============================================================================
@@ -244,6 +246,432 @@ qboolean CG_WorldCoordToScreenCoordVec( vec3_t world, vec2_t screen ) {
 
 //==============================================================================
 
+//==============================================================================
+//==============================================================================
+
+#define CAMERA_DAMP_INTERVAL	50
+
+static vec3_t	cameramins = { -CAMERA_SIZE, -CAMERA_SIZE, -CAMERA_SIZE };
+static vec3_t	cameramaxs = { CAMERA_SIZE, CAMERA_SIZE, CAMERA_SIZE };
+vec3_t	camerafwd, cameraup;
+
+vec3_t	cameraFocusAngles,			cameraFocusLoc;
+vec3_t	cameraIdealTarget,			cameraIdealLoc;
+vec3_t	cameraCurTarget={0,0,0},	cameraCurLoc={0,0,0};
+vec3_t	cameraOldLoc={0,0,0},		cameraNewLoc={0,0,0};
+int		cameraLastFrame=0;
+
+float	cameraLastYaw=0;
+float	cameraStiffFactor=0.0f;
+
+float powf ( float x, int y )
+{
+	float r = x;
+	for ( y--; y>0; y-- )
+		r = r * r;
+	return r;
+}
+
+/*
+===============
+Notes on the camera viewpoint in and out...
+
+cg.refdef.vieworg
+--at the start of the function holds the player actor's origin (center of player model).
+--it is set to the final view location of the camera at the end of the camera code.
+cg.refdef.viewangles
+--at the start holds the client's view angles
+--it is set to the final view angle of the camera at the end of the camera code.
+
+===============
+*/
+
+/*
+===============
+CG_CalcTargetThirdPersonViewLocation
+
+===============
+*/
+static void CG_CalcIdealThirdPersonViewTarget(void)
+{
+	float vertOffset = cg_thirdPersonHeight.value;
+
+	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){vertOffset = 0;}
+
+	VectorCopy(cg.refdef.vieworg, cameraFocusLoc);
+
+	// Add in the new viewheight
+	cameraFocusLoc[2] += cg.snap->ps.viewheight;
+	
+	// Add in a vertical offset from the viewpoint, which puts the actual target above the head, regardless of angle.
+	VectorCopy( cameraFocusLoc, cameraIdealTarget );
+
+	cameraIdealTarget[2] += vertOffset;
+}
+
+/*
+===============
+CG_CalcTargetThirdPersonViewLocation
+
+===============
+*/
+static void CG_CalcIdealThirdPersonViewLocation(void)
+{
+	float thirdPersonRange = cg_thirdPersonRange.value;
+
+	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){thirdPersonRange = 96;}
+
+	VectorMA(cameraIdealTarget, -(thirdPersonRange), camerafwd, cameraIdealLoc);
+}
+
+static void CG_ResetThirdPersonViewDamp(void)
+{
+	trace_t trace;
+
+	// Cap the pitch within reasonable limits
+	if (cameraFocusAngles[PITCH] > 89.0)
+	{
+		cameraFocusAngles[PITCH] = 89.0;
+	}
+	else if (cameraFocusAngles[PITCH] < -89.0)
+	{
+		cameraFocusAngles[PITCH] = -89.0;
+	}
+
+	AngleVectors(cameraFocusAngles, camerafwd, NULL, cameraup);
+
+	// Set the cameraIdealTarget
+	CG_CalcIdealThirdPersonViewTarget();
+
+	// Set the cameraIdealLoc
+	CG_CalcIdealThirdPersonViewLocation();
+
+	// Now, we just set everything to the new positions.
+	VectorCopy(cameraIdealLoc, cameraCurLoc);
+	VectorCopy(cameraIdealTarget, cameraCurTarget);
+
+	// First thing we do is trace from the first person viewpoint out to the new target location.
+	CG_Trace(&trace, cameraFocusLoc, cameramins, cameramaxs, cameraCurTarget, cg.snap->ps.clientNum, MASK_CAMERACLIP);
+	if (trace.fraction <= 1.0)
+	{
+		VectorCopy(trace.endpos, cameraCurTarget);
+	}
+
+	// Now we trace from the new target location to the new view location, to make sure there is nothing in the way.
+	CG_Trace(&trace, cameraCurTarget, cameramins, cameramaxs, cameraCurLoc, cg.snap->ps.clientNum, MASK_CAMERACLIP);
+	if (trace.fraction <= 1.0)
+	{
+		VectorCopy(trace.endpos, cameraCurLoc);
+	}
+
+	cameraLastFrame = cg.time;
+	cameraLastYaw = cameraFocusAngles[YAW];
+	cameraStiffFactor = 0.0f;
+}
+
+// This is called every frame.
+static void CG_UpdateThirdPersonTargetDamp(void)
+{
+	trace_t trace;
+	vec3_t	targetdiff;
+	float	dampfactor, dtime, ratio;
+
+	// Set the cameraIdealTarget
+	// Automatically get the ideal target, to avoid jittering.
+	CG_CalcIdealThirdPersonViewTarget();
+
+	if (cg_thirdPersonTargetDamp.value>=1.0||cg_thirdPersonMeleeTargetDamp.value>=1.0||cg.thisFrameTeleport||cg.snap->ps.bitFlags & usingZanzoken)
+	{	// No damping.
+		VectorCopy(cameraIdealTarget, cameraCurTarget);
+	}
+	else if (cg_thirdPersonTargetDamp.value>=0.0||cg_thirdPersonMeleeTargetDamp.value>=0.0)
+	{	
+		// Calculate the difference from the current position to the new one.
+		VectorSubtract(cameraIdealTarget, cameraCurTarget, targetdiff);
+
+		// Now we calculate how much of the difference we cover in the time allotted.
+		// The equation is (Damp)^(time)
+		if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0)
+		{
+			dampfactor = 1.0-cg_thirdPersonMeleeTargetDamp.value;	// We must exponent the amount LEFT rather than the amount bled off
+		}
+		else
+		{
+			dampfactor = 1.0-cg_thirdPersonTargetDamp.value;
+		}
+		dtime = (float)(cg.time-cameraLastFrame) * (1.0/(float)CAMERA_DAMP_INTERVAL);	// Our dampfactor is geared towards a time interval equal to "1".
+
+		// Note that since there are a finite number of "practical" delta millisecond values possible, 
+		// the ratio should be initialized into a chart ultimately.
+		ratio = powf(dampfactor, dtime);
+		
+		// This value is how much distance is "left" from the ideal.
+		VectorMA(cameraIdealTarget, -ratio, targetdiff, cameraCurTarget);
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	}
+
+	// Now we trace to see if the new location is cool or not.
+
+	// First thing we do is trace from the first person viewpoint out to the new target location.
+	CG_Trace(&trace, cameraFocusLoc, cameramins, cameramaxs, cameraCurTarget, cg.snap->ps.clientNum, MASK_CAMERACLIP);
+	if (trace.fraction < 1.0)
+	{
+		VectorCopy(trace.endpos, cameraCurTarget);
+	}
+}
+
+// This can be called every interval, at the user's discretion.
+//extern void CG_CalcEntityLerpPositions( centity_t *cent ); //cg_ents.c
+static void CG_UpdateThirdPersonCameraDamp(void)
+{
+	trace_t trace;
+	vec3_t	locdiff;
+	float dampfactor, dtime, ratio;
+
+	// Set the cameraIdealLoc
+	CG_CalcIdealThirdPersonViewLocation();
+
+	// First thing we do is calculate the appropriate damping factor for the camera.
+	dampfactor=0.0;
+	if (cg_thirdPersonCameraDamp.value != 0.0 || cg_thirdPersonMeleeCameraDamp.value != 0.0)
+	{
+		float pitch;
+		float dFactor;
+
+		if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){
+			dFactor = cg_thirdPersonMeleeCameraDamp.value;
+		}else{
+			dFactor = cg_thirdPersonCameraDamp.value;
+		}
+
+		// Note that the camera pitch has already been capped off to 89.
+		pitch = Q_fabs(cameraFocusAngles[PITCH]);
+
+		// The higher the pitch, the larger the factor, so as you look up, it damps a lot less.
+		pitch /= 115.0;	
+		dampfactor = (1.0-dFactor)*(pitch*pitch);
+
+		dampfactor += dFactor;
+
+		// Now we also multiply in the stiff factor, so that faster yaw changes are stiffer.
+		if (cameraStiffFactor > 0.0f)
+		{	// The cameraStiffFactor is how much of the remaining damp below 1 should be shaved off, i.e. approach 1 as stiffening increases.
+			dampfactor += (1.0-dampfactor)*cameraStiffFactor;
+		}
+	}
+
+	if (dampfactor>=1.0||cg.thisFrameTeleport||cg.snap->ps.bitFlags & usingZanzoken)
+	{	// No damping.
+		VectorCopy(cameraIdealLoc, cameraCurLoc);
+	}
+	else if (dampfactor>=0.0)
+	{	
+		// Calculate the difference from the current position to the new one.
+		VectorSubtract(cameraIdealLoc, cameraCurLoc, locdiff);
+
+		// Now we calculate how much of the difference we cover in the time allotted.
+		// The equation is (Damp)^(time)
+		dampfactor = 1.0-dampfactor;	// We must exponent the amount LEFT rather than the amount bled off
+		dtime = (float)(cg.time-cameraLastFrame) * (1.0/(float)CAMERA_DAMP_INTERVAL);	// Our dampfactor is geared towards a time interval equal to "1".
+
+		// Note that since there are a finite number of "practical" delta millisecond values possible, 
+		// the ratio should be initialized into a chart ultimately.
+		ratio = powf(dampfactor, dtime);
+		
+		// This value is how much distance is "left" from the ideal.
+		VectorMA(cameraIdealLoc, -ratio, locdiff, cameraCurLoc);
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	}
+
+	// Now we trace from the new target location to the new view location, to make sure there is nothing in the way.
+	CG_Trace(&trace, cameraCurTarget, cameramins, cameramaxs, cameraCurLoc, cg.snap->ps.clientNum, MASK_CAMERACLIP);
+
+	if (trace.fraction < 1.0)
+	{
+		if (trace.entityNum < ENTITYNUM_WORLD &&
+			cg_entities[trace.entityNum].currentState.solid == SOLID_BMODEL &&
+			cg_entities[trace.entityNum].currentState.eType == ET_MOVER)
+		{ //get a different position for movers
+			centity_t *mover = &cg_entities[trace.entityNum];
+
+			//this is absolutely hackiful, since we calc view values before we add packet ents and lerp,
+			//if we hit a mover we want to update its lerp pos and force it when we do the trace against
+			//it.
+			if (mover->currentState.pos.trType != TR_STATIONARY &&
+				mover->currentState.pos.trType != TR_LINEAR)
+			{
+				int curTr = mover->currentState.pos.trType;
+				vec3_t curTrB;
+
+				VectorCopy(mover->currentState.pos.trBase, curTrB);
+
+				//calc lerporigin for this client frame
+				//CG_CalcEntityLerpPositions(mover);
+
+				//force the calc'd lerp to be the base and say we are stationary so we don't try to extrapolate
+				//out further.
+				mover->currentState.pos.trType = TR_STATIONARY;
+				VectorCopy(mover->lerpOrigin, mover->currentState.pos.trBase);
+				
+				//retrace
+				CG_Trace(&trace, cameraCurTarget, cameramins, cameramaxs, cameraCurLoc, cg.snap->ps.clientNum, MASK_CAMERACLIP);
+
+				//copy old data back in
+				mover->currentState.pos.trType = (trType_t) curTr;
+				VectorCopy(curTrB, mover->currentState.pos.trBase);
+			}
+			if (trace.fraction < 1.0f)
+			{ //still hit it, so take the proper trace endpos and use that.
+				VectorCopy(trace.endpos, cameraCurLoc);
+			}
+		}
+		else
+		{
+			VectorCopy( trace.endpos, cameraCurLoc );
+		}
+	}
+}
+
+/*
+===============
+CG_OffsetThirdPersonView2
+
+===============
+*/
+static void CG_OffsetThirdPersonView2( void ) 
+{
+	vec3_t diff;
+	vec3_t forward;
+	float deltayaw;
+	float		transformPercent;
+	float		orbit,pan,zoom;
+	int 		clientNum;
+	float		newAngle,newRange,newHeight;
+	entityState_t *ent;
+	clientInfo_t *ci;
+	tierConfig_cg *tier;
+
+	clientNum = cg.predictedPlayerState.clientNum;
+	ci = &cgs.clientinfo[clientNum];
+
+	cameraStiffFactor = 0.0;
+
+	// Set camera viewing direction.
+	VectorCopy( cg.refdefViewAngles, cameraFocusAngles );
+
+	// Add in the third Person Angle.
+	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){
+		cameraFocusAngles[YAW] += 45;
+	} else {
+		cameraFocusAngles[YAW] += cg_thirdPersonAngle.value;
+	}
+
+	if(cg_beamControl.value == 0){
+		if(((cg.snap->ps.weaponstate == WEAPON_GUIDING) || (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
+			float oldRoll;
+			VectorSubtract( cg.guide_target, cg.snap->ps.origin, forward );
+			VectorNormalize( forward );
+			oldRoll = cameraFocusAngles[ROLL];
+			vectoangles( forward, cameraFocusAngles );
+			cg.refdefViewAngles[ROLL] = oldRoll;
+			VectorCopy( cg.snap->ps.origin,cg.guide_target);
+			cg.guide_view = qfalse;
+		}
+	}
+	// TRANSFORMATIONS
+	if(cg.snap->ps.powerups[PW_TRANSFORM] > 1){
+		tier = &ci->tierConfig[ci->tierCurrent];
+		if(!ci->transformStart){
+			tier = &ci->tierConfig[ci->tierCurrent+1];
+			ci->transformStart = qtrue;
+			ci->transformLength = cg.snap->ps.powerups[PW_TRANSFORM];
+			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
+			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
+			ci->cameraBackup[2] = cg_thirdPersonRange.value;
+		}
+		transformPercent = 1.0 - ((float)cg.snap->ps.powerups[PW_TRANSFORM] / (float)ci->transformLength);
+		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
+		pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
+		zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
+		newAngle = (orbit*transformPercent) - abs(tier->transformCameraOrbit[0]);
+		newHeight = (pan*transformPercent) - abs(tier->transformCameraPan[0]);
+		newRange = (zoom*transformPercent) - abs(tier->transformCameraZoom[0]);
+		cg_thirdPersonAngle.value = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
+		cg_thirdPersonHeight.value = pan > 0 ? newHeight : tier->transformCameraDefault[1];
+		cg_thirdPersonRange.value = zoom > 0 ? newRange : tier->transformCameraDefault[2];
+	}
+	else if(ci->transformStart){
+		ci->transformStart = qfalse;
+		cg_thirdPersonAngle.value = ci->cameraBackup[0];
+		cg_thirdPersonHeight.value = ci->cameraBackup[1];
+		cg_thirdPersonRange.value = ci->cameraBackup[2];
+	}
+
+	// The next thing to do is to see if we need to calculate a new camera target location.
+
+	// If we went back in time for some reason, or if we just started, reset the sample.
+	if (cameraLastFrame == 0 || cameraLastFrame > cg.time)
+	{
+		CG_ResetThirdPersonViewDamp();
+	}
+	else
+	{
+		// Cap the pitch within reasonable limits
+
+		if (cameraFocusAngles[PITCH] > 80.0)
+		{
+			cameraFocusAngles[PITCH] = 80.0;
+		}
+		else if (cameraFocusAngles[PITCH] < -80.0)
+		{
+			cameraFocusAngles[PITCH] = -80.0;
+		}
+
+		AngleVectors(cameraFocusAngles, camerafwd, NULL, cameraup);
+
+		deltayaw = fabs(cameraFocusAngles[YAW] - cameraLastYaw);
+		if (deltayaw > 180.0f)
+		{ // Normalize this angle so that it is between 0 and 180.
+			deltayaw = fabs(deltayaw - 360.0f);
+		}
+		cameraStiffFactor = deltayaw / (float)(cg.time-cameraLastFrame);
+		if (cameraStiffFactor < 1.0)
+		{
+			cameraStiffFactor = 0.0;
+		}
+		else if (cameraStiffFactor > 2.5)
+		{
+			cameraStiffFactor = 0.75;
+		}
+		else
+		{	// 1 to 2 scales from 0.0 to 0.5
+			cameraStiffFactor = (cameraStiffFactor-1.0f)*0.5f;
+		}
+		cameraLastYaw = cameraFocusAngles[YAW];
+
+		// Move the target to the new location.
+		CG_UpdateThirdPersonTargetDamp();
+		CG_UpdateThirdPersonCameraDamp();
+	}
+
+	// We must now take the angle taken from the camera target and location.
+	VectorSubtract(cameraCurTarget, cameraCurLoc, diff);
+	{
+		float dist = VectorNormalize(diff);
+		//under normal circumstances, should never be 0.00000 and so on.
+		if ( !dist || (diff[0] == 0 || diff[1] == 0) )
+		{//must be hitting something, need some value to calc angles, so use cam forward
+			VectorCopy( camerafwd, diff );
+		}
+	}
+
+	vectoangles(diff, cg.refdefViewAngles);
+
+	// ...and of course we should copy the new view location to the proper spot too.
+	VectorCopy(cameraCurLoc, cg.refdef.vieworg);
+
+	cameraLastFrame=cg.time;
+}
 
 /*
 ===============
@@ -979,7 +1407,11 @@ static int CG_CalcViewValues( void ) {
 
 	if ( cg.renderingThirdPerson ) {
 		// back away from character
-		CG_OffsetThirdPersonView();
+		if(ps->powerups[PW_MELEE_STATE] > 0 || cg_thirdPersonCamera.value >= 3){
+			CG_OffsetThirdPersonView2();
+		}else{
+			CG_OffsetThirdPersonView();
+		}
 	} else {
 		// offset for local bobbing and kicks
 		CG_OffsetFirstPersonView();

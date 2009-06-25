@@ -113,6 +113,10 @@ vmCvar_t	cg_thirdPerson;
 vmCvar_t	cg_thirdPersonRange;
 vmCvar_t	cg_thirdPersonAngle;
 vmCvar_t	cg_thirdPersonHeight;
+vmCvar_t	cg_thirdPersonCameraDamp;
+vmCvar_t	cg_thirdPersonTargetDamp;
+vmCvar_t	cg_thirdPersonMeleeCameraDamp;
+vmCvar_t	cg_thirdPersonMeleeTargetDamp;
 vmCvar_t	cg_stereoSeparation;
 vmCvar_t	cg_lagometer;
 vmCvar_t	cg_synchronousClients;
@@ -250,6 +254,10 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "150", CVAR_ARCHIVE },
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
 	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "40", CVAR_ARCHIVE },
+	{ &cg_thirdPersonCameraDamp, "cg_thirdPersonCameraDamp", "0.2", CVAR_ARCHIVE },
+	{ &cg_thirdPersonTargetDamp, "cg_thirdPersonTargetDamp", "0.5", CVAR_ARCHIVE },
+	{ &cg_thirdPersonMeleeCameraDamp, "cg_thirdPersonMeleeCameraDamp", "0.1", CVAR_ARCHIVE },
+	{ &cg_thirdPersonMeleeTargetDamp, "cg_thirdPersonMeleeTargetDamp", "0.9", CVAR_ARCHIVE },
 	{ &cg_thirdPerson, "cg_thirdPerson", "0", CVAR_ARCHIVE },
 	{ &cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE  },
 	{ &cg_teamChatHeight, "cg_teamChatHeight", "0", CVAR_ARCHIVE  },
