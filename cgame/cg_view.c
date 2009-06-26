@@ -319,7 +319,7 @@ static void CG_CalcIdealThirdPersonViewLocation(void)
 {
 	float thirdPersonRange = cg_thirdPersonRange.value;
 
-	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){thirdPersonRange = 96;}
+	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){thirdPersonRange = 70;}
 
 	VectorMA(cameraIdealTarget, -(thirdPersonRange), camerafwd, cameraIdealLoc);
 }

@@ -968,7 +968,7 @@ void ClientSpawn(gentity_t *ent) {
 	}
 	eventSequence = client->ps.eventSequence;
 
-	memset (client, 0, sizeof(*client)); // bk FIXME: Com_Memset?
+	//memset (client, 0, sizeof(*client)); // bk FIXME: Com_Memset?
 
 	client->pers = saved;
 	client->sess = savedSess;
@@ -1028,6 +1028,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.bitFlags = 0;
 	client->ps.eFlags &= ~EF_AURA;
 	// END ADDING
+	G_Printf("Max : %i\n",client->ps.powerLevel[maximum]);
 	client->ps.powerLevel[maximum] = client->ps.powerLevel[maximum] > g_powerLevel.value ? client->ps.powerLevel[maximum] * 0.75 : g_powerLevel.value;
 	client->ps.powerLevel[current] = client->ps.powerLevel[health] = client->ps.powerLevel[fatigue] = client->ps.powerLevel[maximum];
 	G_SetOrigin( ent, spawn_origin );
