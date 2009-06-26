@@ -614,7 +614,8 @@ static void CG_DrawStatusBar( void ) {
 	vec4_t		dullColor = {0.188f,0.278f,0.345f,1.0f};
 	vec4_t		limitColor = {1.0f,0.1f,0.0f,1.0f};
 	vec4_t		beyondFatigueColor = {0.9f,0.5f,0.0f,1.0f};
-	vec4_t		beyondHealthColor = {1.0f,0.3f,0.3f,1.0f};
+	vec4_t		beyondHealthColor = {0.8f,0.2f,0.2f,1.0f};
+	vec4_t		healthFatigueColor = {1.0f,0.4f,0.2f,1.0f};
 	vec4_t		fatigueHealthColor = {0.5f,0.16f,0.16f,1.0f};
 	vec4_t		fatigueColor = {0.4f,0.4f,0.5f,1.0f};
 	vec4_t		clearColor = {0.0f,0.0f,0.0f,0.0f};
@@ -644,6 +645,9 @@ static void CG_DrawStatusBar( void ) {
 	CG_DrawDiffGauge(60,449,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[current],ps->powerLevel[fatigue],ps->powerLevel[maximum],1);
 	CG_DrawDiffGauge(60,449,200,16,fatigueHealthColor,fatigueHealthColor,ps->powerLevel[fatigue],ps->powerLevel[health],ps->powerLevel[maximum],1);
 	CG_DrawDiffGauge(60,449,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[current],ps->powerLevel[health],ps->powerLevel[maximum],1);
+	if((ps->powerLevel[current] > ps->powerLevel[fatigue]) && (ps->powerLevel[fatigue] > ps->powerLevel[health])){
+		CG_DrawDiffGauge(60,449,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[current],ps->powerLevel[fatigue],ps->powerLevel[maximum],1);
+	}
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
 	if(tier){
 		activeTier = &ci->tierConfig[ci->tierCurrent];
