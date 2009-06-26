@@ -362,9 +362,6 @@ void PM_CheckPowerLevel(void){
 	if(pm->ps->powerLevel[fatigue] <= 0 && pm->ps->powerLevel[current] > 0){
 		pm->ps->powerLevel[current] = 1;
 	}
-	//Com_Printf("Current : %i / %i\n",pm->ps->powerLevel[current],pm->ps->powerLevel[maximum]);
-	//Com_Printf("Fatigue : %i\n",pm->ps->powerLevel[fatigue]);
-	//Com_Printf("Health : %i\n",pm->ps->powerLevel[health]);
 	while(timers[powerAuto] >= 100){
 		timers[powerAuto] -= 100;
 		recovery = (float)pm->ps->powerLevel[maximum] * 0.002;
@@ -396,16 +393,16 @@ void PM_CheckPowerLevel(void){
 			PM_StopFlight();
 			PM_ForceLegsAnim(LEGS_FLY_DOWN);
 		}
-		if(pm->cmd.rightmove < 0){
-			pm->ps->eFlags &= ~EF_AURA;
-			lower = powerLevel[fatigue] * 0.01;
-			powerLevel[current] = (powerLevel[current] - lower > 1) ? powerLevel[current] - lower : 1;
-		}
-		else if(pm->cmd.forwardmove > 0){
+		if(pm->cmd.forwardmove > 0){
 			pm->ps->bitFlags |= keyTierUp;
 		}
 		else if(pm->cmd.forwardmove < 0){
 			pm->ps->bitFlags |= keyTierDown;
+		}
+		else if(pm->cmd.rightmove < 0){
+			pm->ps->eFlags &= ~EF_AURA;
+			lower = powerLevel[fatigue] * 0.01;
+			powerLevel[current] = (powerLevel[current] - lower > 1) ? powerLevel[current] - lower : 1;
 		}
 		else if((pm->cmd.rightmove > 0)){
 			pm->ps->eFlags |= EF_AURA;
@@ -682,12 +679,12 @@ void PM_CheckJump(void){
 	pm->ps->velocity[1] *= fabs(pm->ps->velocity[1]) < jumpPower ? 4.0 : 1.0;
 	if((pm->cmd.forwardmove != 0) || (pm->cmd.rightmove != 0)){
 		pm->ps->velocity[2] = jumpPower * 6;
-		pm->ps->powerLevel[useCurrent] += pm->ps->powerLevel[maximum] * 0.01;
+		pm->ps->powerLevel[useCurrent] += pm->ps->powerLevel[maximum] * 0.02;
 		PM_AddEvent(EV_HIGHJUMP);
 	} else{
 		pm->ps->gravity = 6000;
 		pm->ps->velocity[2] = jumpPower * 8;
-		pm->ps->powerLevel[useCurrent] += pm->ps->powerLevel[maximum] * 0.08;
+		pm->ps->powerLevel[useCurrent] += pm->ps->powerLevel[maximum] * 0.12;
 		PM_AddEvent(EV_JUMP);
 	}
 	if(pm->cmd.forwardmove >= 0){
@@ -811,7 +808,7 @@ void PM_WalkMove(void){
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
 	cmd = pm->cmd;
-	scale = PM_CmdScale(&cmd);
+	scale = PM_CmdScale(&cmd) * 2.5;
 	// set the movementDir so clients can rotate the legs for strafing
 	pml.forward[2] = 0;
 	pml.right[2] = 0;
@@ -827,7 +824,6 @@ void PM_WalkMove(void){
 	wishspeed *= scale * 0.60f;
 	accelerate = pm_accelerate;
 	PM_Accelerate (wishdir, wishspeed,accelerate);
-//	if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK){pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;}
 	vel = VectorLength(pm->ps->velocity);
 	PM_ClipVelocity(pm->ps->velocity, pml.groundTrace.plane.normal,pm->ps->velocity, OVERCLIP );
 	VectorNormalize(pm->ps->velocity);
@@ -1211,6 +1207,7 @@ void PM_Footsteps(void){
 	qboolean footstep;
 	if((pm->ps->bitFlags & usingZanzoken)){return;}
 	if((pm->ps->bitFlags & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
+		if(!(pm->cmd.rightmove > 0)){return;}
 		if(pm->ps->powerLevel[current] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
 		else{pm->ps->powerLevel[current] > pm->ps->powerLevel[fatigue] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
 		return;
@@ -2088,6 +2085,9 @@ void PM_CheckLockon(void){
 	int	lockBox;
 	trace_t	trace;
 	vec3_t minSize,maxSize,forward,up,end;
+	if(pm->ps->lockedTarget && (pm->ps->bitFlags & usingFlight) && !(pm->ps->lockedPlayer->bitFlags & usingFlight)){
+		PM_StopLockon();
+	}
 	if(pm->cmd.buttons & BUTTON_GESTURE && pm->ps->powerups[PW_MELEE_STATE] == 0){
 		if(pm->ps->pm_flags & PMF_LOCK_HELD){return;}
 		pm->ps->pm_flags |= PMF_LOCK_HELD;
@@ -2384,11 +2384,13 @@ void PmoveSingle(pmove_t *pmove){
 	PM_WaterEvents();
 	PM_Freeze();
 	PM_GroundTrace();
-	if(!(pm->ps->bitFlags & usingAlter) && !pm->ps->powerups[PW_FREEZE]){
-		PM_FlyMove();
-		PM_DashMove();
-		PM_WalkMove();
-		PM_AirMove();
+	if(!pm->ps->powerups[PW_FREEZE]){
+		if(!(pm->ps->bitFlags & usingAlter)){
+			PM_FlyMove();
+			PM_DashMove();
+			PM_WalkMove();
+			PM_AirMove();
+		}
 	}
 	PM_Friction();
 	PM_GroundTrace();

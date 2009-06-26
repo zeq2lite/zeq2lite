@@ -491,7 +491,6 @@ localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 	localEntity_t	*ex;
 	int				offset;
 	vec3_t			tmpVec, newOrigin;
-
 	if ( msec <= 0 ) {
 		CG_Error( "CG_MakeExplosion: msec = %i", msec );
 	}
@@ -820,15 +819,6 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 				, ( weaponGraphics->explosionTime / 1000 ) * 2
 				, weaponGraphics->explosionSize / 2 );
 
-			if ( weaponGraphics->explosionDlightRadius >= 50 )
-			{
-				start = weaponGraphics->explosionDlightRadius * 100;
-				end = weaponGraphics->explosionDlightRadius * 1000;
-
-				// start, end, red, green, blue, opacity, mode, hint.
-				trap_R_AddFogToScene( start, end, 0, 0, 0, expShell->lifeRate, 2, 2 );
-			}
-
 			// bias the time so all shader effects start correctly
 			expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
 
@@ -877,6 +867,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		expShell->endTime = expShell->startTime + weaponGraphics->explosionTime;
 		expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
 
+		//trap_R_AddFogToScene(0,1000, 0,0,0,0,2,2);
 		// create a camera shake
 		CG_AddEarthquake( origin, 
 			weaponGraphics->explosionSize * 100 
@@ -884,16 +875,6 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 			, ( weaponGraphics->explosionTime / 1000 ) / 2
 			, ( weaponGraphics->explosionTime / 1000 ) * 2
 			, weaponGraphics->explosionSize * 100 );
-
-		if ( weaponGraphics->explosionDlightRadius >= 50 )
-		{
-			start = weaponGraphics->explosionDlightRadius * 100;
-			end = weaponGraphics->explosionDlightRadius * 1000;
-
-			// start, end, red, green, blue, opacity, mode, hint.
-			trap_R_AddFogToScene( start, end, 0, 0, 0, expShell->lifeRate, 2, 2 );
-		}
-
 		// bias the time so all shader effects start correctly
 		expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
 
