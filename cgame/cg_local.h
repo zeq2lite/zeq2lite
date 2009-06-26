@@ -1775,6 +1775,7 @@ void		trap_R_AddRefEntityToScene( const refEntity_t *re );
 // significant construction
 void		trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts );
 void		trap_R_AddPolysToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int numPolys );
+void		trap_R_AddFogToScene( float start, float end, float r, float g, float b, float opacity, float mode, float hint );
 void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 int			trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 void		trap_R_RenderScene( const refdef_t *fd );

@@ -162,7 +162,8 @@ typedef enum {
 	CG_TESTPRINTFLOAT,
 	CG_ACOS,
 	// <-- RiO: Supply file list trap call
-	CG_FS_GETFILELIST
+	CG_FS_GETFILELIST,
+	CG_R_ADDFOGTOSCENE
 	// -->
 } cgameImport_t;
 

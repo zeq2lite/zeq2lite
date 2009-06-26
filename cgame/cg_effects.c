@@ -457,18 +457,18 @@ void CG_ScorePlum( int client, vec3_t org, int score ) {
 	refEntity_t		*re;
 	vec3_t	angles;
 	static vec3_t lastPos;
-	if (client != cg.predictedPlayerState.clientNum || cg_scorePlum.integer == 0) {return;}
+	if (/*client != cg.predictedPlayerState.clientNum || */cg_scorePlum.integer == 0) {return;}
 	le = CG_AllocLocalEntity();
 	le->leFlags = 0;
 	le->leType = LE_SCOREPLUM;
 	le->startTime = cg.time;
-	le->endTime = cg.time + 4000;
+	le->endTime = cg.time + 5000;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
 	le->radius = score;
 	VectorCopy( org, le->pos.trBase );
-	if (org[2] >= lastPos[2] - 20 && org[2] <= lastPos[2] + 20) {
-		le->pos.trBase[2] -= 20;
+	if (org[2] >= lastPos[2] - 10 && org[2] <= lastPos[2] + 10) {
+		le->pos.trBase[2] -= 10;
 	}
 	VectorCopy(org, lastPos);
 	re = &le->refEntity;
@@ -777,7 +777,7 @@ CG_MakeUserExplosion
 ======================
 */
 void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics) {
-	float			angle;
+	float			angle, start, end;
 	localEntity_t	*expShell;
 	localEntity_t	*expShock;
 	int				offset;
@@ -819,6 +819,15 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 				, ( weaponGraphics->explosionTime / 1000 ) / 2
 				, ( weaponGraphics->explosionTime / 1000 ) * 2
 				, weaponGraphics->explosionSize / 2 );
+
+			if ( weaponGraphics->explosionDlightRadius >= 50 )
+			{
+				start = weaponGraphics->explosionDlightRadius * 100;
+				end = weaponGraphics->explosionDlightRadius * 1000;
+
+				// start, end, red, green, blue, opacity, mode, hint.
+				trap_R_AddFogToScene( start, end, 0, 0, 0, expShell->lifeRate, 2, 2 );
+			}
 
 			// bias the time so all shader effects start correctly
 			expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
@@ -875,6 +884,15 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 			, ( weaponGraphics->explosionTime / 1000 ) / 2
 			, ( weaponGraphics->explosionTime / 1000 ) * 2
 			, weaponGraphics->explosionSize * 100 );
+
+		if ( weaponGraphics->explosionDlightRadius >= 50 )
+		{
+			start = weaponGraphics->explosionDlightRadius * 100;
+			end = weaponGraphics->explosionDlightRadius * 1000;
+
+			// start, end, red, green, blue, opacity, mode, hint.
+			trap_R_AddFogToScene( start, end, 0, 0, 0, expShell->lifeRate, 2, 2 );
+		}
 
 		// bias the time so all shader effects start correctly
 		expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
