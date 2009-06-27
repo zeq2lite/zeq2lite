@@ -274,6 +274,7 @@ void PM_BurnPowerLevel(qboolean melee){
 	else{pm->ps->powerLevel[damageFromEnergy] = 0;}
 }
 void PM_CheckStatus(void){
+	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	if(pm->ps->powerLevel[health] <= 0){
 		if(pm->ps->powerups[PW_STATE] != -2){
 			pm->ps->bitFlags |= isDead;
@@ -2376,7 +2377,6 @@ void PmoveSingle(pmove_t *pmove){
 	}
 	if(pm->ps->pm_type == PM_SPECTATOR){
 		PM_FlyMove();
-		return;
 	}
 	pml.previous_waterlevel = pmove->waterlevel;
 	PM_SetWaterLevel();
