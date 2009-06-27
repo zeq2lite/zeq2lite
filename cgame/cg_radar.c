@@ -85,7 +85,7 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 		if(differenceMaximum > 1.0f){differenceMaximum = 1.0f;}
 		if(differenceMaximum < 0.0f){differenceMaximum = 0.0f;}
 
-		difference = differenceCurrent + differenceMaximum;
+		difference = differenceCurrent/* + differenceMaximum*/;
 
 		if(difference > 1.0f){difference = 1.0f;}
 		if(difference < 0.0f){difference = 0.0f;}
