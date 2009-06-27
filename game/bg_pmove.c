@@ -1669,7 +1669,7 @@ void PM_Melee(void){
 		}
 		else if(melee1 >=0 || melee2 >= 0){
 			// Charging Power Melee
-			if(pm->cmd.buttons & BUTTON_ALT_ATTACK && !(enemyState == 2 && (state == 6 || state <= 1))){
+			if(!(pm->cmd.buttons & BUTTON_ATTACK) && pm->cmd.buttons & BUTTON_ALT_ATTACK && !(enemyState == 2 && (state == 6 || state <= 1))){
 				state = 3;
 				melee2 += pml.msec;
 				if(melee2 >= 750){melee2 = 750;}

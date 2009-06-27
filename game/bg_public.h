@@ -41,6 +41,7 @@ typedef struct {
 	int valid;
 	int	team;
 	int pl;
+	int plMax;
 	int properties;
 	int clientNum;
 	vec3_t pos;	

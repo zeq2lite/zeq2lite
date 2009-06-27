@@ -1787,6 +1787,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\cgame.def"
+				>
+			</File>
+			<File
 				RelativePath="..\game\q_math.c"
 				>
 				<FileConfiguration

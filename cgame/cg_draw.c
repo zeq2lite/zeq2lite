@@ -714,41 +714,43 @@ static float CG_DrawSnapshot( float y ) {
 CG_DrawFPS
 ==================
 */
-#define	FPS_FRAMES	4
+#define	FPS_FRAMES	16
 static float CG_DrawFPS( float y ) {
 	char		*s;
 	int			w;
 	static int	previousTimes[FPS_FRAMES];
 	static int	index;
-	int		i, total;
-	int		fps;
-	static	int	previous;
-	int		t, frameTime;
+	int			i, total;
+	int			fps;
+	static	int	previous, lastupdate;
+	int			t, frameTime;
+	const int	xOffset = 0;
 
 	// don't use serverTime, because that will be drifting to
 	// correct for internet lag changes, timescales, timedemos, etc
 	t = trap_Milliseconds();
 	frameTime = t - previous;
 	previous = t;
-
-	previousTimes[index % FPS_FRAMES] = frameTime;
-	index++;
-	if ( index > FPS_FRAMES ) {
-		// average multiple frames together to smooth changes out a bit
-		total = 0;
-		for ( i = 0 ; i < FPS_FRAMES ; i++ ) {
-			total += previousTimes[i];
-		}
-		if ( !total ) {
-			total = 1;
-		}
-		fps = 1000 * FPS_FRAMES / total;
-
-		s = va( "%ifps", fps );
-		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-
-		CG_DrawBigString( 635 - w, y + 2, s, 1.0F);
+	if (t - lastupdate > 50)	//don't sample faster than this
+	{
+		lastupdate = t;
+		previousTimes[index % FPS_FRAMES] = frameTime;
+		index++;
 	}
+	// average multiple frames together to smooth changes out a bit
+	total = 0;
+	for ( i = 0 ; i < FPS_FRAMES ; i++ ) {
+		total += previousTimes[i];
+	}
+	if ( !total ) {
+		total = 1;
+	}
+	fps = 1000 * FPS_FRAMES / total;
+
+	s = va( "%ifps", fps );
+	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
+
+	CG_DrawBigString( 635 - w + xOffset, y + 2, s, 1.0F);
 
 	return y + BIGCHAR_HEIGHT + 4;
 }
@@ -2783,6 +2785,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawSpectator();
 		CG_DrawCrosshair();
 		CG_DrawCrosshairNames();
+		CG_DrawRadar();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
 		if (!cg.showScores && !(cg.snap->ps.powerups[PW_TRANSFORM] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){

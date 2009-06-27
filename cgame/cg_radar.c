@@ -1,6 +1,6 @@
 #include "cg_local.h"
 
-#define RADAR_RANGE		8000
+#define RADAR_RANGE		16000
 #define RADAR_BLIPSIZE	  24
 #define RADAR_MIDSIZE	  16
 
@@ -31,6 +31,15 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 	float			blip_y;
 	float			blip_w;
 	float			blip_h;
+
+	float			powerLevel;
+	float			powerLevel2;
+	float			powerLevelAverage;
+	float			powerLevelMaximum;
+	float			powerLevelMaximum2;
+	float			powerLevelMaximumAverage;
+
+	float			difference, differenceMaximum;
 
 	ps = &cg.predictedPlayerState;
 	warning = qfalse;
@@ -63,12 +72,28 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 		blip_w = ( projection[2] / RADAR_RANGE) * 0.5f * RADAR_BLIPSIZE + RADAR_BLIPSIZE;
 		blip_h = blip_w;
 
-		// Set the blip color with respect to team. Fade it out based on PL;
+		powerLevel = cg.snap->ps.powerLevel[current];
+		powerLevel2 = cg_playerOrigins[i].pl;
+		powerLevelMaximum = cg.snap->ps.powerLevel[maximum];
+		powerLevelMaximum2 = cg_playerOrigins[i].plMax;
+
+		difference = 1.0f - (powerLevel / powerLevel2);
+		differenceMaximum = 1.0f - (powerLevelMaximum / powerLevelMaximum2);
+
+		if(difference > 1.0f){difference = 1.0f;}
+		if(difference < 0.0f){difference = 0.0f;}
+		if(differenceMaximum > 1.0f){differenceMaximum = 1.0f;}
+		if(differenceMaximum < 0.0f){differenceMaximum = 0.0f;}
+
+		// Set the blip color with respect to team.
+		// The brighter the color, the higher the power level is compared to your own.
+		// The blip fades down as the player's current power level gets lower then their maximum.
+		// Should health also effect the fade?
 		if ( cg_playerOrigins[i].team == cg.snap->ps.persistant[PERS_TEAM] && cg_playerOrigins[i].team != TEAM_FREE ) {
-			MAKERGBA( draw_color, 0.0f, 0.2f + (1.0f * cg_playerOrigins[i].pl / 125.0f ), 0.0f, 1.0f );
+			MAKERGBA( draw_color, 0.0f, difference / differenceMaximum, 0.0f, powerLevel2 / powerLevelMaximum2 );
 			MAKERGBA( drawfull_color, 0.0f, 1.0f, 0.0f, 1.0f );
 		} else {
-			MAKERGBA( draw_color, 0.2f + (1.0f * cg_playerOrigins[i].pl / 125.0f ), 0.0f, 0.0f, 1.0f );
+			MAKERGBA( draw_color, difference / differenceMaximum, 0.0f, 0.0f, powerLevel2 / powerLevelMaximum2 );
 			MAKERGBA( drawfull_color, 1.0f, 0.0f, 0.0f, 1.0f );
 		}
 
