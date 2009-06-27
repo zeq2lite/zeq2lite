@@ -39,7 +39,7 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 	float			powerLevelMaximum2;
 	float			powerLevelMaximumAverage;
 
-	float			difference, differenceMaximum;
+	float			difference, differenceCurrent, differenceMaximum;
 
 	ps = &cg.predictedPlayerState;
 	warning = qfalse;
@@ -77,23 +77,30 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 		powerLevelMaximum = cg.snap->ps.powerLevel[maximum];
 		powerLevelMaximum2 = cg_playerOrigins[i].plMax;
 
-		difference = 1.0f - (powerLevel / powerLevel2);
+		differenceCurrent = 1.0f - (powerLevel / powerLevel2);
 		differenceMaximum = 1.0f - (powerLevelMaximum / powerLevelMaximum2);
+
+		if(differenceCurrent > 1.0f){differenceCurrent = 1.0f;}
+		if(differenceCurrent < 0.0f){differenceCurrent = 0.0f;}
+		if(differenceMaximum > 1.0f){differenceMaximum = 1.0f;}
+		if(differenceMaximum < 0.0f){differenceMaximum = 0.0f;}
+
+		difference = differenceCurrent + differenceMaximum;
 
 		if(difference > 1.0f){difference = 1.0f;}
 		if(difference < 0.0f){difference = 0.0f;}
-		if(differenceMaximum > 1.0f){differenceMaximum = 1.0f;}
-		if(differenceMaximum < 0.0f){differenceMaximum = 0.0f;}
+
+		//CG_Printf("Difference: %f\n",difference);
 
 		// Set the blip color with respect to team.
 		// The brighter the color, the higher the power level is compared to your own.
 		// The blip fades down as the player's current power level gets lower then their maximum.
 		// Should health also effect the fade?
 		if ( cg_playerOrigins[i].team == cg.snap->ps.persistant[PERS_TEAM] && cg_playerOrigins[i].team != TEAM_FREE ) {
-			MAKERGBA( draw_color, 0.0f, difference / differenceMaximum, 0.0f, powerLevel2 / powerLevelMaximum2 );
+			MAKERGBA( draw_color, 0.0f, difference, 0.0f, powerLevel2 / powerLevelMaximum2 );
 			MAKERGBA( drawfull_color, 0.0f, 1.0f, 0.0f, 1.0f );
 		} else {
-			MAKERGBA( draw_color, difference / differenceMaximum, 0.0f, 0.0f, powerLevel2 / powerLevelMaximum2 );
+			MAKERGBA( draw_color, difference, 0.0f, 0.0f, powerLevel2 / powerLevelMaximum2 );
 			MAKERGBA( drawfull_color, 1.0f, 0.0f, 0.0f, 1.0f );
 		}
 
