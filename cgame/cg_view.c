@@ -1407,7 +1407,7 @@ static int CG_CalcViewValues( void ) {
 
 	if ( cg.renderingThirdPerson ) {
 		// back away from character
-		if(ps->powerups[PW_MELEE_STATE] > 0 || cg_thirdPersonCamera.value >= 3){
+		if(ps->powerups[PW_MELEE_STATE] > 0 || cg_thirdPersonCamera.value >= 2){
 			CG_OffsetThirdPersonView2();
 		}else{
 			CG_OffsetThirdPersonView();
