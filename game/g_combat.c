@@ -77,7 +77,7 @@ void TossClientItems( gentity_t *self ) {
 		if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
 			weapon = self->client->pers.cmd.weapon;
 		}
-		if ( !( self->client->ps.stats[skills] & ( 1 << weapon ) ) ) {
+		if ( !( self->client->ps.stats[stSkills] & ( 1 << weapon ) ) ) {
 			weapon = WP_NONE;
 		}
 	}

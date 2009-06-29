@@ -532,7 +532,7 @@ void Weapon_HookThink (gentity_t *ent)
 		G_SetOrigin( ent, v );
 	}
 
-	VectorCopy( ent->r.currentOrigin, ent->parent->client->ps.grapplePoint);
+//	VectorCopy( ent->r.currentOrigin, ent->parent->client->ps.grapplePoint);
 }
 
 /*
@@ -599,7 +599,7 @@ qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker ) {
 		return qfalse;
 	}
 
-	if( target->client->ps.powerLevel[current] <= 0 ) {
+	if( target->client->ps.powerLevel[plCurrent] <= 0 ) {
 		return qfalse;
 	}
 

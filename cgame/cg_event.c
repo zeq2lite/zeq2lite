@@ -976,15 +976,15 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TIERUP_FIRST:
 		DEBUGNAME("EV_TIERUP_FIRST");
-		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[tierCurrent]].soundTransformFirst);
+		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformFirst);
 		break;
 	case EV_TIERUP:
 		DEBUGNAME("EV_TIERUP");
-		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[tierCurrent]].soundTransformUp);
+		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformUp);
 		break;
 	case EV_TIERDOWN:
 		DEBUGNAME("EV_TIERDOWN");
-		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[tierCurrent]].soundTransformDown);
+		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformDown);
 		break;
 	default:
 		DEBUGNAME("UNKNOWN");

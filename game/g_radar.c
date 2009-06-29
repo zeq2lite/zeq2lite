@@ -29,7 +29,7 @@ void G_RadarUpdateCS(void) {
 				g_playerOrigins[i].valid = qfalse;
 			} else if ( !(ent->inuse) ) {
 				g_playerOrigins[i].valid = qfalse;
-			} else if( ent->client->ps.powerLevel[current] <= 0 ) {
+			} else if( ent->client->ps.powerLevel[plCurrent] <= 0 ) {
 				g_playerOrigins[i].valid = qfalse;
 			} else {
 				// get the client's player info
@@ -38,12 +38,12 @@ void G_RadarUpdateCS(void) {
 				//get and store the client position and information
 				VectorCopy( ps->origin, g_playerOrigins[i].pos );
 
-				g_playerOrigins[i].pl = ps->powerLevel[current];
-				g_playerOrigins[i].plMax = ps->powerLevel[maximum];
+				g_playerOrigins[i].pl = ps->powerLevel[plCurrent];
+				g_playerOrigins[i].plMax = ps->powerLevel[plMaximum];
 				g_playerOrigins[i].clientNum = ps->clientNum;
 
 				g_playerOrigins[i].properties = 0;
-				if ( ( ps->stats[chargePercentPrimary] >= 50 ) || ( ps->stats[chargePercentSecondary] >= 50 ) ) {
+				if ( ( ps->stats[stChargePercentPrimary] >= 50 ) || ( ps->stats[stChargePercentSecondary] >= 50 ) ) {
 					g_playerOrigins[i].properties |= RADAR_WARN;
 				}
 				if ( ( ps->eFlags & EF_AURA ) || ps->powerups[PW_BOOST] ) {

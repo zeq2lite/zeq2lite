@@ -616,8 +616,8 @@ static void CG_DrawStatusBar( void ) {
 	vec4_t		beyondFatigueColor = {0.9f,0.5f,0.0f,1.0f};
 	vec4_t		beyondHealthColor = {0.8f,0.2f,0.2f,1.0f};
 	vec4_t		healthFatigueColor = {1.0f,0.4f,0.2f,1.0f};
-	vec4_t		fatigueHealthColor = {0.5f,0.16f,0.16f,1.0f};
-	vec4_t		fatigueColor = {0.4f,0.4f,0.5f,1.0f};
+	vec4_t		plFatigueHealthColor = {0.5f,0.16f,0.16f,1.0f};
+	vec4_t		plFatigueColor = {0.4f,0.4f,0.5f,1.0f};
 	vec4_t		clearColor = {0.0f,0.0f,0.0f,0.0f};
 	clientInfo_t *ci;
 	cg_userWeapon_t	*weaponGraphics;
@@ -631,21 +631,21 @@ static void CG_DrawStatusBar( void ) {
 	// -----------------------
 	// Draw That Hud!
 	// -----------------------
-	tier = (float)ps->powerLevel[tierCurrent];
+	tier = (float)ps->powerLevel[plTierCurrent];
 	multiplier = ci->tierConfig[ci->tierCurrent].hudMultiplier;
 	if(multiplier <= 0){
 		multiplier = ((tier*tier*tier*tier)+1.0);
 	}
-	powerLevelDisplay = (float)ps->powerLevel[current] * multiplier;
+	powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
 	powerLevelString = va("%i",powerLevelDisplay);
-	CG_DrawHorGauge(60,449,200,16,powerColor,dullColor,ps->powerLevel[current],ps->powerLevel[maximum],qfalse);	
-	CG_DrawRightGauge(60,449,200,16,fatigueColor,fatigueColor,ps->powerLevel[fatigue],ps->powerLevel[maximum]);
-	CG_DrawRightGauge(60,449,200,16,limitColor,limitColor,ps->powerLevel[health],ps->powerLevel[maximum]);
-	CG_DrawDiffGauge(60,449,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[current],ps->powerLevel[fatigue],ps->powerLevel[maximum],1);
-	CG_DrawDiffGauge(60,449,200,16,fatigueHealthColor,fatigueHealthColor,ps->powerLevel[fatigue],ps->powerLevel[health],ps->powerLevel[maximum],1);
-	CG_DrawDiffGauge(60,449,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[current],ps->powerLevel[health],ps->powerLevel[maximum],1);
-	if((ps->powerLevel[current] > ps->powerLevel[fatigue]) && (ps->powerLevel[fatigue] > ps->powerLevel[health])){
-		CG_DrawDiffGauge(60,449,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[current],ps->powerLevel[fatigue],ps->powerLevel[maximum],1);
+	CG_DrawHorGauge(60,449,200,16,powerColor,dullColor,ps->powerLevel[plCurrent],ps->powerLevel[plMaximum],qfalse);	
+	CG_DrawRightGauge(60,449,200,16,plFatigueColor,plFatigueColor,ps->powerLevel[plFatigue],ps->powerLevel[plMaximum]);
+	CG_DrawRightGauge(60,449,200,16,limitColor,limitColor,ps->powerLevel[plHealth],ps->powerLevel[plMaximum]);
+	CG_DrawDiffGauge(60,449,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+	CG_DrawDiffGauge(60,449,200,16,plFatigueHealthColor,plFatigueHealthColor,ps->powerLevel[plFatigue],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
+	CG_DrawDiffGauge(60,449,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[plCurrent],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
+	if((ps->powerLevel[plCurrent] > ps->powerLevel[plFatigue]) && (ps->powerLevel[plFatigue] > ps->powerLevel[plHealth])){
+		CG_DrawDiffGauge(60,449,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
 	}
 	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
 	if(tier){
@@ -656,11 +656,11 @@ static void CG_DrawStatusBar( void ) {
 		if(activeTier->sustainHealth && activeTier->sustainHealth < tierLast){tierLast = (float)activeTier->sustainHealth;}
 		if(activeTier->sustainMaximum && activeTier->sustainMaximum < tierLast){tierLast = (float)activeTier->sustainMaximum;}
 		if(tierLast < 32767){
-			tierLast = tierLast / (float)ps->powerLevel[maximum];
+			tierLast = tierLast / (float)ps->powerLevel[plMaximum];
 			CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
 		}
 	}
-	if(tier < ps->powerLevel[tierTotal]){
+	if(tier < ps->powerLevel[plTierTotal]){
 		activeTier = &ci->tierConfig[ci->tierCurrent+1];
 		tierNext = 0;
 		if(activeTier->requirementCurrent && activeTier->requirementCurrent > tierNext){tierNext = (float)activeTier->requirementCurrent;}
@@ -668,16 +668,16 @@ static void CG_DrawStatusBar( void ) {
 		if(activeTier->requirementMaximum && activeTier->requirementMaximum > tierNext){tierNext = (float)activeTier->requirementMaximum;}
 		if(activeTier->requirementHealth && activeTier->requirementHealth > tierNext){tierNext = (float)activeTier->requirementHealth;}
 		if(tierNext){
-			tierNext = tierNext / (float)ps->powerLevel[maximum];
+			tierNext = tierNext / (float)ps->powerLevel[plMaximum];
 			if(tierNext < 1.0){
 				CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
 			}
 		}
 	}
-	if(ps->powerLevel[current] == ps->powerLevel[maximum] && ps->bitFlags & usingAlter){
+	if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
 		CG_DrawPic(243,433,40,44,cgs.media.breakLimitShader);
 	}
-	if(ps->powerLevel[current] == 9001){
+	if(ps->powerLevel[plCurrent] == 9001){
 		powerLevelString = "Over ^3NINE-THOUSAND!!!";
 	}
 	if(powerLevelDisplay >= 1000000){	
@@ -1157,7 +1157,7 @@ static float CG_DrawPowerups( float y ) {
 
 	ps = &cg.snap->ps;
 
-	if ( ps->powerLevel[current] <= 0 ) {
+	if ( ps->powerLevel[plCurrent] <= 0 ) {
 		return y;
 	}
 
@@ -1269,7 +1269,7 @@ static int CG_DrawPickupItem( int y ) {
 	int		value;
 	float	*fadeColor;
 
-	if ( cg.snap->ps.powerLevel[current] <= 0 ) {
+	if ( cg.snap->ps.powerLevel[plCurrent] <= 0 ) {
 		return y;
 	}
 
@@ -2042,10 +2042,10 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 	y = y_cross - h; 
 
 	// If the primary weapon can be charged, and atleast 1% is charged, draw the bar.
-	if ( ( cg.snap->ps.ammo[WPbitFlags] && WPF_NEEDSCHARGE) && (cg.snap->ps.stats[chargePercentPrimary] > 0 ) ) {
+	if ( ( cg.snap->ps.ammo[WPbitFlags] && WPF_NEEDSCHARGE) && (cg.snap->ps.stats[stChargePercentPrimary] > 0 ) ) {
 
 		// draw bar
-		value = cg.snap->ps.stats[chargePercentPrimary];
+		value = cg.snap->ps.stats[stChargePercentPrimary];
 
 		// If the primary weapon is charged far enough to be fire-able,
 		// display the ready glow.
@@ -2067,10 +2067,10 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 	if ( cg.snap->ps.ammo[WPbitFlags] & WPF_ALTWEAPONPRESENT ) {
 
 		// If the secondary weapon can be charged, and atleast 1% is charged, draw the bar.
-		if ( ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) && (cg.snap->ps.stats[chargePercentSecondary] > 0 ) ) {
+		if ( ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) && (cg.snap->ps.stats[stChargePercentSecondary] > 0 ) ) {
 
 			// draw bar
-			value = cg.snap->ps.stats[chargePercentSecondary];
+			value = cg.snap->ps.stats[stChargePercentSecondary];
 
 			// If the secondary weapon is charged far enough to be fire-able,
 			// display the ready glow.
@@ -2803,7 +2803,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawRadar();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if (!cg.showScores && !(cg.snap->ps.timers[transform] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
+		if (!cg.showScores && !(cg.snap->ps.timers[tmTransform] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
 			CG_DrawStatusBar();
 			CG_DrawRadar();
 			CG_DrawAmmoWarning();  

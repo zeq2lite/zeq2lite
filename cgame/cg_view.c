@@ -579,17 +579,17 @@ static void CG_OffsetThirdPersonView2( void )
 		}
 	}
 	// TRANSFORMATIONS
-	if(cg.snap->ps.timers[transform] > 1){
+	if(cg.snap->ps.timers[tmTransform] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
 			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;
-			ci->transformLength = cg.snap->ps.timers[transform];
+			ci->transformLength = cg.snap->ps.timers[tmTransform];
 			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
 			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
 			ci->cameraBackup[2] = cg_thirdPersonRange.value;
 		}
-		transformPercent = 1.0 - ((float)cg.snap->ps.timers[transform] / (float)ci->transformLength);
+		transformPercent = 1.0 - ((float)cg.snap->ps.timers[tmTransform] / (float)ci->transformLength);
 		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
 		pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
 		zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
@@ -756,17 +756,17 @@ static void CG_OffsetThirdPersonView( void ) {
 		cg_thirdPersonRange.value = 64;
 	} else
 	// TRANSFORMATIONS
-	if(ps->timers[transform] > 1){
+	if(ps->timers[tmTransform] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
 			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;
-			ci->transformLength = ps->timers[transform];
+			ci->transformLength = ps->timers[tmTransform];
 			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
 			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
 			ci->cameraBackup[2] = cg_thirdPersonRange.value;
 		}
-		transformPercent = 1.0 - ((float)ps->timers[transform] / (float)ci->transformLength);
+		transformPercent = 1.0 - ((float)ps->timers[tmTransform] / (float)ci->transformLength);
 		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
 		pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
 		zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
@@ -1611,7 +1611,7 @@ static void CG_AddLensFlareMarker(int lfe) {
 	
 	memset(&ent, 0, sizeof(ent));
 	ent.reType = RT_MODEL;
-	ent.hModel = trap_R_RegisterModel("models/powerups/health/small_sphere.md3");
+	ent.hModel = trap_R_RegisterModel("models/powerups/plHealth/small_sphere.md3");
 	ent.customShader = trap_R_RegisterShader("lfeditorcursor");
 	radius = lfent->radius;
 	ent.shaderRGBA[0] = 0x00;
@@ -2407,7 +2407,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer ||
-							 (cg.snap->ps.powerLevel[fatigue] <= 0) ||
+							 (cg.snap->ps.powerLevel[plFatigue] <= 0) ||
 							 (cg.snap->ps.weaponstate == WEAPON_GUIDING) ||
 							 (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING);
 /*

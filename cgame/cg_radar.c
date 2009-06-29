@@ -72,9 +72,9 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 		blip_w = ( projection[2] / RADAR_RANGE) * 0.5f * RADAR_BLIPSIZE + RADAR_BLIPSIZE;
 		blip_h = blip_w;
 
-		powerLevel = cg.snap->ps.powerLevel[current];
+		powerLevel = cg.snap->ps.powerLevel[plCurrent];
 		powerLevel2 = cg_playerOrigins[i].pl;
-		powerLevelMaximum = cg.snap->ps.powerLevel[maximum];
+		powerLevelMaximum = cg.snap->ps.powerLevel[plMaximum];
 		powerLevelMaximum2 = cg_playerOrigins[i].plMax;
 
 		differenceCurrent = 1.0f - (powerLevel / powerLevel2);
@@ -95,7 +95,7 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 		// Set the blip color with respect to team.
 		// The brighter the color, the higher the power level is compared to your own.
 		// The blip fades down as the player's current power level gets lower then their maximum.
-		// Should health also effect the fade?
+		// Should plHealth also effect the fade?
 		if ( cg_playerOrigins[i].team == cg.snap->ps.persistant[PERS_TEAM] && cg_playerOrigins[i].team != TEAM_FREE ) {
 			MAKERGBA( draw_color, 0.0f, difference, 0.0f, powerLevel2 / powerLevelMaximum2 );
 			MAKERGBA( drawfull_color, 0.0f, 1.0f, 0.0f, 1.0f );

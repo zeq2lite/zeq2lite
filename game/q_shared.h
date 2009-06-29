@@ -1113,6 +1113,7 @@ typedef struct {
 
 // bit field limits
 #define	MAX_STATS				16
+#define	MAX_BASESTATS			16
 #define	MAX_PERSISTANT			16
 #define	MAX_POWERUPS			16
 #define	MAX_WEAPONS				16		
@@ -1163,7 +1164,7 @@ typedef struct playerState_s {
 								// when at rest, the value will remain unchanged
 								// used to twist the legs during strafing
 
-	vec3_t		grapplePoint;	// location of grapple to pull towards if PMF_GRAPPLE_PULL
+//	vec3_t		grapplePoint;	// location of grapple to pull towards if PMF_GRAPPLE_PULL
 
 	int			eFlags;			// copied to entityState_t->eFlags
 
@@ -1179,7 +1180,7 @@ typedef struct playerState_s {
 	int			weapon;			// copied to entityState_t->weapon
 	int			weaponstate;
 
-	vec3_t		cameraAngles;
+//	vec3_t		cameraAngles;
 	vec3_t		viewangles;		// for fixed views
 	int			viewheight;
 
@@ -1206,7 +1207,7 @@ typedef struct playerState_s {
 	int			bitFlags;
 
 	int			stats[MAX_STATS];
-	float		baseStats[MAX_STATS];
+	float		baseStats[MAX_BASESTATS];
 	int			powerLevel[MAX_POWERSTATS];
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out

@@ -420,7 +420,7 @@ void CG_ColorForHealth( vec4_t hcolor ) {
 
 //	CG_GetColorForHealth( cg.snap->ps.powerLevel[current], 
 //		cg.snap->ps.stats[STAT_ARMOR], hcolor );
-	CG_GetColorForHealth( cg.snap->ps.powerLevel[current], 
+	CG_GetColorForHealth( cg.snap->ps.powerLevel[plCurrent], 
 		0, hcolor );
 }
 

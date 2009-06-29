@@ -60,7 +60,7 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 		if ( client->pers.connected == CON_DISCONNECTED ) {
 			continue;
 		}
-		if ( client->ps.powerLevel[current] <= 0 ) {
+		if ( client->ps.powerLevel[plCurrent] <= 0 ) {
 			continue;
 		}
 
@@ -119,7 +119,7 @@ int Pickup_PersistantPowerup( gentity_t *ent, gentity_t *other ) {
 
 		other->powerLevel = max;
 		other->client->ps.powerLevel[current] = max;
-		other->client->ps.powerLevel[fatigue] = max;
+		other->client->ps.powerLevel[plFatigue] = max;
 		//other->client->ps.stats[STAT_ARMOR] = max;
 		other->client->pers.maxHealth = max;
 
@@ -237,7 +237,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 	}
 
 	// add the weapon
-	other->client->ps.stats[skills] |= ( 1 << ent->item->giTag );
+	other->client->ps.stats[stSkills] |= ( 1 << ent->item->giTag );
 
 	Add_Ammo( other, ent->item->giTag, quantity );
 
@@ -260,9 +260,9 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	int			quantity;
 
 	if ( ent->item->quantity != 5 && ent->item->quantity != 100 ) {
-		max = other->client->ps.powerLevel[fatigue];
+		max = other->client->ps.powerLevel[plFatigue];
 	} else {
-		max = other->client->ps.powerLevel[fatigue] * 2;
+		max = other->client->ps.powerLevel[plFatigue] * 2;
 	}
 
 	if ( ent->count ) {
@@ -276,7 +276,7 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 	if (other->powerLevel > max ) {
 		other->powerLevel = max;
 	}
-	other->client->ps.powerLevel[current] = other->powerLevel;
+	other->client->ps.powerLevel[plCurrent] = other->powerLevel;
 
 	if ( ent->item->quantity == 100 ) {		// mega powerLevel respawns slow
 		return RESPAWN_MEGAHEALTH;
@@ -289,8 +289,8 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 /*	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.powerLevel[fatigue] * 2 ) {
-		other->client->ps.stats[STAT_ARMOR] = other->client->ps.powerLevel[fatigue] * 2;
+	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.powerLevel[plFatigue] * 2 ) {
+		other->client->ps.stats[STAT_ARMOR] = other->client->ps.powerLevel[plFatigue] * 2;
 	}
 
 	return RESPAWN_ARMOR;

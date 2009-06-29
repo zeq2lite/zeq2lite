@@ -2439,14 +2439,14 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerPowerups(cent,&torso);
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
 		CG_AuraStart(cent);
-		if(ps->powerLevel[current] == ps->powerLevel[maximum] && ps->bitFlags & usingAlter){
+		if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
 			CG_AddEarthquake(cent->lerpOrigin, 400, 1, 1, 1, 25);
 		}
 	}
 	else{CG_AuraEnd(cent);}
 	CG_AddAuraToScene(cent);
-	if(ps->timers[knockback]){
-		if(ps->timers[knockback] > 0){
+	if(ps->timers[tmKnockback]){
+		if(ps->timers[tmKnockback] > 0){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
 		}

@@ -229,14 +229,14 @@ void Cmd_Give_f (gentity_t *ent)
 
 	if (give_all || Q_stricmp( name, "powerLevel") == 0)
 	{
-		ent->powerLevel = ent->client->ps.powerLevel[fatigue];
+		ent->powerLevel = ent->client->ps.powerLevel[plFatigue];
 		if (!give_all)
 			return;
 	}
 
 	if (give_all || Q_stricmp(name, "weapons") == 0)
 	{
-		ent->client->ps.stats[skills] = (1 << WP_NUM_WEAPONS) - 1 - 
+		ent->client->ps.stats[stSkills] = (1 << WP_NUM_WEAPONS) - 1 - 
 			( 1 << WP_GRAPPLING_HOOK ) - ( 1 << WP_NONE );
 		if (!give_all)
 			return;
@@ -570,7 +570,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	if ( oldTeam != TEAM_SPECTATOR ) {
 		// Kill him (makes sure he loses flags, etc)
 		ent->flags &= ~FL_GODMODE;
-		ent->client->ps.powerLevel[current] = ent->powerLevel = 0;
+		ent->client->ps.powerLevel[plCurrent] = ent->powerLevel = 0;
 		player_die(ent,ent,ent,100000,MOD_SUICIDE);
 
 	}

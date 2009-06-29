@@ -85,7 +85,7 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 	}
 
 	// Set the ready state of a charged weapon
-	if ( ( ps->stats[chargePercentPrimary] >= weaponSettings->costs_chargeReady ) && ( ps->ammo[WPbitFlags] & WPF_NEEDSCHARGE ) ) {
+	if ( ( ps->stats[stChargePercentPrimary] >= weaponSettings->costs_chargeReady ) && ( ps->ammo[WPbitFlags] & WPF_NEEDSCHARGE ) ) {
 		ps->ammo[WPbitFlags] |= WPF_READY;
 	} else {
 		ps->ammo[WPbitFlags] &= ~WPF_READY;
@@ -130,7 +130,7 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 		}
 
 		// Set the ready state of a charged altfire weapon
-		if ( ( ps->stats[chargePercentSecondary] >= alt_weaponSettings->costs_chargeReady ) && ( ps->ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) ) {
+		if ( ( ps->stats[stChargePercentSecondary] >= alt_weaponSettings->costs_chargeReady ) && ( ps->ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) ) {
 			ps->ammo[WPSTAT_ALT_BITFLAGS] |= WPF_READY;
 		} else {
 			ps->ammo[WPSTAT_ALT_BITFLAGS] &= ~WPF_READY;

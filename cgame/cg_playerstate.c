@@ -17,7 +17,7 @@ If the ammo has gone low enough to generate the warning, play a sound
 void CG_CheckAmmo( void ) {
 	int		total;
 	int		previous;
-	total = cg.snap->ps.powerLevel[fatigue];
+	total = cg.snap->ps.powerLevel[plFatigue];
 	if ( total >= 500 ) {
 		cg.lowAmmoWarning = 0;
 		return;
@@ -52,7 +52,7 @@ void CG_DamageFeedback( int yawByte, int pitchByte, int damage ) {
 	cg.attackerTime = cg.time;
 
 	// the lower on powerLevel you are, the greater the view kick will be
-	powerLevel = cg.snap->ps.powerLevel[fatigue];
+	powerLevel = cg.snap->ps.powerLevel[plFatigue];
 	if ( powerLevel < 40 ) {
 		scale = 1;
 	} else {
@@ -275,11 +275,11 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	}
 
 	// powerLevel changes of more than -1 should make pain sounds
-	if ( ps->powerLevel[fatigue] < ops->powerLevel[fatigue] - 1 ) {
+	if ( ps->powerLevel[plFatigue] < ops->powerLevel[plFatigue] - 1 ) {
 		// but only if actual damage is there; not if deducting powerLevel for an attack!
 		if (ps->damageCount) {
-			if ( ps->powerLevel[fatigue] > 0 ) {
-				CG_PainEvent( &cg.predictedPlayerEntity, ps->powerLevel[fatigue] );
+			if ( ps->powerLevel[plFatigue] > 0 ) {
+				CG_PainEvent( &cg.predictedPlayerEntity, ps->powerLevel[plFatigue] );
 			}
 		}
 	}

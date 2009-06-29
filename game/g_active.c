@@ -254,7 +254,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 
 	if ( client->sess.spectatorState != SPECTATOR_FOLLOW ) {
 		client->ps.pm_type = PM_SPECTATOR;
-		client->ps.stats[speed] = 400;	// faster than normal
+		client->ps.stats[stSpeed] = 400;	// faster than normal
 
 		// set up for pmove
 		memset (&pm, 0, sizeof(pm));
@@ -268,8 +268,8 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 		if (g_editmode.integer == EM_mlf) {
 			pm.tracemask = 0;
 			if (level.lfeFMM) {
-				client->ps.stats[speed] = 30;
-				if (pm.cmd.buttons & BUTTON_WALKING) client->ps.stats[speed] = 15;
+				client->ps.stats[stSpeed] = 30;
+				if (pm.cmd.buttons & BUTTON_WALKING) client->ps.stats[stSpeed] = 15;
 			}
 			if (pm.cmd.buttons & BUTTON_ATTACK) {
 				pm.cmd.forwardmove = 0;
@@ -385,7 +385,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	if(ps->lockedTarget>0){
 		enemyPS = &g_entities[ps->lockedTarget-1].client->ps;
 	}
-	tier = ps->powerLevel[tierCurrent];
+	tier = ps->powerLevel[plTierCurrent];
 	if ( oldEventSequence < client->ps.eventSequence - MAX_PS_EVENTS ) {
 		oldEventSequence = client->ps.eventSequence - MAX_PS_EVENTS;
 	}
@@ -399,26 +399,26 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			FireWeapon(ent,qfalse);
 			break;
 		case EV_AIRBRAKE:
-			if(ps->timers[knockback] >= 4000) {
+			if(ps->timers[tmKnockback] >= 4000) {
 				amount = client->tiers[tier].airBrakeCost * 2;
-				ps->powerLevel[useFatigue] += amount;
-			} else if((pm->ps->timers[knockback] < 4000) && (pm->ps->timers[knockback] > 3500)){
-			} else if(ps->timers[knockback] <= 3500){
-				if(ps->timers[knockback] <= 1000){
+				ps->powerLevel[plUseFatigue] += amount;
+			} else if((pm->ps->timers[tmKnockback] < 4000) && (pm->ps->timers[tmKnockback] > 3500)){
+			} else if(ps->timers[tmKnockback] <= 3500){
+				if(ps->timers[tmKnockback] <= 1000){
 					amount = client->tiers[tier].airBrakeCost / 6;
 				}
-				else if(ps->timers[knockback] <= 1500){
+				else if(ps->timers[tmKnockback] <= 1500){
 					amount = client->tiers[tier].airBrakeCost / 4;
 				}
-				else if(ps->timers[knockback] <= 2500){
+				else if(ps->timers[tmKnockback] <= 2500){
 					amount = client->tiers[tier].airBrakeCost / 2;
 				}
 				else {
 					amount = client->tiers[tier].airBrakeCost;
 				}
-				ps->powerLevel[useFatigue] += amount;
+				ps->powerLevel[plUseFatigue] += amount;
 			}
-			pm->ps->timers[knockback] = -500;
+			pm->ps->timers[tmKnockback] = -500;
 			break;
 		case EV_ZANZOKEN_START:
 			if(!ps->bitFlags & usingMelee){}

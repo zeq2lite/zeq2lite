@@ -417,7 +417,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		Com_Printf("Charge Level of %i means a damage of %i / %i\n",inflictor->chargelvl,(int)(damage * (float)inflictor->chargelvl / 100.0),damage);
 		damage = damage * ((float)inflictor->chargelvl / 100.0);
 	}
-	damage *= ((float)attacker->client->ps.powerLevel[maximum] * 0.0003) * attacker->client->ps.stats[energyAttack];
+	damage *= ((float)attacker->client->ps.powerLevel[plMaximum] * 0.0003) * attacker->client->ps.stats[stEnergyAttack];
 	if(tgClient){
 		//VectorCopy(dir ? dir : target->r.currentOrigin,tgClient->damage_from);
 		tgClient->ps.persistant[PERS_ATTACKER] = attacker ? attacker->s.number : ENTITYNUM_WORLD;
@@ -428,8 +428,8 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	if(damage){
 		if(tgClient){
 			if(target == attacker){damage *= 0.2;}
-			tgClient->ps.powerLevel[damageFromEnergy] += damage;
-			if(tgClient->ps.powerLevel[health] < damage){
+			tgClient->ps.powerLevel[plDamageFromEnergy] += damage;
+			if(tgClient->ps.powerLevel[plHealth] < damage){
 				if (attacker && attacker->client) {
 					attacker->client->lastkilled_client = target->s.number;
 					if ( attacker == target || OnSameTeam (target, attacker ) ) {
@@ -748,19 +748,19 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
+			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[chargePercentSecondary];
+			bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentSecondary];
 			//G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
-			//G_Printf(va("charge percent = %i\n",self->client->ps.stats[chargePercentSecondary]));
-			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
+			//G_Printf(va("charge percent = %i\n",self->client->ps.stats[stChargePercentSecondary]));
+			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
+			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[chargePercentPrimary];
+			bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentPrimary];
 			//G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
-			//G_Printf(va("charge percent = %i\n",self->client->ps.stats[chargePercentPrimary]));
-			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
+			//G_Printf(va("charge percent = %i\n",self->client->ps.stats[stChargePercentPrimary]));
+			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
@@ -938,15 +938,15 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
+			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			bolt->powerLevel = weaponInfo->costs_ki * self->client->ps.stats[chargePercentSecondary];
-			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
+			bolt->powerLevel = weaponInfo->costs_ki * self->client->ps.stats[stChargePercentSecondary];
+			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
+			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			bolt->powerLevel = weaponInfo->costs_ki * self->client->ps.stats[chargePercentPrimary];
-			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
+			bolt->powerLevel = weaponInfo->costs_ki * self->client->ps.stats[stChargePercentPrimary];
+			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
@@ -1035,10 +1035,10 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 		if ( !altfire ) {
 			UserHitscan_Fire( self, weaponInfo, self->s.weapon, firingStart, firingDir );
-			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
+			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
 		} else {
 			UserHitscan_Fire( self, weaponInfo, self->s.weapon + ALTWEAPON_OFFSET, firingStart, firingDir );
-			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
+			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
 		}
 		break;
 
@@ -1069,13 +1069,13 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[chargePercentSecondary];
+			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[chargePercentSecondary] = 0; // Only reset it here!
+			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
 		} else {
-			bolt->chargelvl = self->client->ps.stats[chargePercentPrimary];
+			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[chargePercentPrimary] = 0; // Only reset it here!
+			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
@@ -1380,7 +1380,7 @@ static void G_PushUserMissile( gentity_t *self, trace_t *trace ) {
 	gentity_t *other;
 	other = &g_entities[trace->entityNum];
 	// If the missile has lost against the player
-	if((self->powerLevel / 2) <= other->client->ps.powerLevel[current]){
+	if((self->powerLevel / 2) <= other->client->ps.powerLevel[plCurrent]){
 		self->bounceFrac = 1;
 		self->struggling = qfalse;
 		G_DeflectUserMissile(self, other, trace);
@@ -1390,7 +1390,7 @@ static void G_PushUserMissile( gentity_t *self, trace_t *trace ) {
 		return;
 	}
 	// If the missile has beaten the player
-	if((other->client->ps.powerLevel[current] / 2) <= self->powerLevel){
+	if((other->client->ps.powerLevel[plCurrent] / 2) <= self->powerLevel){
 		self->bounceFrac = -1;
 		self->struggling = qfalse;
 		G_DeflectUserMissile(self, other, trace);
@@ -1424,7 +1424,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	if(other->takedamage) {
 		if(other->client->ps.bitFlags & usingBlock){
 			// Swat
-			if(self->powerLevel < other->client->ps.powerLevel[current]){
+			if(self->powerLevel < other->client->ps.powerLevel[plCurrent]){
 				self->bounceFrac = 1;
 				G_DeflectUserMissile(self, other, trace);
 				self->r.ownerNum = other->s.number;

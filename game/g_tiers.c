@@ -4,47 +4,47 @@ void syncTier(gclient_t *client){
 	tierConfig_g *tier;
 	playerState_t *ps;
 	ps = &client->ps;
-	tier = &client->tiers[ps->powerLevel[tierCurrent]];
+	tier = &client->tiers[ps->powerLevel[plTierCurrent]];
 	ps->breakLimitRate = (float)tier->breakLimitRate * g_breakLimitRate.value;
-	ps->stats[speed] = tier->speed * 450.0;
-	ps->stats[zanzokenDistance] = tier->zanzokenDistance * 500.0;
-	ps->stats[zanzokenSpeed] = tier->zanzokenSpeed * 4000.0;
-	ps->stats[zanzokenCost] = tier->zanzokenCost;
-	ps->stats[airBrakeCost] = tier->airBrakeCost;
-	ps->stats[meleeDefense] = tier->meleeDefense;
-	ps->stats[meleeAttack] = tier->meleeAttack;
-	ps->stats[energyDefense] = tier->energyDefense;
-	ps->stats[energyAttack] = tier->energyAttackDamage;
-	ps->stats[energyCost] = tier->energyAttackCost;
-	ps->powerLevel[drainCurrent] = tier->effectCurrent;
-	ps->powerLevel[drainFatigue] = tier->effectFatigue;
-	ps->powerLevel[drainHealth] = tier->effectHealth;
-	ps->powerLevel[drainMaximum] = tier->effectMaximum;
+	ps->stats[stSpeed] = tier->speed * 450.0;
+	ps->stats[stZanzokenDistance] = tier->zanzokenDistance * 500.0;
+	ps->stats[stZanzokenSpeed] = tier->zanzokenSpeed * 4000.0;
+	ps->stats[stZanzokenCost] = tier->zanzokenCost;
+	ps->stats[stAirBrakeCost] = tier->airBrakeCost;
+	ps->stats[stMeleeDefense] = tier->meleeDefense;
+	ps->stats[stMeleeAttack] = tier->meleeAttack;
+	ps->stats[stEnergyDefense] = tier->energyDefense;
+	ps->stats[stEnergyAttack] = tier->energyAttackDamage;
+	ps->stats[stEnergyCost] = tier->energyAttackCost;
+	ps->powerLevel[plDrainCurrent] = tier->effectCurrent;
+	ps->powerLevel[plDrainFatigue] = tier->effectFatigue;
+	ps->powerLevel[plDrainHealth] = tier->effectHealth;
+	ps->powerLevel[plDrainMaximum] = tier->effectMaximum;
 }
 void checkTier(gclient_t *client){
 	int tier;
 	playerState_t *ps;
 	tierConfig_g *nextTier,*baseTier;
 	ps = &client->ps;
-	if(ps->timers[transform]){return;}
+	if(ps->timers[tmTransform]){return;}
 	while(1){
-		tier = ps->powerLevel[tierCurrent];
+		tier = ps->powerLevel[plTierCurrent];
 		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
 			nextTier = &client->tiers[tier+1];
 			if(((nextTier->requirementButton && (ps->bitFlags & keyTierUp)) || !nextTier->requirementButton) &&
-			   (ps->powerLevel[current] >= nextTier->requirementCurrent) &&
-			   (ps->powerLevel[fatigue] >= nextTier->requirementFatigue) &&
-			   (ps->powerLevel[health]  >= nextTier->requirementHealth) &&
-			   (ps->powerLevel[maximum] >= nextTier->requirementMaximum) &&
-			   (ps->powerLevel[current] >= nextTier->sustainCurrent) &&
-			   (ps->powerLevel[health]  >= nextTier->sustainHealth) &&
-			   (ps->powerLevel[fatigue] >= nextTier->sustainFatigue) &&
-			   (ps->powerLevel[maximum] >= nextTier->sustainMaximum)){
-				ps->timers[transform] = 1;
-				++ps->powerLevel[tierCurrent];
-				if(tier + 1 > ps->powerLevel[tierTotal]){
-					ps->powerLevel[tierTotal] = ps->powerLevel[tierCurrent];
-					ps->timers[transform] = client->tiers[tier+1].transformTime;
+			   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrent) &&
+			   (ps->powerLevel[plFatigue] >= nextTier->requirementFatigue) &&
+			   (ps->powerLevel[plHealth]  >= nextTier->requirementHealth) &&
+			   (ps->powerLevel[plMaximum] >= nextTier->requirementMaximum) &&
+			   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrent) &&
+			   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
+			   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
+			   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum)){
+				ps->timers[tmTransform] = 1;
+				++ps->powerLevel[plTierCurrent];
+				if(tier + 1 > ps->powerLevel[plTierTotal]){
+					ps->powerLevel[plTierTotal] = ps->powerLevel[plTierCurrent];
+					ps->timers[tmTransform] = client->tiers[tier+1].transformTime;
 				}
 				continue;
 			}
@@ -52,12 +52,12 @@ void checkTier(gclient_t *client){
 		if(tier > 0){
 			baseTier = &client->tiers[tier];
 			if(((baseTier->requirementButton && (ps->bitFlags & keyTierDown)) || !baseTier->requirementButton) ||
-			   (ps->powerLevel[current] < baseTier->sustainCurrent) ||
-			   (ps->powerLevel[health] < baseTier->sustainHealth) ||
-			   (ps->powerLevel[fatigue] < baseTier->sustainFatigue) ||
-			   (ps->powerLevel[maximum] < baseTier->sustainMaximum)){
-				ps->timers[transform] = -1;
-				--ps->powerLevel[tierCurrent];
+			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrent) ||
+			   (ps->powerLevel[plHealth] < baseTier->sustainHealth) ||
+			   (ps->powerLevel[plFatigue] < baseTier->sustainFatigue) ||
+			   (ps->powerLevel[plMaximum] < baseTier->sustainMaximum)){
+				ps->timers[tmTransform] = -1;
+				--ps->powerLevel[plTierCurrent];
 				continue;
 			}
 		}

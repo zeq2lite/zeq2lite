@@ -673,13 +673,13 @@ void ClientUserinfoChanged( int clientNum ) {
 		// Set the weapon mask here, incase we changed models on the fly.
 		// FIXME: Can be removed eventually, when we will disallow on the fly
 		//        switching.
-		client->ps.stats[skills] = *G_FindUserWeaponMask( clientNum );
+		client->ps.stats[stSkills] = *G_FindUserWeaponMask( clientNum );
 
 		// force a new weapon up if the current one is unavailable now.
 		// Search downward
 		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
 			// We found a valid weapon
-			if ( client->ps.stats[skills] & (1 << i) ) {
+			if ( client->ps.stats[stSkills] & (1 << i) ) {
 				break;
 			}
 		}
@@ -871,7 +871,7 @@ void ClientBegin( int clientNum ) {
 
 	// ADDING FOR ZEQ2
 	// Set the starting cap
-	client->ps.powerLevel[maximum] = g_powerLevel.value;
+	client->ps.powerLevel[plMaximum] = g_powerLevel.value;
 	// END ADDING
 
 	// locate ent at a spawn point
@@ -1010,9 +1010,9 @@ void ClientSpawn(gentity_t *ent) {
 
 	// ADDING FOR ZEQ2
 	client->modelName = model;
-	client->ps.stats[skills] = *G_FindUserWeaponMask( index );
-	client->ps.stats[chargePercentPrimary] = 0;
-	client->ps.stats[chargePercentSecondary] = 0;
+	client->ps.stats[stSkills] = *G_FindUserWeaponMask( index );
+	client->ps.stats[stChargePercentPrimary] = 0;
+	client->ps.stats[stChargePercentSecondary] = 0;
 	setupTiers(client);
 	// END ADDING
 
@@ -1020,7 +1020,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.running = g_running.value;
 
 	// ADDING FOR ZEQ2
-	client->ps.powerLevel[tierCurrent] = 0;
+	client->ps.powerLevel[plTierCurrent] = 0;
 	if(g_powerLevel.value > 32767){
 		g_powerLevel.value = 32767;
 	}
@@ -1028,8 +1028,8 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.bitFlags = 0;
 	client->ps.eFlags &= ~EF_AURA;
 	// END ADDING
-	client->ps.powerLevel[maximum] = client->ps.powerLevel[maximum] > g_powerLevel.value ? client->ps.powerLevel[maximum] * 0.75 : g_powerLevel.value;
-	client->ps.powerLevel[current] = client->ps.powerLevel[health] = client->ps.powerLevel[fatigue] = client->ps.powerLevel[maximum];
+	client->ps.powerLevel[plMaximum] = client->ps.powerLevel[plMaximum] > g_powerLevel.value ? client->ps.powerLevel[plMaximum] * 0.75 : g_powerLevel.value;
+	client->ps.powerLevel[plCurrent] = client->ps.powerLevel[plHealth] = client->ps.powerLevel[plFatigue] = client->ps.powerLevel[plMaximum];
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
 	trap_GetUsercmd( client - level.clients, &ent->client->pers.cmd );
@@ -1046,7 +1046,7 @@ void ClientSpawn(gentity_t *ent) {
 		// force the best weapon up
 		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
 			// We found a valid weapon
-			if ( client->ps.stats[skills] & (1 << i) ) {
+			if ( client->ps.stats[stSkills] & (1 << i) ) {
 				break;
 			}
 		}

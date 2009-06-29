@@ -217,55 +217,55 @@ void Pmove (pmove_t *pmove);
 //===================================================================================
 
 typedef enum {
-	speed,
-	zanzokenCost,
-	zanzokenSpeed,
-	zanzokenDistance,
-	knockbackPower,
-	airBrakeCost,
-	meleeAttack,
-	meleeDefense,
-	energyAttack,
-	energyDefense,
-	energyCost,
-	chargePercentPrimary,	// % of primary attack charged
-	chargePercentSecondary,	// % of secondary attack charged
-	skills,					// 16 bit bitmask
-	bitFlags				// Set of bitflags for player
+	stSpeed,
+	stZanzokenCost,
+	stZanzokenSpeed,
+	stZanzokenDistance,
+	stKnockbackPower,
+	stAirBrakeCost,
+	stMeleeAttack,
+	stMeleeDefense,
+	stEnergyAttack,
+	stEnergyDefense,
+	stEnergyCost,
+	stChargePercentPrimary,	// % of primary attack charged
+	stChargePercentSecondary,	// % of secondary attack charged
+	stSkills,					// 16 bit bitmask
+	stBitFlags				// Set of bitflags for player
 }statIndex_t;
 
 typedef enum{
-	current,
-	fatigue,
-	health,
-	maximum,
-	useCurrent,
-	useFatigue,
-	useHealth,
-	drainCurrent,
-	drainMaximum,
-	drainFatigue,
-	drainHealth,
-	tierCurrent,
-	tierTotal,
-	damageFromEnergy,
-	damageFromMelee
+	plCurrent,
+	plFatigue,
+	plHealth,
+	plMaximum,
+	plUseCurrent,
+	plUseFatigue,
+	plUseHealth,
+	plDrainCurrent,
+	plDrainMaximum,
+	plDrainFatigue,
+	plDrainHealth,
+	plTierCurrent,
+	plTierTotal,
+	plDamageFromEnergy,
+	plDamageFromMelee
 }powerLevel_t;
 
 typedef enum{
-	updateTier,
-	updateMelee,
-	transform,
-	knockback,
-	zanzoken,
-	attack1,
-	attack2,
-	melee1,
-	melee2,
-	powerRaise,
-	powerAuto,
-	freeze,
-	stun
+	tmUpdateTier,
+	tmUpdateMelee,
+	tmTransform,
+	tmKnockback,
+	tmZanzoken,
+	tmAttack1,
+	tmAttack2,
+	tmMelee1,
+	tmMelee2,
+	tmPowerRaise,
+	tmPowerAuto,
+	tmFreeze,
+	tmStun
 }timers_t;
 
 typedef enum {

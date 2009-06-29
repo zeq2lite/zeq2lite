@@ -399,7 +399,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 		ent->nextthink = level.time + FRAMETIME;
 
 		ent->parent->client->ps.pm_flags |= PMF_GRAPPLE_PULL;
-		VectorCopy( ent->r.currentOrigin, ent->parent->client->ps.grapplePoint);
+//		VectorCopy( ent->r.currentOrigin, ent->parent->client->ps.grapplePoint);
 
 		trap_LinkEntity( ent );
 		trap_LinkEntity( nent );
