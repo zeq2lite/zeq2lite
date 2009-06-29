@@ -388,11 +388,14 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		attacker->client->lastkilled_client = self->s.number;
 		if ( attacker == self || OnSameTeam (self, attacker ) ) {
 			AddScore( attacker, self->r.currentOrigin, -10 );
+			Com_Printf("Lost 10 points\n");
 		} else {
 			AddScore( attacker, self->r.currentOrigin, 10 );
+			Com_Printf("Gained 10 points\n");
 			attacker->client->lastKillTime = level.time;
 		}
 	} else {
+		Com_Printf("Lost 10 points\n");
 		AddScore( self, self->r.currentOrigin, -10 );
 	}
 }

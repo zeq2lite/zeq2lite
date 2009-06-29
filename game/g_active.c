@@ -444,6 +444,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_MELEE_STUN:
 			break;
+		case EV_MELEE_KNOCKOUT:
+			AddScore( ent, ent->r.currentOrigin, 1 );
+			break;
 		case EV_TIERCHECK:
 			checkTier(client);
 			break;
@@ -457,12 +460,12 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_LOCKON_END:
 			break;
 		case EV_DEATH:
-			AddScore( ent, ent->r.currentOrigin, -10 );
+			AddScore( ent, ent->r.currentOrigin, -1);
 			client->respawnTime = level.time + 10000;
 			//ent = G_TempEntity( ent->r.currentOrigin, EV_OBITUARY );
 			break;
 		case EV_UNCONCIOUS:
-			AddScore( ent, ent->r.currentOrigin, -5 );
+			AddScore( ent, ent->r.currentOrigin, -1 );
 			break;
 		case EV_USE_ITEM1:
 			item = NULL;

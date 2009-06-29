@@ -277,7 +277,10 @@ void PM_BurnPowerLevel(qboolean melee){
 void PM_CheckStatus(void){
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	if(pm->ps->powerLevel[health] <= 0){
-		if(pm->ps->powerups[PW_STATE] != -2){
+		if(pm->ps->lockedPlayer->powerups[PW_MELEE_STATE] == 2){
+			pm->ps->powerLevel[health] = 1;
+		}
+		else if(pm->ps->powerups[PW_STATE] != -2){
 			pm->ps->bitFlags |= isDead;
 			pm->ps->powerups[PW_STATE] = -2;
 			PM_StopMovement();
@@ -1778,6 +1781,9 @@ void PM_Melee(void){
 			if(enemyState == 5){damage *= 0.6;}
 			if(enemyState != 6){
 				pm->ps->lockedPlayer->powerLevel[damageFromMelee] += damage;
+			}
+			if(pm->ps->lockedPlayer->powerLevel[health] <= damage){
+				PM_AddEvent(EV_MELEE_KNOCKOUT);
 			}
 		}
 		else if(state == 1 && inRange){

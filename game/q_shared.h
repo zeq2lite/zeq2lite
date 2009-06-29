@@ -1206,7 +1206,7 @@ typedef struct playerState_s {
 	int			bitFlags;
 
 	int			stats[MAX_STATS];
-	//float		baseStats[MAX_STATS];
+	float		baseStats[MAX_STATS];
 	int			powerLevel[MAX_POWERSTATS];
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out

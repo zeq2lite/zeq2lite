@@ -968,6 +968,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MELEE_CHECK:
 		DEBUGNAME("EV_MELEE_CHECK");
 		break;
+	case EV_MELEE_KNOCKOUT:
+		DEBUGNAME("EV_MELEE_KNOCKOUT");
+		break;
 	case EV_TIERCHECK:
 		DEBUGNAME("EV_TIERCHECK");
 		break;
