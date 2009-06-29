@@ -658,8 +658,8 @@ static const char *playerType_list[] = {
 };
 
 static const char *playerTeam_list[] = {
-	"Z Fighters",
-	"HFIL Fighters",
+	"Good",
+	"Evil",
 	0
 };
 

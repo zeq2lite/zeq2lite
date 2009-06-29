@@ -79,8 +79,8 @@
 #define	DEFAULT_TEAM_HEAD		"goku"
 #endif
 
-#define DEFAULT_REDTEAM_NAME		"HFIL Fighters"
-#define DEFAULT_BLUETEAM_NAME		"Z Fighters"
+#define DEFAULT_REDTEAM_NAME		"Evil"
+#define DEFAULT_BLUETEAM_NAME		"Good"
 
 typedef enum {
 	FOOTSTEP_NORMAL,
