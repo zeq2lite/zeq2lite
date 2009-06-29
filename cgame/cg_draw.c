@@ -631,14 +631,13 @@ static void CG_DrawStatusBar( void ) {
 	// -----------------------
 	// Draw That Hud!
 	// -----------------------
-	tier = (float)ps->stats[tierCurrent];
+	tier = (float)ps->powerLevel[tierCurrent];
 	multiplier = ci->tierConfig[ci->tierCurrent].hudMultiplier;
 	if(multiplier <= 0){
 		multiplier = ((tier*tier*tier*tier)+1.0);
 	}
 	powerLevelDisplay = (float)ps->powerLevel[current] * multiplier;
 	powerLevelString = va("%i",powerLevelDisplay);
-	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	CG_DrawHorGauge(60,449,200,16,powerColor,dullColor,ps->powerLevel[current],ps->powerLevel[maximum],qfalse);	
 	CG_DrawRightGauge(60,449,200,16,fatigueColor,fatigueColor,ps->powerLevel[fatigue],ps->powerLevel[maximum]);
 	CG_DrawRightGauge(60,449,200,16,limitColor,limitColor,ps->powerLevel[health],ps->powerLevel[maximum]);
@@ -652,19 +651,22 @@ static void CG_DrawStatusBar( void ) {
 	if(tier){
 		activeTier = &ci->tierConfig[ci->tierCurrent];
 		tierLast = 32767;
-		if(activeTier->sustainPowerLevel && activeTier->sustainPowerLevel < tierLast){tierLast = (float)activeTier->sustainPowerLevel;}
+		if(activeTier->sustainCurrent && activeTier->sustainCurrent < tierLast){tierLast = (float)activeTier->sustainCurrent;}
 		if(activeTier->sustainFatigue && activeTier->sustainFatigue < tierLast){tierLast = (float)activeTier->sustainFatigue;}
+		if(activeTier->sustainHealth && activeTier->sustainHealth < tierLast){tierLast = (float)activeTier->sustainHealth;}
+		if(activeTier->sustainMaximum && activeTier->sustainMaximum < tierLast){tierLast = (float)activeTier->sustainMaximum;}
 		if(tierLast < 32767){
 			tierLast = tierLast / (float)ps->powerLevel[maximum];
 			CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
 		}
 	}
-	if(tier < ps->stats[tierTotal]){
+	if(tier < ps->powerLevel[tierTotal]){
 		activeTier = &ci->tierConfig[ci->tierCurrent+1];
 		tierNext = 0;
-		if(activeTier->requirementPowerLevel && activeTier->requirementPowerLevel > tierNext){tierNext = (float)activeTier->requirementPowerLevel;}
-		if(activeTier->requirementFatigue && activeTier->requirementFatigue > tierNext){tierNext = (float)activeTier->requirementPowerLevel;}
-		if(activeTier->requirementPowerLevelMaximum && activeTier->requirementPowerLevelMaximum > tierNext){tierNext = (float)activeTier->requirementPowerLevelMaximum;}
+		if(activeTier->requirementCurrent && activeTier->requirementCurrent > tierNext){tierNext = (float)activeTier->requirementCurrent;}
+		if(activeTier->requirementFatigue && activeTier->requirementFatigue > tierNext){tierNext = (float)activeTier->requirementFatigue;}
+		if(activeTier->requirementMaximum && activeTier->requirementMaximum > tierNext){tierNext = (float)activeTier->requirementMaximum;}
+		if(activeTier->requirementHealth && activeTier->requirementHealth > tierNext){tierNext = (float)activeTier->requirementHealth;}
 		if(tierNext){
 			tierNext = tierNext / (float)ps->powerLevel[maximum];
 			if(tierNext < 1.0){
@@ -676,9 +678,12 @@ static void CG_DrawStatusBar( void ) {
 		CG_DrawPic(243,433,40,44,cgs.media.breakLimitShader);
 	}
 	if(ps->powerLevel[current] == 9001){
-		powerLevelString = "Over NINE-THOUSAND!!!";
-		powerLevelOffset = 19 * 8;
+		powerLevelString = "Over ^3NINE-THOUSAND!!!";
 	}
+	if(powerLevelDisplay >= 1000000){	
+		powerLevelString = va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0);
+	}
+	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
 	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
 }
@@ -2798,7 +2803,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawRadar();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if (!cg.showScores && !(cg.snap->ps.powerups[PW_TRANSFORM] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
+		if (!cg.showScores && !(cg.snap->ps.timers[transform] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
 			CG_DrawStatusBar();
 			CG_DrawRadar();
 			CG_DrawAmmoWarning();  

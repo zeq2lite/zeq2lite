@@ -685,7 +685,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 	s->charge1.chBase = ps->stats[chargePercentPrimary];
 	s->charge2.chBase = ps->stats[chargePercentSecondary];
 	s->groundEntityNum = ps->groundEntityNum;
-	s->tier = ps->stats[tierCurrent];
+	s->tier = ps->powerLevel[tierCurrent];
 	s->powerups = 0;
 	for(i = 0;i < MAX_POWERUPS;i++){
 		if ( ps->powerups[ i ] ) {

@@ -263,9 +263,7 @@ static void CG_ConfigStringModified( void ) {
 	str = CG_ConfigString( num );
 
 	// do something with it if necessary
-	if ( num == CS_MUSIC ) {
-		CG_StartMusic();
-	} else if ( num == CS_SERVERINFO ) {
+	if ( num == CS_SERVERINFO ) {
 		CG_ParseServerinfo();
 	} else if ( num == CS_WARMUP ) {
 		CG_ParseWarmup();
@@ -443,8 +441,6 @@ static void CG_MapRestart( void ) {
 	cgs.voteTime = 0;
 
 	cg.mapRestart = qtrue;
-
-	CG_StartMusic();
 
 	trap_S_ClearLoopingSounds(qtrue);
 

@@ -385,7 +385,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	if(ps->lockedTarget>0){
 		enemyPS = &g_entities[ps->lockedTarget-1].client->ps;
 	}
-	tier = ps->stats[tierCurrent];
+	tier = ps->powerLevel[tierCurrent];
 	if ( oldEventSequence < client->ps.eventSequence - MAX_PS_EVENTS ) {
 		oldEventSequence = client->ps.eventSequence - MAX_PS_EVENTS;
 	}
@@ -399,18 +399,18 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			FireWeapon(ent,qfalse);
 			break;
 		case EV_AIRBRAKE:
-			if(ps->powerups[PW_KNOCKBACK] >= 4000) {
+			if(ps->timers[knockback] >= 4000) {
 				amount = client->tiers[tier].airBrakeCost * 2;
 				ps->powerLevel[useFatigue] += amount;
-			} else if((pm->ps->powerups[PW_KNOCKBACK] < 4000) && (pm->ps->powerups[PW_KNOCKBACK] > 3500)){
-			} else if(ps->powerups[PW_KNOCKBACK] <= 3500){
-				if(ps->powerups[PW_KNOCKBACK] <= 1000){
+			} else if((pm->ps->timers[knockback] < 4000) && (pm->ps->timers[knockback] > 3500)){
+			} else if(ps->timers[knockback] <= 3500){
+				if(ps->timers[knockback] <= 1000){
 					amount = client->tiers[tier].airBrakeCost / 6;
 				}
-				else if(ps->powerups[PW_KNOCKBACK] <= 1500){
+				else if(ps->timers[knockback] <= 1500){
 					amount = client->tiers[tier].airBrakeCost / 4;
 				}
-				else if(ps->powerups[PW_KNOCKBACK] <= 2500){
+				else if(ps->timers[knockback] <= 2500){
 					amount = client->tiers[tier].airBrakeCost / 2;
 				}
 				else {
@@ -418,13 +418,10 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 				}
 				ps->powerLevel[useFatigue] += amount;
 			}
-			pm->ps->powerups[PW_KNOCKBACK] = -500;
+			pm->ps->timers[knockback] = -500;
 			break;
 		case EV_ZANZOKEN_START:
-			ps->powerups[PW_ZANZOKEN] = client->tiers[tier].zanzokenDistance;
-			ps->powerLevel[useFatigue] += client->tiers[tier].zanzokenCost;
-			if(!ps->bitFlags & usingMelee){
-			}
+			if(!ps->bitFlags & usingMelee){}
 			break;
 		case EV_ALTFIRE_WEAPON:
 			FireWeapon(ent,qtrue);
@@ -576,7 +573,6 @@ void ClientThink_real( gentity_t *ent ) {
 		client->ps.pm_type = PM_NORMAL;
 	}
 	ent->s.playerBitFlags = client->ps.bitFlags;
-	client->ps.stats[speed] = client->tiers[client->ps.stats[tierCurrent]].speed;
 	G_LinkUserWeaponData( &(client->ps) );
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {

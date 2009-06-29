@@ -9,6 +9,7 @@
 #include "cg_userweapons.h"
 #include "cg_auras.h"
 #include "cg_tiers.h"
+#include "cg_music.h"
 // END ADDING
 #include "cg_public.h"
 
@@ -565,7 +566,6 @@ typedef struct {
 	int			clientFrame;		// incremented each frame
 
 	int			clientNum;
-
 	qboolean	demoPlayback;
 	qboolean	levelShot;			// taking a level menu screenshot
 	int			deferredPlayerLoading;
@@ -1180,7 +1180,8 @@ typedef struct {
 	const lensFlareEffect_t* lensFlareEffectExplosion4;
 
 	// media
-	cgMedia_t		media;
+	cgMedia_t	media;
+	musicSystem music;
 
 } cgs_t;
 
@@ -1333,8 +1334,6 @@ const char *CG_Argv( int arg );
 
 void QDECL CG_Printf( const char *msg, ... );
 void QDECL CG_Error( const char *msg, ... );
-
-void CG_StartMusic( void );
 
 void CG_UpdateCvars( void );
 
@@ -1684,6 +1683,7 @@ int			trap_Milliseconds( void );
 void		trap_Cvar_Register( vmCvar_t *vmCvar, const char *varName, const char *defaultValue, int flags );
 void		trap_Cvar_Update( vmCvar_t *vmCvar );
 void		trap_Cvar_Set( const char *var_name, const char *value );
+float		trap_Cvar_VariableValue( const char *var_name );
 void		trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 
 // ServerCommand and ConsoleCommand parameter access

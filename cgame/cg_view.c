@@ -579,17 +579,17 @@ static void CG_OffsetThirdPersonView2( void )
 		}
 	}
 	// TRANSFORMATIONS
-	if(cg.snap->ps.powerups[PW_TRANSFORM] > 1){
+	if(cg.snap->ps.timers[transform] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
 			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;
-			ci->transformLength = cg.snap->ps.powerups[PW_TRANSFORM];
+			ci->transformLength = cg.snap->ps.timers[transform];
 			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
 			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
 			ci->cameraBackup[2] = cg_thirdPersonRange.value;
 		}
-		transformPercent = 1.0 - ((float)cg.snap->ps.powerups[PW_TRANSFORM] / (float)ci->transformLength);
+		transformPercent = 1.0 - ((float)cg.snap->ps.timers[transform] / (float)ci->transformLength);
 		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
 		pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
 		zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
@@ -756,17 +756,17 @@ static void CG_OffsetThirdPersonView( void ) {
 		cg_thirdPersonRange.value = 64;
 	} else
 	// TRANSFORMATIONS
-	if(ps->powerups[PW_TRANSFORM] > 1){
+	if(ps->timers[transform] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
 			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;
-			ci->transformLength = ps->powerups[PW_TRANSFORM];
+			ci->transformLength = ps->timers[transform];
 			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
 			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
 			ci->cameraBackup[2] = cg_thirdPersonRange.value;
 		}
-		transformPercent = 1.0 - ((float)ps->powerups[PW_TRANSFORM] / (float)ci->transformLength);
+		transformPercent = 1.0 - ((float)ps->timers[transform] / (float)ci->transformLength);
 		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
 		pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
 		zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
@@ -2492,6 +2492,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	}
 	// actually issue the rendering calls
 	CG_DrawActive( stereoView );
+	CG_CheckMusic();
 	if ( cg_stats.integer ) {
 		CG_Printf( "cg.clientFrame:%i\n", cg.clientFrame );
 	}

@@ -4,10 +4,13 @@ void syncTier(gclient_t *client){
 	tierConfig_g *tier;
 	playerState_t *ps;
 	ps = &client->ps;
-	tier = &client->tiers[ps->stats[tierCurrent]];
-	ps->breakLimitRate = tier->breakLimitRate * g_breakLimitRate.value;
-	ps->stats[speed] = tier->speed;
-	ps->stats[zanzokenSpeed] = tier->zanzokenSpeed;
+	tier = &client->tiers[ps->powerLevel[tierCurrent]];
+	ps->breakLimitRate = (float)tier->breakLimitRate * g_breakLimitRate.value;
+	ps->stats[speed] = tier->speed * 450.0;
+	ps->stats[zanzokenDistance] = tier->zanzokenDistance * 500.0;
+	ps->stats[zanzokenSpeed] = tier->zanzokenSpeed * 4000.0;
+	ps->stats[zanzokenCost] = tier->zanzokenCost;
+	ps->stats[airBrakeCost] = tier->airBrakeCost;
 	ps->stats[meleeDefense] = tier->meleeDefense;
 	ps->stats[meleeAttack] = tier->meleeAttack;
 	ps->stats[energyDefense] = tier->energyDefense;
@@ -16,41 +19,41 @@ void syncTier(gclient_t *client){
 	ps->powerLevel[drainCurrent] = tier->effectCurrent;
 	ps->powerLevel[drainFatigue] = tier->effectFatigue;
 	ps->powerLevel[drainHealth] = tier->effectHealth;
+	ps->powerLevel[drainMaximum] = tier->effectMaximum;
 }
 void checkTier(gclient_t *client){
 	int tier;
 	playerState_t *ps;
 	tierConfig_g *nextTier,*baseTier;
 	ps = &client->ps;
-	if(ps->powerups[PW_TRANSFORM]){return;}
+	if(ps->timers[transform]){return;}
 	while(1){
-		tier = ps->stats[tierCurrent];
+		tier = ps->powerLevel[tierCurrent];
 		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
 			nextTier = &client->tiers[tier+1];
-			if(((nextTier->requirementButton && ps->bitFlags & keyTierUp) ||
-			   (!nextTier->requirementButton && !(ps->bitFlags & keyTierUp))) &&
-			   (ps->powerLevel[current] >= nextTier->requirementPowerLevelCurrent) &&
+			if(((nextTier->requirementButton && (ps->bitFlags & keyTierUp)) || !nextTier->requirementButton) &&
+			   (ps->powerLevel[current] >= nextTier->requirementCurrent) &&
 			   (ps->powerLevel[fatigue] >= nextTier->requirementFatigue) &&
 			   (ps->powerLevel[health] >= nextTier->requirementHealth) &&
-			   (ps->powerLevel[maximum] >= nextTier->requirementPowerLevelMaximum)){
-				ps->powerups[PW_TRANSFORM] = 1;
-				++ps->stats[tierCurrent];
-				if(tier + 1 > ps->stats[tierTotal]){
-					ps->stats[tierTotal] = ps->stats[tierCurrent];
-					ps->powerups[PW_TRANSFORM] = client->tiers[tier+1].transformTime;
+			   (ps->powerLevel[maximum] >= nextTier->requirementMaximum)){
+				ps->timers[transform] = 1;
+				++ps->powerLevel[tierCurrent];
+				if(tier + 1 > ps->powerLevel[tierTotal]){
+					ps->powerLevel[tierTotal] = ps->powerLevel[tierCurrent];
+					ps->timers[transform] = client->tiers[tier+1].transformTime;
 				}
 				continue;
 			}
 		}
 		if(tier > 0){
 			baseTier = &client->tiers[tier];
-			if(((baseTier->requirementButton && ps->bitFlags & keyTierDown) ||
-			   (!baseTier->requirementButton && !(ps->bitFlags & keyTierDown))) ||
-			   (ps->powerLevel[current] < baseTier->sustainPowerLevel) ||
+			if(((baseTier->requirementButton && (ps->bitFlags & keyTierDown)) || !baseTier->requirementButton) ||
+			   (ps->powerLevel[current] < baseTier->sustainCurrent) ||
 			   (ps->powerLevel[health] < baseTier->sustainHealth) ||
-			   (ps->powerLevel[fatigue] < baseTier->sustainFatigue)){
-				ps->powerups[PW_TRANSFORM] = -1;
-				--ps->stats[tierCurrent];
+			   (ps->powerLevel[fatigue] < baseTier->sustainFatigue) ||
+			   (ps->powerLevel[maximum] < baseTier->sustainMaximum)){
+				ps->timers[transform] = -1;
+				--ps->powerLevel[tierCurrent];
 				continue;
 			}
 		}
@@ -93,7 +96,7 @@ void parseTier(char *path,tierConfig_g *tier){
 			else if(!Q_stricmp(token,"tierSpeed")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->speed = atoi(token);
+				tier->speed = atof(token);
 			}
 			else if(!Q_stricmp(token,"percentMeleeAttack")){
 				token = COM_Parse(&parse);
@@ -123,27 +126,27 @@ void parseTier(char *path,tierConfig_g *tier){
 			else if(!Q_stricmp(token,"tierKnockBackPower")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->knockBackPower = atoi(token);
+				tier->knockBackPower = atof(token);
 			}
 			else if(!Q_stricmp(token,"tierAirBrakeCost")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->airBrakeCost = atoi(token);
+				tier->airBrakeCost = atof(token);
 			}
 			else if(!Q_stricmp(token,"tierZanzokenCost")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->zanzokenCost = atoi(token);
+				tier->zanzokenCost = atof(token);
 			}
 			else if(!Q_stricmp(token,"tierZanzokenSpeed")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->zanzokenSpeed = atoi(token);
+				tier->zanzokenSpeed = atof(token);
 			}
 			else if(!Q_stricmp(token,"tierZanzokenDistance")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->zanzokenDistance = atoi(token);
+				tier->zanzokenDistance = atof(token);
 			}
 			else if(!Q_stricmp(token,"breakLimitRate")){
 				token = COM_Parse(&parse);
@@ -170,15 +173,15 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->effectHealth = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementPowerLevelCurrent")){
+			else if(!Q_stricmp(token,"requirementCurrent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementPowerLevelCurrent = atoi(token);
+				tier->requirementCurrent = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementPowerLevelMaximum")){
+			else if(!Q_stricmp(token,"requirementMaximum")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementPowerLevelMaximum = atoi(token);
+				tier->requirementMaximum = atoi(token);
 			}
 			else if(!Q_stricmp(token,"requirementHealth")){
 				token = COM_Parse(&parse);
@@ -190,10 +193,10 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->requirementFatigue = atoi(token);
 			}
-			else if(!Q_stricmp(token,"sustainPowerLevel")){
+			else if(!Q_stricmp(token,"sustainCurrent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->sustainPowerLevel = atoi(token);
+				tier->sustainCurrent = atoi(token);
 			}
 			else if(!Q_stricmp(token,"sustainHealth")){
 				token = COM_Parse(&parse);
@@ -204,6 +207,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->sustainFatigue = atoi(token);
+			}
+			else if(!Q_stricmp(token,"sustainMaximum")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainMaximum = atoi(token);
 			}
 			else if(!Q_stricmp(token,"transformTime")){
 				token = COM_Parse(&parse);

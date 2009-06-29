@@ -41,7 +41,11 @@ void	trap_Cvar_Update( vmCvar_t *vmCvar ) {
 void	trap_Cvar_Set( const char *var_name, const char *value ) {
 	syscall( CG_CVAR_SET, var_name, value );
 }
-
+float trap_Cvar_VariableValue( const char *var_name ) {
+	int temp;
+	temp = syscall( UI_CVAR_VARIABLEVALUE, var_name );
+	return (*(float*)&temp);
+}
 void trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize ) {
 	syscall( CG_CVAR_VARIABLESTRINGBUFFER, var_name, buffer, bufsize );
 }

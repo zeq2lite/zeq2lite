@@ -2,11 +2,14 @@ typedef struct{
 	char *name;
 	qhandle_t icon;
 	float hudMultiplier;
-	int sustainPowerLevel;
+	int sustainCurrent;
 	int sustainFatigue;
-	int requirementPowerLevel;
+	int sustainHealth;
+	int sustainMaximum;
+	int requirementCurrent;
 	int requirementFatigue;
-	int requirementPowerLevelMaximum;
+	int requirementHealth;
+	int requirementMaximum;
 	int transformCameraDefault[3];
 	int transformCameraOrbit[2];
 	int transformCameraZoom[2];

@@ -35,5 +35,6 @@ cg_weapGfxParser
 cg_weapGfxScanner
 cg_weapGfxAttributes
 cg_tiers
+cg_music
 cg_frameHist
 cg_motionblur

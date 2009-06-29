@@ -218,14 +218,16 @@ void Pmove (pmove_t *pmove);
 
 typedef enum {
 	speed,
+	zanzokenCost,
 	zanzokenSpeed,
+	zanzokenDistance,
+	knockbackPower,
+	airBrakeCost,
 	meleeAttack,
 	meleeDefense,
 	energyAttack,
 	energyDefense,
 	energyCost,
-	tierCurrent,
-	tierTotal,
 	chargePercentPrimary,	// % of primary attack charged
 	chargePercentSecondary,	// % of secondary attack charged
 	skills,					// 16 bit bitmask
@@ -241,8 +243,11 @@ typedef enum{
 	useFatigue,
 	useHealth,
 	drainCurrent,
+	drainMaximum,
 	drainFatigue,
 	drainHealth,
+	tierCurrent,
+	tierTotal,
 	damageFromEnergy,
 	damageFromMelee
 }powerLevel_t;
@@ -250,26 +255,26 @@ typedef enum{
 typedef enum{
 	updateTier,
 	updateMelee,
+	transform,
+	knockback,
+	zanzoken,
+	attack1,
+	attack2,
+	melee1,
+	melee2,
 	powerRaise,
-	powerAuto
+	powerAuto,
+	freeze,
+	stun
 }timers_t;
 
 typedef enum {
 	PW_NONE,
 	PW_BOOST,
 	PW_INVULNERABILITY,
-	PW_ZANZOKEN,
-	PW_TRANSFORM,
-	PW_MELEE1,
-	PW_MELEE2,
 	PW_STATE,
 	PW_MELEE_STATE,
-	PW_DEFENSE,
-	PW_ATTACK1,
-	PW_ATTACK2,
-	PW_STUN,
-	PW_FREEZE,
-	PW_KNOCKBACK,
+	PW_KNOCKBACK_SPEED,
 	PW_NUM_POWERUPS
 }powerup_t;
 

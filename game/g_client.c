@@ -1020,7 +1020,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.running = g_running.value;
 
 	// ADDING FOR ZEQ2
-	client->ps.stats[tierCurrent] = 0;
+	client->ps.powerLevel[tierCurrent] = 0;
 	if(g_powerLevel.value > 32767){
 		g_powerLevel.value = 32767;
 	}

@@ -76,6 +76,8 @@ if "%1"=="TA" goto TA
 @if errorlevel 1 goto quit
 %cc% ../cg_tiers.c
 @if errorlevel 1 goto quit
+%cc% ../cg_music.c
+@if errorlevel 1 goto quit
 %cc% ../cg_frameHist.c
 @if errorlevel 1 goto quit
 %cc% ../cg_motionblur.c

@@ -19,7 +19,7 @@ void CG_MotionBlur( void ) {
 	//int i;	
 
 		
-	if ( !cg.snap->ps.powerups[PW_BOOST] && cg.snap->ps.powerups[PW_ZANZOKEN] < 1 && !cg.snap->ps.powerups[PW_TRANSFORM]) {
+	if ( !cg.snap->ps.powerups[PW_BOOST] && cg.snap->ps.timers[zanzoken] < 1 && !cg.snap->ps.timers[transform]) {
 		cg.refdef.rdflags &= ~RDF_MOTIONBLUR;
 
 		/*

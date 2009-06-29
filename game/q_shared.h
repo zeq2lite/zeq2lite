@@ -1206,6 +1206,7 @@ typedef struct playerState_s {
 	int			bitFlags;
 
 	int			stats[MAX_STATS];
+	//float		baseStats[MAX_STATS];
 	int			powerLevel[MAX_POWERSTATS];
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
@@ -1258,8 +1259,8 @@ typedef struct playerState_s {
 #define BUTTON_BOOST		128			// Boost while held down
 #define BUTTON_LIGHTSPEED	512			// Activate lightspeed movement (Zanzoken)
 #define BUTTON_ALT_ATTACK	1024		// Alternate fire
-#define BUTTON_POWERLEVEL	4096		// Raise power level
-#define BUTTON_BLOCK		8192		// Lower power level
+#define BUTTON_POWERLEVEL	4096		
+#define BUTTON_BLOCK		8192		
 #define BUTTON_JUMP			16384		// jump, seperated from up move
 // END ADDING
 

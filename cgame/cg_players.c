@@ -2445,8 +2445,8 @@ void CG_Player( centity_t *cent ) {
 	}
 	else{CG_AuraEnd(cent);}
 	CG_AddAuraToScene(cent);
-	if(ps->powerups[PW_KNOCKBACK]){
-		if(ps->powerups[PW_KNOCKBACK] > 0){
+	if(ps->timers[knockback]){
+		if(ps->timers[knockback] > 0){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
 			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
 		}

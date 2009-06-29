@@ -130,7 +130,7 @@ void parseTier(char *path,tierConfig_cg *tier){
 			else if(!Q_stricmp(token,"tierName")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				//tier->name = token;
+				tier->name = token;
 			}
 			else if(!Q_stricmp(token,"tierIcon")){
 				token = COM_Parse(&parse);
@@ -170,30 +170,45 @@ void parseTier(char *path,tierConfig_cg *tier){
 					tier->transformCameraPan[i] = atoi(token);
 				}
 			}
-			else if(!Q_stricmp(token,"sustainPowerLevel")){
+			else if(!Q_stricmp(token,"sustainCurrent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->sustainPowerLevel = atoi(token);
+				tier->sustainCurrent = atoi(token);
+			}
+			else if(!Q_stricmp(token,"sustainMaximum")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainMaximum = atoi(token);
 			}
 			else if(!Q_stricmp(token,"sustainFatigue")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->sustainFatigue = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementPowerLevelCurrent")){
+			else if(!Q_stricmp(token,"sustainHealth")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementPowerLevel = atoi(token);
+				tier->sustainHealth = atoi(token);
+			}
+			else if(!Q_stricmp(token,"requirementCurrent")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementCurrent = atoi(token);
 			}
 			else if(!Q_stricmp(token,"requirementFatigue")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->requirementFatigue = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementPowerLevelMaximum")){
+			else if(!Q_stricmp(token,"requirementMaximum")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementPowerLevelMaximum = atoi(token);
+				tier->requirementMaximum = atoi(token);
+			}
+			else if(!Q_stricmp(token,"requirementHealth")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementHealth = atoi(token);
 			}
 			else if(!Q_stricmp(token,"transformSoundFirst")){
 				token = COM_Parse(&parse);
