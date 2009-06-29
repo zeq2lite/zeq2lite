@@ -6,7 +6,7 @@ GAME OPTIONS MENU
 #define ART_FRAMER				"menu/art/frame1_r"
 #define ART_BACK0				"menu/art/back_0"
 #define ART_BACK1				"menu/art/back_1"
-#define PREFERENCES_X_POS		360
+#define PREFERENCES_X_POS		320
 #define ID_CROSSHAIR			127
 #define ID_CAMERASTYLE			128
 #define	ID_BEAMCONTROL			129
@@ -19,6 +19,9 @@ GAME OPTIONS MENU
 #define ID_USERUNANIMATION		136
 #define ID_ALLOWDOWNLOAD		137
 #define ID_BACK					138
+#define ID_CROSSHAIRSIZE		139
+#define ID_PARTICLESOPTIMISE	140
+#define ID_PARTICLESQUALITY		141
 #define	NUM_CROSSHAIRS			10
 typedef struct{
 	menuframework_s		menu;
@@ -26,8 +29,11 @@ typedef struct{
 	menubitmap_s		framel;
 	menubitmap_s		framer;
 	menulist_s			crosshair;
+	menulist_s			crosshairSize;
 	menulist_s			camerastyle;
 	menulist_s			beamdetail;
+	menulist_s			particlesOptimise;
+	menulist_s			particlesQuality;
 	menuradiobutton_s	wallmarks;
 	menuradiobutton_s	dynamiclights;
 	menuradiobutton_s	identifytarget;
@@ -40,13 +46,19 @@ typedef struct{
 	qhandle_t			crosshairShader[NUM_CROSSHAIRS];
 } preferences_t;
 static preferences_t s_preferences;
-static const char *beamdetail_names[] = {"Low","Medium","High","Very High",	0};
+static const char *particlesQuality_names[] = {"Sprites","Models",0};
+static const char *particlesOptimise_names[] = {"Remove After Awhile","Remove On Stop",	0};
+static const char *beamdetail_names[] = {"Very Low","Low","Medium","High","Very High", 0};
 static const char *beamcontrol_names[] = {"Beam Head Focus","Crosshair Focus",0};
 static const char *camerastyle_names[] = {"Locked Behind Head","Locked Behind Character",0};
+static const char *crosshairSize_names[] = {"Tiny!","Very Small","Small","Normal","Large","Extra Large!","Extra Extra Large?!",0};
 static void Preferences_SetMenuItems( void ) {
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
 	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
-	s_preferences.beamdetail.curvalue		= Com_Clamp( 0, 3, trap_Cvar_VariableValue( "r_beamDetail" ) );
+	s_preferences.crosshairSize.curvalue	= Com_Clamp( 0, 6, trap_Cvar_VariableValue( "cg_crosshairSize" ) );
+	s_preferences.beamdetail.curvalue		= Com_Clamp( 0, 4, trap_Cvar_VariableValue( "r_beamDetail" ) );
+	s_preferences.particlesQuality.curvalue	= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_particlesQuality" ) );
+	s_preferences.particlesOptimise.curvalue= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_particlesStop" ) );
 	s_preferences.wallmarks.curvalue		= trap_Cvar_VariableValue( "cg_marks" ) != 0;
 	s_preferences.identifytarget.curvalue	= trap_Cvar_VariableValue( "cg_drawCrosshairNames" ) != 0;
 	s_preferences.dynamiclights.curvalue	= trap_Cvar_VariableValue( "r_dynamiclight" ) != 0;
@@ -68,6 +80,9 @@ static void Preferences_Event( void* ptr, int notification ) {
 		}
 		trap_Cvar_SetValue( "cg_drawCrosshair", s_preferences.crosshair.curvalue );
 		break;
+	case ID_CROSSHAIRSIZE:
+		trap_Cvar_SetValue( "cg_crosshairSize", s_preferences.crosshairSize.curvalue);
+		break;
 	case ID_CAMERASTYLE:
 		trap_Cvar_SetValue( "cg_thirdPersonCamera", s_preferences.camerastyle.curvalue );
 		break;
@@ -75,7 +90,13 @@ static void Preferences_Event( void* ptr, int notification ) {
 		trap_Cvar_SetValue( "cg_beamControl", s_preferences.beamcontrol.curvalue );
 		break;
 	case ID_BEAMDETAIL:
-		trap_Cvar_SetValue( "r_beamDetail", s_preferences.beamdetail.curvalue * 10 + 10);
+		trap_Cvar_SetValue( "r_beamDetail", s_preferences.beamdetail.curvalue);
+		break;
+	case ID_PARTICLESQUALITY:
+		trap_Cvar_SetValue( "cg_particlesQuality", s_preferences.particlesQuality.curvalue );
+		break;
+	case ID_PARTICLESOPTIMISE:
+		trap_Cvar_SetValue( "cg_particlesStop", s_preferences.particlesOptimise.curvalue );
 		break;
 	case ID_WALLMARKS:
 		trap_Cvar_SetValue( "cg_marks", s_preferences.wallmarks.curvalue );
@@ -111,7 +132,9 @@ static void Crosshair_Draw( void *self ) {
 	float		*color;
 	int			x, y;
 	int			style;
+	int			crosshairSizeImage;
 	qboolean	focus;
+	crosshairSizeImage = trap_Cvar_VariableValue( "cg_crosshairSize" ) * 8 + 8;
 	s = (menulist_s *)self;
 	x = s->generic.x;
 	y =	s->generic.y;
@@ -138,7 +161,7 @@ static void Crosshair_Draw( void *self ) {
 	}
 	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
 	if(!s->curvalue){return;}
-	UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y - 4, 24, 24, s_preferences.crosshairShader[s->curvalue] );
+	UI_DrawHandlePic( x + SMALLCHAR_WIDTH + 46 - 0.5f * crosshairSizeImage, y - 0.5f * crosshairSizeImage, crosshairSizeImage, crosshairSizeImage, s_preferences.crosshairShader[s->curvalue] );
 }
 static void Preferences_MenuInit( void ) {
 	int	y;
@@ -167,10 +190,10 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.framer.width  	   = 256;
 	s_preferences.framer.height  	   = 334;
 
-	y = 144;
+	y = 128;
 	s_preferences.crosshair.generic.type		= MTYPE_TEXT;
 	s_preferences.crosshair.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT|QMF_NODEFAULTINIT|QMF_OWNERDRAW;
-	s_preferences.crosshair.generic.x			= PREFERENCES_X_POS;
+	s_preferences.crosshair.generic.x			= PREFERENCES_X_POS - 32;
 	s_preferences.crosshair.generic.y			= y;
 	s_preferences.crosshair.generic.name		= "Crosshair:";
 	s_preferences.crosshair.generic.callback	= Preferences_Event;
@@ -178,10 +201,20 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.crosshair.generic.id			= ID_CROSSHAIR;
 	s_preferences.crosshair.generic.top			= y - 4;
 	s_preferences.crosshair.generic.bottom		= y + 20;
-	s_preferences.crosshair.generic.left		= PREFERENCES_X_POS - ( ( strlen(s_preferences.crosshair.generic.name) + 1 ) * SMALLCHAR_WIDTH );
-	s_preferences.crosshair.generic.right		= PREFERENCES_X_POS + 48;
+	s_preferences.crosshair.generic.left		= PREFERENCES_X_POS - ( ( strlen(s_preferences.crosshair.generic.name) + 1 ) * SMALLCHAR_WIDTH ) - 32;
+	s_preferences.crosshair.generic.right		= PREFERENCES_X_POS + 48 - 32;
 
-	y += BIGCHAR_HEIGHT+2+4;
+	y += BIGCHAR_HEIGHT+2+32;
+	s_preferences.crosshairSize.generic.type		= MTYPE_SPINCONTROL;
+	s_preferences.crosshairSize.generic.name		= "Crosshair Size:";
+	s_preferences.crosshairSize.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.crosshairSize.generic.callback	= Preferences_Event;
+	s_preferences.crosshairSize.generic.id			= ID_CROSSHAIRSIZE;
+	s_preferences.crosshairSize.generic.x			= PREFERENCES_X_POS;
+	s_preferences.crosshairSize.generic.y			= y;
+	s_preferences.crosshairSize.itemnames			= crosshairSize_names;
+
+	y += BIGCHAR_HEIGHT+2;
 	s_preferences.camerastyle.generic.type        = MTYPE_SPINCONTROL;
 	s_preferences.camerastyle.generic.name	      = "Flight Camera style:";
 	s_preferences.camerastyle.generic.flags	      = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -210,6 +243,26 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.beamdetail.generic.x	              = PREFERENCES_X_POS;
 	s_preferences.beamdetail.generic.y	              = y;
 	s_preferences.beamdetail.itemnames				  = beamdetail_names;
+
+	y += BIGCHAR_HEIGHT+2;
+	s_preferences.particlesQuality.generic.type			= MTYPE_SPINCONTROL;
+	s_preferences.particlesQuality.generic.name			= "Particles Quality:";
+	s_preferences.particlesQuality.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.particlesQuality.generic.callback		= Preferences_Event;
+	s_preferences.particlesQuality.generic.id			= ID_PARTICLESQUALITY;
+	s_preferences.particlesQuality.generic.x			= PREFERENCES_X_POS;
+	s_preferences.particlesQuality.generic.y			= y;
+	s_preferences.particlesQuality.itemnames			= particlesQuality_names;
+
+	y += BIGCHAR_HEIGHT+2;
+	s_preferences.particlesOptimise.generic.type		= MTYPE_SPINCONTROL;
+	s_preferences.particlesOptimise.generic.name		= "Particles Optimise:";
+	s_preferences.particlesOptimise.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.particlesOptimise.generic.callback	= Preferences_Event;
+	s_preferences.particlesOptimise.generic.id			= ID_PARTICLESOPTIMISE;
+	s_preferences.particlesOptimise.generic.x			= PREFERENCES_X_POS;
+	s_preferences.particlesOptimise.generic.y			= y;
+	s_preferences.particlesOptimise.itemnames			= particlesOptimise_names;
 
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.motionblur.generic.type     = MTYPE_RADIOBUTTON;
@@ -290,9 +343,12 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.framel );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.framer );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshair );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshairSize );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.camerastyle );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.beamcontrol );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.beamdetail );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesQuality );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesOptimise );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.motionblur );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.wallmarks );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.dynamiclights );

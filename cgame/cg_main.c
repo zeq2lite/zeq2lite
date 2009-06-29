@@ -218,7 +218,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_drawCrosshair, "cg_drawCrosshair", "4", CVAR_ARCHIVE },
 	{ &cg_drawCrosshairNames, "cg_drawCrosshairNames", "1", CVAR_ARCHIVE },
 	{ &cg_drawRewards, "cg_drawRewards", "1", CVAR_ARCHIVE },
-	{ &cg_crosshairSize, "cg_crosshairSize", "24", CVAR_ARCHIVE },
+	{ &cg_crosshairSize, "cg_crosshairSize", "3", CVAR_ARCHIVE },
 	{ &cg_crosshairMargin, "cg_crosshairMargin", "4", CVAR_ARCHIVE },
 	{ &cg_crosshairBars, "cg_crosshairBars", "0", CVAR_ARCHIVE },
 	{ &cg_crosshairHealth, "cg_crosshairHealth", "1", CVAR_ARCHIVE },
@@ -324,7 +324,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_lockonDistance, "cg_lockonDistance", "150", CVAR_CHEAT },
 	{ &cg_tailDetail,	"cg_tailDetail", "50", CVAR_ARCHIVE},
 	{ &cg_verboseParse, "cg_verboseParse", "0", CVAR_ARCHIVE},
-	{ &r_beamDetail,	"r_beamDetail", "30", CVAR_ARCHIVE},
+	{ &r_beamDetail,	"r_beamDetail", "2", CVAR_ARCHIVE},
 	{ &cg_soundAttenuation, "cg_soundAttenuation", "0.0001", CVAR_CHEAT},
 	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "0", CVAR_ARCHIVE},
 	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE},
@@ -1508,7 +1508,6 @@ static void CG_RegisterGraphics( void ) {
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
 		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("interface/hud/crosshair%c", 'a'+i) );
 	}
-	cgs.media.crosshairLockedShader = trap_R_RegisterShader("crosshairLock");
 	cgs.media.backTileShader = trap_R_RegisterShader( "gfx/2d/backtile" );
 	cgs.media.noammoShader = trap_R_RegisterShader( "icons/noammo" );
 

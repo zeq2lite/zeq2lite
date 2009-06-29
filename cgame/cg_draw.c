@@ -1839,10 +1839,16 @@ static void CG_DrawCrosshair(void) {
 	float			f;
 	float			x, y;
 	int				ca;
+	int				i;
 	trace_t			trace;
 	playerState_t	*ps;
 	vec3_t			muzzle, forward, up;
 	vec3_t			start, end;
+	vec4_t			lockOnEnemyColor	= {1.0f,0.0f,0.0f,1.0f};
+	vec4_t			lockOnAllyColor		= {0.0f,1.0f,0.0f,1.0f};
+	vec4_t			chargeColor			= {0.5f,0.5f,1.0f,1.0f};
+
+	radar_t			cg_playerOrigins[MAX_CLIENTS];
 
 	if ( !cg_drawCrosshair.integer ) {
 		return;
@@ -1851,7 +1857,6 @@ static void CG_DrawCrosshair(void) {
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
 		return;
 	}
-
 
 	ps = &cg.predictedPlayerState;
 
@@ -1872,7 +1877,7 @@ static void CG_DrawCrosshair(void) {
 		return;
 	}
 
-	w = h = cg_crosshairSize.value;
+	w = h = (cg_crosshairSize.value * 8 + 8);
 
 	// pulse the size of the crosshair when picking up items
 	f = cg.time - cg.itemPickupBlendTime;
@@ -1892,14 +1897,27 @@ static void CG_DrawCrosshair(void) {
 	}
 
 	ca = cg_drawCrosshair.integer;
+
 	if (ca < 0) {
 		ca = 0;
 	}
+
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
-	if(cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS || ps->clientLockedTarget > 0){
-		hShader = cgs.media.crosshairLockedShader;
+
+	if ( cg.snap->ps.ammo[WPbitFlags] & WPF_READY || cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_READY) {
+		trap_R_SetColor( chargeColor );
+	} else if (cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS || ps->clientLockedTarget > 0) {
+		if ( cgs.clientinfo[cg.crosshairClientNum].team == cg.snap->ps.persistant[PERS_TEAM] && cgs.clientinfo[cg.crosshairClientNum].team != TEAM_FREE  ) {
+			trap_R_SetColor( lockOnAllyColor );
+		} else {
+			trap_R_SetColor( lockOnEnemyColor );
+		}
+	} else {
+		trap_R_SetColor( NULL );
 	}
+
 	CG_DrawPic( x - 0.5f * w, y - 0.5f * h, w, h, hShader );
+
 	trap_R_SetColor( NULL );
 
 	CG_DrawCrosshairChargeBars( x, y );	
@@ -1935,7 +1953,7 @@ static void CG_ScanForCrosshairEntity(void) {
 	
 	CG_Trace(&trace,start,minSize,maxSize,end,cg.snap->ps.clientNum,CONTENTS_BODY);
 
-	if (trace.entityNum>=MAX_CLIENTS){cg.crosshairClientNum=0;return;}
+	if (trace.entityNum>=MAX_CLIENTS){cg.crosshairClientNum= -1;return;}
 
 	cg.crosshairClientNum=trace.entityNum;
 	cg.crosshairClientTime=cg.time;
@@ -1955,21 +1973,13 @@ static void CG_DrawCrosshairNames( void ) {
 	if ( !cg_drawCrosshair.integer ) {
 		return;
 	}
-	if ( !cg_drawCrosshairNames.integer ) {
-		return;
-	}
-
-	// ADDING FOR ZEQ2
-
-	// NOTE: The crosshair is still renderable in 3rd person!
-/*	if ( cg.renderingThirdPerson ) {
-		return;
-	}
-
-*/	// END ADDING
 
 	// scan the known entities to see if the crosshair is sighted on one
 	CG_ScanForCrosshairEntity();
+
+	if ( !cg_drawCrosshairNames.integer ) {
+		return;
+	}
 
 	// draw the name of the player being looked at
 	color = CG_FadeColor( cg.crosshairClientTime, 1000 );
@@ -2021,7 +2031,7 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 	h_bar = 64;
 
 	h = 0.5f * h_bar;
-	w = 0.5f * cg_crosshairSize.value + cg_crosshairMargin.value;
+	w = 0.5f * (cg_crosshairSize.value * 8 + 8) + cg_crosshairMargin.value;
 	x_pri = x_cross - w - w_bar;
 	x_sec = x_cross + w;
 	y = y_cross - h; 

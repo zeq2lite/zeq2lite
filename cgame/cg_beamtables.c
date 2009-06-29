@@ -349,25 +349,28 @@ static int CG_TessCount( const beamTableElem_t *startElem, const beamTableElem_t
 	tangentRatio = indirectTangentRatio > directTangentRatio ? indirectTangentRatio : directTangentRatio;
 
 	// Clamp the detail value
-	detail = r_beamDetail.value;
-	if ( detail < 0 ) {
+	if ( r_beamDetail.value <= 0 ) {
+		r_beamDetail.value = 0;
 		detail = 0;
 	}
 
-	if ( detail >= 40 ) {
+	if ( r_beamDetail.value >= 4 ) {
 		detail = 40;
 		if ( tangentRatio < 1 ) {
 			tangentRatio = 1;
 		}
-	} else if ( detail <= 30 ) {
+	} else if ( r_beamDetail.value == 3 ) {
+		detail = 30;
 		if ( tangentRatio < 0.5 ) {
 			tangentRatio = 0.5;
 		}
-	} else if ( detail <= 20 ) {
+	} else if ( r_beamDetail.value == 2 ) {
+		detail = 20;
 		if ( tangentRatio < 0.25 ) {
 			tangentRatio = 0.25;
 		}
-	} else if ( detail <= 10 ) {
+	} else if ( r_beamDetail.value == 1 ) {
+		detail = 10;
 		if ( tangentRatio < 0.1 ) {
 			tangentRatio = 0.1;
 		}

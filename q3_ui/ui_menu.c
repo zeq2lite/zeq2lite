@@ -129,10 +129,11 @@ void Main_MenuEvent (void* ptr, int event) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
+/*
 	case ID_SINGLEPLAYER:
 		UI_SPLevelMenu();
 		break;
-
+*/
 	case ID_MULTIPLAYER:
 		UI_ArenaServersMenu();
 		break;
@@ -152,14 +153,9 @@ void Main_MenuEvent (void* ptr, int event) {
 	case ID_MODS:
 		UI_ModsMenu();
 		break;
-/*
-	case ID_TEAMARENA:
-		trap_Cvar_Set( "fs_game", "missionpack");
-		trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
-		break;
-*/
+
 	case ID_EXIT:
-		UI_ConfirmMenu( "Quit already?", 0, MainMenu_ExitAction );
+		UI_ConfirmMenu( "Quit ZEQ2Lite?", 0, MainMenu_ExitAction );
 		break;
 	}
 }
@@ -241,13 +237,11 @@ static void Main_MenuDraw( void ) {
 	Menu_Draw( &s_main.menu );
 
 	if (uis.demoversion) {
-//		UI_DrawProportionalString( 320, 372, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, color );
-		UI_DrawString( 320, 400, "ZEQ II (C) 2002-2004, www.zeq2.com  All Rights Reserved. Teaser Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+		UI_DrawString( 320, 400, "ZEQ II (C) 2002-2009, www.zeq2.com  All Rights Reserved. Teaser Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	} else {
-		UI_DrawString( 320, 450, "ZEQ II (C) 2002-2004, www.zeq2.com  All Rights Reserved. Pre-Alpha Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+		UI_DrawString( 320, 450, "ZEQ II (C) 2002-2009, www.zeq2.com  All Rights Reserved. Alpha Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	}
 }
-
 
 /*
 ===============
@@ -275,7 +269,6 @@ static qboolean UI_TeamArenaExists( void ) {
 	return qfalse;
 }
 
-
 /*
 ===============
 UI_MainMenu
@@ -289,24 +282,13 @@ void UI_MainMenu( void ) {
 	int		y;
 	qboolean teamArena = qfalse;
 	int		style = UI_LEFT | UI_DROPSHADOW | UI_SMALLFONT;
-	
-	trap_S_StartBackgroundTrack("music/general01.ogg", "music/general01.ogg");
+
+	trap_S_StartBackgroundTrack("music/menu01.ogg", "music/menu01.ogg");
 	trap_Cvar_Set( "sv_killserver", "1" );
 
 	// set menu cursor to a nice location
 	uis.cursorx = 320;
 	uis.cursory = 240;
-/*
-	if( !uis.demoversion && !ui_cdkeychecked.integer ) {
-		char	key[17];
-
-		trap_GetCDKey( key, sizeof(key) );
-		if( trap_VerifyCDKey( key, NULL ) == qfalse ) {
-			UI_CDKeyMenu();
-			return;
-		}
-	}
-*/
 
 #if MAPLENSFLARES	// JUHOX: reset g_editmode
 	trap_Cvar_Set("g_editmode", "0");
@@ -372,20 +354,6 @@ void UI_MainMenu( void ) {
 	s_main.cinematics.color					= color_white;
 	s_main.cinematics.style					= style;
 
-//	if (UI_TeamArenaExists()) {
-//		teamArena = qtrue;
-//		y += MAIN_MENU_VERTICAL_SPACING;
-//		s_main.teamArena.generic.type			= MTYPE_PTEXT;
-//		s_main.teamArena.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-//		s_main.teamArena.generic.x				= 20;
-//		s_main.teamArena.generic.y				= y;
-//		s_main.teamArena.generic.id				= ID_TEAMARENA;
-//		s_main.teamArena.generic.callback		= Main_MenuEvent; 
-//		s_main.teamArena.string					= "MOD RESTART";
-//		s_main.teamArena.color					= color_white;
-//		s_main.teamArena.style					= style;
-//	}
-
 	s_main.mods.generic.type			= MTYPE_PTEXT;
 	s_main.mods.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_main.mods.generic.x				= 24;
@@ -427,9 +395,7 @@ void UI_MainMenu( void ) {
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
 	Menu_AddItem( &s_main.menu,	&s_main.demos );
 	Menu_AddItem( &s_main.menu,	&s_main.cinematics );
-//	if (teamArena) {
-//		Menu_AddItem( &s_main.menu,	&s_main.teamArena );
-//	}
+
 	Menu_AddItem( &s_main.menu,	&s_main.mods );
 	Menu_AddItem( &s_main.menu,	&s_main.exit );
 
