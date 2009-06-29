@@ -34,8 +34,12 @@ void checkTier(gclient_t *client){
 			if(((nextTier->requirementButton && (ps->bitFlags & keyTierUp)) || !nextTier->requirementButton) &&
 			   (ps->powerLevel[current] >= nextTier->requirementCurrent) &&
 			   (ps->powerLevel[fatigue] >= nextTier->requirementFatigue) &&
-			   (ps->powerLevel[health] >= nextTier->requirementHealth) &&
-			   (ps->powerLevel[maximum] >= nextTier->requirementMaximum)){
+			   (ps->powerLevel[health]  >= nextTier->requirementHealth) &&
+			   (ps->powerLevel[maximum] >= nextTier->requirementMaximum) &&
+			   (ps->powerLevel[current] >= nextTier->sustainCurrent) &&
+			   (ps->powerLevel[health]  >= nextTier->sustainHealth) &&
+			   (ps->powerLevel[fatigue] >= nextTier->sustainFatigue) &&
+			   (ps->powerLevel[maximum] >= nextTier->sustainMaximum)){
 				ps->timers[transform] = 1;
 				++ps->powerLevel[tierCurrent];
 				if(tier + 1 > ps->powerLevel[tierTotal]){
