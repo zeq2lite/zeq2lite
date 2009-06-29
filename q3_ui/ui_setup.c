@@ -222,7 +222,7 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.camera.string						= "CAMERA OPTIONS";
 	setupMenuInfo.camera.color						= color_lightBlue;
 	setupMenuInfo.camera.style						= UI_CENTER|UI_DROPSHADOW;
-
+/*
 	y += SETUP_MENU_VERTICAL_SPACING;
 	setupMenuInfo.cdkey.generic.type				= MTYPE_PTEXT;
 	setupMenuInfo.cdkey.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -233,7 +233,7 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.cdkey.string						= "CD Key";
 	setupMenuInfo.cdkey.color						= color_lightBlue;
 	setupMenuInfo.cdkey.style						= UI_CENTER|UI_DROPSHADOW;
-
+*/
 	if( !trap_Cvar_VariableValue( "cl_paused" ) ) {
 #if 0
 		y += SETUP_MENU_VERTICAL_SPACING;
