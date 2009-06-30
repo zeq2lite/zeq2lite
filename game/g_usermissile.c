@@ -432,14 +432,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 			if(tgClient->ps.powerLevel[plHealth] <= damage && tgClient->ps.powerLevel[plHealth] > 0){
 				if (attacker && attacker->client) {
 					attacker->client->lastkilled_client = target->s.number;
-					if ( attacker == target || OnSameTeam (target, attacker ) ) {
-						AddScore( attacker, target->r.currentOrigin, -1 );
-					} else {
-						AddScore( attacker, target->r.currentOrigin, 1 );
-						attacker->client->lastKillTime = level.time;
-					}
-				} else {
-					AddScore( target, target->r.currentOrigin, -1 );
+					AddScore( attacker, target->r.currentOrigin, 1 );
 				}
 			}
 		}
@@ -448,7 +441,6 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 			//G_Printf(va("Attack Powerlevel = %i\n",target->powerLevel));
 			if(target->powerLevel <= 0){
 				//G_Printf(va("Dead"));
-				//target->die(target,inflictor,attacker,damage,methodOfDeath);
 			}
 		}
 	}

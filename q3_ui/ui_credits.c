@@ -101,7 +101,7 @@ UI_CreditMenu
 */
 void UI_CreditMenu( void ) {
 
-	trap_S_StartBackgroundTrack("music/credits.ogg", "music/credits.ogg");
+	trap_S_StartBackgroundTrack("music/yamamoto/credits02.ogg", "music/yamamoto/credits02.ogg");
 
 	memset( &s_credits, 0 ,sizeof(s_credits) );
 

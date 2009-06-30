@@ -283,7 +283,7 @@ void UI_MainMenu( void ) {
 	qboolean teamArena = qfalse;
 	int		style = UI_LEFT | UI_DROPSHADOW | UI_SMALLFONT;
 
-	trap_S_StartBackgroundTrack("music/menu01.ogg", "music/menu01.ogg");
+	trap_S_StartBackgroundTrack("music/yamamoto/menu01.ogg", "music/yamamoto/menu01.ogg");
 	trap_Cvar_Set( "sv_killserver", "1" );
 
 	// set menu cursor to a nice location
