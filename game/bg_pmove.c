@@ -660,8 +660,12 @@ float PM_CmdScale(usercmd_t *cmd){
 
 	total = sqrt(cmd->forwardmove * cmd->forwardmove + cmd->rightmove * cmd->rightmove + cmd->upmove * cmd->upmove );
 
-	totalSpeed = (pm->ps->powerLevel[plFatigue] / 72.81) + pm->ps->stats[stSpeed];
-	if(pm->ps->bitFlags & isAutoClosing && pm->ps->lockedPlayer->timers[tmKnockback]){totalSpeed *= 3;}
+	if(!pm->ps->powerups[PW_MELEE_STATE] < 2){
+		totalSpeed = (pm->ps->powerLevel[plFatigue] / 72.81) + pm->ps->stats[stSpeed];
+	} else {
+		totalSpeed = 500;
+	}
+	if(pm->ps->bitFlags & isAutoClosing && pm->ps->lockedPlayer->timers[tmKnockback] && pm->ps->powerups[PW_MELEE_STATE] < 2){totalSpeed *= 3;}
 	scale = (float)totalSpeed * max / (127.0 * total );
 
 	return scale;
@@ -741,11 +745,8 @@ void PM_FlyMove(void){
 		PM_StopJump();
 	}
 	if(!(pm->ps->bitFlags & usingFlight)){return;}
-	boostFactor = 1.8;
-	if(pm->ps->bitFlags & usingBoost){
-		boostFactor = 3.9;
-	}
-	else if(pm->cmd.buttons & BUTTON_WALKING){
+	boostFactor = ((pm->ps->bitFlags & usingBoost) && (pm->ps->powerups[PW_MELEE_STATE] < 2)) ? 4.4 : 1.1;
+	if(pm->cmd.buttons & BUTTON_WALKING){
 		boostFactor = 1.0;	
 	}
 	scale = PM_CmdScale(&pm->cmd) * boostFactor;
@@ -867,23 +868,23 @@ void PM_DashMove(void){
 	dashAmount = VectorLength(pm->ps->dashDir);
 	if((pml.onGround && !(pm->cmd.buttons & BUTTON_WALKING) && (pm->cmd.forwardmove || pm->cmd.rightmove))){
 		pm->cmd.upmove = 0;
-		boostFactor = (pm->ps->bitFlags & usingBoost) ? 4.4 : 1.1;
+		boostFactor = ((pm->ps->bitFlags & usingBoost) && (pm->ps->powerups[PW_MELEE_STATE] < 2)) ? 4.4 : 1.1;
 		if(dashAmount == 0){
 			pm->ps->dashDir[0] = 0;
 			pm->ps->dashDir[1] = 0;
 			if(pm->cmd.forwardmove > 0){
 				pm->ps->dashDir[0] = 1;
-				pm->cmd.forwardmove = 120;
+				pm->cmd.forwardmove = 127;
 			}else if(pm->cmd.forwardmove < 0){
 				pm->ps->dashDir[0] = -1;
-				pm->cmd.forwardmove = -120;
+				pm->cmd.forwardmove = -127;
 			}
 			if(pm->cmd.rightmove > 0){
 				pm->ps->dashDir[1] = 1;
-				pm->cmd.rightmove = 120;
+				pm->cmd.rightmove = 127;
 			}else if(pm->cmd.rightmove < 0){
 				pm->ps->dashDir[1] = -1;
-				pm->cmd.rightmove = -120;
+				pm->cmd.rightmove = -127;
 			}
 		}
 		cmd = pm->cmd;
@@ -1816,14 +1817,14 @@ void PM_Melee(void){
 		// Set Melee Position Mode
 		if((state > 1 || enemyState > 1)){
 			if(inRange){
-				pm->cmd.forwardmove *= 0.5;
-				pm->cmd.rightmove *= 0.5;
-				pm->cmd.upmove *= 0.5;
 				if(enemyState == 0){
 					pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
 					pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
 				}
 			}
+			pm->cmd.forwardmove *= 0.5;
+			pm->cmd.rightmove *= 0.5;
+			pm->cmd.upmove *= 0.5;
 			pm->ps->bitFlags |= usingMelee;
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
