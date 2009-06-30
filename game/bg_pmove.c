@@ -1817,14 +1817,14 @@ void PM_Melee(void){
 		// Set Melee Position Mode
 		if((state > 1 || enemyState > 1)){
 			if(inRange){
+				pm->cmd.forwardmove *= 0.5;
+				pm->cmd.rightmove *= 0.5;
+				pm->cmd.upmove *= 0.5;
 				if(enemyState == 0){
 					pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
 					pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
 				}
 			}
-			pm->cmd.forwardmove *= 0.5;
-			pm->cmd.rightmove *= 0.5;
-			pm->cmd.upmove *= 0.5;
 			pm->ps->bitFlags |= usingMelee;
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
