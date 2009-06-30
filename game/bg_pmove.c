@@ -1791,8 +1791,14 @@ void PM_Melee(void){
 			if(enemyState != 6){
 				pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;
 			}
-			if(pm->ps->lockedPlayer->powerLevel[plHealth] <= damage){
-				PM_AddEvent(EV_MELEE_KNOCKOUT);
+			if(pm->ps->persistant[PERS_TEAM] != pm->ps->lockedPlayer->persistant[PERS_TEAM] && pm->ps->persistant[PERS_TEAM] != TEAM_FREE){
+				if(pm->ps->lockedPlayer->powerLevel[plHealth] <= damage && pm->ps->lockedPlayer->powerLevel[plHealth] > 0){
+					PM_AddEvent(EV_MELEE_KNOCKOUT);
+				}
+			} else if (pm->ps->persistant[PERS_TEAM] == TEAM_FREE) {
+				if(pm->ps->lockedPlayer->powerLevel[plHealth] <= damage && pm->ps->lockedPlayer->powerLevel[plHealth] > 0){
+					PM_AddEvent(EV_MELEE_KNOCKOUT);
+				}
 			}
 		}
 		else if(state == 1 && inRange){

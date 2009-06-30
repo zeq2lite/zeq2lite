@@ -1687,6 +1687,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.markerDescendShader = trap_R_RegisterShaderNoMip( "interface/hud/markerDescend.png" );
 	cgs.media.breakLimitShader = trap_R_RegisterShaderNoMip( "breakLimit" );
 	cgs.media.RadarBlipShader = trap_R_RegisterShaderNoMip( "interface/radar/blip.png" );
+	cgs.media.RadarBlipTeamShader = trap_R_RegisterShaderNoMip( "interface/radar/blipteam.png" );
 	cgs.media.RadarBurstShader = trap_R_RegisterShaderNoMip( "interface/radar/burst.png" );
 	cgs.media.RadarWarningShader = trap_R_RegisterShaderNoMip( "interface/radar/warning.png" );
 	cgs.media.RadarMidpointShader = trap_R_RegisterShaderNoMip( "interface/radar/midpoint.png" );

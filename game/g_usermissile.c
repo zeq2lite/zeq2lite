@@ -429,7 +429,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		if(tgClient){
 			if(target == attacker){damage *= 0.2;}
 			tgClient->ps.powerLevel[plDamageFromEnergy] += damage;
-			if(tgClient->ps.powerLevel[plHealth] < damage){
+			if(tgClient->ps.powerLevel[plHealth] <= damage && tgClient->ps.powerLevel[plHealth] > 0){
 				if (attacker && attacker->client) {
 					attacker->client->lastkilled_client = target->s.number;
 					if ( attacker == target || OnSameTeam (target, attacker ) ) {

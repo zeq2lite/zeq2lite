@@ -840,6 +840,7 @@ typedef struct {
 	qhandle_t	breakLimitShader;
 
 	qhandle_t	RadarBlipShader;
+	qhandle_t	RadarBlipTeamShader;
 	qhandle_t	RadarBurstShader;
 	qhandle_t	RadarWarningShader;
 	qhandle_t	RadarMidpointShader;

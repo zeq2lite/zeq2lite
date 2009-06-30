@@ -23,6 +23,7 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 	vec3_t			up = { 0.0f, 0.0f, 1.0f };
 	vec4_t			draw_color;
 	vec4_t			drawfull_color;
+	vec4_t			drawteam_color;
 
 	float			center_x;
 	float			center_y;
@@ -98,6 +99,7 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 		// Should plHealth also effect the fade?
 		if ( cg_playerOrigins[i].team == cg.snap->ps.persistant[PERS_TEAM] && cg_playerOrigins[i].team != TEAM_FREE ) {
 			MAKERGBA( draw_color, 0.0f, difference, 0.0f, powerLevel2 / powerLevelMaximum2 );
+			MAKERGBA( drawteam_color, 0.0f, 1.0f, 0.0f, powerLevel2 / powerLevelMaximum2 );
 			MAKERGBA( drawfull_color, 0.0f, 1.0f, 0.0f, 1.0f );
 		} else {
 			MAKERGBA( draw_color, difference, 0.0f, 0.0f, powerLevel2 / powerLevelMaximum2 );
@@ -118,6 +120,12 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 			// Atleast one warning was on the radar this screen.
 			// NOTE: Used to check if a warning sound needs to be issued.
 			warning = qtrue;
+		}
+
+		// Draw the team blip
+		if ( cg_playerOrigins[i].team == cg.snap->ps.persistant[PERS_TEAM] && cg_playerOrigins[i].team != TEAM_FREE ) {
+			trap_R_SetColor( drawteam_color );
+			CG_DrawPic( blip_x - 0.5f * blip_w, blip_y - 0.5f * blip_h, blip_w, blip_h, cgs.media.RadarBlipTeamShader );
 		}
 
 		trap_R_SetColor( NULL );
