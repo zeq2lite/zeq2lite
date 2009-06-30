@@ -1625,7 +1625,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.teleportEffectModel = trap_R_RegisterModel( "models/powerups/pop.md3" );
 #else
 	cgs.media.teleportEffectModel = trap_R_RegisterModel( "models/misc/telep.md3" );
-	cgs.media.meleeSpeedEffectShader = trap_R_RegisterShader( "stSkills/energyBlast" );
+	cgs.media.meleeSpeedEffectShader = trap_R_RegisterShader( "skills/energyBlast" );
 	cgs.media.meleePowerEffectShader = trap_R_RegisterShader( "shockwave" );
 	cgs.media.teleportEffectShader = trap_R_RegisterShader( "teleportEffect" );
 	cgs.media.boltEffectShader = trap_R_RegisterShader( "boltEffect" );

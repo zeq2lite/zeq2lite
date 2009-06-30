@@ -737,7 +737,7 @@ void ClientUserinfoChanged( int clientNum ) {
 			client->pers.netname, client->sess.sessionTeam, model, headModel, redTeam, blueTeam, c1, c2, 
 			client->pers.maxHealth, client->sess.wins, client->sess.losses, teamTask, teamLeader);
 	}
-
+	client->ps.powerLevel[plTierCurrent] = 0;
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
 
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );

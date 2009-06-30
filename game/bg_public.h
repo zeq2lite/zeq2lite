@@ -231,7 +231,6 @@ typedef enum {
 	stChargePercentPrimary,	// % of primary attack charged
 	stChargePercentSecondary,	// % of secondary attack charged
 	stSkills,					// 16 bit bitmask
-	stBitFlags				// Set of bitflags for player
 }statIndex_t;
 
 typedef enum{
@@ -265,7 +264,8 @@ typedef enum{
 	tmPowerRaise,
 	tmPowerAuto,
 	tmFreeze,
-	tmStun
+	tmStun,
+	tmTap
 }timers_t;
 
 typedef enum {
@@ -275,7 +275,7 @@ typedef enum {
 	PW_STATE,
 	PW_MELEE_STATE,
 	PW_KNOCKBACK_SPEED,
-	PW_NUM_POWERUPS
+	PW_NUM_POWERUPS,
 }powerup_t;
 
 // Player stat bits
@@ -288,15 +288,15 @@ typedef enum {
 #define usingWeapon		0x00000040
 #define usingFlight		0x00000080
 #define usingMelee		0x00000100
-#define usingTap		0x00000200
-#define keyTierUp		0x00000400
-#define keyTierDown		0x00000800
-#define isTransforming	0x00040000
-#define isStruggling	0x00080000
-#define isUnconcious	0x00100000
-#define isDead			0x00200000
-#define isBreakingLimit	0x00400000
-#define isAutoClosing	0x00800000
+#define keyTierUp		0x00000200
+#define keyTierDown		0x00000400
+#define isTransforming	0x00000800
+#define isStruggling	0x00001000
+#define isUnconcious	0x00002000
+#define isDead			0x00004000
+#define isBreakingLimit	0x00008000
+#define isAutoClosing	0x00010000
+#define isGuiding		0x00020000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16

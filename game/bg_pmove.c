@@ -36,6 +36,7 @@ void PM_StopLockon(void);
 void PM_ContinueLegsAnim(int anim);
 void PM_ContinueTorsoAnim(int anim);
 void PM_Accelerate(vec3_t wishdir,float wishspeed,float accel);
+void PM_WeaponRelease(void);
 float PM_CmdScale(usercmd_t *cmd);
 /*===================
 PM_StartTorsoAnim
@@ -44,12 +45,12 @@ void PM_StartTorsoAnim(int anim){
 	pm->ps->torsoAnim = ((pm->ps->torsoAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT) | anim;
 }
 void PM_StartLegsAnim(int anim){
-	if((pm->ps->weaponstate == WEAPON_GUIDING) && (pm->cmd.buttons & BUTTON_ANY) && !(VectorLength(pm->ps->velocity)== 0.0f)){return;}
+	if((pm->ps->bitFlags & isGuiding) && (pm->cmd.buttons & BUTTON_ANY) && !(VectorLength(pm->ps->velocity)== 0.0f)){return;}
 	pm->ps->legsAnim = ((pm->ps->legsAnim & ANIM_TOGGLEBIT)^ ANIM_TOGGLEBIT ) | anim;
 }
 
 void PM_ContinueLegsAnim(int anim){
-	if((pm->ps->weaponstate == WEAPON_GUIDING) && (pm->cmd.buttons & BUTTON_ANY) && !(VectorLength(pm->ps->velocity)== 0.0f)){return;}
+	if((pm->ps->bitFlags & isGuiding) && (pm->cmd.buttons & BUTTON_ANY) && !(VectorLength(pm->ps->velocity)== 0.0f)){return;}
 	if((pm->ps->legsAnim & ~ANIM_TOGGLEBIT)== anim){
 		return;
 	}
@@ -67,7 +68,7 @@ void PM_ForceTorsoAnim(int anim){
 	PM_StartTorsoAnim(anim);
 }
 void PM_ForceLegsAnim(int anim){
-	if((pm->ps->weaponstate == WEAPON_GUIDING) && (pm->cmd.buttons & BUTTON_ANY) && !(VectorLength(pm->ps->velocity)== 0.0f)){return;}
+	if((pm->ps->bitFlags & isGuiding) && (pm->cmd.buttons & BUTTON_ANY) && !(VectorLength(pm->ps->velocity)== 0.0f)){return;}
 	pm->ps->legsTimer = 0;
 	PM_StartLegsAnim(anim );
 }
@@ -357,11 +358,12 @@ void PM_CheckTransform(void){
 }
 void PM_CheckPowerLevel(void){
 	int plSpeed,amount;
-	int *stBitFlags,*timers,*powerLevel;
+	int *timers,*powerLevel;
 	float lower,raise,recovery;
 	float check;
 	float pushLimit;
 	int newValue;
+	int idleScale;
 	timers = pm->ps->timers;
 	powerLevel = pm->ps->powerLevel;
 	timers[tmPowerAuto] += pml.msec;
@@ -371,7 +373,8 @@ void PM_CheckPowerLevel(void){
 	}
 	while(timers[tmPowerAuto] >= 100){
 		timers[tmPowerAuto] -= 100;
-		recovery = (float)pm->ps->powerLevel[plMaximum] * 0.002;
+		idleScale = (!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove) ? 2 : 1;
+		recovery = (float)pm->ps->powerLevel[plMaximum] * 0.002 * idleScale;
 		recovery *= (1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]));
 		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue]){recovery = 0;}
 		if(powerLevel[plCurrent] > powerLevel[plFatigue]){
@@ -428,12 +431,13 @@ void PM_CheckPowerLevel(void){
 				if(powerLevel[plCurrent] == pm->ps->powerLevel[plMaximum]){
 					pm->ps->bitFlags |= isBreakingLimit;
 					pushLimit = powerLevel[plCurrent] + pm->ps->breakLimitRate;
+					if(powerLevel[plHealth] + raise * 0.3 < pushLimit){
+						powerLevel[plHealth] += raise * 0.3;
+						pm->ps->powerLevel[plUseFatigue] += raise * 0.25;
+					}
+					if(powerLevel[plHealth] > 32767){powerLevel[plHealth] = 32767;}
 					if(pushLimit < 32767){
 						powerLevel[plCurrent] = powerLevel[plMaximum] = pushLimit;
-						if(powerLevel[plHealth] + raise * 0.2 < pushLimit){
-							powerLevel[plHealth] += raise * 0.2;
-						}
-						if(powerLevel[plHealth] > 32767){powerLevel[plHealth] = 32767;}
 					}
 				}
 				if(pm->ps->bitFlags & isBreakingLimit){
@@ -773,7 +777,7 @@ void PM_AirMove(void){
 	float		scale;
 	usercmd_t	cmd;
 	if(pml.onGround){return;}
-	if(pm->ps->weaponstate == WEAPON_GUIDING){return;}
+	if(pm->ps->bitFlags & isGuiding){return;}
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
 	cmd = pm->cmd;
@@ -1606,10 +1610,12 @@ void PM_Melee(void){
 	pm->ps->timers[tmUpdateMelee] += pml.msec;
 	pm->ps->bitFlags &= ~isAutoClosing;
 	if(pm->ps->lockedTarget > 0){
+		/*
 		if(pm->ps->lockedPlayer->bitFlags & isDead || pm->ps->lockedPlayer->bitFlags & isUnconcious){
 			PM_StopLockon();
 			return;
 		}
+		*/
 		if(pm->ps->timers[tmUpdateMelee] > 300){
 			pm->ps->timers[tmUpdateMelee] = 0;
 			PM_AddEvent(EV_MELEE_CHECK);
@@ -1625,12 +1631,15 @@ void PM_Melee(void){
 	state = pm->ps->powerups[PW_MELEE_STATE];
 	if((state > 0) && !charging && (pm->ps->lockedTarget > 0)){
 		enemyState = pm->ps->lockedPlayer->powerups[PW_MELEE_STATE];
-		melee1 = pm->ps->timers[melee1];
-		melee2 = pm->ps->timers[melee2];
-		damage = 0;
-		// Knockback Halt
-		if(pm->ps->lockedPlayer->timers[knockback] > 500 && distance <= 128 && melee2 >= 0 && !(pm->ps->bitFlags & usingZanzoken)){
-			pm->ps->lockedPlayer->timers[knockback] = 250;
+		melee1 = pm->ps->timers[tmMelee1];
+		melee2 = pm->ps->timers[tmMelee2];
+		damage = 0;		if(pm->ps->lockedPlayer->bitFlags & isDead || pm->ps->lockedPlayer->bitFlags & isUnconcious){
+			PM_StopLockon();
+			return;
+		}
+		// Knockback Juggle Helper
+		if(pm->ps->lockedPlayer->timers[tmKnockback] > 500 && distance <= 128 && melee2 >= 0 && !(pm->ps->bitFlags & usingZanzoken)){
+			pm->ps->lockedPlayer->timers[tmKnockback] = 250;
 			if(melee2 < 500){melee2 = 500;}
 		}
 		// Auto Close-in
@@ -1638,7 +1647,7 @@ void PM_Melee(void){
 		if(pm->cmd.forwardmove > 0){
 			if((state != 4 && distance > 32 && distance < 512) || (pm->ps->bitFlags & usingZanzoken)){
 				pm->ps->bitFlags |= isAutoClosing;
-				if(!pm->ps->lockedPlayer->timers[knockback] && (pm->cmd.buttons & BUTTON_ALT_ATTACK || pm->cmd.buttons & BUTTON_ATTACK)){
+				if(!pm->ps->lockedPlayer->timers[tmKnockback] && (pm->cmd.buttons & BUTTON_ALT_ATTACK || pm->cmd.buttons & BUTTON_ATTACK)){
 					pm->cmd.forwardmove = 127;
 				}
 			}
@@ -1768,13 +1777,13 @@ void PM_Melee(void){
 			else if(pm->cmd.forwardmove < 0){desired = 2;}
 			else if(pm->cmd.rightmove > 0){desired = 3;} 
 			else if(pm->cmd.rightmove < 0){desired = 4;}
-			if(!pm->ps->lockedPlayer->knockBackDirection && !pm->ps->lockedPlayer->timers[knockback]){
+			if(!pm->ps->lockedPlayer->knockBackDirection && !pm->ps->lockedPlayer->timers[tmKnockback]){
 				pm->ps->lockedPlayer->knockBackDirection = desired;
 			}
 		}
 		else if(state == 4){
 			if(knockback && enemyState < 5){
-				pm->ps->lockedPlayer->timers[knockback] = 5000;
+				pm->ps->lockedPlayer->timers[tmKnockback] = 5000;
 				pm->ps->lockedPlayer->powerups[PW_KNOCKBACK_SPEED] = (pm->ps->powerLevel[plCurrent] / 21.84) + pm->ps->stats[stKnockbackPower];
 				pm->ps->lockedPlayer->powerups[PW_MELEE_STATE] = 0;
 			}
@@ -1816,53 +1825,42 @@ void PM_Melee(void){
 				}
 			}
 			pm->ps->bitFlags |= usingMelee;
-		} else if (!pm->ps->lockedPlayer->timers[knockback]){
-			pm->cmd.forwardmove *= 0.5;
-			pm->cmd.rightmove *= 0.5;
-			pm->cmd.upmove *= 0.5;
 		}
 		pm->ps->powerups[PW_MELEE_STATE] = state;
-		pm->ps->timers[melee1] = melee1;
-		pm->ps->timers[melee2] = melee2;
+		pm->ps->timers[tmMelee1] = melee1;
+		pm->ps->timers[tmMelee2] = melee2;
 	}
 }
 /*==============
 PM_Weapon
 Generates weapon events and modifes the weapon counter
 ==============*/
+void PM_WeaponRelease(void){
+	if(pm->ps->bitFlags & isGuiding){
+		PM_AddEvent(EV_DETONATE_WEAPON);
+		pm->ps->bitFlags &= ~isGuiding;
+	}
+	pm->ps->weaponstate = WEAPON_READY;
+	pm->ps->stats[stChargePercentPrimary] = 0;
+	pm->ps->stats[stChargePercentSecondary] = 0;
+}
 void PM_Weapon(void){
 	int	*weaponInfo;
 	int	*alt_weaponInfo;
 	int chargeRate;
 	int costPrimary,costSecondary;	
+	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
-	if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
+	if(pm->ps->bitFlags & isGuiding){
 		PM_StopMovement();
 		PM_StopDash();
 	}
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL || pm->ps->timers[tmTransform] > 0){
-		if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
-			PM_AddEvent(EV_DETONATE_WEAPON );
-		}
-		pm->ps->weaponstate = WEAPON_READY;
-		pm->ps->stats[stChargePercentPrimary] = 0;
-		pm->ps->stats[stChargePercentSecondary] = 0;
-		return;
-	}
-	if(pm->ps->powerLevel[plCurrent] <= 0){
-		if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
-			PM_AddEvent(EV_DETONATE_WEAPON);
-		}
-		pm->ps->weaponstate = WEAPON_READY;
-		pm->ps->stats[stChargePercentPrimary] = 0;
-		pm->ps->stats[stChargePercentSecondary] = 0;
-		pm->ps->weapon = WP_NONE;
+		PM_WeaponRelease();
 		return;
 	}
 	if(pm->ps->weapon == WP_NONE || pm->ps->bitFlags & usingMelee){
-			if(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING){
-			PM_AddEvent(EV_DETONATE_WEAPON );
-		}
+		PM_WeaponRelease();
 		return;
 	}
 	// Retrieve our weapon's settings
@@ -2005,6 +2003,7 @@ void PM_Weapon(void){
 					weaponInfo[WPbitFlags] &= ~WPF_READY;
 					if(weaponInfo[WPbitFlags] & WPF_GUIDED){
 						pm->ps->weaponstate = WEAPON_GUIDING;
+						pm->ps->bitFlags |= isGuiding;
 					} else{
 						pm->ps->weaponstate = WEAPON_COOLING;
 						pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
@@ -2038,6 +2037,7 @@ void PM_Weapon(void){
 					alt_weaponInfo[WPbitFlags] &= ~WPF_READY;
 					if(alt_weaponInfo[WPbitFlags] & WPF_GUIDED){
 						pm->ps->weaponstate = WEAPON_ALTGUIDING;
+						pm->ps->bitFlags |= isGuiding;
 					} else{
 						pm->ps->weaponstate = WEAPON_COOLING;
 						pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
@@ -2129,11 +2129,6 @@ void PM_CheckLockon(void){
 	else{
 		pm->ps->pm_flags &= ~PMF_LOCK_HELD;
 	}
-	if(pm->ps->lockedTarget > 0){
-		if(pm->ps->lockedPlayer->powerLevel[plCurrent] <= 0){
-			PM_StopLockon();
-		}
-	}
 }
 /*
 ================
@@ -2215,7 +2210,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		}
 		// Don't forget to add our customized roll function if
 		// we're not guiding a weapon!
-		if(ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING) {
+		if(!(pm->ps->bitFlags & isGuiding)){
 			offset_angles[ROLL] = AngleNormalize180(offset_angles[ROLL] + roll);
 		}
 
