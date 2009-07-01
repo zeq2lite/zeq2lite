@@ -70,6 +70,10 @@ static void CG_Obituary( entityState_t *ent ) {
 	gender_t	gender;
 	clientInfo_t	*ci;
 
+	if ( !cg_displayObituary.integer ) {
+		return;
+	}
+
 	target = ent->otherEntityNum;
 	attacker = ent->otherEntityNum2;
 	mod = ent->eventParm;
@@ -158,12 +162,14 @@ static void CG_Obituary( entityState_t *ent ) {
 			message = "should have used a smaller gun";
 			break;
 		default:
+			/*
 			if ( gender == GENDER_FEMALE )
 				message = "killed herself";
 			else if ( gender == GENDER_NEUTER )
 				message = "killed itself";
 			else
 				message = "killed himself";
+			*/
 			break;
 		}
 	}
@@ -178,13 +184,13 @@ static void CG_Obituary( entityState_t *ent ) {
 		char	*s;
 
 		if ( cgs.gametype < GT_TEAM ) {
-			s = va("You took %s's life \n%s place with %i", targetName, 
+			s = va("You defeated %s \n%s place with %i skill points", targetName, 
 				CG_PlaceString( cg.snap->ps.persistant[PERS_RANK] + 1 ),
 				cg.snap->ps.persistant[PERS_SCORE] );
 		} else {
-			s = va("You took %s's life", targetName );
+			s = va("You defeated %s", targetName );
 		}
-		CG_CenterPrint( s, SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
+		CG_CenterPrint( s, SCREEN_HEIGHT * 0.30, MEDIUMCHAR_WIDTH );
 
 		// print the text message as well
 	}
@@ -256,7 +262,7 @@ static void CG_Obituary( entityState_t *ent ) {
 			message2 = "'s personal space";
 			break;
 		case MOD_KI:
-			message = "was blasted to bits by";
+			message = "was blasted by";
 			break;
 		case MOD_MELEE:
 			message = "was pummeled by";

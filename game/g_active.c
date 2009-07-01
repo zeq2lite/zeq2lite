@@ -368,6 +368,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int			distance;
 	int 		enemyMelee,playerMelee;
 	gclient_t	*client;
+	gentity_t	*enemy;
 	int			damage;
 	int			amount;
 	vec3_t		dir;
@@ -445,7 +446,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_MELEE_STUN:
 			break;
 		case EV_MELEE_KNOCKOUT:
-			AddScore( ent, ent->r.currentOrigin, 1 );
+			enemy = &g_entities[ps->lockedTarget-1];
+			enemy->enemy = ent;
+			enemy->die (enemy, ent, ent, 1, MOD_MELEE);
 			break;
 		case EV_TIERCHECK:
 			checkTier(client);
@@ -461,10 +464,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_DEATH:
 			if (ps->persistant[PERS_SCORE] >= 1){
-				AddScore( ent, ent->r.currentOrigin, -1);
+				AddScore( ent, ent->r.currentOrigin, -1 );
 			}
 			client->respawnTime = level.time + 10000;
-			//ent = G_TempEntity( ent->r.currentOrigin, EV_OBITUARY );
 			break;
 		case EV_UNCONCIOUS:
 			if (ps->persistant[PERS_SCORE] >= 1){

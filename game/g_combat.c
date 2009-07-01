@@ -384,20 +384,97 @@ player_die
 ==================
 */
 void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
-	if (attacker && attacker->client) {
-		attacker->client->lastkilled_client = self->s.number;
-		if ( attacker == self || OnSameTeam (self, attacker ) ) {
-			AddScore( attacker, self->r.currentOrigin, -10 );
-			Com_Printf("Lost 10 points\n");
+	gentity_t	*ent;
+	int			anim;
+	int			contents;
+	int			killer;
+	int			i;
+	char		*killerName, *obit;
+
+	if ( self->client->ps.pm_type == PM_DEAD ) {
+		return;
+	}
+
+	if ( level.intermissiontime ) {
+		return;
+	}
+
+	self->client->ps.pm_type = PM_DEAD;
+
+	if ( attacker ) {
+		killer = attacker->s.number;
+		if ( attacker->client ) {
+			killerName = attacker->client->pers.netname;
 		} else {
-			AddScore( attacker, self->r.currentOrigin, 10 );
-			Com_Printf("Gained 10 points\n");
-			attacker->client->lastKillTime = level.time;
+			killerName = "<non-client>";
 		}
 	} else {
-		Com_Printf("Lost 10 points\n");
-		AddScore( self, self->r.currentOrigin, -10 );
+		killer = ENTITYNUM_WORLD;
+		killerName = "<world>";
 	}
+
+	if ( killer < 0 || killer >= MAX_CLIENTS ) {
+		killer = ENTITYNUM_WORLD;
+		killerName = "<world>";
+	}
+
+	if ( meansOfDeath < 0 || meansOfDeath >= sizeof( modNames ) / sizeof( modNames[0] ) ) {
+		obit = "<bad obituary>";
+	} else {
+		obit = modNames[ meansOfDeath ];
+	}
+
+	G_LogPrintf("Kill: %i %i %i: %s killed %s by %s\n", 
+		killer, self->s.number, meansOfDeath, killerName, 
+		self->client->pers.netname, obit );
+
+	// broadcast the death event to everyone
+	ent = G_TempEntity( self->r.currentOrigin, EV_OBITUARY );
+	ent->s.eventParm = meansOfDeath;
+	ent->s.otherEntityNum = self->s.number;
+	ent->s.otherEntityNum2 = killer;
+	ent->r.svFlags = SVF_BROADCAST;	// send to everyone
+
+	self->enemy = attacker;
+	self->client->ps.persistant[PERS_KILLED]++;
+
+	if (attacker && attacker->client) {
+		attacker->client->lastkilled_client = self->s.number;
+		if ( attacker == self && self->client->ps.persistant[PERS_SCORE] >= 1) {
+			AddScore( attacker, self->r.currentOrigin, -1 );
+		} else {
+			AddScore( attacker, self->r.currentOrigin, 1 );
+		}
+	} else if (self->client->ps.persistant[PERS_SCORE] >= 1) {
+		AddScore( self, self->r.currentOrigin, -1 );
+	}
+
+	Cmd_Score_f( self );		// show scores
+	// send updated scores to any clients that are following this one,
+	// or they would get stale scoreboards
+	for ( i = 0 ; i < level.maxclients ; i++ ) {
+		gclient_t	*client;
+
+		client = &level.clients[i];
+		if ( client->pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+		if ( client->sess.sessionTeam != TEAM_SPECTATOR ) {
+			continue;
+		}
+		if ( client->sess.spectatorClient == self->s.number ) {
+			Cmd_Score_f( g_entities + i );
+		}
+	}
+
+	self->s.weapon = WP_NONE;
+	self->s.powerups = 0;
+	self->r.contents = CONTENTS_CORPSE;
+	self->s.loopSound = 0;
+	self->r.maxs[2] = -8;
+
+	trap_LinkEntity (self);
+
 }
 int RaySphereIntersections( vec3_t origin, float radius, vec3_t point, vec3_t dir, vec3_t intersections[2] ) {
 	float b, c, d, t;

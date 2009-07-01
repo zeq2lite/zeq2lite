@@ -389,6 +389,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	gclient_t *tgClient;
 	if(!target->takedamage){return;}
 	if(level.intermissionQueued){return;}
+	if(target->flags & FL_GODMODE){return;}
 	if(!inflictor){inflictor = &g_entities[ENTITYNUM_WORLD];}
 	if(!attacker){attacker = &g_entities[ENTITYNUM_WORLD];}
 	tgClient = target->client;
@@ -429,11 +430,12 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		if(tgClient){
 			if(target == attacker){damage *= 0.2;}
 			tgClient->ps.powerLevel[plDamageFromEnergy] += damage;
-			if(tgClient->ps.powerLevel[plHealth] <= damage && tgClient->ps.powerLevel[plHealth] > 0){
-				if (attacker && attacker->client) {
-					attacker->client->lastkilled_client = target->s.number;
-					AddScore( attacker, target->r.currentOrigin, 1 );
-				}
+			if ( tgClient->ps.powerLevel[plHealth] <= damage && tgClient->ps.powerLevel[plHealth] > 0 ) {
+				target->enemy = attacker;
+				target->die (target, inflictor, attacker, damage, methodOfDeath);
+				return;
+			} else if ( target->pain ) {
+				target->pain (target, attacker, damage);
 			}
 		}
 		else{
