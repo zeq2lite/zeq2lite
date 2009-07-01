@@ -297,6 +297,8 @@ typedef enum {
 #define isBreakingLimit	0x00008000
 #define isAutoClosing	0x00010000
 #define isGuiding		0x00020000
+#define isChargging		0x00040000
+#define isTargeted		0x00080000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16

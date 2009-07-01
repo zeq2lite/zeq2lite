@@ -1612,7 +1612,7 @@ void PM_Melee(void){
 	pm->ps->bitFlags &= ~isAutoClosing;
 	if(pm->ps->lockedTarget > 0){
 		/*
-		if(pm->ps->lockedPlayer->bitFlags & isDead || pm->ps->lockedPlayer->bitFlags & isUnconcious){
+		if((pm->ps->lockedPlayer->bitFlags & isDead) || (pm->ps->lockedPlayer->bitFlags & isUnconcious)){
 			PM_StopLockon();
 			return;
 		}
@@ -1634,10 +1634,7 @@ void PM_Melee(void){
 		enemyState = pm->ps->lockedPlayer->powerups[PW_MELEE_STATE];
 		melee1 = pm->ps->timers[tmMelee1];
 		melee2 = pm->ps->timers[tmMelee2];
-		damage = 0;		if(pm->ps->lockedPlayer->bitFlags & isDead || pm->ps->lockedPlayer->bitFlags & isUnconcious){
-			PM_StopLockon();
-			return;
-		}
+		damage = 0;
 		// Knockback Juggle Helper
 		if(pm->ps->lockedPlayer->timers[tmKnockback] > 500 && distance <= 128 && melee2 >= 0 && !(pm->ps->bitFlags & usingZanzoken)){
 			pm->ps->lockedPlayer->timers[tmKnockback] = 250;
