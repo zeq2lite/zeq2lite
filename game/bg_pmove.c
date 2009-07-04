@@ -2231,6 +2231,9 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		QuatMul(quatOrient, quatRot, quatResult);
 		QuatToAngles(quatResult, new_angles);
 
+		// Try and compensate for the drifting problem.
+		new_angles[PITCH] += 0.05f;
+
 		// HACK: Because an exact pitch of -90 degrees STILL causes trouble troughout the
 		//       code due to 'bad mathematics', we give a slight nudge ifthis threatens
 		//       to happen. 2 degrees is not really noticeable, and is big enough to
