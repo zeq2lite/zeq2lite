@@ -137,7 +137,7 @@ void Think_Guided (gentity_t *self) {
  
 		// Setup the new directional vector for the fired weapon.
 		VectorSubtract( muzzle, self->r.currentOrigin, muzzle );
-		dist = VectorLength( muzzle )/* + SOLID_ADD*/;
+		dist = VectorLength( muzzle ) + SOLID_ADD;
 	
 		VectorScale( forward, dist, forward );
 		VectorAdd( forward, muzzle, muzzle );
@@ -1198,7 +1198,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 				 
 				// Setup the new directional vector for the triggered weapon.
 				VectorSubtract( start, newBase, newDir );
-				traceDist = VectorLength( newDir )/* + SOLID_ADD*/;
+				traceDist = VectorLength( newDir ) + SOLID_ADD;
 	
 				VectorScale( dir, traceDist, traceEnd );
 				VectorAdd( traceEnd, start, traceEnd );
@@ -1370,7 +1370,7 @@ static void G_PushUserMissile( gentity_t *self, gentity_t *other ) {
 
 	// Setup the new directional vector for the fired weapon.
 	VectorSubtract( muzzle, self->r.currentOrigin, muzzle );
-	dist = VectorLength( muzzle )/* + SOLID_ADD*/;
+	dist = VectorLength( muzzle ) + SOLID_ADD;
 
 	VectorScale( forward, dist, forward );
 	VectorAdd( forward, muzzle, muzzle );
