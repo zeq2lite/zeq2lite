@@ -1599,12 +1599,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	}
 	// Terminate guidance
 	if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
-	other->client->ps.bitFlags &= ~isStruggling;
-	if(other->client->ps.lockedTarget >= MAX_CLIENTS){
-		other->client->ps.lockedPosition = NULL;
-		other->client->ps.lockedTarget = 0;
-		other->client->ps.clientLockedTarget = 0;
-	}
 	if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
 		if(other->takedamage && other->client){
 			G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
@@ -1630,12 +1624,19 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	}
 }
 
-
-void G_RemoveUserWeapon (gentity_t *self) {
 // Wrapper function to safely remove a user weapon, incase
 // things like fading trails need to be handled.
+void G_RemoveUserWeapon (gentity_t *self) {
+	gentity_t *other;
 	if ( self->guided ) {
 		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
+		other = &g_entities[self->s.otherEntityNum];
+		other->client->ps.bitFlags &= ~isStruggling;
+		if(other->client->ps.lockedTarget >= MAX_CLIENTS){
+			other->client->ps.lockedPosition = NULL;
+			other->client->ps.lockedTarget = 0;
+			other->client->ps.clientLockedTarget = 0;
+		}
 	}
 	G_FreeEntity( self );
 }
@@ -1658,7 +1659,9 @@ void G_RunUserMissile( gentity_t *ent ) {
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
 
 	// ignore interactions with the missile owner
-	if(ent->strugglingPlayer || ent->strugglingAttack){
+	if(ent->strugglingAttack){
+		pass_ent = ent->s.otherEntityNum;//ENTITYNUM_NONE;
+	} else if (ent->strugglingPlayer){
 		pass_ent = ent->s.number;
 	} else {
 		pass_ent = ent->r.ownerNum;
