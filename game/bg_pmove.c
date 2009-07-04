@@ -376,7 +376,7 @@ void PM_CheckPowerLevel(void){
 		idleScale = (!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove) ? 2 : 1;
 		recovery = (float)pm->ps->powerLevel[plMaximum] * 0.002 * idleScale;
 		recovery *= (1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]));
-		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue]){recovery = 0;}
+		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue]){recovery = 0;}
 		if(powerLevel[plCurrent] > powerLevel[plFatigue]){
 			newValue = powerLevel[plCurrent] - (pm->ps->powerLevel[plMaximum] * 0.005);
 			powerLevel[plCurrent] = (powerLevel[plCurrent] - newValue >= 0) ? newValue : 0;
@@ -684,7 +684,7 @@ void PM_StopJump(void){
 void PM_CheckJump(void){
 	int jumpPower;
 	float jumpScale;
-	if(pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight){return;}
+	if(pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight || pm->ps->bitFlags & isStruggling){return;}
 	if(!(pm->cmd.buttons & BUTTON_JUMP)){return;}
 	PM_NotOnGround();
 	PM_StopDash();
@@ -718,11 +718,17 @@ PM_CheckBlock
 =============*/
 void PM_CheckBlock(void){
 	pm->ps->bitFlags &= ~usingBlock;
-	if((pm->cmd.buttons & BUTTON_BLOCK)){
+	if((pm->cmd.buttons & BUTTON_BLOCK)
+		&& !(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)
+		&& !(pm->ps->bitFlags & usingAlter)
+		&& !(pm->ps->bitFlags & usingZanzoken)
+		&& !(pm->ps->bitFlags & usingWeapon)
+		&& !(pm->ps->bitFlags & usingAlter)){
 		pm->ps->bitFlags |= usingBlock;
 		if(pm->ps->bitFlags & isStruggling){
+			PM_StopMovement();
 			pm->ps->timers[tmFreeze] = 100;
-			pm->ps->powerLevel[plUseCurrent] += 1;
+			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.001;;
 		}
 	}
 }
@@ -1603,7 +1609,7 @@ void PM_StopMelee(void){
 void PM_Melee(void){
 	int melee1,melee2,enemyState,state,option,damage,distance;
 	qboolean knockback,inRange,charging,movingForward;
-	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
+	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR || pm->ps->bitFlags & isStruggling){return;}
 	knockback = qfalse;
 	inRange = qfalse;
 	state = pm->ps->powerups[PW_MELEE_STATE];
@@ -1848,7 +1854,7 @@ void PM_Weapon(void){
 	int chargeRate;
 	int costPrimary,costSecondary;	
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
-	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
+	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR || pm->ps->bitFlags & isStruggling){return;}
 	if(pm->ps->bitFlags & isGuiding){
 		PM_StopMovement();
 		PM_StopDash();
@@ -2393,7 +2399,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_Freeze();
 	PM_GroundTrace();
 	if(!pm->ps->timers[tmFreeze]){
-		if(!(pm->ps->bitFlags & usingAlter)){
+		if(!(pm->ps->bitFlags & usingAlter) && !(pm->ps->bitFlags & isStruggling)){
 			PM_FlyMove();
 			PM_DashMove();
 			PM_WalkMove();

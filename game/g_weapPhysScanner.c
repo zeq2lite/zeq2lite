@@ -15,6 +15,8 @@ g_weapPhysField_t g_weapPhysFields[] = {
 	{ "radius",			G_weapPhys_ParseRadius			},	// Physics, Damage
 	{ "range",			G_weapPhys_ParseRange			},	// Physics, Trajectory
 	{ "lifetime",		G_weapPhys_ParseLifetime		},	// Physics
+	{ "swat",			G_weapPhys_ParseSwat			},	// Physics
+	{ "deflect",		G_weapPhys_ParseSwat			},	// Physics
 	{ "hitpoints",		G_weapPhys_ParseHitpoints		},	// Costs
 	{ "hp",				G_weapPhys_ParseHitpoints		},	// Costs
 	{ "ki",				G_weapPhys_ParseKi				},	// Costs

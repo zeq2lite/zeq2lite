@@ -124,7 +124,10 @@ struct gentity_s {
 	float		homRange;
 	float		homAngle;
 	int			powerLevel;
-	qboolean	struggling;
+	int			powerLevelCurrent;
+	qboolean	strugglingPlayer;
+	qboolean	strugglingAttack;
+	qboolean	isSwattable;
 	
 	// END ADDING
 	vec3_t		movedir;

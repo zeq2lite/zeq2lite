@@ -1,6 +1,6 @@
 #include "g_local.h"
 
-#define RADAR_UPDATE_TIME	500 // update the radar once every 5 seconds
+#define RADAR_UPDATE_TIME	5000 // update the radar once every 5 seconds
 
 
 radar_t g_playerOrigins[MAX_CLIENTS]; //global storage for player positions

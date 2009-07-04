@@ -166,6 +166,7 @@ qboolean G_weapPhys_ParseAcceleration( g_weapPhysParser_t *parser, g_weapPhysCat
 qboolean G_weapPhys_ParseRadius( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseRange( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseLifetime( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseSwat( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseHitpoints( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseKi( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseStamina( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
