@@ -1599,6 +1599,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	}
 	// Terminate guidance
 	if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
+	other->client->ps.bitFlags &= ~isStruggling;
 	if(other->client->ps.lockedTarget >= MAX_CLIENTS){
 		other->client->ps.lockedPosition = NULL;
 		other->client->ps.lockedTarget = 0;
