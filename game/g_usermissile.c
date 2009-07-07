@@ -131,7 +131,7 @@ void Think_Guided (gentity_t *self) {
 	float dist;
 	gentity_t *owner = GetMissileOwnerEntity(self);
 
-	if (self->strugglingAttack){
+	if (self->strugglingAttack && self->enemy->strugglingAttack){
 		self->think = Think_NormalMissileStruggle;
 		self->nextthink = level.time + 1;
 		return;
@@ -211,7 +211,7 @@ void Think_Homing (gentity_t *self) {
 	vec3_t		chosen_dir;
 	float		chosen_length;
 
-	if (self->strugglingAttack){
+	if (self->strugglingAttack && self->enemy->strugglingAttack){
 		self->think = Think_NormalMissileStruggle;
 		self->nextthink = level.time + 1;
 		return;
@@ -310,7 +310,7 @@ void Think_CylinderHoming (gentity_t *self) {
 	vec3_t		chosen_dir;
 	float		chosen_length;
 
-	if (self->strugglingAttack){
+	if (self->strugglingAttack && self->enemy->strugglingAttack){
 		self->think = Think_NormalMissileStruggle;
 		self->nextthink = level.time + 1;
 		return;
@@ -409,7 +409,7 @@ void Think_NormalMissile (gentity_t *self) {
 	if ( ( self->missileSpawnTime + self->maxMissileTime ) <= level.time ) {
 	  self->think = G_ExplodeUserWeapon;
 	}
-	if (self->strugglingAttack){
+	if (self->strugglingAttack && self->enemy->strugglingAttack){
 		self->think = Think_NormalMissileStruggle;
 		self->nextthink = level.time + 1;
 	} else if (self->strugglingPlayer) {
@@ -426,13 +426,14 @@ Think_NormalMissileStruggle
 =====================
 */
 void Think_NormalMissileStruggle (gentity_t *self) {
-	int powerDifference;
-	int speedDifference;
-	int	power1,power2;
-	int	speed1,speed2;
-	int result;
-	gentity_t *missileOwner;
-	trace_t	*trace;
+	int			powerDifference;
+	int			speedDifference;
+	int			power1,power2;
+	int			speed1,speed2;
+	int			result;
+	vec3_t		forward;
+	gentity_t	*missileOwner;
+	trace_t		*trace;
 	missileOwner = GetMissileOwnerEntity( self );
 	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
 		self->powerLevel += 1 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
@@ -448,8 +449,9 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	// If the other attack stopped struggling for whatever reason, resume moving forward.
 	if(!self->enemy->strugglingAttack){
 		self->bounceFrac = 1;
-		VectorNormalize(self->s.pos.trDelta);
-		VectorScale(self->s.pos.trDelta,self->speed,self->s.pos.trDelta);
+		VectorCopy(self->s.pos.trDelta,forward);
+		VectorNormalize(forward);
+		VectorScale(forward,self->speed,self->s.pos.trDelta);
 		G_BounceUserMissile(self,trace);
 		self->strugglingAttack = qfalse;
 		self->think = Think_NormalMissile;
@@ -457,11 +459,12 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	// Struggle away!
 	}else{
 		// Best way to get forward vector for this rocket?
-		VectorNormalize(self->s.pos.trDelta);
+		VectorCopy(self->s.pos.trDelta,forward);
+		VectorNormalize(forward);
 		VectorCopy(self->r.currentOrigin,self->s.pos.trBase);
 		self->s.pos.trTime = level.time;
 		self->s.pos.trType = TR_LINEAR;
-		VectorScale(self->s.pos.trDelta,result,self->s.pos.trDelta);
+		VectorScale(forward,result,self->s.pos.trDelta);
 		SnapVector(self->s.pos.trDelta);
 		VectorCopy(self->s.pos.trBase,self->r.currentOrigin);
 		//G_Printf("Power Difference: %i Speed Difference: %f Result: %i\n",powerDifference, speedDifference, result);
@@ -1475,60 +1478,6 @@ static void G_PushUserMissile( gentity_t *self, gentity_t *other ) {
 	self->s.pos.trTime = level.time;
 }
 
-static void G_DeflectUserMissile( gentity_t *self, gentity_t *other, vec3_t forward ) {
-	vec3_t	bounce_dir;
-	int		i;
-	float	speed;
-	gentity_t	*owner = other;
-	int		isowner = 0;
-	if ( other->r.ownerNum ){
-		owner = &g_entities[other->r.ownerNum];
-	}
-	if (self->r.ownerNum == other->s.number){ 
-		//the original owner is bouncing the missile, so don't try to bounce it back at him
-		isowner = 1;
-	}
-	//save the original speed
-	speed = VectorNormalize( self->s.pos.trDelta );
-	if ( &g_entities[self->r.ownerNum] && !(self->client->ps.bitFlags & usingBlock) && !isowner ){
-		//bounce back at them if you can
-		VectorSubtract( g_entities[self->r.ownerNum].r.currentOrigin, self->r.currentOrigin, bounce_dir );
-		VectorNormalize( bounce_dir );
-	}else if (isowner){ 
-		//in this case, actually push the missile away from me, and since we're giving boost to our own missile by pushing it, up the velocity
-		vec3_t missile_dir;
-		speed *= 1.5;
-		VectorSubtract( self->r.currentOrigin, other->r.currentOrigin, missile_dir );
-		VectorCopy( self->s.pos.trDelta, bounce_dir );
-		VectorScale( bounce_dir, DotProduct( forward, missile_dir ), bounce_dir );
-		VectorNormalize( bounce_dir );
-	}else{
-		vec3_t missile_dir;
-		VectorSubtract( other->r.currentOrigin, self->r.currentOrigin, missile_dir );
-		VectorCopy( self->s.pos.trDelta, bounce_dir );
-		VectorScale( bounce_dir, DotProduct( forward, missile_dir ), bounce_dir );
-		VectorNormalize( bounce_dir );
-	}
-	VectorNormalize( bounce_dir );
-	VectorScale( bounce_dir, speed, self->s.pos.trDelta );
-	self->s.pos.trTime = level.time;		// move a bit on the very first frame
-	VectorCopy( self->r.currentOrigin, self->s.pos.trBase );
-	if ( self->client->ps.bitFlags & usingBlock ){
-	//you are mine, now!
-		self->r.ownerNum = other->s.number;
-	}
-	if ( self->s.eType == ET_BEAMHEAD ){
-	//stop homing
-		self->think = 0;
-		self->nextthink = 0;
-	}
-	// check for stop
-	if ( VectorLength( self->s.pos.trDelta ) < 40 ) {
-		G_ExplodeUserWeapon ( self );
-		return;
-	}
-}
-
 static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	vec3_t fwd;
 	AngleVectors(self->enemy->r.currentAngles, fwd, NULL, NULL);
@@ -1600,71 +1549,74 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	vec3_t	velocity;
 	other = &g_entities[trace->entityNum];
 	if(self->strugglingPlayer){return;}
-	if(self->strugglingAttack && self->s.eType == ET_BEAMHEAD){return;}
-	if(!other->takedamage && self->bounceFrac && self->bouncesLeft){
+	// Initiate Power Struggle
+	if((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD) && !other->client && !self->strugglingAttack && !other->strugglingAttack){
+		self->enemy = other;
+		other->enemy = self;
+		self->strugglingAttack = qtrue;
+		self->enemy->strugglingAttack = qtrue;
+		if(self->s.eFlags & EF_GUIDED){
+			self->s.eFlags &= ~EF_GUIDED;
+		}
+		if(self->enemy->s.eFlags & EF_GUIDED){
+			self->enemy->s.eFlags &= ~EF_GUIDED;
+		}
+		//G_Printf("Started Power Struggle!\n");
+		return;
+	// Initiate Swat / Push Struggle
+	} else if (other->client && (other->client->ps.bitFlags & usingBlock) && !(other->client->ps.bitFlags & isStruggling) && !self->strugglingAttack){
+		self->strugglingPlayer = qtrue;
+		other->client->ps.bitFlags |= isStruggling;
+		self->enemy = other;
+		// If the player isn't already locked onto another player, and the attack won't be instantly swat away, lock onto the attack.
+		if(!other->client->ps.lockedTarget && !self->isSwattable){
+			other->client->ps.lockedTarget = self->s.number;
+			other->client->ps.clientLockedTarget = self->s.number;
+			other->client->ps.lockedPosition = &self->r.currentOrigin;
+		}
+		//G_Printf("Missile Started Struggle with %i!\n",other->s.clientNum);
+		return;
+	// Bounce off the world
+	} else if (self->bounceFrac && self->bouncesLeft && !other->takedamage && !self->strugglingAttack){
 		G_BounceUserMissile( self, trace );
 		G_AddEvent( self, EV_GRENADE_BOUNCE, 0 );
 		self->bouncesLeft--;
 		return;
-	}
-	self->takedamage = qtrue;
-	if(other->takedamage) {
-		if(other->client && (other->client->ps.bitFlags & usingBlock) && !(other->client->ps.bitFlags & isStruggling)){
-			// Initiate Swat / Push Struggle
-			self->strugglingPlayer = qtrue;
-			other->client->ps.bitFlags |= isStruggling;
-			self->enemy = other;
-			// If the player isn't already locked onto another player, and the attack won't be instantly swat away, lock onto the attack.
-			if(!other->client->ps.lockedTarget && !self->isSwattable){
-				other->client->ps.lockedTarget = self->s.number;
-				other->client->ps.clientLockedTarget = self->s.number;
-				other->client->ps.lockedPosition = &self->r.currentOrigin;
+	// Hit a player or the world
+	} else if(other->client || !other->takedamage){ 
+		self->takedamage = qtrue;
+		if(other->takedamage && self->damage) {
+			BG_EvaluateTrajectoryDelta(&self->s, &self->s.pos, level.time, velocity);
+			if(VectorLength( velocity ) == 0){
+				velocity[2] = 1;
 			}
-			//G_Printf("Missile Started Struggle with %i!\n",other->s.clientNum);
-			return;
-		}else if(self->damage){
-			if(other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD && !other->client && !other->strugglingAttack){
-				// Initiate Power Struggle
-				self->strugglingAttack = qtrue;
-				self->enemy = other;
-				if(self->s.eFlags & EF_GUIDED){
-					self->s.eFlags &= ~EF_GUIDED;
+			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->damage,0,self->methodOfDeath, self->extraKnockback);
+		}
+		if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
+			// Terminate guidance
+			if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
+			if(other->takedamage && other->client){
+				G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
+				self->s.otherEntityNum = other->s.number;
+			}
+			else if(trace->surfaceFlags & SURF_METALSTEPS){
+				G_AddEvent( self, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
+			}
+			else{
+				G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
+			}
+			self->freeAfterEvent = qtrue;
+			// Change over to a normal stationary entity right at the point of impact
+			self->s.eType = ET_GENERAL;
+			SnapVectorTowards( trace->endpos, self->s.pos.trBase );	// save net bandwidth
+			G_SetOrigin( self, trace->endpos );
+			if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
+				if( !hitClient ) {
+					g_entities[self->s.clientNum].client->accuracy_hits++;
 				}
-				//G_Printf("Started Power Struggle!\n");
-				return;
-			}else{
-				BG_EvaluateTrajectoryDelta(&self->s, &self->s.pos, level.time, velocity);
-				if(VectorLength( velocity ) == 0){
-					velocity[2] = 1;
-				}
-				G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->damage,0,self->methodOfDeath, self->extraKnockback);
 			}
+			trap_LinkEntity( self );
 		}
-	}
-	// Terminate guidance
-	if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
-	if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
-		if(other->takedamage && other->client){
-			G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
-			self->s.otherEntityNum = other->s.number;
-		}
-		else if(trace->surfaceFlags & SURF_METALSTEPS){
-			G_AddEvent( self, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
-		}
-		else{
-			G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
-		}
-		self->freeAfterEvent = qtrue;
-		// change over to a normal stationary entity right at the point of impact
-		self->s.eType = ET_GENERAL;
-		SnapVectorTowards( trace->endpos, self->s.pos.trBase );	// save net bandwidth
-		G_SetOrigin( self, trace->endpos );
-		if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->damage, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
-			if( !hitClient ) {
-				g_entities[self->s.clientNum].client->accuracy_hits++;
-			}
-		}
-		trap_LinkEntity( self );
 	}
 }
 
