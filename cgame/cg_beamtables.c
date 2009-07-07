@@ -413,6 +413,15 @@ static void CG_DrawBeamTable ( int clientNum, qboolean alternate ) {
 	// Initialize the polyVerts.
 	memset( verts, 0, sizeof(verts) );
 
+	verts[0].st[0] = 1;
+	verts[0].st[1] = 0;
+	verts[1].st[0] = 0;
+	verts[1].st[1] = 0;
+	verts[2].st[0] = 0;
+	verts[2].st[1] = 1;
+	verts[3].st[0] = 1;
+	verts[3].st[1] = 1;
+/*
 	verts[0].st[0] = 0;
 	verts[0].st[1] = 0;
 	verts[1].st[0] = 0;
@@ -421,7 +430,7 @@ static void CG_DrawBeamTable ( int clientNum, qboolean alternate ) {
 	verts[2].st[1] = 1;
 	verts[3].st[0] = 1;
 	verts[3].st[1] = 0;
-
+*/
 	for (i = 0; i < 4; i++) {
 		for (j = 0; j < 4; j++) {
 			verts[i].modulate[j] = 255;
