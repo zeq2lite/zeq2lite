@@ -1008,7 +1008,7 @@ void CheckTeamStatus(void) {
 			if (ent->inuse && (ent->client->sess.sessionTeam == TEAM_RED ||	ent->client->sess.sessionTeam == TEAM_BLUE)) {
 				loc = Team_GetLocation( ent );
 				if (loc)
-					ent->client->pers.teamState.location = loc->powerLevel;
+					ent->client->pers.teamState.location = loc->powerLevelTotal;
 				else
 					ent->client->pers.teamState.location = 0;
 			}
@@ -1068,24 +1068,24 @@ Obelisks
 
 static void ObeliskRegen( gentity_t *self ) {
 	self->nextthink = level.time + g_obeliskRegenPeriod.integer * 1000;
-	if( self->powerLevel >= g_obeliskHealth.integer ) {
+	if( self->powerLevelTotal >= g_obeliskHealth.integer ) {
 		return;
 	}
 
 	G_AddEvent( self, EV_POWERUP_REGEN, 0 );
-	self->powerLevel += g_obeliskRegenAmount.integer;
-	if ( self->powerLevel > g_obeliskHealth.integer ) {
-		self->powerLevel = g_obeliskHealth.integer;
+	self->powerLevelTotal += g_obeliskRegenAmount.integer;
+	if ( self->powerLevelTotal > g_obeliskHealth.integer ) {
+		self->powerLevelTotal = g_obeliskHealth.integer;
 	}
 
-	self->activator->s.modelindex2 = self->powerLevel * 0xff / g_obeliskHealth.integer;
+	self->activator->s.modelindex2 = self->powerLevelTotal * 0xff / g_obeliskHealth.integer;
 	self->activator->s.frame = 0;
 }
 
 
 static void ObeliskRespawn( gentity_t *self ) {
 	self->takedamage = qtrue;
-	self->powerLevel = g_obeliskHealth.integer;
+	self->powerLevelTotal = g_obeliskHealth.integer;
 
 	self->think = ObeliskRegen;
 	self->nextthink = level.time + g_obeliskRegenPeriod.integer * 1000;
@@ -1166,7 +1166,7 @@ static void ObeliskPain( gentity_t *self, gentity_t *attacker, int damage ) {
 	if (actualDamage <= 0) {
 		actualDamage = 1;
 	}
-	self->activator->s.modelindex2 = self->powerLevel * 0xff / g_obeliskHealth.integer;
+	self->activator->s.modelindex2 = self->powerLevelTotal * 0xff / g_obeliskHealth.integer;
 	if (!self->activator->s.frame) {
 		G_AddEvent(self, EV_OBELISKPAIN, 0);
 	}
@@ -1194,7 +1194,7 @@ gentity_t *SpawnObelisk( vec3_t origin, int team, int spawnflags) {
 	if( g_gametype.integer == GT_OBELISK ) {
 		ent->r.contents = CONTENTS_SOLID;
 		ent->takedamage = qtrue;
-		ent->powerLevel = g_obeliskHealth.integer;
+		ent->powerLevelTotal = g_obeliskHealth.integer;
 		ent->die = ObeliskDie;
 		ent->pain = ObeliskPain;
 		ent->think = ObeliskRegen;

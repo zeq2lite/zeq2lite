@@ -995,7 +995,7 @@ void BeginIntermission( void ) {
 		if (!client->inuse)
 			continue;
 		// respawn if dead
-		if (client->powerLevel <= 0) {
+		if (client->powerLevelTotal <= 0) {
 			respawn(client);
 		}
 		MoveClientToIntermission( client );

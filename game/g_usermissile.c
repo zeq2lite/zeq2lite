@@ -131,7 +131,7 @@ void Think_Guided (gentity_t *self) {
 	float dist;
 	gentity_t *owner = GetMissileOwnerEntity(self);
 
-	if (self->strugglingAttack && self->enemy->strugglingAttack){
+	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
 		self->nextthink = level.time + 1;
 		return;
@@ -211,7 +211,7 @@ void Think_Homing (gentity_t *self) {
 	vec3_t		chosen_dir;
 	float		chosen_length;
 
-	if (self->strugglingAttack && self->enemy->strugglingAttack){
+	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
 		self->nextthink = level.time + 1;
 		return;
@@ -310,7 +310,7 @@ void Think_CylinderHoming (gentity_t *self) {
 	vec3_t		chosen_dir;
 	float		chosen_length;
 
-	if (self->strugglingAttack && self->enemy->strugglingAttack){
+	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
 		self->nextthink = level.time + 1;
 		return;
@@ -409,7 +409,7 @@ void Think_NormalMissile (gentity_t *self) {
 	if ( ( self->missileSpawnTime + self->maxMissileTime ) <= level.time ) {
 	  self->think = G_ExplodeUserWeapon;
 	}
-	if (self->strugglingAttack && self->enemy->strugglingAttack){
+	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
 		self->nextthink = level.time + 1;
 	} else if (self->strugglingPlayer) {
@@ -436,13 +436,24 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	trace_t		*trace;
 	missileOwner = GetMissileOwnerEntity( self );
 	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
-		self->powerLevel += 1 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+		self->powerLevelTotal += 1 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
 		self->speed += 1 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+	}
+	if(self->strugglingAllyAttack){
+		if(self->s.eType == ET_BEAMHEAD){
+			self->ally->powerLevelTotal += 1 + ((float)self->powerLevelTotal * 0.0003);
+			self->ally->speed += 1 + ((float)self->speed * 0.0003);
+		}else{
+			self->powerLevelTotal -= 1;
+			self->speed -= 1;
+			self->ally->powerLevelTotal += 1;
+			self->ally->speed += 1;
+		}
 	}
 	speed1 = self->speed;
 	speed2 = self->enemy->speed;
-	power1 = self->powerLevel;
-	power2 = self->enemy->powerLevel;
+	power1 = self->powerLevelTotal;
+	power2 = self->enemy->powerLevelTotal;
 	speedDifference = speed1-speed2;
 	powerDifference = power1-power2;
 	result = speedDifference + powerDifference;
@@ -454,8 +465,22 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		VectorScale(forward,self->speed,self->s.pos.trDelta);
 		G_BounceUserMissile(self,trace);
 		self->strugglingAttack = qfalse;
+		self->strugglingAllyAttack = qfalse;
 		self->think = Think_NormalMissile;
+		self->nextthink = level.time + 1;// + FRAMETIME;
 		//G_Printf("Moving forward again!\n");
+		return;
+	}
+	// Help ally with struggle!
+	if(self->strugglingAllyAttack){
+		VectorCopy(self->ally->s.pos.trBase,self->s.pos.trBase);
+		self->s.pos.trTime = level.time;
+		self->s.pos.trType = TR_LINEAR;
+		VectorCopy(self->ally->s.pos.trDelta,self->s.pos.trDelta);
+		SnapVector(self->s.pos.trDelta);
+		VectorCopy(self->s.pos.trBase,self->r.currentOrigin);
+		//VectorCopy(self->ally->r.currentOrigin,self->r.currentOrigin);
+		//G_Printf("Helping ally!\n");
 	// Struggle away!
 	}else{
 		// Best way to get forward vector for this rocket?
@@ -538,9 +563,9 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 			}
 		}
 		else{
-			target->powerLevel = target->powerLevel - damage;
-			//G_Printf("Attack Powerlevel = %i\n",target->powerLevel);
-			if(target->powerLevel <= 0){
+			target->powerLevelTotal = target->powerLevelTotal - damage;
+			//G_Printf("Attack Powerlevel = %i\n",target->powerLevelTotal);
+			if(target->powerLevelTotal <= 0){
 				//G_ExplodeUserWeapon ( self );
 				//G_Printf(va("Dead"));
 			}
@@ -845,14 +870,14 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			bolt->powerLevelCurrent = bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentSecondary];
+			bolt->powerLevelCurrent = bolt->powerLevelTotal = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentSecondary];
 			//G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
 			//G_Printf(va("charge percent = %i\n",self->client->ps.stats[stChargePercentSecondary]));
 			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
 		} else {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			bolt->powerLevelCurrent = bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentPrimary];
+			bolt->powerLevelCurrent = bolt->powerLevelTotal = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentPrimary];
 			//G_Printf(va("ki cost = %i\n",weaponInfo->costs_ki));
 			//G_Printf(va("charge percent = %i\n",self->client->ps.stats[stChargePercentPrimary]));
 			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
@@ -865,6 +890,10 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
 		bolt->takedamage = qtrue;
+		bolt->strugglingAllyAttack = qfalse;
+		bolt->strugglingAttack = qfalse;
+		bolt->strugglingPlayer = qfalse;
+		bolt->count = 0;
 		{
 			float radius;
 			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
@@ -1036,12 +1065,12 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			bolt->powerLevelCurrent = bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentSecondary];
+			bolt->powerLevelCurrent = bolt->powerLevelTotal = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentSecondary];
 			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
 		} else {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			bolt->powerLevelCurrent = bolt->powerLevel = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentPrimary];
+			bolt->powerLevelCurrent = bolt->powerLevelTotal = (weaponInfo->costs_ki*5) * self->client->ps.stats[stChargePercentPrimary];
 			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
 		}
 		
@@ -1052,7 +1081,10 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 				
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
-
+		bolt->strugglingAllyAttack = qfalse;
+		bolt->strugglingAttack = qfalse;
+		bolt->strugglingPlayer = qfalse;
+		bolt->count = 0;
 		{
 			float radius;
 			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
@@ -1386,8 +1418,9 @@ void G_ExplodeUserWeapon( gentity_t *self ) {
 	G_AddEvent( self, EV_MISSILE_MISS_AIR, DirToByte( dir ) );
 	self->freeAfterEvent = qtrue;
 
-	if(self->strugglingAttack || self->strugglingPlayer){
+	if(self->strugglingAttack || self->strugglingPlayer || self->strugglingAllyAttack){
 		self->enemy->strugglingAttack = qfalse;
+		self->strugglingAllyAttack = qfalse;
 		self->enemy->client->ps.bitFlags &= ~isStruggling;
 	}
 
@@ -1488,9 +1521,11 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		self->strugglingPlayer = qfalse;
 		self->bounceFrac = 1.0f;
 		G_PushUserMissile(self, self->enemy);
-		self->powerLevelCurrent = self->powerLevel;
+		self->powerLevelCurrent = self->powerLevelTotal;
 		self->enemy->client->ps.bitFlags &= ~isStruggling;
 		self->r.ownerNum = self->enemy->s.number;
+		self->s.clientNum = self->enemy->s.number;
+		self->parent = self->enemy;				
 		if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
 			self->enemy->client->ps.lockedPosition = NULL;
 			self->enemy->client->ps.lockedTarget = 0;
@@ -1501,13 +1536,15 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	// if the missle is losing against the player
 	else if (self->powerLevelCurrent < self->enemy->client->ps.powerLevel[plCurrent]) {
 		// If the missile has lost over half its power against the player
-		if(self->powerLevelCurrent < (self->powerLevel / 2)){
+		if(self->powerLevelCurrent < (self->powerLevelTotal / 2)){
 			self->strugglingPlayer = qfalse;
 			self->bounceFrac = 1.0f;
 			G_PushUserMissile(self, self->enemy);
-			self->powerLevelCurrent = self->powerLevel;
+			self->powerLevelCurrent = self->powerLevelTotal;
 			self->enemy->client->ps.bitFlags &= ~isStruggling;
 			self->r.ownerNum = self->enemy->s.number;
+			self->s.clientNum = self->enemy->s.number;
+			self->parent = self->enemy;	
 			//G_Printf("Missile Lost to %i!\n",self->enemy->s.clientNum);
 			if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
 				self->enemy->client->ps.lockedPosition = NULL;
@@ -1550,7 +1587,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	other = &g_entities[trace->entityNum];
 	if(self->strugglingPlayer){return;}
 	// Initiate Power Struggle
-	if((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD) && !other->client && !self->strugglingAttack && !other->strugglingAttack){
+	if((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD) && !other->client && !self->strugglingAttack && !self->strugglingAllyAttack && !other->strugglingAttack){
 		self->enemy = other;
 		other->enemy = self;
 		self->strugglingAttack = qtrue;
@@ -1563,8 +1600,13 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		}
 		//G_Printf("Started Power Struggle!\n");
 		return;
+	// Initiate attack absorbtion
+	} else if ((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD) && !other->client && !self->strugglingAttack && !self->strugglingAllyAttack && other->strugglingAttack){
+		//self->ally = other->enemy;
+		//self->strugglingAllyAttack = qtrue;
+		return;
 	// Initiate Swat / Push Struggle
-	} else if (other->client && (other->client->ps.bitFlags & usingBlock) && !(other->client->ps.bitFlags & isStruggling) && !self->strugglingAttack){
+	} else if (other->client && (other->client->ps.bitFlags & usingBlock) && !(other->client->ps.bitFlags & isStruggling) && !self->strugglingAttack && !self->strugglingAllyAttack){
 		self->strugglingPlayer = qtrue;
 		other->client->ps.bitFlags |= isStruggling;
 		self->enemy = other;
@@ -1577,7 +1619,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		//G_Printf("Missile Started Struggle with %i!\n",other->s.clientNum);
 		return;
 	// Bounce off the world
-	} else if (self->bounceFrac && self->bouncesLeft && !other->takedamage && !self->strugglingAttack){
+	} else if (self->bounceFrac && self->bouncesLeft && !other->takedamage && !self->strugglingAttack && !self->strugglingAllyAttack && !other->strugglingAttack){
 		G_BounceUserMissile( self, trace );
 		G_AddEvent( self, EV_GRENADE_BOUNCE, 0 );
 		self->bouncesLeft--;
@@ -1592,7 +1634,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			}
 			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->damage,0,self->methodOfDeath, self->extraKnockback);
 		}
-		if((self->powerLevel <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
+		if((self->powerLevelTotal <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
 			// Terminate guidance
 			if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
 			if(other->takedamage && other->client){
@@ -1624,11 +1666,11 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 // things like fading trails need to be handled.
 void G_RemoveUserWeapon (gentity_t *self) {
 	gentity_t *other;
-/*
+
 	if(self->strugglingAttack || self->strugglingPlayer){
 		return;
 	}
-*/
+
 	other = &g_entities[self->s.otherEntityNum];
 	other->client->ps.bitFlags &= ~isStruggling;
 	if(other->client->ps.lockedTarget >= MAX_CLIENTS){
@@ -1646,7 +1688,17 @@ void G_RemoveUserWeapon (gentity_t *self) {
 	G_FreeEntity( self );
 }
 
+void Missile_Smooth (gentity_t *ent, vec3_t origin, trace_t *tr) {
+	int touch[MAX_GENTITIES];
+	vec3_t mins, maxs;
+	int num;
 
+	num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES);
+	VectorAdd(origin,ent->r.mins, mins);
+	VectorAdd(origin,ent->r.maxs, maxs);
+	VectorCopy(origin,ent->s.pos.trBase);
+	ent->s.pos.trTime = level.time;
+}
 
 /*
    -----------------------------------------
@@ -1663,13 +1715,16 @@ void G_RunUserMissile( gentity_t *ent ) {
 	// get current position
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
 
-	// ignore interactions with the missile owner
-	if (ent->strugglingPlayer || ent->strugglingAttack){
+	// attacks that left the owner bbox will hit anything, even the owner
+	if (ent->count) {
+		pass_ent = ent->s.number;//ENTITYNUM_NONE;
+	// if the attack is in any type of struggle, ignore interaction with the attacker but hit the owner.
+	} else if (ent->strugglingPlayer || ent->strugglingAttack || ent->strugglingAllyAttack){
 		pass_ent = ent->s.number;
+	// ignore interactions with the missile owner
 	} else {
 		pass_ent = ent->r.ownerNum;
 	}
-
 	// trace a line from the previous position to the current position
 	trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, pass_ent, ent->clipmask );
 
@@ -1681,6 +1736,7 @@ void G_RunUserMissile( gentity_t *ent ) {
 	else {
 		VectorCopy( trace.endpos, ent->r.currentOrigin );
 	}
+	//Missile_Smooth(ent,origin,&trace);
 	trap_LinkEntity(ent);
 	//G_Printf("%i\n",ent->r.currentOrigin);
 
@@ -1693,11 +1749,20 @@ void G_RunUserMissile( gentity_t *ent ) {
 
 		G_ImpactUserWeapon(ent, &trace);
 
-		if ( (ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD) && ((ent->powerLevel <= 0)||(g_entities[trace.entityNum].powerLevel <=0)) ) {
+		if ( (ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD) && ((ent->powerLevelTotal <= 0)||(g_entities[trace.entityNum].powerLevelTotal <=0)) ) {
 			// Missile has changed to ET_GENERAL and has exploded, so we don't want
 			// to run the think function!
 			// Return immediately instead.
 			return;	
+		}
+	}
+
+	// if the attack wasn't yet outside the player body
+	if (!ent->count) {
+		// check if the attack is outside the owner bbox
+		trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, ENTITYNUM_NONE, ent->clipmask );
+		if (!trace.startsolid || trace.entityNum != ent->r.ownerNum) {
+			ent->count = 1;
 		}
 	}
 

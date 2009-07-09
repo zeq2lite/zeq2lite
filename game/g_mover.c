@@ -1170,7 +1170,7 @@ void SP_func_button( gentity_t *ent ) {
 	distance = abs_movedir[0] * size[0] + abs_movedir[1] * size[1] + abs_movedir[2] * size[2] - lip;
 	VectorMA (ent->pos1, distance, ent->movedir, ent->pos2);
 
-	if (ent->powerLevel) {
+	if (ent->powerLevelTotal) {
 		// shootable button
 		ent->takedamage = qtrue;
 	} else {

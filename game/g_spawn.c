@@ -89,7 +89,7 @@ field_t fields[] = {
 	{"wait", FOFS(wait), F_FLOAT},
 	{"random", FOFS(random), F_FLOAT},
 	{"count", FOFS(count), F_INT},
-	{"powerLevel", FOFS(powerLevel), F_INT},
+	{"powerLevelTotal", FOFS(powerLevelTotal), F_INT},
 	{"light", 0, F_IGNORE},
 	{"dmg", FOFS(damage), F_INT},
 	{"angles", FOFS(s.angles), F_VECTOR},

@@ -271,12 +271,12 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 		quantity = ent->item->quantity;
 	}
 
-	other->powerLevel += quantity;
+	other->powerLevelTotal += quantity;
 
-	if (other->powerLevel > max ) {
-		other->powerLevel = max;
+	if (other->powerLevelTotal > max ) {
+		other->powerLevelTotal = max;
 	}
-	other->client->ps.powerLevel[plCurrent] = other->powerLevel;
+	other->client->ps.powerLevel[plCurrent] = other->powerLevelTotal;
 
 	if ( ent->item->quantity == 100 ) {		// mega powerLevel respawns slow
 		return RESPAWN_MEGAHEALTH;

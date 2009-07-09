@@ -123,10 +123,11 @@ struct gentity_s {
 	float		homAccel;
 	float		homRange;
 	float		homAngle;
-	int			powerLevel;
+	int			powerLevelTotal;
 	int			powerLevelCurrent;
 	qboolean	strugglingPlayer;
 	qboolean	strugglingAttack;
+	qboolean	strugglingAllyAttack;
 	qboolean	isSwattable;
 	
 	// END ADDING
@@ -155,6 +156,7 @@ struct gentity_s {
 	int			count;
 	gentity_t	*chain;
 	gentity_t	*enemy;
+	gentity_t	*ally;
 	gentity_t	*activator;
 	gentity_t	*teamchain;		// next entity in team
 	gentity_t	*teammaster;	// master of the team

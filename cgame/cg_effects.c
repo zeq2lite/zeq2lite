@@ -775,12 +775,48 @@ void CG_BigExplode( vec3_t playerOrigin ) {
 CG_MakeUserExplosion
 ======================
 */
-void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics) {
+void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, int powerups) {
 	float			angle, start, end;
 	localEntity_t	*expShell;
 	localEntity_t	*expShock;
 	int				offset;
 	vec3_t			tmpVec, newOrigin;
+	entityState_t	*s1;
+	float			explosionScale;
+	int				attackChargeLvl;
+
+	// The attacks's charge level was stored in this field. We hijacked it on the
+	// server to be able to transmit the missile's own charge level.
+	attackChargeLvl = powerups;
+
+	// Obtain the scale the missile must have.
+	if (weaponGraphics->chargeGrowth) {
+		// below the start, we use the lowest form
+		if (weaponGraphics->chargeStartPct >= attackChargeLvl) {
+			explosionScale = weaponGraphics->chargeStartsize;
+		} else {
+			// above the end, we use the highest form
+			if (weaponGraphics->chargeEndPct <= attackChargeLvl) {
+				explosionScale = weaponGraphics->chargeEndsize;
+			} else {
+				float	PctRange;
+				float	PctVal;
+				float	SizeRange;
+				float	SizeVal;
+
+				// inbetween, we work out the value
+				PctRange = weaponGraphics->chargeEndPct - weaponGraphics->chargeStartPct;
+				PctVal = attackChargeLvl - weaponGraphics->chargeStartPct;
+
+				SizeRange = weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize;
+				SizeVal = (PctVal / PctRange) * SizeRange;
+				explosionScale = SizeVal + weaponGraphics->chargeStartsize;
+			}
+		}
+	} else {
+		explosionScale = 1;
+	}
+	explosionScale = explosionScale * weaponGraphics->explosionSize;
 
 	// skew the time a bit so they aren't all in sync
 	offset = rand() & 63;	
@@ -795,7 +831,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 			// set the type as sprite and link the image
 			expShell->refEntity.reType = RT_SPRITE;
 			expShell->refEntity.customShader = weaponGraphics->explosionShader;
-			expShell->refEntity.radius = 4 * weaponGraphics->explosionSize;
+			expShell->refEntity.radius = 4 * explosionScale;//weaponGraphics->explosionSize;
 
 			// randomly rotate sprite orientation
 			expShell->refEntity.rotation = rand() % 360;
@@ -813,7 +849,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 
 			// create a camera shake
 			CG_AddEarthquake( origin, 
-				weaponGraphics->explosionSize / 2 
+				explosionScale/*weaponGraphics->explosionSize*/ / 2 
 				, weaponGraphics->explosionTime / 1000
 				, ( weaponGraphics->explosionTime / 1000 ) / 2
 				, ( weaponGraphics->explosionTime / 1000 ) * 2
@@ -853,9 +889,9 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		VectorNormalize(expShell->refEntity.axis[0]);
 		VectorNormalize(expShell->refEntity.axis[1]);
 		VectorNormalize(expShell->refEntity.axis[2]);
-		VectorScale(expShell->refEntity.axis[0], weaponGraphics->explosionSize, expShell->refEntity.axis[0]);
-		VectorScale(expShell->refEntity.axis[1], weaponGraphics->explosionSize, expShell->refEntity.axis[1]);
-		VectorScale(expShell->refEntity.axis[2], weaponGraphics->explosionSize, expShell->refEntity.axis[2]);
+		VectorScale(expShell->refEntity.axis[0], explosionScale/*weaponGraphics->explosionSize*/, expShell->refEntity.axis[0]);
+		VectorScale(expShell->refEntity.axis[1], explosionScale/*weaponGraphics->explosionSize*/, expShell->refEntity.axis[1]);
+		VectorScale(expShell->refEntity.axis[2], explosionScale/*weaponGraphics->explosionSize*/, expShell->refEntity.axis[2]);
 
 		// set origin
 		VectorCopy( origin, newOrigin );
@@ -870,7 +906,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		//trap_R_AddFogToScene(0,1000, 0,0,0,0,2,2);
 		// create a camera shake
 		CG_AddEarthquake( origin, 
-			weaponGraphics->explosionSize * 100 
+			explosionScale/*weaponGraphics->explosionSize*/ * 100 
 			, weaponGraphics->explosionTime / 1000
 			, ( weaponGraphics->explosionTime / 1000 ) / 2
 			, ( weaponGraphics->explosionTime / 1000 ) * 2
@@ -913,9 +949,9 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		VectorNormalize(expShock->refEntity.axis[0]);
 		VectorNormalize(expShock->refEntity.axis[1]);
 		VectorNormalize(expShock->refEntity.axis[2]);
-		VectorScale(expShock->refEntity.axis[0], 2 * weaponGraphics->explosionSize, expShock->refEntity.axis[0]);
-		VectorScale(expShock->refEntity.axis[1], 2 * weaponGraphics->explosionSize, expShock->refEntity.axis[1]);
-		VectorScale(expShock->refEntity.axis[2], 2 * weaponGraphics->explosionSize, expShock->refEntity.axis[2]);
+		VectorScale(expShock->refEntity.axis[0], 2 * explosionScale/*weaponGraphics->explosionSize*/, expShock->refEntity.axis[0]);
+		VectorScale(expShock->refEntity.axis[1], 2 * explosionScale/*weaponGraphics->explosionSize*/, expShock->refEntity.axis[1]);
+		VectorScale(expShock->refEntity.axis[2], 2 * explosionScale/*weaponGraphics->explosionSize*/, expShock->refEntity.axis[2]);
 
 		// set origin
 		VectorCopy( origin, newOrigin );

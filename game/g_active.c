@@ -40,7 +40,7 @@ void P_DamageFeedback( gentity_t *player ) {
 	// play an apropriate pain sound
 	if ( (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) ) {
 		player->pain_debounce_time = level.time + 700;
-		G_AddEvent( player, EV_PAIN, player->powerLevel );
+		G_AddEvent( player, EV_PAIN, player->powerLevelTotal );
 		client->ps.damageEvent++;
 	}
 
@@ -79,7 +79,7 @@ void P_WorldEffects( gentity_t *ent ) {
 	ent->client->airOutTime = level.time + 12000;
 	if (waterlevel && 
 		(ent->watertype&(CONTENTS_LAVA|CONTENTS_SLIME)) ) {
-		if (ent->powerLevel > 0
+		if (ent->powerLevelTotal > 0
 			&& ent->pain_debounce_time <= level.time	) {
 
 			if ( envirosuit ) {

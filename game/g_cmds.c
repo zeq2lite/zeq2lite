@@ -91,7 +91,7 @@ qboolean	CheatsOk( gentity_t *ent ) {
 		trap_SendServerCommand( ent-g_entities, va("print \"Cheats are not enabled on this server.\n\""));
 		return qfalse;
 	}
-	if ( ent->powerLevel <= 0 ) {
+	if ( ent->powerLevelTotal <= 0 ) {
 		trap_SendServerCommand( ent-g_entities, va("print \"You must be alive to use this command.\n\""));
 		return qfalse;
 	}
@@ -229,7 +229,7 @@ void Cmd_Give_f (gentity_t *ent)
 
 	if (give_all || Q_stricmp( name, "powerLevel") == 0)
 	{
-		ent->powerLevel = ent->client->ps.powerLevel[plFatigue];
+		ent->powerLevelTotal = ent->client->ps.powerLevel[plFatigue];
 		if (!give_all)
 			return;
 	}
@@ -445,7 +445,7 @@ void Cmd_Kill_f( gentity_t *ent ) {
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		return;
 	}
-	if (ent->powerLevel <= 0) {
+	if (ent->powerLevelTotal <= 0) {
 		return;
 	}
 	ent->flags &= ~FL_GODMODE;
@@ -570,7 +570,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	if ( oldTeam != TEAM_SPECTATOR ) {
 		// Kill him (makes sure he loses flags, etc)
 		ent->flags &= ~FL_GODMODE;
-		ent->client->ps.powerLevel[plCurrent] = ent->powerLevel = 0;
+		ent->client->ps.powerLevel[plCurrent] = ent->powerLevelTotal = 0;
 		player_die(ent,ent,ent,100000,MOD_SUICIDE);
 
 	}

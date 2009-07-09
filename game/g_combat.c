@@ -259,11 +259,11 @@ body_die
 ==================
 */
 void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
-	if ( self->powerLevel > GIB_HEALTH ) {
+	if ( self->powerLevelTotal > GIB_HEALTH ) {
 		return;
 	}
 	if ( !g_blood.integer ) {
-		self->powerLevel = GIB_HEALTH+1;
+		self->powerLevelTotal = GIB_HEALTH+1;
 		return;
 	}
 
