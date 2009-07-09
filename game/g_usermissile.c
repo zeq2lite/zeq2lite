@@ -1666,11 +1666,11 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 // things like fading trails need to be handled.
 void G_RemoveUserWeapon (gentity_t *self) {
 	gentity_t *other;
-
+/*
 	if(self->strugglingAttack || self->strugglingPlayer){
 		return;
 	}
-
+*/
 	other = &g_entities[self->s.otherEntityNum];
 	other->client->ps.bitFlags &= ~isStruggling;
 	if(other->client->ps.lockedTarget >= MAX_CLIENTS){
