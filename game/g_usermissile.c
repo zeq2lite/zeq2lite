@@ -141,6 +141,11 @@ void Think_Guided (gentity_t *self) {
 		return;
 	}
 
+	if((owner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
+		self->powerLevelTotal += 10 + ((float)owner->client->ps.powerLevel[plMaximum] * 0.0003);
+		self->speed += 10 + ((float)owner->client->ps.powerLevel[plMaximum] * 0.0003);
+	}
+
 	// If our weapon's owner can't be found, skip anything related to guiding.
 	if ( !owner )
 	{
@@ -406,8 +411,14 @@ Think_NormalMissile
 =====================
 */
 void Think_NormalMissile (gentity_t *self) {
+	gentity_t	*missileOwner;
+	missileOwner = GetMissileOwnerEntity( self );
 	if ( ( self->missileSpawnTime + self->maxMissileTime ) <= level.time ) {
 	  self->think = G_ExplodeUserWeapon;
+	}
+	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
+		self->powerLevelTotal += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+		self->speed += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
 	}
 	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
@@ -459,11 +470,11 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	result = speedDifference + powerDifference;
 	// If the other attack stopped struggling for whatever reason, resume moving forward.
 	if(!self->enemy->strugglingAttack){
-		self->bounceFrac = 1;
-		VectorCopy(self->s.pos.trDelta,forward);
-		VectorNormalize(forward);
-		VectorScale(forward,self->speed,self->s.pos.trDelta);
-		G_BounceUserMissile(self,trace);
+		//self->bounceFrac = 1;
+		//VectorCopy(self->s.pos.trDelta,forward);
+		//VectorNormalize(forward);
+		//VectorScale(forward,self->speed,self->s.pos.trDelta);
+		//G_BounceUserMissile(self,trace);
 		self->strugglingAttack = qfalse;
 		self->strugglingAllyAttack = qfalse;
 		self->think = Think_NormalMissile;
@@ -1519,12 +1530,18 @@ static void G_PushUserMissile( gentity_t *self, gentity_t *other ) {
 
 static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	vec3_t fwd;
+	gentity_t	*missileOwner;
+	missileOwner = GetMissileOwnerEntity( self );
 	AngleVectors(self->enemy->r.currentAngles, fwd, NULL, NULL);
 	VectorNormalize( fwd );
 	if(self->enemy->client->ps.bitFlags & usingBoost){
 		self->powerLevelCurrent -= 50 * self->enemy->client->tiers->energyDefense;
 	}else{
 		self->powerLevelCurrent -= 25 * self->enemy->client->tiers->energyDefense;
+	}
+	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
+		self->powerLevelTotal += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+		self->speed += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
 	}
 	// if the missile has lost all its power or it's swattable, swat it away instantly.
 	if (self->powerLevelCurrent <= 0 || self->isSwattable){
