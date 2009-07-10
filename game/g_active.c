@@ -429,7 +429,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_DETONATE_WEAPON:
 			missile = client->guidetarget;
-			G_RemoveUserWeapon(missile);
+			if(!missile->strugglingAllyAttack || !missile->strugglingAttack || !missile->strugglingPlayer){
+				G_RemoveUserWeapon(missile);
+			}
 			break;
 		case EV_MELEE_CHECK:
 			if(ps->lockedTarget>0){

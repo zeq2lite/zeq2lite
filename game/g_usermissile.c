@@ -133,11 +133,11 @@ void Think_Guided (gentity_t *self) {
 
 	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
-		self->nextthink = level.time + 1;
+		self->nextthink = level.time;
 		return;
 	} else if (self->strugglingPlayer) {
 		self->think = Think_NormalMissileStrugglePlayer;
-		self->nextthink = level.time + FRAMETIME;
+		self->nextthink = level.time;
 		return;
 	}
 
@@ -213,11 +213,11 @@ void Think_Homing (gentity_t *self) {
 
 	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
-		self->nextthink = level.time + 1;
+		self->nextthink = level.time;
 		return;
 	} else if (self->strugglingPlayer) {
 		self->think = Think_NormalMissileStrugglePlayer;
-		self->nextthink = level.time + FRAMETIME;
+		self->nextthink = level.time;
 		return;
 	}
 
@@ -312,11 +312,11 @@ void Think_CylinderHoming (gentity_t *self) {
 
 	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
-		self->nextthink = level.time + 1;
+		self->nextthink = level.time;
 		return;
 	} else if (self->strugglingPlayer) {
 		self->think = Think_NormalMissileStrugglePlayer;
-		self->nextthink = level.time + FRAMETIME;
+		self->nextthink = level.time;
 		return;
 	}
 
@@ -411,10 +411,10 @@ void Think_NormalMissile (gentity_t *self) {
 	}
 	if ((self->strugglingAttack && self->enemy->strugglingAttack) || (self->strugglingAllyAttack && self->enemy->strugglingAttack)){
 		self->think = Think_NormalMissileStruggle;
-		self->nextthink = level.time + 1;
+		self->nextthink = level.time;
 	} else if (self->strugglingPlayer) {
 		self->think = Think_NormalMissileStrugglePlayer;
-		self->nextthink = level.time + FRAMETIME;
+		self->nextthink = level.time;
 	} else {
 		self->nextthink = level.time + FRAMETIME;
 	}
@@ -431,23 +431,23 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	int			power1,power2;
 	int			speed1,speed2;
 	int			result;
-	vec3_t		forward;
+	vec3_t		forward,dir,dir2,start;
 	gentity_t	*missileOwner;
 	trace_t		*trace;
 	missileOwner = GetMissileOwnerEntity( self );
 	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
-		self->powerLevelTotal += 1 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
-		self->speed += 1 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+		self->powerLevelTotal += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+		self->speed += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
 	}
 	if(self->strugglingAllyAttack){
 		if(self->s.eType == ET_BEAMHEAD){
-			self->ally->powerLevelTotal += 1 + ((float)self->powerLevelTotal * 0.0003);
-			self->ally->speed += 1 + ((float)self->speed * 0.0003);
+			self->ally->powerLevelTotal += 10 + ((float)self->powerLevelTotal * 0.0003);
+			self->ally->speed += 10 + ((float)self->speed * 0.0003);
 		}else{
-			self->powerLevelTotal -= 1;
-			self->speed -= 1;
-			self->ally->powerLevelTotal += 1;
-			self->ally->speed += 1;
+			self->powerLevelTotal -= 10;
+			self->speed -= 10;
+			self->ally->powerLevelTotal += 10;
+			self->ally->speed += 10;
 		}
 	}
 	speed1 = self->speed;
@@ -467,35 +467,41 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		self->strugglingAttack = qfalse;
 		self->strugglingAllyAttack = qfalse;
 		self->think = Think_NormalMissile;
-		self->nextthink = level.time + 1;// + FRAMETIME;
+		self->nextthink = level.time;
 		//G_Printf("Moving forward again!\n");
 		return;
 	}
 	// Help ally with struggle!
 	if(self->strugglingAllyAttack){
 		VectorCopy(self->ally->s.pos.trBase,self->s.pos.trBase);
+		VectorCopy(self->ally->s.pos.trDelta,self->s.pos.trDelta);
+		if(self->s.eType != ET_BEAMHEAD){
+			SnapVector(self->s.pos.trDelta);
+		}
+		VectorCopy(self->s.pos.trBase,self->r.currentOrigin);
 		self->s.pos.trTime = level.time;
 		self->s.pos.trType = TR_LINEAR;
-		VectorCopy(self->ally->s.pos.trDelta,self->s.pos.trDelta);
-		SnapVector(self->s.pos.trDelta);
-		VectorCopy(self->s.pos.trBase,self->r.currentOrigin);
-		//VectorCopy(self->ally->r.currentOrigin,self->r.currentOrigin);
+		VectorCopy(self->ally->r.currentOrigin,self->r.currentOrigin);
 		//G_Printf("Helping ally!\n");
 	// Struggle away!
 	}else{
-		// Best way to get forward vector for this rocket?
-		VectorCopy(self->s.pos.trDelta,forward);
-		VectorNormalize(forward);
-		VectorCopy(self->r.currentOrigin,self->s.pos.trBase);
-		self->s.pos.trTime = level.time;
+		VectorCopy(self->r.currentOrigin,start);
+		VectorCopy(self->s.pos.trDelta,dir);
+		VectorCopy(self->r.currentAngles,dir2);
+		VectorNormalize(dir);
+		VectorScale(dir,0.2,dir);
+		VectorAdd(dir,dir2,dir);
+		VectorNormalize(dir);
+		VectorCopy(start,self->s.pos.trBase);
+		VectorScale(dir,result,self->s.pos.trDelta);
+		VectorCopy(start,self->r.currentOrigin);
+		VectorCopy(dir,self->r.currentAngles);
 		self->s.pos.trType = TR_LINEAR;
-		VectorScale(forward,result,self->s.pos.trDelta);
-		SnapVector(self->s.pos.trDelta);
-		VectorCopy(self->s.pos.trBase,self->r.currentOrigin);
+		self->s.pos.trTime = level.time;
 		//G_Printf("Power Difference: %i Speed Difference: %f Result: %i\n",powerDifference, speedDifference, result);
 		//G_AddEvent( self, EV_POWER_STRUGGLE, 0 );
 	}
-	self->nextthink = level.time + 1;// + FRAMETIME;
+	self->nextthink = level.time + FRAMETIME;
 }
 
 /*
@@ -1392,7 +1398,7 @@ void G_DieUserWeapon( gentity_t *self, gentity_t *inflictor,
 		return;
 	self->takedamage = qfalse;
 	self->think = G_ExplodeUserWeapon;
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time;
 }
 
 void G_ExplodeUserWeapon( gentity_t *self ) {
@@ -1515,7 +1521,11 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	vec3_t fwd;
 	AngleVectors(self->enemy->r.currentAngles, fwd, NULL, NULL);
 	VectorNormalize( fwd );
-	self->powerLevelCurrent -= 10 * self->enemy->client->tiers->energyDefense;
+	if(self->enemy->client->ps.bitFlags & usingBoost){
+		self->powerLevelCurrent -= 50 * self->enemy->client->tiers->energyDefense;
+	}else{
+		self->powerLevelCurrent -= 25 * self->enemy->client->tiers->energyDefense;
+	}
 	// if the missile has lost all its power or it's swattable, swat it away instantly.
 	if (self->powerLevelCurrent <= 0 || self->isSwattable){
 		self->strugglingPlayer = qfalse;
@@ -1606,7 +1616,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		//self->strugglingAllyAttack = qtrue;
 		return;
 	// Initiate Swat / Push Struggle
-	} else if (other->client && (other->client->ps.bitFlags & usingBlock) && !(other->client->ps.bitFlags & isStruggling) && !self->strugglingAttack && !self->strugglingAllyAttack){
+	} else if (other->client && (other->client->ps.bitFlags & usingBlock) && other->client->ps.bitFlags & ~isStruggling && !self->strugglingAttack && !self->strugglingAllyAttack){
 		self->strugglingPlayer = qtrue;
 		other->client->ps.bitFlags |= isStruggling;
 		self->enemy = other;

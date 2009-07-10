@@ -720,15 +720,20 @@ void PM_CheckBlock(void){
 	pm->ps->bitFlags &= ~usingBlock;
 	if((pm->cmd.buttons & BUTTON_BLOCK)
 		&& !(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)
-		&& !(pm->ps->bitFlags & usingAlter)
-		&& !(pm->ps->bitFlags & usingZanzoken)
-		&& !(pm->ps->bitFlags & usingWeapon)
-		&& !(pm->ps->bitFlags & usingAlter)){
+		&& (pm->ps->bitFlags & ~usingAlter)
+		&& (pm->ps->bitFlags & ~usingZanzoken)
+		&& (pm->ps->bitFlags & ~usingWeapon)
+		&& (pm->ps->bitFlags & ~usingMelee)
+		&& (pm->ps->bitFlags & ~isStruggling)){
 		pm->ps->bitFlags |= usingBlock;
 		if(pm->ps->bitFlags & isStruggling){
 			PM_StopMovement();
 			pm->ps->timers[tmFreeze] = 100;
-			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.001;;
+			if(pm->ps->bitFlags & usingBoost){
+				pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.002;
+			}else{
+				pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.001;
+			}
 		}
 	}
 }
