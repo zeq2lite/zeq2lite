@@ -1017,8 +1017,23 @@ Used case depends on input.
 =============
 */
 static void CG_AddPlayerWeaponFlash( refEntity_t *parent, cg_userWeapon_t *weaponGraphics,
-									  refEntity_t *flash ) {
-	
+									  refEntity_t *flash, int flashPowerLevelTotal, int flashPowerLevelCurrent ) {
+	float	flashScale;
+	float	radiusScale;
+
+	if(flashPowerLevelCurrent >= (flashPowerLevelTotal * 2)){
+		flashPowerLevelCurrent = flashPowerLevelTotal * 2;
+	}
+
+	radiusScale = (float)flashPowerLevelCurrent / (float)flashPowerLevelTotal;
+	flashScale = weaponGraphics->flashSize * radiusScale;
+
+	if (radiusScale > 1.0f){
+		radiusScale = 1.0f;
+	}else if(radiusScale < 0.0f){
+		radiusScale = 0.0f;
+	}
+
 	// Add the charge model or sprite
 
 	VectorCopy( parent->lightingOrigin, flash->lightingOrigin );
@@ -1026,7 +1041,7 @@ static void CG_AddPlayerWeaponFlash( refEntity_t *parent, cg_userWeapon_t *weapo
 	flash->renderfx = parent->renderfx;
 	if ( ! (weaponGraphics->flashModel && weaponGraphics->flashSkin) ) {
 		flash->reType = RT_SPRITE;
-		flash->radius = 4 * weaponGraphics->flashSize;
+		flash->radius = 4 * flashScale;
 		flash->rotation = 0;
 		flash->customShader = weaponGraphics->flashShader;
 	} else {
@@ -1035,9 +1050,9 @@ static void CG_AddPlayerWeaponFlash( refEntity_t *parent, cg_userWeapon_t *weapo
 		flash->customSkin = weaponGraphics->flashSkin;
 	
 		flash->nonNormalizedAxes = qtrue;
-		VectorScale(flash->axis[0], weaponGraphics->flashSize, flash->axis[0]);
-		VectorScale(flash->axis[1], weaponGraphics->flashSize, flash->axis[1]);
-		VectorScale(flash->axis[2], weaponGraphics->flashSize, flash->axis[2]);
+		VectorScale(flash->axis[0], flashScale, flash->axis[0]);
+		VectorScale(flash->axis[1], flashScale, flash->axis[1]);
+		VectorScale(flash->axis[2], flashScale, flash->axis[2]);
 	}
 
 	trap_R_AddRefEntityToScene( flash );
@@ -1169,7 +1184,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 			VectorCopy( orient.origin, refEnt.origin );
 			AxisCopy( orient.axis, refEnt.axis );
 			
-			CG_AddPlayerWeaponFlash( parent, weaponGraphics, &refEnt );
+			CG_AddPlayerWeaponFlash( parent, weaponGraphics, &refEnt, cg.snap->ps.attackPowerTotal, cg.snap->ps.attackPowerCurrent );
 		}
 
 		if ( weaponGraphics->firingSound ) {
@@ -1453,8 +1468,8 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 			Com_sprintf( name, sizeof(name), "%s", weaponInfo->weaponName );
 		}
 
-//		w = CG_DrawStrlen( name ) * MEDIUMCHAR_WIDTH; //BIGCHAR_WIDTH;
-//		x = ( SCREEN_WIDTH - w ) / 2;
+		w = CG_DrawStrlen( name ) * MEDIUMCHAR_WIDTH; //BIGCHAR_WIDTH;
+		x = ( SCREEN_WIDTH - w ) / 2;
 		//CG_DrawSmallStringColor(6, y - 30, name, color);
 	}
 

@@ -816,6 +816,11 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 	} else {
 		explosionScale = 1;
 	}
+
+	if(explosionScale > 2){
+		explosionScale = 2;
+	}
+
 	explosionScale = explosionScale * weaponGraphics->explosionSize;
 
 	// skew the time a bit so they aren't all in sync

@@ -1196,6 +1196,8 @@ typedef struct playerState_s {
 	vec3_t		*lockedPosition;
 	int			knockBackDirection;
 	float		breakLimitRate;
+	int			attackPowerTotal;
+	int			attackPowerCurrent;
 	// RiO -->
 
 	// damage feedback

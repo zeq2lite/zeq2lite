@@ -427,7 +427,10 @@ void CG_TrailFunc_StraightBeam( centity_t *ent ) {
 	cg_userWeapon_t	*weaponGraphics;
 	float			radius;
 	orientation_t	orient;
-	
+	int			beamPowerLevelCurrent;
+	int			beamPowerLevelTotal;
+	float		radiusScale;
+
 	// Initialize some things for quick reference
 	es = &ent->currentState;
 	owner_ent = &cg_entities[es->clientNum];
@@ -437,14 +440,31 @@ void CG_TrailFunc_StraightBeam( centity_t *ent ) {
 		return;
 	}
 
+	// The beam's power level was stored in this field. We hijacked it on the
+	// server to be able to transmit the beam's own power level.
+	beamPowerLevelTotal = es->dashDir[0];
+	beamPowerLevelCurrent = es->dashDir[1];
+
+	if(beamPowerLevelCurrent >= (beamPowerLevelTotal * 2)){
+		beamPowerLevelCurrent = beamPowerLevelTotal * 2;
+	}
+
+	// Obtain the scale the missile must have.
 	if (weaponGraphics->missileTrailRadius) {
-		radius = weaponGraphics->missileTrailRadius;
+		radiusScale = (float)beamPowerLevelCurrent / (float)beamPowerLevelTotal;
+		radius = weaponGraphics->missileTrailRadius * radiusScale;
 	} else {
 		radius = 10;
 	}
 
+	if (radiusScale > 1.0f){
+		radiusScale = 1.0f;
+	}else if(radiusScale < 0.0f){
+		radiusScale = 0.0f;
+	}
+
 	if ( CG_GetTagOrientationFromPlayerEntity( &cg_entities[es->clientNum], weaponGraphics->chargeTag[0], &orient )) {
-		CG_DrawLine (orient.origin, ent->lerpOrigin, radius, weaponGraphics->missileTrailShader, 1);
+		CG_DrawLine (orient.origin, ent->lerpOrigin, radius, weaponGraphics->missileTrailShader, 1/*radiusScale*/);
 	}
 }
 
@@ -458,15 +478,35 @@ void CG_TrailFunc_BendyBeam( centity_t *ent ) {
 	cg_userWeapon_t	*weaponGraphics;
 	float			radius;
 	//vec3_t			tangent;
+	int			beamPowerLevelCurrent;
+	int			beamPowerLevelTotal;
+	float		radiusScale;
 
 	// Set up shortcut references
 	es = &ent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics( es->clientNum, es->weapon );
 	
-	if ( weaponGraphics->missileTrailRadius ) {
-		radius = weaponGraphics->missileTrailRadius;
+	// The beam's power level was stored in this field. We hijacked it on the
+	// server to be able to transmit the beam's own power level.
+	beamPowerLevelTotal = es->dashDir[0];
+	beamPowerLevelCurrent = es->dashDir[1];
+
+	if(beamPowerLevelCurrent >= (beamPowerLevelTotal * 2)){
+		beamPowerLevelCurrent = beamPowerLevelTotal * 2;
+	}
+
+	// Obtain the scale the missile must have.
+	if (weaponGraphics->missileTrailRadius) {
+		radiusScale = (float)beamPowerLevelCurrent / (float)beamPowerLevelTotal;
+		radius = weaponGraphics->missileTrailRadius * radiusScale;
 	} else {
 		radius = 10;
+	}
+
+	if (radiusScale > 1.0f){
+		radiusScale = 1.0f;
+	}else if(radiusScale < 0.0f){
+		radiusScale = 0.0f;
 	}
 
 	if ( weaponGraphics->missileTrailShader ) {
@@ -664,6 +704,9 @@ static void CG_Missile( centity_t *cent ) {
 	float				missileScale;
 	int					missileChargeLvl;
 	playerState_t		*ps;
+	int					missilePowerLevelCurrent;
+	int					missilePowerLevelTotal;
+	float				radiusScale;
 	ps = &cg.predictedPlayerState;
 	s1 = &cent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
@@ -671,6 +714,8 @@ static void CG_Missile( centity_t *cent ) {
 	// The missile's charge level was stored in this field. We hijacked it on the
 	// server to be able to transmit the missile's own charge level.
 	missileChargeLvl = s1->powerups;
+	missilePowerLevelTotal = s1->dashDir[0];
+	missilePowerLevelCurrent = s1->dashDir[1];
 
 	// Obtain the scale the missile must have.
 	if (weaponGraphics->chargeGrowth) {
@@ -700,6 +745,19 @@ static void CG_Missile( centity_t *cent ) {
 		missileScale = 1;
 	}
 	missileScale = missileScale * weaponGraphics->missileSize;
+
+	if(missilePowerLevelCurrent >= (missilePowerLevelTotal * 2)){
+		missilePowerLevelCurrent = missilePowerLevelTotal * 2;
+	}
+
+	radiusScale = (float)missilePowerLevelCurrent / (float)missilePowerLevelTotal;
+	missileScale = missileScale * radiusScale;
+
+	if (radiusScale > 1.0f){
+		radiusScale = 1.0f;
+	}else if(radiusScale < 0.0f){
+		radiusScale = 0.0f;
+	}
 
 	// calculate the axis
 	 VectorCopy( s1->angles, cent->lerpAngles);
@@ -761,13 +819,21 @@ static void CG_Missile( centity_t *cent ) {
 		ent.radius = 4 * missileScale;
 		ent.rotation = 0;
 		ent.customShader = weaponGraphics->missileShader;
+		//ent.shaderRGBA[0] = radiusScale;
+		//ent.shaderRGBA[1] = radiusScale;
+		//ent.shaderRGBA[2] = radiusScale;
+		//ent.shaderRGBA[3] = radiusScale;
 		trap_R_AddRefEntityToScene( &ent );
 	} else {
 		ent.reType = RT_MODEL;
 		ent.hModel = weaponGraphics->missileModel;
 		ent.customSkin = weaponGraphics->missileSkin;
 		ent.renderfx = RF_NOSHADOW;
-		
+		//ent.shaderRGBA[0] = radiusScale;
+		//ent.shaderRGBA[1] = radiusScale;
+		//ent.shaderRGBA[2] = radiusScale;
+		//ent.shaderRGBA[3] = radiusScale;
+
 		// We want something simple for simple roll-spinning missiles,
 		// but will use quaternions to get a correct yaw rotation for
 		// disk attacks and the like.

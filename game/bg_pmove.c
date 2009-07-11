@@ -396,7 +396,7 @@ void PM_CheckPowerLevel(void){
 			powerLevel[plFatigue] = pm->ps->powerLevel[plMaximum];
 		}
 	}
-	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
+	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !(pm->ps->bitFlags & isStruggling)){
 		pm->ps->bitFlags &= ~keyTierDown;
 		pm->ps->bitFlags &= ~keyTierUp;
 		pm->ps->bitFlags |= usingAlter;
@@ -713,6 +713,21 @@ void PM_CheckJump(void){
 	}
 }
 
+/*==================
+PM_CheckStruggling
+==================*/
+void PM_CheckStruggling(void){
+	if(pm->ps->bitFlags & isStruggling){
+		PM_StopMovement();
+		pm->ps->timers[tmFreeze] = 100;
+		if(pm->ps->bitFlags & usingBoost){
+			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.002;
+		}else{
+			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.001;
+		}
+	}
+}
+
 /*=============
 PM_CheckBlock
 =============*/
@@ -722,19 +737,8 @@ void PM_CheckBlock(void){
 		&& !(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)
 		&& !(pm->ps->bitFlags & usingAlter)
 		&& !(pm->ps->bitFlags & usingZanzoken)
-		&& !(pm->ps->bitFlags & usingWeapon)
-		&& !(pm->ps->bitFlags & usingMelee)
-		&& !(pm->ps->bitFlags & isStruggling)){
+		&& !(pm->ps->bitFlags & usingWeapon)){
 		pm->ps->bitFlags |= usingBlock;
-		if(pm->ps->bitFlags & isStruggling){
-			PM_StopMovement();
-			pm->ps->timers[tmFreeze] = 100;
-			if(pm->ps->bitFlags & usingBoost){
-				pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.002;
-			}else{
-				pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.001;
-			}
-		}
 	}
 }
 /*===================
@@ -1431,7 +1435,7 @@ PM_TorsoAnimation
 ==============*/
 void PM_TorsoAnimation(void){
 	if(pm->ps->weaponstate != WEAPON_READY && !(pm->ps->bitFlags & usingMelee)){return;}
-	if(pm->ps->bitFlags & usingBlock && !(pm->ps->bitFlags & usingMelee)){
+	if(pm->ps->bitFlags & usingBlock && pm->ps->bitFlags & ~usingMelee){
 		if(pm->ps->bitFlags & isStruggling){
 			PM_ContinueTorsoAnim(TORSO_PUSH);
 			PM_ContinueLegsAnim(LEGS_PUSH);
@@ -1859,7 +1863,8 @@ void PM_Weapon(void){
 	int chargeRate;
 	int costPrimary,costSecondary;	
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
-	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR || pm->ps->bitFlags & isStruggling){return;}
+	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
+	if(pm->ps->bitFlags & isStruggling){return;}
 	if(pm->ps->bitFlags & isGuiding){
 		PM_StopMovement();
 		PM_StopDash();
@@ -1974,6 +1979,8 @@ void PM_Weapon(void){
 				pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 				PM_StartTorsoAnim(TORSO_STAND);
 			}
+			PM_StopMovement();
+			PM_StopDirections();
 			pm->ps->velocity[0] = 0.0f;
 			pm->ps->velocity[1] = 0.0f;
 			pm->ps->velocity[2] = 0.0f;
@@ -1986,6 +1993,8 @@ void PM_Weapon(void){
 				pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
 				PM_StartTorsoAnim(TORSO_STAND );
 			}
+			PM_StopMovement();
+			PM_StopDirections();
 			pm->ps->velocity[0] = 0.0f;
 			pm->ps->velocity[1] = 0.0f;
 			pm->ps->velocity[2] = 0.0f;
@@ -1993,8 +2002,8 @@ void PM_Weapon(void){
 		break;
 	case WEAPON_CHARGING:
 		{
-			chargeRate = (pm->ps->bitFlags & usingBoost) ? 6 : 1;
-			costPrimary *= (pm->ps->bitFlags & usingBoost) ? 5 : 1;
+			chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
+			costPrimary *= (pm->ps->bitFlags & usingBoost) ? 3 : 1;
 			pm->ps->timers[tmAttack1] += pml.msec;
 			if(pm->ps->timers[tmAttack1] >= weaponInfo[WPSTAT_CHRGTIME]){
 				pm->ps->timers[tmAttack1] -= weaponInfo[WPSTAT_CHRGTIME];
@@ -2030,11 +2039,13 @@ void PM_Weapon(void){
 		break;
 	case WEAPON_ALTCHARGING:
 		{
+			chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
+			costPrimary *= (pm->ps->bitFlags & usingBoost) ? 3 : 1;
 			pm->ps->timers[tmAttack2] += pml.msec;
 			if(pm->ps->timers[tmAttack2] >= weaponInfo[WPSTAT_ALT_CHRGTIME]){
 				pm->ps->timers[tmAttack2] -= weaponInfo[WPSTAT_ALT_CHRGTIME];
 				if(pm->ps->stats[stChargePercentSecondary] < 100){
-					pm->ps->stats[stChargePercentSecondary] += 1;
+					pm->ps->stats[stChargePercentSecondary] += chargeRate;
 					if(pm->ps->stats[stChargePercentSecondary] > 100){
 						pm->ps->stats[stChargePercentSecondary] = 100;
 					}
@@ -2358,6 +2369,7 @@ void PmoveSingle(pmove_t *pmove){
 		PM_BurnPowerLevel(qtrue);
 		PM_BurnPowerLevel(qfalse);
 		PM_CheckStatus();
+		PM_CheckStruggling();
 		if(!pm->ps->timers[tmKnockback] && !(pm->ps->bitFlags & isUnconcious) && !(pm->ps->bitFlags & isDead)){
 			PM_CheckBoost();
 			PM_CheckPowerLevel();
