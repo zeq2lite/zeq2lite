@@ -17,6 +17,7 @@ g_weapPhysField_t g_weapPhysFields[] = {
 	{ "lifetime",		G_weapPhys_ParseLifetime		},	// Physics
 	{ "swat",			G_weapPhys_ParseSwat			},	// Physics
 	{ "deflect",		G_weapPhys_ParseSwat			},	// Physics
+	{ "drain",			G_weapPhys_ParseDrain			},	// Physics
 	{ "hitpoints",		G_weapPhys_ParseHitpoints		},	// Costs
 	{ "hp",				G_weapPhys_ParseHitpoints		},	// Costs
 	{ "ki",				G_weapPhys_ParseKi				},	// Costs

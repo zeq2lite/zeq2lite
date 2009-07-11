@@ -103,6 +103,7 @@ typedef struct {
 	float				physics_bounceFrac;			// How much of the energy to pass on in a bounce. 0 == no bounce
 	int					physics_maxBounces;			// How many times at max the missile can bounce.
 	qboolean			physics_swat;				// If the attack can be swatted away regardless of it's power.
+	qboolean			physics_drain;				// Does the attack's power drain during it's lifetime?
 	
 	// Firing
 	int					firing_angleW_min;			// Minimum width angle ( + and - ) a projectile can deviate from its firing path.

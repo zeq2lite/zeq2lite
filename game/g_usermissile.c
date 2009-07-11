@@ -143,7 +143,9 @@ void Think_Guided (gentity_t *self) {
 		return;
 	}
 
-	self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+	if(self->isDrainable){
+		self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+	}
 	if (self->powerLevelCurrent <= 0) {
 		G_RemoveUserWeapon(self);
 		return;
@@ -237,7 +239,9 @@ void Think_Homing (gentity_t *self) {
 		return;
 	}
 
-	self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+	if(self->isDrainable){
+		self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+	}
 	if (self->powerLevelCurrent <= 0) {
 		G_RemoveUserWeapon(self);
 		return;
@@ -345,7 +349,9 @@ void Think_CylinderHoming (gentity_t *self) {
 		return;
 	}
 
-	self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+	if(self->isDrainable){
+		self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+	}
 	if (self->powerLevelCurrent <= 0) {
 		G_RemoveUserWeapon(self);
 		return;
@@ -447,7 +453,9 @@ void Think_NormalMissile (gentity_t *self) {
 		return;
 	}
 
-	self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+	if(self->isDrainable){
+		self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+	}
 	if (self->powerLevelCurrent <= 0) {
 		G_RemoveUserWeapon(self);
 		return;
@@ -970,6 +978,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		bolt->isSwattable = weaponInfo->physics_swat;
+		bolt->isDrainable = weaponInfo->physics_drain;
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
@@ -1167,6 +1176,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		bolt->isSwattable = weaponInfo->physics_swat;
+		bolt->isDrainable = weaponInfo->physics_drain;
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
