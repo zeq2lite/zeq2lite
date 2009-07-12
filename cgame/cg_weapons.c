@@ -1184,7 +1184,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 			VectorCopy( orient.origin, refEnt.origin );
 			AxisCopy( orient.axis, refEnt.axis );
 			
-			CG_AddPlayerWeaponFlash( parent, weaponGraphics, &refEnt, cg.snap->ps.attackPowerTotal, cg.snap->ps.attackPowerCurrent );
+			CG_AddPlayerWeaponFlash( parent, weaponGraphics, &refEnt, ent->attackPowerTotal, ent->attackPowerCurrent );
 		}
 
 		if ( weaponGraphics->firingSound ) {

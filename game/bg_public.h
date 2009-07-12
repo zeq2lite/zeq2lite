@@ -814,6 +814,12 @@ typedef struct animation_s {
 // #define	ANIM_TOGGLEBIT		128
 #define ANIM_TOGGLEBIT			32768 // HACK: Let's hope this works...
 
+// Relative direction strike came from
+#define LOCATION_NONE		0x00000000
+#define LOCATION_LEFT		0x00000100
+#define LOCATION_RIGHT		0x00000200
+#define LOCATION_FRONT		0x00000400
+#define LOCATION_BACK		0x00000800
 
 typedef enum {
 	TEAM_FREE,

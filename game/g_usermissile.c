@@ -1648,33 +1648,14 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		self->powerLevelCurrent += 1 + ((float)self->powerLevelTotal * 0.005);
 		self->speed += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
 	}
-	// if the missile has lost all its power or it's swattable, swat it away instantly.
-	if (self->powerLevelCurrent <= 0 || self->isSwattable){
-		self->strugglingPlayer = qfalse;
-		self->bounceFrac = 1.0f;
-		G_PushUserMissile(self, self->enemy);
-		self->enemy->client->ps.bitFlags &= ~isStruggling;
-		self->r.ownerNum = self->enemy->s.number;
-		self->s.clientNum = self->enemy->s.number;
-		self->parent = self->enemy;				
-		if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
-			self->enemy->client->ps.lockedPosition = NULL;
-			self->enemy->client->ps.lockedTarget = 0;
-			self->enemy->client->ps.clientLockedTarget = 0;
-		}
-		return;
-	}
 	// if the missle is losing against the player
-	else if (self->powerLevelCurrent < self->enemy->client->ps.powerLevel[plCurrent]) {
-		// If the missile has lost over half its power against the player
-		if(self->powerLevelCurrent < (self->powerLevelTotal / 2)){
+	if(self->powerLevelCurrent < self->enemy->client->ps.powerLevel[plCurrent]) {
+		// If the missile has lost over 1/3 its power against the player
+		if(self->powerLevelCurrent < (self->powerLevelTotal / 1.5)){
 			self->strugglingPlayer = qfalse;
 			self->bounceFrac = 1.0f;
 			G_PushUserMissile(self, self->enemy);
 			self->enemy->client->ps.bitFlags &= ~isStruggling;
-			self->r.ownerNum = self->enemy->s.number;
-			self->s.clientNum = self->enemy->s.number;
-			self->parent = self->enemy;	
 			//G_Printf("Missile Lost to %i!\n",self->enemy->s.clientNum);
 			if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
 				self->enemy->client->ps.lockedPosition = NULL;
@@ -1703,10 +1684,62 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 				self->enemy->client->ps.lockedTarget = 0;
 				self->enemy->client->ps.clientLockedTarget = 0;
 			}
+			return;
 		}
 	}
 	//G_Printf("Missile Power Level %i. Player Power Level %i\n",self->powerLevelCurrent,self->enemy->client->ps.powerLevel[plCurrent]);
 	self->nextthink = level.time + FRAMETIME;
+}
+
+/* 
+============
+G_LocationImpact
+============
+*/
+void G_LocationImpact(vec3_t point, gentity_t* targ, gentity_t* attacker) {
+	vec3_t attackPath;
+	vec3_t attackAngle;
+
+	int clientHeight;
+	int clientFeetZ;
+	int clientRotation;
+	int attackHeight;
+	int attackRotation;	// Degrees rotation around client.
+						// used to check Back of head vs. Face
+	int impactRotation;
+
+	// Point[2] is the REAL world Z. We want Z relative to the clients feet
+	
+	// Where the feet are at [real Z]
+	clientFeetZ  = targ->r.currentOrigin[2] + targ->r.mins[2];	
+	// How tall the client is [Relative Z]
+	clientHeight = targ->r.maxs[2] - targ->r.mins[2];
+	// Where the bullet struck [Relative Z]
+	attackHeight = point[2] - clientFeetZ;
+
+	// Get a vector aiming from the client to the bullet hit 
+	VectorSubtract(targ->r.currentOrigin, point, attackPath); 
+	// Convert it into PITCH, ROLL, YAW
+	vectoangles(attackPath, attackAngle);
+
+	clientRotation = targ->client->ps.viewangles[YAW];
+	attackRotation = attackAngle[YAW];
+
+	impactRotation = abs(clientRotation-attackRotation);
+	
+	impactRotation += 45; // just to make it easier to work with
+	impactRotation = impactRotation % 360; // Keep it in the 0-359 range
+
+	if (impactRotation < 90)
+		targ->client->lasthurt_location = LOCATION_BACK;
+	else if (impactRotation < 180)
+		targ->client->lasthurt_location = LOCATION_RIGHT;
+	else if (impactRotation < 270)
+		targ->client->lasthurt_location = LOCATION_FRONT;
+	else if (impactRotation < 360)
+		targ->client->lasthurt_location = LOCATION_LEFT;
+	else
+		targ->client->lasthurt_location = LOCATION_NONE;
 }
 
 // Handles impact of the weapon with map geometry or entities.
@@ -1715,6 +1748,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	qboolean		hitClient = qfalse;
 	vec3_t	velocity;
 	other = &g_entities[trace->entityNum];
+	G_LocationImpact(trace->endpos,other,GetMissileOwnerEntity(self));
 	if(self->strugglingPlayer){return;}
 	// Initiate Power Struggle
 	if((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD) && !other->client && !self->strugglingAttack && !self->strugglingAllyAttack && !other->strugglingAttack){
@@ -1742,18 +1776,24 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		//self->strugglingAllyAttack = qtrue;
 		return;
 	// Initiate Swat / Push Struggle
-	} else if (other->client && (other->client->ps.bitFlags & usingBlock) && other->client->ps.bitFlags & ~isStruggling && !self->strugglingAttack && !self->strugglingAllyAttack){
-		self->strugglingPlayer = qtrue;
-		other->client->ps.bitFlags |= isStruggling;
-		self->enemy = other;
-		// If the player isn't already locked onto another player, and the attack won't be instantly swat away, lock onto the attack.
-		if(!other->client->ps.lockedTarget && !self->isSwattable){
-			other->client->ps.lockedTarget = self->s.number;
-			other->client->ps.clientLockedTarget = self->s.number;
-			other->client->ps.lockedPosition = &self->r.currentOrigin;
+	} else if (other->client && (other->client->ps.bitFlags & usingBlock) && other->client->ps.bitFlags & ~isStruggling && !self->strugglingAttack && !self->strugglingAllyAttack && other->client->lasthurt_location == LOCATION_FRONT){
+		if(self->isSwattable){
+			self->bounceFrac = 1.0f;
+			G_PushUserMissile(self, other);
+			return;
+		}else{
+			self->strugglingPlayer = qtrue;
+			other->client->ps.bitFlags |= isStruggling;
+			self->enemy = other;
+			// If the player isn't already locked onto another player, lock onto the attack.
+			if(!other->client->ps.lockedTarget){
+				other->client->ps.lockedTarget = self->s.number;
+				other->client->ps.clientLockedTarget = self->s.number;
+				other->client->ps.lockedPosition = &self->r.currentOrigin;
+			}
+			//G_Printf("Missile Started Struggle with %i!\n",other->s.clientNum);
+			return;
 		}
-		//G_Printf("Missile Started Struggle with %i!\n",other->s.clientNum);
-		return;
 	// Bounce off the world
 	} else if (self->bounceFrac && self->bouncesLeft && !other->takedamage && !self->strugglingAttack && !self->strugglingAllyAttack && !other->strugglingAttack){
 		G_BounceUserMissile( self, trace );
@@ -1807,7 +1847,7 @@ void G_RemoveUserWeapon (gentity_t *self) {
 		return;
 	}
 */
-	other = &g_entities[self->s.otherEntityNum];
+	other = self->enemy;
 	other->client->ps.bitFlags &= ~isStruggling;
 	self->client->ps.bitFlags &= ~isStruggling;
 	if(other->client->ps.lockedTarget >= MAX_CLIENTS){

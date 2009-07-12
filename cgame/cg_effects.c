@@ -781,7 +781,6 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 	localEntity_t	*expShock;
 	int				offset;
 	vec3_t			tmpVec, newOrigin;
-	entityState_t	*s1;
 	float			explosionScale;
 	int				attackChargeLvl;
 

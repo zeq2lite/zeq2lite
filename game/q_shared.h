@@ -1371,6 +1371,8 @@ typedef struct entityState_s {
 	// <-- RiO: Communicate weaponstate and tier as well (but 4bits only!)
 	int		weaponstate;
 	int		tier;
+	int		attackPowerTotal;
+	int		attackPowerCurrent;
 	// -->
 
 	int		legsAnim;		// mask off ANIM_TOGGLEBIT
