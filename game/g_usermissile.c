@@ -1535,15 +1535,13 @@ void G_ExplodeUserWeapon( gentity_t *self ) {
 	G_AddEvent( self, EV_MISSILE_MISS_AIR, DirToByte( dir ) );
 	self->freeAfterEvent = qtrue;
 
-	if(self->strugglingAttack || self->strugglingPlayer || self->strugglingAllyAttack){
-		self->enemy->strugglingAttack = qfalse;
-		self->strugglingAllyAttack = qfalse;
-		if(self->s.eType == ET_BEAMHEAD){
-			self->enemy->client->ps.bitFlags &= ~isStruggling;
-		}
-		if(self->enemy->s.eType == ET_BEAMHEAD){
-			self->client->ps.bitFlags &= ~isStruggling;
-		}
+	self->enemy->strugglingAttack = qfalse;
+	self->strugglingAllyAttack = qfalse;
+	if(self->s.eType == ET_BEAMHEAD){
+		self->enemy->client->ps.bitFlags &= ~isStruggling;
+	}
+	if(self->enemy->s.eType == ET_BEAMHEAD){
+		self->client->ps.bitFlags &= ~isStruggling;
 	}
 
 	trap_LinkEntity( self );
@@ -1639,53 +1637,44 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	AngleVectors(self->enemy->r.currentAngles, fwd, NULL, NULL);
 	VectorNormalize( fwd );
 	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent;
+	self->bounceFrac = 0.0f;
+	G_HoldUserMissile(self,self->enemy);
 	if(self->enemy->client->ps.bitFlags & usingBoost){
 		self->powerLevelCurrent -= 2 * self->enemy->client->tiers->energyDefense;
 	}else{
 		self->powerLevelCurrent -= 1 * self->enemy->client->tiers->energyDefense;
 	}
 	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
-		self->powerLevelCurrent += 1 + ((float)self->powerLevelTotal * 0.005);
-		self->speed += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+		self->powerLevelCurrent += 1 + ((float)self->powerLevelTotal * 0.005f);
+		self->speed += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003f);
 	}
-	// if the missle is losing against the player
-	if(self->powerLevelCurrent < self->enemy->client->ps.powerLevel[plCurrent]) {
-		// If the missile has lost over 1/3 its power against the player
-		if(self->powerLevelCurrent < (self->powerLevelTotal / 1.5)){
-			self->strugglingPlayer = qfalse;
-			self->bounceFrac = 1.0f;
-			G_PushUserMissile(self, self->enemy);
-			self->enemy->client->ps.bitFlags &= ~isStruggling;
-			//G_Printf("Missile Lost to %i!\n",self->enemy->s.clientNum);
-			if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
-				self->enemy->client->ps.lockedPosition = NULL;
-				self->enemy->client->ps.lockedTarget = 0;
-				self->enemy->client->ps.clientLockedTarget = 0;
-			}
-			return;
-		} else {
-			self->bounceFrac = 0.0f;
-			G_HoldUserMissile(self,self->enemy);
-			//G_Printf("Missile Losing to %i!\n",self->enemy->s.clientNum);
+	// If the missile has lost over 1/3 its power against the player
+	if(self->powerLevelCurrent < (self->powerLevelTotal / 1.5f)){
+		self->strugglingPlayer = qfalse;
+		self->bounceFrac = 1.0f;
+		G_PushUserMissile(self, self->enemy);
+		self->enemy->client->ps.bitFlags &= ~isStruggling;
+		//G_Printf("Missile Lost to %i!\n",self->enemy->s.clientNum);
+		if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
+			self->enemy->client->ps.lockedPosition = NULL;
+			self->enemy->client->ps.lockedTarget = 0;
+			self->enemy->client->ps.clientLockedTarget = 0;
 		}
+		return;
+		//G_Printf("Missile Losing to %i!\n",self->enemy->s.clientNum);
 	}
 	// If the missile is beating the player
-	else if(self->enemy->client->ps.powerLevel[plCurrent] < self->powerLevelCurrent){
-		self->bounceFrac = 0.0f;
-		G_HoldUserMissile(self,self->enemy);
-		//G_Printf("Missile Winning against %i!\n",self->enemy->s.clientNum);
-		// If the missile has beaten the player
-		if(self->enemy->client->ps.powerLevel[plCurrent] <= 1){
-			G_ExplodeUserWeapon ( self );
-			self->enemy->client->ps.bitFlags &= ~isStruggling;
-			//G_Printf("Missile Won against %i!\n",self->enemy->s.clientNum);
-			if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
-				self->enemy->client->ps.lockedPosition = NULL;
-				self->enemy->client->ps.lockedTarget = 0;
-				self->enemy->client->ps.clientLockedTarget = 0;
-			}
-			return;
+	else if(self->enemy->client->ps.powerLevel[plCurrent] <= 1){
+		G_ExplodeUserWeapon ( self );
+		self->strugglingPlayer = qfalse;
+		self->enemy->client->ps.bitFlags &= ~isStruggling;
+		//G_Printf("Missile Won against %i!\n",self->enemy->s.clientNum);
+		if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
+			self->enemy->client->ps.lockedPosition = NULL;
+			self->enemy->client->ps.lockedTarget = 0;
+			self->enemy->client->ps.clientLockedTarget = 0;
 		}
+		return;
 	}
 	//G_Printf("Missile Power Level %i. Player Power Level %i\n",self->powerLevelCurrent,self->enemy->client->ps.powerLevel[plCurrent]);
 	self->nextthink = level.time + FRAMETIME;

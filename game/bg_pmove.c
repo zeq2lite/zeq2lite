@@ -735,6 +735,7 @@ void PM_CheckBlock(void){
 	pm->ps->bitFlags &= ~usingBlock;
 	if((pm->cmd.buttons & BUTTON_BLOCK)
 		&& !(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)
+		&& !(pm->ps->bitFlags & usingMelee)
 		&& !(pm->ps->bitFlags & usingAlter)
 		&& !(pm->ps->bitFlags & usingZanzoken)
 		&& !(pm->ps->bitFlags & usingWeapon)){
