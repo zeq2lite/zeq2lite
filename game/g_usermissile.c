@@ -494,7 +494,7 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	if(self->powerLevelCurrent <= 1){
 		// And we are not a beam.
 		if(self->s.eType != ET_BEAMHEAD) {
-			// Remove the beam.
+			// Remove the ball.
 			G_RemoveUserWeapon ( self );
 			return;
 		// Or we're a ball and both our powers are drained.
@@ -502,10 +502,15 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 			// Remove us.
 			G_ExplodeUserWeapon ( self );
 			return;
-		// Else.
-		}else{
+		// Else we're a beam and we arn't helping an ally
+		}else if(!self->strugglingAllyAttack){
 			// We stick around for the beam struggle regardless of our drained power.
 			self->powerLevelCurrent = 1;
+		// Else
+		}else{
+			// Remove the beam.
+			G_RemoveUserWeapon ( self );
+			return;
 		}
 	}
 	// If we're not a beam.
@@ -530,8 +535,10 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		// And we are a beam.
 		if(self->s.eType == ET_BEAMHEAD){
 			// Add to the allies power and speed directly.
-			self->ally->powerLevelCurrent += 10 + ((float)self->powerLevelCurrent * 0.0003);
+			self->ally->powerLevelCurrent += 1 + ((float)self->powerLevelCurrent * 0.0003);
 			self->ally->speed += 10 + ((float)self->speed * 0.0003);
+			self->powerLevelCurrent -= 1 + ((float)self->powerLevelCurrent * 0.0003);
+			self->speed -= 10 + ((float)self->speed * 0.0003);
 		// Else we're a ball.
 		}else{
 			// Let the allies attack absorb our power and speed instead.
@@ -549,7 +556,8 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	powerDifference = power1-power2;
 	result = speedDifference + powerDifference;
 	// If the other attack stopped struggling for whatever reason, our attack will resume moving forward.
-	if(!self->enemy->strugglingAttack){
+	if(!self->enemy->strugglingAttack || !self->ally->strugglingAttack){
+
 		VectorCopy(self->r.currentOrigin,start);
 		VectorCopy(self->s.pos.trDelta,dir);
 		VectorCopy(self->r.currentAngles,dir2);
@@ -586,13 +594,10 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	if(self->strugglingAllyAttack){
 		VectorCopy(self->ally->s.pos.trBase,self->s.pos.trBase);
 		VectorCopy(self->ally->s.pos.trDelta,self->s.pos.trDelta);
-		if(self->s.eType != ET_BEAMHEAD){
-			SnapVector(self->s.pos.trDelta);
-		}
-		VectorCopy(self->s.pos.trBase,self->r.currentOrigin);
 		VectorCopy(self->ally->r.currentOrigin,self->r.currentOrigin);
-		self->s.pos.trTime = level.time;
+		VectorCopy(self->ally->r.currentAngles,self->r.currentAngles);
 		self->s.pos.trType = TR_LINEAR;
+		self->s.pos.trTime = level.time;
 		//G_Printf("Helping ally!\n");
 	// Struggle away!
 	}else{
@@ -1654,6 +1659,14 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 			self->enemy->client->ps.lockedTarget = 0;
 			self->enemy->client->ps.clientLockedTarget = 0;
 		}
+		// Turn the beam into a ball attack.
+		if(self->s.eType == ET_BEAMHEAD){
+			// Terminate guidance
+			if ( self->guided ) {
+				g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
+			}
+			self->s.eType = ET_MISSILE;
+		}
 		return;
 		//G_Printf("Missile Losing to %i!\n",self->enemy->s.clientNum);
 	}
@@ -1732,9 +1745,13 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	vec3_t	velocity;
 	other = &g_entities[trace->entityNum];
 	G_LocationImpact(trace->endpos,other,GetMissileOwnerEntity(self));
-	if(self->strugglingPlayer){return;}
+	if(self->strugglingPlayer || (self->strugglingAllyAttack && self->ally->strugglingAttack)){return;}
 	// Initiate Power Struggle
-	if((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD) && !other->client && !self->strugglingAttack && !self->strugglingAllyAttack && !other->strugglingAttack){
+	if((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD)	// If it's a beam or ball attack
+		&& !other->client												// And it's not a player
+		&& !self->strugglingAttack										// And we are not struggling an attack
+		&& !self->strugglingAllyAttack									// And we are not helping an ally
+		&& !other->strugglingAttack){									// And the other attack isn't struggling with some other attack
 		self->enemy = other;
 		other->enemy = self;
 		self->strugglingAttack = qtrue;
@@ -1754,15 +1771,35 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		//G_Printf("Started Power Struggle!\n");
 		return;
 	// Initiate attack absorbtion
-	} else if ((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD) && !other->client && !self->strugglingAttack && !self->strugglingAllyAttack && other->strugglingAttack){
-		//self->ally = other->enemy;
-		//self->strugglingAllyAttack = qtrue;
+	} else if ((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD)	// If it's a beam or ball attack
+		&& !other->client														// And it's not a player
+		&& !self->strugglingAttack												// And we are not struggling an attack
+		&& !self->strugglingAllyAttack											// And we are not helping an ally
+		&& other->strugglingAttack){											// And the other attack IS struggling with some other attack
+		// If our attack and the other attack is on the same team
+		if ( self->client->ps.persistant[PERS_TEAM] == other->client->ps.persistant[PERS_TEAM] && self->client->ps.persistant[PERS_TEAM] != TEAM_FREE ) {
+			// Get absorbed by our enemies enemy, which should be someone on our team.
+			self->ally = other->enemy;
+		// Else get absorbed by whichever attack you hit first.
+		}else{
+			self->ally = other;
+		}
+		self->r.ownerNum = self->ally->s.number;
+		self->strugglingAllyAttack = qtrue;
+		//G_Printf("Attack Absorbtion Started!\n");
 		return;
 	// Initiate Swat / Push Struggle
-	} else if (other->client && (other->client->ps.bitFlags & usingBlock) && other->client->ps.bitFlags & ~isStruggling && !self->strugglingAttack && !self->strugglingAllyAttack && other->client->lasthurt_location == LOCATION_FRONT){
+	} else if ((other->s.eType != ET_MISSILE || other->s.eType != ET_BEAMHEAD)	// If it's not a beam or ball attack
+		&& other->client														// If it's a player
+		&& (other->client->ps.bitFlags & usingBlock)							// And they pushed block
+		&& !(other->client->ps.bitFlags & isStruggling)							// And they are not struggling something
+		&& !self->strugglingAttack												// And we are not struggling an attack
+		&& !self->strugglingAllyAttack											// And we are not helping an ally
+		&& other->client->lasthurt_location == LOCATION_FRONT){					// And we hit the front of the player
 		if(self->isSwattable){
 			self->bounceFrac = 1.0f;
 			G_PushUserMissile(self, other);
+			//G_Printf("Attack Deflected!\n");
 			return;
 		}else{
 			self->strugglingPlayer = qtrue;
@@ -1778,10 +1815,16 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			return;
 		}
 	// Bounce off the world
-	} else if (self->bounceFrac && self->bouncesLeft && !other->takedamage && !self->strugglingAttack && !self->strugglingAllyAttack && !other->strugglingAttack){
+	} else if (self->bounceFrac   
+		&& self->bouncesLeft 
+		&& !other->takedamage 
+		&& !self->strugglingAttack 
+		&& !self->strugglingAllyAttack 
+		&& !other->strugglingAttack){
 		G_BounceUserMissile( self, trace );
 		G_AddEvent( self, EV_GRENADE_BOUNCE, 0 );
 		self->bouncesLeft--;
+		//G_Printf("Attack Bounced!\n");
 		return;
 	// Hit a player or the world
 	} else if(other->client || !other->takedamage){ 
@@ -1792,6 +1835,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 				velocity[2] = 1;
 			}
 			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->powerLevelCurrent,0,self->methodOfDeath, self->extraKnockback);
+			//G_Printf("Hit Player!\n");
 		}
 		if((self->powerLevelCurrent <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
 			// Terminate guidance
@@ -1802,9 +1846,11 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			}
 			else if(trace->surfaceFlags & SURF_METALSTEPS){
 				G_AddEvent( self, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
+				//G_Printf("Hit World!\n");
 			}
 			else{
 				G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
+				//G_Printf("Hit World!\n");
 			}
 			self->freeAfterEvent = qtrue;
 			// Change over to a normal stationary entity right at the point of impact
@@ -1841,7 +1887,7 @@ void G_RemoveUserWeapon (gentity_t *self) {
 	if (self->guided) {
 		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
 	}
-	if (self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0) {
+	if (self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0 && (!self->strugglingAllyAttack || !self->strugglingAttack || !self->strugglingPlayer)) {
 		G_ExplodeUserWeapon ( self );
 		return;
 	}
@@ -1946,11 +1992,11 @@ void G_RunUserMissile( gentity_t *ent ) {
 		// Snap the endpos to integers, but nudged towards the line
 		SnapVectorTowards( trace2.endpos, muzzle );
 		// If the player is holding block when he entered the beam, inititate push struggle.
-		if (traceEnt2->takedamage && trace2.fraction != 1 && (traceEnt2->client->ps.bitFlags & usingBlock)) {
+		if (traceEnt2->client && traceEnt2->takedamage && trace2.fraction != 1 && (traceEnt2->client->ps.bitFlags & usingBlock)) {
 			G_SetOrigin(ent,trace2.endpos);
 			G_ImpactUserWeapon(ent,&trace2);
 		// Else if the player that entered the beam isn't blocking, burn them and/or push them.
-		}else if (traceEnt2->takedamage && trace2.fraction != 1 && !(traceEnt2->client->ps.bitFlags & usingBlock)) {
+		}else if (traceEnt2->client && traceEnt2->takedamage && trace2.fraction != 1 && !(traceEnt2->client->ps.bitFlags & usingBlock)) {
 			beamKnockBack = ent->powerLevelCurrent < (ent->powerLevelTotal / 3.0f) ? 0 : 100;
 			G_UserWeaponDamage(traceEnt2,ent,missileOwner,forward,trace2.endpos,1+(ent->powerLevelCurrent / 4),0,ent->methodOfDeath,beamKnockBack);
 		}
