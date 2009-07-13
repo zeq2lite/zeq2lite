@@ -118,6 +118,7 @@ void PM_CheckKnockback(void){
 	float scale,wishspeed;
 	int i,speed;
 	if(pm->ps->pm_flags & PMF_TIME_KNOCKBACK){
+		pm->ps->powerups[PW_KNOCKBACK_SPEED] = (pm->ps->powerLevel[plCurrent] / 21.84) + pm->ps->stats[stKnockbackPower];
 		pm->ps->timers[tmKnockback] = 5000; 
 		pm->ps->knockBackDirection = 5;
 	}
@@ -566,10 +567,10 @@ void PM_Friction(void){
 		drop += control*pm_friction*pml.frametime;
 	}
 	if(pm->ps->timers[tmKnockback] > 0){
-		if(speed < 100){
-			drop = speed*15*pml.frametime;
+		if(!(pm->ps->pm_flags & PMF_TIME_KNOCKBACK)){
+			drop = speed*20*pml.frametime;
 		} else {
-			drop = speed*0*pml.frametime;
+			drop = speed*1*pml.frametime;
 		}
 	}
 	newspeed = speed - drop;

@@ -42,7 +42,7 @@ static void Think_NormalMissileStrugglePlayer (gentity_t *self);
 static void G_StruggleUserMissile( gentity_t *self, gentity_t *other );
 static void G_PushUserMissile( gentity_t *self, gentity_t *other );
 static void G_BounceUserMissile( gentity_t *self, trace_t *trace );
-
+void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int knockback);
 /*
 =============
 Think_Torch
@@ -460,7 +460,6 @@ void Think_NormalMissile (gentity_t *self) {
 		G_RemoveUserWeapon(self);
 		return;
 	}
-
 	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
 		self->powerLevelCurrent += 10 + ((float)self->powerLevelTotal * 0.005);
 		self->speed += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
@@ -649,7 +648,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		VectorScale (dir, knockback, kvel);
 		VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
 		if (!tgClient->ps.pm_time) {
-			tgClient->ps.pm_time = 20;
+			tgClient->ps.pm_time = 200;
 			tgClient->ps.pm_flags |= PMF_TIME_KNOCKBACK;
 			if(!tgClient->ps.lockedTarget){
 				tgClient->ps.lockedTarget = attacker->client->ps.clientNum+1;
@@ -1535,13 +1534,8 @@ void G_ExplodeUserWeapon( gentity_t *self ) {
 	G_AddEvent( self, EV_MISSILE_MISS_AIR, DirToByte( dir ) );
 	self->freeAfterEvent = qtrue;
 
-	self->enemy->strugglingAttack = qfalse;
-	self->strugglingAllyAttack = qfalse;
-	if(self->s.eType == ET_BEAMHEAD){
+	if(self->s.eType == ET_BEAMHEAD && (self->strugglingPlayer || self->strugglingAttack)){
 		self->enemy->client->ps.bitFlags &= ~isStruggling;
-	}
-	if(self->enemy->s.eType == ET_BEAMHEAD){
-		self->client->ps.bitFlags &= ~isStruggling;
 	}
 
 	trap_LinkEntity( self );
@@ -1799,7 +1793,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			}
 			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->powerLevelCurrent,0,self->methodOfDeath, self->extraKnockback);
 		}
-		if((self->powerLevelTotal <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
+		if((self->powerLevelCurrent <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
 			// Terminate guidance
 			if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
 			if(other->takedamage && other->client){
@@ -1876,7 +1870,13 @@ void G_RunUserMissile( gentity_t *ent ) {
 	vec3_t		origin;
 	trace_t		trace;
 	int			pass_ent;
+	int			beamKnockBack;
 	gentity_t	*traceEnt;
+	vec3_t		muzzle, forward, right, up;
+	vec3_t		start,end;
+	trace_t		trace2;
+	gentity_t	*traceEnt2;
+	gentity_t	*missileOwner = GetMissileOwnerEntity(ent);
 
 	// get current position
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
@@ -1915,7 +1915,7 @@ void G_RunUserMissile( gentity_t *ent ) {
 
 		G_ImpactUserWeapon(ent, &trace);
 
-		if ( (ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD) && ((ent->powerLevelTotal <= 0)||(g_entities[trace.entityNum].powerLevelTotal <=0)) ) {
+		if ((ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD)/* && ((ent->powerLevelCurrent <= 0)||(g_entities[trace.entityNum].client->ps.powerLevel[plHealth] <=0)) */) {
 			// Missile has changed to ET_GENERAL and has exploded, so we don't want
 			// to run the think function!
 			// Return immediately instead.
@@ -1929,6 +1929,36 @@ void G_RunUserMissile( gentity_t *ent ) {
 		trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, ENTITYNUM_NONE, ent->clipmask );
 		if (!trace.startsolid || trace.entityNum != ent->r.ownerNum) {
 			ent->count = 1;
+		}
+	}
+
+	// Here we test if a player entered a beam
+	if(ent->s.eType == ET_BEAMHEAD && !(ent->s.eFlags & EF_GUIDED)){
+		// Get player direction
+		AngleVectors( missileOwner->client->ps.viewangles, forward, right, up );
+		CalcMuzzlePoint( missileOwner, forward, right, up, muzzle );
+		// Get player position and beam head position
+		BG_EvaluateTrajectory( &missileOwner->s, &missileOwner->s.pos, level.time, start );
+		BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, end );
+		// Trace between the two positions
+		trap_Trace (&trace2, start, ent->r.mins, ent->r.maxs, end, ent->s.number, MASK_SHOT);
+		traceEnt2 = &g_entities[ trace2.entityNum ];
+		// Snap the endpos to integers, but nudged towards the line
+		SnapVectorTowards( trace2.endpos, muzzle );
+		// If the player is holding block when he entered the beam, inititate push struggle.
+		if (traceEnt2->takedamage && trace2.fraction != 1 && (traceEnt2->client->ps.bitFlags & usingBlock)) {
+			G_SetOrigin(ent,trace2.endpos);
+			G_ImpactUserWeapon(ent,&trace2);
+		// Else if the player that entered the beam isn't blocking, burn them and/or push them.
+		}else if (traceEnt2->takedamage && trace2.fraction != 1 && !(traceEnt2->client->ps.bitFlags & usingBlock)) {
+			beamKnockBack = ent->powerLevelCurrent < (ent->powerLevelTotal / 3.0f) ? 0 : 100;
+			G_UserWeaponDamage(traceEnt2,ent,missileOwner,forward,trace2.endpos,1+(ent->powerLevelCurrent / 4),0,ent->methodOfDeath,beamKnockBack);
+		}
+		if ((ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD)/* && ((ent->powerLevelCurrent <= 0)||(g_entities[trace2.entityNum].client->ps.powerLevel[plHealth] <=0)) */) {
+			// Missile has changed to ET_GENERAL and has exploded, so we don't want
+			// to run the think function!
+			// Return immediately instead.
+			return;	
 		}
 	}
 
