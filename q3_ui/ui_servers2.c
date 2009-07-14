@@ -75,22 +75,23 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_TOURNEY		3
 #define GAMES_CTF			4
 #define GAMES_STRUGGLE		5
+#define GAMES_ZEQ2LITE		6
 
 static const char *master_items[] = {
 	"Local",
-	"Mplayer",
+//	"Mplayer",
 	"Internet",
 	"Favorites",
 	0
 };
 
 static const char *servertype_items[] = {
-	"All",
-	"Free For All",
-	"Team Deathmatch",
-	"Tournament",
-	"Capture the Flag",
-	"Struggle",
+//	"All",
+//	"Free For All",
+//	"Team Deathmatch",
+//	"Tournament",
+//	"Capture the Flag",
+	"ZEQ2Lite",
 	0
 };
 
@@ -116,6 +117,7 @@ static char* gamenames[] = {
 	"Q3F",						// Q3F
 	"Urban Terror",		// Urban Terror
 	"OSP",						// Orange Smoothie Productions
+	"ZEQ2Lite",	// ZEQ2Lite
 	"???",			// unknown
 	0
 };
@@ -350,7 +352,7 @@ static void ArenaServers_UpdateMenu( void ) {
 		// servers found
 		if( g_arenaservers.refreshservers && ( g_arenaservers.currentping <= g_arenaservers.numqueriedservers ) ) {
 			// show progress
-			Com_sprintf( g_arenaservers.status.string, MAX_STATUSLENGTH, "%d of %d Arena Servers.", g_arenaservers.currentping, g_arenaservers.numqueriedservers);
+			Com_sprintf( g_arenaservers.status.string, MAX_STATUSLENGTH, "%d of %d ZEQ2Lite Servers.", g_arenaservers.currentping, g_arenaservers.numqueriedservers);
 			g_arenaservers.statusbar.string  = "Press SPACE to stop";
 			qsort( g_arenaservers.serverlist, *g_arenaservers.numservers, sizeof( servernode_t ), ArenaServers_Compare);
 		}
@@ -446,16 +448,12 @@ static void ArenaServers_UpdateMenu( void ) {
 		}
 
 		switch( g_gametype ) {
+/*
 		case GAMES_ALL:
 			break;
 
 		case GAMES_FFA:
 			if( servernodeptr->gametype != GT_FFA ) {
-				continue;
-			}
-			break;
-		case GAMES_STRUGGLE:
-			if( servernodeptr->gametype != GT_STRUGGLE ) {
 				continue;
 			}
 			break;
@@ -473,6 +471,14 @@ static void ArenaServers_UpdateMenu( void ) {
 
 		case GAMES_CTF:
 			if( servernodeptr->gametype != GT_CTF ) {
+				continue;
+			}
+			break;
+		}
+*/
+		case GAMES_ZEQ2LITE:
+			if( strcmp(servernodeptr->gamename,"ZEQ2Contents") != 0 ) {
+			//if( servernodeptr->gametype != GT_STRUGGLE ) {
 				continue;
 			}
 			break;
@@ -1010,8 +1016,11 @@ static void ArenaServers_StartRefresh( void )
 		case GAMES_CTF:
 			strcpy( myargs, " ctf" );
 			break;
-		}
 
+		case GAMES_STRUGGLE:
+			strcpy( myargs, " struggle" );
+			break;
+		}
 
 		if (g_emptyservers) {
 			strcat(myargs, " empty");
@@ -1277,7 +1286,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.banner.generic.flags = QMF_CENTER_JUSTIFY;
 	g_arenaservers.banner.generic.x	    = 320;
 	g_arenaservers.banner.generic.y	    = 16;
-	g_arenaservers.banner.string  		= "ARENA SERVERS";
+	g_arenaservers.banner.string  		= "ZEQ2LITE SERVERS";
 	g_arenaservers.banner.style  	    = UI_CENTER|UI_DROPSHADOW;
 	g_arenaservers.banner.color  	    = color_white;
 
