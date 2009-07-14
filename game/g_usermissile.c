@@ -557,7 +557,6 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	result = speedDifference + powerDifference;
 	// If the other attack stopped struggling for whatever reason, our attack will resume moving forward.
 	if(!self->enemy->strugglingAttack || !self->ally->strugglingAttack){
-
 		VectorCopy(self->r.currentOrigin,start);
 		VectorCopy(self->s.pos.trDelta,dir);
 		VectorCopy(self->r.currentAngles,dir2);
@@ -615,7 +614,7 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		self->s.pos.trType = TR_LINEAR;
 		self->s.pos.trTime = level.time;
 		//G_Printf("Power: %i Speed: %i Power Difference: %i Speed Difference: %f Result: %i\n",self->powerLevelCurrent, self->speed, powerDifference, speedDifference, result);
-		//G_AddEvent( self, EV_POWER_STRUGGLE, 0 );
+		G_AddEvent( self, EV_POWER_STRUGGLE, DirToByte( dir ) );
 	}
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -1662,8 +1661,8 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		// Turn the beam into a ball attack.
 		if(self->s.eType == ET_BEAMHEAD){
 			// Terminate guidance
-			if ( self->guided ) {
-				g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
+			if (self->guided){
+				g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;
 			}
 			self->s.eType = ET_MISSILE;
 		}
@@ -1695,24 +1694,10 @@ G_LocationImpact
 void G_LocationImpact(vec3_t point, gentity_t* targ, gentity_t* attacker) {
 	vec3_t attackPath;
 	vec3_t attackAngle;
-
-	int clientHeight;
-	int clientFeetZ;
 	int clientRotation;
-	int attackHeight;
 	int attackRotation;	// Degrees rotation around client.
-						// used to check Back of head vs. Face
-	int impactRotation;
-
-	// Point[2] is the REAL world Z. We want Z relative to the clients feet
+	int impactRotation;	// used to check back of head vs. face
 	
-	// Where the feet are at [real Z]
-	clientFeetZ  = targ->r.currentOrigin[2] + targ->r.mins[2];	
-	// How tall the client is [Relative Z]
-	clientHeight = targ->r.maxs[2] - targ->r.mins[2];
-	// Where the bullet struck [Relative Z]
-	attackHeight = point[2] - clientFeetZ;
-
 	// Get a vector aiming from the client to the bullet hit 
 	VectorSubtract(targ->r.currentOrigin, point, attackPath); 
 	// Convert it into PITCH, ROLL, YAW
@@ -1768,6 +1753,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		if(other->s.eFlags & EF_GUIDED){
 			other->s.eFlags &= ~EF_GUIDED;
 		}
+		G_AddEvent( self, EV_POWER_STRUGGLE_START, DirToByte( trace->plane.normal ) );
 		//G_Printf("Started Power Struggle!\n");
 		return;
 	// Initiate attack absorbtion
@@ -1978,7 +1964,7 @@ void G_RunUserMissile( gentity_t *ent ) {
 		}
 	}
 
-	// Here we test if a player entered a beam
+	// Here we test if something entered a beam
 	if(ent->s.eType == ET_BEAMHEAD && !(ent->s.eFlags & EF_GUIDED)){
 		// Get player direction
 		AngleVectors( missileOwner->client->ps.viewangles, forward, right, up );
@@ -1991,15 +1977,32 @@ void G_RunUserMissile( gentity_t *ent ) {
 		traceEnt2 = &g_entities[ trace2.entityNum ];
 		// Snap the endpos to integers, but nudged towards the line
 		SnapVectorTowards( trace2.endpos, muzzle );
-		// If the player is holding block when he entered the beam, inititate push struggle.
+		// If a player is holding block when he entered the beam, inititate push struggle.
 		if (traceEnt2->client && traceEnt2->takedamage && trace2.fraction != 1 && (traceEnt2->client->ps.bitFlags & usingBlock)) {
 			G_SetOrigin(ent,trace2.endpos);
 			G_ImpactUserWeapon(ent,&trace2);
-		// Else if the player that entered the beam isn't blocking, burn them and/or push them.
+		// Else if a player that entered the beam isn't blocking, burn them and/or push them.
 		}else if (traceEnt2->client && traceEnt2->takedamage && trace2.fraction != 1 && !(traceEnt2->client->ps.bitFlags & usingBlock)) {
 			beamKnockBack = ent->powerLevelCurrent < (ent->powerLevelTotal / 3.0f) ? 0 : 100;
 			G_UserWeaponDamage(traceEnt2,ent,missileOwner,forward,trace2.endpos,1+(ent->powerLevelCurrent / 4),0,ent->methodOfDeath,beamKnockBack);
+		// Else an attack entered our beam
+		// FIXME: This block won't work unless you comment out self->strugglingAllyAttack in the main struggle function.
+		// Even then, it still dosn't work right.
 		}
+		/*
+		else if (!traceEnt2->client && traceEnt2->takedamage && trace2.fraction != 1){
+			// If our attack and the other attack is on the same team
+			if (traceEnt2->client->ps.persistant[PERS_TEAM] == ent->client->ps.persistant[PERS_TEAM] && traceEnt2->client->ps.persistant[PERS_TEAM] != TEAM_FREE ) {
+				// Get absorbed by our enemies enemy, which should be someone on our team.
+				traceEnt2->ally = ent->enemy;
+			// Else get absorbed by whichever attack you hit first.
+			}else{
+				traceEnt2->ally = ent;
+			}
+			traceEnt2->r.ownerNum = traceEnt2->ally->s.number;
+			traceEnt2->strugglingAllyAttack = qtrue;
+		}
+		*/
 		if ((ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD)/* && ((ent->powerLevelCurrent <= 0)||(g_entities[trace2.entityNum].client->ps.powerLevel[plHealth] <=0)) */) {
 			// Missile has changed to ET_GENERAL and has exploded, so we don't want
 			// to run the think function!

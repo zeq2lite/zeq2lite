@@ -992,6 +992,15 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_TIERDOWN");
 		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformDown);
 		break;
+	case EV_POWER_STRUGGLE_START:
+		DEBUGNAME("EV_POWER_STRUGGLE_START");
+		CG_AddEarthquake(cent->lerpOrigin, 10000, 1, 0, 1, 200);
+		//CG_PowerMeleeEffect(cent->lerpOrigin);
+		break;
+	case EV_POWER_STRUGGLE:
+		DEBUGNAME("EV_POWER_STRUGGLE");
+		CG_AddEarthquake(cent->lerpOrigin, 10000, 1, 0, 1, 50);
+		break;
 	default:
 		DEBUGNAME("UNKNOWN");
 		CG_Error( "Unknown event: %i", event );
