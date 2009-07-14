@@ -686,7 +686,7 @@ void PM_CheckJump(void){
 	int jumpPower;
 	float jumpScale;
 	if(pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight || pm->ps->bitFlags & isStruggling){return;}
-	if(!(pm->cmd.buttons & BUTTON_JUMP)){return;}
+	if(!(pm->cmd.buttons & BUTTON_JUMP) || pm->ps->weaponstate == WEAPON_GUIDING){return;}
 	PM_NotOnGround();
 	PM_StopDash();
 	pm->ps->bitFlags |= usingJump;
