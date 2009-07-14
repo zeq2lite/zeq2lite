@@ -79,7 +79,7 @@ MULTIPLAYER MENU (SERVER BROWSER)
 
 static const char *master_items[] = {
 	"Local",
-//	"Mplayer",
+	"Mplayer",
 	"Internet",
 	"Favorites",
 	0
@@ -477,8 +477,8 @@ static void ArenaServers_UpdateMenu( void ) {
 		}
 */
 		case GAMES_ZEQ2LITE:
-			if( strcmp(servernodeptr->gamename,"ZEQ2Contents") != 0 ) {
-			//if( servernodeptr->gametype != GT_STRUGGLE ) {
+			//if( strcmp(servernodeptr->gamename,"ZEQ2Contents") != 0 || strcmp(servernodeptr->gamename,"ZEQ2") != 0 ) {
+			if( servernodeptr->gametype != GT_STRUGGLE ) {
 				continue;
 			}
 			break;
