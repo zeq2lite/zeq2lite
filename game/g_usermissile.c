@@ -495,6 +495,7 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		// And we are not a beam.
 		if(self->s.eType != ET_BEAMHEAD) {
 			// Remove the ball.
+			self->strugglingAttack = qfalse;
 			G_RemoveUserWeapon ( self );
 			return;
 		// Or we're a ball and both our powers are drained.
@@ -509,6 +510,7 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		// Else
 		}else{
 			// Remove the beam.
+			self->strugglingAttack = qfalse;
 			G_RemoveUserWeapon ( self );
 			return;
 		}
@@ -522,6 +524,12 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 			self->enemy->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
 			self->speed += 1;
 			self->enemy->speed -= 1;
+		}else{
+			// Our attack is being absorbing instead.
+			self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
+			self->enemy->powerLevelCurrent += 1 + ((float)self->powerLevelTotal * 0.005);
+			self->speed -= 1;
+			self->enemy->speed += 1;
 		}
 	}
 	// If we're using boost and we're a beam.
@@ -554,7 +562,7 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	power2 = self->enemy->powerLevelCurrent;
 	speedDifference = speed1-speed2;
 	powerDifference = power1-power2;
-	result = speedDifference + powerDifference;
+	result = /*speedDifference +*/ powerDifference;
 	// If the other attack stopped struggling for whatever reason, our attack will resume moving forward.
 	if(!self->enemy->strugglingAttack || !self->ally->strugglingAttack){
 		VectorCopy(self->r.currentOrigin,start);
@@ -1749,7 +1757,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		if(self->s.eType == ET_BEAMHEAD){
 			self->client->ps.bitFlags |= isStruggling;
 		}
-		if(other->s.eType== ET_BEAMHEAD){
+		if(other->s.eType == ET_BEAMHEAD){
 			other->client->ps.bitFlags |= isStruggling;
 		}
 		if(self->s.eFlags & EF_GUIDED){
@@ -1759,7 +1767,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			other->s.eFlags &= ~EF_GUIDED;
 		}
 		G_AddEvent( self, EV_POWER_STRUGGLE_START, DirToByte( trace->plane.normal ) );
-		//G_Printf("Started Power Struggle!\n");
+		G_Printf("Started Power Struggle!\n");
 		return;
 	// Initiate attack absorbtion
 	} else if ((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD)	// If it's a beam or ball attack
@@ -1777,7 +1785,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		}
 		self->r.ownerNum = self->ally->s.number;
 		self->strugglingAllyAttack = qtrue;
-		//G_Printf("Attack Absorbtion Started!\n");
+		G_Printf("Attack Absorbtion Started!\n");
 		return;
 	// Initiate Swat / Push Struggle
 	} else if ((other->s.eType != ET_MISSILE || other->s.eType != ET_BEAMHEAD)	// If it's not a beam or ball attack
