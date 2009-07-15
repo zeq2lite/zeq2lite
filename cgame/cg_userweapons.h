@@ -70,6 +70,11 @@ typedef struct {
 	qhandle_t		missileSkin;
 	qhandle_t		missileShader;
 
+	// MISSILE STRUGGLE
+	qhandle_t		missileStruggleModel;
+	qhandle_t		missileStruggleSkin;
+	qhandle_t		missileStruggleShader;
+
 	float			missileSize;			// If the weapon was charged, multiply with chargeSize;
 
 	vec3_t			missileSpin;			// Spin the missile during flight
@@ -184,6 +189,11 @@ typedef struct {
 	char			missileModel[MAX_QPATH];
 	char			missileSkin[MAX_QPATH];
 	char			missileShader[MAX_QPATH];
+
+	// MISSILE STRUGGLE
+	char			missileStruggleModel[MAX_QPATH];
+	char			missileStruggleSkin[MAX_QPATH];
+	char			missileStruggleShader[MAX_QPATH];
 
 	float			missileSize;			// If the weapon was charged, multiply with chargeSize;
 	

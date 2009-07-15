@@ -826,8 +826,14 @@ static void CG_Missile( centity_t *cent ) {
 		trap_R_AddRefEntityToScene( &ent );
 	} else {
 		ent.reType = RT_MODEL;
-		ent.hModel = weaponGraphics->missileModel;
-		ent.customSkin = weaponGraphics->missileSkin;
+		if ( (weaponGraphics->missileStruggleModel && weaponGraphics->missileStruggleSkin) && (s1->dashDir[2] != 0.0f)) {
+			ent.hModel = weaponGraphics->missileStruggleModel;
+			ent.customSkin = weaponGraphics->missileStruggleSkin;
+		} else {
+			ent.hModel = weaponGraphics->missileModel;
+			ent.customSkin = weaponGraphics->missileSkin;
+		}
+
 		ent.renderfx = RF_NOSHADOW;
 		//ent.shaderRGBA[0] = radiusScale;
 		//ent.shaderRGBA[1] = radiusScale;

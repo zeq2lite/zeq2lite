@@ -148,6 +148,7 @@ typedef struct {
 typedef enum {
 	CAT_CHARGE,
 	CAT_EXPLOSION,
+	CAT_STRUGGLE,
 	CAT_MISSILE,
 	CAT_FLASH,
 	CAT_TRAIL,

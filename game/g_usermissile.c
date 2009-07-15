@@ -579,6 +579,7 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		self->enemy = NULL;
 		self->strugglingAttack = qfalse;
 		self->strugglingAllyAttack = qfalse;
+		self->s.dashDir[2] = 0.0f;
 		self->think = Think_NormalMissile;
 		self->nextthink = level.time;
 		// check for stop
@@ -1010,6 +1011,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->strugglingAllyAttack = qfalse;
 		bolt->strugglingAttack = qfalse;
 		bolt->strugglingPlayer = qfalse;
+		self->s.dashDir[2] = 0.0f;
 		bolt->count = 0;
 		{
 			float radius;
@@ -1204,6 +1206,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->strugglingAllyAttack = qfalse;
 		bolt->strugglingAttack = qfalse;
 		bolt->strugglingPlayer = qfalse;
+		self->s.dashDir[2] = 0.0f;
 		bolt->count = 0;
 		{
 			float radius;
@@ -1741,6 +1744,8 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		other->enemy = self;
 		self->strugglingAttack = qtrue;
 		self->enemy->strugglingAttack = qtrue;
+		self->s.dashDir[2] = 1.0f;
+		self->enemy->s.dashDir[2] = 1.0f;
 		if(self->s.eType == ET_BEAMHEAD){
 			self->client->ps.bitFlags |= isStruggling;
 		}

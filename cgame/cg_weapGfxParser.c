@@ -105,6 +105,12 @@ void CG_weapGfx_StoreBuffer(int clientNum, int weaponNum) {
 	if ( *src->missileModel ) dest->missileModel = trap_R_RegisterModel( src->missileModel );
 	if ( *src->missileSkin ) dest->missileSkin = trap_R_RegisterSkin( src->missileSkin );
 	if ( *src->missileShader ) dest->missileShader = trap_R_RegisterShader( src->missileShader );
+
+	// --< Missile Struggle >--
+	if ( *src->missileStruggleModel ) dest->missileStruggleModel = trap_R_RegisterModel( src->missileStruggleModel );
+	if ( *src->missileStruggleSkin ) dest->missileStruggleSkin = trap_R_RegisterSkin( src->missileStruggleSkin );
+	if ( *src->missileStruggleShader ) dest->missileStruggleShader = trap_R_RegisterShader( src->missileStruggleShader );
+
 	if ( *src->missileSound ) dest->missileSound = trap_S_RegisterSound( src->missileSound, qfalse );
 	
 	VectorCopy( src->missileSpin, dest->missileSpin );
@@ -177,6 +183,17 @@ qboolean CG_weapGfx_ParseModel( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIn
 			Q_strncpyz( cg_weapGfxBuffer.explosionModel, "", sizeof(cg_weapGfxBuffer.explosionModel) );
 		} else if ( token->tokenSym == TOKEN_STRING ) {
 			Q_strncpyz( cg_weapGfxBuffer.explosionModel, token->stringval, sizeof(cg_weapGfxBuffer.explosionModel) );
+		} else {
+			CG_weapGfx_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		}		
+		break;
+
+	case CAT_STRUGGLE:
+		if ( token->tokenSym == TOKEN_NULL ) {
+			Q_strncpyz( cg_weapGfxBuffer.missileStruggleModel, "", sizeof(cg_weapGfxBuffer.missileStruggleModel) );
+		} else if ( token->tokenSym == TOKEN_STRING ) {
+			Q_strncpyz( cg_weapGfxBuffer.missileStruggleModel, token->stringval, sizeof(cg_weapGfxBuffer.missileStruggleModel) );
 		} else {
 			CG_weapGfx_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
 			return qfalse;
@@ -261,6 +278,17 @@ qboolean CG_weapGfx_ParseSkin( cg_weapGfxParser_t *parser, cg_weapGfxCategoryInd
 		}		
 		break;
 
+	case CAT_STRUGGLE:
+		if ( token->tokenSym == TOKEN_NULL ) {
+			Q_strncpyz( cg_weapGfxBuffer.missileStruggleSkin, "", sizeof(cg_weapGfxBuffer.missileStruggleSkin) );
+		} else if ( token->tokenSym == TOKEN_STRING ) {
+			Q_strncpyz( cg_weapGfxBuffer.missileStruggleSkin, token->stringval, sizeof(cg_weapGfxBuffer.missileStruggleSkin) );
+		} else {
+			CG_weapGfx_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		}		
+		break;
+
 	case CAT_MISSILE:
 		if ( token->tokenSym == TOKEN_NULL ) {
 			Q_strncpyz( cg_weapGfxBuffer.missileSkin, "", sizeof(cg_weapGfxBuffer.missileSkin) );
@@ -332,6 +360,17 @@ qboolean CG_weapGfx_ParseShader( cg_weapGfxParser_t *parser, cg_weapGfxCategoryI
 			Q_strncpyz( cg_weapGfxBuffer.explosionShader, "", sizeof(cg_weapGfxBuffer.explosionShader) );
 		} else if ( token->tokenSym == TOKEN_STRING ) {
 			Q_strncpyz( cg_weapGfxBuffer.explosionShader, token->stringval, sizeof(cg_weapGfxBuffer.explosionShader) );
+		} else {
+			CG_weapGfx_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
+			return qfalse;
+		}		
+		break;
+
+	case CAT_STRUGGLE:
+		if ( token->tokenSym == TOKEN_NULL ) {
+			Q_strncpyz( cg_weapGfxBuffer.missileStruggleShader, "", sizeof(cg_weapGfxBuffer.missileStruggleShader) );
+		} else if ( token->tokenSym == TOKEN_STRING ) {
+			Q_strncpyz( cg_weapGfxBuffer.missileStruggleShader, token->stringval, sizeof(cg_weapGfxBuffer.missileStruggleShader) );
 		} else {
 			CG_weapGfx_ErrorHandle( ERROR_STRING_EXPECTED, scanner, token->stringval, NULL );
 			return qfalse;

@@ -5,13 +5,13 @@
 #include "cg_weapGfxParser.h" // <-- cg_local.h included in this
 
 char *cg_weapGfxCategories[] = {
-	"Charge", "Explosion", "Missile", "Flash", "Trail", "Hud", ""
+	"Charge", "Explosion", "Struggle", "Missile", "Flash", "Trail", "Hud", ""
 };
 
 cg_weapGfxField_t cg_weapGfxFields[] = {
-	{ "model",				CG_weapGfx_ParseModel				},	// Charge, Explosion, Missile, Flash
-	{ "skin",				CG_weapGfx_ParseSkin				},	// Charge, Explosion, Missile, Flash
-	{ "shader",				CG_weapGfx_ParseShader				},	// Charge, Explosion, Missile, Flash
+	{ "model",				CG_weapGfx_ParseModel				},	// Charge, Explosion, Struggle, Missile, Flash
+	{ "skin",				CG_weapGfx_ParseSkin				},	// Charge, Explosion, Struggle, Missile, Flash
+	{ "shader",				CG_weapGfx_ParseShader				},	// Charge, Explosion, Struggle, Missile, Flash
 	{ "animationRange",		CG_weapGfx_ParseAnimationRange		},	// Charge
 	{ "size",				CG_weapGfx_ParseSize				},	// Charge, Explosion, Missile, Flash, Trail
 	{ "light",				CG_weapGfx_ParseDlight				},	// Charge, Explosion, Missile, Flash
