@@ -490,15 +490,27 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	trace_t		*trace;
 	gentity_t	*missileOwner = GetMissileOwnerEntity( self );
 	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent;
+	// Our players have a slight power level drain for the duration of a struggle
+	missileOwner->client->ps.powerLevel[plUseCurrent] += ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+	// Our attacks have a slight constant drain if we try to go over the attacks's normal power.
+	if(self->powerLevelCurrent > self->powerLevelTotal){
+		self->powerLevelCurrent -= 1;// + ((float)self->powerLevelTotal * 0.005);
+	}
+	// If we're beams, set our origins to be at the same point
+	if(self->s.eType == ET_BEAMHEAD && self->enemy->s.eType == ET_BEAMHEAD){
+		if(self->powerLevelCurrent > self->enemy->powerLevelCurrent){
+			//G_SetOrigin(self,self->enemy->s.pos.trBase);
+		}
+	}
 	// If we ran out of power.
-	if(self->powerLevelCurrent <= 1){
+	if(self->powerLevelCurrent <= 10){
 		// And we are not a beam.
 		if(self->s.eType != ET_BEAMHEAD) {
 			// Remove the ball.
 			self->strugglingAttack = qfalse;
 			G_RemoveUserWeapon ( self );
 			return;
-		// Or we're a ball and both our powers are drained.
+		// Or we're a beam and both our powers are drained.
 		}else if(self->client->ps.powerLevel[plCurrent] <= 1 && self->enemy->client->ps.powerLevel[plCurrent] <= 1){
 			// Remove us.
 			G_ExplodeUserWeapon ( self );
@@ -506,7 +518,7 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		// Else we're a beam and we arn't helping an ally
 		}else if(!self->strugglingAllyAttack){
 			// We stick around for the beam struggle regardless of our drained power.
-			self->powerLevelCurrent = 1;
+			self->powerLevelCurrent = 10;
 		// Else
 		}else{
 			// Remove the beam.
@@ -520,40 +532,41 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		// And we're winning.
 		if(self->powerLevelCurrent > self->enemy->powerLevelCurrent){
 			// Our attack is absorbing the other attack's power and speed instead.
-			self->powerLevelCurrent += 1 + ((float)self->powerLevelTotal * 0.005);
-			self->enemy->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
-			self->speed += 1;
-			self->enemy->speed -= 1;
+			self->powerLevelCurrent += 5 + ((float)self->powerLevelTotal * 0.005);
+			self->enemy->powerLevelCurrent -= 5 + ((float)self->powerLevelTotal * 0.005);
+			self->speed += 5;
+			self->enemy->speed -= 5;
 		}else{
 			// Our attack is being absorbing instead.
-			self->powerLevelCurrent -= 1 + ((float)self->powerLevelTotal * 0.005);
-			self->enemy->powerLevelCurrent += 1 + ((float)self->powerLevelTotal * 0.005);
-			self->speed -= 1;
-			self->enemy->speed += 1;
+			self->powerLevelCurrent -= 5 + ((float)self->powerLevelTotal * 0.005);
+			self->enemy->powerLevelCurrent += 5 + ((float)self->powerLevelTotal * 0.005);
+			self->speed -= 5;
+			self->enemy->speed += 5;
 		}
 	}
 	// If we're using boost and we're a beam.
-	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
+	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD && missileOwner->client->ps.powerLevel[plCurrent] > 1){
 		// Make us stronger and faster.
-		self->powerLevelCurrent += 1 + ((float)self->powerLevelTotal * 0.005);
-		self->speed += 10 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+		self->powerLevelCurrent += 5 + ((float)self->powerLevelTotal * 0.005);
+		self->speed += 5 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
+		missileOwner->client->ps.powerLevel[plUseCurrent] += ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
 	}
 	// If we're helping an allies attack.
 	if(self->strugglingAllyAttack){
 		// And we are a beam.
 		if(self->s.eType == ET_BEAMHEAD){
 			// Add to the allies power and speed directly.
-			self->ally->powerLevelCurrent += 1 + ((float)self->powerLevelCurrent * 0.0003);
-			self->ally->speed += 10 + ((float)self->speed * 0.0003);
-			self->powerLevelCurrent -= 1 + ((float)self->powerLevelCurrent * 0.0003);
-			self->speed -= 10 + ((float)self->speed * 0.0003);
+			self->ally->powerLevelCurrent += 5 + ((float)self->powerLevelCurrent * 0.0003);
+			self->ally->speed += 5 + ((float)self->speed * 0.0003);
+			self->powerLevelCurrent -= 5 + ((float)self->powerLevelCurrent * 0.0003);
+			self->speed -= 5 + ((float)self->speed * 0.0003);
 		// Else we're a ball.
 		}else{
 			// Let the allies attack absorb our power and speed instead.
-			self->powerLevelCurrent -= 10;
-			self->speed -= 10;
-			self->ally->powerLevelCurrent += 10;
-			self->ally->speed += 10;
+			self->powerLevelCurrent -= 5;
+			self->speed -= 5;
+			self->ally->powerLevelCurrent += 5;
+			self->ally->speed += 5;
 		}
 	}
 	speed1 = self->speed;
@@ -1767,7 +1780,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			other->s.eFlags &= ~EF_GUIDED;
 		}
 		G_AddEvent( self, EV_POWER_STRUGGLE_START, DirToByte( trace->plane.normal ) );
-		G_Printf("Started Power Struggle!\n");
+		//G_Printf("Started Power Struggle!\n");
 		return;
 	// Initiate attack absorbtion
 	} else if ((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD)	// If it's a beam or ball attack
@@ -1785,7 +1798,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		}
 		self->r.ownerNum = self->ally->s.number;
 		self->strugglingAllyAttack = qtrue;
-		G_Printf("Attack Absorbtion Started!\n");
+		//G_Printf("Attack Absorbtion Started!\n");
 		return;
 	// Initiate Swat / Push Struggle
 	} else if ((other->s.eType != ET_MISSILE || other->s.eType != ET_BEAMHEAD)	// If it's not a beam or ball attack
