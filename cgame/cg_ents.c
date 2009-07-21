@@ -707,6 +707,7 @@ static void CG_Missile( centity_t *cent ) {
 	int					missilePowerLevelCurrent;
 	int					missilePowerLevelTotal;
 	float				radiusScale;
+	qboolean			missileIsStruggling;
 	ps = &cg.predictedPlayerState;
 	s1 = &cent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
@@ -716,6 +717,7 @@ static void CG_Missile( centity_t *cent ) {
 	missileChargeLvl = s1->powerups;
 	missilePowerLevelTotal = s1->dashDir[0];
 	missilePowerLevelCurrent = s1->dashDir[1];
+	missileIsStruggling = s1->dashDir[2];
 
 	// Obtain the scale the missile must have.
 	if (weaponGraphics->chargeGrowth) {
@@ -826,7 +828,7 @@ static void CG_Missile( centity_t *cent ) {
 		trap_R_AddRefEntityToScene( &ent );
 	} else {
 		ent.reType = RT_MODEL;
-		if ( (weaponGraphics->missileStruggleModel && weaponGraphics->missileStruggleSkin) && (s1->dashDir[2] != 0.0f)) {
+		if ( (weaponGraphics->missileStruggleModel && weaponGraphics->missileStruggleSkin) && missileIsStruggling/*(s1->dashDir[2] != 0.0f)*/) {
 			ent.hModel = weaponGraphics->missileStruggleModel;
 			ent.customSkin = weaponGraphics->missileStruggleSkin;
 		} else {
@@ -889,12 +891,19 @@ static void CG_Missile( centity_t *cent ) {
 		trap_R_AddRefEntityToScene( &ent );
 	}
 
+	// Check if the missile is in a struggle, and if so, do effects for it.
+	if( missileIsStruggling ){
+		CG_AddEarthquake(cent->lerpOrigin, 10000, 1, 0, 1, 50);
+	}
+
 	// Check if it is a groundskimmer missile and activate a new debris trail
 	// if the entity is a entering into the PVS this frame.
 	if ( s1->eType == ET_SKIMMER ) {
 		//if ( cent->lastPVSTime < ( cg.time - cg.frametime - 100 )) { // 100 msec leeway for inconsistency in engine timing
-		if ( !CG_FrameHist_WasInPVS( s1->number )) {
-			PSys_SpawnCachedSystem( "TrailDebris", cent->lerpOrigin, NULL, cent, NULL, qfalse, qfalse );
+		if (!missileIsStruggling){
+			if ( !CG_FrameHist_WasInPVS( s1->number )) {
+				PSys_SpawnCachedSystem( "TrailDebris", cent->lerpOrigin, NULL, cent, NULL, qfalse, qfalse );
+			}
 		}
 	}
 

@@ -449,6 +449,108 @@ void CG_PowerMeleeEffect( vec3_t org ) {
 
 /*
 ==================
+CG_PowerStruggleEffect
+
+Power Struggle impact effect
+==================
+*/
+void CG_PowerStruggleEffect( vec3_t org, int size ) {
+	localEntity_t	*le;
+	refEntity_t		*re;
+	localEntity_t	*le2;
+	refEntity_t		*re2;
+
+	le = CG_AllocLocalEntity();
+	le->leFlags = 0;
+	le->startTime = cg.time;
+	le->leType = LE_SCALE_FADE_RGB;
+	le->endTime = cg.time + 250;
+
+	switch ( size ) {
+		case 4:
+			le->radius = 2048;
+			break;
+		case 3:
+			le->radius = 1024;
+			break;
+		case 2:
+			le->radius = 512;
+			break;
+		case 1:
+			le->radius = 256;
+			break;
+		case 0:
+			le->radius = 128;
+			break;
+		default:
+			le->radius = 64;
+			break;
+	}
+
+	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
+
+	re = &le->refEntity;
+	re->reType = RT_SPRITE;
+	re->radius = le->radius;
+	re->shaderRGBA[0] = le->color[0] * 0xff;
+	re->shaderRGBA[1] = le->color[1] * 0xff;
+	re->shaderRGBA[2] = le->color[2] * 0xff;
+	re->shaderRGBA[3] = 0xff;
+	re->customShader = cgs.media.powerStruggleRaysEffectShader;
+	re->rotation = random() * 360;
+
+	AxisClear( re->axis );
+
+	VectorCopy( org, re->origin );
+
+	le2 = CG_AllocLocalEntity();
+	le2->leFlags = 0;
+	le2->startTime = cg.time;
+	le2->leType = LE_SCALE_FADE_RGB;
+	le2->endTime = cg.time + 1000;
+
+	switch ( size ) {
+		case 4:
+			le2->radius = 4096;
+			break;
+		case 3:
+			le2->radius = 2048;
+			break;
+		case 2:
+			le2->radius = 1024;
+			break;
+		case 1:
+			le2->radius = 512;
+			break;
+		case 0:
+			le2->radius = 256;
+			break;
+		default:
+			le2->radius = 128;
+			break;
+	}
+
+	le2->lifeRate = 1.0 / ( le2->endTime - le2->startTime );
+	le2->color[0] = le2->color[1] = le2->color[2] = le2->color[3] = 1.0;
+
+	re2 = &le2->refEntity;
+	re2->reType = RT_SPRITE;
+	re2->radius = le2->radius;
+	re2->shaderRGBA[0] = le2->color[0] * 0xff;
+	re2->shaderRGBA[1] = le2->color[1] * 0xff;
+	re2->shaderRGBA[2] = le2->color[2] * 0xff;
+	re2->shaderRGBA[3] = 0xff;
+	re2->customShader = cgs.media.powerStruggleShockwaveEffectShader;
+	re2->rotation = random() * 360;
+
+	AxisClear( re2->axis );
+
+	VectorCopy( org, re2->origin );
+}
+
+/*
+==================
 CG_ScorePlum
 ==================
 */

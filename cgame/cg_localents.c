@@ -404,7 +404,7 @@ static void CG_AddMoveScaleFade( localEntity_t *le ) {
 	}
 
 	BG_EvaluateTrajectory( NULL, &le->pos, cg.time, re->origin );
-
+/*
 	// if the view would be "inside" the sprite, kill the sprite
 	// so it doesn't add too much overdraw
 	VectorSubtract( re->origin, cg.refdef.vieworg, delta );
@@ -413,7 +413,7 @@ static void CG_AddMoveScaleFade( localEntity_t *le ) {
 		CG_FreeLocalEntity( le );
 		return;
 	}
-
+*/
 	trap_R_AddRefEntityToScene( re );
 }
 
@@ -440,7 +440,7 @@ static void CG_AddScaleFade( localEntity_t *le ) {
 
 	re->shaderRGBA[3] = 0xff * c * le->color[3];
 	re->radius = le->radius * ( 1.0 - c ) + 8;
-
+/*
 	// if the view would be "inside" the sprite, kill the sprite
 	// so it doesn't add too much overdraw
 	VectorSubtract( re->origin, cg.refdef.vieworg, delta );
@@ -449,7 +449,7 @@ static void CG_AddScaleFade( localEntity_t *le ) {
 		CG_FreeLocalEntity( le );
 		return;
 	}
-
+*/
 	trap_R_AddRefEntityToScene( re );
 }
 
@@ -468,7 +468,7 @@ static void CG_AddScaleFadeRGB( localEntity_t *le ) {
 	re->shaderRGBA[1] = 0xff * c * le->color[1];
 	re->shaderRGBA[2] = 0xff * c * le->color[2];
 	re->radius = le->radius * ( 1.0 - c ) + 8;
-
+/*
 	// if the view would be "inside" the sprite, kill the sprite
 	// so it doesn't add too much overdraw
 	VectorSubtract( re->origin, cg.refdef.vieworg, delta );
@@ -477,7 +477,7 @@ static void CG_AddScaleFadeRGB( localEntity_t *le ) {
 		CG_FreeLocalEntity( le );
 		return;
 	}
-
+*/
 	trap_R_AddRefEntityToScene( re );
 }
 
@@ -507,7 +507,7 @@ static void CG_AddFallScaleFade( localEntity_t *le ) {
 	re->origin[2] = le->pos.trBase[2] - ( 1.0 - c ) * le->pos.trDelta[2];
 
 	re->radius = le->radius * ( 1.0 - c ) + 16;
-
+/*
 	// if the view would be "inside" the sprite, kill the sprite
 	// so it doesn't add too much overdraw
 	VectorSubtract( re->origin, cg.refdef.vieworg, delta );
@@ -516,7 +516,7 @@ static void CG_AddFallScaleFade( localEntity_t *le ) {
 		CG_FreeLocalEntity( le );
 		return;
 	}
-
+*/
 	trap_R_AddRefEntityToScene( re );
 }
 

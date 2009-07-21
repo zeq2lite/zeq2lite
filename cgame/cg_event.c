@@ -436,7 +436,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	const char		*s;
 	int				clientNum;
 	clientInfo_t	*ci;
-	int	r;
+	int	r,size;
 
 	r = random() * 10;
 
@@ -862,6 +862,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		}
 #if EARTHQUAKE_SYSTEM
 	case EV_EARTHQUAKE:
+		DEBUGNAME("EV_EARTHQUAKE");
 		CG_AddEarthquake(
 			es->origin, es->angles2[1],
 			es->angles[0], es->angles[1], es->angles[2],
@@ -982,24 +983,32 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TIERUP_FIRST:
 		DEBUGNAME("EV_TIERUP_FIRST");
-		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformFirst);
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformFirst);
 		break;
 	case EV_TIERUP:
 		DEBUGNAME("EV_TIERUP");
-		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformUp);
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformUp);
 		break;
 	case EV_TIERDOWN:
 		DEBUGNAME("EV_TIERDOWN");
-		trap_S_StartSound(NULL,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformDown);
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformDown);
 		break;
 	case EV_POWER_STRUGGLE_START:
 		DEBUGNAME("EV_POWER_STRUGGLE_START");
-		CG_AddEarthquake(cent->lerpOrigin, 10000, 1, 0, 1, 200);
-		//CG_PowerMeleeEffect(cent->lerpOrigin);
-		break;
-	case EV_POWER_STRUGGLE:
-		DEBUGNAME("EV_POWER_STRUGGLE");
-		CG_AddEarthquake(cent->lerpOrigin, 10000, 1, 0, 1, 50);
+		CG_AddEarthquake(position, 20000, 1, 0, 1, 100);
+		if(es->dashDir[1] > 300){
+			size = 4;
+		}else if(es->dashDir[1] > 200){
+			size = 3;
+		}else if(es->dashDir[1] > 100){
+			size = 2;
+		}else if(es->dashDir[1] > 50){
+			size = 1;
+		}else{
+			size = 0;
+		}
+		CG_PowerStruggleEffect(position,size);
+		trap_S_StartSound(position,es->number,CHAN_BODY,cgs.media.airBrake1);
 		break;
 	default:
 		DEBUGNAME("UNKNOWN");

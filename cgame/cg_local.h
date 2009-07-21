@@ -920,6 +920,8 @@ typedef struct {
 	qhandle_t	teleportEffectShader;
 	qhandle_t	meleeSpeedEffectShader;
 	qhandle_t	meleePowerEffectShader;
+	qhandle_t	powerStruggleRaysEffectShader;
+	qhandle_t	powerStruggleShockwaveEffectShader;
 	qhandle_t	boltEffectShader;
 	qhandle_t	auraLightningSparks1;
 	qhandle_t	auraLightningSparks2;
@@ -1598,6 +1600,7 @@ void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier );
 void CG_BigLightningEffect( vec3_t org );
 void CG_SpeedMeleeEffect( vec3_t org );
 void CG_PowerMeleeEffect( vec3_t org );
+void CG_PowerStruggleEffect( vec3_t org, int size );
 #ifdef MISSIONPACK
 void CG_KamikazeEffect( vec3_t org );
 void CG_ObeliskExplode( vec3_t org, int entityNum );

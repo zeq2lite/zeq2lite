@@ -1633,6 +1633,8 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.boltEffectShader = trap_R_RegisterShader( "boltEffect" );
 	cgs.media.auraLightningSparks1 = trap_R_RegisterShader( "AuraLightningSparks1" );
 	cgs.media.auraLightningSparks2 = trap_R_RegisterShader( "AuraLightningSparks2" );
+	cgs.media.powerStruggleRaysEffectShader = trap_R_RegisterShader( "PowerStruggleRays" );
+	cgs.media.powerStruggleShockwaveEffectShader = trap_R_RegisterShader( "PowerStruggleShockwave" );
 #endif
 #ifdef MISSIONPACK
 	cgs.media.kamikazeEffectModel = trap_R_RegisterModel( "models/weaphits/kamboom2.md3" );

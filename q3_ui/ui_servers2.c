@@ -129,7 +129,7 @@ static char* netnames[] = {
 	NULL
 };
 
-static char quake3worldMessage[] = "Visit www.zeq2.com - News, Community, Events, Files";
+static char quake3worldMessage[] = "Visit www.zeq2.com/lite - News, Community, Events, Files";
 
 typedef struct {
 	char	adrstr[MAX_ADDRESSLENGTH];
@@ -1269,6 +1269,7 @@ static void ArenaServers_MenuInit( void ) {
 	int			i;
 	int			type;
 	int			y;
+	int			value;
 	static char	statusbuffer[MAX_STATUSLENGTH];
 //	static char leaguebuffer[MAX_LEAGUELENGTH]; // TTimo: unused
 
@@ -1286,7 +1287,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.banner.generic.flags = QMF_CENTER_JUSTIFY;
 	g_arenaservers.banner.generic.x	    = 320;
 	g_arenaservers.banner.generic.y	    = 16;
-	g_arenaservers.banner.string  		= "ZEQ2LITE SERVERS";
+	g_arenaservers.banner.string  		= "ZEQII LITE SERVERS";
 	g_arenaservers.banner.style  	    = UI_CENTER|UI_DROPSHADOW;
 	g_arenaservers.banner.color  	    = color_white;
 
@@ -1497,7 +1498,11 @@ static void ArenaServers_MenuInit( void ) {
 	ArenaServers_LoadFavorites();
 
 	g_servertype = Com_Clamp( 0, 3, ui_browserMaster.integer );
-	g_arenaservers.master.curvalue = g_servertype;
+	// hack to get rid of MPlayer stuff
+	value = g_servertype;
+	if (value >= 1)
+		value--;
+	g_arenaservers.master.curvalue = value;
 
 	g_gametype = Com_Clamp( 0, 4, ui_browserGameType.integer );
 	g_arenaservers.gametype.curvalue = g_gametype;

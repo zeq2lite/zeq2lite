@@ -636,7 +636,6 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		self->s.pos.trType = TR_LINEAR;
 		self->s.pos.trTime = level.time;
 		//G_Printf("Power: %i Speed: %i Power Difference: %i Speed Difference: %f Result: %i\n",self->powerLevelCurrent, self->speed, powerDifference, speedDifference, result);
-		G_AddEvent( self, EV_POWER_STRUGGLE, DirToByte( dir ) );
 	}
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -1077,6 +1076,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		VectorCopy( firingStart, bolt->r.currentOrigin );
 
 		VectorCopy( self->client->ps.viewangles, self->s.angles );
+		VectorCopy( self->client->ps.viewangles, bolt->s.angles2 );
 
 		VectorScale( firingDir, bolt->speed, bolt->s.pos.trDelta );
 		VectorCopy(firingDir,bolt->movedir);
@@ -1261,6 +1261,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		VectorCopy( firingDir, bolt->movedir );
 
 		VectorCopy( self->client->ps.viewangles, self->s.angles );
+		VectorCopy( self->client->ps.viewangles, bolt->s.angles2 );
 
 		// Set the correct think based on homing properties.
 		switch (weaponInfo->homing_type) {
