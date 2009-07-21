@@ -75,7 +75,6 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_TOURNEY		3
 #define GAMES_CTF			4
 #define GAMES_STRUGGLE		5
-#define GAMES_ZEQ2LITE		6
 
 static const char *master_items[] = {
 	"Local",
@@ -86,12 +85,12 @@ static const char *master_items[] = {
 };
 
 static const char *servertype_items[] = {
-//	"All",
-//	"Free For All",
-//	"Team Deathmatch",
-//	"Tournament",
-//	"Capture the Flag",
-	"ZEQ2Lite",
+	"All",
+	"Free For All",
+	"Team Deathmatch",
+	"Tournament",
+	"Capture the Flag",
+	"Struggle",
 	0
 };
 
@@ -110,6 +109,7 @@ static char* gamenames[] = {
 	"SP ",	// single player
 	"Team DM",	// team deathmatch
 	"CTF",	// capture the flag
+/*
 	"One Flag CTF",		// one flag ctf
 	"OverLoad",				// Overload
 	"Harvester",			// Harvester
@@ -118,6 +118,7 @@ static char* gamenames[] = {
 	"Urban Terror",		// Urban Terror
 	"OSP",						// Orange Smoothie Productions
 	"ZEQ2Lite",	// ZEQ2Lite
+*/
 	"???",			// unknown
 	0
 };
@@ -447,8 +448,11 @@ static void ArenaServers_UpdateMenu( void ) {
 			continue;
 		}
 
+		if( strcmp(servernodeptr->gamename,"zeq2") != 0 ) {
+			continue;
+		}
+
 		switch( g_gametype ) {
-/*
 		case GAMES_ALL:
 			break;
 
@@ -474,10 +478,9 @@ static void ArenaServers_UpdateMenu( void ) {
 				continue;
 			}
 			break;
-		}
-*/
-		case GAMES_ZEQ2LITE:
-			//if( strcmp(servernodeptr->gamename,"ZEQ2Contents") != 0 || strcmp(servernodeptr->gamename,"ZEQ2") != 0 ) {
+
+		case GAMES_STRUGGLE:
+			//if( strcmp(servernodeptr->gamename,"zeq2") != 0/* || strcmp(servernodeptr->gamename,"ZEQ2") != 0 */) {
 			if( servernodeptr->gametype != GT_STRUGGLE ) {
 				continue;
 			}
@@ -846,6 +849,11 @@ static void ArenaServers_DoRefresh( void )
 	maxPing = ArenaServers_MaxPing();
 	for (i=0; i<MAX_PINGREQUESTS; i++)
 	{
+/*
+		if( strcmp(g_arenaservers.serverlist->gamename,"zeq2") != 0 ) {
+			continue;
+		}
+*/
 		trap_LAN_GetPing( i, adrstr, MAX_ADDRESSLENGTH, &time );
 		if (!adrstr[0])
 		{
@@ -935,7 +943,11 @@ static void ArenaServers_DoRefresh( void )
 		g_arenaservers.pinglist[j].start = uis.realtime;
 
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "ping %s\n", adrstr )  );
-		
+/*
+		if( strcmp(g_arenaservers.serverlist->gamename,"zeq2") != 0 ) {
+			break;
+		}
+*/
 		// advance to next server
 		g_arenaservers.currentping++;
 	}
