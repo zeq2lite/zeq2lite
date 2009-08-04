@@ -43,27 +43,27 @@ static void UI_CreditMenu_Draw( void ) {
 	int		y;
 
 	y = 12;
-	UI_DrawProportionalString( 320, y, "ZEQ II is:", UI_CENTER|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, y, "ZEQ II Lite Team is:", UI_CENTER|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "Programming", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "RiO, Kaiopunk, Zeth, MDave", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, y, "RiO, Kaiopunk, Brad, MDave", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "Animations", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Wolf, Zeth, MDave, RiO", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, y, "MDave", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "Modellers", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "MDave, Blaize, Super Vegetto, RiO", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, y, "Blaize, MDave, Super Vegetto, RiO, DarkLink", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "Mappers", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Element X, Zeth, MDave, RiO", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, y, "Element X, Brad, MDave, RiO, Rammek, NJ", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "Skinners", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
@@ -73,22 +73,22 @@ static void UI_CreditMenu_Draw( void ) {
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "Sounds", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Wolf, Son Davie, Vysse", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, y, "Wolf, Son Davie, Circlerun", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "Music", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Vysse, Kaiopunk", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, y, "Circlerun", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "Retired Members", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Brax, Eclipse, IrishBlood", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( 320, y, "Eclipse, IrishBlood, Bruno", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 	UI_DrawProportionalString( 320, y, "An@kin, Mystic Mike, Tenken", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.35 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawString( 320, y, "DBZ Q3 Total Conversion     www.zeq2.com     www.idsoftware.com", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawString( 320, y, "DBZ Q3 Total Conversion     www.zeq2.com/lite     www.idsoftware.com", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	y += SMALLCHAR_HEIGHT;
 	UI_DrawString( 320, y, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 }
@@ -102,6 +102,7 @@ UI_CreditMenu
 void UI_CreditMenu( void ) {
 
 	trap_S_StartBackgroundTrack("music/yamamoto/credits02.ogg", "music/yamamoto/credits02.ogg");
+	trap_S_StartLocalSound( menu_exit_sound, CHAN_LOCAL_SOUND );
 
 	memset( &s_credits, 0 ,sizeof(s_credits) );
 

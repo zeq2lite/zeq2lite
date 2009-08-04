@@ -12,6 +12,7 @@ sfxHandle_t menu_move_sound;
 sfxHandle_t menu_out_sound;
 sfxHandle_t menu_buzz_sound;
 sfxHandle_t menu_null_sound;
+sfxHandle_t menu_exit_sound;
 
 static qhandle_t	sliderBar;
 static qhandle_t	sliderButton_0;
@@ -1711,6 +1712,7 @@ void Menu_Cache( void )
 	menu_move_sound	= trap_S_RegisterSound( "interface/menu/hover.ogg", qfalse );
 	menu_out_sound	= trap_S_RegisterSound( "interface/menu/back.ogg", qfalse );
 	menu_buzz_sound	= trap_S_RegisterSound( "interface/menu/cancel.ogg", qfalse );
+	menu_exit_sound = trap_S_RegisterSound( "interface/menu/exit.ogg", qfalse );
 
 	// need a nonzero sound, make an empty sound for this
 	menu_null_sound = -1;

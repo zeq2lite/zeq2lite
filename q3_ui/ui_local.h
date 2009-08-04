@@ -262,6 +262,7 @@ extern sfxHandle_t	menu_move_sound;
 extern sfxHandle_t	menu_out_sound;
 extern sfxHandle_t	menu_buzz_sound;
 extern sfxHandle_t	menu_null_sound;
+extern sfxHandle_t	menu_exit_sound;
 extern vec4_t		menu_text_color;
 extern vec4_t		menu_grayed_color;
 extern vec4_t		menu_dark_color;
