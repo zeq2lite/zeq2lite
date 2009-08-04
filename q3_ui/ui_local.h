@@ -547,6 +547,9 @@ typedef struct {
 	qboolean			debug;
 	qhandle_t			whiteShader;
 	qhandle_t			menuBackShader;
+	qhandle_t			logoShader;
+	qhandle_t			sceneModel;
+	qhandle_t			logoModel;
 	qhandle_t			charset;
 	qhandle_t			charsetProp;
 	qhandle_t			charsetPropGlow;
@@ -597,6 +600,8 @@ extern void			UI_PopMenu (void);
 extern void			UI_ForceMenuOff (void);
 extern char			*UI_Argv( int arg );
 extern char			*UI_Cvar_VariableString( const char *var_name );
+extern void			UI_MenuScene( void );
+extern void			UI_MenuLogo( void );
 extern void			UI_DrawBackPic(qboolean drawPic);	// JUHOX
 extern void			UI_Refresh( int time );
 extern void			UI_StartDemoLoop( void );

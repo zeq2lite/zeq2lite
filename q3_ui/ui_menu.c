@@ -24,7 +24,6 @@ MAIN MENU
 #define	ID_MODEL				18
 #define MAX_NAMELENGTH			20
 
-//#define MAIN_BANNER_MODEL				"models/mapobjects/banner/banner5.md3"
 #define MAIN_MENU_VERTICAL_SPACING		34
 
 typedef struct {
@@ -38,7 +37,6 @@ typedef struct {
 	menutext_s		teamArena;
 	menutext_s		mods;
 	menutext_s		exit;
-	qhandle_t		bannerModel;
 
 	menubitmap_s	player1;
 	playerInfo_t	playerinfo1;
@@ -167,7 +165,7 @@ MainMenu_Cache
 ===============
 */
 void MainMenu_Cache( void ) {
-//	s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
+
 }
 
 
@@ -177,69 +175,18 @@ Main_MenuDraw
 ===============
 */
 static void Main_MenuDraw( void ) {
-	refdef_t		refdef;
-	refEntity_t		ent;
-	vec3_t			origin;
-	vec3_t			angles;
-	float			adjust;
-	float			x, y, w, h;
-//	vec4_t			color = {0.5, 0, 0, 1};
-
-	// setup the refdef
-
-	memset( &refdef, 0, sizeof( refdef ) );
-
-	refdef.rdflags = RDF_NOWORLDMODEL;
-
-	AxisClear( refdef.viewaxis );
-
-	x = 0;
-	y = 0;
-	w = 640;
-	h = 480;
-	UI_AdjustFrom640( &x, &y, &w, &h );
-	refdef.x = x;
-	refdef.y = y;
-	refdef.width = w;
-	refdef.height = h;
-
-	adjust = 0; // JDC: Kenneth asked me to stop this 1.0 * sin( (float)uis.realtime / 1000 );
-	refdef.fov_x = 20 + adjust;
-	refdef.fov_y = 15 + adjust;
-
-	refdef.time = uis.realtime;
-
-	origin[0] = 640; //z depth
-	origin[1] = 0; //x depth
-	origin[2] = 0; //y depth
-
-	trap_R_ClearScene();
-
-	// add the model
-/*
-	memset( &ent, 0, sizeof(ent) );
-
-	adjust = 0.0 * sin( (float)uis.realtime / 5000 );
-	VectorSet( angles, 0, 180 + adjust, 0 );
-	AnglesToAxis( angles, ent.axis );
-	ent.hModel = s_main.bannerModel;
-	VectorCopy( origin, ent.origin );
-	VectorCopy( origin, ent.lightingOrigin );
-	ent.renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
-	VectorCopy( ent.origin, ent.oldorigin );
-
-	trap_R_AddRefEntityToScene( &ent );
-
-	trap_R_RenderScene( &refdef );
-
 	// standard menu drawing
-*/
 	Menu_Draw( &s_main.menu );
 
+	// draw logo
+//	UI_SetColor( NULL );
+//	UI_DrawHandlePic( 0, 0, 640, 480, uis.logoShader);
+	UI_MenuLogo();
+
 	if (uis.demoversion) {
-		UI_DrawString( 320, 400, "ZEQ II (C) 2002-2009, www.zeq2.com  All Rights Reserved. Teaser Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+		UI_DrawString( 320, 400, "ZEQ2Lite (C) 2002-2009, www.zeq2.com/lite  All Rights Reserved. Teaser Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	} else {
-		UI_DrawString( 320, 450, "ZEQ II (C) 2002-2009, www.zeq2.com  All Rights Reserved. Alpha Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+		UI_DrawString( 320, 450, "ZEQ2Lite (C) 2002-2009, www.zeq2.com/lite  All Rights Reserved. Alpha Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	}
 }
 
@@ -373,7 +320,7 @@ void UI_MainMenu( void ) {
 	s_main.exit.string						= "EXIT";
 	s_main.exit.color						= color_white;
 	s_main.exit.style						= style;
-
+/*
 	s_main.player1.generic.type				= MTYPE_BITMAP;
 	s_main.player1.generic.flags			= QMF_INACTIVE;
 	s_main.player1.generic.ownerdraw		= MainMenu_DrawPlayer1;
@@ -389,7 +336,7 @@ void UI_MainMenu( void ) {
 	s_main.player2.generic.y				= 0;
 	s_main.player2.width					= 32*10;
 	s_main.player2.height					= 56*10;
-
+*/
 	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
@@ -399,8 +346,8 @@ void UI_MainMenu( void ) {
 	Menu_AddItem( &s_main.menu,	&s_main.mods );
 	Menu_AddItem( &s_main.menu,	&s_main.exit );
 
-	Menu_AddItem( &s_main.menu, &s_main.player1 );
-	Menu_AddItem( &s_main.menu, &s_main.player2 );
+//	Menu_AddItem( &s_main.menu, &s_main.player1 );
+//	Menu_AddItem( &s_main.menu, &s_main.player2 );
 
 	trap_Key_SetCatcher( KEYCATCH_UI );
 	uis.menusp = 0;

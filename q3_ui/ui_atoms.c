@@ -1238,6 +1238,160 @@ void UI_UpdateScreen( void ) {
 }
 
 /*
+===============
+UI_MenuScene
+===============
+*/
+void UI_MenuScene( void ) {
+	refdef_t		refdef;
+	refEntity_t		ent;
+	vec3_t			origin;
+	vec3_t			angles;
+	float			adjust;
+	float			x, y, w, h;
+	float			xx;
+	vec3_t			mins = {-128, -128, -128};
+	vec3_t			maxs = {128, 128, 128};
+	float			len;
+
+	// setup the refdef
+
+	memset( &refdef, 0, sizeof( refdef ) );
+
+	refdef.rdflags = RDF_NOWORLDMODEL;
+
+	AxisClear( refdef.viewaxis );
+
+	x = 0;
+	y = 0;
+	w = 640;
+	h = 480;
+	UI_AdjustFrom640( &x, &y, &w, &h );
+	refdef.x = x;
+	refdef.y = y;
+	refdef.width = w;
+	refdef.height = h;
+
+	//adjust = 1.0f * sin( (float)uis.realtime / 5000 );
+
+	refdef.fov_x = (int)((float)refdef.width / 640.0f * 35.0f);
+	xx = refdef.width / tan( refdef.fov_x / 360 * M_PI );
+	refdef.fov_y = atan2( refdef.height, xx );
+	refdef.fov_y *= ( 360 / M_PI );
+
+	/*
+	refdef.fov_x = 20 + adjust;
+	refdef.fov_y = 15 + adjust;
+	*/
+	refdef.time = uis.realtime;
+
+	// calculate distance so the scene fills the box
+	len = 0.5 * ( maxs[2] - mins[2] );		
+	origin[0] = len / tan( DEG2RAD(refdef.fov_x) * 0.5 );
+	origin[1] = 0.5 * ( mins[1] + maxs[1] );
+	origin[2] = -0.5 * ( mins[2] + maxs[2] );
+/*
+	origin[0] = 640; //z depth
+	origin[1] = 0; //x depth
+	origin[2] = 0; //y depth
+*/
+	trap_R_ClearScene();
+
+	// add the model
+
+	memset( &ent, 0, sizeof(ent) );
+
+	adjust = 2.5f * sin( (float)uis.realtime / 5000 );
+	VectorSet( angles, 0, 180 + adjust, 0 );
+	AnglesToAxis( angles, ent.axis );
+	ent.hModel = uis.sceneModel;
+	VectorCopy( origin, ent.origin );
+	VectorCopy( origin, ent.lightingOrigin );
+	ent.renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
+	VectorCopy( ent.origin, ent.oldorigin );
+
+	trap_R_AddRefEntityToScene( &ent );
+	trap_R_RenderScene( &refdef );
+}
+
+/*
+===============
+UI_MenuLogo
+===============
+*/
+void UI_MenuLogo( void ) {
+	refdef_t		refdef;
+	refEntity_t		ent;
+	vec3_t			origin;
+	vec3_t			angles;
+	float			adjust;
+	float			x, y, w, h;
+	float			xx;
+	vec3_t			mins = {-128, -128, -128};
+	vec3_t			maxs = {128, 128, 128};
+	float			len;
+
+	// setup the refdef
+
+	memset( &refdef, 0, sizeof( refdef ) );
+
+	refdef.rdflags = RDF_NOWORLDMODEL;
+
+	AxisClear( refdef.viewaxis );
+
+	x = 0;
+	y = 0;
+	w = 640;
+	h = 480;
+	UI_AdjustFrom640( &x, &y, &w, &h );
+	refdef.x = x;
+	refdef.y = y;
+	refdef.width = w;
+	refdef.height = h;
+
+	//adjust = 1.0f * sin( (float)uis.realtime / 5000 );
+
+	refdef.fov_x = (int)((float)refdef.width / 640.0f * 35.0f);
+	xx = refdef.width / tan( refdef.fov_x / 360 * M_PI );
+	refdef.fov_y = atan2( refdef.height, xx );
+	refdef.fov_y *= ( 360 / M_PI );
+
+	/*
+	refdef.fov_x = 20 + adjust;
+	refdef.fov_y = 15 + adjust;
+	*/
+	refdef.time = uis.realtime;
+
+	// calculate distance so the scene fills the box
+	len = 0.5 * ( maxs[2] - mins[2] );		
+	origin[0] = len / tan( DEG2RAD(refdef.fov_x) * 0.5 );
+	origin[1] = 0.5 * ( mins[1] + maxs[1] );
+	origin[2] = -0.5 * ( mins[2] + maxs[2] );
+/*
+	origin[0] = 640; //z depth
+	origin[1] = 0; //x depth
+	origin[2] = 0; //y depth
+*/
+	trap_R_ClearScene();
+
+	// add the model
+
+	memset( &ent, 0, sizeof(ent) );
+
+	adjust = 2.5f * sin( (float)uis.realtime / 5000 );
+	VectorSet( angles, 0, 180 + adjust, 0 );
+	AnglesToAxis( angles, ent.axis );
+	ent.hModel = uis.logoModel;
+	VectorCopy( origin, ent.origin );
+	VectorCopy( origin, ent.lightingOrigin );
+	ent.renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
+	VectorCopy( ent.origin, ent.oldorigin );
+
+	trap_R_AddRefEntityToScene( &ent );
+	trap_R_RenderScene( &refdef );
+}
+
+/*
 =================
 JUHOX: UI_DrawBackPic
 =================
@@ -1280,6 +1434,7 @@ void UI_Refresh( int realtime )
 		{
 			// draw the background
 			UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+			UI_MenuScene();
 		}
 
 		if (uis.activemenu->draw)

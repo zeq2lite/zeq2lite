@@ -169,6 +169,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
 #else
 		UI_DrawBackPic(qtrue);
+		UI_MenuScene();
 //		UI_DrawHandlePic(30, 35, 580, 36, uis.menuBackTitleShader);	// "H U N T"
 #endif
 	}

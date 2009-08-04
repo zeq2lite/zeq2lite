@@ -1703,6 +1703,9 @@ void Menu_Cache( void )
 
 	uis.whiteShader = trap_R_RegisterShaderNoMip("white");
 	uis.menuBackShader	= trap_R_RegisterShaderNoMip("menuback");
+	uis.logoShader	= trap_R_RegisterShaderNoMip("zeq2litelogo");
+	uis.sceneModel = trap_R_RegisterModel("interface/menu/earthBattle.md3");
+	uis.logoModel = trap_R_RegisterModel("interface/menu/logo.md3");
 
 	menu_in_sound	= trap_S_RegisterSound( "interface/menu/click.ogg", qfalse );
 	menu_move_sound	= trap_S_RegisterSound( "interface/menu/hover.ogg", qfalse );
