@@ -127,11 +127,11 @@ void Main_MenuEvent (void* ptr, int event) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-/*
+
 	case ID_SINGLEPLAYER:
 		UI_SPLevelMenu();
 		break;
-*/
+
 	case ID_MULTIPLAYER:
 		UI_ArenaServersMenu();
 		break;
@@ -175,18 +175,29 @@ Main_MenuDraw
 ===============
 */
 static void Main_MenuDraw( void ) {
+	int dragonBallSize = 32;
+	// draw logo
+	//UI_SetColor( NULL );
+	//UI_DrawHandlePic( 0, 0, 640, 480, uis.logoShader);
+	UI_MenuLogo();
+
+	// draw dragonballs
+	//UI_DrawHandlePic( 24, 24, 32, 32, uis.DragonBall1Star);
+	UI_DrawHandlePic( 64 - dragonBallSize - 4, 24 - 3, dragonBallSize, dragonBallSize, uis.DragonBall1Star);
+	UI_DrawHandlePic( 230 - dragonBallSize - 4, 24 - 3, dragonBallSize, dragonBallSize, uis.DragonBall2Star);
+	UI_DrawHandlePic( 390 - dragonBallSize - 4, 24 - 3, dragonBallSize, dragonBallSize, uis.DragonBall3Star);
+	UI_DrawHandlePic( 550 - dragonBallSize - 4, 24 - 3, dragonBallSize, dragonBallSize, uis.DragonBall4Star);
+	//UI_DrawHandlePic( 0, 0, 32, 32, uis.DragonBall6Star);
+	//UI_DrawHandlePic( 0, 0, 64, 64, uis.DragonBall7Star);
+	//UI_DrawHandlePic( 0, 0, 64, 64, uis.DragonBall7Star);
+
 	// standard menu drawing
 	Menu_Draw( &s_main.menu );
-
-	// draw logo
-//	UI_SetColor( NULL );
-//	UI_DrawHandlePic( 0, 0, 640, 480, uis.logoShader);
-	UI_MenuLogo();
 
 	if (uis.demoversion) {
 		UI_DrawString( 320, 400, "ZEQ2Lite (C) 2002-2009, www.zeq2.com/lite  All Rights Reserved. Teaser Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	} else {
-		UI_DrawString( 320, 450, "ZEQ2Lite (C) 2002-2009, www.zeq2.com/lite  All Rights Reserved. Alpha Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+		UI_DrawString( 320, 450, "ZEQ2Lite (C) 2002-2009,  www.zeq2.com/lite  All Rights Reserved.  Beta Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 	}
 }
 
@@ -251,6 +262,7 @@ void UI_MainMenu( void ) {
 	s_main.menu.showlogo = qtrue;
 
 	y = 24;
+
 	s_main.singleplayer.generic.type		= MTYPE_PTEXT;
 	s_main.singleplayer.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_main.singleplayer.generic.x			= 24;
@@ -263,17 +275,17 @@ void UI_MainMenu( void ) {
 
 	s_main.multiplayer.generic.type			= MTYPE_PTEXT;
 	s_main.multiplayer.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.multiplayer.generic.x			= 120;
+	s_main.multiplayer.generic.x			= 64;
 	s_main.multiplayer.generic.y			= y;
 	s_main.multiplayer.generic.id			= ID_MULTIPLAYER;
 	s_main.multiplayer.generic.callback		= Main_MenuEvent; 
-	s_main.multiplayer.string				= "MULTIPLAYER";
+	s_main.multiplayer.string				= "PLAY";
 	s_main.multiplayer.color				= color_white;
 	s_main.multiplayer.style				= style;
 
 	s_main.setup.generic.type				= MTYPE_PTEXT;
 	s_main.setup.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.setup.generic.x					= 292;
+	s_main.setup.generic.x					= 230;
 	s_main.setup.generic.y					= y;
 	s_main.setup.generic.id					= ID_SETUP;
 	s_main.setup.generic.callback			= Main_MenuEvent; 
@@ -283,7 +295,7 @@ void UI_MainMenu( void ) {
 
 	s_main.demos.generic.type				= MTYPE_PTEXT;
 	s_main.demos.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.demos.generic.x					= 375;
+	s_main.demos.generic.x					= 350;
 	s_main.demos.generic.y					= y;
 	s_main.demos.generic.id					= ID_DEMOS;
 	s_main.demos.generic.callback			= Main_MenuEvent; 
@@ -303,8 +315,12 @@ void UI_MainMenu( void ) {
 
 	s_main.mods.generic.type			= MTYPE_PTEXT;
 	s_main.mods.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+/*
 	s_main.mods.generic.x				= 24;
 	s_main.mods.generic.y				= 420;
+*/
+	s_main.mods.generic.x				= 390;
+	s_main.mods.generic.y				= y;
 	s_main.mods.generic.id				= ID_MODS;
 	s_main.mods.generic.callback		= Main_MenuEvent; 
 	s_main.mods.string					= "MODS";
@@ -313,8 +329,12 @@ void UI_MainMenu( void ) {
 
 	s_main.exit.generic.type				= MTYPE_PTEXT;
 	s_main.exit.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+/*
 	s_main.exit.generic.x					= 560;
 	s_main.exit.generic.y					= 420;
+*/
+	s_main.exit.generic.x					= 550;
+	s_main.exit.generic.y					= y;
 	s_main.exit.generic.id					= ID_EXIT;
 	s_main.exit.generic.callback			= Main_MenuEvent; 
 	s_main.exit.string						= "EXIT";
@@ -337,11 +357,12 @@ void UI_MainMenu( void ) {
 	s_main.player2.width					= 32*10;
 	s_main.player2.height					= 56*10;
 */
-	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
+//	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
-	Menu_AddItem( &s_main.menu,	&s_main.demos );
-	Menu_AddItem( &s_main.menu,	&s_main.cinematics );
+
+//	Menu_AddItem( &s_main.menu,	&s_main.demos );
+//	Menu_AddItem( &s_main.menu,	&s_main.cinematics );
 
 	Menu_AddItem( &s_main.menu,	&s_main.mods );
 	Menu_AddItem( &s_main.menu,	&s_main.exit );

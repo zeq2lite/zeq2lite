@@ -1708,6 +1708,14 @@ void Menu_Cache( void )
 	uis.sceneModel = trap_R_RegisterModel("interface/menu/earthBattle.md3");
 	uis.logoModel = trap_R_RegisterModel("interface/menu/logo.md3");
 
+	uis.DragonBall1Star	= trap_R_RegisterShaderNoMip("1StarDragonBall");
+	uis.DragonBall2Star	= trap_R_RegisterShaderNoMip("2StarDragonBall");
+	uis.DragonBall3Star	= trap_R_RegisterShaderNoMip("3StarDragonBall");
+	uis.DragonBall4Star	= trap_R_RegisterShaderNoMip("4StarDragonBall");
+	uis.DragonBall5Star	= trap_R_RegisterShaderNoMip("5StarDragonBall");
+	uis.DragonBall6Star	= trap_R_RegisterShaderNoMip("6StarDragonBall");
+	uis.DragonBall7Star	= trap_R_RegisterShaderNoMip("7StarDragonBall");
+
 	menu_in_sound	= trap_S_RegisterSound( "interface/menu/click.ogg", qfalse );
 	menu_move_sound	= trap_S_RegisterSound( "interface/menu/hover.ogg", qfalse );
 	menu_out_sound	= trap_S_RegisterSound( "interface/menu/back.ogg", qfalse );

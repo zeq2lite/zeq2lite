@@ -549,6 +549,13 @@ typedef struct {
 	qhandle_t			whiteShader;
 	qhandle_t			menuBackShader;
 	qhandle_t			logoShader;
+	qhandle_t			DragonBall1Star;
+	qhandle_t			DragonBall2Star;
+	qhandle_t			DragonBall3Star;
+	qhandle_t			DragonBall4Star;
+	qhandle_t			DragonBall5Star;
+	qhandle_t			DragonBall6Star;
+	qhandle_t			DragonBall7Star;
 	qhandle_t			sceneModel;
 	qhandle_t			logoModel;
 	qhandle_t			charset;
