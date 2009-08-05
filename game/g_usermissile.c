@@ -1663,9 +1663,9 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	self->bounceFrac = 0.0f;
 	G_HoldUserMissile(self,self->enemy);
 	if(self->enemy->client->ps.bitFlags & usingBoost){
-		self->powerLevelCurrent -= 2 * self->enemy->client->tiers->energyDefense;
+		self->powerLevelCurrent -= 4 * self->enemy->client->tiers->energyDefense;
 	}else{
-		self->powerLevelCurrent -= 1 * self->enemy->client->tiers->energyDefense;
+		self->powerLevelCurrent -= 2 * self->enemy->client->tiers->energyDefense;
 	}
 	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD){
 		self->powerLevelCurrent += 1 + ((float)self->powerLevelTotal * 0.005f);
