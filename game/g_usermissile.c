@@ -1755,13 +1755,16 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	vec3_t	velocity;
 	other = &g_entities[trace->entityNum];
 	G_LocationImpact(trace->endpos,other,GetMissileOwnerEntity(self));
+	// If the attack is already in a struggle with a player,
+	// or the attack is helping an allies attack and the ally is struggling, ignore interation with anything.
 	if(self->strugglingPlayer || (self->strugglingAllyAttack && self->ally->strugglingAttack)){return;}
 	// Initiate Power Struggle
 	if((other->s.eType == ET_MISSILE || other->s.eType == ET_BEAMHEAD)	// If it's a beam or ball attack
 		&& !other->client												// And it's not a player
 		&& !self->strugglingAttack										// And we are not struggling an attack
 		&& !self->strugglingAllyAttack									// And we are not helping an ally
-		&& !other->strugglingAttack){									// And the other attack isn't struggling with some other attack
+		&& !other->strugglingAttack										// And the other attack isn't struggling with some other attack
+		&& !other->strugglingPlayer){									// And the other attack isn't struggling with a player
 		self->enemy = other;
 		other->enemy = self;
 		self->strugglingAttack = qtrue;
