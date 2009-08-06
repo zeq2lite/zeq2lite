@@ -145,7 +145,7 @@ typedef struct servernode_s {
 	int		maxclients;
 	int		pingtime;
 	int		gametype;
-	char	gamename[12];
+	char	gamename[16];
 	int		nettype;
 	int		minPing;
 	int		maxPing;
@@ -447,11 +447,9 @@ static void ArenaServers_UpdateMenu( void ) {
 		if( !g_fullservers && ( servernodeptr->numclients == servernodeptr->maxclients ) ) {
 			continue;
 		}
-
-		if( strcmp(servernodeptr->gamename,"zeq2") != 0 ) {
+		if( Q_strncmp( "ZEQ2", servernodeptr->gamename, 4) ) {
 			continue;
 		}
-
 		switch( g_gametype ) {
 		case GAMES_ALL:
 			break;
@@ -849,11 +847,6 @@ static void ArenaServers_DoRefresh( void )
 	maxPing = ArenaServers_MaxPing();
 	for (i=0; i<MAX_PINGREQUESTS; i++)
 	{
-/*
-		if( strcmp(g_arenaservers.serverlist->gamename,"zeq2") != 0 ) {
-			continue;
-		}
-*/
 		trap_LAN_GetPing( i, adrstr, MAX_ADDRESSLENGTH, &time );
 		if (!adrstr[0])
 		{
@@ -943,11 +936,11 @@ static void ArenaServers_DoRefresh( void )
 		g_arenaservers.pinglist[j].start = uis.realtime;
 
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "ping %s\n", adrstr )  );
-/*
-		if( strcmp(g_arenaservers.serverlist->gamename,"zeq2") != 0 ) {
+
+		if( Q_strncmp( "ZEQ2", g_arenaservers.serverlist->gamename, 4) ) {
 			break;
 		}
-*/
+
 		// advance to next server
 		g_arenaservers.currentping++;
 	}
