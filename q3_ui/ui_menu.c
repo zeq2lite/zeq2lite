@@ -26,6 +26,27 @@ MAIN MENU
 
 #define MAIN_MENU_VERTICAL_SPACING		34
 
+int	singleXpos = 0;
+int singleYpos = 0;
+
+int	multiXpos = 64;
+int multiYpos = 24;
+
+int setupXpos = 230;
+int setupYpos = 24;
+
+int demosXpos = 0;
+int demosYpos = 0;
+
+int cinXpos = 0;
+int cinYpos = 0;
+
+int modsXpos = 390;
+int modsYpos = 24;
+
+int exitXpos = 550;
+int exitYpos = 24;
+
 typedef struct {
 	menuframework_s	menu;
 
@@ -38,6 +59,10 @@ typedef struct {
 	menutext_s		mods;
 	menutext_s		exit;
 
+	menubitmap_s	player;
+	playerInfo_t	playerinfo;
+	char			playerModel[MAX_QPATH];
+
 	menubitmap_s	player1;
 	playerInfo_t	playerinfo1;
 	char			playerModel1[MAX_QPATH];
@@ -48,6 +73,31 @@ typedef struct {
 } mainmenu_t;
 
 static mainmenu_t s_main;
+
+/*
+=================
+MainMenu_DrawPlayer
+=================
+*/
+static void MainMenu_DrawPlayer( void *self ) {
+	menubitmap_s	*b;
+	vec3_t			viewangles;
+	char			buf[MAX_QPATH];
+
+	trap_Cvar_VariableStringBuffer( "model", buf, sizeof( buf ) );
+	if ( strcmp( buf, s_main.playerModel ) != 0 ) {
+		UI_PlayerInfo_SetModel( &s_main.playerinfo, buf );
+		strcpy( s_main.playerModel, buf );
+
+		viewangles[YAW]   = 180 - 30;
+		viewangles[PITCH] = 0;
+		viewangles[ROLL]  = 0;
+		UI_PlayerInfo_SetInfo( &s_main.playerinfo, LEGS_FLY_IDLE, TORSO_FLY_IDLE, viewangles, vec3_origin, WP_NONE, qfalse );
+	}
+
+	b = (menubitmap_s*) self;
+	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo, uis.realtime / PLAYER_MODEL_SPEED );
+}
 
 /*
 =================
@@ -155,6 +205,10 @@ void Main_MenuEvent (void* ptr, int event) {
 	case ID_EXIT:
 		UI_ConfirmMenu( "Quit ZEQ2Lite?", 0, MainMenu_ExitAction );
 		break;
+
+	case ID_MODEL:
+		UI_PlayerModelMenu();
+		break;
 	}
 }
 
@@ -168,28 +222,26 @@ void MainMenu_Cache( void ) {
 
 }
 
-
 /*
 ===============
 Main_MenuDraw
 ===============
 */
 static void Main_MenuDraw( void ) {
-	int dragonBallSize = 32;
+	int DBSize = 32;
+	int DBXOffset = DBSize + 4;
+	int DBYOffset = 3;
+
 	// draw logo
 	//UI_SetColor( NULL );
 	//UI_DrawHandlePic( 0, 0, 640, 480, uis.logoShader);
 	UI_MenuLogo();
 
 	// draw dragonballs
-	//UI_DrawHandlePic( 24, 24, 32, 32, uis.DragonBall1Star);
-	UI_DrawHandlePic( 64 - dragonBallSize - 4, 24 - 3, dragonBallSize, dragonBallSize, uis.DragonBall1Star);
-	UI_DrawHandlePic( 230 - dragonBallSize - 4, 24 - 3, dragonBallSize, dragonBallSize, uis.DragonBall2Star);
-	UI_DrawHandlePic( 390 - dragonBallSize - 4, 24 - 3, dragonBallSize, dragonBallSize, uis.DragonBall3Star);
-	UI_DrawHandlePic( 550 - dragonBallSize - 4, 24 - 3, dragonBallSize, dragonBallSize, uis.DragonBall4Star);
-	//UI_DrawHandlePic( 0, 0, 32, 32, uis.DragonBall6Star);
-	//UI_DrawHandlePic( 0, 0, 64, 64, uis.DragonBall7Star);
-	//UI_DrawHandlePic( 0, 0, 64, 64, uis.DragonBall7Star);
+	UI_DrawHandlePic( multiXpos - DBXOffset, multiYpos - DBYOffset, DBSize, DBSize, uis.DragonBall1Star);
+	UI_DrawHandlePic( setupXpos - DBXOffset, setupYpos - DBYOffset, DBSize, DBSize, uis.DragonBall2Star);
+	UI_DrawHandlePic( modsXpos - DBXOffset, modsYpos - DBYOffset, DBSize, DBSize, uis.DragonBall3Star);
+	UI_DrawHandlePic( exitXpos - DBXOffset, exitYpos - DBYOffset, DBSize, DBSize, uis.DragonBall4Star);
 
 	// standard menu drawing
 	Menu_Draw( &s_main.menu );
@@ -203,32 +255,6 @@ static void Main_MenuDraw( void ) {
 
 /*
 ===============
-UI_TeamArenaExists
-===============
-*/
-static qboolean UI_TeamArenaExists( void ) {
-	int		numdirs;
-	char	dirlist[2048];
-	char	*dirptr;
-  char  *descptr;
-	int		i;
-	int		dirlen;
-
-	numdirs = trap_FS_GetFileList( "$modlist", "", dirlist, sizeof(dirlist) );
-	dirptr  = dirlist;
-	for( i = 0; i < numdirs; i++ ) {
-		dirlen = strlen( dirptr ) + 1;
-    descptr = dirptr + dirlen;
-		if (Q_stricmp(dirptr, "missionpack") == 0) {
-			return qtrue;
-		}
-    dirptr += dirlen + strlen(descptr) + 1;
-	}
-	return qfalse;
-}
-
-/*
-===============
 UI_MainMenu
 
 The main menu only comes up when not in a game,
@@ -237,10 +263,10 @@ and that local cinematics are killed
 ===============
 */
 void UI_MainMenu( void ) {
-	int		y;
 	qboolean teamArena = qfalse;
 	int		style = UI_LEFT | UI_DROPSHADOW | UI_SMALLFONT;
 
+	trap_S_StopBackgroundTrack();
 	trap_S_StartBackgroundTrack("music/yamamoto/menu01.ogg", "music/yamamoto/menu01.ogg");
 	trap_Cvar_Set( "sv_killserver", "1" );
 
@@ -261,12 +287,10 @@ void UI_MainMenu( void ) {
 	s_main.menu.wrapAround = qtrue;
 	s_main.menu.showlogo = qtrue;
 
-	y = 24;
-
 	s_main.singleplayer.generic.type		= MTYPE_PTEXT;
 	s_main.singleplayer.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.singleplayer.generic.x			= 24;
-	s_main.singleplayer.generic.y			= y;
+	s_main.singleplayer.generic.x			= singleXpos;
+	s_main.singleplayer.generic.y			= singleYpos;
 	s_main.singleplayer.generic.id			= ID_SINGLEPLAYER;
 	s_main.singleplayer.generic.callback	= Main_MenuEvent; 
 	s_main.singleplayer.string				= "Story";
@@ -275,8 +299,8 @@ void UI_MainMenu( void ) {
 
 	s_main.multiplayer.generic.type			= MTYPE_PTEXT;
 	s_main.multiplayer.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.multiplayer.generic.x			= 64;
-	s_main.multiplayer.generic.y			= y;
+	s_main.multiplayer.generic.x			= multiXpos;
+	s_main.multiplayer.generic.y			= multiYpos;
 	s_main.multiplayer.generic.id			= ID_MULTIPLAYER;
 	s_main.multiplayer.generic.callback		= Main_MenuEvent; 
 	s_main.multiplayer.string				= "PLAY";
@@ -285,8 +309,8 @@ void UI_MainMenu( void ) {
 
 	s_main.setup.generic.type				= MTYPE_PTEXT;
 	s_main.setup.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.setup.generic.x					= 230;
-	s_main.setup.generic.y					= y;
+	s_main.setup.generic.x					= setupXpos;
+	s_main.setup.generic.y					= setupYpos;
 	s_main.setup.generic.id					= ID_SETUP;
 	s_main.setup.generic.callback			= Main_MenuEvent; 
 	s_main.setup.string						= "SETUP";
@@ -295,8 +319,8 @@ void UI_MainMenu( void ) {
 
 	s_main.demos.generic.type				= MTYPE_PTEXT;
 	s_main.demos.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.demos.generic.x					= 350;
-	s_main.demos.generic.y					= y;
+	s_main.demos.generic.x					= demosXpos;
+	s_main.demos.generic.y					= demosYpos;
 	s_main.demos.generic.id					= ID_DEMOS;
 	s_main.demos.generic.callback			= Main_MenuEvent; 
 	s_main.demos.string						= "DEMOS";
@@ -305,8 +329,8 @@ void UI_MainMenu( void ) {
 
 	s_main.cinematics.generic.type			= MTYPE_PTEXT;
 	s_main.cinematics.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.cinematics.generic.x				= 470;
-	s_main.cinematics.generic.y				= y;
+	s_main.cinematics.generic.x				= cinXpos;
+	s_main.cinematics.generic.y				= cinYpos;
 	s_main.cinematics.generic.id			= ID_CINEMATICS;
 	s_main.cinematics.generic.callback		= Main_MenuEvent; 
 	s_main.cinematics.string				= "CINEMATICS";
@@ -315,12 +339,8 @@ void UI_MainMenu( void ) {
 
 	s_main.mods.generic.type			= MTYPE_PTEXT;
 	s_main.mods.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-/*
-	s_main.mods.generic.x				= 24;
-	s_main.mods.generic.y				= 420;
-*/
-	s_main.mods.generic.x				= 390;
-	s_main.mods.generic.y				= y;
+	s_main.mods.generic.x				= modsXpos;
+	s_main.mods.generic.y				= modsYpos;
 	s_main.mods.generic.id				= ID_MODS;
 	s_main.mods.generic.callback		= Main_MenuEvent; 
 	s_main.mods.string					= "MODS";
@@ -329,18 +349,24 @@ void UI_MainMenu( void ) {
 
 	s_main.exit.generic.type				= MTYPE_PTEXT;
 	s_main.exit.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-/*
-	s_main.exit.generic.x					= 560;
-	s_main.exit.generic.y					= 420;
-*/
-	s_main.exit.generic.x					= 550;
-	s_main.exit.generic.y					= y;
+	s_main.exit.generic.x					= exitXpos;
+	s_main.exit.generic.y					= exitYpos;
 	s_main.exit.generic.id					= ID_EXIT;
 	s_main.exit.generic.callback			= Main_MenuEvent; 
 	s_main.exit.string						= "EXIT";
 	s_main.exit.color						= color_white;
 	s_main.exit.style						= style;
-/*
+
+	s_main.player.generic.type				= MTYPE_BITMAP;
+	s_main.player.generic.flags				= QMF_SILENT;
+	s_main.player.generic.ownerdraw			= MainMenu_DrawPlayer;
+	s_main.player.generic.id				= ID_MODEL;
+	s_main.player.generic.callback			= Main_MenuEvent;
+	s_main.player.generic.x					= 400;
+	s_main.player.generic.y					= 0;
+	s_main.player.width						= 32*10;
+	s_main.player.height					= 56*10;
+
 	s_main.player1.generic.type				= MTYPE_BITMAP;
 	s_main.player1.generic.flags			= QMF_INACTIVE;
 	s_main.player1.generic.ownerdraw		= MainMenu_DrawPlayer1;
@@ -356,7 +382,7 @@ void UI_MainMenu( void ) {
 	s_main.player2.generic.y				= 0;
 	s_main.player2.width					= 32*10;
 	s_main.player2.height					= 56*10;
-*/
+
 //	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
@@ -367,6 +393,7 @@ void UI_MainMenu( void ) {
 	Menu_AddItem( &s_main.menu,	&s_main.mods );
 	Menu_AddItem( &s_main.menu,	&s_main.exit );
 
+//	Menu_AddItem( &s_main.menu, &s_main.player );
 //	Menu_AddItem( &s_main.menu, &s_main.player1 );
 //	Menu_AddItem( &s_main.menu, &s_main.player2 );
 

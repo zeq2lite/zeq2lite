@@ -1378,7 +1378,7 @@ void UI_MenuLogo( void ) {
 
 	memset( &ent, 0, sizeof(ent) );
 
-	adjust = 2.5f * sin( (float)uis.realtime / 5000 );
+	adjust = -2.5f * sin( (float)uis.realtime / 5000 );
 	VectorSet( angles, 0, 180 + adjust, 0 );
 	AnglesToAxis( angles, ent.axis );
 	ent.hModel = uis.logoModel;

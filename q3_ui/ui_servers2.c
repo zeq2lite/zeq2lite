@@ -1559,6 +1559,7 @@ UI_ArenaServersMenu
 =================
 */
 void UI_ArenaServersMenu( void ) {
+	trap_S_StopBackgroundTrack();
 	trap_S_StartBackgroundTrack("music/yamamoto/menu02.ogg", "music/yamamoto/menu02.ogg");
 	ArenaServers_MenuInit();
 	UI_PushMenu( &g_arenaservers.menu );
