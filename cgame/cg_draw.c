@@ -2850,6 +2850,12 @@ Perform all drawing needed to completely fill the screen
 void CG_DrawActive( stereoFrame_t stereoView ) {
 	float		separation;
 	vec3_t		baseOrg;
+	vec4_t		water = {0.25f,0.25f,1.0f,0.1f};
+	vec4_t		slime = {0.25f,1f,0.25f,0.1f};
+	vec4_t		lava = {1.0f,0.5f,0.0f,0.1f};
+	vec4_t		white = {1.0f,1.0f,1.0f,0.5f};
+	vec4_t		black = {0.0f,0.0f,1.0f,0.5f};
+	int			contents;
 
 	// optionally draw the info screen instead
 	if ( !cg.snap ) {
@@ -2926,6 +2932,16 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	// restore original viewpoint if running stereo
 	if ( separation != 0 ) {
 		VectorCopy( baseOrg, cg.refdef.vieworg );
+	}
+
+	contents = CG_PointContents( cg.refdef.vieworg, -1 );
+
+	if ( contents & CONTENTS_WATER ){
+		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, water);
+	} else if ( contents & CONTENTS_SLIME ){
+		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, slime);
+	} else if ( contents & CONTENTS_LAVA ){
+		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, lava);
 	}
 
 	// draw status bar and other floating elements
