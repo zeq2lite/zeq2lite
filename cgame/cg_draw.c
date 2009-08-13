@@ -1277,7 +1277,7 @@ static int CG_DrawPickupItem( int y ) {
 
 	value = cg.itemPickup;
 	if ( value ) {
-		fadeColor = CG_FadeColor( cg.itemPickupTime, 3000 );
+		fadeColor = CG_FadeColor( cg.itemPickupTime, 3000, 200 );
 		if ( fadeColor ) {
 			CG_RegisterItemVisuals( value );
 			trap_R_SetColor( fadeColor );
@@ -1441,7 +1441,7 @@ static void CG_DrawReward( void ) {
 		return;
 	}
 
-	color = CG_FadeColor( cg.rewardTime, REWARD_TIME );
+	color = CG_FadeColor( cg.rewardTime, REWARD_TIME, 200 );
 	if ( !color ) {
 		if (cg.rewardStack > 0) {
 			for(i = 0; i < cg.rewardStack; i++) {
@@ -1451,7 +1451,7 @@ static void CG_DrawReward( void ) {
 			}
 			cg.rewardTime = cg.time;
 			cg.rewardStack--;
-			color = CG_FadeColor( cg.rewardTime, REWARD_TIME );
+			color = CG_FadeColor( cg.rewardTime, REWARD_TIME, 200 );
 			trap_S_StartLocalSound(cg.rewardSound[0], CHAN_ANNOUNCER);
 		} else {
 			return;
@@ -1770,7 +1770,7 @@ static void CG_DrawCenterString( void ) {
 		return;
 	}
 
-	color = CG_FadeColor( cg.centerPrintTime, 1000 * cg_centertime.value );
+	color = CG_FadeColor( cg.centerPrintTime, 1000 * cg_centertime.value, 200 );
 	if ( !color ) {
 		return;
 	}
@@ -1987,7 +1987,7 @@ static void CG_DrawCrosshairNames( void ) {
 	}
 
 	// draw the name of the player being looked at
-	color = CG_FadeColor( cg.crosshairClientTime, 1000 );
+	color = CG_FadeColor( cg.crosshairClientTime, 1000, 200 );
 	if ( !color ) {
 		trap_R_SetColor( NULL );
 		return;
@@ -2838,7 +2838,24 @@ static void CG_DrawTourneyScoreboard() {
 	CG_DrawOldTourneyScoreboard();
 }
 
+void CG_DrawScreenFlash ( void ) {
+	float		*color;
+	vec4_t		white = {1.0f,1.0f,1.0f,0.5f};
+	vec4_t		black = {0.0f,0.0f,1.0f,0.5f};
 
+	color = CG_FadeColor( cg.screenFlashTime, cg.screenFlastTimeTotal, cg.screenFlashFadeTime );
+
+	if ( !color ) {
+		return;
+	}
+
+	trap_R_SetColor( color );
+
+	white[3] = color[3] * cg.screenFlashFadeAmount * 0.5f;
+	CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, white);
+
+	trap_R_SetColor( NULL );
+}
 
 /*
 =====================
@@ -2851,10 +2868,8 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	float		separation;
 	vec3_t		baseOrg;
 	vec4_t		water = {0.25f,0.25f,1.0f,0.1f};
-	vec4_t		slime = {0.25f,1f,0.25f,0.1f};
+	vec4_t		slime = {0.25f,1.0f,0.25f,0.1f};
 	vec4_t		lava = {1.0f,0.5f,0.0f,0.1f};
-	vec4_t		white = {1.0f,1.0f,1.0f,0.5f};
-	vec4_t		black = {0.0f,0.0f,1.0f,0.5f};
 	int			contents;
 
 	// optionally draw the info screen instead
@@ -2934,19 +2949,27 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		VectorCopy( baseOrg, cg.refdef.vieworg );
 	}
 
+	// draw screen tinting and flashing
+
 	contents = CG_PointContents( cg.refdef.vieworg, -1 );
 
 	if ( contents & CONTENTS_WATER ){
 		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, water);
+		trap_R_AddFogToScene(0,5000, 0,0,0,1,2,2);
 	} else if ( contents & CONTENTS_SLIME ){
 		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, slime);
+		trap_R_AddFogToScene(0,3000, 0.5,0.5,0.5,1,2,2);
 	} else if ( contents & CONTENTS_LAVA ){
 		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, lava);
+		trap_R_AddFogToScene(0,2000, 1,1,1,1,2,2);
+	} else {
+		trap_R_AddFogToScene(0,0, 0,0,0,0,2,2);
 	}
+
+	CG_DrawScreenFlash();
 
 	// draw status bar and other floating elements
  	CG_Draw2D();
-
 
 	// ADDING FOR ZEQ2
 	// HACK: We don't support deferring, so until it can REALLY be removed,

@@ -951,7 +951,22 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 			// set the explosion's duration
 			expShell->startTime = cg.time - offset;
 			expShell->endTime = expShell->startTime + weaponGraphics->explosionTime;
-			expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
+			expShell->lifeRate = 1.0f / ( expShell->endTime - expShell->startTime );
+
+			// screen fade
+			cg.screenFlashTime = cg.time - offset;
+			cg.screenFlastTimeTotal = weaponGraphics->explosionTime;
+			cg.screenFlashFadeTime = weaponGraphics->explosionTime;
+
+			if (explosionScale > 0) {
+				float distance;
+				
+				distance = Distance(cg.refdef.vieworg, origin);
+				cg.screenFlashFadeAmount = 1.0f - (distance / (explosionScale * 100) );
+
+				if (cg.screenFlashFadeAmount < 0.0f){cg.screenFlashFadeAmount = 0.0f;}
+				if (cg.screenFlashFadeAmount > 1.0f){cg.screenFlashFadeAmount = 1.0f;}
+			}
 
 			// create a camera shake
 			CG_AddEarthquake( origin, 
@@ -1007,7 +1022,22 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		// set the explosion's duration
 		expShell->startTime = cg.time - offset;
 		expShell->endTime = expShell->startTime + weaponGraphics->explosionTime;
-		expShell->lifeRate = 1.0 / ( expShell->endTime - expShell->startTime );
+		expShell->lifeRate = 1.0f / ( expShell->endTime - expShell->startTime );
+
+		// screen fade
+		cg.screenFlashTime = cg.time - offset;
+		cg.screenFlastTimeTotal = weaponGraphics->explosionTime;
+		cg.screenFlashFadeTime = weaponGraphics->explosionTime;
+
+		if (explosionScale > 0) {
+			float distance;
+			
+			distance = Distance(cg.refdef.vieworg, origin);
+			cg.screenFlashFadeAmount = 1.0f - (distance / (explosionScale * 100) );
+
+			if (cg.screenFlashFadeAmount < 0.0f){cg.screenFlashFadeAmount = 0.0f;}
+			if (cg.screenFlashFadeAmount > 1.0f){cg.screenFlashFadeAmount = 1.0f;}
+		}
 
 		//trap_R_AddFogToScene(0,1000, 0,0,0,0,2,2);
 		// create a camera shake

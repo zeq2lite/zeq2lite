@@ -684,6 +684,12 @@ typedef struct {
 	int			crosshairClientNum;
 	int			crosshairClientTime;
 
+	// screen flashing
+	int			screenFlashTime;
+	int			screenFlastTimeTotal;
+	int			screenFlashFadeTime;
+	float		screenFlashFadeAmount;
+
 	// powerup active flashing
 	int			powerupActive;
 	int			powerupTime;
@@ -1414,7 +1420,7 @@ void CG_DrawMediumStringColor( int x, int y, const char *s, vec4_t color );
 
 int CG_DrawStrlen( const char *str );
 
-float	*CG_FadeColor( int startMsec, int totalMsec );
+float	*CG_FadeColor( int startMsec, int totalMsec, int fadeTime );
 float *CG_TeamColor( int team );
 void CG_TileClear( void );
 void CG_ColorForHealth( vec4_t hcolor );

@@ -1325,7 +1325,7 @@ static void CG_DrawWeaponSelectQuarterFan( void ) {
 	cg_userWeapon_t	*weaponInfo;
 	cg_userWeapon_t	*alt_weaponInfo;
 
-	color = CG_FadeColor( cg.weaponSelectTime, WEAPON_SELECT_TIME );
+	color = CG_FadeColor( cg.weaponSelectTime, WEAPON_SELECT_TIME, 200 );
 	if ( !color ) {
 		return;
 	}
@@ -1405,7 +1405,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 	cg_userWeapon_t	*weaponInfo;
 	cg_userWeapon_t	*alt_weaponInfo;
 
-	color = CG_FadeColor( cg.weaponSelectTime, WEAPON_SELECT_TIME );
+	color = CG_FadeColor( cg.weaponSelectTime, WEAPON_SELECT_TIME, 200 );
 	if ( !color ) {
 		return;
 	}
