@@ -2417,7 +2417,7 @@ void PmoveSingle(pmove_t *pmove){
 	pml.previous_waterlevel = pmove->waterlevel;
 	PM_SetWaterLevel();
 	PM_TorsoAnimation();
-	PM_WaterEvents();
+	//PM_WaterEvents();
 	PM_Freeze();
 	PM_GroundTrace();
 	if(!pm->ps->timers[tmFreeze]){
