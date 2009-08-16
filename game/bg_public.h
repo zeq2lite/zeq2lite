@@ -263,6 +263,7 @@ typedef enum{
 	tmMelee2,
 	tmPowerRaise,
 	tmPowerAuto,
+	tmBlind,
 	tmFreeze,
 	tmStun,
 	tmTap

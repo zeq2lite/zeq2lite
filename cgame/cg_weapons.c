@@ -2254,7 +2254,7 @@ CG_UserMissileHitWall
 ======================
 Caused by an EV_MISSILE_MISS event
 */
-void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, vec3_t origin, vec3_t dir, qboolean inAir ) {
+void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, int number, vec3_t origin, vec3_t dir, qboolean inAir ) {
 	cg_userWeapon_t		*weaponGraphics;
 	vec3_t end;
 	trace_t tr;
@@ -2280,7 +2280,7 @@ void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, vec3_t orig
 	}
 
 	// Create Explosion
-	CG_MakeUserExplosion( origin, dir, weaponGraphics, powerups);
+	CG_MakeUserExplosion( origin, dir, weaponGraphics, powerups, number);
 
 	if ( !inAir ) {
 		vec3_t tempAxis[3];
@@ -2291,89 +2291,91 @@ void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, vec3_t orig
 		VectorCopy(origin, end);
 		end[2] -= 64;
 		CG_Trace( &tr, origin, NULL, NULL, end, -1, MASK_PLAYERSOLID );
-
-		if (cg_particlesQuality.value) {
-			if (tr.surfaceFlags & SURF_METALSTEPS){
-				if(weaponGraphics->explosionSize <= 10){
-					PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 25){
-					PSys_SpawnCachedSystem( "NormalExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 50){
-					PSys_SpawnCachedSystem( "LargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else{
-					PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+		
+		if (!weaponGraphics->noRockDebris){
+			if (cg_particlesQuality.value) {
+				if (tr.surfaceFlags & SURF_METALSTEPS){
+					if(weaponGraphics->explosionSize <= 10){
+						PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 25){
+						PSys_SpawnCachedSystem( "NormalExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 50){
+						PSys_SpawnCachedSystem( "LargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else{
+						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}
+				} else if (tr.surfaceFlags & SURF_FLESH){
+					if(weaponGraphics->explosionSize <= 10){
+						PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 25){
+						PSys_SpawnCachedSystem( "NormalExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 50){
+						PSys_SpawnCachedSystem( "LargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else{
+						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}
+				} else if (tr.surfaceFlags & SURF_DUST){
+					if(weaponGraphics->explosionSize <= 10){
+						PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 25){
+						PSys_SpawnCachedSystem( "NormalExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 50){
+						PSys_SpawnCachedSystem( "LargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else{
+						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}
+				} else {
+					if(weaponGraphics->explosionSize <= 10){
+						PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 25){
+						PSys_SpawnCachedSystem( "NormalExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 50){
+						PSys_SpawnCachedSystem( "LargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else{
+						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}
 				}
-			} else if (tr.surfaceFlags & SURF_FLESH){
-				if(weaponGraphics->explosionSize <= 10){
-					PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 25){
-					PSys_SpawnCachedSystem( "NormalExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 50){
-					PSys_SpawnCachedSystem( "LargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else{
-					PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}
-			} else if (tr.surfaceFlags & SURF_DUST){
-				if(weaponGraphics->explosionSize <= 10){
-					PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 25){
-					PSys_SpawnCachedSystem( "NormalExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 50){
-					PSys_SpawnCachedSystem( "LargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else{
-					PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}
-			} else {
-				if(weaponGraphics->explosionSize <= 10){
-					PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 25){
-					PSys_SpawnCachedSystem( "NormalExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 50){
-					PSys_SpawnCachedSystem( "LargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else{
-					PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}
-			}
-		}else{
-			if (tr.surfaceFlags & SURF_METALSTEPS){
-				if(weaponGraphics->explosionSize <= 10){
-					PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 25){
-					PSys_SpawnCachedSystem( "NormalExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 50){
-					PSys_SpawnCachedSystem( "LargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else{
-					PSys_SpawnCachedSystem( "ExtraLargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}
-			} else if (tr.surfaceFlags & SURF_FLESH){
-				if(weaponGraphics->explosionSize <= 10){
-					PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 25){
-					PSys_SpawnCachedSystem( "NormalExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 50){
-					PSys_SpawnCachedSystem( "LargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else{
-					PSys_SpawnCachedSystem( "ExtraLargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}
-			} else if (tr.surfaceFlags & SURF_DUST){
-				if(weaponGraphics->explosionSize <= 10){
-					PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 25){
-					PSys_SpawnCachedSystem( "NormalExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 50){
-					PSys_SpawnCachedSystem( "LargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else{
-					PSys_SpawnCachedSystem( "ExtraLargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}
-			} else {
-				if(weaponGraphics->explosionSize <= 10){
-					PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 25){
-					PSys_SpawnCachedSystem( "NormalExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else if(weaponGraphics->explosionSize <= 50){
-					PSys_SpawnCachedSystem( "LargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
-				}else{
-					PSys_SpawnCachedSystem( "ExtraLargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+			}else{
+				if (tr.surfaceFlags & SURF_METALSTEPS){
+					if(weaponGraphics->explosionSize <= 10){
+						PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 25){
+						PSys_SpawnCachedSystem( "NormalExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 50){
+						PSys_SpawnCachedSystem( "LargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else{
+						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}
+				} else if (tr.surfaceFlags & SURF_FLESH){
+					if(weaponGraphics->explosionSize <= 10){
+						PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 25){
+						PSys_SpawnCachedSystem( "NormalExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 50){
+						PSys_SpawnCachedSystem( "LargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else{
+						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}
+				} else if (tr.surfaceFlags & SURF_DUST){
+					if(weaponGraphics->explosionSize <= 10){
+						PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 25){
+						PSys_SpawnCachedSystem( "NormalExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 50){
+						PSys_SpawnCachedSystem( "LargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else{
+						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}
+				} else {
+					if(weaponGraphics->explosionSize <= 10){
+						PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 25){
+						PSys_SpawnCachedSystem( "NormalExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else if(weaponGraphics->explosionSize <= 50){
+						PSys_SpawnCachedSystem( "LargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}else{
+						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );
+					}
 				}
 			}
 		}
@@ -2558,10 +2560,10 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 }
 
 
-void CG_UserMissileHitPlayer( int weapon, int clientNum, int powerups, vec3_t origin, vec3_t dir, int entityNum ) {
+void CG_UserMissileHitPlayer( int weapon, int clientNum, int powerups, int number, vec3_t origin, vec3_t dir, int entityNum ) {
 	CG_Bleed( origin, entityNum );
 
-	CG_UserMissileHitWall( weapon, clientNum, powerups, origin, dir, qtrue );
+	CG_UserMissileHitWall( weapon, clientNum, powerups, number, origin, dir, qtrue );
 }
 
 /*

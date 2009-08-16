@@ -502,6 +502,40 @@ qboolean G_weapPhys_ParseDrain( g_weapPhysParser_t *parser, g_weapPhysCategoryIn
 }
 
 /*
+=========================
+G_weapPhys_ParseBlind
+=========================
+Parses 'blind' field.
+Syntax:
+'blind' '=' <int>
+*/
+qboolean G_weapPhys_ParseBlind( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+
+	if ( category != CAT_PHYSICS ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	g_weapPhysBuffer.physics_blind = token->intval;
+
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+/*
 ==========================
 G_weapPhys_ParseHitpoints
 ==========================

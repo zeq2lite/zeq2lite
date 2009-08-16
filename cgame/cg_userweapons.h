@@ -110,6 +110,7 @@ typedef struct {
 	char			smokeParticleSystem[MAX_QPATH];
 	qhandle_t		markShader;
 	qhandle_t		markSize;
+	qboolean		noRockDebris;
 
 	sfxHandle_t		explosionSound[4];		// if more than one is specified, a random one	
 											// is chosen. (Breaks repetitiveness for
@@ -231,6 +232,7 @@ typedef struct {
 	char			smokeParticleSystem[MAX_QPATH];
 	char			markShader[MAX_QPATH];
 	qhandle_t		markSize;
+	qboolean		noRockDebris;
 
 	char			explosionSound[4][MAX_QPATH];	// if more than one is specified, a random one	
 													// is chosen. (Breaks repetitiveness for

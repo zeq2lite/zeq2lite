@@ -98,6 +98,7 @@ void CG_weapGfx_StoreBuffer(int clientNum, int weaponNum) {
 	dest->explosionSize = src->explosionSize;
 	dest->explosionTime = src->explosionTime;
 	dest->markSize = src->markSize;
+	dest->noRockDebris = src->noRockDebris;
 	Q_strncpyz( dest->smokeParticleSystem, src->smokeParticleSystem, sizeof( dest->smokeParticleSystem ));
 	Q_strncpyz( dest->explosionParticleSystem, src->explosionParticleSystem, sizeof( dest->explosionParticleSystem ));
 	
@@ -1542,6 +1543,43 @@ qboolean CG_weapGfx_ParseMarkSize( cg_weapGfxParser_t *parser, cg_weapGfxCategor
 	return qtrue;
 }
 
+
+/*
+==========================
+CG_weapGfx_ParseRockDeris
+==========================
+Parses 'noRockDebris' field.
+Syntax:
+'noRockDebris' '=' <int>
+*/
+qboolean CG_weapGfx_ParseRockDebris( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field ) {
+	cg_weapGfxToken_t	*token;
+	cg_weapGfxScanner_t	*scanner;
+
+	scanner = &parser->scanner;
+	token = &parser->token;
+
+	if ( category != CAT_EXPLOSION ) {
+		CG_weapGfx_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, cg_weapGfxFields[field].fieldname, cg_weapGfxCategories[category] );
+		return qfalse;
+	}
+
+	if ( (token->tokenSym != TOKEN_INTEGER) && (token->tokenSym != TOKEN_FLOAT) ) {
+		CG_weapGfx_ErrorHandle( ERROR_FLOAT_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+
+	cg_weapGfxBuffer.noRockDebris = token->intval;
+
+	if ( !CG_weapGfx_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			CG_weapGfx_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
+
+	return qtrue;
+}
 
 /*
 ================================

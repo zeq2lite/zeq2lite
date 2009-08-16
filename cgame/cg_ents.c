@@ -395,17 +395,12 @@ static void CG_AddMissileLensFlare(centity_t* cent) {
 
 	if (!cg_lensFlare.integer) return;
 
-	switch (cent->currentState.weapon) {
-	case WP_ROCKET_LAUNCHER:
-		memset(&lfent, 0, sizeof(lfent));
-		lfent.lfeff = cgs.lensFlareEffectBeamHead;
-		lfent.angle = 90;
-		VectorNegate(cent->currentState.pos.trDelta, lfent.dir);
-		VectorNormalize(lfent.dir);
-		break;
-	default:
-		return;
-	}
+	memset(&lfent, 0, sizeof(lfent));
+	lfent.lfeff = cgs.lensFlareEffectSolarFlare;
+	lfent.angle = 90;
+	//VectorNegate(cent->currentState.pos.trDelta, lfent.dir);
+	VectorCopy(cent->currentState.pos.trDelta, lfent.dir);
+	VectorNormalize(lfent.dir);
 
 	if (!lfent.lfeff) return;
 
@@ -814,7 +809,7 @@ static void CG_Missile( centity_t *cent ) {
 	VectorCopy( cent->lerpOrigin, ent.oldorigin);
 
 	// JUHOX: draw BeamHead missile lens flare effects
-	CG_AddMissileLensFlare(cent);
+	//CG_AddMissileLensFlare(cent);
 
 	if ( ! (weaponGraphics->missileModel && weaponGraphics->missileSkin) ) {
 		ent.reType = RT_SPRITE;

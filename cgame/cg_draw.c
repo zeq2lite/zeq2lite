@@ -2841,7 +2841,7 @@ static void CG_DrawTourneyScoreboard() {
 void CG_DrawScreenFlash ( void ) {
 	float		*color;
 	vec4_t		white = {1.0f,1.0f,1.0f,0.5f};
-	vec4_t		black = {0.0f,0.0f,1.0f,0.5f};
+	vec4_t		black = {0.0f,0.0f,0.0f,0.5f};
 
 	color = CG_FadeColor( cg.screenFlashTime, cg.screenFlastTimeTotal, cg.screenFlashFadeTime );
 
@@ -2849,12 +2849,16 @@ void CG_DrawScreenFlash ( void ) {
 		return;
 	}
 
-	trap_R_SetColor( color );
+	if ( cg.snap->ps.timers[tmBlind] > 0 ){
 
-	white[3] = color[3] * cg.screenFlashFadeAmount * 0.5f;
-	CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, white);
+		trap_R_SetColor( color );
 
-	trap_R_SetColor( NULL );
+		white[3] = color[3] * cg.screenFlashFadeAmount * 0.5f;
+		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, white);
+
+		trap_R_SetColor( NULL );
+
+	}
 }
 
 /*
@@ -2867,7 +2871,7 @@ Perform all drawing needed to completely fill the screen
 void CG_DrawActive( stereoFrame_t stereoView ) {
 	float		separation;
 	vec3_t		baseOrg;
-	vec4_t		water = {0.25f,0.25f,1.0f,0.1f};
+	vec4_t		water = {0.25f,0.5f,1.0f,0.1f};
 	vec4_t		slime = {0.25f,1.0f,0.25f,0.1f};
 	vec4_t		lava = {1.0f,0.5f,0.0f,0.1f};
 	int			contents;
@@ -2954,12 +2958,18 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	contents = CG_PointContents( cg.refdef.vieworg, -1 );
 
 	if ( contents & CONTENTS_WATER ){
+		float phase = cg.time / 1000.0 * 0.2f * M_PI * 2;
+		water[3] = 0.1f + (0.02f*sin( phase ));
 		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, water);
 		trap_R_AddFogToScene(0,5000, 0,0,0,1,2,2);
 	} else if ( contents & CONTENTS_SLIME ){
+		float phase = cg.time / 1000.0 * 0.2f * M_PI * 2;
+		slime[3] = 0.1f + (0.02f*sin( phase ));
 		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, slime);
 		trap_R_AddFogToScene(0,3000, 0.5,0.5,0.5,1,2,2);
 	} else if ( contents & CONTENTS_LAVA ){
+		float phase = cg.time / 1000.0 * 0.2f * M_PI * 2;
+		lava[3] = 0.1f + (0.02f*sin( phase ));
 		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, lava);
 		trap_R_AddFogToScene(0,2000, 1,1,1,1,2,2);
 	} else {

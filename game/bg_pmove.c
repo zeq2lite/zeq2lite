@@ -84,6 +84,15 @@ void PM_Freeze(void){
 	}
 }
 /*===================
+BLIND
+===================*/
+void PM_Blind(void){
+	if(pm->ps->timers[tmBlind] > 0){
+		pm->ps->timers[tmBlind] -= pml.msec;
+		if(pm->ps->timers[tmBlind]<0){pm->ps->timers[tmBlind] = 0;}
+	}
+}
+/*===================
 CHECK LOOPING SOUND
 ===================*/
 void PM_CheckLoopingSound(void){
@@ -2419,6 +2428,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_TorsoAnimation();
 	//PM_WaterEvents();
 	PM_Freeze();
+	PM_Blind();
 	PM_GroundTrace();
 	if(!pm->ps->timers[tmFreeze]){
 		if(!(pm->ps->bitFlags & usingAlter) && !(pm->ps->bitFlags & isStruggling)){

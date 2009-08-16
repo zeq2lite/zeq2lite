@@ -104,6 +104,7 @@ typedef struct {
 	int					physics_maxBounces;			// How many times at max the missile can bounce.
 	qboolean			physics_swat;				// If the attack can be swatted away regardless of it's power.
 	qboolean			physics_drain;				// Does the attack's power drain during it's lifetime?
+	qboolean			physics_blind;				// Are you vulnerable to your own attack's blinding ability?
 	
 	// Firing
 	int					firing_angleW_min;			// Minimum width angle ( + and - ) a projectile can deviate from its firing path.

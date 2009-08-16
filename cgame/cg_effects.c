@@ -871,13 +871,32 @@ void CG_BigExplode( vec3_t playerOrigin ) {
 	CG_LaunchExplode( origin, velocity, cgs.media.smoke2 );
 }
 
+static void CG_AddExplosionLensFlare( vec3_t origin, vec3_t dir ) {
+	lensFlareEntity_t lfent;
+
+	if (!cg_lensFlare.integer) return;
+
+	memset(&lfent, 0, sizeof(lfent));
+	lfent.lfeff = cgs.lensFlareEffectBeamHead;
+	lfent.angle = 180;
+	VectorCopy(dir, lfent.dir);
+	VectorNormalize(lfent.dir);
+
+	if (!lfent.lfeff) return;
+
+	VectorCopy(origin, lfent.origin);
+
+	CG_ComputeMaxVisAngle(&lfent);
+
+	CG_AddLensFlare(&lfent, 1);
+}
 
 /*
 ======================
 CG_MakeUserExplosion
 ======================
 */
-void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, int powerups) {
+void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, int powerups, int number ) {
 	float			angle, start, end;
 	localEntity_t	*expShell;
 	localEntity_t	*expShock;
@@ -965,7 +984,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 				cg.screenFlashFadeAmount = 1.0f - (distance / (explosionScale * 100) );
 
 				if (cg.screenFlashFadeAmount < 0.0f){cg.screenFlashFadeAmount = 0.0f;}
-				if (cg.screenFlashFadeAmount > 1.0f){cg.screenFlashFadeAmount = 1.0f;}
+				if (cg.screenFlashFadeAmount > 0.5f){cg.screenFlashFadeAmount = 0.5f;}
 			}
 
 			// create a camera shake
@@ -974,7 +993,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 				, weaponGraphics->explosionTime / 1000
 				, ( weaponGraphics->explosionTime / 1000 ) / 2
 				, ( weaponGraphics->explosionTime / 1000 ) * 2
-				, weaponGraphics->explosionSize / 2 );
+				, explosionScale/*weaponGraphics->explosionSize*/ / 2 );
 
 			// bias the time so all shader effects start correctly
 			expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
@@ -1039,14 +1058,13 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 			if (cg.screenFlashFadeAmount > 1.0f){cg.screenFlashFadeAmount = 1.0f;}
 		}
 
-		//trap_R_AddFogToScene(0,1000, 0,0,0,0,2,2);
 		// create a camera shake
 		CG_AddEarthquake( origin, 
 			explosionScale/*weaponGraphics->explosionSize*/ * 100 
 			, weaponGraphics->explosionTime / 1000
 			, ( weaponGraphics->explosionTime / 1000 ) / 2
 			, ( weaponGraphics->explosionTime / 1000 ) * 2
-			, weaponGraphics->explosionSize * 100 );
+			, explosionScale/*weaponGraphics->explosionSize*/ * 100 );
 		// bias the time so all shader effects start correctly
 		expShell->refEntity.shaderTime = expShell->startTime / 1000.0f;
 
@@ -1057,8 +1075,8 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		expShell->light = weaponGraphics->explosionDlightRadius * 100;
 	}
 
-
-
+	// JUHOX: draw BeamHead missile lens flare effects
+	//CG_AddExplosionLensFlare( newOrigin, dir );
 
 	if ( weaponGraphics->shockwaveModel && weaponGraphics->shockwaveSkin ) {
 		// allocate the entity as a ZEQ explosion

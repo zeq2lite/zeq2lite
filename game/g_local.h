@@ -130,6 +130,7 @@ struct gentity_s {
 	qboolean	strugglingAllyAttack;
 	qboolean	isSwattable;
 	qboolean	isDrainable;
+	qboolean	isBlindable;
 	
 	// END ADDING
 	vec3_t		movedir;

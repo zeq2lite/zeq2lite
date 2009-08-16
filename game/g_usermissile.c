@@ -43,6 +43,7 @@ static void G_StruggleUserMissile( gentity_t *self, gentity_t *other );
 static void G_PushUserMissile( gentity_t *self, gentity_t *other );
 static void G_BounceUserMissile( gentity_t *self, trace_t *trace );
 void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int knockback);
+void G_LocationImpact(vec3_t point, gentity_t* targ, gentity_t* attacker);
 /*
 =============
 Think_Torch
@@ -719,6 +720,7 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 	
 	float		realDamage, distance;
 	gentity_t	*ent;
+	gentity_t	*owner = GetMissileOwnerEntity(ignore);
 	
 	vec3_t		mins, maxs;
 	vec3_t		deltaRadius;
@@ -744,7 +746,8 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 			continue;
 		if (!ent->takedamage)
 			continue;
-
+		if (ent == owner && ignore->isBlindable)
+			continue;
 		
 		// Find the distance between the perimeter of the entities' bounding box
 		// and the explosion's origin.
@@ -770,6 +773,10 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 			// push the center of mass higher than the origin so players
 			// get knocked into the air more
 			dir[2] += 24;
+			G_LocationImpact(origin,ent,attacker);
+			if (ent->client->lasthurt_location == LOCATION_FRONT){
+				ent->client->ps.timers[tmBlind] = 5000;
+			}
 			G_UserWeaponDamage(ent,NULL,attacker,dir,origin,(int)realDamage,DAMAGE_RADIUS,methodOfDeath,extraKnockback);
 		}
 	}
@@ -1003,6 +1010,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		bolt->isSwattable = weaponInfo->physics_swat;
 		bolt->isDrainable = weaponInfo->physics_drain;
+		bolt->isBlindable = weaponInfo->physics_blind;
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
@@ -1203,6 +1211,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		bolt->isSwattable = weaponInfo->physics_swat;
 		bolt->isDrainable = weaponInfo->physics_drain;
+		bolt->isBlindable = weaponInfo->physics_blind;
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl

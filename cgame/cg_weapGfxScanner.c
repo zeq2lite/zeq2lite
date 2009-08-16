@@ -25,6 +25,7 @@ cg_weapGfxField_t cg_weapGfxFields[] = {
 	{ "shockwave",			CG_weapGfx_ParseShockwave			},	// Explosion
 	{ "markShader",			CG_weapGfx_ParseMarkShader			},	// Explosion
 	{ "markSize",			CG_weapGfx_ParseMarkSize			},	// Explosion
+	{ "noRockDebris",		CG_weapGfx_ParseRockDebris			},	// Explosion
 	{ "particles",			CG_weapGfx_ParseParticles			},	// Charge, Explosion, Missile, Flash
 	{ "loopParticles",		CG_weapGfx_ParseLoopParticles		},	// Charge, Flash
 	{ "smokeParticles",		CG_weapGfx_ParseSmokeParticles		},	// Explosion

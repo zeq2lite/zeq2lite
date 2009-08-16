@@ -173,6 +173,7 @@ qboolean CG_weapGfx_ParseDuration( cg_weapGfxParser_t *parser, cg_weapGfxCategor
 qboolean CG_weapGfx_ParseShockwave( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseMarkShader( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseMarkSize( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
+qboolean CG_weapGfx_ParseRockDebris( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseParticles( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseLoopParticles( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseSmokeParticles( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );

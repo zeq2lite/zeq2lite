@@ -1207,7 +1207,7 @@ static void CG_LoadMissileLensFlares(void) {
 	cgs.numMissileLensFlareEffects = 0;
 	memset(&cgs.missileLensFlareEffects, 0, sizeof(cgs.missileLensFlareEffects));
 
-	CG_PushFile("maps/", "effects.lfs");
+	CG_PushFile("effects/", "effects.lfs");
 	if (!CG_PopFile()) return;
 	lfNameBase[0] = 0;
 
@@ -1468,6 +1468,7 @@ static void CG_RegisterGraphics( void ) {
 	CG_LoadingString("lens flares");
 	CG_LoadLensFlares();
 	CG_LoadLensFlareEntities();
+	CG_LoadMissileLensFlares();
 	cg.lfEditor.copyOptions = -1;
 	cg.lfEditor.copiedLFEnt.dir[0] = 1;
 #endif
@@ -1635,6 +1636,11 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.auraLightningSparks2 = trap_R_RegisterShader( "AuraLightningSparks2" );
 	cgs.media.powerStruggleRaysEffectShader = trap_R_RegisterShader( "PowerStruggleRays" );
 	cgs.media.powerStruggleShockwaveEffectShader = trap_R_RegisterShader( "PowerStruggleShockwave" );
+	cgs.media.bfgLFGlare = trap_R_RegisterShader("bfgLFGlare");
+	cgs.media.bfgLFDisc = trap_R_RegisterShader("bfgLFDisc");
+	cgs.media.bfgLFRing = trap_R_RegisterShader("bfgLFRing");
+	cgs.media.bfgLFStar = trap_R_RegisterShader("bfgLFStar");
+	cgs.media.bfgLFLine = trap_R_RegisterShader("bfgLFLine");
 #endif
 #ifdef MISSIONPACK
 	cgs.media.kamikazeEffectModel = trap_R_RegisterModel( "models/weaphits/kamboom2.md3" );
