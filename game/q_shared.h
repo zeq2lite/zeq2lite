@@ -1194,6 +1194,7 @@ typedef struct playerState_s {
 	int			clientLockedTarget;
 	playerState *lockedPlayer;
 	vec3_t		*lockedPosition;
+	vec3_t		soarLimit;
 	int			knockBackDirection;
 	float		breakLimitRate;
 	int			attackPowerTotal;

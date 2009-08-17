@@ -656,6 +656,54 @@ static void CG_AddZEQExplosion( localEntity_t *le ) {
 }
 
 /*
+====================
+CG_AddZEQSplash
+====================
+*/
+static void CG_AddZEQSplash( localEntity_t *le ) {
+	refEntity_t	*ent;
+	float		c;
+	float		RGBfade;
+	vec3_t		tmpAxes[3];
+	
+	ent = &le->refEntity;
+
+	RGBfade = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime );
+	if ( RGBfade < 0.5 ) {
+		RGBfade = 1.0;
+	} else {
+		RGBfade = 1.0 - ( RGBfade - 0.5 ) * 2;
+	}
+
+	/*ent->shaderRGBA[0] = 0xff * RGBfade;
+	ent->shaderRGBA[1] = 0xff * RGBfade;
+	ent->shaderRGBA[2] = 0xff * RGBfade;*/
+	ent->shaderRGBA[3] = 0xff * RGBfade;
+	
+
+	// grow time
+	c = ( le->endTime - cg.time ) * le->lifeRate;
+
+	// preserve the full scale
+	VectorCopy(ent->axis[0], tmpAxes[0]);
+	VectorCopy(ent->axis[1], tmpAxes[1]);
+	VectorCopy(ent->axis[2], tmpAxes[2]);
+
+	// set the current scale
+	VectorScale(ent->axis[0], 1 - c, ent->axis[0]);
+	VectorScale(ent->axis[1], 1 - c, ent->axis[1]);
+	VectorScale(ent->axis[2], 1 - c, ent->axis[2]);
+
+	// add the entity
+	trap_R_AddRefEntityToScene( ent );
+
+	// set the full scale again
+	VectorCopy(tmpAxes[0], ent->axis[0]);
+	VectorCopy(tmpAxes[1], ent->axis[1]);
+	VectorCopy(tmpAxes[2], ent->axis[2]);
+}
+
+/*
 ================
 CG_AddSpriteExplosion
 ================
@@ -1004,6 +1052,11 @@ void CG_AddLocalEntities( void ) {
 		case LE_ZEQSMOKE:
 			if (cg.time >= le->startTime) {
 				CG_AddMoveScaleFade( le );
+			}
+			break;
+		case LE_ZEQSPLASH:
+			if (cg.time >= le->startTime) {
+				CG_AddZEQSplash( le );
 			}
 			break;
 		case LE_STRAIGHTBEAM_FADE:

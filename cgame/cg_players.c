@@ -2209,6 +2209,7 @@ static void CG_PlayerSplash( centity_t *cent ) {
 	entityState_t	*s1;
 	vec3_t			origin, lastPos;
 	int				contents, lastContents,anim;
+	float			xyzspeed;
 	s1 = &cent->currentState;
 
 	// Water bubble/splash setup
@@ -2246,19 +2247,32 @@ static void CG_PlayerSplash( centity_t *cent ) {
 	}
 
 	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if ( anim != LEGS_IDLE && 
+	if (anim != LEGS_IDLE && 
 		anim != LEGS_IDLE_LOCKED && 
 		anim != LEGS_IDLECR && 
 		anim != LEGS_TURN &&
 		anim != LEGS_FLY_IDLE &&
 		anim < LEGS_KI_ATTACK1_PREPARE) {
-		CG_WaterSplash(trace.endpos,1);
-	}
-	//if (lastContents & CONTENTS_WATER &&/*contents != lastContents*/) {
-	//	CG_WaterSplash(trace.endpos,1);
-	//}
 
-	//CG_Printf("Time: %i Trail Time: %i Contents: %i Last Contents: %i\n",cg.time,cent->trailTime,contents,lastContents);
+		xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
+		cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] );
+
+		CG_WaterSplash(trace.endpos,1+(xyzspeed/100));
+
+		if ( cent->trailTime > cg.time ) {
+			return;
+		}
+
+		cent->trailTime += 250;
+
+		if ( cent->trailTime < cg.time ) {
+			cent->trailTime = cg.time;
+		}
+
+		CG_WaterRipple(trace.endpos,1+(xyzspeed/100));
+
+		return;
+	}
 
 	cent->trailTime = cg.time;
 
@@ -2405,11 +2419,13 @@ void CG_Player( centity_t *cent ) {
 		ci->tierMax = ci->tierCurrent;
 	}
 	renderfx = 0;
+	CG_PlayerSplash(cent);
 	//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
 	//else if(cg_cameraMode.integer){return;}
 	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == ps->clientNum) && (ps->bitFlags & usingZanzoken))) {
 		return;
 	}
+	CG_PlayerSprites(cent);
 	//if((cent->currentState.clientNum == cg.clientNum) && (ps->powerups[PW_MELEE_STATE] > 0)){
 	//	VectorCopy(ps->lockedPosition, cg.guide_target);
 	//	cg.guide_view = qtrue;
@@ -2421,9 +2437,7 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerAnimation( cent, &legs.oldframe, &legs.frame, &legs.backlerp,
 							  &torso.oldframe, &torso.frame, &torso.backlerp,
 							  &head.oldframe, &head.frame, &head.backlerp );
-	CG_PlayerSprites(cent);
 	shadow = CG_PlayerShadow(cent,&shadowPlane);
-	CG_PlayerSplash( cent );
 	if (cg_shadows.integer == 3 && shadow){
 		renderfx |= RF_SHADOW_PLANE;
 	}

@@ -396,8 +396,8 @@ static void CG_AddMissileLensFlare(centity_t* cent) {
 	if (!cg_lensFlare.integer) return;
 
 	memset(&lfent, 0, sizeof(lfent));
-	lfent.lfeff = cgs.lensFlareEffectSolarFlare;
-	lfent.angle = 90;
+	lfent.lfeff = cgs.lensFlareEffectEnergyGlowDarkBackground; //cgs.lensFlareEffectSolarFlare;
+	lfent.angle = -1;
 	//VectorNegate(cent->currentState.pos.trDelta, lfent.dir);
 	VectorCopy(cent->currentState.pos.trDelta, lfent.dir);
 	VectorNormalize(lfent.dir);
@@ -703,9 +703,12 @@ static void CG_Missile( centity_t *cent ) {
 	int					missilePowerLevelTotal;
 	float				radiusScale;
 	qboolean			missileIsStruggling;
-	vec3_t	origin, lastPos;
-	int		contents;
-	int		lastContents;
+	qboolean			splash;
+	vec3_t				origin, lastPos;
+	int					contents;
+	int					lastContents;
+	vec3_t				start, end;
+	trace_t				trace;
 	ps = &cg.predictedPlayerState;
 	s1 = &cent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
@@ -717,6 +720,31 @@ static void CG_Missile( centity_t *cent ) {
 
 	BG_EvaluateTrajectory( s1, &s1->pos, cent->trailTime, lastPos );
 	lastContents = CG_PointContents( lastPos, -1 );
+
+	VectorCopy( cent->lerpOrigin, end );
+	end[2] -= 64;
+
+	VectorCopy( cent->lerpOrigin, start );
+	start[2] += 64;
+
+	// trace down to find the surface
+	trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) );
+
+	splash = qtrue;
+
+	contents = trap_CM_PointContents( end, 0 );
+	if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) ) {
+		splash = qfalse;
+	}
+
+	contents = trap_CM_PointContents( start, 0 );
+	if ( contents & ( CONTENTS_SOLID | CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
+		splash = qfalse;
+	}
+
+	if ( trace.fraction == 1.0 ) {
+		splash = qfalse;
+	}
 
 	cent->trailTime = cg.time;
 
@@ -778,8 +806,22 @@ static void CG_Missile( centity_t *cent ) {
 		cg.guide_view = qtrue;
 	}
 
-	if (contents != lastContents) {
-		CG_WaterSplash( lastPos, missileScale);
+	if (splash) {
+		CG_WaterSplash(trace.endpos, missileScale);
+	}
+
+	if ( cent->trailTime > cg.time ) {
+		splash = qfalse;
+	}
+
+	cent->trailTime += 1250;
+
+	if ( cent->trailTime < cg.time ) {
+		cent->trailTime = cg.time;
+	}
+
+	if (splash) {
+		CG_WaterRipple(trace.endpos, missileScale);
 	}
 
 	// add trails
@@ -829,7 +871,7 @@ static void CG_Missile( centity_t *cent ) {
 	VectorCopy( cent->lerpOrigin, ent.oldorigin);
 
 	// JUHOX: draw BeamHead missile lens flare effects
-	//CG_AddMissileLensFlare(cent);
+	CG_AddMissileLensFlare(cent);
 
 	if ( ! (weaponGraphics->missileModel && weaponGraphics->missileSkin) ) {
 		ent.reType = RT_SPRITE;

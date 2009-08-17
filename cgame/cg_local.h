@@ -233,6 +233,7 @@ typedef enum {
 	LE_SCOREPLUM,
 	LE_ZEQEXPLOSION,
 	LE_ZEQSMOKE,
+	LE_ZEQSPLASH,
 	LE_STRAIGHTBEAM_FADE
 } leType_t;
 
@@ -869,6 +870,8 @@ typedef struct {
 	qhandle_t	globalCelLighting;
 	qhandle_t	waterSplashSkin;
 	qhandle_t	waterSplashModel;
+	qhandle_t	waterRippleSkin;
+	qhandle_t	waterRippleModel;
 
 	qhandle_t	smokePuffShader;
 	qhandle_t	smokePuffRageProShader;
@@ -1189,6 +1192,7 @@ typedef struct {
 	const lensFlareEffect_t* lensFlareEffectExplosion2;
 	const lensFlareEffect_t* lensFlareEffectExplosion3;
 	const lensFlareEffect_t* lensFlareEffectExplosion4;
+	const lensFlareEffect_t* lensFlareEffectEnergyGlowDarkBackground;
 
 	// media
 	cgMedia_t	media;
@@ -1605,6 +1609,7 @@ localEntity_t *CG_SmokePuff( const vec3_t p,
 				   qhandle_t hShader );
 void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing );
 void CG_SpawnEffect( vec3_t org );
+void CG_WaterRipple( vec3_t org, int size );
 void CG_WaterSplash( vec3_t org, int size );
 void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier );
 void CG_BigLightningEffect( vec3_t org );

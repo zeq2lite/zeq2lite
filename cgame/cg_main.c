@@ -1230,6 +1230,7 @@ static void CG_LoadMissileLensFlares(void) {
 	cgs.lensFlareEffectExplosion2 = CG_FindMissileLensFlareEffect("explosion2");
 	cgs.lensFlareEffectExplosion3 = CG_FindMissileLensFlareEffect("explosion3");
 	cgs.lensFlareEffectExplosion4 = CG_FindMissileLensFlareEffect("explosion4");
+	cgs.lensFlareEffectEnergyGlowDarkBackground = CG_FindMissileLensFlareEffect("energyGlowDarkBackground");
 }
 #endif
 
@@ -1631,6 +1632,8 @@ static void CG_RegisterGraphics( void ) {
 #else
 	cgs.media.waterSplashSkin = trap_R_RegisterSkin( "effects/water/waterSplash.skin" );
 	cgs.media.waterSplashModel = trap_R_RegisterModel( "effects/water/waterSplash.md3" );
+	cgs.media.waterRippleSkin = trap_R_RegisterSkin( "effects/water/waterRipple.skin" );
+	cgs.media.waterRippleModel = trap_R_RegisterModel( "effects/water/waterRipple.md3" );
 	cgs.media.teleportEffectModel = trap_R_RegisterModel( "models/misc/telep.md3" );
 	cgs.media.meleeSpeedEffectShader = trap_R_RegisterShader( "skills/energyBlast" );
 	cgs.media.meleePowerEffectShader = trap_R_RegisterShader( "shockwave" );

@@ -183,6 +183,56 @@ void CG_SpawnEffect( vec3_t org ) {
 	re->origin[2] += 16;
 }
 
+
+/*
+==================
+CG_WaterRipple
+
+==================
+*/
+void CG_WaterRipple( vec3_t org, int size ) {
+	localEntity_t	*le;
+	refEntity_t		*re;
+	float			ang;
+	vec3_t			oldAxis[3];
+
+	le = CG_AllocLocalEntity();
+	le->leFlags = 0;
+	le->leType = LE_ZEQSPLASH;
+	le->startTime = cg.time;
+	le->endTime = cg.time + 1000;
+	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+
+	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
+
+	re = &le->refEntity;
+
+	re->reType = RT_MODEL;
+
+	re->shaderRGBA[0] = le->color[0] * 0xff;
+	re->shaderRGBA[1] = le->color[1] * 0xff;
+	re->shaderRGBA[2] = le->color[2] * 0xff;
+	re->shaderRGBA[3] = 0xff;
+
+	re->customSkin = cgs.media.waterRippleSkin;
+	re->hModel = cgs.media.waterRippleModel;
+
+	// bias the time so all shader effects start correctly
+	re->shaderTime = le->startTime / 1000.0f;
+
+	AxisClear( re->axis );
+
+	re->nonNormalizedAxes = qtrue;
+	VectorNormalize(re->axis[0]);
+	VectorNormalize(re->axis[1]);
+	VectorNormalize(re->axis[2]);
+	VectorScale(re->axis[0], size, re->axis[0]);
+	VectorScale(re->axis[1], size, re->axis[1]);
+	VectorScale(re->axis[2], size, re->axis[2]);
+
+	VectorCopy( org, re->origin );
+}
+
 /*
 ==================
 CG_WaterSplash
@@ -192,21 +242,21 @@ CG_WaterSplash
 void CG_WaterSplash( vec3_t org, int size ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
+	float			ang;
+	vec3_t			oldAxis[3];
 
 	le = CG_AllocLocalEntity();
 	le->leFlags = 0;
-	le->leType = LE_SCALE_FADE;
+	le->leType = LE_ZEQSPLASH;
 	le->startTime = cg.time;
 	le->endTime = cg.time + 1000;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
-	le->radius = 64;
 
 	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
 
 	re = &le->refEntity;
 
 	re->reType = RT_MODEL;
-	re->radius = le->radius;
 
 	re->shaderRGBA[0] = le->color[0] * 0xff;
 	re->shaderRGBA[1] = le->color[1] * 0xff;
@@ -220,6 +270,15 @@ void CG_WaterSplash( vec3_t org, int size ) {
 	re->shaderTime = le->startTime / 1000.0f;
 
 	AxisClear( re->axis );
+
+	// set axis with random rotate
+	ang = rand() % 360;
+
+	VectorCopy( re->axis[0], oldAxis[0] );
+	VectorCopy( re->axis[1], oldAxis[1] );
+	RotateAroundDirection( re->axis, ang );
+	VectorCopy( oldAxis[0], re->axis[0] );
+	VectorCopy( oldAxis[1], re->axis[1] );
 
 	re->nonNormalizedAxes = qtrue;
 	VectorNormalize(re->axis[0]);
