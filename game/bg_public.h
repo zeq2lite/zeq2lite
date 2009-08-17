@@ -266,7 +266,7 @@ typedef enum{
 	tmBlind,
 	tmFreeze,
 	tmStun,
-	tmTap
+	tmTap,
 }timers_t;
 
 typedef enum {

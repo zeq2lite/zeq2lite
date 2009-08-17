@@ -641,8 +641,6 @@ void ClientUserinfoChanged( int clientNum ) {
 	client->playerEntity = ent;
 
 	// setup tier information
-	client->modelName = model;
-	setupTiers(client);
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
 
@@ -666,6 +664,8 @@ void ClientUserinfoChanged( int clientNum ) {
 
 		Q_strncpyz( skinName, skin, sizeof( skinName ) );
 		Q_strncpyz( modelName, modelStr, sizeof( modelName ) );
+		client->modelName = modelName;
+		setupTiers(client);
 		
 		Com_sprintf( filename, sizeof( filename ), "players/%s/%s.phys", modelName, skinName );
 		G_weapPhys_Parse( filename, clientNum );
@@ -772,7 +772,6 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	gentity_t	*ent;
 
 	ent = &g_entities[ clientNum ];
-
 	trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
 	// check to see if they are on the banned IP list
 	value = Info_ValueForKey (userinfo, "ip");
@@ -871,6 +870,7 @@ void ClientBegin( int clientNum ) {
 
 	// ADDING FOR ZEQ2
 	// Set the starting cap
+	ClientUserinfoChanged(clientNum);
 	client->ps.powerLevel[plMaximum] = g_powerLevel.value;
 	// END ADDING
 
@@ -1009,11 +1009,9 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.clientNum = index;
 
 	// ADDING FOR ZEQ2
-	client->modelName = model;
 	client->ps.stats[stSkills] = *G_FindUserWeaponMask( index );
 	client->ps.stats[stChargePercentPrimary] = 0;
 	client->ps.stats[stChargePercentSecondary] = 0;
-	setupTiers(client);
 	// END ADDING
 
 	client->ps.rolling = g_rolling.value;

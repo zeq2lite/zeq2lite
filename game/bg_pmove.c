@@ -220,14 +220,14 @@ void PM_CheckZanzoken(void){
 	if(pm->ps->timers[tmZanzoken] > 0){
 		speed = (pm->ps->powerLevel[plCurrent] / 13.1) + pm->ps->stats[stZanzokenSpeed];
 		pm->ps->timers[tmZanzoken] -= pml.msec;
+		if(pm->ps->timers[tmZanzoken] < 0){
+			pm->ps->timers[tmZanzoken] = 0;
+		}
 		VectorNormalize(pm->ps->velocity);
 		VectorCopy(pm->ps->velocity,pre_vel);
 		if(pm->ps->lockedTarget > 0){speed *= 1.5;}
 		VectorScale(pm->ps->velocity,speed,pm->ps->velocity);
 		VectorNormalize2(pm->ps->velocity,post_vel);
-		if(pm->ps->timers[tmZanzoken] < 0){
-			pm->ps->timers[tmZanzoken] = 0;
-		}
 	}
 	if((pm->cmd.buttons & BUTTON_LIGHTSPEED) && !(pm->ps->bitFlags & usingZanzoken) && (pm->ps->timers[tmZanzoken] == -1)){
 		PM_StopDash();
@@ -235,6 +235,7 @@ void PM_CheckZanzoken(void){
 		pm->ps->timers[tmZanzoken] = (pm->ps->powerLevel[plFatigue] / 93.62) + pm->ps->stats[stZanzokenDistance];
 		cost = (pm->ps->powerLevel[plMaximum] / 12) * pm->ps->stats[stZanzokenCost];
 		if(pm->ps->lockedTarget > 0){cost *= 0.8;}
+		if(pm->ps->bitFlags & usingJump){cost *= 0.4;}
 		pm->ps->powerLevel[plUseFatigue] += cost;
 		PM_AddEvent(EV_ZANZOKEN_START);
 	}	
@@ -384,7 +385,7 @@ void PM_CheckPowerLevel(void){
 	while(timers[tmPowerAuto] >= 100){
 		timers[tmPowerAuto] -= 100;
 		idleScale = (!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove) ? 2 : 1;
-		recovery = (float)pm->ps->powerLevel[plMaximum] * 0.002 * idleScale;
+		recovery = (float)pm->ps->powerLevel[plMaximum] * 0.004 * idleScale;
 		recovery *= (1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]));
 		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue]){recovery = 0;}
 		if(powerLevel[plCurrent] > powerLevel[plFatigue]){
@@ -689,21 +690,32 @@ void PM_NotOnGround(void){
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 }
 void PM_StopJump(void){
-	pm->ps->bitFlags &= ~usingJump;
+	if(pm->ps->bitFlags & usingJump){
+		pm->ps->bitFlags &= ~usingJump;
+		VectorScale(pm->ps->velocity,0.01,pm->ps->velocity);
+	}
 }
 void PM_CheckJump(void){
 	int jumpPower;
-	float jumpScale;
+	float jumpScale,jumpEmphasis;
+	vec3_t pre_vel,post_vel;
 	if(pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight || pm->ps->bitFlags & isStruggling){return;}
 	if(!(pm->cmd.buttons & BUTTON_JUMP) || pm->ps->weaponstate == WEAPON_GUIDING){return;}
 	PM_NotOnGround();
 	PM_StopDash();
 	pm->ps->bitFlags |= usingJump;
-	jumpScale = pm->ps->bitFlags & usingBoost ? 1.5 : 1.0;
+	jumpScale = pm->ps->bitFlags & usingBoost ? 2.0 : 1.0;
 	jumpPower = pm->ps->stats[stSpeed] * jumpScale;
+	jumpEmphasis = 2500.0;
 	pm->ps->gravity = 12000 * jumpScale;
-	pm->ps->velocity[0] *= fabs(pm->ps->velocity[0]) < jumpPower ? 4.0 : 1.0;
-	pm->ps->velocity[1] *= fabs(pm->ps->velocity[1]) < jumpPower ? 4.0 : 1.0;
+	pm->ps->velocity[2] = 0;
+	VectorNormalize(pm->ps->velocity);
+	VectorCopy(pm->ps->velocity,pre_vel);
+	if(!((pm->cmd.forwardmove != 0) || (pm->cmd.rightmove != 0))){
+		jumpEmphasis *= jumpScale;
+	}
+	VectorScale(pm->ps->velocity,2500.0 * jumpScale,pm->ps->velocity);
+	VectorNormalize2(pm->ps->velocity,post_vel);
 	if((pm->cmd.forwardmove != 0) || (pm->cmd.rightmove != 0)){
 		pm->ps->velocity[2] = jumpPower * 6;
 		pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.01;
@@ -711,6 +723,7 @@ void PM_CheckJump(void){
 	} else{
 		pm->ps->gravity = 6000;
 		pm->ps->velocity[2] = jumpPower * 8;
+		jumpEmphasis *= jumpScale;
 		pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.06;
 		PM_AddEvent(EV_JUMP);
 	}
@@ -800,6 +813,7 @@ void PM_AirMove(void){
 	vec3_t		wishvel;
 	float		fmove, smove;
 	vec3_t		wishdir;
+	qboolean	gravity;
 	float		wishspeed;
 	float		scale;
 	usercmd_t	cmd;
@@ -827,8 +841,12 @@ void PM_AirMove(void){
 	if(pm->waterlevel == 3){
 		pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
 	}
-	if(pm->ps->bitFlags & usingZanzoken){pm->tracemask = CONTENTS_SOLID;}
-	PM_StepSlideMove(pm->ps->bitFlags & usingFlight ? qfalse : qtrue); 
+	gravity = pm->ps->bitFlags & usingFlight ? qfalse : qtrue;
+	if(pm->ps->bitFlags & usingZanzoken){
+		if(pm->ps->bitFlags & usingJump){gravity = qtrue;}
+		pm->tracemask = CONTENTS_SOLID;
+	}
+	PM_StepSlideMove(gravity); 
 	if(pm->ps->bitFlags & usingZanzoken){pm->tracemask = MASK_PLAYERSOLID;}
 }
 /*===================
@@ -1645,12 +1663,10 @@ void PM_Melee(void){
 	pm->ps->timers[tmUpdateMelee] += pml.msec;
 	pm->ps->bitFlags &= ~isAutoClosing;
 	if(pm->ps->lockedTarget > 0){
-		/*
-		if((pm->ps->lockedPlayer->bitFlags & isDead) || (pm->ps->lockedPlayer->bitFlags & isUnconcious)){
+		if((pm->ps->lockedPlayer->bitFlags & isDead) /* || (pm->ps->lockedPlayer->bitFlags & isUnconcious)*/){
 			PM_StopLockon();
 			return;
 		}
-		*/
 		if(pm->ps->timers[tmUpdateMelee] > 300){
 			pm->ps->timers[tmUpdateMelee] = 0;
 			PM_AddEvent(EV_MELEE_CHECK);
@@ -2235,6 +2251,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
 	}
+	/*
 	else if(pm->ps->bitFlags & usingFlight) {
 		if(cmd->buttons & BUTTON_ROLL_LEFT){
 			roll -= 28 * (pml.msec / 200.0f);
@@ -2285,12 +2302,17 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		}
 
 		// Correct the 3 delta_angles;
+		if(i == ROLL && ps->viewangles[i] != 0) {
+			ps->viewangles[i] = 0;
+			ps->delta_angles[i] = 0 - cmd->angles[i];
+		}
 		for (i=0; i<3; i++) {
 			ps->viewangles[i] = AngleNormalize180(new_angles[i]);
 			ps->delta_angles[i] = ANGLE2SHORT(ps->viewangles[i]) - cmd->angles[i];
 		}
 		return;
 	}
+	*/
 
 	// We've been flying and we've inverted our pitch to a good amount upside down.
 	// Cheat the view, by adjusting the yaw to 'swing around' and adjusting the pitch to match.
@@ -2395,10 +2417,8 @@ void PmoveSingle(pmove_t *pmove){
 			PM_CheckLockon();
 			PM_CheckZanzoken();
 			if(!meleeRange){
-				if(!(pm->ps->bitFlags & usingAlter)){
-					PM_CheckJump();
-					PM_CheckBlock();
-				}
+				PM_CheckBlock();
+				PM_CheckJump();
 				PM_Footsteps();
 			}
 		}

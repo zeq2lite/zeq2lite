@@ -18,6 +18,7 @@ SETUP MENU
 #define ID_HEIGHT		11
 #define ID_ANGLE		12
 #define ID_BACK			13
+#define ID_SLIDE		14
 
 typedef struct
 {
@@ -37,6 +38,7 @@ typedef struct {
 
 	menuslider_s	rangeSlider;
 	menuslider_s	heightSlider;
+	menuslider_s	slideSlider;
 	menuslider_s	angleSlider;
 
 	qboolean		changesMade;
@@ -50,6 +52,7 @@ static configcvar_t g_configcvars[] =
 {
 	{"cg_thirdPersonRange",	0,	0},
 	{"cg_thirdPersonHeight",0,	0},
+	{"cg_thirdPersonSlide",0,	0},
 	{"cg_thirdPersonAngle",	0,	0},
 	{NULL,					0,	0}
 };
@@ -136,7 +139,8 @@ Camera_GetConfig
 static void Camera_GetConfig( void )
 {
 	s_camera.rangeSlider.curvalue  = UI_ClampCvar( 15, 150, Camera_GetCvarValue( "cg_thirdPersonRange" ) );
-	s_camera.heightSlider.curvalue  = UI_ClampCvar( 0, 150, Camera_GetCvarValue( "cg_thirdPersonHeight" ) );
+	s_camera.heightSlider.curvalue  = UI_ClampCvar( -80, 80, Camera_GetCvarValue( "cg_thirdPersonHeight" ) );
+	s_camera.slideSlider.curvalue  = UI_ClampCvar( -150, 150, Camera_GetCvarValue( "cg_thirdPersonSlide" ) );
 	s_camera.angleSlider.curvalue  = UI_ClampCvar( 0, 359, Camera_GetCvarValue( "cg_thirdPersonAngle" ) );
 }
 
@@ -149,6 +153,7 @@ static void Camera_SetConfig( void )
 {
 	trap_Cvar_SetValue( "cg_thirdPersonRange", s_camera.rangeSlider.curvalue );
 	trap_Cvar_SetValue( "cg_thirdPersonHeight", s_camera.heightSlider.curvalue );
+	trap_Cvar_SetValue( "cg_thirdPersonSlide", s_camera.slideSlider.curvalue );
 	trap_Cvar_SetValue( "cg_thirdPersonAngle", s_camera.angleSlider.curvalue );
 }
 
@@ -171,6 +176,7 @@ static void Camera_MenuEvent( void* ptr, int event ) {
 			break;
 		case ID_RANGE:
 		case ID_HEIGHT:
+		case ID_SLIDE:
 		case ID_ANGLE:
 			if (event == QM_ACTIVATED)
 			{
@@ -210,8 +216,8 @@ static void Camera_MenuInit( void )
 	s_camera.rangeSlider.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_camera.rangeSlider.generic.callback	= Camera_MenuEvent;
 	s_camera.rangeSlider.generic.id			= ID_RANGE;
-	s_camera.rangeSlider.generic.x			= SCREEN_WIDTH/2 - 200 - 20;
-	s_camera.rangeSlider.generic.y			= 400;
+	s_camera.rangeSlider.generic.x			= 70;
+	s_camera.rangeSlider.generic.y			= 40;
 	s_camera.rangeSlider.minvalue			= 15;
     s_camera.rangeSlider.maxvalue			= 150;
 
@@ -220,18 +226,28 @@ static void Camera_MenuInit( void )
 	s_camera.heightSlider.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_camera.heightSlider.generic.callback	= Camera_MenuEvent;
 	s_camera.heightSlider.generic.id		= ID_HEIGHT;
-	s_camera.heightSlider.generic.x			= SCREEN_WIDTH/2 - 20;
-	s_camera.heightSlider.generic.y			= 400;
-	s_camera.heightSlider.minvalue			= 0;
-    s_camera.heightSlider.maxvalue			= 150;
+	s_camera.heightSlider.generic.x			= 70;
+	s_camera.heightSlider.generic.y			= 60;
+	s_camera.heightSlider.minvalue			= -80;
+    s_camera.heightSlider.maxvalue			= 80;
+
+	s_camera.slideSlider.generic.type		= MTYPE_SLIDER;
+	s_camera.slideSlider.generic.name		= "Slide:";
+	s_camera.slideSlider.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_camera.slideSlider.generic.callback	= Camera_MenuEvent;
+	s_camera.slideSlider.generic.id			= ID_SLIDE;
+	s_camera.slideSlider.generic.x			= 70;
+	s_camera.slideSlider.generic.y			= 80;
+	s_camera.slideSlider.minvalue			= -150;
+    s_camera.slideSlider.maxvalue			= 150;
 
 	s_camera.angleSlider.generic.type		= MTYPE_SLIDER;
 	s_camera.angleSlider.generic.name		= "Angle:";
 	s_camera.angleSlider.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_camera.angleSlider.generic.callback	= Camera_MenuEvent;
 	s_camera.angleSlider.generic.id			= ID_ANGLE;
-	s_camera.angleSlider.generic.x			= SCREEN_WIDTH/2 + 200 - 20;
-	s_camera.angleSlider.generic.y			= 400;
+	s_camera.angleSlider.generic.x			= 70;
+	s_camera.angleSlider.generic.y			= 100;
 	s_camera.angleSlider.minvalue			= 0;
     s_camera.angleSlider.maxvalue			= 359;
 
@@ -250,6 +266,7 @@ static void Camera_MenuInit( void )
 
 	Menu_AddItem( &s_camera.menu, &s_camera.rangeSlider );
 	Menu_AddItem( &s_camera.menu, &s_camera.heightSlider );
+	Menu_AddItem( &s_camera.menu, &s_camera.slideSlider );
 	Menu_AddItem( &s_camera.menu, &s_camera.angleSlider );
 
 	Menu_AddItem( &s_camera.menu, &s_camera.back );

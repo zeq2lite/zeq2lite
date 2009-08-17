@@ -104,7 +104,7 @@ void CG_NextTrack(void){
 	qtime_t realRandom;
 	playlistSize = cgs.music.playlistSize[cgs.music.currentType];
 	nextIndex = (nextIndex < playlistSize) ? cgs.music.currentIndex + 1 : 0;
-	trap_Cvar_Set("s_musicvolume","0.7");
+	trap_Cvar_Set("s_musicvolume","0.0");
 	if(cgs.music.random){
 		trap_RealTime(&realRandom);
 		nextIndex = (int)(Q_random(&realRandom.tm_sec) * (float)(playlistSize));

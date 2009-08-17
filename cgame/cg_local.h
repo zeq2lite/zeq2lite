@@ -1267,6 +1267,7 @@ extern	vmCvar_t		cg_thirdPersonMeleeTargetDamp;
 extern	vmCvar_t		cg_thirdPersonRange;
 extern	vmCvar_t		cg_thirdPersonAngle;
 extern	vmCvar_t		cg_thirdPersonHeight;
+extern	vmCvar_t		cg_thirdPersonSlide;
 extern	vmCvar_t		cg_thirdPerson;
 extern	vmCvar_t		cg_stereoSeparation;
 extern	vmCvar_t		cg_lagometer;

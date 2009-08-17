@@ -295,6 +295,7 @@ CG_CalcTargetThirdPersonViewLocation
 static void CG_CalcIdealThirdPersonViewTarget(void)
 {
 	float vertOffset = cg_thirdPersonHeight.value;
+	float horzOffset = cg_thirdPersonSlide.value;
 
 	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){vertOffset = 0;}
 
@@ -307,6 +308,7 @@ static void CG_CalcIdealThirdPersonViewTarget(void)
 	VectorCopy( cameraFocusLoc, cameraIdealTarget );
 
 	cameraIdealTarget[2] += vertOffset;
+	cameraIdealTarget[1] += horzOffset;
 }
 
 /*
@@ -341,7 +343,7 @@ static void CG_ResetThirdPersonViewDamp(void)
 	AngleVectors(cameraFocusAngles, camerafwd, NULL, cameraup);
 
 	// Set the cameraIdealTarget
-	CG_CalcIdealThirdPersonViewTarget();
+	//CG_CalcIdealThirdPersonViewTarget();
 
 	// Set the cameraIdealLoc
 	CG_CalcIdealThirdPersonViewLocation();
@@ -783,6 +785,7 @@ static void CG_OffsetThirdPersonView( void ) {
 		cg_thirdPersonHeight.value = ci->cameraBackup[1];
 		cg_thirdPersonRange.value = ci->cameraBackup[2];
 	}
+	view[1] += cg_thirdPersonSlide.value;
 	view[2] += cg_thirdPersonHeight.value;
 	forwardScale = cos( cg_thirdPersonAngle.value / 180 * M_PI );	
 	sideScale = sin( cg_thirdPersonAngle.value / 180 * M_PI );
@@ -833,7 +836,8 @@ static void CG_OffsetThirdPersonView( void ) {
 			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
 			VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
 			VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
-			VectorMA( overrideOrg, 8 + cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
+			VectorMA( overrideOrg, cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
+			VectorMA( overrideOrg, cg_thirdPersonSlide.value, right, cg.refdef.vieworg );
 			VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
 			if (!cg_cameraMode.integer) {
 				CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, clientNum, MASK_SOLID );
