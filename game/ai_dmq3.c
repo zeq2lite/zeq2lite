@@ -3656,6 +3656,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		case EV_WATER_LEAVE:
 		case EV_WATER_UNDER:
 		case EV_WATER_CLEAR:
+		case EV_WATER_SPLASH:
 		case EV_ITEM_PICKUP:
 		case EV_GLOBAL_ITEM_PICKUP:
 		case EV_NOAMMO:

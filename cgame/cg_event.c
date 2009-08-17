@@ -634,6 +634,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_WATER_CLEAR");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.ogg" ) );
 		break;
+	case EV_WATER_SPLASH:
+		DEBUGNAME("EV_WATER_SPLASH");
+		CG_WaterSplash(es->origin,1);
+		break;
 	case EV_ITEM_PICKUP:
 		DEBUGNAME("EV_ITEM_PICKUP");
 		{

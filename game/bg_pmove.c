@@ -1362,6 +1362,14 @@ Generate sound events for entering and leaving water
 ==============
 */
 void PM_WaterEvents(void){		// FIXME?
+/*
+	//
+	// ifjust entered a water volume at a high velocity, play a sound and effect
+	//
+	if(!pml.previous_waterlevel && pm->waterlevel && pm->xyspeed > 200) {
+		PM_AddEvent(EV_WATER_SPLASH );
+	}
+*/
 	//
 	// ifjust entered a water volume, play a sound
 	//

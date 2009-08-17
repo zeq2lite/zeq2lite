@@ -185,6 +185,55 @@ void CG_SpawnEffect( vec3_t org ) {
 
 /*
 ==================
+CG_WaterSplash
+
+==================
+*/
+void CG_WaterSplash( vec3_t org, int size ) {
+	localEntity_t	*le;
+	refEntity_t		*re;
+
+	le = CG_AllocLocalEntity();
+	le->leFlags = 0;
+	le->leType = LE_SCALE_FADE;
+	le->startTime = cg.time;
+	le->endTime = cg.time + 1000;
+	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+	le->radius = 64;
+
+	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
+
+	re = &le->refEntity;
+
+	re->reType = RT_MODEL;
+	re->radius = le->radius;
+
+	re->shaderRGBA[0] = le->color[0] * 0xff;
+	re->shaderRGBA[1] = le->color[1] * 0xff;
+	re->shaderRGBA[2] = le->color[2] * 0xff;
+	re->shaderRGBA[3] = 0xff;
+
+	re->customSkin = cgs.media.waterSplashSkin;
+	re->hModel = cgs.media.waterSplashModel;
+
+	// bias the time so all shader effects start correctly
+	re->shaderTime = le->startTime / 1000.0f;
+
+	AxisClear( re->axis );
+
+	re->nonNormalizedAxes = qtrue;
+	VectorNormalize(re->axis[0]);
+	VectorNormalize(re->axis[1]);
+	VectorNormalize(re->axis[2]);
+	VectorScale(re->axis[0], size, re->axis[0]);
+	VectorScale(re->axis[1], size, re->axis[1]);
+	VectorScale(re->axis[2], size, re->axis[2]);
+
+	VectorCopy( org, re->origin );
+}
+
+/*
+==================
 CG_LightningEffect
 
 Player lightning effect.

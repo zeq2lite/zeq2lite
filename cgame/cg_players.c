@@ -2203,17 +2203,30 @@ Draw a mark at the water surface
 ===============
 */
 static void CG_PlayerSplash( centity_t *cent ) {
-	vec3_t		start, end;
-	trace_t		trace;
-	int			contents;
-	polyVert_t	verts[4];
+	vec3_t			start, end;
+	trace_t			trace;
+	polyVert_t		verts[4];
+	entityState_t	*s1;
+	vec3_t			origin, lastPos;
+	int				contents, lastContents,anim;
+	s1 = &cent->currentState;
 
-	if ( !cg_shadows.integer ) {
-		return;
-	}
+	// Water bubble/splash setup
+
+	BG_EvaluateTrajectory( s1, &s1->pos, cg.time, origin );
+	contents = trap_CM_PointContents( origin, 0 );
+
+	BG_EvaluateTrajectory( s1, &s1->pos, cent->trailTime, lastPos );
+	lastContents = trap_CM_PointContents( lastPos, 0 );
 
 	VectorCopy( cent->lerpOrigin, end );
 	end[2] -= 24;
+
+	VectorCopy( cent->lerpOrigin, start );
+	start[2] += 32;
+
+	// trace down to find the surface
+	trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) );
 
 	// if the feet aren't in liquid, don't make a mark
 	// this won't handle moving water brushes, but they wouldn't draw right anyway...
@@ -2222,21 +2235,32 @@ static void CG_PlayerSplash( centity_t *cent ) {
 		return;
 	}
 
-	VectorCopy( cent->lerpOrigin, start );
-	start[2] += 32;
-
 	// if the head isn't out of liquid, don't make a mark
 	contents = trap_CM_PointContents( start, 0 );
 	if ( contents & ( CONTENTS_SOLID | CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
 		return;
 	}
 
-	// trace down to find the surface
-	trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) );
-
 	if ( trace.fraction == 1.0 ) {
 		return;
 	}
+
+	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
+	if ( anim != LEGS_IDLE && 
+		anim != LEGS_IDLE_LOCKED && 
+		anim != LEGS_IDLECR && 
+		anim != LEGS_TURN &&
+		anim != LEGS_FLY_IDLE &&
+		anim < LEGS_KI_ATTACK1_PREPARE) {
+		CG_WaterSplash(trace.endpos,1);
+	}
+	//if (lastContents & CONTENTS_WATER &&/*contents != lastContents*/) {
+	//	CG_WaterSplash(trace.endpos,1);
+	//}
+
+	//CG_Printf("Time: %i Trail Time: %i Contents: %i Last Contents: %i\n",cg.time,cent->trailTime,contents,lastContents);
+
+	cent->trailTime = cg.time;
 
 	// create a mark polygon
 	VectorCopy( trace.endpos, verts[0].xyz );

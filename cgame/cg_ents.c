@@ -703,9 +703,22 @@ static void CG_Missile( centity_t *cent ) {
 	int					missilePowerLevelTotal;
 	float				radiusScale;
 	qboolean			missileIsStruggling;
+	vec3_t	origin, lastPos;
+	int		contents;
+	int		lastContents;
 	ps = &cg.predictedPlayerState;
 	s1 = &cent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
+
+	// Water bubble/splash setup
+
+	BG_EvaluateTrajectory( s1, &s1->pos, cg.time, origin );
+	contents = CG_PointContents( origin, -1 );
+
+	BG_EvaluateTrajectory( s1, &s1->pos, cent->trailTime, lastPos );
+	lastContents = CG_PointContents( lastPos, -1 );
+
+	cent->trailTime = cg.time;
 
 	// The missile's charge level was stored in this field. We hijacked it on the
 	// server to be able to transmit the missile's own charge level.
@@ -764,11 +777,18 @@ static void CG_Missile( centity_t *cent ) {
 		VectorCopy(cent->lerpOrigin, cg.guide_target);
 		cg.guide_view = qtrue;
 	}
+
+	if (contents != lastContents) {
+		CG_WaterSplash( lastPos, missileScale);
+	}
+
 	// add trails
 	if ( weaponGraphics->missileTrailShader && weaponGraphics->missileTrailRadius ) {
 		if ( cent->currentState.eType == ET_MISSILE ) {
 			CG_TrailFunc_FadeTail( cent );
-
+			if ( contents & lastContents & CONTENTS_WATER ) {
+				CG_BubbleTrail( lastPos, origin, 64 );
+			}
 		} else if ( cent->currentState.eType == ET_BEAMHEAD ) {
 			if ( cent->currentState.eFlags & EF_GUIDED  &&
 						!weaponGraphics->missileTrailSpiralShader &&
