@@ -2255,7 +2255,8 @@ static void CG_PlayerSplash( centity_t *cent ) {
 		anim < LEGS_KI_ATTACK1_PREPARE) {
 
 		xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
-		cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] );
+		cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] + 
+		cent->currentState.pos.trDelta[2] * cent->currentState.pos.trDelta[2]);
 
 		CG_WaterSplash(trace.endpos,1+(xyzspeed/100));
 

@@ -746,6 +746,10 @@ static void CG_Missile( centity_t *cent ) {
 		splash = qfalse;
 	}
 
+	if (splash) {
+		CG_WaterSplash(trace.endpos, missileScale);
+	}
+
 	cent->trailTime = cg.time;
 
 	// The missile's charge level was stored in this field. We hijacked it on the
@@ -806,23 +810,19 @@ static void CG_Missile( centity_t *cent ) {
 		cg.guide_view = qtrue;
 	}
 
-	if (splash) {
-		CG_WaterSplash(trace.endpos, missileScale);
-	}
-
 	if ( cent->trailTime > cg.time ) {
 		splash = qfalse;
 	}
 
-	cent->trailTime += 1250;
+	cent->trailTime += 250;
 
 	if ( cent->trailTime < cg.time ) {
 		cent->trailTime = cg.time;
 	}
 
-	if (splash) {
-		CG_WaterRipple(trace.endpos, missileScale);
-	}
+	//if (splash) {
+	//	CG_WaterRipple(trace.endpos, missileScale);
+	//}
 
 	// add trails
 	if ( weaponGraphics->missileTrailShader && weaponGraphics->missileTrailRadius ) {
