@@ -1314,13 +1314,13 @@ extern	vmCvar_t		cg_blueTeamName;
 extern	vmCvar_t		cg_currentSelectedPlayer;
 extern	vmCvar_t		cg_currentSelectedPlayerName;
 extern	vmCvar_t		cg_singlePlayer;
-extern	vmCvar_t		cg_enableDust;
-extern	vmCvar_t		cg_enableBreath;
 extern	vmCvar_t		cg_singlePlayerActive;
 extern  vmCvar_t		cg_recordSPDemo;
 extern  vmCvar_t		cg_recordSPDemoName;
 extern	vmCvar_t		cg_obeliskRespawnDelay;
 #endif
+extern	vmCvar_t		cg_enableDust;
+extern	vmCvar_t		cg_enableBreath;
 //ADDING FOR ZEQ2
 extern	vmCvar_t		cg_lockonDistance;
 extern	vmCvar_t		cg_tailDetail;
@@ -1607,6 +1607,16 @@ localEntity_t *CG_SmokePuff( const vec3_t p,
 				   int fadeInTime,
 				   int leFlags,
 				   qhandle_t hShader );
+localEntity_t *CG_WaterBubble( const vec3_t p, 
+				   const vec3_t vel, 
+				   float radius,
+				   float r, float g, float b, float a,
+				   float duration,
+				   int startTime,
+				   int fadeInTime,
+				   int leFlags,
+				   qhandle_t hShader );
+void CG_PlayerSplash( centity_t *cent, int scale );
 void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing );
 void CG_SpawnEffect( vec3_t org );
 void CG_WaterRipple( vec3_t org, int size );

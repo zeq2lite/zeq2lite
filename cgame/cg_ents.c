@@ -712,7 +712,7 @@ static void CG_Missile( centity_t *cent ) {
 	ps = &cg.predictedPlayerState;
 	s1 = &cent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
-
+/*
 	// Water bubble/splash setup
 
 	BG_EvaluateTrajectory( s1, &s1->pos, cg.time, origin );
@@ -746,12 +746,8 @@ static void CG_Missile( centity_t *cent ) {
 		splash = qfalse;
 	}
 
-	if (splash) {
-		CG_WaterSplash(trace.endpos, missileScale);
-	}
-
 	cent->trailTime = cg.time;
-
+*/
 	// The missile's charge level was stored in this field. We hijacked it on the
 	// server to be able to transmit the missile's own charge level.
 	missileChargeLvl = s1->powerups;
@@ -809,21 +805,11 @@ static void CG_Missile( centity_t *cent ) {
 		VectorCopy(cent->lerpOrigin, cg.guide_target);
 		cg.guide_view = qtrue;
 	}
-
-	if ( cent->trailTime > cg.time ) {
-		splash = qfalse;
+/*
+	if (splash) {
+		CG_WaterSplash(trace.endpos, missileScale);
 	}
-
-	cent->trailTime += 250;
-
-	if ( cent->trailTime < cg.time ) {
-		cent->trailTime = cg.time;
-	}
-
-	//if (splash) {
-	//	CG_WaterRipple(trace.endpos, missileScale);
-	//}
-
+*/
 	// add trails
 	if ( weaponGraphics->missileTrailShader && weaponGraphics->missileTrailRadius ) {
 		if ( cent->currentState.eType == ET_MISSILE ) {
@@ -883,6 +869,7 @@ static void CG_Missile( centity_t *cent ) {
 		//ent.shaderRGBA[2] = radiusScale;
 		//ent.shaderRGBA[3] = radiusScale;
 		trap_R_AddRefEntityToScene( &ent );
+		CG_PlayerSplash(cent, 500 / (missileScale / 4));
 	} else {
 		ent.reType = RT_MODEL;
 		if ( (weaponGraphics->missileStruggleModel && weaponGraphics->missileStruggleSkin) && missileIsStruggling/*(s1->dashDir[2] != 0.0f)*/) {
@@ -946,6 +933,7 @@ static void CG_Missile( centity_t *cent ) {
 		VectorScale(ent.axis[2], missileScale, ent.axis[2]);
 
 		trap_R_AddRefEntityToScene( &ent );
+		CG_PlayerSplash(cent, 500 / missileScale);
 	}
 
 	// Check if the missile is in a struggle, and if so, do effects for it.

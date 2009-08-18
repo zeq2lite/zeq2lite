@@ -142,6 +142,85 @@ localEntity_t *CG_SmokePuff( const vec3_t p, const vec3_t vel,
 	return le;
 }
 
+
+/*
+=====================
+CG_WaterBubble
+
+Adds a water bubble localEntity.
+=====================
+*/
+localEntity_t *CG_WaterBubble( const vec3_t p, const vec3_t vel, 
+				   float radius,
+				   float r, float g, float b, float a,
+				   float duration,
+				   int startTime,
+				   int fadeInTime,
+				   int leFlags,
+				   qhandle_t hShader ) {
+	static int	seed = 0x92;
+	localEntity_t	*le;
+	refEntity_t		*re;
+	int contents;
+
+	le = CG_AllocLocalEntity();
+	le->leFlags = leFlags;
+	le->radius = radius;
+
+	re = &le->refEntity;
+	re->rotation = Q_random( &seed ) * 360;
+	re->radius = radius;
+	re->shaderTime = startTime / 1000.0f;
+
+	le->leType = LE_MOVE_SCALE_FADE;
+	le->startTime = startTime;
+	le->fadeInTime = fadeInTime;
+	le->endTime = startTime + duration;
+	if ( fadeInTime > startTime ) {
+		le->lifeRate = 1.0 / ( le->endTime - le->fadeInTime );
+	}
+	else {
+		le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+	}
+	le->color[0] = r;
+	le->color[1] = g; 
+	le->color[2] = b;
+	le->color[3] = a;
+
+	le->pos.trType = TR_LINEAR;
+	le->pos.trTime = startTime;
+	VectorCopy( vel, le->pos.trDelta );
+	VectorCopy( p, le->pos.trBase );
+
+	VectorCopy( p, re->origin );
+	re->customShader = hShader;
+
+	// rage pro can't alpha fade, so use a different shader
+	if ( cgs.glconfig.hardwareType == GLHW_RAGEPRO ) {
+		re->customShader = cgs.media.smokePuffRageProShader;
+		re->shaderRGBA[0] = 0xff;
+		re->shaderRGBA[1] = 0xff;
+		re->shaderRGBA[2] = 0xff;
+		re->shaderRGBA[3] = 0xff;
+	} else {
+		re->shaderRGBA[0] = le->color[0] * 0xff;
+		re->shaderRGBA[1] = le->color[1] * 0xff;
+		re->shaderRGBA[2] = le->color[2] * 0xff;
+		re->shaderRGBA[3] = 0xff;
+	}
+
+	re->reType = RT_SPRITE;
+	re->radius = le->radius;
+
+	contents = trap_CM_PointContents( re->origin, 0 );
+
+	if ( !(contents & CONTENTS_WATER ) ) {
+		le->fadeInTime = 0;
+	}
+
+	return le;
+}
+
 /*
 ==================
 CG_SpawnEffect
@@ -200,7 +279,7 @@ void CG_WaterRipple( vec3_t org, int size ) {
 	le->leFlags = 0;
 	le->leType = LE_ZEQSPLASH;
 	le->startTime = cg.time;
-	le->endTime = cg.time + 1000;
+	le->endTime = cg.time + 100 * size;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 
 	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
@@ -249,7 +328,7 @@ void CG_WaterSplash( vec3_t org, int size ) {
 	le->leFlags = 0;
 	le->leType = LE_ZEQSPLASH;
 	le->startTime = cg.time;
-	le->endTime = cg.time + 1000;
+	le->endTime = cg.time + 100 * size;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 
 	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
@@ -274,16 +353,25 @@ void CG_WaterSplash( vec3_t org, int size ) {
 	// set axis with random rotate
 	ang = rand() % 360;
 
+	// avoid horizontal angles
+	if ((ang >= 70.0f && ang <= 110.0f) || (ang >= 250.0f && ang <= 290.0f)) {
+		ang = rand() % 69;
+	}
+
 	VectorCopy( re->axis[0], oldAxis[0] );
 	VectorCopy( re->axis[1], oldAxis[1] );
+
 	RotateAroundDirection( re->axis, ang );
+
 	VectorCopy( oldAxis[0], re->axis[0] );
 	VectorCopy( oldAxis[1], re->axis[1] );
 
 	re->nonNormalizedAxes = qtrue;
+
 	VectorNormalize(re->axis[0]);
 	VectorNormalize(re->axis[1]);
 	VectorNormalize(re->axis[2]);
+
 	VectorScale(re->axis[0], size, re->axis[0]);
 	VectorScale(re->axis[1], size, re->axis[1]);
 	VectorScale(re->axis[2], size, re->axis[2]);

@@ -165,13 +165,13 @@ vmCvar_t 	cg_blueTeamName;
 vmCvar_t	cg_currentSelectedPlayer;
 vmCvar_t	cg_currentSelectedPlayerName;
 vmCvar_t	cg_singlePlayer;
-vmCvar_t	cg_enableDust;
-vmCvar_t	cg_enableBreath;
 vmCvar_t	cg_singlePlayerActive;
 vmCvar_t	cg_recordSPDemo;
 vmCvar_t	cg_recordSPDemoName;
 vmCvar_t	cg_obeliskRespawnDelay;
 #endif
+vmCvar_t	cg_enableDust;
+vmCvar_t	cg_enableBreath;
 //ADDING FOR ZEQ2
 vmCvar_t	cg_lockonDistance;
 vmCvar_t	cg_tailDetail;
@@ -297,14 +297,14 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_currentSelectedPlayer, "cg_currentSelectedPlayer", "0", CVAR_ARCHIVE},
 	{ &cg_currentSelectedPlayerName, "cg_currentSelectedPlayerName", "", CVAR_ARCHIVE},
 	{ &cg_singlePlayer, "ui_singlePlayerActive", "0", CVAR_USERINFO},
-	{ &cg_enableDust, "g_enableDust", "0", CVAR_SERVERINFO},
-	{ &cg_enableBreath, "g_enableBreath", "0", CVAR_SERVERINFO},
 	{ &cg_singlePlayerActive, "ui_singlePlayerActive", "0", CVAR_USERINFO},
 	{ &cg_recordSPDemo, "ui_recordSPDemo", "0", CVAR_ARCHIVE},
 	{ &cg_recordSPDemoName, "ui_recordSPDemoName", "", CVAR_ARCHIVE},
 	{ &cg_obeliskRespawnDelay, "g_obeliskRespawnDelay", "10", CVAR_SERVERINFO},
 	{ &cg_hudFiles, "cg_hudFiles", "ui/hud.txt", CVAR_ARCHIVE},
 #endif
+	{ &cg_enableDust, "g_enableDust", "0", CVAR_SERVERINFO},
+	{ &cg_enableBreath, "g_enableBreath", "1", CVAR_SERVERINFO},
 	{ &cg_cameraOrbit, "cg_cameraOrbit", "0", CVAR_ARCHIVE},
 	{ &cg_cameraOrbitDelay, "cg_cameraOrbitDelay", "50", CVAR_ARCHIVE},
 	{ &cg_timescaleFadeEnd, "cg_timescaleFadeEnd", "1", 0},

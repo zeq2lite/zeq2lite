@@ -1734,7 +1734,6 @@ static void CG_HasteTrail( centity_t *cent ) {
 	smoke->leType = LE_SCALE_FADE;
 }
 
-#ifdef MISSIONPACK
 /*
 ===============
 CG_BreathPuffs
@@ -1747,9 +1746,6 @@ static void CG_BreathPuffs( centity_t *cent, refEntity_t *head) {
 
 	ci = &cgs.clientinfo[ cent->currentState.number ];
 
-	if (!cg_enableBreath.integer) {
-		return;
-	}
 	if ( cent->currentState.number == cg.snap->ps.clientNum && !cg.renderingThirdPerson) {
 		return;
 	}
@@ -1758,19 +1754,20 @@ static void CG_BreathPuffs( centity_t *cent, refEntity_t *head) {
 	}
 	contents = trap_CM_PointContents( head->origin, 0 );
 	if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
-		return;
-	}
-	if ( ci->breathPuffTime > cg.time ) {
-		return;
-	}
 
-	VectorSet( up, 0, 0, 8 );
-	VectorMA(head->origin, 8, head->axis[0], origin);
-	VectorMA(origin, -4, head->axis[2], origin);
-	CG_SmokePuff( origin, up, 16, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 400, LEF_PUFF_DONT_SCALE, cgs.media.shotgunSmokePuffShader );
-	ci->breathPuffTime = cg.time + 2000;
+		if ( ci->breathPuffTime > cg.time ) {
+			return;
+		}
+
+		VectorSet( up, 0, 0, 32 + rand() % 32 );
+		VectorMA(head->origin, 8, head->axis[0], origin);
+		VectorMA(origin, -4, head->axis[2], origin);
+		CG_WaterBubble( origin, up, 1 + rand() % 5, 1, 1, 1, 1, 1500, cg.time, cg.time + 400 + rand() % 400, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleShader );
+		ci->breathPuffTime = cg.time + rand() % 2000;
+	}
 }
 
+#ifdef MISSIONPACK
 /*
 ===============
 CG_DustTrail
@@ -2202,17 +2199,24 @@ CG_PlayerSplash
 Draw a mark at the water surface
 ===============
 */
-static void CG_PlayerSplash( centity_t *cent ) {
+void CG_PlayerSplash( centity_t *cent, int scale ) {
 	vec3_t			start, end;
+	vec3_t			origin, lastPos;
 	trace_t			trace;
 	polyVert_t		verts[4];
 	entityState_t	*s1;
-	vec3_t			origin, lastPos;
-	int				contents, lastContents,anim;
+	clientInfo_t	*ci;
+	int				contents, lastContents;
+	int				powerBoost;
 	float			xyzspeed;
 	s1 = &cent->currentState;
 
 	// Water bubble/splash setup
+
+	// Measure the objects velocity
+	xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
+	cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] + 
+	cent->currentState.pos.trDelta[2] * cent->currentState.pos.trDelta[2]);
 
 	BG_EvaluateTrajectory( s1, &s1->pos, cg.time, origin );
 	contents = trap_CM_PointContents( origin, 0 );
@@ -2221,10 +2225,18 @@ static void CG_PlayerSplash( centity_t *cent ) {
 	lastContents = trap_CM_PointContents( lastPos, 0 );
 
 	VectorCopy( cent->lerpOrigin, end );
-	end[2] -= 24;
-
 	VectorCopy( cent->lerpOrigin, start );
-	start[2] += 32;
+
+	// If the player is charging/boosting/transforming and they are not moving, increase the splash detection and power.
+	if (!xyzspeed && (cent->currentState.eFlags & EF_AURA)) {
+		powerBoost = 5;
+		start[2] += 512;
+		end[2] -= 512;
+	} else {
+		powerBoost = 1;
+		start[2] += 32;
+		end[2] -= 24;
+	}
 
 	// trace down to find the surface
 	trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) );
@@ -2246,31 +2258,29 @@ static void CG_PlayerSplash( centity_t *cent ) {
 		return;
 	}
 
-	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if (anim != LEGS_IDLE && 
-		anim != LEGS_IDLE_LOCKED && 
-		anim != LEGS_IDLECR && 
-		anim != LEGS_TURN &&
-		anim != LEGS_FLY_IDLE &&
-		anim < LEGS_KI_ATTACK1_PREPARE) {
+	if (xyzspeed || (cent->currentState.eFlags & EF_AURA)) {
 
-		xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
-		cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] + 
-		cent->currentState.pos.trDelta[2] * cent->currentState.pos.trDelta[2]);
+		if (!xyzspeed && (cent->currentState.eFlags & EF_AURA)) {
+			powerBoost = 6;
+		} else {
+			powerBoost = 1;
+		}
 
-		CG_WaterSplash(trace.endpos,1+(xyzspeed/100));
+		if (powerBoost == 1) {
+			CG_WaterSplash(trace.endpos,powerBoost+(xyzspeed/scale));
+		}
 
 		if ( cent->trailTime > cg.time ) {
 			return;
 		}
 
-		cent->trailTime += 250;
+		cent->trailTime += 500;
 
 		if ( cent->trailTime < cg.time ) {
 			cent->trailTime = cg.time;
 		}
 
-		CG_WaterRipple(trace.endpos,1+(xyzspeed/100));
+		CG_WaterRipple(trace.endpos,powerBoost+(xyzspeed/scale));
 
 		return;
 	}
@@ -2420,7 +2430,7 @@ void CG_Player( centity_t *cent ) {
 		ci->tierMax = ci->tierCurrent;
 	}
 	renderfx = 0;
-	CG_PlayerSplash(cent);
+	CG_PlayerSplash(cent,100);
 	//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
 	//else if(cg_cameraMode.integer){return;}
 	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == ps->clientNum) && (ps->bitFlags & usingZanzoken))) {
@@ -2469,6 +2479,7 @@ void CG_Player( centity_t *cent ) {
 	head.shadowPlane = shadowPlane;
 	head.renderfx = renderfx;
 	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	CG_BreathPuffs(cent,&head);
 	memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
 	memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
 	memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));

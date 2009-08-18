@@ -599,11 +599,10 @@ static void CG_AddZEQExplosion( localEntity_t *le ) {
 	refEntity_t	*ent;
 	float		c;
 	float		RGBfade;
+	float		phase ;
 	vec3_t		tmpAxes[3];
 	
 	ent = &le->refEntity;
-
-	
 
 	RGBfade = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime );
 	if ( RGBfade < 0.5 ) {
@@ -617,9 +616,9 @@ static void CG_AddZEQExplosion( localEntity_t *le ) {
 	ent->shaderRGBA[2] = 0xff * RGBfade;
 	ent->shaderRGBA[3] = 0xff * RGBfade;
 	
-
 	// grow time
-	c = ( le->endTime - cg.time ) * le->lifeRate;
+	phase = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime ) * M_PI / 1.5f;
+	c = 1.0f + (sin(phase));
 
 	// preserve the full scale
 	VectorCopy(ent->axis[0], tmpAxes[0]);
@@ -675,14 +674,10 @@ static void CG_AddZEQSplash( localEntity_t *le ) {
 		RGBfade = 1.0 - ( RGBfade - 0.5 ) * 2;
 	}
 
-	/*ent->shaderRGBA[0] = 0xff * RGBfade;
-	ent->shaderRGBA[1] = 0xff * RGBfade;
-	ent->shaderRGBA[2] = 0xff * RGBfade;*/
 	ent->shaderRGBA[3] = 0xff * RGBfade;
 	
-
 	// grow time
-	c = ( le->endTime - cg.time ) * le->lifeRate;
+	c = ( le->endTime - cg.time ) * le->lifeRate / 2;
 
 	// preserve the full scale
 	VectorCopy(ent->axis[0], tmpAxes[0]);
