@@ -597,7 +597,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_LOCKON_START:
 		DEBUGNAME("EV_LOCKON_START");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
+		if(!cg.snap->ps.clientLockedTarget){
+			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
+		}
 		break;
 	case EV_LOCKON_END:
 		DEBUGNAME("EV_LOCKON_END");
