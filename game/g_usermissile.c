@@ -1007,6 +1007,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 		bolt->damage = weaponInfo->damage_damage;
 		bolt->splashRadius = weaponInfo->damage_radius;
+		bolt->splashDuration = weaponInfo->damage_radiusDuration;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		bolt->isSwattable = weaponInfo->physics_swat;
 		bolt->isDrainable = weaponInfo->physics_drain;
@@ -1208,6 +1209,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		VectorCopy( self->client->ps.viewangles, bolt->s.angles ); // store the correct angles
 		bolt->damage = weaponInfo->damage_damage;
 		bolt->splashRadius = weaponInfo->damage_radius;
+		bolt->splashDuration = weaponInfo->damage_radiusDuration;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		bolt->isSwattable = weaponInfo->physics_swat;
 		bolt->isDrainable = weaponInfo->physics_drain;
@@ -1349,6 +1351,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		
 		bolt->damage = weaponInfo->damage_damage;
 		bolt->splashRadius = weaponInfo->damage_radius;
+		bolt->splashDuration = weaponInfo->damage_radiusDuration;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
@@ -1762,6 +1765,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	gentity_t		*other;
 	qboolean		hitClient = qfalse;
 	vec3_t	velocity;
+	int radius;
 	other = &g_entities[trace->entityNum];
 	G_LocationImpact(trace->endpos,other,GetMissileOwnerEntity(self));
 	// If the attack is already in a struggle with a player,
@@ -1869,25 +1873,14 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 				G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
 				self->s.otherEntityNum = other->s.number;
 			}
-			else if(trace->surfaceFlags & SURF_METALSTEPS){
-				G_AddEvent( self, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
-				//G_Printf("Hit World!\n");
-			}
-			else{
-				G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
-				//G_Printf("Hit World!\n");
-			}
-			self->freeAfterEvent = qtrue;
-			// Change over to a normal stationary entity right at the point of impact
-			self->s.eType = ET_GENERAL;
+			else if(trace->surfaceFlags & SURF_METALSTEPS){G_AddEvent( self, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );}
+			else{G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );}
 			SnapVectorTowards( trace->endpos, self->s.pos.trBase );	// save net bandwidth
 			G_SetOrigin( self, trace->endpos );
-			if( G_UserRadiusDamage( trace->endpos, GetMissileOwnerEntity(self), self, self->powerLevelCurrent, self->splashRadius, self->methodOfDeath, self->extraKnockback )) {
-				if( !hitClient ) {
-					g_entities[self->s.clientNum].client->accuracy_hits++;
-				}
-			}
-			trap_LinkEntity( self );
+			self->s.eType = ET_EXPLOSION;
+			self->splashEnd = level.time + self->splashDuration;
+			self->splashTimer = level.time;
+			trap_LinkEntity(self);
 		}
 	}
 }
@@ -1936,7 +1929,20 @@ void Missile_Smooth (gentity_t *ent, vec3_t origin, trace_t *tr) {
      R U N   F R A M E   F U N C T I O N S
    -----------------------------------------
 */
-
+void G_RunUserExplosion(gentity_t *ent) {
+	int radius,power;
+	float step;
+	if(level.time + 250 > ent->splashTimer){
+		ent->splashTimer = level.time;
+		step = (1.0 - ((float)ent->splashEnd - (float)level.time) / (float)ent->splashDuration);
+		radius = step * ent->splashRadius;
+		power = ent->powerLevelCurrent;
+		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,ent->powerLevelCurrent,radius,ent->methodOfDeath,ent->extraKnockback);
+	}
+	if(level.time >= ent->splashEnd){
+		ent->freeAfterEvent = qtrue;
+	}
+}
 void G_RunUserMissile( gentity_t *ent ) {
 	vec3_t		origin;
 	trace_t		trace;
@@ -1986,14 +1992,8 @@ void G_RunUserMissile( gentity_t *ent ) {
 
 		G_ImpactUserWeapon(ent, &trace);
 
-		if ((ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD)/* && ((ent->powerLevelCurrent <= 0)||(g_entities[trace.entityNum].client->ps.powerLevel[plHealth] <=0)) */) {
-			// Missile has changed to ET_GENERAL and has exploded, so we don't want
-			// to run the think function!
-			// Return immediately instead.
-			return;	
-		}
+		if ((ent->s.eType != ET_MISSILE) && (ent->s.eType != ET_BEAMHEAD)){return;}
 	}
-
 	// if the attack wasn't yet outside the player body
 	if (!ent->count) {
 		// check if the attack is outside the owner bbox

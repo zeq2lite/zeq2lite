@@ -263,10 +263,11 @@ typedef enum{
 	tmMelee2,
 	tmPowerRaise,
 	tmPowerAuto,
-	tmBlind,
 	tmFreeze,
+	tmBlind,
+	tmSoar,
 	tmStun,
-	tmTap,
+	tmTap
 }timers_t;
 
 typedef enum {
@@ -276,6 +277,7 @@ typedef enum {
 	PW_STATE,
 	PW_MELEE_STATE,
 	PW_KNOCKBACK_SPEED,
+	PW_SOAR_YAW,
 	PW_NUM_POWERUPS,
 }powerup_t;
 
@@ -288,18 +290,23 @@ typedef enum {
 #define usingZanzoken	0x00000020
 #define usingWeapon		0x00000040
 #define usingFlight		0x00000080
-#define usingMelee		0x00000100
-#define keyTierUp		0x00000200
-#define keyTierDown		0x00000400
-#define isTransforming	0x00000800
-#define isStruggling	0x00001000
-#define isUnconcious	0x00002000
-#define isDead			0x00004000
-#define isBreakingLimit	0x00008000
-#define isAutoClosing	0x00010000
-#define isGuiding		0x00020000
-#define isChargging		0x00040000
-#define isTargeted		0x00080000
+#define usingSoar		0x00000100
+#define usingMelee		0x00000200
+#define keyTierUp		0x00000400
+#define keyTierDown		0x00000800
+#define isTransforming	0x00001000
+#define isStruggling	0x00002000
+#define isUnconcious	0x00004000
+#define isDead			0x00008000
+#define isBreakingLimit	0x00010000
+#define isAutoClosing	0x00020000
+#define isGuiding		0x00040000
+#define isCharging		0x00080000
+#define isTargeted		0x00100000
+#define lockedPitch		0x00200000
+#define lockedYaw		0x00400000
+#define lockedRoll		0x00800000
+#define locked360		0x01000000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16
@@ -977,6 +984,7 @@ typedef enum {
 	ET_TORCH,
 	ET_SKIMMER,
 	ET_RIFT,
+	ET_EXPLOSION,
 	// -->
 
 	ET_EVENTS				// any of the EV_* events can be added freestanding

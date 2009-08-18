@@ -397,7 +397,35 @@ qboolean G_weapPhys_ParseRange( g_weapPhysParser_t *parser, g_weapPhysCategoryIn
 
 	return qtrue;
 }
+/*
+==========================
+G_weapPhys_ParseDuration
+==========================
+Parses 'duration' field.
+Syntax:
+'duration' '=' <int>
+*/
+qboolean G_weapPhys_ParseDuration(g_weapPhysParser_t *parser,g_weapPhysCategoryIndex_t category,int field) {
+	g_weapPhysToken_t	*token = &parser->token;
+	g_weapPhysScanner_t	*scanner = &parser->scanner;
+	if ( category != CAT_DETONATION ) {
+		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
+		return qfalse;
+	}
+	if ( token->tokenSym != TOKEN_INTEGER ) {
+		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
+		return qfalse;
+	}
+	g_weapPhysBuffer.damage_radiusDuration = token->intval;
+	if ( !G_weapPhys_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
 
+	return qtrue;
+}
 
 /*
 ==========================

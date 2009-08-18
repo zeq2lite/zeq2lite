@@ -77,6 +77,7 @@ typedef struct {
 	int					damage_damage;				// Amount of damage, done at the impact point.
 	int					damage_burn;
 	int					damage_radius;				// Splash radius of damage. Actual damage linearly decreases the further away you are from the impact point.
+	int					damage_radiusDuration;
 	int					damage_multiplier;			// Damage dealt = damage_damage + multiplier * charge level / 100.
 	int					damage_radiusMultiplier;	// Actual radius = damage_radius + multiplier * charge level / 100.
 	int					damage_playerHitType;

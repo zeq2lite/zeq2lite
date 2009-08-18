@@ -29,6 +29,7 @@ void PM_StopBoost(void);
 void PM_StopZanzoken(void);
 void PM_StopDash(void);
 void PM_StopJump(void);
+void PM_StopSoar(void);
 void PM_StopFlight(void);
 void PM_StopMovement(void);
 void PM_StopDirections(void);
@@ -204,6 +205,7 @@ void PM_CheckZanzoken(void){
 	vec3_t pre_vel, post_vel,minSize,maxSize,forward,up,end;
 	int speed,cost;
 	trace_t trace;
+	if(pm->ps->bitFlags & usingSoar){return;}
 	if(!(pm->cmd.buttons & BUTTON_LIGHTSPEED)){
 		pm->ps->timers[tmZanzoken] = -1;
 	}
@@ -407,7 +409,7 @@ void PM_CheckPowerLevel(void){
 			powerLevel[plFatigue] = pm->ps->powerLevel[plMaximum];
 		}
 	}
-	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !(pm->ps->bitFlags & isStruggling)){
+	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !(pm->ps->bitFlags & isStruggling) && !(pm->ps->bitFlags & usingSoar)){
 		pm->ps->bitFlags &= ~keyTierDown;
 		pm->ps->bitFlags &= ~keyTierUp;
 		pm->ps->bitFlags |= usingAlter;
@@ -482,6 +484,7 @@ void PM_StopDash(void){
 void PM_StopMovementTypes(void){
 	PM_StopDash();
 	PM_StopJump();
+	PM_StopSoar();
 	PM_StopZanzoken();
 	PM_StopKnockback();
 }
@@ -760,6 +763,7 @@ void PM_CheckBlock(void){
 		&& !(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)
 		&& !(pm->ps->bitFlags & usingMelee)
 		&& !(pm->ps->bitFlags & usingAlter)
+		&& !(pm->ps->bitFlags & usingSoar)
 		&& !(pm->ps->bitFlags & usingZanzoken)
 		&& !(pm->ps->bitFlags & usingWeapon)){
 		pm->ps->bitFlags |= usingBlock;
@@ -768,6 +772,13 @@ void PM_CheckBlock(void){
 /*===================
 PM_FlyMove
 ===================*/
+void PM_StopSoar(void){
+	pm->ps->bitFlags &= ~usingSoar;
+	pm->ps->bitFlags &= ~lockedRoll;
+	pm->ps->bitFlags &= ~lockedPitch;
+	pm->ps->bitFlags &= ~lockedYaw;
+	pm->ps->bitFlags &= ~locked360;
+}
 void PM_StopFlight(void){
 	pm->ps->bitFlags &= ~usingFlight;
 }
@@ -775,7 +786,9 @@ void PM_FlyMove(void){
 	int		i;
 	vec3_t	wishvel;
 	vec3_t	wishdir;
+	float	soarCost;
 	float	wishspeed;
+	float	fadeSpeed;
 	float	scale;
 	float	boostFactor;
 	if(pm->cmd.upmove > 0){
@@ -786,7 +799,99 @@ void PM_FlyMove(void){
 	if(!(pm->ps->bitFlags & usingFlight)){return;}
 	boostFactor = ((pm->ps->bitFlags & usingBoost) && (pm->ps->powerups[PW_MELEE_STATE] < 2)) ? 4.4 : 1.1;
 	if(pm->cmd.buttons & BUTTON_WALKING){
-		boostFactor = 1.0;	
+		boostFactor = 1.0;
+	}
+	if((pm->cmd.buttons & BUTTON_JUMP &&
+		pm->ps->weaponstate != WEAPON_CHARGING && 
+		!(pm->ps->bitFlags & usingZanzoken)) ||
+		(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & lockedYaw || pm->ps->bitFlags & lockedRoll)){
+		if(pm->ps->bitFlags & usingJump){return;}
+		if(!(pm->ps->bitFlags & usingSoar)){
+			pm->ps->bitFlags |= usingSoar;
+			pm->ps->powerups[PW_SOAR_YAW] = pm->ps->soarBase[YAW] = pm->ps->soarLimit[YAW] = pm->ps->viewangles[YAW];
+			pm->ps->soarBase[ROLL] = pm->ps->soarLimit[ROLL] = 0.0;
+			pm->ps->soarBase[PITCH] = pm->ps->soarLimit[PITCH] = 0.0;
+			pm->ps->viewangles[PITCH] = 0.0;
+		}
+		soarCost = 0;
+		if(pm->ps->powerLevel[plMaximum] * 0.8 > pm->ps->powerLevel[plFatigue]){
+			soarCost = pm->ps->powerLevel[plMaximum] * 0.001;
+		}
+		boostFactor = 5.8;
+		pm->ps->eFlags |= EF_AURA;
+		pm->ps->timers[tmSoar] += pml.msec;
+		pm->ps->viewangles[PITCH] = pm->ps->soarBase[PITCH];
+		pm->ps->viewangles[YAW] = pm->ps->soarBase[YAW];
+		pm->ps->viewangles[ROLL] = pm->ps->soarBase[ROLL];
+		if(pm->cmd.upmove != 0){
+			if(pm->cmd.upmove < 0){pm->ps->soarLimit[PITCH] = 360.0;}
+			else if(pm->cmd.upmove > 0){pm->ps->soarLimit[PITCH] = -360.0;}
+			pm->ps->bitFlags |= locked360;
+		}
+		else if(pm->cmd.forwardmove != 0){
+			if(pm->cmd.forwardmove < 0){pm->ps->soarLimit[PITCH] += 6.0;}
+			else if(pm->cmd.forwardmove > 0){pm->ps->soarLimit[PITCH] += -6.0;}
+			pm->ps->bitFlags |= lockedPitch;
+		}
+		else if(pm->cmd.rightmove != 0){
+			if(pm->cmd.rightmove < 0){pm->ps->soarLimit[YAW] += 6.0;}
+			else if(pm->cmd.rightmove > 0){pm->ps->soarLimit[YAW] -= 6.0;}
+			pm->ps->bitFlags |= lockedYaw;
+		}
+		if(pm->cmd.buttons & BUTTON_BOOST){
+			if(soarCost){soarCost = pm->ps->powerLevel[plMaximum] * 0.002;}
+			boostFactor *= 1.5;
+		}
+		if(pm->cmd.buttons & BUTTON_ROLL_RIGHT || pm->cmd.buttons & BUTTON_ROLL_LEFT){
+			if(pm->cmd.buttons & BUTTON_ROLL_RIGHT){pm->ps->soarLimit[ROLL] = 360;}
+			else if(pm->cmd.buttons & BUTTON_ROLL_LEFT){pm->ps->soarLimit[ROLL] = -360;}
+			pm->ps->bitFlags |= lockedRoll;
+		}
+		fadeSpeed = 2.0;
+		while(pm->ps->timers[tmSoar] > 10){
+			if(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & locked360){
+				if(pm->ps->bitFlags & locked360){boostFactor *= 2.0;}
+				if(pm->ps->soarBase[PITCH] > 180){
+					pm->ps->soarBase[PITCH] = -182;
+					pm->ps->soarLimit[PITCH] = 0;
+				}
+				else if(pm->ps->soarBase[PITCH] < -180){
+					pm->ps->soarBase[PITCH] = 182;
+					pm->ps->soarLimit[PITCH] = 0;
+				}
+				if(pm->ps->soarBase[PITCH] > pm->ps->soarLimit[PITCH]){pm->ps->soarBase[PITCH] -= fadeSpeed;}
+				else if(pm->ps->soarBase[PITCH] < pm->ps->soarLimit[PITCH]){pm->ps->soarBase[PITCH] += fadeSpeed;}
+				else{
+					pm->ps->bitFlags &= ~lockedPitch;
+					pm->ps->bitFlags &= ~locked360;
+				}
+			}
+			if(pm->ps->bitFlags & lockedYaw){
+				if(pm->ps->soarBase[YAW] > pm->ps->soarLimit[YAW]){pm->ps->soarBase[YAW] -= fadeSpeed;}
+				else if(pm->ps->soarBase[YAW] < pm->ps->soarLimit[YAW]){pm->ps->soarBase[YAW] += fadeSpeed;}
+				else{pm->ps->bitFlags &= ~lockedYaw;}
+			}
+			if(pm->ps->bitFlags & lockedRoll){
+				boostFactor *= 1.2;
+				if(pm->ps->soarBase[ROLL] > pm->ps->soarLimit[ROLL]){pm->ps->soarBase[ROLL] -= fadeSpeed;}
+				else if(pm->ps->soarBase[ROLL] < pm->ps->soarLimit[ROLL]){pm->ps->soarBase[ROLL] += fadeSpeed;}
+				else{
+					if(pm->ps->soarBase[ROLL] > 360){pm->ps->soarBase[ROLL] = 0;}
+					if(pm->ps->soarBase[ROLL] > -360){pm->ps->soarBase[ROLL] = 0;}
+					pm->ps->bitFlags &= ~lockedRoll;
+				}
+			}
+			pm->ps->timers[tmSoar] -= 10;
+			pm->ps->powerLevel[plUseCurrent] +=	soarCost;
+		}
+		pm->cmd.upmove = 0;
+		pm->cmd.rightmove = 0;
+		pm->cmd.forwardmove = 127;
+	}
+	else if(pm->ps->bitFlags & usingSoar){
+		pm->ps->timers[tmFreeze] = 1000;
+		pm->ps->bitFlags &= ~usingSoar;
+		pm->ps->eFlags &= ~EF_AURA;
 	}
 	scale = PM_CmdScale(&pm->cmd) * boostFactor;
 	if(!scale){
@@ -825,8 +930,8 @@ void PM_AirMove(void){
 	scale = PM_CmdScale(&cmd);
 	pml.forward[2] = 0;
 	pml.right[2] = 0;
-	VectorNormalize (pml.forward);
-	VectorNormalize (pml.right);
+	VectorNormalize(pml.forward);
+	VectorNormalize(pml.right);
 	for(i = 0 ; i < 2 ; i++){
 		wishvel[i] = pml.forward[i]*fmove + pml.right[i]*smove;
 	}
@@ -894,7 +999,6 @@ void PM_WalkMove(void){
 	}
 	PM_StepSlideMove(qfalse);
 }
-
 /*=============
 PM_DashMove
 =============*/
@@ -1151,6 +1255,7 @@ PM_GroundTrace
 void PM_GroundTrace(void){
 	vec3_t		point;
 	trace_t		trace;
+	if(pm->ps->bitFlags & usingSoar){return;}
 	point[0] = pm->ps->origin[0];
 	point[1] = pm->ps->origin[1];
 	point[2] = pm->ps->origin[2] - 0.75f;
@@ -1272,6 +1377,10 @@ void PM_Footsteps(void){
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
 	if(pm->ps->bitFlags & usingFlight){
+		if(pm->ps->bitFlags & usingSoar){
+			PM_ContinueLegsAnim(LEGS_FLY_FORWARD);
+			return;
+		}
 		if((!pm->cmd.forwardmove && !pm->cmd.rightmove) || (pm->cmd.buttons & BUTTON_WALKING )) {
 			int	tempAnimIndex;
 			pm->ps->bobCycle = 0;
@@ -1380,7 +1489,14 @@ Generate sound events for entering and leaving water
 ==============
 */
 void PM_WaterEvents(void){		// FIXME?
-
+/*
+	//
+	// ifjust entered a water volume at a high velocity, play a sound and effect
+	//
+	if(!pml.previous_waterlevel && pm->waterlevel && pm->xyspeed > 200) {
+		PM_AddEvent(EV_WATER_SPLASH );
+	}
+*/
 	//
 	// ifjust entered a water volume, play a sound
 	//
@@ -1892,7 +2008,7 @@ void PM_Weapon(void){
 	int costPrimary,costSecondary;	
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
-	if(pm->ps->bitFlags & isStruggling){return;}
+	if(pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar){return;}
 	if(pm->ps->bitFlags & isGuiding){
 		PM_StopMovement();
 		PM_StopDash();
@@ -2306,7 +2422,6 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		return;
 	}
 	*/
-
 	// We've been flying and we've inverted our pitch to a good amount upside down.
 	// Cheat the view, by adjusting the yaw to 'swing around' and adjusting the pitch to match.
 	pitchNorm = AngleNormalize180(ps->viewangles[PITCH]);

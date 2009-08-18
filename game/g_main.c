@@ -1777,7 +1777,10 @@ void G_RunFrame( int levelTime ) {
 			G_RunUserMissile( ent );
 			continue;
 		}
-
+		if ( ent->s.eType == ET_EXPLOSION ) {
+			G_RunUserExplosion( ent );
+			continue;
+		}
 		if ( ent->s.eType == ET_BEAMHEAD ) {
 			G_RunUserMissile( ent );
 		}

@@ -152,6 +152,9 @@ struct gentity_s {
 	int			damageRadius;
 	int			splashDamage;	// quad will increase this without increasing radius
 	int			splashRadius;
+	int			splashDuration;
+	int			splashTimer;
+	int			splashEnd;
 	int			methodOfDeath;
 	int			splashMethodOfDeath;
 	int			extraKnockback;
@@ -716,6 +719,7 @@ void BotInterbreedEndMatch( void );
 
 void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfire );
 void Release_UserWeapon( gentity_t *self, qboolean altfire );
+void G_RunUserExplosion( gentity_t *ent );
 void G_RunUserMissile( gentity_t *ent );
 void G_RunUserSkimmer( gentity_t *ent );
 void G_RunUserTorch( gentity_t *ent );

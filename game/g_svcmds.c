@@ -291,6 +291,9 @@ void	Svcmd_EntityList_f (void) {
 		case ET_MISSILE:
 			G_Printf("ET_MISSILE          ");
 			break;
+		case ET_EXPLOSION:
+			G_Printf("ET_EXPLOSION        ");
+			break;
 		case ET_MOVER:
 			G_Printf("ET_MOVER            ");
 			break;

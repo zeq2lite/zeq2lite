@@ -1423,6 +1423,7 @@ static void CG_AddCEntity( centity_t *cent ) {
 	case ET_BEAM:
 		CG_Beam( cent );
 		break;
+	case ET_EXPLOSION:
 	case ET_PORTAL:
 		CG_Portal( cent );
 		break;
