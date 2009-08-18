@@ -834,9 +834,16 @@ void PM_FlyMove(void){
 			pm->ps->bitFlags |= lockedPitch;
 		}
 		else if(pm->cmd.rightmove != 0){
-			if(pm->cmd.rightmove < 0){pm->ps->soarLimit[YAW] += 6.0;}
-			else if(pm->cmd.rightmove > 0){pm->ps->soarLimit[YAW] -= 6.0;}
+			if(pm->cmd.rightmove < 0){
+				if(!(pm->ps->bitFlags & lockedRoll)){pm->ps->soarLimit[ROLL] = pm->ps->soarLimit[ROLL] == 20 ? 0 : -20;}
+				pm->ps->soarLimit[YAW] += 6.0;
+			}
+			else if(pm->cmd.rightmove > 0){
+				if(!(pm->ps->bitFlags & lockedRoll)){pm->ps->soarLimit[ROLL] = pm->ps->soarLimit[ROLL] == -20 ? 0 : 20;}
+				pm->ps->soarLimit[YAW] -= 6.0;
+			}
 			pm->ps->bitFlags |= lockedYaw;
+			pm->ps->bitFlags |= lockedRoll;
 		}
 		if(pm->cmd.buttons & BUTTON_BOOST){
 			if(soarCost){soarCost = pm->ps->powerLevel[plMaximum] * 0.002;}
@@ -845,7 +852,7 @@ void PM_FlyMove(void){
 		if(pm->cmd.buttons & BUTTON_ROLL_RIGHT || pm->cmd.buttons & BUTTON_ROLL_LEFT){
 			if(pm->cmd.buttons & BUTTON_ROLL_RIGHT){pm->ps->soarLimit[ROLL] = 360;}
 			else if(pm->cmd.buttons & BUTTON_ROLL_LEFT){pm->ps->soarLimit[ROLL] = -360;}
-			pm->ps->bitFlags |= lockedRoll;
+			pm->ps->bitFlags |= lockedSpin;
 		}
 		fadeSpeed = 2.0;
 		while(pm->ps->timers[tmSoar] > 10){
@@ -871,14 +878,15 @@ void PM_FlyMove(void){
 				else if(pm->ps->soarBase[YAW] < pm->ps->soarLimit[YAW]){pm->ps->soarBase[YAW] += fadeSpeed;}
 				else{pm->ps->bitFlags &= ~lockedYaw;}
 			}
-			if(pm->ps->bitFlags & lockedRoll){
+			if(pm->ps->bitFlags & lockedRoll || pm->ps->bitFlags & lockedSpin){
 				boostFactor *= 1.2;
 				if(pm->ps->soarBase[ROLL] > pm->ps->soarLimit[ROLL]){pm->ps->soarBase[ROLL] -= fadeSpeed;}
 				else if(pm->ps->soarBase[ROLL] < pm->ps->soarLimit[ROLL]){pm->ps->soarBase[ROLL] += fadeSpeed;}
 				else{
 					if(pm->ps->soarBase[ROLL] > 360){pm->ps->soarBase[ROLL] = 0;}
-					if(pm->ps->soarBase[ROLL] > -360){pm->ps->soarBase[ROLL] = 0;}
+					if(pm->ps->soarBase[ROLL] < -360){pm->ps->soarBase[ROLL] = 0;}
 					pm->ps->bitFlags &= ~lockedRoll;
+					pm->ps->bitFlags &= ~lockedSpin;
 				}
 			}
 			pm->ps->timers[tmSoar] -= 10;

@@ -307,6 +307,7 @@ typedef enum {
 #define lockedYaw		0x00400000
 #define lockedRoll		0x00800000
 #define locked360		0x01000000
+#define lockedSpin		0x02000000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16
