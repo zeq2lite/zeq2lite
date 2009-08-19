@@ -829,18 +829,22 @@ void PM_FlyMove(void){
 			pm->ps->bitFlags |= locked360;
 		}
 		else if(pm->cmd.forwardmove != 0){
-			if(pm->cmd.forwardmove < 0){pm->ps->soarLimit[PITCH] += 6.0;}
-			else if(pm->cmd.forwardmove > 0){pm->ps->soarLimit[PITCH] += -6.0;}
+			if(pm->cmd.forwardmove < 0){pm->ps->soarLimit[PITCH] += 2.0;}
+			else if(pm->cmd.forwardmove > 0){pm->ps->soarLimit[PITCH] += -2.0;}
 			pm->ps->bitFlags |= lockedPitch;
 		}
 		else if(pm->cmd.rightmove != 0){
 			if(pm->cmd.rightmove < 0){
-				if(!(pm->ps->bitFlags & lockedRoll)){pm->ps->soarLimit[ROLL] = pm->ps->soarLimit[ROLL] == 20 ? 0 : -20;}
-				pm->ps->soarLimit[YAW] += 6.0;
+				if(!(pm->ps->bitFlags & lockedRoll) && !(pm->ps->bitFlags & lockedSpin) && pm->ps->soarLimit[ROLL] > -20){
+					pm->ps->soarLimit[ROLL] -= 2;
+				}
+				pm->ps->soarLimit[YAW] += 2.0;
 			}
 			else if(pm->cmd.rightmove > 0){
-				if(!(pm->ps->bitFlags & lockedRoll)){pm->ps->soarLimit[ROLL] = pm->ps->soarLimit[ROLL] == -20 ? 0 : 20;}
-				pm->ps->soarLimit[YAW] -= 6.0;
+				if(!(pm->ps->bitFlags & lockedRoll) && !(pm->ps->bitFlags & lockedSpin) && pm->ps->soarLimit[ROLL] < 20){
+					pm->ps->soarLimit[ROLL] += 2;
+				}
+				pm->ps->soarLimit[YAW] -= 2.0;
 			}
 			pm->ps->bitFlags |= lockedYaw;
 			pm->ps->bitFlags |= lockedRoll;
@@ -857,13 +861,13 @@ void PM_FlyMove(void){
 		fadeSpeed = 2.0;
 		while(pm->ps->timers[tmSoar] > 10){
 			if(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & locked360){
-				if(pm->ps->bitFlags & locked360){boostFactor *= 2.0;}
+				if(pm->ps->bitFlags & locked360){fadeSpeed = 4;}
 				if(pm->ps->soarBase[PITCH] > 180){
-					pm->ps->soarBase[PITCH] = -182;
+					pm->ps->soarBase[PITCH] = pm->ps->bitFlags & locked360 ? -184 : -182;
 					pm->ps->soarLimit[PITCH] = 0;
 				}
 				else if(pm->ps->soarBase[PITCH] < -180){
-					pm->ps->soarBase[PITCH] = 182;
+					pm->ps->soarBase[PITCH] = pm->ps->bitFlags & locked360 ? 184 : 182;
 					pm->ps->soarLimit[PITCH] = 0;
 				}
 				if(pm->ps->soarBase[PITCH] > pm->ps->soarLimit[PITCH]){pm->ps->soarBase[PITCH] -= fadeSpeed;}
@@ -880,11 +884,18 @@ void PM_FlyMove(void){
 			}
 			if(pm->ps->bitFlags & lockedRoll || pm->ps->bitFlags & lockedSpin){
 				boostFactor *= 1.2;
+				if(pm->ps->bitFlags & lockedSpin){fadeSpeed = 4;}
+				if(pm->ps->soarBase[ROLL] > 180){
+					pm->ps->soarBase[ROLL] = pm->ps->bitFlags & lockedSpin ? -184 : -182;
+					pm->ps->soarLimit[ROLL] = 0;
+				}
+				else if(pm->ps->soarBase[ROLL] < -180){
+					pm->ps->soarBase[ROLL] = pm->ps->bitFlags & lockedSpin ? 184 : 182;
+					pm->ps->soarLimit[ROLL] = 0;
+				}
 				if(pm->ps->soarBase[ROLL] > pm->ps->soarLimit[ROLL]){pm->ps->soarBase[ROLL] -= fadeSpeed;}
 				else if(pm->ps->soarBase[ROLL] < pm->ps->soarLimit[ROLL]){pm->ps->soarBase[ROLL] += fadeSpeed;}
 				else{
-					if(pm->ps->soarBase[ROLL] > 360){pm->ps->soarBase[ROLL] = 0;}
-					if(pm->ps->soarBase[ROLL] < -360){pm->ps->soarBase[ROLL] = 0;}
 					pm->ps->bitFlags &= ~lockedRoll;
 					pm->ps->bitFlags &= ~lockedSpin;
 				}
@@ -900,6 +911,13 @@ void PM_FlyMove(void){
 		pm->ps->timers[tmFreeze] = 1000;
 		pm->ps->bitFlags &= ~usingSoar;
 		pm->ps->eFlags &= ~EF_AURA;
+	}
+	else{
+		/*
+		pm->ps->viewangles[ROLL] = pm->ps->soarBase[ROLL];
+		if(pm->cmd.buttons & BUTTON_ROLL_LEFT){pm->ps->soarBase[ROLL] -= 3;}
+		if(pm->cmd.buttons & BUTTON_ROLL_RIGHT){pm->ps->soarBase[ROLL] += 3;}
+		*/
 	}
 	scale = PM_CmdScale(&pm->cmd) * boostFactor;
 	if(!scale){
@@ -2358,12 +2376,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		vec3_t angles;
 		VectorSubtract(*(ps->lockedPosition),ps->origin,dir);
 		vectoangles(dir, angles);
-		if(angles[PITCH] > 180) { 
-			angles[PITCH] -= 360;
-		}
-		else if(angles[PITCH] < -180) {
-			angles[PITCH] += 360;
-		}
+
 		for (i = 0; i < 3; i++) {
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
@@ -2448,18 +2461,21 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 		temp = cmd->angles[i] + ps->delta_angles[i];
 		if(i == PITCH){
 			// don't let the player look up or down more than 90 degrees
-			if(temp > 16000){
-				ps->delta_angles[i] = 16000 - cmd->angles[i];
-				temp = 16000;
-				pm->cmd.rightmove *= 0.1;
-				pm->cmd.upmove *= 0.1;
-			} else if(temp < -16000){
-				ps->delta_angles[i] = -16000 - cmd->angles[i];
-				temp = -16000;
-				pm->cmd.rightmove *= 0.1;
-				pm->cmd.upmove *= 0.1;
+			if(pm->ps->lockedTarget <= 0){
+				if(temp > 16000){
+					ps->delta_angles[i] = 16000 - cmd->angles[i];
+					temp = 16000;
+					pm->cmd.rightmove *= 0.1;
+					pm->cmd.upmove *= 0.1;
+				} else if(temp < -16000){
+					ps->delta_angles[i] = -16000 - cmd->angles[i];
+					temp = -16000;
+					pm->cmd.rightmove *= 0.1;
+					pm->cmd.upmove *= 0.1;
+				}
 			}
 			// Slow down side movement speed the more pitch we have + or - during lockon.
+			/*
 			if(pm->ps->lockedTarget > 0){
 				if(temp > 2000 || temp < -2000){
 					pm->cmd.rightmove *= 0.5;
@@ -2482,12 +2498,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 					pm->cmd.upmove *= 0;
 				}
 			}
-		}
-		// ADDING FOR ZEQ2
-		// Incase we've been flying, our roll might've been changed.
-		if(i == ROLL && ps->viewangles[i] != 0) {
-			ps->viewangles[i] = 0;
-			ps->delta_angles[i] = 0 - cmd->angles[i];
+			*/
 		}
 		// END ADDING
 		ps->viewangles[i] = SHORT2ANGLE(temp);
