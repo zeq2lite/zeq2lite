@@ -303,11 +303,12 @@ typedef enum {
 #define isGuiding		0x00040000
 #define isCharging		0x00080000
 #define isTargeted		0x00100000
-#define lockedPitch		0x00200000
-#define lockedYaw		0x00400000
-#define lockedRoll		0x00800000
-#define locked360		0x01000000
-#define lockedSpin		0x02000000
+#define isPreparing		0x00200000
+#define lockedPitch		0x00400000
+#define lockedYaw		0x00800000
+#define lockedRoll		0x01000000
+#define locked360		0x02000000
+#define lockedSpin		0x04000000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16

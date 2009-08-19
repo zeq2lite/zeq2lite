@@ -806,20 +806,24 @@ void PM_FlyMove(void){
 		!(pm->ps->bitFlags & usingZanzoken)) ||
 		(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & lockedYaw || pm->ps->bitFlags & lockedRoll)){
 		if(pm->ps->bitFlags & usingJump){return;}
+		pm->ps->timers[tmSoar] += pml.msec;
+		pm->ps->eFlags |= EF_AURA;
 		if(!(pm->ps->bitFlags & usingSoar)){
-			pm->ps->bitFlags |= usingSoar;
+			pm->ps->bitFlags |= isPreparing;
 			pm->ps->powerups[PW_SOAR_YAW] = pm->ps->soarBase[YAW] = pm->ps->soarLimit[YAW] = pm->ps->viewangles[YAW];
 			pm->ps->soarBase[ROLL] = pm->ps->soarLimit[ROLL] = 0.0;
 			pm->ps->soarBase[PITCH] = pm->ps->soarLimit[PITCH] = 0.0;
 			pm->ps->viewangles[PITCH] = 0.0;
+			if(pm->ps->timers[tmSoar] < 700){return;}
+			pm->ps->bitFlags |= usingSoar;
+			pm->ps->bitFlags &= ~isPreparing;
+			pm->ps->timers[tmSoar] = 0;
 		}
 		soarCost = 0;
 		if(pm->ps->powerLevel[plMaximum] * 0.8 > pm->ps->powerLevel[plFatigue]){
 			soarCost = pm->ps->powerLevel[plMaximum] * 0.001;
 		}
 		boostFactor = 5.8;
-		pm->ps->eFlags |= EF_AURA;
-		pm->ps->timers[tmSoar] += pml.msec;
 		pm->ps->viewangles[PITCH] = pm->ps->soarBase[PITCH];
 		pm->ps->viewangles[YAW] = pm->ps->soarBase[YAW];
 		pm->ps->viewangles[ROLL] = pm->ps->soarBase[ROLL];
@@ -1403,7 +1407,7 @@ void PM_Footsteps(void){
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
 	if(pm->ps->bitFlags & usingFlight){
-		if(pm->ps->bitFlags & usingSoar){
+		if(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing){
 			PM_ContinueLegsAnim(LEGS_FLY_FORWARD);
 			return;
 		}
