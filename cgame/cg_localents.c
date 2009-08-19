@@ -599,7 +599,7 @@ static void CG_AddZEQExplosion( localEntity_t *le ) {
 	refEntity_t	*ent;
 	float		c;
 	float		RGBfade;
-	float		phase ;
+	float		phase;
 	vec3_t		tmpAxes[3];
 	
 	ent = &le->refEntity;
@@ -662,6 +662,7 @@ CG_AddZEQSplash
 static void CG_AddZEQSplash( localEntity_t *le ) {
 	refEntity_t	*ent;
 	float		c;
+	float		phase;
 	float		RGBfade;
 	vec3_t		tmpAxes[3];
 	
@@ -678,6 +679,10 @@ static void CG_AddZEQSplash( localEntity_t *le ) {
 	
 	// grow time
 	c = ( le->endTime - cg.time ) * le->lifeRate / 2;
+
+	// grow time
+	//phase = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime ) * M_PI / 1.5f;
+	//c = 1.0f + (sin(phase));
 
 	// preserve the full scale
 	VectorCopy(ent->axis[0], tmpAxes[0]);

@@ -2206,32 +2206,35 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 	polyVert_t		verts[4];
 	entityState_t	*s1;
 	clientInfo_t	*ci;
-	int				contents, lastContents;
+	int				contents;
 	int				powerBoost;
 	float			xyzspeed;
 	s1 = &cent->currentState;
-
-	// Water bubble/splash setup
 
 	// Measure the objects velocity
 	xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
 	cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] + 
 	cent->currentState.pos.trDelta[2] * cent->currentState.pos.trDelta[2]);
 
+	// Get the objects content value and position.
 	BG_EvaluateTrajectory( s1, &s1->pos, cg.time, origin );
 	contents = trap_CM_PointContents( origin, 0 );
-
-	BG_EvaluateTrajectory( s1, &s1->pos, cent->trailTime, lastPos );
-	lastContents = trap_CM_PointContents( lastPos, 0 );
 
 	VectorCopy( cent->lerpOrigin, end );
 	VectorCopy( cent->lerpOrigin, start );
 
-	// If the player is charging/boosting/transforming and they are not moving, increase the splash detection and power.
-	if (!xyzspeed && (cent->currentState.eFlags & EF_AURA)) {
-		powerBoost = 5;
+	if (xyzspeed && cent->currentState.eFlags & EF_AURA) {
+		powerBoost = 1;
+		start[2] += 128;
+		end[2] -= 128;
+	} else if (!xyzspeed && cent->currentState.eFlags & EF_AURA) {
+		powerBoost = 6;
 		start[2] += 512;
 		end[2] -= 512;
+	} else if (xyzspeed) {
+		powerBoost = 1;
+		start[2] += 64;
+		end[2] -= 48;
 	} else {
 		powerBoost = 1;
 		start[2] += 32;
@@ -2259,12 +2262,6 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 	}
 
 	if (xyzspeed || (cent->currentState.eFlags & EF_AURA)) {
-
-		if (!xyzspeed && (cent->currentState.eFlags & EF_AURA)) {
-			powerBoost = 6;
-		} else {
-			powerBoost = 1;
-		}
 
 		if (powerBoost == 1) {
 			CG_WaterSplash(trace.endpos,powerBoost+(xyzspeed/scale));
