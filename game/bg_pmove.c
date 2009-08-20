@@ -205,7 +205,7 @@ void PM_CheckZanzoken(void){
 	vec3_t pre_vel, post_vel,minSize,maxSize,forward,up,end;
 	int speed,cost;
 	trace_t trace;
-	if(pm->ps->bitFlags & usingSoar){return;}
+	if(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing){return;}
 	if(!(pm->cmd.buttons & BUTTON_LIGHTSPEED)){
 		pm->ps->timers[tmZanzoken] = -1;
 	}
@@ -765,7 +765,8 @@ void PM_CheckBlock(void){
 		&& !(pm->ps->bitFlags & usingAlter)
 		&& !(pm->ps->bitFlags & usingSoar)
 		&& !(pm->ps->bitFlags & usingZanzoken)
-		&& !(pm->ps->bitFlags & usingWeapon)){
+		&& !(pm->ps->bitFlags & usingWeapon)
+		&& !(pm->ps->bitFlags & isPreparing)){
 		pm->ps->bitFlags |= usingBlock;
 	}
 }
@@ -773,6 +774,7 @@ void PM_CheckBlock(void){
 PM_FlyMove
 ===================*/
 void PM_StopSoar(void){
+	pm->ps->bitFlags &= ~isPreparing;
 	pm->ps->bitFlags &= ~usingSoar;
 	pm->ps->bitFlags &= ~lockedRoll;
 	pm->ps->bitFlags &= ~lockedPitch;
@@ -809,6 +811,7 @@ void PM_FlyMove(void){
 		pm->ps->timers[tmSoar] += pml.msec;
 		pm->ps->eFlags |= EF_AURA;
 		if(!(pm->ps->bitFlags & usingSoar)){
+			pm->cmd.upmove = pm->cmd.rightmove = pm->cmd.forwardmove = 0;
 			pm->ps->bitFlags |= isPreparing;
 			pm->ps->powerups[PW_SOAR_YAW] = pm->ps->soarBase[YAW] = pm->ps->soarLimit[YAW] = pm->ps->viewangles[YAW];
 			pm->ps->soarBase[ROLL] = pm->ps->soarLimit[ROLL] = 0.0;
@@ -911,9 +914,10 @@ void PM_FlyMove(void){
 		pm->cmd.rightmove = 0;
 		pm->cmd.forwardmove = 127;
 	}
-	else if(pm->ps->bitFlags & usingSoar){
+	else if(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing){
 		pm->ps->timers[tmFreeze] = 1000;
 		pm->ps->bitFlags &= ~usingSoar;
+		pm->ps->bitFlags &= ~isPreparing;
 		pm->ps->eFlags &= ~EF_AURA;
 	}
 	else{
@@ -2038,7 +2042,7 @@ void PM_Weapon(void){
 	int costPrimary,costSecondary;	
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
-	if(pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar){return;}
+	if(pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar ||  pm->ps->bitFlags & isPreparing){return;}
 	if(pm->ps->bitFlags & isGuiding){
 		PM_StopMovement();
 		PM_StopDash();
