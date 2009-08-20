@@ -22,6 +22,10 @@ GAME OPTIONS MENU
 #define ID_CROSSHAIRSIZE		139
 #define ID_PARTICLESOPTIMISE	140
 #define ID_PARTICLESQUALITY		141
+#define ID_BLOOMQUALITY			142
+#define ID_BLOOMINTENSITY		143
+#define ID_BLOOMDARKEN			144
+#define ID_BLOOMALPHA			145
 #define	NUM_CROSSHAIRS			10
 typedef struct{
 	menuframework_s		menu;
@@ -34,6 +38,10 @@ typedef struct{
 	menulist_s			beamdetail;
 	menulist_s			particlesOptimise;
 	menulist_s			particlesQuality;
+	menulist_s			bloomQuality;
+	menuslider_s		bloomIntensity;
+	menulist_s			bloomDarken;
+	menuslider_s		bloomAlpha;
 	menuradiobutton_s	wallmarks;
 	menuradiobutton_s	dynamiclights;
 	menuradiobutton_s	identifytarget;
@@ -50,11 +58,15 @@ static const char *particlesQuality_names[] = {"Sprites","Models",0};
 static const char *particlesOptimise_names[] = {"Remove After Awhile","Remove On Stop",	0};
 static const char *beamdetail_names[] = {"Very Low","Low","Medium","High","Very High", 0};
 static const char *beamcontrol_names[] = {"Beam Head Focus","Crosshair Focus",0};
-static const char *camerastyle_names[] = {"Locked Behind Head","Locked Behind Character",0};
+static const char *camerastyle_names[] = {"Locked Behind Head","Locked Behind Character","Delay Behind Character",0};
 static const char *crosshairSize_names[] = {"Tiny!","Very Small","Small","Normal","Large","Extra Large!","Extra Extra Large?!",0};
+static const char *bloomQuality_names[] = {"Off","Low","Medium","High","Very High", 0};
+static const char *bloomIntensity_names[] = {"Low","Medium","High", 0};
+static const char *bloomDarken_names[] = {"Low","Medium","High", 0};
+static const char *bloomAlpha_names[] = {"Low","Medium","High", 0};
 static void Preferences_SetMenuItems( void ) {
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
-	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
+	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
 	s_preferences.crosshairSize.curvalue	= Com_Clamp( 0, 6, trap_Cvar_VariableValue( "cg_crosshairSize" ) );
 	s_preferences.beamdetail.curvalue		= Com_Clamp( 0, 4, trap_Cvar_VariableValue( "r_beamDetail" ) );
 	s_preferences.particlesQuality.curvalue	= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_particlesQuality" ) );
@@ -67,6 +79,74 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.motionblur.curvalue		= trap_Cvar_VariableValue( "r_motionBlur" ) != 0;
 	s_preferences.useRunAnimation.curvalue	= trap_Cvar_VariableValue( "g_running" ) != 0;
 	s_preferences.allowdownload.curvalue	= trap_Cvar_VariableValue( "cl_allowDownload" ) != 0;
+	// Bloom Quality
+	switch ( ( int ) trap_Cvar_VariableValue( "r_bloom_sample_size" ) )
+	{
+	default:
+	case 0:
+		s_preferences.bloomQuality.curvalue = 0;
+		break;
+	case 64:
+		s_preferences.bloomQuality.curvalue = 1;
+		break;
+	case 128:
+		s_preferences.bloomQuality.curvalue = 2;
+		break;
+	case 256:
+		s_preferences.bloomQuality.curvalue = 3;
+		break;
+	case 512:
+		s_preferences.bloomQuality.curvalue = 4;
+		break;
+	}
+	s_preferences.bloomIntensity.curvalue = trap_Cvar_VariableValue( "r_bloom_intensity" );
+/*
+	// Bloom Intensity
+	switch ( ( float ) trap_Cvar_VariableValue( "r_bloom_intensity" ) )
+	{
+	default:
+	case 0.25f:
+		s_preferences.bloomIntensity.curvalue = 0;
+		break;
+	case 0.5f:
+		s_preferences.bloomIntensity.curvalue = 1;
+		break;
+	case 0.75:
+		s_preferences.bloomIntensity.curvalue = 2;
+		break;
+	}
+*/
+	// Bloom Darken
+	switch ( ( int ) trap_Cvar_VariableValue( "r_bloom_darken" ) )
+	{
+	default:
+	case 16:
+		s_preferences.bloomDarken.curvalue = 0;
+		break;
+	case 32:
+		s_preferences.bloomDarken.curvalue = 1;
+		break;
+	case 64:
+		s_preferences.bloomDarken.curvalue = 2;
+		break;
+	}
+	s_preferences.bloomAlpha.curvalue = trap_Cvar_VariableValue( "r_bloom_alpha" );
+/*
+	// Bloom Alpha
+	switch ( ( float ) trap_Cvar_VariableValue( "r_bloom_alpha" ) )
+	{
+	default:
+	case 0.25f:
+		s_preferences.bloomAlpha.curvalue = 0;
+		break;
+	case 0.5f:
+		s_preferences.bloomAlpha.curvalue = 1;
+		break;
+	case 0.75:
+		s_preferences.bloomAlpha.curvalue = 2;
+		break;
+	}
+*/
 }
 static void Preferences_Event( void* ptr, int notification ) {
 	if(notification != QM_ACTIVATED){
@@ -118,6 +198,52 @@ static void Preferences_Event( void* ptr, int notification ) {
 		break;
 	case ID_ALLOWDOWNLOAD:
 		trap_Cvar_SetValue( "cl_allowDownload", s_preferences.allowdownload.curvalue );
+		break;
+	case ID_BLOOMQUALITY:
+		switch ( s_preferences.bloomQuality.curvalue  )
+		{
+		case 0:
+			trap_Cvar_SetValue( "r_bloom_sample_size", 0 );
+			trap_Cvar_SetValue( "r_bloom", 0 );
+			break;
+		case 1:
+			trap_Cvar_SetValue( "r_bloom_sample_size", 64 );
+			trap_Cvar_SetValue( "r_bloom", 1 );
+			break;
+		case 2:
+			trap_Cvar_SetValue( "r_bloom_sample_size", 128 );
+			trap_Cvar_SetValue( "r_bloom", 1 );
+			break;
+		case 3:
+			trap_Cvar_SetValue( "r_bloom_sample_size", 256 );
+			trap_Cvar_SetValue( "r_bloom", 1 );
+			break;
+		case 4:
+			trap_Cvar_SetValue( "r_bloom_sample_size", 512 );
+			trap_Cvar_SetValue( "r_bloom", 1 );
+			break;
+		}
+		trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart\n" );
+		break;
+	case ID_BLOOMINTENSITY:
+			trap_Cvar_SetValue( "r_bloom_intensity", s_preferences.bloomIntensity.curvalue );
+		break;
+	case ID_BLOOMDARKEN:
+		switch ( s_preferences.bloomDarken.curvalue  )
+		{
+		case 0:
+			trap_Cvar_SetValue( "r_bloom_darken", 16 );
+			break;
+		case 1:
+			trap_Cvar_SetValue( "r_bloom_darken", 32 );
+			break;
+		case 2:
+			trap_Cvar_SetValue( "r_bloom_darken", 64 );
+			break;
+		}
+		break;
+	case ID_BLOOMALPHA:
+			trap_Cvar_SetValue( "r_bloom_alpha", s_preferences.bloomAlpha.curvalue );
 		break;
 	case ID_BACK:
 		UI_PopMenu();
@@ -190,7 +316,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.framer.width  	   = 256;
 	s_preferences.framer.height  	   = 334;
 
-	y = 128;
+	y = 96;
 	s_preferences.crosshair.generic.type		= MTYPE_TEXT;
 	s_preferences.crosshair.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT|QMF_NODEFAULTINIT|QMF_OWNERDRAW;
 	s_preferences.crosshair.generic.x			= PREFERENCES_X_POS - 32;
@@ -328,6 +454,48 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.allowdownload.generic.y	       = y;
 
 	y += BIGCHAR_HEIGHT+2;
+	s_preferences.bloomQuality.generic.type			= MTYPE_SPINCONTROL;
+	s_preferences.bloomQuality.generic.name			= "Bloom Quality:";
+	s_preferences.bloomQuality.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.bloomQuality.generic.callback		= Preferences_Event;
+	s_preferences.bloomQuality.generic.id			= ID_BLOOMQUALITY;
+	s_preferences.bloomQuality.generic.x			= PREFERENCES_X_POS;
+	s_preferences.bloomQuality.generic.y			= y;
+	s_preferences.bloomQuality.itemnames			= bloomQuality_names;
+
+	y += BIGCHAR_HEIGHT+2;
+	s_preferences.bloomDarken.generic.type		= MTYPE_SPINCONTROL;
+	s_preferences.bloomDarken.generic.name		= "Bloom Darken:";
+	s_preferences.bloomDarken.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.bloomDarken.generic.callback	= Preferences_Event;
+	s_preferences.bloomDarken.generic.id		= ID_BLOOMDARKEN;
+	s_preferences.bloomDarken.generic.x			= PREFERENCES_X_POS;
+	s_preferences.bloomDarken.generic.y			= y;
+	s_preferences.bloomDarken.itemnames			= bloomDarken_names;
+
+	y += BIGCHAR_HEIGHT+2;
+	s_preferences.bloomIntensity.generic.type		= MTYPE_SLIDER;
+	s_preferences.bloomIntensity.generic.name		= "Bloom Intensity:";
+	s_preferences.bloomIntensity.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.bloomIntensity.generic.callback	= Preferences_Event;
+	s_preferences.bloomIntensity.generic.id			= ID_BLOOMINTENSITY;
+	s_preferences.bloomIntensity.generic.x			= PREFERENCES_X_POS;
+	s_preferences.bloomIntensity.generic.y			= y;
+	s_preferences.bloomIntensity.minvalue			= 0;
+	s_preferences.bloomIntensity.maxvalue			= 1;
+
+	y += BIGCHAR_HEIGHT+2;
+	s_preferences.bloomAlpha.generic.type		= MTYPE_SLIDER;
+	s_preferences.bloomAlpha.generic.name		= "Bloom Alpha:";
+	s_preferences.bloomAlpha.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.bloomAlpha.generic.callback	= Preferences_Event;
+	s_preferences.bloomAlpha.generic.id			= ID_BLOOMALPHA;
+	s_preferences.bloomAlpha.generic.x			= PREFERENCES_X_POS;
+	s_preferences.bloomAlpha.generic.y			= y;
+	s_preferences.bloomAlpha.minvalue			= 0;
+	s_preferences.bloomAlpha.maxvalue			= 1;
+
+	y += BIGCHAR_HEIGHT+2;
 	s_preferences.back.generic.type	    = MTYPE_BITMAP;
 	s_preferences.back.generic.name     = ART_BACK0;
 	s_preferences.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -356,6 +524,10 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.synceveryframe );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.useRunAnimation );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.allowdownload );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomQuality );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomIntensity );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomDarken );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomAlpha );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.back );
 
 	Preferences_SetMenuItems();

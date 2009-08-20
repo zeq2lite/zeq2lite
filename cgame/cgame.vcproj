@@ -1101,6 +1101,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\cg_music.c"
+				>
+			</File>
+			<File
 				RelativePath="cg_newDraw.c"
 				>
 				<FileConfiguration
@@ -1921,6 +1925,10 @@
 			</File>
 			<File
 				RelativePath="cg_local.h"
+				>
+			</File>
+			<File
+				RelativePath=".\cg_music.h"
 				>
 			</File>
 			<File
