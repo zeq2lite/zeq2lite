@@ -6,6 +6,8 @@ GAME OPTIONS MENU
 #define ART_FRAMER				"menu/art/frame1_r"
 #define ART_BACK0				"menu/art/back_0"
 #define ART_BACK1				"menu/art/back_1"
+#define ART_ACCEPT0				"menu/art/accept_0"
+#define ART_ACCEPT1				"menu/art/accept_1"
 #define PREFERENCES_X_POS		320
 #define ID_CROSSHAIR			127
 #define ID_CAMERASTYLE			128
@@ -26,6 +28,7 @@ GAME OPTIONS MENU
 #define ID_BLOOMINTENSITY		143
 #define ID_BLOOMDARKEN			144
 #define ID_BLOOMALPHA			145
+#define ID_OUTLINES				146
 #define	NUM_CROSSHAIRS			10
 typedef struct{
 	menuframework_s		menu;
@@ -50,9 +53,12 @@ typedef struct{
 	menuradiobutton_s	motionblur;
 	menuradiobutton_s	useRunAnimation;
 	menuradiobutton_s	allowdownload;
+	menuradiobutton_s	outlines;
 	menubitmap_s		back;
+	menubitmap_s		apply;
 	qhandle_t			crosshairShader[NUM_CROSSHAIRS];
 } preferences_t;
+static int	initialBloomQuality;
 static preferences_t s_preferences;
 static const char *particlesQuality_names[] = {"Sprites","Models",0};
 static const char *particlesOptimise_names[] = {"Remove After Awhile","Remove On Stop",	0};
@@ -79,6 +85,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.motionblur.curvalue		= trap_Cvar_VariableValue( "r_motionBlur" ) != 0;
 	s_preferences.useRunAnimation.curvalue	= trap_Cvar_VariableValue( "g_running" ) != 0;
 	s_preferences.allowdownload.curvalue	= trap_Cvar_VariableValue( "cl_allowDownload" ) != 0;
+	s_preferences.outlines.curvalue			= trap_Cvar_VariableValue( "r_outlines" ) != 0;
 	// Bloom Quality
 	switch ( ( int ) trap_Cvar_VariableValue( "r_bloom_sample_size" ) )
 	{
@@ -169,6 +176,9 @@ static void Preferences_Event( void* ptr, int notification ) {
 	case ID_ALLOWDOWNLOAD:
 		trap_Cvar_SetValue( "cl_allowDownload", s_preferences.allowdownload.curvalue );
 		break;
+	case ID_OUTLINES:
+		trap_Cvar_SetValue( "r_outlines", s_preferences.outlines.curvalue );
+		break;
 	case ID_BLOOMQUALITY:
 		switch ( s_preferences.bloomQuality.curvalue  )
 		{
@@ -193,7 +203,6 @@ static void Preferences_Event( void* ptr, int notification ) {
 			trap_Cvar_SetValue( "r_bloom", 1 );
 			break;
 		}
-		trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart\n" );
 		break;
 	case ID_BLOOMINTENSITY:
 		trap_Cvar_SetValue( "r_bloom_intensity", s_preferences.bloomIntensity.curvalue);
@@ -259,12 +268,42 @@ static void Crosshair_Draw( void *self ) {
 	if(!s->curvalue){return;}
 	UI_DrawHandlePic( x + SMALLCHAR_WIDTH + 46 - 0.5f * crosshairSizeImage, y - 0.5f * crosshairSizeImage, crosshairSizeImage, crosshairSizeImage, s_preferences.crosshairShader[s->curvalue] );
 }
+
+/*
+=================
+Bloom_ApplyChanges
+=================
+*/
+static void Bloom_ApplyChanges( void *unused, int notification )
+{
+	if (notification != QM_ACTIVATED)
+		return;
+
+	trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart\n" );
+}
+/*
+================
+Preferences_MenuDraw
+================
+*/
+void Preferences_MenuDraw (void)
+{
+	s_preferences.apply.generic.flags |= QMF_HIDDEN|QMF_INACTIVE;
+
+	if ( initialBloomQuality != s_preferences.bloomQuality.curvalue )
+	{
+		s_preferences.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+	}
+	Menu_Draw( &s_preferences.menu );
+}
+
 static void Preferences_MenuInit( void ) {
 	int	y;
 	memset( &s_preferences, 0 ,sizeof(preferences_t) );
 	Preferences_Cache();
 	s_preferences.menu.wrapAround = qtrue;
 	s_preferences.menu.fullscreen = qtrue;
+	s_preferences.menu.draw = Preferences_MenuDraw;
 	s_preferences.banner.generic.type  = MTYPE_BTEXT;
 	s_preferences.banner.generic.x	   = 320;
 	s_preferences.banner.generic.y	   = 16;
@@ -286,7 +325,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.framer.width  	   = 256;
 	s_preferences.framer.height  	   = 334;
 
-	y = 96;
+	y = 88;
 	s_preferences.crosshair.generic.type		= MTYPE_TEXT;
 	s_preferences.crosshair.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT|QMF_NODEFAULTINIT|QMF_OWNERDRAW;
 	s_preferences.crosshair.generic.x			= PREFERENCES_X_POS - 32;
@@ -424,6 +463,15 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.allowdownload.generic.y	       = y;
 
 	y += BIGCHAR_HEIGHT+2;
+	s_preferences.outlines.generic.type			= MTYPE_RADIOBUTTON;
+	s_preferences.outlines.generic.name			= "Character Outlines:";
+	s_preferences.outlines.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.outlines.generic.callback		= Preferences_Event;
+	s_preferences.outlines.generic.id			= ID_OUTLINES;
+	s_preferences.outlines.generic.x			= PREFERENCES_X_POS;
+	s_preferences.outlines.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT+2;
 	s_preferences.bloomQuality.generic.type			= MTYPE_SPINCONTROL;
 	s_preferences.bloomQuality.generic.name			= "Bloom Quality:";
 	s_preferences.bloomQuality.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -477,6 +525,16 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.back.height  		    = 64;
 	s_preferences.back.focuspic         = ART_BACK1;
 
+	s_preferences.apply.generic.type     = MTYPE_BITMAP;
+	s_preferences.apply.generic.name     = ART_ACCEPT0;
+	s_preferences.apply.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_HIDDEN|QMF_INACTIVE;
+	s_preferences.apply.generic.callback = Bloom_ApplyChanges;
+	s_preferences.apply.generic.x        = 640;
+	s_preferences.apply.generic.y        = 480-64;
+	s_preferences.apply.width  		     = 128;
+	s_preferences.apply.height  		 = 64;
+	s_preferences.apply.focuspic         = ART_ACCEPT1;
+
 	Menu_AddItem( &s_preferences.menu, &s_preferences.banner );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.framel );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.framer );
@@ -494,13 +552,16 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.synceveryframe );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.useRunAnimation );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.allowdownload );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.outlines );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomQuality );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomIntensity );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomDarken );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomAlpha );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.back );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.apply );
 
 	Preferences_SetMenuItems();
+	initialBloomQuality = s_preferences.bloomQuality.curvalue;
 }
 /*===============
 Preferences_Cache
@@ -511,6 +572,8 @@ void Preferences_Cache(void){
 	trap_R_RegisterShaderNoMip(ART_FRAMER);
 	trap_R_RegisterShaderNoMip(ART_BACK0);
 	trap_R_RegisterShaderNoMip(ART_BACK1);
+	trap_R_RegisterShaderNoMip(ART_ACCEPT0);
+	trap_R_RegisterShaderNoMip(ART_ACCEPT1);
 	for(n=0;n<NUM_CROSSHAIRS;n++){
 		s_preferences.crosshairShader[n] = trap_R_RegisterShaderNoMip( va("interface/hud/crosshair%c", 'a' + n ) );
 	}
