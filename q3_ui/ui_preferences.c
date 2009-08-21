@@ -99,23 +99,8 @@ static void Preferences_SetMenuItems( void ) {
 		s_preferences.bloomQuality.curvalue = 4;
 		break;
 	}
-	s_preferences.bloomIntensity.curvalue = trap_Cvar_VariableValue( "r_bloom_intensity" );
-/*
 	// Bloom Intensity
-	switch ( ( float ) trap_Cvar_VariableValue( "r_bloom_intensity" ) )
-	{
-	default:
-	case 0.25f:
-		s_preferences.bloomIntensity.curvalue = 0;
-		break;
-	case 0.5f:
-		s_preferences.bloomIntensity.curvalue = 1;
-		break;
-	case 0.75:
-		s_preferences.bloomIntensity.curvalue = 2;
-		break;
-	}
-*/
+	s_preferences.bloomIntensity.curvalue = trap_Cvar_VariableValue( "r_bloom_intensity" );
 	// Bloom Darken
 	switch ( ( int ) trap_Cvar_VariableValue( "r_bloom_darken" ) )
 	{
@@ -130,23 +115,8 @@ static void Preferences_SetMenuItems( void ) {
 		s_preferences.bloomDarken.curvalue = 2;
 		break;
 	}
-	s_preferences.bloomAlpha.curvalue = trap_Cvar_VariableValue( "r_bloom_alpha" );
-/*
 	// Bloom Alpha
-	switch ( ( float ) trap_Cvar_VariableValue( "r_bloom_alpha" ) )
-	{
-	default:
-	case 0.25f:
-		s_preferences.bloomAlpha.curvalue = 0;
-		break;
-	case 0.5f:
-		s_preferences.bloomAlpha.curvalue = 1;
-		break;
-	case 0.75:
-		s_preferences.bloomAlpha.curvalue = 2;
-		break;
-	}
-*/
+	s_preferences.bloomAlpha.curvalue = trap_Cvar_VariableValue( "r_bloom_alpha" );
 }
 static void Preferences_Event( void* ptr, int notification ) {
 	if(notification != QM_ACTIVATED){
@@ -226,7 +196,7 @@ static void Preferences_Event( void* ptr, int notification ) {
 		trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart\n" );
 		break;
 	case ID_BLOOMINTENSITY:
-			trap_Cvar_SetValue( "r_bloom_intensity", s_preferences.bloomIntensity.curvalue );
+		trap_Cvar_SetValue( "r_bloom_intensity", s_preferences.bloomIntensity.curvalue);
 		break;
 	case ID_BLOOMDARKEN:
 		switch ( s_preferences.bloomDarken.curvalue  )
@@ -243,7 +213,7 @@ static void Preferences_Event( void* ptr, int notification ) {
 		}
 		break;
 	case ID_BLOOMALPHA:
-			trap_Cvar_SetValue( "r_bloom_alpha", s_preferences.bloomAlpha.curvalue );
+		trap_Cvar_SetValue( "r_bloom_alpha", s_preferences.bloomAlpha.curvalue);
 		break;
 	case ID_BACK:
 		UI_PopMenu();
