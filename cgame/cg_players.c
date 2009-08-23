@@ -2207,7 +2207,7 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 	entityState_t	*s1;
 	clientInfo_t	*ci;
 	int				contents;
-	int				powerBoost;
+	qboolean		powerBoost;
 	float			xyzspeed;
 	s1 = &cent->currentState;
 
@@ -2224,19 +2224,19 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 	VectorCopy( cent->lerpOrigin, start );
 
 	if (xyzspeed && cent->currentState.eFlags & EF_AURA) {
-		powerBoost = 1;
+		powerBoost = qfalse;
 		start[2] += 128;
 		end[2] -= 128;
 	} else if (!xyzspeed && cent->currentState.eFlags & EF_AURA) {
-		powerBoost = 6;
+		powerBoost = qtrue;
 		start[2] += 512;
 		end[2] -= 512;
 	} else if (xyzspeed) {
-		powerBoost = 1;
+		powerBoost = qfalse;
 		start[2] += 64;
 		end[2] -= 48;
 	} else {
-		powerBoost = 1;
+		powerBoost = qfalse;
 		start[2] += 32;
 		end[2] -= 24;
 	}
@@ -2263,7 +2263,7 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 
 	if (xyzspeed || (cent->currentState.eFlags & EF_AURA)) {
 
-		if (powerBoost == 1) {
+		if (!powerBoost) {
 			CG_WaterSplash(trace.endpos,powerBoost+(xyzspeed/scale));
 		}
 
