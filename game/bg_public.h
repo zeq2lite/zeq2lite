@@ -241,6 +241,7 @@ typedef enum{
 	plUseCurrent,
 	plUseFatigue,
 	plUseHealth,
+	plUseMaximum,
 	plDrainCurrent,
 	plDrainMaximum,
 	plDrainFatigue,
@@ -277,7 +278,7 @@ typedef enum {
 	PW_STATE,
 	PW_MELEE_STATE,
 	PW_KNOCKBACK_SPEED,
-	PW_SOAR_YAW,
+	PW_SKILLS,
 	PW_NUM_POWERUPS,
 }powerup_t;
 
@@ -304,11 +305,13 @@ typedef enum {
 #define isCharging		0x00080000
 #define isTargeted		0x00100000
 #define isPreparing		0x00200000
-#define lockedPitch		0x00400000
-#define lockedYaw		0x00800000
-#define lockedRoll		0x01000000
-#define locked360		0x02000000
-#define lockedSpin		0x04000000
+#define atopGround		0x00400000
+#define underWater		0x00800000	
+#define lockedPitch		0x01000000
+#define lockedYaw		0x02000000
+#define lockedRoll		0x04000000
+#define locked360		0x08000000
+#define lockedSpin		0x10000000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16

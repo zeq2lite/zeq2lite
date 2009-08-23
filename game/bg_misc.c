@@ -177,7 +177,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 		return qtrue;	// weapons are always picked up
 
 	case IT_AMMO:
-		if ( ps->ammo[ item->giTag ] >= 200 ) {
+		if ( ps->currentSkill[ item->giTag ] >= 200 ) {
 			return qfalse;		// can't hold any more
 		}
 		return qtrue;

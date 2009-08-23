@@ -399,6 +399,8 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_FIRE_WEAPON:
 			FireWeapon(ent,qfalse);
 			break;
+		case EV_CHANGE_WEAPON:
+			break;
 		case EV_AIRBRAKE:
 			if(ps->timers[tmKnockback] >= 4000) {
 				amount = client->tiers[tier].airBrakeCost * 2;
@@ -466,12 +468,14 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			if (ps->persistant[PERS_SCORE] >= 1){
 				AddScore( ent, ent->r.currentOrigin, -1 );
 			}
+			ps->powerLevel[plTierCurrent] = 0;
 			client->respawnTime = level.time + 10000;
 			break;
 		case EV_UNCONCIOUS:
 			if (ps->persistant[PERS_SCORE] >= 1){
 				AddScore( ent, ent->r.currentOrigin, -1 );
 			}
+			ps->powerLevel[plTierCurrent] = 0;
 			break;
 		case EV_USE_ITEM1:
 			item = NULL;
@@ -583,6 +587,7 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 	ent->s.playerBitFlags = client->ps.bitFlags;
 	G_LinkUserWeaponData( &(client->ps) );
+	G_CheckSkills(&(client->ps));
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
 		Weapon_HookFree(client->hook);

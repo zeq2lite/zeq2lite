@@ -153,7 +153,8 @@ typedef enum {
 	CAT_COSTS,
 	CAT_DETONATION,
 	CAT_MUZZLE,
-	CAT_TRAJECTORY
+	CAT_TRAJECTORY,
+	CAT_REQUIREMENT
 } g_weapPhysCategoryIndex_t;
 
 
@@ -170,13 +171,26 @@ qboolean G_weapPhys_ParseLifetime( g_weapPhysParser_t *parser, g_weapPhysCategor
 qboolean G_weapPhys_ParseSwat( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseDrain( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseBlind( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
-qboolean G_weapPhys_ParseHitpoints( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
-qboolean G_weapPhys_ParseKi( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
-qboolean G_weapPhys_ParseStamina( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMinPowerLevel( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMaxPowerLevel( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMinHealth( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMaxHealth( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMinFatigue( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMaxFatigue( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMinTier( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMaxTier( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMinTotalTier( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMaxTotalTier( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseGround( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseFlight( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseWater( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParsePowerLevel( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseMaximum( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseHealth( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseFatigue( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseCooldownTime( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseChargeTime( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseChargeReadyPct( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
-qboolean G_weapPhys_ParseSubstHitpoints( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseDamage( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseKnockBack( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseNrShots( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );

@@ -1,5 +1,9 @@
 #include "cg_local.h"
 void CG_CheckMusic(void){
+	playerState_t	*ps;
+	ps = &cg.snap->ps;
+	if(cgs.music.currentType != 1 && ps->bitFlags & usingAlter){
+	}
 	if(cg.time > cgs.music.endTime){
 		int difference = (cg.time - cgs.music.endTime);
 		float percent = 0.0;

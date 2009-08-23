@@ -245,25 +245,41 @@ void PM_CheckZanzoken(void){
 /*===============
 POWER LEVEL
 ===============*/
-void PM_UsePowerLevel(qboolean useTotal){
-	int newValue,amount,stat;
-	stat = useTotal ? pm->ps->powerLevel[plFatigue] : pm->ps->powerLevel[plCurrent];
-	amount = useTotal ? pm->ps->powerLevel[plUseFatigue] : pm->ps->powerLevel[plUseCurrent];
-	newValue = (stat - amount) > 32767 ? 32767 : stat - amount;
-	if(newValue <= 0 && !useTotal && pm->ps->powerLevel[plFatigue] > 0){
-		pm->ps->powerLevel[plFatigue] -= (amount * 1.5);
-		pm->ps->powerLevel[plCurrent] = 1;
-		pm->ps->powerLevel[plUseCurrent] = 0;
-		return;
-	}
-	newValue = newValue < -32767 ? -32767 : newValue;
-	if(useTotal){
-		pm->ps->powerLevel[plFatigue] = newValue;
-		pm->ps->powerLevel[plUseFatigue] = 0;
-	}
-	else{
-		pm->ps->powerLevel[plCurrent] = newValue;
-		pm->ps->powerLevel[plUseCurrent] = 0;
+void PM_UsePowerLevel(){
+	int newValue,amount,stat,useType;
+	useType = 0;
+	while(useType < 4){
+		stat = useType == 1 ? pm->ps->powerLevel[plFatigue] : pm->ps->powerLevel[plCurrent];
+		stat = useType == 2 ? pm->ps->powerLevel[plHealth] : stat;
+		stat = useType == 3 ? pm->ps->powerLevel[plMaximum] : stat;
+		amount = useType == 1 ? pm->ps->powerLevel[plUseFatigue] : pm->ps->powerLevel[plUseCurrent];
+		amount = useType == 2 ? pm->ps->powerLevel[plUseHealth] : amount;
+		amount = useType == 3 ? pm->ps->powerLevel[plUseMaximum] : amount;
+		newValue = (stat - amount) > 32767 ? 32767 : stat - amount;
+		if(newValue <= 0 && useType == 0 && pm->ps->powerLevel[plFatigue] > 0){
+			pm->ps->powerLevel[plFatigue] -= (amount * 1.5);
+			pm->ps->powerLevel[plCurrent] = 1;
+			pm->ps->powerLevel[plUseCurrent] = 0;
+			return;
+		}
+		newValue = newValue < -32767 ? -32767 : newValue;
+		if(useType == 1){
+			pm->ps->powerLevel[plFatigue] = newValue;
+			pm->ps->powerLevel[plUseFatigue] = 0;
+		}
+		else if(useType == 2){
+			pm->ps->powerLevel[plHealth] = newValue;
+			pm->ps->powerLevel[plUseHealth] = 0;
+		}
+		else if(useType == 3){
+			pm->ps->powerLevel[plMaximum] = newValue;
+			pm->ps->powerLevel[plUseMaximum] = 0;
+		}
+		else{
+			pm->ps->powerLevel[plCurrent] = newValue;
+			pm->ps->powerLevel[plUseCurrent] = 0;
+		}
+		useType += 1;
 	}
 }
 void PM_BurnPowerLevel(qboolean melee){
@@ -389,7 +405,7 @@ void PM_CheckPowerLevel(void){
 		idleScale = (!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove) ? 2 : 1;
 		recovery = (float)pm->ps->powerLevel[plMaximum] * 0.004 * idleScale;
 		recovery *= (1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]));
-		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue]){recovery = 0;}
+		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] || pm->ps->bitFlags & usingSoar){recovery = 0;}
 		if(powerLevel[plCurrent] > powerLevel[plFatigue]){
 			newValue = powerLevel[plCurrent] - (pm->ps->powerLevel[plMaximum] * 0.005);
 			powerLevel[plCurrent] = (powerLevel[plCurrent] - newValue >= 0) ? newValue : 0;
@@ -409,27 +425,33 @@ void PM_CheckPowerLevel(void){
 			powerLevel[plFatigue] = pm->ps->powerLevel[plMaximum];
 		}
 	}
-	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !(pm->ps->bitFlags & isStruggling) && !(pm->ps->bitFlags & usingSoar)){
+	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
+		qboolean canAlter;
 		pm->ps->bitFlags &= ~keyTierDown;
 		pm->ps->bitFlags &= ~keyTierUp;
 		pm->ps->bitFlags |= usingAlter;
-		if(pm->ps->bitFlags & usingBoost || pm->ps->timers[tmTransform] < 0){return;}
-		if(pm->cmd.upmove < 0){
+		canAlter = qtrue;
+		if(pm->ps->bitFlags & usingBoost || pm->ps->timers[tmTransform] < 0 || pm->ps->bitFlags & usingSoar){
+			canAlter = qfalse;
+		}
+		if(canAlter && pm->cmd.upmove < 0){
 			PM_StopFlight();
 			PM_ForceLegsAnim(LEGS_FLY_DOWN);
 		}
 		if(pm->cmd.forwardmove > 0){
 			pm->ps->bitFlags |= keyTierUp;
+			pm->ps->bitFlags &= ~usingAlter;
 		}
 		else if(pm->cmd.forwardmove < 0){
 			pm->ps->bitFlags |= keyTierDown;
+			pm->ps->bitFlags &= ~usingAlter;
 		}
-		else if(pm->cmd.rightmove < 0){
+		else if(canAlter && pm->cmd.rightmove < 0){
 			pm->ps->eFlags &= ~EF_AURA;
 			lower = powerLevel[plFatigue] * 0.01;
 			powerLevel[plCurrent] = (powerLevel[plCurrent] - lower > 1) ? powerLevel[plCurrent] - lower : 1;
 		}
-		else if((pm->cmd.rightmove > 0)){
+		else if(canAlter && (pm->cmd.rightmove > 0)){
 			pm->ps->eFlags |= EF_AURA;
 			timers[tmPowerRaise] += pml.msec;
 			while(timers[tmPowerRaise] >= 25){
@@ -690,6 +712,7 @@ PM_CheckJump
 void PM_NotOnGround(void){
 	pml.groundPlane = qfalse;
 	pml.onGround = qfalse;
+	pm->ps->bitFlags &= ~atopGround;
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 }
 void PM_StopJump(void){
@@ -747,9 +770,11 @@ void PM_CheckStruggling(void){
 		PM_StopMovement();
 		pm->ps->timers[tmFreeze] = 100;
 		if(pm->ps->bitFlags & usingBoost){
-			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.002;
+			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.004;
+			pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.002;
 		}else{
-			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.001;
+			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.002;
+			pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.001;
 		}
 	}
 }
@@ -798,7 +823,7 @@ void PM_FlyMove(void){
 		PM_StopDash();
 		PM_StopJump();
 	}
-	if(!(pm->ps->bitFlags & usingFlight)){return;}
+	if(!(pm->ps->bitFlags & usingFlight) ||(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity))){return;}
 	boostFactor = ((pm->ps->bitFlags & usingBoost) && (pm->ps->powerups[PW_MELEE_STATE] < 2)) ? 4.4 : 1.1;
 	if(pm->cmd.buttons & BUTTON_WALKING){
 		boostFactor = 1.0;
@@ -810,10 +835,11 @@ void PM_FlyMove(void){
 		if(pm->ps->bitFlags & usingJump){return;}
 		pm->ps->timers[tmSoar] += pml.msec;
 		pm->ps->eFlags |= EF_AURA;
+		if(pm->cmd.buttons & BUTTON_POWERLEVEL){pm->cmd.forwardmove = 0;}
 		if(!(pm->ps->bitFlags & usingSoar)){
 			pm->cmd.upmove = pm->cmd.rightmove = pm->cmd.forwardmove = 0;
 			pm->ps->bitFlags |= isPreparing;
-			pm->ps->powerups[PW_SOAR_YAW] = pm->ps->soarBase[YAW] = pm->ps->soarLimit[YAW] = pm->ps->viewangles[YAW];
+			pm->ps->soarBase[YAW] = pm->ps->soarLimit[YAW] = pm->ps->viewangles[YAW];
 			pm->ps->soarBase[ROLL] = pm->ps->soarLimit[ROLL] = 0.0;
 			pm->ps->soarBase[PITCH] = pm->ps->soarLimit[PITCH] = 0.0;
 			pm->ps->viewangles[PITCH] = 0.0;
@@ -956,7 +982,7 @@ void PM_AirMove(void){
 	float		wishspeed;
 	float		scale;
 	usercmd_t	cmd;
-	if(pml.onGround){return;}
+	if(pml.onGround ||(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity))){return;}
 	if(pm->ps->bitFlags & isGuiding){return;}
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
@@ -1202,11 +1228,6 @@ void PM_Land(void){
 
 	delta = vel + t * acc;
 	delta = delta*delta * 0.0001;
-	// never take falling damage ifcompletely underwater
-	if(pm->waterlevel == 3){
-		return;
-	}
-
 	// reduce falling damage ifthere is standing water
 	if(pm->waterlevel == 2){
 		delta *= 0.25;
@@ -1301,6 +1322,7 @@ void PM_GroundTrace(void){
 		PM_GroundTraceMissed();
 		pml.groundPlane = qfalse;
 		pml.onGround = qfalse;
+		pm->ps->bitFlags &= ~atopGround;
 		return;
 	}
 	if(pm->ps->velocity[2] > 0 && DotProduct(pm->ps->velocity, trace.plane.normal)> 10){
@@ -1333,6 +1355,7 @@ void PM_GroundTrace(void){
 	}
 	pml.groundPlane = qtrue;
 	pml.onGround = qtrue;
+	pm->ps->bitFlags |= atopGround;
 	if(pm->ps->groundEntityNum == ENTITYNUM_NONE && (pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingFlight)){
 		PM_StopJump();
 		PM_StopFlight();
@@ -1402,11 +1425,15 @@ void PM_Footsteps(void){
 	float bobmove;
 	int	old;
 	qboolean footstep;
-	if((pm->ps->bitFlags & usingZanzoken)){return;}
+	if(pm->ps->bitFlags & usingZanzoken ||pm->ps->bitFlags & usingJump || pm->cmd.buttons & BUTTON_POWERLEVEL){return;}
 	if((pm->ps->bitFlags & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
 		if(!(pm->cmd.rightmove > 0)){return;}
 		if(pm->ps->powerLevel[plCurrent] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
 		else{pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
+		return;
+	}
+	if(pm->waterlevel > 0 && !(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing || pm->ps->bitFlags & usingBoost)){
+		PM_ContinueLegsAnim(LEGS_SWIM);
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
@@ -1442,13 +1469,6 @@ void PM_Footsteps(void){
 		}
 		return;
 	}
-	if(pm->ps->groundEntityNum == ENTITYNUM_NONE){
-		//if(pm->ps->velocity[2] <= 0){PM_ForceLegsAnim(LEGS_FLY_DOWN);}
-		if(pm->waterlevel > 1){
-			PM_ContinueLegsAnim(LEGS_SWIM);
-		}
-		return;
-	}
 	if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
 		if(pm->xyspeed < 5){
 			int	tempAnimIndex;
@@ -1458,7 +1478,8 @@ void PM_Footsteps(void){
 				tempAnimIndex = tempAnimIndex - TORSO_KI_ATTACK1_PREPARE;
 				tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim(tempAnimIndex);
-			} else{
+			}
+			else if(pm->ps->bitFlags & atopGround){
 				if(pm->ps->clientLockedTarget>0){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
 				else{PM_ContinueLegsAnim(LEGS_IDLE);}
 			}
@@ -1568,6 +1589,7 @@ PM_BeginWeaponChange
 */
 void PM_BeginWeaponChange(int weapon){
 	qboolean charging;
+	qboolean usable;
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
 	if(pm->ps->weapon == pm->cmd.weapon){
 		return;
@@ -1585,30 +1607,28 @@ void PM_BeginWeaponChange(int weapon){
 	if(pm->ps->weaponstate == WEAPON_DROPPING){
 		return;
 	}
-	PM_AddEvent(EV_CHANGE_WEAPON );
-	pm->ps->weaponstate = WEAPON_DROPPING;
-}
-
-
-/*
-===============
-PM_FinishWeaponChange
-===============
-*/
-void PM_FinishWeaponChange(void){
-	int	weapon;
+	PM_AddEvent(EV_CHANGE_WEAPON);
+	usable = qfalse;
 	weapon = pm->cmd.weapon;
-	if(weapon < WP_NONE || weapon >= WP_NUM_WEAPONS){
-		weapon = WP_NONE;
-	}
-	if(!(pm->ps->stats[stSkills] & (1 << weapon))){
-		weapon = WP_NONE;
+	while(!usable){
+		if(weapon == 1 && pm->ps->powerups[PW_SKILLS] & USABLE_SKILL1){usable = qtrue;}
+		if(weapon == 2 && pm->ps->powerups[PW_SKILLS] & USABLE_SKILL2){usable = qtrue;}
+		if(weapon == 3 && pm->ps->powerups[PW_SKILLS] & USABLE_SKILL3){usable = qtrue;}
+		if(weapon == 4 && pm->ps->powerups[PW_SKILLS] & USABLE_SKILL4){usable = qtrue;}
+		if(weapon == 5 && pm->ps->powerups[PW_SKILLS] & USABLE_SKILL5){usable = qtrue;}
+		if(weapon == 6 && pm->ps->powerups[PW_SKILLS] & USABLE_SKILL6){usable = qtrue;}
+		if(!usable){
+			if(pm->cmd.weapon < pm->ps->weapon){weapon -=1;}
+			else if(pm->cmd.weapon > pm->ps->weapon){weapon +=1;}
+			else{break;}
+			if(weapon > 6){weapon = 1;}
+			if(weapon < 1){weapon = 6;}
+		}
 	}
 	pm->ps->weapon = weapon;
 	pm->ps->timers[tmAttack1] = 0;
 	pm->ps->timers[tmAttack2] = 0;
 }
-
 
 /*==============
 PM_TorsoAnimation
@@ -1814,6 +1834,7 @@ void PM_Melee(void){
 			pm->ps->timers[tmUpdateMelee] = 0;
 			PM_AddEvent(EV_MELEE_CHECK);
 		}
+		pm->ps->lockedPlayer->bitFlags |= isTargeted;
 		distance = Distance(pm->ps->origin,*(pm->ps->lockedPosition));
 		inRange = distance <= 64 ? qtrue : qfalse;
 		if(charging || !state || distance > 512){PM_StopMelee();}
@@ -2047,7 +2068,7 @@ void PM_Weapon(void){
 		PM_StopMovement();
 		PM_StopDash();
 	}
-	if(pm->cmd.buttons & BUTTON_POWERLEVEL || pm->ps->timers[tmTransform] > 0){
+	if(pm->ps->timers[tmTransform] > 1){
 		PM_WeaponRelease();
 		return;
 	}
@@ -2056,9 +2077,9 @@ void PM_Weapon(void){
 		return;
 	}
 	// Retrieve our weapon's settings
-	weaponInfo = pm->ps->ammo;
-	if(weaponInfo[WPbitFlags] & WPF_ALTWEAPONPRESENT){
-		alt_weaponInfo = &weaponInfo[WPSTAT_ALT_KICOST];
+	weaponInfo = pm->ps->currentSkill;
+	if(weaponInfo[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT){
+		alt_weaponInfo = &weaponInfo[WPSTAT_ALT_POWERLEVELCOST];
 	} else{
 		alt_weaponInfo = weaponInfo;	 // Keep both sets the same.
 		if(pm->cmd.buttons & BUTTON_ALT_ATTACK) {	// ifwe have no altfire,
@@ -2080,8 +2101,8 @@ void PM_Weapon(void){
 	if(weaponInfo[WPSTAT_NUMCHECK] != pm->ps->weapon){
 		return;
 	}
-	costPrimary = weaponInfo[WPSTAT_KICOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
-	costSecondary = alt_weaponInfo[WPSTAT_KICOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);;
+	costPrimary = weaponInfo[WPSTAT_POWERLEVELCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+	costSecondary = alt_weaponInfo[WPSTAT_POWERLEVELCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);;
 	switch(pm->ps->weaponstate){
 	case WEAPON_READY:
 	case WEAPON_DROPPING:
@@ -2099,26 +2120,15 @@ void PM_Weapon(void){
 				pm->ps->weaponstate = WEAPON_READY;
 			}
 			PM_BeginWeaponChange(pm->cmd.weapon );
-			if(pm->ps->weaponstate == WEAPON_DROPPING){
-				PM_FinishWeaponChange();
-				break;
-			}
-
-			if(pm->ps->weaponstate == WEAPON_RAISING){
-				pm->ps->weaponstate = WEAPON_READY;
-				PM_StartTorsoAnim(TORSO_STAND);
-				break;
-			}
-
 			// Starting a primary attack
 			if(pm->cmd.buttons & BUTTON_ATTACK) {
-				if(weaponInfo[WPbitFlags] & WPF_NEEDSCHARGE){
+				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE){
 					pm->ps->weaponstate = WEAPON_CHARGING;
 					PM_StartTorsoAnim(TORSO_KI_ATTACK1_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
 				pm->ps->powerLevel[plUseCurrent] += costPrimary;
-				if(weaponInfo[WPbitFlags] & WPF_CONTINUOUS){
+				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
 					PM_AddEvent(EV_FIRE_WEAPON );
 					pm->ps->weaponstate = WEAPON_FIRING;
 				} else{
@@ -2130,13 +2140,13 @@ void PM_Weapon(void){
 				break;
 			}
 			if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
-				if(alt_weaponInfo[WPbitFlags] & WPF_NEEDSCHARGE){
+				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE){
 					pm->ps->weaponstate = WEAPON_ALTCHARGING;
 					PM_StartTorsoAnim(TORSO_KI_ATTACK1_ALT_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
 				pm->ps->powerLevel[plUseCurrent] += costSecondary;
-				if(alt_weaponInfo[WPbitFlags] & WPF_CONTINUOUS){
+				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
 					pm->ps->weaponstate = WEAPON_ALTFIRING;
 					PM_AddEvent(EV_ALTFIRE_WEAPON );
 				} else{
@@ -2147,7 +2157,7 @@ void PM_Weapon(void){
 				PM_StartTorsoAnim(TORSO_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
 				break;
 			}
-			PM_ContinueTorsoAnim(TORSO_STAND);
+
 		}
 		break;
 	case WEAPON_GUIDING:
@@ -2191,13 +2201,16 @@ void PM_Weapon(void){
 						pm->ps->stats[stChargePercentPrimary] = 100;
 					}
 					pm->ps->powerLevel[plUseCurrent] += costPrimary;
+					pm->ps->powerLevel[plUseFatigue] += weaponInfo[WPSTAT_FATIGUECOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+					pm->ps->powerLevel[plUseHealth] += weaponInfo[WPSTAT_HEALTHCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+					pm->ps->powerLevel[plUseMaximum] += weaponInfo[WPSTAT_MAXIMUMCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
 				}
 			}
 			if(!(pm->cmd.buttons & BUTTON_ATTACK)) {
 				pm->ps->timers[tmAttack1] = 0;
-				if(weaponInfo[WPbitFlags] & WPF_READY){
-					weaponInfo[WPbitFlags] &= ~WPF_READY;
-					if(weaponInfo[WPbitFlags] & WPF_GUIDED){
+				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_READY){
+					weaponInfo[WPSTAT_BITFLAGS] &= ~WPF_READY;
+					if(weaponInfo[WPSTAT_BITFLAGS] & WPF_GUIDED){
 						pm->ps->weaponstate = WEAPON_GUIDING;
 						pm->ps->bitFlags |= isGuiding;
 					} else{
@@ -2228,12 +2241,15 @@ void PM_Weapon(void){
 						pm->ps->stats[stChargePercentSecondary] = 100;
 					}
 					pm->ps->powerLevel[plUseCurrent] += costPrimary;
+					pm->ps->powerLevel[plUseFatigue] += weaponInfo[WPSTAT_ALT_FATIGUECOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+					pm->ps->powerLevel[plUseHealth] += weaponInfo[WPSTAT_ALT_HEALTHCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+					pm->ps->powerLevel[plUseMaximum] += weaponInfo[WPSTAT_ALT_MAXIMUMCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
 				}
 			}
 			if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)) {
-				if(alt_weaponInfo[WPbitFlags] & WPF_READY){
-					alt_weaponInfo[WPbitFlags] &= ~WPF_READY;
-					if(alt_weaponInfo[WPbitFlags] & WPF_GUIDED){
+				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_READY){
+					alt_weaponInfo[WPSTAT_BITFLAGS] &= ~WPF_READY;
+					if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_GUIDED){
 						pm->ps->weaponstate = WEAPON_ALTGUIDING;
 						pm->ps->bitFlags |= isGuiding;
 					} else{
@@ -2289,6 +2305,7 @@ PM_CheckLockon
 ================*/
 void PM_StopLockon(void){
 	if(pm->ps->lockedTarget>0){
+		pm->ps->lockedPlayer->bitFlags &= ~isTargeted;
 		PM_AddEvent(EV_LOCKON_END);
 	}
 	pm->ps->lockedPosition = NULL;
@@ -2540,8 +2557,7 @@ void PmoveSingle(pmove_t *pmove){
 		meleeRange = Distance(pm->ps->origin,*(pm->ps->lockedPosition)) <= 32 ? qtrue : qfalse;
 	}
 	if(!(pm->ps->bitFlags & isTransforming)){
-		PM_UsePowerLevel(qtrue);
-		PM_UsePowerLevel(qfalse);
+		PM_UsePowerLevel();
 		PM_BurnPowerLevel(qtrue);
 		PM_BurnPowerLevel(qfalse);
 		PM_CheckStatus();

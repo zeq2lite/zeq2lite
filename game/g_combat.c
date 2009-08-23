@@ -83,7 +83,7 @@ void TossClientItems( gentity_t *self ) {
 	}
 
 	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
-		self->client->ps.ammo[ weapon ] ) {
+		self->client->ps.currentSkill[ weapon ] ) {
 		// find the item type for this weapon
 		item = BG_FindItemForWeapon( weapon );
 

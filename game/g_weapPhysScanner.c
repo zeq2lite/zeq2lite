@@ -5,43 +5,53 @@
 #include "g_weapPhysParser.h" // <-- cg_local.h included in this
 
 char *g_weapPhysCategories[] = {
-	"Physics", "Costs", "Detonation", "Muzzle", "Trajectory", ""
+	"Physics", "Costs", "Detonation", "Muzzle", "Trajectory", "Requirement", ""
 };
 
 g_weapPhysField_t g_weapPhysFields[] = {
-	{ "type",			G_weapPhys_ParseType			},	// Physics, Damage, Trajectory
-	{ "speed",			G_weapPhys_ParseSpeed			},	// Physics
-	{ "acceleration",	G_weapPhys_ParseAcceleration	},	// Physics
-	{ "radius",			G_weapPhys_ParseRadius			},	// Physics, Damage
-	{ "range",			G_weapPhys_ParseRange			},	// Physics, Trajectory
-	{ "duration",		G_weapPhys_ParseDuration		},	// Physics, Duration
-	{ "lifetime",		G_weapPhys_ParseLifetime		},	// Physics
-	{ "swat",			G_weapPhys_ParseSwat			},	// Physics
-	{ "deflect",		G_weapPhys_ParseSwat			},	// Physics
-	{ "drain",			G_weapPhys_ParseDrain			},	// Physics
-	{ "blind",			G_weapPhys_ParseBlind			},	// Physics
-	{ "hitpoints",		G_weapPhys_ParseHitpoints		},	// Costs
-	{ "hp",				G_weapPhys_ParseHitpoints		},	// Costs
-	{ "ki",				G_weapPhys_ParseKi				},	// Costs
-	{ "energy",			G_weapPhys_ParseKi				},	// Costs
-	{ "stamina",		G_weapPhys_ParseStamina			},	// Costs
-	{ "cooldownTime",	G_weapPhys_ParseCooldownTime	},	// Costs
-	{ "chargeTime",		G_weapPhys_ParseChargeTime		},	// Costs
-	{ "chargeReadyPct",	G_weapPhys_ParseChargeReadyPct	},	// Costs
-	{ "substHitpoints", G_weapPhys_ParseSubstHitpoints	},	// Costs
-	{ "substHp",		G_weapPhys_ParseSubstHitpoints	},	// Costs
-	{ "damage",			G_weapPhys_ParseDamage			},	// Damage
-	{ "knockback",		G_weapPhys_ParseKnockBack		},	// Damage
-	{ "nrShots",		G_weapPhys_ParseNrShots			},	// Muzzle
-	{ "offsetWidth",	G_weapPhys_ParseOffsetWidth		},	// Muzzle
-	{ "offsetHeight",	G_weapPhys_ParseOffsetHeight	},	// Muzzle
-	{ "angleWidth",		G_weapPhys_ParseAngleWidth		},	// Muzzle
-	{ "angleHeight",	G_weapPhys_ParseAngleHeight		},	// Muzzle
-	{ "flipInWidth",	G_weapPhys_ParseFlipInWidth		},	// Muzzle
-	{ "flipInHeight",	G_weapPhys_ParseFlipInHeight	},	// Muzzle
-	{ "fieldOfView",	G_weapPhys_ParseFOV				},	// Trajectory  --NOTE: Use for homing angles!
-	{ "FOV",			G_weapPhys_ParseFOV				},	// Trajectory  --NOTE: Use for homing angles!
-	{ "",				G_weapPhys_ParseDummy			}	// Terminator dummy function
+	{ "type",				G_weapPhys_ParseType			},	// Physics, Damage, Trajectory
+	{ "speed",				G_weapPhys_ParseSpeed			},	// Physics
+	{ "acceleration",		G_weapPhys_ParseAcceleration	},	// Physics
+	{ "radius",				G_weapPhys_ParseRadius			},	// Physics, Damage
+	{ "range",				G_weapPhys_ParseRange			},	// Physics, Trajectory
+	{ "duration",			G_weapPhys_ParseDuration		},	// Physics, Duration
+	{ "lifetime",			G_weapPhys_ParseLifetime		},	// Physics
+	{ "swat",				G_weapPhys_ParseSwat			},	// Physics
+	{ "deflect",			G_weapPhys_ParseSwat			},	// Physics
+	{ "drain",				G_weapPhys_ParseDrain			},	// Physics
+	{ "blind",				G_weapPhys_ParseBlind			},	// Physics
+	{ "minPowerLevel",		G_weapPhys_ParseMinPowerLevel	},	// Requirement
+	{ "maxPowerLevel",		G_weapPhys_ParseMinPowerLevel	},	// Requirement
+	{ "minFatigue",			G_weapPhys_ParseMinFatigue		},	// Requirement
+	{ "maxFatigue",			G_weapPhys_ParseMaxFatigue		},	// Requirement
+	{ "minHealth",			G_weapPhys_ParseMinHealth		},	// Requirement
+	{ "maxHealth",			G_weapPhys_ParseMaxHealth		},	// Requirement
+	{ "minTier",			G_weapPhys_ParseMinTier			},	// Requirement
+	{ "maxTier",			G_weapPhys_ParseMaxTier			},	// Requirement
+	{ "minTotalTier",		G_weapPhys_ParseMinTotalTier	},	// Requirement
+	{ "maxTotalTier",		G_weapPhys_ParseMaxTotalTier	},	// Requirement
+	{ "ground",				G_weapPhys_ParseGround			},	// Requirement
+	{ "flight",				G_weapPhys_ParseFlight			},	// Requirement
+	{ "water",				G_weapPhys_ParseWater			},	// Requirement
+	{ "powerLevel",			G_weapPhys_ParsePowerLevel		},	// Costs
+	{ "maximum",			G_weapPhys_ParseMaximum			},	// Costs
+	{ "health",				G_weapPhys_ParseHealth			},	// Costs
+	{ "fatigue",			G_weapPhys_ParseFatigue			},	// Costs
+	{ "cooldownTime",		G_weapPhys_ParseCooldownTime	},	// Costs
+	{ "chargeTime",			G_weapPhys_ParseChargeTime		},	// Costs
+	{ "chargeReadyPct",		G_weapPhys_ParseChargeReadyPct	},	// Costs
+	{ "damage",				G_weapPhys_ParseDamage			},	// Damage
+	{ "knockback",			G_weapPhys_ParseKnockBack		},	// Damage
+	{ "nrShots",			G_weapPhys_ParseNrShots			},	// Muzzle
+	{ "offsetWidth",		G_weapPhys_ParseOffsetWidth		},	// Muzzle
+	{ "offsetHeight",		G_weapPhys_ParseOffsetHeight	},	// Muzzle
+	{ "angleWidth",			G_weapPhys_ParseAngleWidth		},	// Muzzle
+	{ "angleHeight",		G_weapPhys_ParseAngleHeight		},	// Muzzle
+	{ "flipInWidth",		G_weapPhys_ParseFlipInWidth		},	// Muzzle
+	{ "flipInHeight",		G_weapPhys_ParseFlipInHeight	},	// Muzzle
+	{ "fieldOfView",		G_weapPhys_ParseFOV				},	// Trajectory  --NOTE: Use for homing angles!
+	{ "FOV",				G_weapPhys_ParseFOV				},	// Trajectory  --NOTE: Use for homing angles!
+	{ "",					G_weapPhys_ParseDummy			}	// Terminator dummy function
 };
 
 

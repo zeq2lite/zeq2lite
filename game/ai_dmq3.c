@@ -937,14 +937,14 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_BFG10K] = (bs->cur_ps.stats[stSkills] & (1 << WP_BFG)) != 0;
 	bs->inventory[INVENTORY_GRAPPLINGHOOK] = (bs->cur_ps.stats[stSkills] & (1 << WP_GRAPPLING_HOOK)) != 0;
 	//ammo
-	bs->inventory[INVENTORY_SHELLS] = bs->cur_ps.ammo[WP_SHOTGUN];
-	bs->inventory[INVENTORY_BULLETS] = bs->cur_ps.ammo[WP_MACHINEGUN];
-	bs->inventory[INVENTORY_GRENADES] = bs->cur_ps.ammo[WP_GRENADE_LAUNCHER];
-	bs->inventory[INVENTORY_CELLS] = bs->cur_ps.ammo[WP_PLASMAGUN];
-	bs->inventory[INVENTORY_LIGHTNINGAMMO] = bs->cur_ps.ammo[WP_LIGHTNING];
-	bs->inventory[INVENTORY_ROCKETS] = bs->cur_ps.ammo[WP_ROCKET_LAUNCHER];
-	bs->inventory[INVENTORY_SLUGS] = bs->cur_ps.ammo[WP_RAILGUN];
-	bs->inventory[INVENTORY_BFGAMMO] = bs->cur_ps.ammo[WP_BFG];
+	bs->inventory[INVENTORY_SHELLS] = bs->cur_ps.currentSkill[WP_SHOTGUN];
+	bs->inventory[INVENTORY_BULLETS] = bs->cur_ps.currentSkill[WP_MACHINEGUN];
+	bs->inventory[INVENTORY_GRENADES] = bs->cur_ps.currentSkill[WP_GRENADE_LAUNCHER];
+	bs->inventory[INVENTORY_CELLS] = bs->cur_ps.currentSkill[WP_PLASMAGUN];
+	bs->inventory[INVENTORY_LIGHTNINGAMMO] = bs->cur_ps.currentSkill[WP_LIGHTNING];
+	bs->inventory[INVENTORY_ROCKETS] = bs->cur_ps.currentSkill[WP_ROCKET_LAUNCHER];
+	bs->inventory[INVENTORY_SLUGS] = bs->cur_ps.currentSkill[WP_RAILGUN];
+	bs->inventory[INVENTORY_BFGAMMO] = bs->cur_ps.currentSkill[WP_BFG];
 	//powerups
 	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.powerLevel[plCurrent];
 	bs->inventory[INVENTORY_TELEPORTER] = 0; //bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;

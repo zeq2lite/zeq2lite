@@ -188,9 +188,9 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other ) {
 
 void Add_Ammo (gentity_t *ent, int weapon, int count)
 {
-	ent->client->ps.ammo[weapon] += count;
-	if ( ent->client->ps.ammo[weapon] > 200 ) {
-		ent->client->ps.ammo[weapon] = 200;
+	ent->client->ps.currentSkill[weapon] += count;
+	if ( ent->client->ps.currentSkill[weapon] > 200 ) {
+		ent->client->ps.currentSkill[weapon] = 200;
 	}
 }
 
@@ -228,8 +228,8 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 		if ( ! (ent->flags & FL_DROPPED_ITEM) && g_gametype.integer != GT_TEAM ) {
 			// respawning rules
 			// drop the quantity if the already have over the minimum
-			if ( other->client->ps.ammo[ ent->item->giTag ] < quantity ) {
-				quantity = quantity - other->client->ps.ammo[ ent->item->giTag ];
+			if ( other->client->ps.currentSkill[ ent->item->giTag ] < quantity ) {
+				quantity = quantity - other->client->ps.currentSkill[ ent->item->giTag ];
 			} else {
 				quantity = 1;		// only add a single shot
 			}
@@ -242,7 +242,7 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 	Add_Ammo( other, ent->item->giTag, quantity );
 
 	if (ent->item->giTag == WP_GRAPPLING_HOOK)
-		other->client->ps.ammo[ent->item->giTag] = -1; // unlimited ammo
+		other->client->ps.currentSkill[ent->item->giTag] = -1; // unlimited ammo
 
 	// team deathmatch has slow weapon respawns
 	if ( g_gametype.integer == GT_TEAM ) {

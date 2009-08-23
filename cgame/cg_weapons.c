@@ -1424,6 +1424,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 	y = 418;
 
 	for ( i = 1 ; i < 16 ; i++ ) {
+		qboolean usable;
 		if ( !( bits & ( 1 << i ) ) ) {
 			continue;
 		}
@@ -1431,9 +1432,18 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 		//CG_RegisterWeapon( i );
 
 		weaponInfo = CG_FindUserWeaponGraphics( cg.snap->ps.clientNum, i );
-
+		usable = qfalse;
 		// draw weapon icon
 		//CG_DrawPic( x, y, 32, 32, cg_weapons[i].weaponIcon );
+		if(i == 1 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL1){usable = qtrue;}
+		if(i == 2 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL2){usable = qtrue;}
+		if(i == 3 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL3){usable = qtrue;}
+		if(i == 4 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL4){usable = qtrue;}
+		if(i == 5 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL5){usable = qtrue;}
+		if(i == 6 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL6){usable = qtrue;}
+		if(!usable){
+			continue;
+		}
 		CG_DrawPic( x, y, 24, 24, weaponInfo->weaponIcon );
 
 		// draw selection marker
@@ -1447,7 +1457,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 		
 		/*
 		// no ammo cross on top
-		if ( !cg.snap->ps.ammo[ i ] ) {
+		if ( !cg.snap->ps.currentSkill[ i ] ) {
 			CG_DrawPic( x, y, 32, 32, cgs.media.noammoShader );
 		}
 		*/
@@ -1489,13 +1499,18 @@ CG_WeaponSelectable
 ===============
 */
 static qboolean CG_WeaponSelectable( int i ) {
-//	if ( !cg.snap->ps.ammo[i] ) {
-//		return qfalse;
-//	}
+	qboolean usable;
+	usable = qfalse;
 	if ( ! (cg.snap->ps.stats[ stSkills ] & ( 1 << i ) ) ) {
 		return qfalse;
 	}
-
+	if(i == 1 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL1){usable = qtrue;}
+	if(i == 2 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL2){usable = qtrue;}
+	if(i == 3 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL3){usable = qtrue;}
+	if(i == 4 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL4){usable = qtrue;}
+	if(i == 5 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL5){usable = qtrue;}
+	if(i == 6 && cg.snap->ps.powerups[PW_SKILLS] & USABLE_SKILL6){usable = qtrue;}
+	if(!usable){return qfalse;}
 	return qtrue;
 }
 
@@ -1535,9 +1550,6 @@ void CG_NextWeapon_f( void ) {
 		if ( cg.weaponSelect == 16 ) {
 			cg.weaponSelect = 0;
 		}
-//		if ( cg.weaponSelect == WP_GAUNTLET ) {
-//			continue;		// never cycle to gauntlet
-//		}
 		if ( CG_WeaponSelectable( cg.weaponSelect ) ) {
 			break;
 		}

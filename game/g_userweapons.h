@@ -45,14 +45,6 @@ typedef struct {
 	userWeaponType_t	general_type;				// Weapon's type
 	int					general_bitflags;			// Bitflag settings for weapon (see above)
 
-	// Requirements
-	int					requirePowerLevelMinimum;
-	int					requirePowerLevelMaximum;
-	int					requirePowerLevelTotalMinimum;
-	int					requirePowerLevelTotalMaximum;
-	int					requireTierMinimum;
-	int					requireTierMaximum;	
-
 	// Reactions
 	qboolean			canStruggle;
 	qboolean			canStruggleFeed;
@@ -64,14 +56,30 @@ typedef struct {
 	int					homing_range;				// range within which the weapon scans for targets
 	int					homing_FOV;					// FOV of the weapon's range of vision when scanning for targets	
 
+	// Requirements
+	int					require_maximum;
+	int					require_minPowerLevel;
+	int					require_maxPowerLevel;
+	int					require_minHealth;
+	int					require_maxHealth;
+	int					require_minFatigue;
+	int					require_maxFatigue;
+	int					require_minTier;
+	int					require_maxTier;
+	int					require_minTotalTier;
+	int					require_maxTotalTier;
+	int					require_ground;
+	int					require_flight;
+	int					require_water;
+
 	// Costs
-	int					costs_ki;					// Ki to fire a shot of the weapon. Charging weapons deduct the cost each second
-	int					costs_hp;					// HP to fire a shot of the weapon. Charging weapons deduct the cost each second.
-	int					costs_stamina;				// Stamina to fire a shot of the weapon. Charging weapons deduct the cost each second.
+	int					costs_powerLevel;
+	int					costs_maximum;
+	int					costs_health;
+	int					costs_fatigue;
 	int					costs_chargeTime;			// Time to charge 1% of the weapon
 	int					costs_chargeReady;			// Percentage at which the weapon can be fired
 	int					costs_cooldownTime;			// Time the weapon must rest after being fired, before it can be fired again.
-	qboolean			costs_transKi2HP;			// When no more Ki is present, can the weapon drain HP? ( NOTE: While not going below 15%. )
 
 	// Damage
 	int					damage_damage;				// Amount of damage, done at the impact point.

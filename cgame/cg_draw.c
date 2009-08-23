@@ -1909,7 +1909,7 @@ static void CG_DrawCrosshair(void) {
 
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
-	if ( cg.snap->ps.ammo[WPbitFlags] & WPF_READY || cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_READY) {
+	if ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] & WPF_READY || cg.snap->ps.currentSkill[WPSTAT_ALT_BITFLAGS] & WPF_READY) {
 		trap_R_SetColor( chargeColor );
 	} else if (cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS || ps->clientLockedTarget > 0) {
 		if ( cgs.clientinfo[cg.crosshairClientNum].team == cg.snap->ps.persistant[PERS_TEAM] && cgs.clientinfo[cg.crosshairClientNum].team != TEAM_FREE  ) {
@@ -2042,7 +2042,7 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 	y = y_cross - h; 
 
 	// If the primary weapon can be charged, and atleast 1% is charged, draw the bar.
-	if ( ( cg.snap->ps.ammo[WPbitFlags] && WPF_NEEDSCHARGE) && (cg.snap->ps.stats[stChargePercentPrimary] > 0 ) ) {
+	if ( ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] && WPF_NEEDSCHARGE) && (cg.snap->ps.stats[stChargePercentPrimary] > 0 ) ) {
 
 		// draw bar
 		value = cg.snap->ps.stats[stChargePercentPrimary];
@@ -2050,7 +2050,7 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 		// If the primary weapon is charged far enough to be fire-able,
 		// display the ready glow.
 
-		if ( cg.snap->ps.ammo[WPbitFlags] & WPF_READY ) {
+		if ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] & WPF_READY ) {
 			CG_DrawVertGauge( x_pri + 14, y + 15, 4, 34, color_ready, color_empty, value, 100, qfalse );	
 		}
 		else {
@@ -2064,10 +2064,10 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 
 	// If the secondary weapon exists, display the charge bar
 	// depending on whether it is chargeable or not.
-	if ( cg.snap->ps.ammo[WPbitFlags] & WPF_ALTWEAPONPRESENT ) {
+	if ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT ) {
 
 		// If the secondary weapon can be charged, and atleast 1% is charged, draw the bar.
-		if ( ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) && (cg.snap->ps.stats[stChargePercentSecondary] > 0 ) ) {
+		if ( ( cg.snap->ps.currentSkill[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) && (cg.snap->ps.stats[stChargePercentSecondary] > 0 ) ) {
 
 			// draw bar
 			value = cg.snap->ps.stats[stChargePercentSecondary];
@@ -2075,7 +2075,7 @@ static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
 			// If the secondary weapon is charged far enough to be fire-able,
 			// display the ready glow.
 
-			if ( cg.snap->ps.ammo[WPSTAT_ALT_BITFLAGS] & WPF_READY ) {
+			if ( cg.snap->ps.currentSkill[WPSTAT_ALT_BITFLAGS] & WPF_READY ) {
 				CG_DrawVertGauge( x_sec + 14, y + 15, 4, 34, color_ready, color_empty, value, 100, qfalse );
 			}
 			else {
