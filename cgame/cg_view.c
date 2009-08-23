@@ -2366,6 +2366,7 @@ Generates and draws a game scene and status information at the given time.
 void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback ) {
 	int		inwater;
 	float	attenuation;
+	char	var[MAX_TOKEN_CHARS];
 
 	cg.time = serverTime;
 	cg.demoPlayback = demoPlayback;
@@ -2497,6 +2498,10 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// actually issue the rendering calls
 	CG_DrawActive( stereoView );
 	CG_CheckMusic();
+
+	trap_Cvar_VariableStringBuffer( "cl_paused", var, sizeof( var ) );
+	cgs.clientPaused = atoi( var );
+
 	if ( cg_stats.integer ) {
 		CG_Printf( "cg.clientFrame:%i\n", cg.clientFrame );
 	}

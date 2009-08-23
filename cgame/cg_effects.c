@@ -232,6 +232,10 @@ void CG_SpawnEffect( vec3_t org ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 
+	if (cgs.clientPaused){
+		return;
+	}
+
 	le = CG_AllocLocalEntity();
 	le->leFlags = 0;
 	le->leType = LE_FADE_ALPHA;
@@ -274,6 +278,10 @@ void CG_WaterRipple( vec3_t org, int size ) {
 	refEntity_t		*re;
 	float			ang;
 	vec3_t			oldAxis[3];
+
+	if (cgs.clientPaused){
+		return;
+	}
 
 	le = CG_AllocLocalEntity();
 	le->leFlags = 0;
@@ -323,6 +331,10 @@ void CG_WaterSplash( vec3_t org, int size ) {
 	refEntity_t		*re;
 	float			ang;
 	vec3_t			oldAxis[3];
+
+	if (cgs.clientPaused){
+		return;
+	}
 
 	le = CG_AllocLocalEntity();
 	le->leFlags = 0;
@@ -390,6 +402,11 @@ void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 	int r,r1,r2,r3,r4,r5,r6;
+
+	if (cgs.clientPaused){
+		return;
+	}
+
 	r = random() * 60;
 	r1 = random() * 24 + 8;
 	r2 = random() * 24 + 8;
@@ -462,6 +479,10 @@ void CG_BigLightningEffect( vec3_t org ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 	int r,s;
+
+	if (cgs.clientPaused){
+		return;
+	}
 
 	r = random() * 200;
 
@@ -547,6 +568,10 @@ void CG_SpeedMeleeEffect( vec3_t org ) {
 	refEntity_t		*re;
 	int r,r1,r2,r3,r4,r5,r6;
 
+	if (cgs.clientPaused){
+		return;
+	}
+
 	r = random() * 60;
 	r1 = random() * 24 + 8;
 	r2 = random() * 24 + 8;
@@ -606,6 +631,10 @@ void CG_PowerMeleeEffect( vec3_t org ) {
 	refEntity_t		*re;
 	int r,r1,r2,r3,r4,r5,r6;
 
+	if (cgs.clientPaused){
+		return;
+	}
+
 	r1 = random() * 24 + 8;
 	r2 = random() * 24 + 8;
 	r3 = random() * 32 + 16;
@@ -655,6 +684,10 @@ void CG_PowerStruggleEffect( vec3_t org, int size ) {
 	refEntity_t		*re;
 	localEntity_t	*le2;
 	refEntity_t		*re2;
+
+	if (cgs.clientPaused){
+		return;
+	}
 
 	le = CG_AllocLocalEntity();
 	le->leFlags = 0;
