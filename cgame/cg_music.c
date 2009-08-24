@@ -131,7 +131,6 @@ void CG_NextTrack(void){
 	int i;
 	qtime_t realRandom;
 	playlistSize = cgs.music.playlistSize[cgs.music.currentType];
-	CG_Printf("playlist size : %i\n",playlistSize);
 	nextIndex = (nextIndex < playlistSize) ? cgs.music.currentIndex + 1 : 0;
 	if(cgs.music.random){
 		trap_RealTime(&realRandom);
