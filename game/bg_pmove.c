@@ -301,6 +301,9 @@ void PM_BurnPowerLevel(qboolean melee){
 	if(!burn){return;}
 	defense = melee ? pm->ps->stats[stMeleeDefense] : pm->ps->stats[stEnergyDefense];
 	defense = pm->ps->bitFlags & usingBlock ? defense * 2.5 : defense;
+	defense = pm->ps->bitFlags & usingBallFlip ? defense * 1.5 : defense;
+	defense = pm->ps->bitFlags & atopGround ? defense * 2.0 : defense;
+	defense = (pm->cmd.buttons & BUTTON_WALKING) && pm->ps->bitFlags & atopGround ? defense * 3.0 : defense;
 	percent = 1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]);
 	burn -= (int)(((float)pm->ps->powerLevel[plFatigue] * 0.01) * defense);
 	newValue = pm->ps->powerLevel[plHealth] - burn;
