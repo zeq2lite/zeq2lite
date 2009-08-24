@@ -136,6 +136,9 @@ void CG_NextTrack(void){
 		trap_RealTime(&realRandom);
 		nextIndex = (int)(Q_random(&realRandom.tm_sec) * (float)(playlistSize-1));
 	}
+	if(nextIndex == cgs.music.lastTrack[cgs.music.currentType]){nextIndex += 1;}
+	if(nextIndex < 0){nextIndex = playlistSize-1;}
+	if(nextIndex >= playlistSize){nextIndex = 0;}
 	path = va("music/%s",cgs.music.playlist[cgs.music.currentType][nextIndex]);
 	cgs.music.endTime = cg.time + cgs.music.trackLength[cgs.music.currentType][nextIndex] - cgs.music.fadeAmount;
 	trap_S_StartBackgroundTrack(path,path);

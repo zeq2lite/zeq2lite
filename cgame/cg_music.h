@@ -4,6 +4,7 @@ typedef struct{
 	qboolean hasPlayed[6][32];
 	qboolean random;
 	int playlistSize[6];
+	int lastTrack[6];
 	int currentType;
 	int currentIndex;
 	int fadeAmount;
