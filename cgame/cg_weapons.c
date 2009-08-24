@@ -2836,12 +2836,12 @@ static qboolean	CG_CalcMuzzlePoint( int entityNum, vec3_t muzzle ) {
 	VectorCopy( cent->currentState.pos.trBase, muzzle );
 
 	AngleVectors( cent->currentState.apos.trBase, forward, NULL, NULL );
-	anim = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
-	if ( anim == LEGS_WALKCR || anim == LEGS_IDLECR ) {
-		muzzle[2] += CROUCH_VIEWHEIGHT;
-	} else {
+//	anim = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
+//	if ( anim == LEGS_WALKCR || anim == LEGS_IDLECR ) {
+//		muzzle[2] += CROUCH_VIEWHEIGHT;
+//	} else {
 		muzzle[2] += DEFAULT_VIEWHEIGHT;
-	}
+//	}
 
 	VectorMA( muzzle, 14, forward, muzzle );
 

@@ -504,12 +504,12 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 
 	case ANIM_JUMP:	
-		s_controls.playerLegs = LEGS_JUMP;
-		s_controls.playerTorso = TORSO_JUMP;
+		s_controls.playerLegs = LEGS_JUMP_UP;
+		s_controls.playerTorso = TORSO_JUMP_UP;
 		break;
 
 	case ANIM_CROUCH:	
-		s_controls.playerLegs = LEGS_IDLECR;
+		//s_controls.playerLegs = LEGS_IDLECR;
 		break;
 
 	case ANIM_TURNLEFT:
@@ -646,8 +646,8 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 
 	case ANIM_DIE:
-		s_controls.playerLegs = BOTH_DEATH1;
-		s_controls.playerTorso = BOTH_DEATH1;
+		s_controls.playerLegs = BOTH_DEATH_GROUND;
+		s_controls.playerTorso = BOTH_DEATH_GROUND;
 		s_controls.playerWeapon = WP_NONE;
 		break;
 

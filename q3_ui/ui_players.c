@@ -135,7 +135,7 @@ UI_ForceLegsAnim
 static void UI_ForceLegsAnim( playerInfo_t *pi, int anim ) {
 	pi->legsAnim = ( ( pi->legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
 
-	if ( anim == LEGS_JUMP ) {
+	if ( anim == LEGS_JUMP_UP ) {
 		pi->legsAnimationTimer = UI_TIMER_JUMP;
 	}
 }
@@ -246,20 +246,20 @@ static void UI_LegsSequencing( playerInfo_t *pi ) {
 	currentAnim = pi->legsAnim & ~ANIM_TOGGLEBIT;
 
 	if ( pi->legsAnimationTimer > 0 ) {
-		if ( currentAnim == LEGS_JUMP ) {
+		if ( currentAnim == LEGS_JUMP_UP ) {
 			jumpHeight = JUMP_HEIGHT * sin( M_PI * ( UI_TIMER_JUMP - pi->legsAnimationTimer ) / UI_TIMER_JUMP );
 		}
 		return;
 	}
 
-	if ( currentAnim == LEGS_JUMP ) {
-		UI_ForceLegsAnim( pi, LEGS_LAND );
+	if ( currentAnim == LEGS_JUMP_UP ) {
+		UI_ForceLegsAnim( pi, LEGS_LAND_UP );
 		pi->legsAnimationTimer = UI_TIMER_LAND;
 		jumpHeight = 0;
 		return;
 	}
 
-	if ( currentAnim == LEGS_LAND ) {
+	if ( currentAnim == LEGS_LAND_UP ) {
 		UI_SetLegsAnim( pi, LEGS_IDLE );
 		return;
 	}
@@ -455,20 +455,26 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, HEAD_KI_CHARGE );
 		} else if ( TORSO_FLY_DOWN == torsoAnimNum && pi->overrideHead ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_KI_CHARGE );
+		} else if ( TORSO_FLOOR_RECOVER == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_FLOOR_RECOVER );
 		} else if ( TORSO_WALK == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_WALK );
 		} else if ( TORSO_RUN == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_RUN );
 		} else if ( TORSO_BACK == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_BACK );
-		} else if ( TORSO_JUMP == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_JUMP );
-		} else if ( TORSO_LAND == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_LAND );
-		} else if ( TORSO_JUMPB == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_JUMPB );
-		} else if ( TORSO_LANDB == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_LANDB );
+		} else if ( TORSO_JUMP_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_JUMP_UP );
+		} else if ( TORSO_LAND_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_LAND_UP );
+		} else if ( TORSO_JUMP_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_JUMP_FORWARD );
+		} else if ( TORSO_LAND_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_LAND_FORWARD );
+		} else if ( TORSO_JUMP_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_JUMP_BACK );
+		} else if ( TORSO_LAND_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_LAND_BACK );
 		} else if ( TORSO_SWIM == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_SWIM );
 		} else if ( TORSO_DASH_RIGHT == torsoAnimNum ) {
@@ -491,6 +497,8 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, HEAD_TRANS_BACK );
 		} else if ( TORSO_FLY_IDLE == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_IDLE );
+		} else if ( TORSO_FLY_PREPARE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_PREPARE );
 		} else if ( TORSO_FLY_FORWARD == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_FORWARD );
 		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
@@ -515,6 +523,30 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_BLOCK );
 		} else if ( TORSO_SPEED_MELEE_HIT == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_HIT );
+		} else if ( TORSO_BREAKER_MELEE_ATTACK1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK1 );
+		} else if ( TORSO_BREAKER_MELEE_ATTACK2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK2 );
+		} else if ( TORSO_BREAKER_MELEE_ATTACK3 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK3 );
+		} else if ( TORSO_BREAKER_MELEE_ATTACK4 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK4 );
+		} else if ( TORSO_BREAKER_MELEE_ATTACK5 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK5 );
+		} else if ( TORSO_BREAKER_MELEE_ATTACK6 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK6 );
+		} else if ( TORSO_BREAKER_MELEE_HIT1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT1 );
+		} else if ( TORSO_BREAKER_MELEE_HIT2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT2 );
+		} else if ( TORSO_BREAKER_MELEE_HIT3 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT3 );
+		} else if ( TORSO_BREAKER_MELEE_HIT4 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT4 );
+		} else if ( TORSO_BREAKER_MELEE_HIT5 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT5 );
+		} else if ( TORSO_BREAKER_MELEE_HIT6 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT6 );
 		} else if ( TORSO_POWER_MELEE_1_CHARGE == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_1_CHARGE );
 		} else if ( TORSO_POWER_MELEE_2_CHARGE == torsoAnimNum ) {
@@ -541,6 +573,8 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_6_HIT );
 		} else if ( TORSO_KNOCKBACK == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK );
+		} else if ( TORSO_KNOCKBACK_HIT_WALL == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK_HIT_WALL );
 		} else if ( TORSO_KNOCKBACK_RECOVER_1 == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK_RECOVER_1 );
 		} else if ( TORSO_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
@@ -1332,8 +1366,8 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	weaponNum = pi->lastWeapon;
 	pi->weapon = weaponNum;
 
-	if ( torsoAnim == BOTH_DEATH1 || legsAnim == BOTH_DEATH1 ) {
-		torsoAnim = legsAnim = BOTH_DEATH1;
+	if ( torsoAnim == BOTH_DEATH_GROUND || legsAnim == BOTH_DEATH_GROUND ) {
+		torsoAnim = legsAnim = BOTH_DEATH_GROUND;
 		pi->weapon = pi->currentWeapon = WP_NONE;
 		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 
@@ -1349,7 +1383,7 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 
 	// leg animation
 	currentAnim = pi->legsAnim & ~ANIM_TOGGLEBIT;
-	if ( legsAnim != LEGS_JUMP && ( currentAnim == LEGS_JUMP || currentAnim == LEGS_LAND ) ) {
+	if ( legsAnim != LEGS_JUMP_UP && ( currentAnim == LEGS_JUMP_UP || currentAnim == LEGS_LAND_UP ) ) {
 		pi->pendingLegsAnim = legsAnim;
 	}
 	else if ( legsAnim != currentAnim ) {
@@ -1359,9 +1393,9 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	}
 
 	// torso animation
-	if ( torsoAnim == TORSO_STAND || torsoAnim == TORSO_CROUCH ) {
+	if ( torsoAnim == TORSO_STAND || torsoAnim == TORSO_STAND_LOCKED ) {
 		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
-			torsoAnim = TORSO_CROUCH;
+			torsoAnim = TORSO_STAND;
 		}
 		else {
 			torsoAnim = TORSO_STAND;

@@ -318,8 +318,8 @@ void PM_CheckStatus(void){
 			PM_AddEvent(EV_DEATH);
 		}
 		else{
-			PM_ContinueTorsoAnim(BOTH_DEATH2);
-			PM_ContinueLegsAnim(BOTH_DEATH2);
+			PM_ContinueTorsoAnim(BOTH_DEATH_GROUND);
+			PM_ContinueLegsAnim(BOTH_DEATH_GROUND);
 		}
 	}
 	else if(pm->ps->powerLevel[plFatigue]<= 0){
@@ -336,8 +336,8 @@ void PM_CheckStatus(void){
 		}
 		else{
 			pm->ps->powerLevel[plFatigue] += pml.msec / 2;
-			PM_ContinueTorsoAnim(BOTH_DEATH3);
-			PM_ContinueLegsAnim(BOTH_DEATH3);
+			PM_ContinueTorsoAnim(BOTH_DEATH_GROUND);
+			PM_ContinueLegsAnim(BOTH_DEATH_GROUND);
 			if(pm->ps->powerLevel[plFatigue] > 0){
 				pm->ps->bitFlags &= ~isUnconcious;
 				pm->ps->powerups[PW_STATE] = 0;
@@ -756,10 +756,10 @@ void PM_CheckJump(void){
 		PM_AddEvent(EV_JUMP);
 	}
 	if(pm->cmd.forwardmove >= 0){
-		PM_ForceLegsAnim(LEGS_JUMP);
+		PM_ForceLegsAnim(LEGS_JUMP_UP);
 		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 	} else{
-		PM_ForceLegsAnim(LEGS_JUMPB);
+		PM_ForceLegsAnim(LEGS_JUMP_BACK);
 		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 	}
 }
@@ -1206,9 +1206,9 @@ void PM_Land(void){
 
 	// decide which landing animation to use
 	if(pm->ps->pm_flags & PMF_BACKWARDS_JUMP){
-		PM_ForceLegsAnim(LEGS_LANDB );
+		PM_ForceLegsAnim(LEGS_LAND_BACK );
 	} else{
-		PM_ForceLegsAnim(LEGS_LAND );
+		PM_ForceLegsAnim(LEGS_LAND_UP );
 	}
 
 	pm->ps->legsTimer = TIMER_LAND;
@@ -1292,11 +1292,11 @@ void PM_GroundTraceMissed(void){
 		pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 		if(trace.fraction == 1.0){
 			if(pm->cmd.forwardmove >= 0){
-				PM_ContinueLegsAnim(LEGS_JUMP);
+				PM_ContinueLegsAnim(LEGS_JUMP_UP);
 				pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 			}
 			else{
-				PM_ContinueLegsAnim(LEGS_JUMPB);
+				PM_ContinueLegsAnim(LEGS_JUMP_BACK);
 				pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 			}
 			PM_StopDash();
@@ -1329,10 +1329,10 @@ void PM_GroundTrace(void){
 	}
 	if(pm->ps->velocity[2] > 0 && DotProduct(pm->ps->velocity, trace.plane.normal)> 10){
 		if(pm->cmd.forwardmove >= 0){
-			PM_ForceLegsAnim(LEGS_JUMP);
+			PM_ForceLegsAnim(LEGS_JUMP_UP);
 			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 		}else{
-			PM_ForceLegsAnim(LEGS_JUMPB );
+			PM_ForceLegsAnim(LEGS_JUMP_BACK);
 			pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 		}
 		PM_NotOnGround();
@@ -1654,6 +1654,9 @@ void PM_TorsoAnimation(void){
 	case LEGS_KNOCKBACK:
 		PM_ContinueTorsoAnim(TORSO_KNOCKBACK);
 		break;
+	case LEGS_KNOCKBACK_HIT_WALL:
+		PM_ContinueTorsoAnim(TORSO_KNOCKBACK_HIT_WALL);
+		break;
 	case LEGS_KNOCKBACK_RECOVER_1:
 		PM_ContinueTorsoAnim(TORSO_KNOCKBACK_RECOVER_1);
 		break;
@@ -1696,6 +1699,42 @@ void PM_TorsoAnimation(void){
 	case LEGS_POWER_MELEE_6_HIT:
 		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_6_HIT);
 		break;
+	case LEGS_BREAKER_MELEE_HIT1:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT1);
+		break;
+	case LEGS_BREAKER_MELEE_HIT2:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT2);
+		break;
+	case LEGS_BREAKER_MELEE_HIT3:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT3);
+		break;
+	case LEGS_BREAKER_MELEE_HIT4:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT4);
+		break;
+	case LEGS_BREAKER_MELEE_HIT5:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT5);
+		break;
+	case LEGS_BREAKER_MELEE_HIT6:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT6);
+		break;
+	case LEGS_BREAKER_MELEE_ATTACK1:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK1);
+		break;
+	case LEGS_BREAKER_MELEE_ATTACK2:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK2);
+		break;
+	case LEGS_BREAKER_MELEE_ATTACK3:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK3);
+		break;
+	case LEGS_BREAKER_MELEE_ATTACK4:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK4);
+		break;
+	case LEGS_BREAKER_MELEE_ATTACK5:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK5);
+		break;
+	case LEGS_BREAKER_MELEE_ATTACK6:
+		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK6);
+		break;
 	case LEGS_SPEED_MELEE_DODGE:
 		PM_ContinueTorsoAnim(TORSO_SPEED_MELEE_DODGE);
 		break;
@@ -1732,17 +1771,26 @@ void PM_TorsoAnimation(void){
 	case LEGS_BACKWALK:
 		PM_ContinueTorsoAnim(TORSO_BACKWALK );
 		break;
-	case LEGS_WALKCR:
-		PM_ContinueTorsoAnim(TORSO_WALKCR );
-		break;
 	case LEGS_SWIM:
 		PM_ContinueTorsoAnim(TORSO_SWIM );
 		break;
-	case LEGS_JUMP:
-		PM_ContinueTorsoAnim(TORSO_JUMP );
+	case LEGS_JUMP_UP:
+		PM_ContinueTorsoAnim(TORSO_JUMP_UP );
 		break;
-	case LEGS_LAND:
-		PM_ContinueTorsoAnim(TORSO_LAND );
+	case LEGS_JUMP_FORWARD:
+		PM_ContinueTorsoAnim(TORSO_JUMP_FORWARD );
+		break;
+	case LEGS_JUMP_BACK:
+		PM_ContinueTorsoAnim(TORSO_JUMP_BACK );
+		break;
+	case LEGS_LAND_UP:
+		PM_ContinueTorsoAnim(TORSO_LAND_UP );
+		break;
+	case LEGS_LAND_FORWARD:
+		PM_ContinueTorsoAnim(TORSO_LAND_FORWARD );
+		break;
+	case LEGS_LAND_BACK:
+		PM_ContinueTorsoAnim(TORSO_LAND_BACK );
 		break;
 	case LEGS_STUNNED:
 		PM_ContinueTorsoAnim(TORSO_STUNNED);
@@ -1755,12 +1803,6 @@ void PM_TorsoAnimation(void){
 		break;
 	case LEGS_BLOCK:
 		PM_ContinueTorsoAnim(TORSO_BLOCK);
-		break;
-	case LEGS_JUMPB:
-		PM_ContinueTorsoAnim(TORSO_JUMPB );
-		break;
-	case LEGS_LANDB:
-		PM_ContinueTorsoAnim(TORSO_LANDB );
 		break;
 	case LEGS_KI_CHARGE:
 		PM_ContinueTorsoAnim(TORSO_KI_CHARGE );
@@ -1777,6 +1819,9 @@ void PM_TorsoAnimation(void){
 	case LEGS_FLY_IDLE:
 		PM_ContinueTorsoAnim(TORSO_FLY_IDLE);
 		break;
+	case LEGS_FLY_PREPARE:
+		PM_ContinueTorsoAnim(TORSO_FLY_PREPARE);
+		break;
 	case LEGS_FLY_FORWARD:
 		PM_ContinueTorsoAnim(TORSO_FLY_FORWARD );
 		break;
@@ -1791,6 +1836,9 @@ void PM_TorsoAnimation(void){
 		break;
 	case LEGS_IDLE:
 		PM_ContinueTorsoAnim(TORSO_STAND);
+		break;
+	case LEGS_FLOOR_RECOVER:
+		PM_ContinueTorsoAnim(TORSO_FLOOR_RECOVER);
 		break;
 	default:
 		(pm->ps->clientLockedTarget>0) ? PM_ContinueTorsoAnim(TORSO_STAND_LOCKED) : PM_ContinueTorsoAnim(TORSO_STAND);
