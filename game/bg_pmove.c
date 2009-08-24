@@ -367,7 +367,7 @@ void PM_CheckStatus(void){
 	}
 	else{
 		if(pm->ps->powerups[PW_STATE] == -1){
-			if(pm->ps->timers[tmRecover] <= 0){pm->ps->timers[tmRecover] = 1000;}
+			if(pm->ps->timers[tmRecover] <= 0){pm->ps->timers[tmRecover] = 2000;}
 			pm->ps->timers[tmRecover] -= pml.msec;
 			if(pm->ps->timers[tmRecover] <= 0){
 				pm->ps->bitFlags &= ~isUnconcious;
