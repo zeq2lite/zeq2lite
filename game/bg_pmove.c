@@ -759,7 +759,7 @@ void PM_CheckJump(void){
 	float jumpScale,jumpEmphasis;
 	vec3_t pre_vel,post_vel;
 	if(pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight || pm->ps->bitFlags & isStruggling || !(pm->ps->bitFlags & atopGround)){return;}
-	if(!(pm->cmd.buttons & BUTTON_JUMP) || pm->ps->weaponstate == WEAPON_GUIDING){return;}
+	if(!(pm->cmd.buttons & BUTTON_JUMP) || pm->cmd.upmove < 0 || pm->ps->weaponstate == WEAPON_GUIDING){return;}
 	PM_NotOnGround();
 	PM_StopDash();
 	pm->ps->bitFlags |= usingJump;
@@ -1024,14 +1024,13 @@ void PM_AirMove(void){
 	usercmd_t	cmd;
 	if(pml.onGround ||(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity))){return;}
 	if(pm->ps->bitFlags & isGuiding){return;}
-	if((!(pm->ps->bitFlags & atopGround) && !(pm->ps->bitFlags & usingFlight) || pm->ps->bitFlags & usingJump) && pm->cmd.upmove < 0){
-		pm->ps->gravity = 8000;
+	if((pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBallFlip) && pm->cmd.upmove < 0){
+		pm->ps->gravity = 3500;
 		pm->ps->bitFlags &= ~usingJump;
 		pm->ps->bitFlags |= usingBallFlip;
-		pm->ps->velocity[2] = 0;
 	}
 	else if(!(pm->ps->bitFlags & usingJump)){
-		pm->ps->gravity = 4000;
+		pm->ps->gravity = 6000;
 		pm->ps->bitFlags &= ~usingBallFlip;
 	}
 	fmove = pm->cmd.forwardmove;
