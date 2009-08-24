@@ -137,13 +137,13 @@ static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity
 	body->s.event = 0;
 	body->s.pos.trType = TR_STATIONARY;
 	body->s.groundEntityNum = ENTITYNUM_WORLD;
-	body->s.legsAnim = LEGS_IDLE;
-	body->s.torsoAnim = TORSO_STAND;
+	body->s.legsAnim = ANIM_IDLE;
+	body->s.torsoAnim = ANIM_IDLE;
 //	if( body->s.weapon == WP_NONE ) {
 //		body->s.weapon = WP_MACHINEGUN;
 //	}
 //	if( body->s.weapon == WP_GAUNTLET) {
-//		body->s.torsoAnim = TORSO_STAND2;
+//		body->s.torsoAnim = ANIM_IDLE2;
 //	}
 	body->s.event = 0;
 	body->r.svFlags = ent->r.svFlags;
@@ -180,10 +180,10 @@ static void CelebrateStop( gentity_t *player ) {
 	int		anim;
 
 //	if( player->s.weapon == WP_GAUNTLET) {
-//		anim = TORSO_STAND2;
+//		anim = ANIM_IDLE2;
 //	}
 //	else {
-		anim = TORSO_STAND;
+		anim = ANIM_IDLE;
 //	}
 	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
 }
@@ -191,7 +191,7 @@ static void CelebrateStop( gentity_t *player ) {
 
 #define	TIMER_GESTURE	(34*66+50)
 static void CelebrateStart( gentity_t *player ) {
-	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) ;//| TORSO_GESTURE;
+	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) ;//| ANIM_GESTURE;
 	player->nextthink = level.time + TIMER_GESTURE;
 	player->think = CelebrateStop;
 

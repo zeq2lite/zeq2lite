@@ -162,7 +162,7 @@ static void PlayerModel_UpdateModel( void )
 	VectorClear( moveangles );
 
 	UI_PlayerInfo_SetModel( &s_playermodel.playerinfo, s_playermodel.modelskin );
-	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_FLY_IDLE, TORSO_FLY_IDLE, viewangles, moveangles, WP_NONE, qfalse );
+	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, ANIM_FLY_IDLE, ANIM_FLY_IDLE, viewangles, moveangles, WP_NONE, qfalse );
 }
 
 /*

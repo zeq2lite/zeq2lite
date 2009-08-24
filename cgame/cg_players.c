@@ -91,7 +91,7 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	char		*token;
 	float		fps;
 	int			skip;
-	char		text[30000];
+	char		text[32000];
 	fileHandle_t	f;
 	animation_t *animations;
 
@@ -195,12 +195,12 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 
 // ADDING FOR ZEQ2
 	// until we include optional extra taunts, this block will remain turned off.
-/*			if( i >= TORSO_GETFLAG && i <= TORSO_NEGATIVE ) {
-				animations[i].firstFrame = animations[TORSO_GESTURE].firstFrame;
-				animations[i].frameLerp = animations[TORSO_GESTURE].frameLerp;
-				animations[i].initialLerp = animations[TORSO_GESTURE].initialLerp;
-				animations[i].loopFrames = animations[TORSO_GESTURE].loopFrames;
-				animations[i].numFrames = animations[TORSO_GESTURE].numFrames;
+/*			if( i >= ANIM_GETFLAG && i <= ANIM_NEGATIVE ) {
+				animations[i].firstFrame = animations[ANIM_GESTURE].firstFrame;
+				animations[i].frameLerp = animations[ANIM_GESTURE].frameLerp;
+				animations[i].initialLerp = animations[ANIM_GESTURE].initialLerp;
+				animations[i].loopFrames = animations[ANIM_GESTURE].loopFrames;
+				animations[i].numFrames = animations[ANIM_GESTURE].numFrames;
 				animations[i].reversed = qfalse;
 				animations[i].flipflop = qfalse;
 				continue;
@@ -219,10 +219,10 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 // which ZEQ2 won't have in its animation.cfg files.
 
 /*		// leg only frames are adjusted to not count the upper body only frames
-		if ( i == LEGS_WALKCR ) {
-			skip = animations[LEGS_WALKCR].firstFrame - animations[TORSO_GESTURE].firstFrame;
+		if ( i == ANIM_WALKCR ) {
+			skip = animations[ANIM_WALKCR].firstFrame - animations[ANIM_GESTURE].firstFrame;
 		}
-		if ( i >= LEGS_WALKCR && i<TORSO_GETFLAG) {
+		if ( i >= ANIM_WALKCR && i<ANIM_GETFLAG) {
 			animations[i].firstFrame -= skip;
 		}
 */
@@ -262,9 +262,9 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 		// ADDING FOR ZEQ2
 
 		// Read the continuous flag for ki attack animations
-		if ( i >= HEAD_KI_ATTACK1_FIRE &&
+		if ( i >= ANIM_KI_ATTACK1_FIRE &&
 			 i < MAX_ANIMATIONS &&
-			 (i - HEAD_KI_ATTACK1_FIRE) % 2 == 0 ) {
+			 (i - ANIM_KI_ATTACK1_FIRE) % 2 == 0 ) {
 			token = COM_Parse( &text_p );
 			if ( !*token ) {
 				break;
@@ -281,10 +281,10 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	}
 
 	// walk backward animation
-	memcpy(&animations[LEGS_BACKWALK], &animations[LEGS_WALK], sizeof(animation_t));
-	animations[LEGS_BACKWALK].reversed = qtrue;
-	memcpy(&animations[TORSO_BACKWALK], &animations[TORSO_WALK], sizeof(animation_t));
-	animations[TORSO_BACKWALK].reversed = qtrue;
+	memcpy(&animations[ANIM_BACKWALK], &animations[ANIM_WALK], sizeof(animation_t));
+	animations[ANIM_BACKWALK].reversed = qtrue;
+	memcpy(&animations[ANIM_BACKWALK], &animations[ANIM_WALK], sizeof(animation_t));
+	animations[ANIM_BACKWALK].reversed = qtrue;
 
 	// ZEQ2 NOTE:
 	// The following animate a FLAG, NOT a player model, they should
@@ -316,11 +316,11 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	//
 	// new anims changes
 	//
-//	animations[TORSO_GETFLAG].flipflop = qtrue;
-//	animations[TORSO_GUARDBASE].flipflop = qtrue;
-//	animations[TORSO_PATROL].flipflop = qtrue;
-//	animations[TORSO_AFFIRMATIVE].flipflop = qtrue;
-//	animations[TORSO_NEGATIVE].flipflop = qtrue;
+//	animations[ANIM_GETFLAG].flipflop = qtrue;
+//	animations[ANIM_GUARDBASE].flipflop = qtrue;
+//	animations[ANIM_PATROL].flipflop = qtrue;
+//	animations[ANIM_AFFIRMATIVE].flipflop = qtrue;
+//	animations[ANIM_NEGATIVE].flipflop = qtrue;
 	//
 
 	return qtrue;
@@ -1342,8 +1342,8 @@ static void CG_PlayerAnimation( centity_t *cent,
 	ci = &cgs.clientinfo[ clientNum ];
 
 	// do the shuffle turn frames locally
-	if ( cent->pe.legs.yawing && ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_IDLE ) {
-		CG_RunLerpFrame( ci, &cent->pe.legs, LEGS_TURN, speedScale );
+	if ( cent->pe.legs.yawing && ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_IDLE ) {
+		CG_RunLerpFrame( ci, &cent->pe.legs, ANIM_TURN, speedScale );
 	} else {
 		CG_RunLerpFrame( ci, &cent->pe.legs, cent->currentState.legsAnim, speedScale );
 	}
@@ -1368,153 +1368,153 @@ static void CG_PlayerAnimation( centity_t *cent,
 		torsoAnimNum = cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT;
 
 		if ( cent->currentState.eFlags & EF_AURA && ci->overrideHead) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KI_CHARGE, speedScale );
 		} else if ( ci->auraConfig[tier]->auraAlways && ci->overrideHead) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
-		} else if ( TORSO_FLY_UP == torsoAnimNum && ci->overrideHead ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
-		} else if ( TORSO_FLY_DOWN == torsoAnimNum && ci->overrideHead ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
-		} else if ( TORSO_FLOOR_RECOVER == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLOOR_RECOVER, speedScale );
-		} else if ( TORSO_WALK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_WALK, speedScale );
-		} else if ( TORSO_RUN == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_RUN, speedScale );
-		} else if ( TORSO_BACK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BACK, speedScale );
-		} else if ( TORSO_JUMP_UP == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_JUMP_UP, speedScale );
-		} else if ( TORSO_LAND_UP == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_LAND_UP, speedScale );
-		} else if ( TORSO_JUMP_FORWARD == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_JUMP_FORWARD, speedScale );
-		} else if ( TORSO_LAND_FORWARD == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_LAND_FORWARD, speedScale );
-		} else if ( TORSO_JUMP_BACK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_JUMP_BACK, speedScale );
-		} else if ( TORSO_LAND_BACK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_LAND_BACK, speedScale );
-		} else if ( TORSO_SWIM == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_SWIM, speedScale );
-		} else if ( TORSO_DASH_RIGHT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DASH_RIGHT, speedScale );
-		} else if ( TORSO_DASH_LEFT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DASH_LEFT, speedScale );
-		} else if ( TORSO_DASH_FORWARD == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DASH_FORWARD, speedScale );
-		} else if ( TORSO_DASH_BACKWARD == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DASH_BACKWARD, speedScale );
-		} else if ( TORSO_KI_CHARGE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KI_CHARGE, speedScale );
-		} else if ( TORSO_PL_DOWN == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_PL_DOWN, speedScale );
-		} else if ( TORSO_PL_UP == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_PL_UP, speedScale );
-		} else if ( TORSO_TRANS_UP == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_TRANS_UP, speedScale );
-		} else if ( TORSO_TRANS_BACK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_TRANS_BACK, speedScale );
-		} else if ( TORSO_FLY_IDLE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_IDLE, speedScale );
-		} else if ( TORSO_FLY_PREPARE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_PREPARE, speedScale );
-		} else if ( TORSO_FLY_FORWARD == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_FORWARD, speedScale );
-		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_BACKWARD, speedScale );
-		} else if ( TORSO_FLY_UP == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_UP, speedScale );
-		} else if ( TORSO_FLY_DOWN == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_FLY_DOWN, speedScale );
-		} else if ( TORSO_STUNNED == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_STUNNED, speedScale );
-		} else if ( TORSO_PUSH == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_PUSH, speedScale );
-		} else if ( BOTH_DEATH_GROUND == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, BOTH_DEATH_GROUND, speedScale );
-		} else if ( BOTH_DEATH_AIR == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, BOTH_DEATH_AIR, speedScale );
-		} else if ( BOTH_DEATH_AIR_LAND == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, BOTH_DEATH_AIR_LAND, speedScale );
-		} else if ( BOTH_STUN == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, BOTH_STUN, speedScale );
-		} else if ( TORSO_DEFLECT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_DEFLECT, speedScale );
-		} else if ( TORSO_BLOCK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BLOCK, speedScale );
-		} else if ( TORSO_SPEED_MELEE_ATTACK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_SPEED_MELEE_ATTACK, speedScale );
-		} else if ( TORSO_SPEED_MELEE_DODGE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_SPEED_MELEE_DODGE, speedScale );
-		} else if ( TORSO_SPEED_MELEE_BLOCK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_SPEED_MELEE_BLOCK, speedScale );
-		} else if ( TORSO_SPEED_MELEE_HIT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_SPEED_MELEE_HIT, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK1 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_ATTACK1, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK2 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_ATTACK2, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK3 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_ATTACK3, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK4 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_ATTACK4, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK5 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_ATTACK5, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK6 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_ATTACK6, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_HIT1 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_HIT1, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_HIT2 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_HIT2, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_HIT3 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_HIT3, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_HIT4 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_HIT4, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_HIT5 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_HIT5, speedScale );
-		} else if ( TORSO_BREAKER_MELEE_HIT6 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_BREAKER_MELEE_HIT6, speedScale );
-		} else if ( TORSO_POWER_MELEE_1_CHARGE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_1_CHARGE, speedScale );
-		} else if ( TORSO_POWER_MELEE_2_CHARGE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_2_CHARGE, speedScale );
-		} else if ( TORSO_POWER_MELEE_3_CHARGE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_3_CHARGE, speedScale );
-		} else if ( TORSO_POWER_MELEE_4_CHARGE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_4_CHARGE, speedScale );
-		} else if ( TORSO_POWER_MELEE_5_CHARGE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_5_CHARGE, speedScale );
-		} else if ( TORSO_POWER_MELEE_6_CHARGE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_6_CHARGE, speedScale );
-		} else if ( TORSO_POWER_MELEE_1_HIT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_1_HIT, speedScale );
-		} else if ( TORSO_POWER_MELEE_2_HIT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_2_HIT, speedScale );
-		} else if ( TORSO_POWER_MELEE_3_HIT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_3_HIT, speedScale );
-		} else if ( TORSO_POWER_MELEE_4_HIT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_4_HIT, speedScale );
-		} else if ( TORSO_POWER_MELEE_5_HIT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_5_HIT, speedScale );
-		} else if ( TORSO_POWER_MELEE_6_HIT == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_POWER_MELEE_6_HIT, speedScale );
-		} else if ( TORSO_KNOCKBACK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KNOCKBACK, speedScale );
-		} else if ( TORSO_KNOCKBACK_HIT_WALL == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KNOCKBACK_HIT_WALL, speedScale );
-		} else if ( TORSO_KNOCKBACK_RECOVER_1 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KNOCKBACK_RECOVER_1, speedScale );
-		} else if ( TORSO_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, HEAD_KNOCKBACK_RECOVER_2, speedScale );
-		} else if ( TORSO_KI_ATTACK1_PREPARE <= torsoAnimNum && TORSO_KI_ATTACK6_ALT_FIRE >= torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, torsoAnimNum - TORSO_KI_ATTACK1_PREPARE + HEAD_KI_ATTACK1_PREPARE, speedScale );
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KI_CHARGE, speedScale );
+		} else if ( ANIM_FLY_UP == torsoAnimNum && ci->overrideHead ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KI_CHARGE, speedScale );
+		} else if ( ANIM_FLY_DOWN == torsoAnimNum && ci->overrideHead ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KI_CHARGE, speedScale );
+		} else if ( ANIM_FLOOR_RECOVER == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLOOR_RECOVER, speedScale );
+		} else if ( ANIM_WALK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_WALK, speedScale );
+		} else if ( ANIM_RUN == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_RUN, speedScale );
+		} else if ( ANIM_BACK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BACK, speedScale );
+		} else if ( ANIM_JUMP_UP == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_JUMP_UP, speedScale );
+		} else if ( ANIM_LAND_UP == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_LAND_UP, speedScale );
+		} else if ( ANIM_JUMP_FORWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_JUMP_FORWARD, speedScale );
+		} else if ( ANIM_LAND_FORWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_LAND_FORWARD, speedScale );
+		} else if ( ANIM_JUMP_BACK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_JUMP_BACK, speedScale );
+		} else if ( ANIM_LAND_BACK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_LAND_BACK, speedScale );
+		} else if ( ANIM_SWIM == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_SWIM, speedScale );
+		} else if ( ANIM_DASH_RIGHT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_DASH_RIGHT, speedScale );
+		} else if ( ANIM_DASH_LEFT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_DASH_LEFT, speedScale );
+		} else if ( ANIM_DASH_FORWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_DASH_FORWARD, speedScale );
+		} else if ( ANIM_DASH_BACKWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_DASH_BACKWARD, speedScale );
+		} else if ( ANIM_KI_CHARGE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KI_CHARGE, speedScale );
+		} else if ( ANIM_PL_DOWN == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_PL_DOWN, speedScale );
+		} else if ( ANIM_PL_UP == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_PL_UP, speedScale );
+		} else if ( ANIM_TRANS_UP == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_TRANS_UP, speedScale );
+		} else if ( ANIM_TRANS_BACK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_TRANS_BACK, speedScale );
+		} else if ( ANIM_FLY_IDLE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_IDLE, speedScale );
+		} else if ( ANIM_FLY_PREPARE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_PREPARE, speedScale );
+		} else if ( ANIM_FLY_FORWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_FORWARD, speedScale );
+		} else if ( ANIM_FLY_BACKWARD == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_BACKWARD, speedScale );
+		} else if ( ANIM_FLY_UP == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_UP, speedScale );
+		} else if ( ANIM_FLY_DOWN == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_DOWN, speedScale );
+		} else if ( ANIM_STUNNED == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_STUNNED, speedScale );
+		} else if ( ANIM_PUSH == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_PUSH, speedScale );
+		} else if ( ANIM_DEATH_GROUND == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_DEATH_GROUND, speedScale );
+		} else if ( ANIM_DEATH_AIR == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_DEATH_AIR, speedScale );
+		} else if ( ANIM_DEATH_AIR_LAND == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_DEATH_AIR_LAND, speedScale );
+		} else if ( ANIM_STUN == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_STUN, speedScale );
+		} else if ( ANIM_DEFLECT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_DEFLECT, speedScale );
+		} else if ( ANIM_BLOCK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BLOCK, speedScale );
+		} else if ( ANIM_SPEED_MELEE_ATTACK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_SPEED_MELEE_ATTACK, speedScale );
+		} else if ( ANIM_SPEED_MELEE_DODGE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_SPEED_MELEE_DODGE, speedScale );
+		} else if ( ANIM_SPEED_MELEE_BLOCK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_SPEED_MELEE_BLOCK, speedScale );
+		} else if ( ANIM_SPEED_MELEE_HIT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_SPEED_MELEE_HIT, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK1 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_ATTACK1, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK2 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_ATTACK2, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK3 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_ATTACK3, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK4 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_ATTACK4, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK5 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_ATTACK5, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK6 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_ATTACK6, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_HIT1 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_HIT1, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_HIT2 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_HIT2, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_HIT3 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_HIT3, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_HIT4 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_HIT4, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_HIT5 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_HIT5, speedScale );
+		} else if ( ANIM_BREAKER_MELEE_HIT6 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BREAKER_MELEE_HIT6, speedScale );
+		} else if ( ANIM_POWER_MELEE_1_CHARGE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_1_CHARGE, speedScale );
+		} else if ( ANIM_POWER_MELEE_2_CHARGE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_2_CHARGE, speedScale );
+		} else if ( ANIM_POWER_MELEE_3_CHARGE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_3_CHARGE, speedScale );
+		} else if ( ANIM_POWER_MELEE_4_CHARGE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_4_CHARGE, speedScale );
+		} else if ( ANIM_POWER_MELEE_5_CHARGE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_5_CHARGE, speedScale );
+		} else if ( ANIM_POWER_MELEE_6_CHARGE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_6_CHARGE, speedScale );
+		} else if ( ANIM_POWER_MELEE_1_HIT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_1_HIT, speedScale );
+		} else if ( ANIM_POWER_MELEE_2_HIT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_2_HIT, speedScale );
+		} else if ( ANIM_POWER_MELEE_3_HIT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_3_HIT, speedScale );
+		} else if ( ANIM_POWER_MELEE_4_HIT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_4_HIT, speedScale );
+		} else if ( ANIM_POWER_MELEE_5_HIT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_5_HIT, speedScale );
+		} else if ( ANIM_POWER_MELEE_6_HIT == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_6_HIT, speedScale );
+		} else if ( ANIM_KNOCKBACK == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KNOCKBACK, speedScale );
+		} else if ( ANIM_KNOCKBACK_HIT_WALL == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KNOCKBACK_HIT_WALL, speedScale );
+		} else if ( ANIM_KNOCKBACK_RECOVER_1 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KNOCKBACK_RECOVER_1, speedScale );
+		} else if ( ANIM_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KNOCKBACK_RECOVER_2, speedScale );
+		} else if ( ANIM_KI_ATTACK1_PREPARE <= torsoAnimNum && ANIM_KI_ATTACK6_ALT_FIRE >= torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, torsoAnimNum - ANIM_KI_ATTACK1_PREPARE + ANIM_KI_ATTACK1_PREPARE, speedScale );
 		} else {
 			legsAnimNum = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
 			if (cg.predictedPlayerState.clientLockedTarget >0) {
-				CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE_LOCKED, speedScale );
+				CG_RunLerpFrame( ci, &cent->pe.head, ANIM_IDLE_LOCKED, speedScale );
 			} else {
-				CG_RunLerpFrame( ci, &cent->pe.head, HEAD_IDLE, speedScale );
+				CG_RunLerpFrame( ci, &cent->pe.head, ANIM_IDLE, speedScale );
 			}
 		}
 	}
@@ -1657,10 +1657,10 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	// --------- yaw -------------
 
 	// allow yaw to drift a bit
-	if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE_LOCKED
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND_LOCKED ) {
+	if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE_LOCKED
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE_LOCKED ) {
 		// if not standing still, always point all in the same direction
 		cent->pe.torso.yawing = qtrue;	// always center
 		cent->pe.torso.pitching = qtrue;	// always center
@@ -1671,8 +1671,8 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	if ( cent->currentState.eFlags & EF_DEAD ) {
 		// don't let dead bodies twitch
 		dir = 0;
-	} else if ( (( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) >= LEGS_DASH_RIGHT ) &&
-				(( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) <= LEGS_DASH_BACKWARD ) ) {
+	} else if ( (( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) >= ANIM_DASH_RIGHT ) &&
+				(( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) <= ANIM_DASH_BACKWARD ) ) {
 		// don't let the dash animations adjust angles.
 		dir = 0;
 	} else {
@@ -1742,7 +1742,7 @@ static void CG_HasteTrail( centity_t *cent ) {
 		return;
 	}
 	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if ( anim != LEGS_RUN && anim != LEGS_BACK ) {
+	if ( anim != ANIM_RUN && anim != ANIM_BACK ) {
 		return;
 	}
 
@@ -1820,7 +1820,7 @@ static void CG_DustTrail( centity_t *cent ) {
 	}
 
 	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if ( anim != LEGS_LAND_BACK && anim != LEGS_LAND_UP && anim != LEGS_LAND_FORWARD) {
+	if ( anim != ANIM_LAND_BACK && anim != ANIM_LAND_UP && anim != ANIM_LAND_FORWARD) {
 		return;
 	}
 
@@ -1912,9 +1912,9 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hSkin, refEntity_t *torso 
 
 	updateangles = qfalse;
 	legsAnim = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
-	if( legsAnim == LEGS_IDLE || legsAnim == LEGS_IDLE_LOCKED ) {
+	if( legsAnim == ANIM_IDLE || legsAnim == ANIM_IDLE_LOCKED ) {
 		flagAnim = FLAG_STAND;
-	} else if ( legsAnim == LEGS_WALK ) {
+	} else if ( legsAnim == ANIM_WALK ) {
 		flagAnim = FLAG_STAND;
 		updateangles = qtrue;
 	} else {

@@ -144,13 +144,13 @@ void PM_CheckKnockback(void){
 	}
 	if(pm->ps->timers[tmKnockback] < 0){
 		pm->ps->timers[tmKnockback] += pml.msec;
-		PM_ContinueLegsAnim(LEGS_KNOCKBACK_RECOVER_2);
+		PM_ContinueLegsAnim(ANIM_KNOCKBACK_RECOVER_2);
 		if(pm->ps->timers[tmKnockback] >= 0){
 			pm->ps->timers[tmKnockback] = 0;
 		}
 	}
 	if(pm->ps->timers[tmKnockback] > 0){
-		PM_ContinueLegsAnim(LEGS_KNOCKBACK);
+		PM_ContinueLegsAnim(ANIM_KNOCKBACK);
 		pm->ps->timers[tmKnockback] -= pml.msec;
 		PM_StopDirections();
 		if(pm->ps->timers[tmKnockback] > 0){
@@ -179,7 +179,7 @@ void PM_CheckKnockback(void){
 		}
 		else if(pm->cmd.buttons & BUTTON_ATTACK){
 			pm->ps->timers[tmKnockback] -= pml.msec;
-			PM_ContinueLegsAnim(LEGS_KNOCKBACK_RECOVER_1);
+			PM_ContinueLegsAnim(ANIM_KNOCKBACK_RECOVER_1);
 			speed /= 2;
 		}
 		VectorScale(pm->ps->velocity,speed,pm->ps->velocity);
@@ -332,12 +332,12 @@ void PM_CheckStatus(void){
 		}
 		else{
 			if(pm->ps->bitFlags & atopGround){
-				PM_ContinueTorsoAnim(BOTH_DEATH_GROUND);
-				PM_ContinueLegsAnim(BOTH_DEATH_GROUND);
+				PM_ContinueTorsoAnim(ANIM_DEATH_GROUND);
+				PM_ContinueLegsAnim(ANIM_DEATH_GROUND);
 			}
 			else{
-				PM_ContinueTorsoAnim(BOTH_DEATH_AIR);
-				PM_ContinueLegsAnim(BOTH_DEATH_AIR);
+				PM_ContinueTorsoAnim(ANIM_DEATH_AIR);
+				PM_ContinueLegsAnim(ANIM_DEATH_AIR);
 			}
 		}
 	}
@@ -356,12 +356,12 @@ void PM_CheckStatus(void){
 		else{
 			pm->ps->powerLevel[plFatigue] += pml.msec / 2;
 			if(pm->ps->bitFlags & atopGround){
-				PM_ContinueTorsoAnim(BOTH_DEATH_GROUND);
-				PM_ContinueLegsAnim(BOTH_DEATH_GROUND);
+				PM_ContinueTorsoAnim(ANIM_DEATH_GROUND);
+				PM_ContinueLegsAnim(ANIM_DEATH_GROUND);
 			}
 			else{
-				PM_ContinueTorsoAnim(BOTH_DEATH_AIR);
-				PM_ContinueLegsAnim(BOTH_DEATH_AIR);
+				PM_ContinueTorsoAnim(ANIM_DEATH_AIR);
+				PM_ContinueLegsAnim(ANIM_DEATH_AIR);
 			}
 		}
 	}
@@ -374,8 +374,8 @@ void PM_CheckStatus(void){
 				pm->ps->powerups[PW_STATE] = 0;
 			}
 			else{
-				PM_ContinueTorsoAnim(TORSO_FLOOR_RECOVER);
-				PM_ContinueLegsAnim(LEGS_FLOOR_RECOVER);
+				PM_ContinueTorsoAnim(ANIM_FLOOR_RECOVER);
+				PM_ContinueLegsAnim(ANIM_FLOOR_RECOVER);
 				return;
 			}
 		}
@@ -394,7 +394,7 @@ void PM_CheckTransform(void){
 	}
 	else if(pm->ps->timers[tmTransform] > 0){
 		if(pm->ps->bitFlags & isTransforming){
-			PM_ContinueLegsAnim(LEGS_TRANS_UP);
+			PM_ContinueLegsAnim(ANIM_TRANS_UP);
 			pm->ps->eFlags |= EF_AURA;
 			pm->ps->timers[tmTransform] -= pml.msec;
 			if(pm->ps->timers[tmTransform] <= 0){pm->ps->timers[tmTransform] = 0;}
@@ -472,7 +472,7 @@ void PM_CheckPowerLevel(void){
 		}
 		if(canAlter && pm->cmd.upmove < 0){
 			PM_StopFlight();
-			PM_ForceLegsAnim(LEGS_FLY_DOWN);
+			PM_ForceLegsAnim(ANIM_FLY_DOWN);
 		}
 		if(pm->cmd.forwardmove > 0){
 			pm->ps->bitFlags |= keyTierUp;
@@ -791,16 +791,16 @@ void PM_CheckJump(void){
 		PM_AddEvent(EV_JUMP);
 	}
 	if(pm->cmd.forwardmove > 0){
-		PM_ForceLegsAnim(LEGS_JUMP_UP);
+		PM_ForceLegsAnim(ANIM_JUMP_UP);
 		pm->ps->pm_flags |= PMF_FORWARDS_JUMP;
 		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 	}else if(pm->cmd.forwardmove < 0){
-		PM_ForceLegsAnim(LEGS_JUMP_BACK);
+		PM_ForceLegsAnim(ANIM_JUMP_BACK);
 		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 		pm->ps->pm_flags &= ~PMF_FORWARDS_JUMP;
 	}
 	else{
-		PM_ForceLegsAnim(LEGS_JUMP_UP);
+		PM_ForceLegsAnim(ANIM_JUMP_UP);
 		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 		pm->ps->pm_flags &= ~PMF_FORWARDS_JUMP;
 	}
@@ -1259,15 +1259,15 @@ void PM_Land(void){
 
 	// decide which landing animation to use
 	if(pm->ps->pm_flags & PMF_BACKWARDS_JUMP){
-		PM_ForceLegsAnim(LEGS_LAND_BACK );
+		PM_ForceLegsAnim(ANIM_LAND_BACK );
 	} else if(pm->ps->pm_flags & PMF_FORWARDS_JUMP){
-		PM_ForceLegsAnim(LEGS_LAND_UP);
+		PM_ForceLegsAnim(ANIM_LAND_UP);
 	} else{
-		PM_ForceLegsAnim(LEGS_LAND_UP);
+		PM_ForceLegsAnim(ANIM_LAND_UP);
 	}
 	if(pm->ps->bitFlags & usingBallFlip){
 		pm->ps->bitFlags &= ~usingBallFlip;
-		PM_ForceLegsAnim(LEGS_LAND_FORWARD);
+		PM_ForceLegsAnim(ANIM_LAND_FORWARD);
 	}
 
 	pm->ps->legsTimer = TIMER_LAND;
@@ -1474,54 +1474,54 @@ void PM_Footsteps(void){
 	if(pm->ps->bitFlags & usingZanzoken || pm->ps->bitFlags & usingJump || pm->cmd.buttons & BUTTON_POWERLEVEL){return;}
 	if((pm->ps->bitFlags & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
 		if(!(pm->cmd.rightmove > 0)){return;}
-		if(pm->ps->powerLevel[plCurrent] > 31000){PM_ContinueLegsAnim(LEGS_KI_CHARGE);}
-		else{pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] ? PM_ContinueLegsAnim(LEGS_KI_CHARGE) : PM_ContinueLegsAnim(LEGS_PL_UP);}
+		if(pm->ps->powerLevel[plCurrent] > 31000){PM_ContinueLegsAnim(ANIM_KI_CHARGE);}
+		else{pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] ? PM_ContinueLegsAnim(ANIM_KI_CHARGE) : PM_ContinueLegsAnim(ANIM_PL_UP);}
 		return;
 	}
 	if(pm->waterlevel > 0 && !(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing || pm->ps->bitFlags & usingBoost)){
-		PM_ContinueLegsAnim(LEGS_SWIM);
+		PM_ContinueLegsAnim(ANIM_SWIM);
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
 	if(pm->ps->bitFlags & usingFlight){
 		if(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing){
-			pm->ps->bitFlags & usingSoar ? PM_ContinueLegsAnim(LEGS_FLY_FORWARD) : PM_ContinueLegsAnim(LEGS_FLY_PREPARE);
+			pm->ps->bitFlags & usingSoar ? PM_ContinueLegsAnim(ANIM_FLY_FORWARD) : PM_ContinueLegsAnim(ANIM_FLY_PREPARE);
 			return;
 		}
 		if((!pm->cmd.forwardmove && !pm->cmd.rightmove) || (pm->cmd.buttons & BUTTON_WALKING )) {
 			int	tempAnimIndex;
 			pm->ps->bobCycle = 0;
 			tempAnimIndex = pm->ps->torsoAnim & ~ANIM_TOGGLEBIT;
-			if((tempAnimIndex >= TORSO_KI_ATTACK1_PREPARE) && (tempAnimIndex <= TORSO_KI_ATTACK6_ALT_FIRE)) {
-				tempAnimIndex = tempAnimIndex - TORSO_KI_ATTACK1_PREPARE;
-				tempAnimIndex = LEGS_AIR_KI_ATTACK1_PREPARE + tempAnimIndex;
+			if((tempAnimIndex >= ANIM_KI_ATTACK1_PREPARE) && (tempAnimIndex <= ANIM_KI_ATTACK6_ALT_FIRE)) {
+				tempAnimIndex = tempAnimIndex - ANIM_KI_ATTACK1_PREPARE;
+				tempAnimIndex = ANIM_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim(tempAnimIndex);
 			} else{
-				if(pm->cmd.upmove > 0){PM_ContinueLegsAnim(LEGS_FLY_UP);} 
-				else if(pm->cmd.upmove < 0){PM_ContinueLegsAnim(LEGS_FLY_DOWN);}
-				else if(pm->ps->clientLockedTarget>0){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
-				else{PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
+				if(pm->cmd.upmove > 0){PM_ContinueLegsAnim(ANIM_FLY_UP);} 
+				else if(pm->cmd.upmove < 0){PM_ContinueLegsAnim(ANIM_FLY_DOWN);}
+				else if(pm->ps->clientLockedTarget>0){PM_ContinueLegsAnim(ANIM_IDLE_LOCKED);}
+				else{PM_ContinueLegsAnim(ANIM_FLY_IDLE);}
 			}
 			return;
 		}
 		if(pm->cmd.forwardmove > 0){
-			PM_ContinueLegsAnim(LEGS_DASH_FORWARD);
+			PM_ContinueLegsAnim(ANIM_DASH_FORWARD);
 		} else if(pm->cmd.forwardmove < 0){
-			PM_ContinueLegsAnim(LEGS_DASH_BACKWARD);
+			PM_ContinueLegsAnim(ANIM_DASH_BACKWARD);
 		} else if(pm->cmd.rightmove > 0){
-			PM_ContinueLegsAnim(LEGS_DASH_RIGHT);
+			PM_ContinueLegsAnim(ANIM_DASH_RIGHT);
 		} else if(pm->cmd.rightmove < 0){
-			PM_ContinueLegsAnim(LEGS_DASH_LEFT);
+			PM_ContinueLegsAnim(ANIM_DASH_LEFT);
 		}
 		return;
 	}
 	if(!(pm->ps->bitFlags & atopGround)){
 		if(!(pm->ps->bitFlags & usingBallFlip)){
-			PM_ContinueLegsAnim(LEGS_FLY_DOWN);
+			PM_ContinueLegsAnim(ANIM_FLY_DOWN);
 			return;
 		}
 		else{
-			PM_ContinueLegsAnim(LEGS_JUMP_FORWARD);
+			PM_ContinueLegsAnim(ANIM_JUMP_FORWARD);
 			return;
 		}
 	}
@@ -1530,14 +1530,14 @@ void PM_Footsteps(void){
 			int	tempAnimIndex;
 			pm->ps->bobCycle = 0;	// start at beginning of cycle again
 			tempAnimIndex = pm->ps->torsoAnim & ~ANIM_TOGGLEBIT;
-			if((tempAnimIndex >= TORSO_KI_ATTACK1_PREPARE) && (tempAnimIndex <= TORSO_KI_ATTACK6_ALT_FIRE)) {
-				tempAnimIndex = tempAnimIndex - TORSO_KI_ATTACK1_PREPARE;
-				tempAnimIndex = LEGS_KI_ATTACK1_PREPARE + tempAnimIndex;
+			if((tempAnimIndex >= ANIM_KI_ATTACK1_PREPARE) && (tempAnimIndex <= ANIM_KI_ATTACK6_ALT_FIRE)) {
+				tempAnimIndex = tempAnimIndex - ANIM_KI_ATTACK1_PREPARE;
+				tempAnimIndex = ANIM_KI_ATTACK1_PREPARE + tempAnimIndex;
 				PM_ContinueLegsAnim(tempAnimIndex);
 			}
 			else if(pm->ps->bitFlags & atopGround){
-				if(pm->ps->clientLockedTarget>0){PM_ContinueLegsAnim(LEGS_IDLE_LOCKED);}
-				else{PM_ContinueLegsAnim(LEGS_IDLE);}
+				if(pm->ps->clientLockedTarget>0){PM_ContinueLegsAnim(ANIM_IDLE_LOCKED);}
+				else{PM_ContinueLegsAnim(ANIM_IDLE);}
 			}
 		}
 		return;
@@ -1547,33 +1547,33 @@ void PM_Footsteps(void){
 		bobmove = 0.4f;
 		if(!pm->ps->running){
 			if(pm->cmd.forwardmove < 0) {
-				PM_ContinueLegsAnim(LEGS_DASH_BACKWARD);
+				PM_ContinueLegsAnim(ANIM_DASH_BACKWARD);
 			} else if(pm->cmd.forwardmove > 0){
-				PM_ContinueLegsAnim(LEGS_DASH_FORWARD);
+				PM_ContinueLegsAnim(ANIM_DASH_FORWARD);
 			} else if(pm->cmd.rightmove > 0){
-				PM_ContinueLegsAnim(LEGS_DASH_RIGHT);
+				PM_ContinueLegsAnim(ANIM_DASH_RIGHT);
 			} else if(pm->cmd.rightmove < 0){
-				PM_ContinueLegsAnim(LEGS_DASH_LEFT);
+				PM_ContinueLegsAnim(ANIM_DASH_LEFT);
 			}
 		}else{
 			if(pm->cmd.forwardmove < 0){
-				PM_ContinueLegsAnim(LEGS_BACK);
+				PM_ContinueLegsAnim(ANIM_BACK);
 			} else if(pm->cmd.forwardmove > 0){
-				PM_ContinueLegsAnim(LEGS_RUN);
+				PM_ContinueLegsAnim(ANIM_RUN);
 			} else if(pm->cmd.rightmove > 0){
-				PM_ContinueLegsAnim(LEGS_DASH_RIGHT );
+				PM_ContinueLegsAnim(ANIM_DASH_RIGHT );
 			} else if(pm->cmd.rightmove < 0){
-				PM_ContinueLegsAnim(LEGS_DASH_LEFT);
+				PM_ContinueLegsAnim(ANIM_DASH_LEFT);
 			}
 		}
 		footstep = qtrue;
 	}else{
 		bobmove = 0.3f;
 		if(pm->cmd.forwardmove < 0){
-			PM_ContinueLegsAnim(LEGS_BACKWALK );
+			PM_ContinueLegsAnim(ANIM_BACKWALK );
 		}
 		else{
-			PM_ContinueLegsAnim(LEGS_WALK);
+			PM_ContinueLegsAnim(ANIM_WALK);
 		}
 	}
 	old = pm->ps->bobCycle;
@@ -1693,209 +1693,209 @@ void PM_TorsoAnimation(void){
 	if(pm->ps->weaponstate != WEAPON_READY && !(pm->ps->bitFlags & usingMelee)){return;}
 	if(pm->ps->bitFlags & usingBlock && pm->ps->bitFlags & ~usingMelee){
 		if(pm->ps->bitFlags & isStruggling){
-			PM_ContinueTorsoAnim(TORSO_PUSH);
-			PM_ContinueLegsAnim(LEGS_PUSH);
+			PM_ContinueTorsoAnim(ANIM_PUSH);
+			PM_ContinueLegsAnim(ANIM_PUSH);
 			return;
 		}else{
-			PM_ContinueTorsoAnim(TORSO_BLOCK);
+			PM_ContinueTorsoAnim(ANIM_BLOCK);
 			if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
-				PM_ContinueLegsAnim(LEGS_BLOCK);
+				PM_ContinueLegsAnim(ANIM_BLOCK);
 			}
 			return;
 		}
 	}
 	switch(pm->ps->legsAnim & ~ANIM_TOGGLEBIT){
-	case LEGS_KNOCKBACK:
-		PM_ContinueTorsoAnim(TORSO_KNOCKBACK);
+	case ANIM_KNOCKBACK:
+		PM_ContinueTorsoAnim(ANIM_KNOCKBACK);
 		break;
-	case LEGS_KNOCKBACK_HIT_WALL:
-		PM_ContinueTorsoAnim(TORSO_KNOCKBACK_HIT_WALL);
+	case ANIM_KNOCKBACK_HIT_WALL:
+		PM_ContinueTorsoAnim(ANIM_KNOCKBACK_HIT_WALL);
 		break;
-	case LEGS_KNOCKBACK_RECOVER_1:
-		PM_ContinueTorsoAnim(TORSO_KNOCKBACK_RECOVER_1);
+	case ANIM_KNOCKBACK_RECOVER_1:
+		PM_ContinueTorsoAnim(ANIM_KNOCKBACK_RECOVER_1);
 		break;
-	case LEGS_KNOCKBACK_RECOVER_2:
-		PM_ContinueTorsoAnim(TORSO_KNOCKBACK_RECOVER_2);
+	case ANIM_KNOCKBACK_RECOVER_2:
+		PM_ContinueTorsoAnim(ANIM_KNOCKBACK_RECOVER_2);
 		break;
-	case LEGS_POWER_MELEE_1_CHARGE:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_1_CHARGE);
+	case ANIM_POWER_MELEE_1_CHARGE:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_1_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_2_CHARGE:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_2_CHARGE);
+	case ANIM_POWER_MELEE_2_CHARGE:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_2_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_3_CHARGE:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_3_CHARGE);
+	case ANIM_POWER_MELEE_3_CHARGE:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_3_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_4_CHARGE:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_4_CHARGE);
+	case ANIM_POWER_MELEE_4_CHARGE:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_4_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_5_CHARGE:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_5_CHARGE);
+	case ANIM_POWER_MELEE_5_CHARGE:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_5_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_6_CHARGE:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_6_CHARGE);
+	case ANIM_POWER_MELEE_6_CHARGE:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_6_CHARGE);
 		break;
-	case LEGS_POWER_MELEE_1_HIT:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_1_HIT);
+	case ANIM_POWER_MELEE_1_HIT:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_1_HIT);
 		break;
-	case LEGS_POWER_MELEE_2_HIT:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_2_HIT);
+	case ANIM_POWER_MELEE_2_HIT:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_2_HIT);
 		break;
-	case LEGS_POWER_MELEE_3_HIT:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_3_HIT);
+	case ANIM_POWER_MELEE_3_HIT:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_3_HIT);
 		break;
-	case LEGS_POWER_MELEE_4_HIT:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_4_HIT);
+	case ANIM_POWER_MELEE_4_HIT:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_4_HIT);
 		break;
-	case LEGS_POWER_MELEE_5_HIT:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_5_HIT);
+	case ANIM_POWER_MELEE_5_HIT:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_5_HIT);
 		break;
-	case LEGS_POWER_MELEE_6_HIT:
-		PM_ContinueTorsoAnim(TORSO_POWER_MELEE_6_HIT);
+	case ANIM_POWER_MELEE_6_HIT:
+		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_6_HIT);
 		break;
-	case LEGS_BREAKER_MELEE_HIT1:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT1);
+	case ANIM_BREAKER_MELEE_HIT1:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_HIT1);
 		break;
-	case LEGS_BREAKER_MELEE_HIT2:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT2);
+	case ANIM_BREAKER_MELEE_HIT2:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_HIT2);
 		break;
-	case LEGS_BREAKER_MELEE_HIT3:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT3);
+	case ANIM_BREAKER_MELEE_HIT3:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_HIT3);
 		break;
-	case LEGS_BREAKER_MELEE_HIT4:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT4);
+	case ANIM_BREAKER_MELEE_HIT4:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_HIT4);
 		break;
-	case LEGS_BREAKER_MELEE_HIT5:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT5);
+	case ANIM_BREAKER_MELEE_HIT5:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_HIT5);
 		break;
-	case LEGS_BREAKER_MELEE_HIT6:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_HIT6);
+	case ANIM_BREAKER_MELEE_HIT6:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_HIT6);
 		break;
-	case LEGS_BREAKER_MELEE_ATTACK1:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK1);
+	case ANIM_BREAKER_MELEE_ATTACK1:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_ATTACK1);
 		break;
-	case LEGS_BREAKER_MELEE_ATTACK2:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK2);
+	case ANIM_BREAKER_MELEE_ATTACK2:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_ATTACK2);
 		break;
-	case LEGS_BREAKER_MELEE_ATTACK3:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK3);
+	case ANIM_BREAKER_MELEE_ATTACK3:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_ATTACK3);
 		break;
-	case LEGS_BREAKER_MELEE_ATTACK4:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK4);
+	case ANIM_BREAKER_MELEE_ATTACK4:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_ATTACK4);
 		break;
-	case LEGS_BREAKER_MELEE_ATTACK5:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK5);
+	case ANIM_BREAKER_MELEE_ATTACK5:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_ATTACK5);
 		break;
-	case LEGS_BREAKER_MELEE_ATTACK6:
-		PM_ContinueTorsoAnim(TORSO_BREAKER_MELEE_ATTACK6);
+	case ANIM_BREAKER_MELEE_ATTACK6:
+		PM_ContinueTorsoAnim(ANIM_BREAKER_MELEE_ATTACK6);
 		break;
-	case LEGS_SPEED_MELEE_DODGE:
-		PM_ContinueTorsoAnim(TORSO_SPEED_MELEE_DODGE);
+	case ANIM_SPEED_MELEE_DODGE:
+		PM_ContinueTorsoAnim(ANIM_SPEED_MELEE_DODGE);
 		break;
-	case LEGS_SPEED_MELEE_ATTACK:
-		PM_ContinueTorsoAnim(TORSO_SPEED_MELEE_ATTACK);
+	case ANIM_SPEED_MELEE_ATTACK:
+		PM_ContinueTorsoAnim(ANIM_SPEED_MELEE_ATTACK);
 		break;
-	case LEGS_SPEED_MELEE_BLOCK:
-		PM_ContinueTorsoAnim(TORSO_SPEED_MELEE_BLOCK);
+	case ANIM_SPEED_MELEE_BLOCK:
+		PM_ContinueTorsoAnim(ANIM_SPEED_MELEE_BLOCK);
 		break;
-	case LEGS_SPEED_MELEE_HIT:
-		PM_ContinueTorsoAnim(TORSO_SPEED_MELEE_HIT);
+	case ANIM_SPEED_MELEE_HIT:
+		PM_ContinueTorsoAnim(ANIM_SPEED_MELEE_HIT);
 		break;
-	case LEGS_RUN:
-		PM_ContinueTorsoAnim(TORSO_RUN);
+	case ANIM_RUN:
+		PM_ContinueTorsoAnim(ANIM_RUN);
 		break;
-	case LEGS_BACK:
-		PM_ContinueTorsoAnim(TORSO_BACK);
+	case ANIM_BACK:
+		PM_ContinueTorsoAnim(ANIM_BACK);
 		break;
-	case LEGS_DASH_FORWARD:
-		PM_ContinueTorsoAnim(TORSO_DASH_FORWARD );
+	case ANIM_DASH_FORWARD:
+		PM_ContinueTorsoAnim(ANIM_DASH_FORWARD );
 		break;
-	case LEGS_DASH_BACKWARD:
-		PM_ContinueTorsoAnim(TORSO_DASH_BACKWARD );
+	case ANIM_DASH_BACKWARD:
+		PM_ContinueTorsoAnim(ANIM_DASH_BACKWARD );
 		break;
-	case LEGS_DASH_RIGHT:
-		PM_ContinueTorsoAnim(TORSO_DASH_RIGHT );
+	case ANIM_DASH_RIGHT:
+		PM_ContinueTorsoAnim(ANIM_DASH_RIGHT );
 		break;
-	case LEGS_DASH_LEFT:
-		PM_ContinueTorsoAnim(TORSO_DASH_LEFT );
+	case ANIM_DASH_LEFT:
+		PM_ContinueTorsoAnim(ANIM_DASH_LEFT );
 		break;
-	case LEGS_WALK:
-		PM_ContinueTorsoAnim(TORSO_WALK );
+	case ANIM_WALK:
+		PM_ContinueTorsoAnim(ANIM_WALK );
 		break;
-	case LEGS_BACKWALK:
-		PM_ContinueTorsoAnim(TORSO_BACKWALK );
+	case ANIM_BACKWALK:
+		PM_ContinueTorsoAnim(ANIM_BACKWALK );
 		break;
-	case LEGS_SWIM:
-		PM_ContinueTorsoAnim(TORSO_SWIM );
+	case ANIM_SWIM:
+		PM_ContinueTorsoAnim(ANIM_SWIM );
 		break;
-	case LEGS_JUMP_UP:
-		PM_ContinueTorsoAnim(TORSO_JUMP_UP );
+	case ANIM_JUMP_UP:
+		PM_ContinueTorsoAnim(ANIM_JUMP_UP );
 		break;
-	case LEGS_JUMP_FORWARD:
-		PM_ContinueTorsoAnim(TORSO_JUMP_FORWARD );
+	case ANIM_JUMP_FORWARD:
+		PM_ContinueTorsoAnim(ANIM_JUMP_FORWARD );
 		break;
-	case LEGS_JUMP_BACK:
-		PM_ContinueTorsoAnim(TORSO_JUMP_BACK );
+	case ANIM_JUMP_BACK:
+		PM_ContinueTorsoAnim(ANIM_JUMP_BACK );
 		break;
-	case LEGS_LAND_UP:
-		PM_ContinueTorsoAnim(TORSO_LAND_UP );
+	case ANIM_LAND_UP:
+		PM_ContinueTorsoAnim(ANIM_LAND_UP );
 		break;
-	case LEGS_LAND_FORWARD:
-		PM_ContinueTorsoAnim(TORSO_LAND_FORWARD );
+	case ANIM_LAND_FORWARD:
+		PM_ContinueTorsoAnim(ANIM_LAND_FORWARD );
 		break;
-	case LEGS_LAND_BACK:
-		PM_ContinueTorsoAnim(TORSO_LAND_BACK );
+	case ANIM_LAND_BACK:
+		PM_ContinueTorsoAnim(ANIM_LAND_BACK );
 		break;
-	case LEGS_STUNNED:
-		PM_ContinueTorsoAnim(TORSO_STUNNED);
+	case ANIM_STUNNED:
+		PM_ContinueTorsoAnim(ANIM_STUNNED);
 		break;
-	case LEGS_PUSH:
-		PM_ContinueTorsoAnim(TORSO_PUSH);
+	case ANIM_PUSH:
+		PM_ContinueTorsoAnim(ANIM_PUSH);
 		break;
-	case LEGS_DEFLECT:
-		PM_ContinueTorsoAnim(TORSO_DEFLECT);
+	case ANIM_DEFLECT:
+		PM_ContinueTorsoAnim(ANIM_DEFLECT);
 		break;
-	case LEGS_BLOCK:
-		PM_ContinueTorsoAnim(TORSO_BLOCK);
+	case ANIM_BLOCK:
+		PM_ContinueTorsoAnim(ANIM_BLOCK);
 		break;
-	case LEGS_KI_CHARGE:
-		PM_ContinueTorsoAnim(TORSO_KI_CHARGE );
+	case ANIM_KI_CHARGE:
+		PM_ContinueTorsoAnim(ANIM_KI_CHARGE );
 		break;
-	case LEGS_PL_UP:
-		PM_ContinueTorsoAnim(TORSO_PL_UP );
+	case ANIM_PL_UP:
+		PM_ContinueTorsoAnim(ANIM_PL_UP );
 		break;
-	case LEGS_TRANS_UP:
-		PM_ContinueTorsoAnim(TORSO_TRANS_UP);
+	case ANIM_TRANS_UP:
+		PM_ContinueTorsoAnim(ANIM_TRANS_UP);
 		break;
-	case LEGS_TRANS_BACK:
-		PM_ContinueTorsoAnim(TORSO_TRANS_BACK );
+	case ANIM_TRANS_BACK:
+		PM_ContinueTorsoAnim(ANIM_TRANS_BACK );
 		break;
-	case LEGS_FLY_IDLE:
-		PM_ContinueTorsoAnim(TORSO_FLY_IDLE);
+	case ANIM_FLY_IDLE:
+		PM_ContinueTorsoAnim(ANIM_FLY_IDLE);
 		break;
-	case LEGS_FLY_PREPARE:
-		PM_ContinueTorsoAnim(TORSO_FLY_PREPARE);
+	case ANIM_FLY_PREPARE:
+		PM_ContinueTorsoAnim(ANIM_FLY_PREPARE);
 		break;
-	case LEGS_FLY_FORWARD:
-		PM_ContinueTorsoAnim(TORSO_FLY_FORWARD );
+	case ANIM_FLY_FORWARD:
+		PM_ContinueTorsoAnim(ANIM_FLY_FORWARD );
 		break;
-	case LEGS_FLY_BACKWARD:
-		PM_ContinueTorsoAnim(TORSO_FLY_BACKWARD);
+	case ANIM_FLY_BACKWARD:
+		PM_ContinueTorsoAnim(ANIM_FLY_BACKWARD);
 		break;
-	case LEGS_FLY_UP:
-		PM_ContinueTorsoAnim(TORSO_FLY_UP );
+	case ANIM_FLY_UP:
+		PM_ContinueTorsoAnim(ANIM_FLY_UP );
 		break;
-	case LEGS_FLY_DOWN:
-		PM_ContinueTorsoAnim(TORSO_FLY_DOWN);
+	case ANIM_FLY_DOWN:
+		PM_ContinueTorsoAnim(ANIM_FLY_DOWN);
 		break;
-	case LEGS_IDLE:
-		PM_ContinueTorsoAnim(TORSO_STAND);
+	case ANIM_IDLE:
+		PM_ContinueTorsoAnim(ANIM_IDLE);
 		break;
-	case LEGS_FLOOR_RECOVER:
-		PM_ContinueTorsoAnim(TORSO_FLOOR_RECOVER);
+	case ANIM_FLOOR_RECOVER:
+		PM_ContinueTorsoAnim(ANIM_FLOOR_RECOVER);
 		break;
 	default:
-		(pm->ps->clientLockedTarget>0) ? PM_ContinueTorsoAnim(TORSO_STAND_LOCKED) : PM_ContinueTorsoAnim(TORSO_STAND);
+		(pm->ps->clientLockedTarget>0) ? PM_ContinueTorsoAnim(ANIM_IDLE_LOCKED) : PM_ContinueTorsoAnim(ANIM_IDLE);
 		break;
 	}
 }
@@ -2046,27 +2046,27 @@ void PM_Melee(void){
 		// Speed Melee Hit
 		if(enemyState == 2 && (state == 6 || state <= 1)){
 			pm->ps->timers[tmFreeze] = 300;
-			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_HIT);
+			PM_ContinueLegsAnim(ANIM_SPEED_MELEE_HIT);
 		}
 		// Block Power Melee
 		else if(enemyState == 4 && state == 5){
-			PM_ContinueLegsAnim(LEGS_BLOCK);
+			PM_ContinueLegsAnim(ANIM_BLOCK);
 		}
 		// Block / Dodge Speed Melee
 		else if(enemyState == 2 && state == 5){
 			if(pm->ps->bitFlags & usingBoost){
-				PM_ContinueLegsAnim(LEGS_SPEED_MELEE_BLOCK);
+				PM_ContinueLegsAnim(ANIM_SPEED_MELEE_BLOCK);
 				PM_AddEvent(EV_MELEE_SPEED);
 			}
 			else{
 				pm->ps->timers[tmFreeze] = 300;
-				PM_ContinueLegsAnim(LEGS_SPEED_MELEE_DODGE);
+				PM_ContinueLegsAnim(ANIM_SPEED_MELEE_DODGE);
 				PM_AddEvent(EV_MELEE_MISS);
 			}
 		}
 		// Speed Melee Using
 		else if(state == 2){
-			PM_ContinueLegsAnim(LEGS_SPEED_MELEE_ATTACK);
+			PM_ContinueLegsAnim(ANIM_SPEED_MELEE_ATTACK);
 			if(pm->ps->bitFlags & usingBoost){
 				damage *= 2.2;
 			}
@@ -2112,21 +2112,21 @@ void PM_Melee(void){
 			}
 		}
 		else if(state == 1 && inRange){
-			if(pm->ps->bitFlags & usingFlight){PM_ContinueLegsAnim(LEGS_FLY_IDLE);}
-			else{PM_ContinueLegsAnim(LEGS_IDLE);}
+			if(pm->ps->bitFlags & usingFlight){PM_ContinueLegsAnim(ANIM_FLY_IDLE);}
+			else{PM_ContinueLegsAnim(ANIM_IDLE);}
 		}
 		if(state == 3 || state == 4){
 			int direction;
 			direction = pm->ps->lockedPlayer->knockBackDirection;
-			if(direction == 1){state == 4 ? PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_HIT) : PM_ContinueLegsAnim(LEGS_POWER_MELEE_4_CHARGE);}
-			else if(direction == 2){state == 4 ? PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_HIT) : PM_ContinueLegsAnim(LEGS_POWER_MELEE_2_CHARGE);}
-			else if(direction == 3){state == 4 ? PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_HIT) : PM_ContinueLegsAnim(LEGS_POWER_MELEE_6_CHARGE);}
-			else if(direction == 4){state == 4 ? PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_HIT) : PM_ContinueLegsAnim(LEGS_POWER_MELEE_5_CHARGE);}
+			if(direction == 1){state == 4 ? PM_ContinueLegsAnim(ANIM_POWER_MELEE_4_HIT) : PM_ContinueLegsAnim(ANIM_POWER_MELEE_4_CHARGE);}
+			else if(direction == 2){state == 4 ? PM_ContinueLegsAnim(ANIM_POWER_MELEE_2_HIT) : PM_ContinueLegsAnim(ANIM_POWER_MELEE_2_CHARGE);}
+			else if(direction == 3){state == 4 ? PM_ContinueLegsAnim(ANIM_POWER_MELEE_6_HIT) : PM_ContinueLegsAnim(ANIM_POWER_MELEE_6_CHARGE);}
+			else if(direction == 4){state == 4 ? PM_ContinueLegsAnim(ANIM_POWER_MELEE_5_HIT) : PM_ContinueLegsAnim(ANIM_POWER_MELEE_5_CHARGE);}
 			else if(pm->cmd.buttons & BUTTON_BOOST){
-				state == 4 ? PM_ContinueLegsAnim(LEGS_POWER_MELEE_3_HIT) : PM_ContinueLegsAnim(LEGS_POWER_MELEE_3_CHARGE);
+				state == 4 ? PM_ContinueLegsAnim(ANIM_POWER_MELEE_3_HIT) : PM_ContinueLegsAnim(ANIM_POWER_MELEE_3_CHARGE);
 			}
 			else{
-				state == 4 ? PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_HIT) : PM_ContinueLegsAnim(LEGS_POWER_MELEE_1_CHARGE);
+				state == 4 ? PM_ContinueLegsAnim(ANIM_POWER_MELEE_1_HIT) : PM_ContinueLegsAnim(ANIM_POWER_MELEE_1_CHARGE);
 			}
 		}
 		// Set Melee Position Mode
@@ -2228,7 +2228,7 @@ void PM_Weapon(void){
 			if(pm->cmd.buttons & BUTTON_ATTACK) {
 				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE){
 					pm->ps->weaponstate = WEAPON_CHARGING;
-					PM_StartTorsoAnim(TORSO_KI_ATTACK1_PREPARE + (pm->ps->weapon - 1) * 2 );
+					PM_StartTorsoAnim(ANIM_KI_ATTACK1_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
 				pm->ps->powerLevel[plUseCurrent] += costPrimary;
@@ -2240,13 +2240,13 @@ void PM_Weapon(void){
 					pm->ps->weaponstate = WEAPON_COOLING;
 					pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 				}
-				PM_StartTorsoAnim(TORSO_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
+				PM_StartTorsoAnim(ANIM_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
 				break;
 			}
 			if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
 				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE){
 					pm->ps->weaponstate = WEAPON_ALTCHARGING;
-					PM_StartTorsoAnim(TORSO_KI_ATTACK1_ALT_PREPARE + (pm->ps->weapon - 1) * 2 );
+					PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
 				pm->ps->powerLevel[plUseCurrent] += costSecondary;
@@ -2258,7 +2258,7 @@ void PM_Weapon(void){
 					pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
 					PM_AddEvent(EV_ALTFIRE_WEAPON );
 				}
-				PM_StartTorsoAnim(TORSO_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
+				PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
 				break;
 			}
 
@@ -2269,7 +2269,7 @@ void PM_Weapon(void){
 			if(pm->cmd.buttons & BUTTON_ATTACK){
 				PM_AddEvent(EV_DETONATE_WEAPON );
 				pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(TORSO_STAND);
+				PM_StartTorsoAnim(ANIM_IDLE);
 			}
 			PM_StopMovement();
 			PM_StopDirections();
@@ -2283,7 +2283,7 @@ void PM_Weapon(void){
 			if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
 				PM_AddEvent(EV_DETONATE_WEAPON );
 				pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(TORSO_STAND );
+				PM_StartTorsoAnim(ANIM_IDLE );
 			}
 			PM_StopMovement();
 			PM_StopDirections();
@@ -2322,12 +2322,12 @@ void PM_Weapon(void){
 						pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 					}
 					PM_AddEvent(EV_FIRE_WEAPON);
-					PM_StartTorsoAnim(TORSO_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
+					PM_StartTorsoAnim(ANIM_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
 				} else{
 					pm->ps->weaponTime = 0;
 					pm->ps->weaponstate = WEAPON_READY;
 					pm->ps->stats[stChargePercentPrimary] = 0;
-					PM_StartTorsoAnim(TORSO_STAND);
+					PM_StartTorsoAnim(ANIM_IDLE);
 				}
 			}
 		}
@@ -2361,12 +2361,12 @@ void PM_Weapon(void){
 						pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
 					}
 					PM_AddEvent(EV_ALTFIRE_WEAPON );
-					PM_StartTorsoAnim(TORSO_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
+					PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
 				} else{
 					pm->ps->weaponTime = 0;
 					pm->ps->weaponstate = WEAPON_READY;
 					pm->ps->stats[stChargePercentSecondary] = 0;
-					PM_StartTorsoAnim(TORSO_STAND );
+					PM_StartTorsoAnim(ANIM_IDLE );
 				}
 			}
 		}
@@ -2376,7 +2376,7 @@ void PM_Weapon(void){
 			if(!(pm->cmd.buttons & BUTTON_ATTACK)){
 				pm->ps->weaponstate = WEAPON_COOLING;
 				pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(TORSO_STAND );
+				PM_StartTorsoAnim(ANIM_IDLE );
 				break;
 			}
 			pm->ps->weaponTime += pml.msec;
@@ -2391,7 +2391,7 @@ void PM_Weapon(void){
 			if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)){
 				pm->ps->weaponstate = WEAPON_COOLING;
 				pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(TORSO_STAND );
+				PM_StartTorsoAnim(ANIM_IDLE );
 				break;
 			}
 			pm->ps->weaponTime += pml.msec;

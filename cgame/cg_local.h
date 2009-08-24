@@ -42,7 +42,7 @@
 #define	ITEM_BLOB_TIME		200
 #define	MUZZLE_FLASH_TIME	80 //20
 #define	SINK_TIME			1000		// time for fragments to sink into ground before going away
-#define	ATTACKER_HEAD_TIME	10000
+#define	ATTACKER_ANIM_TIME	10000
 #define	REWARD_TIME			3000
 
 #define	PULSE_SCALE			1.5			// amount to scale up the icons when activating

@@ -135,7 +135,7 @@ UI_ForceLegsAnim
 static void UI_ForceLegsAnim( playerInfo_t *pi, int anim ) {
 	pi->legsAnim = ( ( pi->legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
 
-	if ( anim == LEGS_JUMP_UP ) {
+	if ( anim == ANIM_JUMP_UP ) {
 		pi->legsAnimationTimer = UI_TIMER_JUMP;
 	}
 }
@@ -163,11 +163,11 @@ UI_ForceTorsoAnim
 static void UI_ForceTorsoAnim( playerInfo_t *pi, int anim ) {
 	pi->torsoAnim = ( ( pi->torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
 /*
-	if ( anim == TORSO_GESTURE ) {
+	if ( anim == ANIM_GESTURE ) {
 		pi->torsoAnimationTimer = UI_TIMER_GESTURE;
 	}
 
-	if ( anim == TORSO_ATTACK || anim == TORSO_ATTACK2 ) {
+	if ( anim == ANIM_ATTACK || anim == ANIM_ATTACK2 ) {
 		pi->torsoAnimationTimer = UI_TIMER_ATTACK;
 	}
 */
@@ -200,9 +200,9 @@ static void UI_TorsoSequencing( playerInfo_t *pi ) {
 	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
 /*
 	if ( pi->weapon != pi->currentWeapon ) {
-		if ( currentAnim != TORSO_DROP ) {
+		if ( currentAnim != ANIM_DROP ) {
 			pi->torsoAnimationTimer = UI_TIMER_WEAPON_SWITCH;
-			UI_ForceTorsoAnim( pi, TORSO_DROP );
+			UI_ForceTorsoAnim( pi, ANIM_DROP );
 		}
 	}
 */
@@ -210,25 +210,25 @@ static void UI_TorsoSequencing( playerInfo_t *pi ) {
 		return;
 	}
 /*
-	if( currentAnim == TORSO_GESTURE ) {
-		UI_SetTorsoAnim( pi, TORSO_STAND );
+	if( currentAnim == ANIM_GESTURE ) {
+		UI_SetTorsoAnim( pi, ANIM_IDLE );
 		return;
 	}
 
-	if( currentAnim == TORSO_ATTACK || currentAnim == TORSO_ATTACK2 ) {
-		UI_SetTorsoAnim( pi, TORSO_STAND );
+	if( currentAnim == ANIM_ATTACK || currentAnim == ANIM_ATTACK2 ) {
+		UI_SetTorsoAnim( pi, ANIM_IDLE );
 		return;
 	}
 
-	if ( currentAnim == TORSO_DROP ) {
+	if ( currentAnim == ANIM_DROP ) {
 		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 		pi->torsoAnimationTimer = UI_TIMER_WEAPON_SWITCH;
-		UI_ForceTorsoAnim( pi, TORSO_RAISE );
+		UI_ForceTorsoAnim( pi, ANIM_RAISE );
 		return;
 	}
 
-	if ( currentAnim == TORSO_RAISE ) {
-		UI_SetTorsoAnim( pi, TORSO_STAND );
+	if ( currentAnim == ANIM_RAISE ) {
+		UI_SetTorsoAnim( pi, ANIM_IDLE );
 		return;
 	}
 */
@@ -246,21 +246,21 @@ static void UI_LegsSequencing( playerInfo_t *pi ) {
 	currentAnim = pi->legsAnim & ~ANIM_TOGGLEBIT;
 
 	if ( pi->legsAnimationTimer > 0 ) {
-		if ( currentAnim == LEGS_JUMP_UP ) {
+		if ( currentAnim == ANIM_JUMP_UP ) {
 			jumpHeight = JUMP_HEIGHT * sin( M_PI * ( UI_TIMER_JUMP - pi->legsAnimationTimer ) / UI_TIMER_JUMP );
 		}
 		return;
 	}
 
-	if ( currentAnim == LEGS_JUMP_UP ) {
-		UI_ForceLegsAnim( pi, LEGS_LAND_UP );
+	if ( currentAnim == ANIM_JUMP_UP ) {
+		UI_ForceLegsAnim( pi, ANIM_LAND_UP );
 		pi->legsAnimationTimer = UI_TIMER_LAND;
 		jumpHeight = 0;
 		return;
 	}
 
-	if ( currentAnim == LEGS_LAND_UP ) {
-		UI_SetLegsAnim( pi, LEGS_IDLE );
+	if ( currentAnim == ANIM_LAND_UP ) {
+		UI_SetLegsAnim( pi, ANIM_IDLE );
 		return;
 	}
 }
@@ -421,8 +421,8 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 
 	UI_LegsSequencing( pi );
 
-	if ( pi->legs.yawing && ( pi->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_IDLE ) {
-		UI_RunLerpFrame( pi, &pi->legs, LEGS_TURN );
+	if ( pi->legs.yawing && ( pi->legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_IDLE ) {
+		UI_RunLerpFrame( pi, &pi->legs, ANIM_TURN );
 	} else {
 		UI_RunLerpFrame( pi, &pi->legs, pi->legsAnim );
 	}
@@ -451,141 +451,141 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 		// NOTE: Torso animations take precedence over leg animations when deciding which
 		//       head animation to play.
 		torsoAnimNum = pi->torsoAnim & ~ANIM_TOGGLEBIT;
-		if ( TORSO_FLY_UP == torsoAnimNum && pi->overrideHead ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_KI_CHARGE );
-		} else if ( TORSO_FLY_DOWN == torsoAnimNum && pi->overrideHead ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_KI_CHARGE );
-		} else if ( TORSO_FLOOR_RECOVER == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_FLOOR_RECOVER );
-		} else if ( TORSO_WALK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_WALK );
-		} else if ( TORSO_RUN == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_RUN );
-		} else if ( TORSO_BACK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BACK );
-		} else if ( TORSO_JUMP_UP == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_JUMP_UP );
-		} else if ( TORSO_LAND_UP == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_LAND_UP );
-		} else if ( TORSO_JUMP_FORWARD == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_JUMP_FORWARD );
-		} else if ( TORSO_LAND_FORWARD == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_LAND_FORWARD );
-		} else if ( TORSO_JUMP_BACK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_JUMP_BACK );
-		} else if ( TORSO_LAND_BACK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_LAND_BACK );
-		} else if ( TORSO_SWIM == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_SWIM );
-		} else if ( TORSO_DASH_RIGHT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_DASH_RIGHT );
-		} else if ( TORSO_DASH_LEFT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_DASH_LEFT );
-		} else if ( TORSO_DASH_FORWARD == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_DASH_FORWARD );
-		} else if ( TORSO_DASH_BACKWARD == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_DASH_BACKWARD );
-		} else if ( TORSO_KI_CHARGE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_KI_CHARGE );
-		} else if ( TORSO_PL_DOWN == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_PL_DOWN );
-		} else if ( TORSO_PL_UP == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_PL_UP );
-		} else if ( TORSO_TRANS_UP == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_TRANS_UP );
-		} else if ( TORSO_TRANS_BACK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_TRANS_BACK );
-		} else if ( TORSO_FLY_IDLE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_IDLE );
-		} else if ( TORSO_FLY_PREPARE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_PREPARE );
-		} else if ( TORSO_FLY_FORWARD == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_FORWARD );
-		} else if ( TORSO_FLY_BACKWARD == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_BACKWARD );
-		} else if ( TORSO_FLY_UP == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_UP );
-		} else if ( TORSO_FLY_DOWN == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_FLY_DOWN );
-		} else if ( TORSO_STUNNED == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_STUNNED );
-		} else if ( TORSO_PUSH == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_PUSH );
-		} else if ( TORSO_DEFLECT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_DEFLECT );
-		} else if ( TORSO_BLOCK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BLOCK );
-		} else if ( TORSO_SPEED_MELEE_ATTACK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_ATTACK );
-		} else if ( TORSO_SPEED_MELEE_DODGE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_DODGE );
-		} else if ( TORSO_SPEED_MELEE_BLOCK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_BLOCK );
-		} else if ( TORSO_SPEED_MELEE_HIT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_SPEED_MELEE_HIT );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK1 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK1 );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK2 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK2 );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK3 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK3 );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK4 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK4 );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK5 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK5 );
-		} else if ( TORSO_BREAKER_MELEE_ATTACK6 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_ATTACK6 );
-		} else if ( TORSO_BREAKER_MELEE_HIT1 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT1 );
-		} else if ( TORSO_BREAKER_MELEE_HIT2 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT2 );
-		} else if ( TORSO_BREAKER_MELEE_HIT3 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT3 );
-		} else if ( TORSO_BREAKER_MELEE_HIT4 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT4 );
-		} else if ( TORSO_BREAKER_MELEE_HIT5 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT5 );
-		} else if ( TORSO_BREAKER_MELEE_HIT6 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_BREAKER_MELEE_HIT6 );
-		} else if ( TORSO_POWER_MELEE_1_CHARGE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_1_CHARGE );
-		} else if ( TORSO_POWER_MELEE_2_CHARGE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_2_CHARGE );
-		} else if ( TORSO_POWER_MELEE_3_CHARGE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_3_CHARGE );
-		} else if ( TORSO_POWER_MELEE_4_CHARGE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_4_CHARGE );
-		} else if ( TORSO_POWER_MELEE_5_CHARGE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_5_CHARGE );
-		} else if ( TORSO_POWER_MELEE_6_CHARGE == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_6_CHARGE );
-		} else if ( TORSO_POWER_MELEE_1_HIT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_1_HIT );
-		} else if ( TORSO_POWER_MELEE_2_HIT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_2_HIT );
-		} else if ( TORSO_POWER_MELEE_3_HIT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_3_HIT );
-		} else if ( TORSO_POWER_MELEE_4_HIT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_4_HIT );
-		} else if ( TORSO_POWER_MELEE_5_HIT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_5_HIT );
-		} else if ( TORSO_POWER_MELEE_6_HIT == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_POWER_MELEE_6_HIT );
-		} else if ( TORSO_KNOCKBACK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK );
-		} else if ( TORSO_KNOCKBACK_HIT_WALL == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK_HIT_WALL );
-		} else if ( TORSO_KNOCKBACK_RECOVER_1 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK_RECOVER_1 );
-		} else if ( TORSO_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, HEAD_KNOCKBACK_RECOVER_2 );
-		} else if ( TORSO_KI_ATTACK1_PREPARE <= torsoAnimNum && TORSO_KI_ATTACK6_ALT_FIRE >= torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, torsoAnimNum - TORSO_KI_ATTACK1_PREPARE + HEAD_KI_ATTACK1_PREPARE );
+		if ( ANIM_FLY_UP == torsoAnimNum && pi->overrideHead ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KI_CHARGE );
+		} else if ( ANIM_FLY_DOWN == torsoAnimNum && pi->overrideHead ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KI_CHARGE );
+		} else if ( ANIM_FLOOR_RECOVER == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLOOR_RECOVER );
+		} else if ( ANIM_WALK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_WALK );
+		} else if ( ANIM_RUN == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_RUN );
+		} else if ( ANIM_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BACK );
+		} else if ( ANIM_JUMP_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_JUMP_UP );
+		} else if ( ANIM_LAND_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_LAND_UP );
+		} else if ( ANIM_JUMP_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_JUMP_FORWARD );
+		} else if ( ANIM_LAND_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_LAND_FORWARD );
+		} else if ( ANIM_JUMP_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_JUMP_BACK );
+		} else if ( ANIM_LAND_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_LAND_BACK );
+		} else if ( ANIM_SWIM == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SWIM );
+		} else if ( ANIM_DASH_RIGHT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DASH_RIGHT );
+		} else if ( ANIM_DASH_LEFT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DASH_LEFT );
+		} else if ( ANIM_DASH_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DASH_FORWARD );
+		} else if ( ANIM_DASH_BACKWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DASH_BACKWARD );
+		} else if ( ANIM_KI_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KI_CHARGE );
+		} else if ( ANIM_PL_DOWN == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_PL_DOWN );
+		} else if ( ANIM_PL_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_PL_UP );
+		} else if ( ANIM_TRANS_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_TRANS_UP );
+		} else if ( ANIM_TRANS_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_TRANS_BACK );
+		} else if ( ANIM_FLY_IDLE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_IDLE );
+		} else if ( ANIM_FLY_PREPARE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_PREPARE );
+		} else if ( ANIM_FLY_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_FORWARD );
+		} else if ( ANIM_FLY_BACKWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_BACKWARD );
+		} else if ( ANIM_FLY_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_UP );
+		} else if ( ANIM_FLY_DOWN == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_DOWN );
+		} else if ( ANIM_STUNNED == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_STUNNED );
+		} else if ( ANIM_PUSH == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_PUSH );
+		} else if ( ANIM_DEFLECT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DEFLECT );
+		} else if ( ANIM_BLOCK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BLOCK );
+		} else if ( ANIM_SPEED_MELEE_ATTACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SPEED_MELEE_ATTACK );
+		} else if ( ANIM_SPEED_MELEE_DODGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SPEED_MELEE_DODGE );
+		} else if ( ANIM_SPEED_MELEE_BLOCK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SPEED_MELEE_BLOCK );
+		} else if ( ANIM_SPEED_MELEE_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SPEED_MELEE_HIT );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK1 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK2 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK3 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK3 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK4 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK4 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK5 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK5 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK6 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK6 );
+		} else if ( ANIM_BREAKER_MELEE_HIT1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT1 );
+		} else if ( ANIM_BREAKER_MELEE_HIT2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT2 );
+		} else if ( ANIM_BREAKER_MELEE_HIT3 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT3 );
+		} else if ( ANIM_BREAKER_MELEE_HIT4 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT4 );
+		} else if ( ANIM_BREAKER_MELEE_HIT5 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT5 );
+		} else if ( ANIM_BREAKER_MELEE_HIT6 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT6 );
+		} else if ( ANIM_POWER_MELEE_1_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_1_CHARGE );
+		} else if ( ANIM_POWER_MELEE_2_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_2_CHARGE );
+		} else if ( ANIM_POWER_MELEE_3_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_3_CHARGE );
+		} else if ( ANIM_POWER_MELEE_4_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_4_CHARGE );
+		} else if ( ANIM_POWER_MELEE_5_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_5_CHARGE );
+		} else if ( ANIM_POWER_MELEE_6_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_6_CHARGE );
+		} else if ( ANIM_POWER_MELEE_1_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_1_HIT );
+		} else if ( ANIM_POWER_MELEE_2_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_2_HIT );
+		} else if ( ANIM_POWER_MELEE_3_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_3_HIT );
+		} else if ( ANIM_POWER_MELEE_4_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_4_HIT );
+		} else if ( ANIM_POWER_MELEE_5_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_5_HIT );
+		} else if ( ANIM_POWER_MELEE_6_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_6_HIT );
+		} else if ( ANIM_KNOCKBACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK );
+		} else if ( ANIM_KNOCKBACK_HIT_WALL == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK_HIT_WALL );
+		} else if ( ANIM_KNOCKBACK_RECOVER_1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK_RECOVER_1 );
+		} else if ( ANIM_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK_RECOVER_2 );
+		} else if ( ANIM_KI_ATTACK1_PREPARE <= torsoAnimNum && ANIM_KI_ATTACK6_ALT_FIRE >= torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, torsoAnimNum - ANIM_KI_ATTACK1_PREPARE + ANIM_KI_ATTACK1_PREPARE );
 		} else {
 			legsAnimNum = pi->legsAnim & ~ANIM_TOGGLEBIT;
 			if ( 0 ) {
 			} else {
-				UI_RunLerpFrame( pi, &pi->head, HEAD_IDLE );
+				UI_RunLerpFrame( pi, &pi->head, ANIM_IDLE );
 			}
 		}
 	}
@@ -722,8 +722,8 @@ static void UI_PlayerAngles( playerInfo_t *pi, vec3_t legs[3], vec3_t torso[3], 
 	// --------- yaw -------------
 
 	// allow yaw to drift a bit
-	if ( ( pi->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE 
-		|| ( pi->torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND  ) {
+	if ( ( pi->legsAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE 
+		|| ( pi->torsoAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE  ) {
 		// if not standing still, always point all in the same direction
 		pi->torso.yawing = qtrue;	// always center
 		pi->torso.pitching = qtrue;	// always center
@@ -817,13 +817,13 @@ float	UI_MachinegunSpinAngle( playerInfo_t *pi ) {
 
 	torsoAnim = pi->torsoAnim  & ~ANIM_TOGGLEBIT;
 
-	if( torsoAnim == TORSO_ATTACK2 ) {
-		torsoAnim = TORSO_ATTACK;
+	if( torsoAnim == ANIM_ATTACK2 ) {
+		torsoAnim = ANIM_ATTACK;
 	}
-	if ( pi->barrelSpinning == !(torsoAnim == TORSO_ATTACK) ) {
+	if ( pi->barrelSpinning == !(torsoAnim == ANIM_ATTACK) ) {
 		pi->barrelTime = dp_realtime;
 		pi->barrelAngle = AngleMod( angle );
-		pi->barrelSpinning = !!(torsoAnim == TORSO_ATTACK);
+		pi->barrelSpinning = !!(torsoAnim == ANIM_ATTACK);
 	}
 */
 	return angle;
@@ -1160,10 +1160,10 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 		animations[i].firstFrame = atoi( token );
 /*
 		// leg only frames are adjusted to not count the upper body only frames
-		if ( i == LEGS_WALKCR ) {
-			skip = animations[LEGS_WALKCR].firstFrame - animations[TORSO_GESTURE].firstFrame;
+		if ( i == ANIM_WALKCR ) {
+			skip = animations[ANIM_WALKCR].firstFrame - animations[ANIM_GESTURE].firstFrame;
 		}
-		if ( i >= LEGS_WALKCR ) {
+		if ( i >= ANIM_WALKCR ) {
 			animations[i].firstFrame -= skip;
 		}
 */
@@ -1193,9 +1193,9 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 		// ADDING FOR ZEQ2
 
 		// Read the continuous flag for ki attack animations
-		if ( i >= HEAD_KI_ATTACK1_FIRE &&
+		if ( i >= ANIM_KI_ATTACK1_FIRE &&
 			 i < MAX_ANIMATIONS &&
-			 (i - HEAD_KI_ATTACK1_FIRE) % 2 == 0 ) {
+			 (i - ANIM_KI_ATTACK1_FIRE) % 2 == 0 ) {
 			token = COM_Parse( &text_p );
 			if ( !*token ) {
 				break;
@@ -1366,8 +1366,8 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	weaponNum = pi->lastWeapon;
 	pi->weapon = weaponNum;
 
-	if ( torsoAnim == BOTH_DEATH_GROUND || legsAnim == BOTH_DEATH_GROUND ) {
-		torsoAnim = legsAnim = BOTH_DEATH_GROUND;
+	if ( torsoAnim == ANIM_DEATH_GROUND || legsAnim == ANIM_DEATH_GROUND ) {
+		torsoAnim = legsAnim = ANIM_DEATH_GROUND;
 		pi->weapon = pi->currentWeapon = WP_NONE;
 		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 
@@ -1383,7 +1383,7 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 
 	// leg animation
 	currentAnim = pi->legsAnim & ~ANIM_TOGGLEBIT;
-	if ( legsAnim != LEGS_JUMP_UP && ( currentAnim == LEGS_JUMP_UP || currentAnim == LEGS_LAND_UP ) ) {
+	if ( legsAnim != ANIM_JUMP_UP && ( currentAnim == ANIM_JUMP_UP || currentAnim == ANIM_LAND_UP ) ) {
 		pi->pendingLegsAnim = legsAnim;
 	}
 	else if ( legsAnim != currentAnim ) {
@@ -1393,21 +1393,21 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	}
 
 	// torso animation
-	if ( torsoAnim == TORSO_STAND || torsoAnim == TORSO_STAND_LOCKED ) {
+	if ( torsoAnim == ANIM_IDLE || torsoAnim == ANIM_IDLE_LOCKED ) {
 		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
-			torsoAnim = TORSO_STAND;
+			torsoAnim = ANIM_IDLE;
 		}
 		else {
-			torsoAnim = TORSO_STAND;
+			torsoAnim = ANIM_IDLE;
 		}
 	}
 /*
-	if ( torsoAnim == TORSO_ATTACK || torsoAnim == TORSO_ATTACK2 ) {
+	if ( torsoAnim == ANIM_ATTACK || torsoAnim == ANIM_ATTACK2 ) {
 		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
-			torsoAnim = TORSO_ATTACK2;
+			torsoAnim = ANIM_ATTACK2;
 		}
 		else {
-			torsoAnim = TORSO_ATTACK;
+			torsoAnim = ANIM_ATTACK;
 		}
 		pi->muzzleFlashTime = dp_realtime + UI_TIMER_MUZZLE_FLASH;
 		//FIXME play firing sound here
@@ -1415,10 +1415,10 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 */
 	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
 /*
-	if ( weaponNum != pi->currentWeapon || currentAnim == TORSO_RAISE || currentAnim == TORSO_DROP ) {
+	if ( weaponNum != pi->currentWeapon || currentAnim == ANIM_RAISE || currentAnim == ANIM_DROP ) {
 		pi->pendingTorsoAnim = torsoAnim;
 	}
-	else if ( ( currentAnim == TORSO_GESTURE || currentAnim == TORSO_ATTACK ) && ( torsoAnim != currentAnim ) ) {
+	else if ( ( currentAnim == ANIM_GESTURE || currentAnim == ANIM_ATTACK ) && ( torsoAnim != currentAnim ) ) {
 		pi->pendingTorsoAnim = torsoAnim;
 	}
 	else */if ( torsoAnim != currentAnim ) {

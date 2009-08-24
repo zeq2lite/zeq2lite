@@ -92,7 +92,7 @@ static void MainMenu_DrawPlayer( void *self ) {
 		viewangles[YAW]   = 180 - 30;
 		viewangles[PITCH] = 0;
 		viewangles[ROLL]  = 0;
-		UI_PlayerInfo_SetInfo( &s_main.playerinfo, LEGS_FLY_IDLE, TORSO_FLY_IDLE, viewangles, vec3_origin, WP_NONE, qfalse );
+		UI_PlayerInfo_SetInfo( &s_main.playerinfo, ANIM_FLY_IDLE, ANIM_FLY_IDLE, viewangles, vec3_origin, WP_NONE, qfalse );
 	}
 
 	b = (menubitmap_s*) self;
@@ -118,7 +118,7 @@ static void MainMenu_DrawPlayer1( void *self ) {
 		viewangles[YAW]   = 90;
 		viewangles[PITCH] = 0;
 		viewangles[ROLL]  = 0;
-		UI_PlayerInfo_SetInfo( &s_main.playerinfo1, LEGS_SPEED_MELEE_ATTACK + r, TORSO_SPEED_MELEE_ATTACK + r, viewangles, vec3_origin, WP_NONE, qfalse );
+		UI_PlayerInfo_SetInfo( &s_main.playerinfo1, ANIM_SPEED_MELEE_ATTACK + r, ANIM_SPEED_MELEE_ATTACK + r, viewangles, vec3_origin, WP_NONE, qfalse );
 	}
 
 	b = (menubitmap_s*) self;
@@ -144,7 +144,7 @@ static void MainMenu_DrawPlayer2( void *self ) {
 		viewangles[YAW]   = -90;
 		viewangles[PITCH] = 0;
 		viewangles[ROLL]  = 0;
-		UI_PlayerInfo_SetInfo( &s_main.playerinfo2, LEGS_SPEED_MELEE_ATTACK + r, TORSO_SPEED_MELEE_ATTACK + r, viewangles, vec3_origin, WP_NONE, qfalse );
+		UI_PlayerInfo_SetInfo( &s_main.playerinfo2, ANIM_SPEED_MELEE_ATTACK + r, ANIM_SPEED_MELEE_ATTACK + r, viewangles, vec3_origin, WP_NONE, qfalse );
 	}
 
 	b = (menubitmap_s*) self;
