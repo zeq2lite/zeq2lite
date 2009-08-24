@@ -268,7 +268,7 @@ typedef enum{
 	tmBlind,
 	tmSoar,
 	tmStun,
-	tmTap
+	tmSafe
 }timers_t;
 
 typedef enum {
@@ -305,13 +305,14 @@ typedef enum {
 #define isCharging		0x00080000
 #define isTargeted		0x00100000
 #define isPreparing		0x00200000
-#define atopGround		0x00400000
-#define underWater		0x00800000	
-#define lockedPitch		0x01000000
-#define lockedYaw		0x02000000
-#define lockedRoll		0x04000000
-#define locked360		0x08000000
-#define lockedSpin		0x10000000
+#define isSafe			0x00400000
+#define atopGround		0x00800000
+#define underWater		0x01000000	
+#define lockedPitch		0x02000000
+#define lockedYaw		0x04000000
+#define lockedRoll		0x08000000
+#define locked360		0x10000000
+#define lockedSpin		0x20000000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16

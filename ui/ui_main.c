@@ -5141,7 +5141,8 @@ void _UI_Init( qboolean inGameLoad ) {
 
 	if (trap_Cvar_VariableValue("ui_TeamArenaFirstRun") == 0) {
 		trap_Cvar_Set("s_volume", "0.8");
-		trap_Cvar_Set("s_musicvolume", "0.5");
+		trap_Cvar_Set("cg_music", "0.5");
+		trap_Cvar_Set("s_musicvolume","0.5");
 		trap_Cvar_Set("ui_TeamArenaFirstRun", "1");
 	}
 

@@ -332,7 +332,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_soundAttenuation, "cg_soundAttenuation", "0.0001", CVAR_CHEAT},
 	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "0", CVAR_ARCHIVE},
 	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE},
-	{ &cg_music, "cg_music", "1", CVAR_ARCHIVE},
+	{ &cg_music, "cg_music", "0.6", CVAR_ARCHIVE},
 	{ &cg_particlesQuality, "cg_particlesQuality", "1", CVAR_ARCHIVE},
 	{ &cg_particlesStop, "cg_particlesStop", "0", CVAR_ARCHIVE},
 	{ &cg_particlesMaximum, "cg_particlesMaximum", "1024", CVAR_ARCHIVE}

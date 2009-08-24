@@ -88,6 +88,7 @@ static void UI_SoundOptionsMenu_Event( void* ptr, int event ) {
 		break;
 
 	case ID_MUSICVOLUME:
+		trap_Cvar_SetValue( "cg_music", soundOptionsInfo.musicvolume.curvalue / 10 );
 		trap_Cvar_SetValue( "s_musicvolume", soundOptionsInfo.musicvolume.curvalue / 10 );
 		break;
 

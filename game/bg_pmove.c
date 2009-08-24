@@ -314,6 +314,7 @@ void PM_CheckStatus(void){
 			pm->ps->bitFlags |= isDead;
 			pm->ps->powerups[PW_STATE] = -2;
 			PM_StopMovement();
+			PM_StopFlight();
 			PM_AddEvent(EV_DEATH);
 		}
 		else{
@@ -326,6 +327,7 @@ void PM_CheckStatus(void){
 			pm->ps->bitFlags |= isUnconcious;
 			pm->ps->powerups[PW_STATE] = -1;
 			PM_StopMovement();
+			PM_StopFlight();
 			pm->ps->powerLevel[plCurrent] = 1;
 			PM_AddEvent(EV_UNCONCIOUS);
 			if(pm->ps->powerLevel[plFatigue] > -2500){
@@ -405,7 +407,7 @@ void PM_CheckPowerLevel(void){
 		idleScale = (!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove) ? 2 : 1;
 		recovery = (float)pm->ps->powerLevel[plMaximum] * 0.004 * idleScale;
 		recovery *= (1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]));
-		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] || pm->ps->bitFlags & usingSoar){recovery = 0;}
+		if(pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingZanzoken || pm->ps->bitFlags & usingJump || pm->ps->bitFlags & isStruggling || pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] || pm->ps->bitFlags & usingSoar){recovery = 0;}
 		if(powerLevel[plCurrent] > powerLevel[plFatigue]){
 			newValue = powerLevel[plCurrent] - (pm->ps->powerLevel[plMaximum] * 0.005);
 			powerLevel[plCurrent] = (powerLevel[plCurrent] - newValue >= 0) ? newValue : 0;

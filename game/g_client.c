@@ -590,7 +590,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	ent = g_entities + clientNum;
 	client = ent->client;
 	trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
-
+	
 	// check for malformed or illegal info strings
 	if ( !Info_Validate(userinfo) ) {
 		strcpy (userinfo, "\\name\\badinfo");
@@ -641,6 +641,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	client->playerEntity = ent;
 
 	// setup tier information
+	client->ps.bitFlags |= isSafe;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
 
@@ -814,6 +815,7 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 
 	// get and distribute relevent paramters
 	G_LogPrintf( "ClientConnect: %i\n", clientNum );
+	client->ps.bitFlags |= isSafe;
 	ClientUserinfoChanged( clientNum );
 
 	// don't do the "xxx connected" messages if they were caried over from previous level
@@ -872,6 +874,7 @@ void ClientBegin( int clientNum ) {
 	// Set the starting cap
 	ClientUserinfoChanged(clientNum);
 	client->ps.powerLevel[plMaximum] = g_powerLevel.value;
+	client->ps.bitFlags |= isSafe;
 	// END ADDING
 
 	// locate ent at a spawn point

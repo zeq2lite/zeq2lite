@@ -1755,7 +1755,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		self->strugglingAllyAttack = qtrue;
 		return;
 	// Initiate Swat / Push Struggle
-	} else if ((other->s.eType != ET_MISSILE || other->s.eType != ET_BEAMHEAD)	// If it's not a beam or ball attack
+	} else if (other->s.eType == ET_PLAYER && other->s.eType != ET_EXPLOSION
 		&& (other->client->ps.bitFlags & usingBlock)							// And they pushed block
 		&& !(other->client->ps.bitFlags & isStruggling)							// And they are not struggling something
 		&& other->client->lasthurt_location == LOCATION_FRONT){					// And we hit the front of the player

@@ -537,6 +537,43 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 	}
 }
 
+void G_CheckSafety(vec3_t origin,playerState_t *ps){
+	int radius,distance;
+	int	entityList[MAX_GENTITIES];
+	int areaEntities;
+	int i,e;
+	gentity_t *ent;
+	vec3_t mins,maxs,deltaRadius;
+	if(ps->bitFlags & isTargeted || ps->lockedTarget > 0){
+		ps->bitFlags &= ~isSafe;
+		ps->timers[tmSafe] = level.time;
+		return;
+	}
+	for(i=0;i<3;i++){
+		mins[i] = origin[i] - radius;
+		maxs[i] = origin[i] + radius;
+	}
+	radius = 5000;
+	areaEntities = trap_EntitiesInBox(mins,maxs,entityList,MAX_GENTITIES);
+	for(e=0;e<areaEntities;e++){
+		ent = &g_entities[entityList[e]];
+		for(i=0;i<3;i++){
+			if(origin[i]<ent->r.absmin[i]){deltaRadius[i] = ent->r.absmin[i] - origin[i];}
+			else if(origin[i]>ent->r.absmax[i]){deltaRadius[i] = origin[i] - ent->r.absmax[i];}
+			else{deltaRadius[i] = 0;}
+		}
+		distance = VectorLength(deltaRadius);
+		if(distance >= radius){continue;}
+		if(ent->s.eType == ET_PLAYER && ent->r.currentOrigin != origin){
+			ps->bitFlags &= ~isSafe;
+			ps->timers[tmSafe] = level.time;
+			return;
+		}
+	}
+	if(level.time - ps->timers[tmSafe] > 5000){
+		ps->bitFlags |= isSafe;
+	}
+}
 /*
 ==============
 ClientThink
@@ -588,6 +625,7 @@ void ClientThink_real( gentity_t *ent ) {
 	ent->s.playerBitFlags = client->ps.bitFlags;
 	G_LinkUserWeaponData( &(client->ps) );
 	G_CheckSkills(&(client->ps));
+	G_CheckSafety(ent->r.currentOrigin,&(client->ps));
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
 		Weapon_HookFree(client->hook);
