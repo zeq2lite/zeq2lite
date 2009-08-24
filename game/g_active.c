@@ -469,6 +469,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 				AddScore( ent, ent->r.currentOrigin, -1 );
 			}
 			ps->powerLevel[plTierCurrent] = 0;
+			syncTier(client);
 			client->respawnTime = level.time + 10000;
 			break;
 		case EV_UNCONCIOUS:
@@ -476,6 +477,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 				AddScore( ent, ent->r.currentOrigin, -1 );
 			}
 			ps->powerLevel[plTierCurrent] = 0;
+			syncTier(client);
 			break;
 		case EV_USE_ITEM1:
 			item = NULL;

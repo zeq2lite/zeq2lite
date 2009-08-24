@@ -1872,6 +1872,7 @@ void G_RunUserExplosion(gentity_t *ent) {
 		step = (1.0 - ((float)ent->splashEnd - (float)level.time) / (float)ent->splashDuration);
 		radius = step * ent->splashRadius;
 		power = ent->powerLevelCurrent;
+
 		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,ent->powerLevelCurrent,radius,ent->methodOfDeath,ent->extraKnockback);
 	}
 	if(level.time >= ent->splashEnd || ent->powerLevelCurrent <= 0){
