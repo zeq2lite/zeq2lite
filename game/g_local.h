@@ -125,6 +125,7 @@ struct gentity_s {
 	float		homAngle;
 	int			powerLevelTotal;
 	int			powerLevelCurrent;
+	int			impede;
 	qboolean	strugglingPlayer;
 	qboolean	strugglingAttack;
 	qboolean	strugglingAllyAttack;

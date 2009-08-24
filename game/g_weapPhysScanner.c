@@ -13,6 +13,7 @@ g_weapPhysField_t g_weapPhysFields[] = {
 	{ "speed",				G_weapPhys_ParseSpeed			},	// Physics
 	{ "acceleration",		G_weapPhys_ParseAcceleration	},	// Physics
 	{ "radius",				G_weapPhys_ParseRadius			},	// Physics, Damage
+	{ "impede",				G_weapPhys_ParseImpede			},	// Damage
 	{ "range",				G_weapPhys_ParseRange			},	// Physics, Trajectory
 	{ "duration",			G_weapPhys_ParseDuration		},	// Physics, Duration
 	{ "lifetime",			G_weapPhys_ParseLifetime		},	// Physics

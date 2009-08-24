@@ -160,7 +160,7 @@ typedef enum {
 #define	PMF_JUMP_HELD		2		// jump key held
 #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
 #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
-#define	PMF_TIME_LAND		32		// pm_time is time before rejump
+#define	PMF_FORWARDS_JUMP	32		// pm_time is time before rejump
 #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
 #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
 #define	PMF_CAN_MOVE		512		// clear after attack and jump buttons come up
@@ -171,8 +171,6 @@ typedef enum {
 #define PMF_SCOREBOARD		8192	// spectate as a scoreboa0rd
 #define PMF_LOCK_HELD		16384	// 
 #define PMF_BLOCK_HELD		32768	// Block, swat, push etc.
-
-#define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
 
 #define	MAXTOUCH	32
 typedef struct {
@@ -264,7 +262,9 @@ typedef enum{
 	tmMelee2,
 	tmPowerRaise,
 	tmPowerAuto,
+	tmImpede,
 	tmFreeze,
+	tmRecover,
 	tmBlind,
 	tmSoar,
 	tmStun,
@@ -293,26 +293,27 @@ typedef enum {
 #define usingFlight		0x00000080
 #define usingSoar		0x00000100
 #define usingMelee		0x00000200
-#define keyTierUp		0x00000400
-#define keyTierDown		0x00000800
-#define isTransforming	0x00001000
-#define isStruggling	0x00002000
-#define isUnconcious	0x00004000
-#define isDead			0x00008000
-#define isBreakingLimit	0x00010000
-#define isAutoClosing	0x00020000
-#define isGuiding		0x00040000
-#define isCharging		0x00080000
-#define isTargeted		0x00100000
-#define isPreparing		0x00200000
-#define isSafe			0x00400000
-#define atopGround		0x00800000
-#define underWater		0x01000000	
-#define lockedPitch		0x02000000
-#define lockedYaw		0x04000000
-#define lockedRoll		0x08000000
-#define locked360		0x10000000
-#define lockedSpin		0x20000000
+#define usingBallFlip	0x00000400
+#define keyTierUp		0x00000800
+#define keyTierDown		0x00001000
+#define isTransforming	0x00002000
+#define isStruggling	0x00004000
+#define isUnconcious	0x00008000
+#define isDead			0x00010000
+#define isBreakingLimit	0x00020000
+#define isAutoClosing	0x00040000
+#define isGuiding		0x00080000
+#define isCharging		0x00100000
+#define isTargeted		0x00200000
+#define isPreparing		0x00400000
+#define isSafe			0x00800000
+#define atopGround		0x01000000
+#define underWater		0x02000000	
+#define lockedPitch		0x04000000
+#define lockedYaw		0x08000000
+#define lockedRoll		0x10000000
+#define locked360		0x20000000
+#define lockedSpin		0x40000000
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16

@@ -83,6 +83,7 @@ typedef struct {
 
 	// Damage
 	int					damage_damage;				// Amount of damage, done at the impact point.
+	int					damage_impede;
 	int					damage_burn;
 	int					damage_radius;				// Splash radius of damage. Actual damage linearly decreases the further away you are from the impact point.
 	int					damage_radiusDuration;

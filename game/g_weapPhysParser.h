@@ -161,6 +161,7 @@ typedef enum {
 // Prototype these, so definition of G_weapPhysFields doesn't complain
 qboolean G_weapPhys_ParseType( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseRequire( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
+qboolean G_weapPhys_ParseImpede( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseReaction( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseSpeed( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseAcceleration( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );

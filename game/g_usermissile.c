@@ -642,6 +642,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		if(tgClient){
 			if(target == attacker){damage *= 0.2f;}
 			tgClient->ps.powerLevel[plDamageFromEnergy] += damage;
+			if(inflictor->impede){tgClient->ps.timers[tmImpede] = inflictor->impede;}
 			if ( tgClient->ps.powerLevel[plHealth] <= damage && tgClient->ps.powerLevel[plHealth] > 0 ) {
 				target->enemy = attacker;
 				target->die (target, inflictor, attacker, damage, methodOfDeath);
@@ -963,6 +964,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->splashDuration = weaponInfo->damage_radiusDuration;
 		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
+		bolt->impede = weaponInfo->damage_impede;
 		bolt->isSwattable = weaponInfo->physics_swat;
 		bolt->isDrainable = weaponInfo->physics_drain;
 		bolt->isBlindable = weaponInfo->physics_blind;
@@ -1797,7 +1799,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 				velocity[2] = 1;
 			}
 			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->powerLevelCurrent,0,self->methodOfDeath, self->extraKnockback);
-			//G_Printf("Hit Player!\n");
 		}
 	}
 	if((self->powerLevelCurrent <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
