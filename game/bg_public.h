@@ -267,6 +267,7 @@ typedef enum{
 	tmRecover,
 	tmBlind,
 	tmSoar,
+	tmFall,
 	tmStun,
 	tmSafe
 }timers_t;

@@ -333,7 +333,10 @@ void PM_CheckStatus(void){
 		}
 		else{
 			if(pm->ps->bitFlags & atopGround){
-				if((pm->ps->torsoAnim & ~ANIM_TOGGLEBIT)== ANIM_DEATH_AIR_LAND){
+				if((pm->ps->torsoAnim & ~ANIM_TOGGLEBIT) == ANIM_DEATH_AIR || (pm->ps->torsoAnim & ~ANIM_TOGGLEBIT) == ANIM_DEATH_AIR_LAND){
+					PM_ContinueLegsAnim(ANIM_DEATH_AIR_LAND);
+				}
+				else{
 					PM_ContinueTorsoAnim(ANIM_DEATH_GROUND);
 					PM_ContinueLegsAnim(ANIM_DEATH_GROUND);
 				}
@@ -1366,7 +1369,11 @@ void PM_NotNearGround(void){
 void PM_NearGroundTrace(void){
 	vec3_t		point;
 	trace_t		trace;
-	if(pm->ps->bitFlags & atopGround){return;}
+	if(pm->ps->bitFlags & atopGround){
+		pm->ps->timers[tmFall] = 0;
+		return;
+	}
+	pm->ps->timers[tmFall] += pml.msec;
 	point[0] = pm->ps->origin[0];
 	point[1] = pm->ps->origin[1];
 	point[2] = pm->ps->origin[2] - 350.0f;
@@ -1542,10 +1549,10 @@ void PM_Footsteps(void){
 		return;
 	}
 	if(!(pm->ps->bitFlags & atopGround)){
-		if(!(pm->ps->bitFlags & usingBallFlip)){
+		if(pm->ps->timers[tmFall] > 750){
 			PM_ContinueLegsAnim(ANIM_FLY_DOWN);
-			return;
 		}
+		return;
 	}
 	if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
 		if(pm->xyspeed < 5){
@@ -2751,7 +2758,6 @@ void PmoveSingle(pmove_t *pmove){
 	}
 	PM_Friction();
 	PM_GroundTrace();
-	PM_NearGroundTrace();
 	trap_SnapVector(pm->ps->velocity);
 }
 
