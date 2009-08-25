@@ -760,13 +760,25 @@ void PM_StopJump(void){
 		pm->ps->bitFlags &= ~usingJump;
 		VectorScale(pm->ps->velocity,0.01,pm->ps->velocity);
 	}
-		pm->ps->bitFlags &= ~usingBallFlip;
+	pm->ps->bitFlags &= ~usingBallFlip;
 }
 void PM_CheckJump(void){
 	int jumpPower;
 	float jumpScale,jumpEmphasis;
 	vec3_t pre_vel,post_vel;
-	if(pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight
+	if(pm->ps->bitFlags & usingBallFlip){return;}
+	if(pm->ps->bitFlags & usingJump){
+		if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){
+			PM_ContinueLegsAnim(ANIM_FLY_DOWN);
+		}
+		else if(pm->ps->velocity[2] < 200){
+			if(pm->ps->pm_flags & PMF_BACKWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_BACK);}
+			else if(pm->ps->pm_flags & PMF_FORWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_UP);}
+			else{PM_ForceLegsAnim(ANIM_LAND_UP);}
+		}
+		return;
+	}	
+	if(pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight
 		|| pm->ps->bitFlags & isStruggling || (!(pm->ps->bitFlags & atopGround && !(pm->waterlevel)))){return;}
 	if(!(pm->cmd.buttons & BUTTON_JUMP) || pm->cmd.upmove < 0 || pm->ps->weaponstate == WEAPON_GUIDING){return;}
 	PM_NotOnGround();
@@ -799,7 +811,7 @@ void PM_CheckJump(void){
 		PM_ForceLegsAnim(ANIM_JUMP_UP);
 		pm->ps->pm_flags |= PMF_FORWARDS_JUMP;
 		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-	}else if(pm->cmd.forwardmove < 0){
+	}else if(pm->cmd.forwardmove < 0 || pm->ps->pm_flags & PMF_BACKWARDS_JUMP){
 		PM_ForceLegsAnim(ANIM_JUMP_BACK);
 		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 		pm->ps->pm_flags &= ~PMF_FORWARDS_JUMP;
@@ -1035,15 +1047,17 @@ void PM_AirMove(void){
 		&& !(pm->ps->bitFlags & isUnconcious) && !(pm->ps->bitFlags & isDead)){return;}
 	if(pm->ps->bitFlags & isGuiding){return;}
 	if(!(pm->ps->bitFlags & usingFlight)){
-		if((pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBallFlip) && pm->cmd.upmove < 0){
-			pm->ps->gravity = 3500;
-			pm->ps->bitFlags &= ~usingJump;
+		if(pm->ps->bitFlags & usingJump && pm->cmd.upmove < 0){
+			pm->ps->gravity = 3000;
 			pm->ps->bitFlags |= usingBallFlip;
+			if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){PM_ContinueLegsAnim(ANIM_FLY_DOWN);}
+			else{PM_ContinueLegsAnim(ANIM_JUMP_FORWARD);}
 		}
-		else if(!(pm->ps->bitFlags & usingJump) && !(pm->ps->bitFlags & atopGround)){
-			pm->ps->gravity = 800;
+		else if(pm->ps->bitFlags & usingJump && pm->ps->bitFlags & usingBallFlip && pm->cmd.upmove == 0){
+			pm->ps->gravity = 6000;
 			pm->ps->bitFlags &= ~usingBallFlip;
 		}
+		if(pm->ps->bitFlags & usingBallFlip){PM_StopDirections();}
 	}
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
@@ -1262,19 +1276,6 @@ void PM_Land(void){
 	float		vel, acc;
 	float		t;
 	float		a, b, c, den;
-
-	if(pm->ps->bitFlags & usingJump){
-		if(pm->ps->pm_flags & PMF_BACKWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_BACK);}
-		else if(pm->ps->pm_flags & PMF_FORWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_UP);}
-		else{PM_ForceLegsAnim(ANIM_LAND_UP);}
-		PM_StopJump();
-	}
-	else if(pm->ps->bitFlags & usingBallFlip){
-		pm->ps->bitFlags &= ~usingBallFlip;
-		PM_ForceLegsAnim(ANIM_LAND_FORWARD);
-	}
-	else if(pm->ps->bitFlags & isUnconcious || pm->ps->bitFlags & isDead){PM_ForceLegsAnim(ANIM_DEATH_AIR_LAND);}
-	else{PM_ForceLegsAnim(ANIM_LAND_FORWARD);}
 	pm->ps->legsTimer = TIMER_LAND;
 	// calculate the exact velocity on landing
 	dist = pm->ps->origin[2] - pml.previous_origin[2];
@@ -1359,11 +1360,27 @@ void PM_GroundTraceMissed(void){
 	}
 	PM_NotOnGround();
 }
-/*
-=============
+void PM_NotNearGround(void){
+	pm->ps->bitFlags &= ~nearGround;
+}
+void PM_NearGroundTrace(void){
+	vec3_t		point;
+	trace_t		trace;
+	if(pm->ps->bitFlags & atopGround){return;}
+	point[0] = pm->ps->origin[0];
+	point[1] = pm->ps->origin[1];
+	point[2] = pm->ps->origin[2] - 350.0f;
+	pm->trace(&trace,pm->ps->origin,pm->mins,pm->maxs,point,pm->ps->clientNum,pm->tracemask);
+	if(trace.allsolid && (!PM_CorrectAllSolid(&trace))){return;}
+	if(trace.fraction == 1.0){
+		PM_NotNearGround();
+		return;
+	}
+	pm->ps->bitFlags |= nearGround;
+}
+/*=============
 PM_GroundTrace
-=============
-*/
+=============*/
 void PM_GroundTrace(void){
 	vec3_t		point;
 	trace_t		trace;
@@ -1410,6 +1427,7 @@ void PM_GroundTrace(void){
 		|| pm->ps->bitFlags & usingBallFlip || pm->ps->bitFlags & isUnconcious || pm->ps->bitFlags & isDead)){
 		PM_StopFlight();
 		PM_Land();
+		PM_StopJump();
 	}
 	pm->ps->groundEntityNum = trace.entityNum;
 	// don't reset the z velocity for slopes
@@ -1475,7 +1493,7 @@ void PM_Footsteps(void){
 	float bobmove;
 	int	old;
 	qboolean footstep;
-	if(pm->ps->bitFlags & usingZanzoken || pm->ps->bitFlags & usingJump){return;}
+	if(pm->ps->bitFlags & usingZanzoken || pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBallFlip){return;}
 	if((pm->ps->bitFlags & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
 		if(!(pm->cmd.rightmove > 0)){return;}
 		if(pm->ps->powerLevel[plCurrent] > 31000){PM_ContinueLegsAnim(ANIM_KI_CHARGE);}
@@ -1526,10 +1544,6 @@ void PM_Footsteps(void){
 	if(!(pm->ps->bitFlags & atopGround)){
 		if(!(pm->ps->bitFlags & usingBallFlip)){
 			PM_ContinueLegsAnim(ANIM_FLY_DOWN);
-			return;
-		}
-		else{
-			PM_ContinueLegsAnim(ANIM_JUMP_FORWARD);
 			return;
 		}
 	}
@@ -2706,6 +2720,7 @@ void PmoveSingle(pmove_t *pmove){
 		PM_StopDirections();
 		PM_StopLockon();
 		PM_GroundTrace();
+		PM_NearGroundTrace();
 		PM_AirMove();
 		PM_UpdateViewAngles(pm->ps, &pm->cmd);
 		return;
@@ -2725,6 +2740,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_Freeze();
 	PM_Blind();
 	PM_GroundTrace();
+	PM_NearGroundTrace();
 	if(!pm->ps->timers[tmFreeze]){
 		if(!(pm->ps->bitFlags & usingAlter) && !(pm->ps->bitFlags & isStruggling)){
 			PM_FlyMove();
@@ -2735,6 +2751,7 @@ void PmoveSingle(pmove_t *pmove){
 	}
 	PM_Friction();
 	PM_GroundTrace();
+	PM_NearGroundTrace();
 	trap_SnapVector(pm->ps->velocity);
 }
 
