@@ -325,6 +325,7 @@ void PM_CheckStatus(void){
 		}
 		else if(pm->ps->powerups[PW_STATE] != -2){
 			pm->ps->bitFlags |= isDead;
+			pm->ps->bitFlags &= ~isStruggling;
 			pm->ps->powerups[PW_STATE] = -2;
 			PM_StopMovement();
 			PM_StopFlight();
@@ -332,8 +333,10 @@ void PM_CheckStatus(void){
 		}
 		else{
 			if(pm->ps->bitFlags & atopGround){
-				PM_ContinueTorsoAnim(ANIM_DEATH_GROUND);
-				PM_ContinueLegsAnim(ANIM_DEATH_GROUND);
+				if((pm->ps->torsoAnim & ~ANIM_TOGGLEBIT)== ANIM_DEATH_AIR_LAND){
+					PM_ContinueTorsoAnim(ANIM_DEATH_GROUND);
+					PM_ContinueLegsAnim(ANIM_DEATH_GROUND);
+				}
 			}
 			else{
 				PM_ContinueTorsoAnim(ANIM_DEATH_AIR);
@@ -344,6 +347,7 @@ void PM_CheckStatus(void){
 	else if(pm->ps->powerLevel[plFatigue]<= 0){
 		if(pm->ps->powerups[PW_STATE] != -1){
 			pm->ps->bitFlags |= isUnconcious;
+			pm->ps->bitFlags &= ~isStruggling;
 			pm->ps->powerups[PW_STATE] = -1;
 			PM_StopMovement();
 			PM_StopFlight();
@@ -756,6 +760,7 @@ void PM_StopJump(void){
 		pm->ps->bitFlags &= ~usingJump;
 		VectorScale(pm->ps->velocity,0.01,pm->ps->velocity);
 	}
+		pm->ps->bitFlags &= ~usingBallFlip;
 }
 void PM_CheckJump(void){
 	int jumpPower;
@@ -1026,7 +1031,8 @@ void PM_AirMove(void){
 	float		wishspeed;
 	float		scale;
 	usercmd_t	cmd;
-	if(pml.onGround ||(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity))){return;}
+	if(pml.onGround || (pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity))
+		&& !(pm->ps->bitFlags & isUnconcious) && !(pm->ps->bitFlags & isDead)){return;}
 	if(pm->ps->bitFlags & isGuiding){return;}
 	if(!(pm->ps->bitFlags & usingFlight)){
 		if((pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBallFlip) && pm->cmd.upmove < 0){
@@ -1034,8 +1040,8 @@ void PM_AirMove(void){
 			pm->ps->bitFlags &= ~usingJump;
 			pm->ps->bitFlags |= usingBallFlip;
 		}
-		else if(!(pm->ps->bitFlags & usingJump)){
-			pm->ps->gravity = 6000;
+		else if(!(pm->ps->bitFlags & usingJump) && !(pm->ps->bitFlags & atopGround)){
+			pm->ps->gravity = 800;
 			pm->ps->bitFlags &= ~usingBallFlip;
 		}
 	}
@@ -1257,21 +1263,19 @@ void PM_Land(void){
 	float		t;
 	float		a, b, c, den;
 
-	// decide which landing animation to use
-	if(pm->ps->pm_flags & PMF_BACKWARDS_JUMP){
-		PM_ForceLegsAnim(ANIM_LAND_BACK );
-	} else if(pm->ps->pm_flags & PMF_FORWARDS_JUMP){
-		PM_ForceLegsAnim(ANIM_LAND_UP);
-	} else{
-		PM_ForceLegsAnim(ANIM_LAND_UP);
+	if(pm->ps->bitFlags & usingJump){
+		if(pm->ps->pm_flags & PMF_BACKWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_BACK);}
+		else if(pm->ps->pm_flags & PMF_FORWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_UP);}
+		else{PM_ForceLegsAnim(ANIM_LAND_UP);}
+		PM_StopJump();
 	}
-	if(pm->ps->bitFlags & usingBallFlip){
+	else if(pm->ps->bitFlags & usingBallFlip){
 		pm->ps->bitFlags &= ~usingBallFlip;
 		PM_ForceLegsAnim(ANIM_LAND_FORWARD);
 	}
-
+	else if(pm->ps->bitFlags & isUnconcious || pm->ps->bitFlags & isDead){PM_ForceLegsAnim(ANIM_DEATH_AIR_LAND);}
+	else{PM_ForceLegsAnim(ANIM_LAND_FORWARD);}
 	pm->ps->legsTimer = TIMER_LAND;
-
 	// calculate the exact velocity on landing
 	dist = pm->ps->origin[2] - pml.previous_origin[2];
 	vel = pml.previous_velocity[2];
@@ -1402,8 +1406,8 @@ void PM_GroundTrace(void){
 	pml.groundPlane = qtrue;
 	pml.onGround = qtrue;
 	pm->ps->bitFlags |= atopGround;
-	if(pm->ps->groundEntityNum == ENTITYNUM_NONE && (pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingFlight || pm->ps->bitFlags & usingBallFlip)){
-		PM_StopJump();
+	if(pm->ps->groundEntityNum == ENTITYNUM_NONE && (pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingFlight
+		|| pm->ps->bitFlags & usingBallFlip || pm->ps->bitFlags & isUnconcious || pm->ps->bitFlags & isDead)){
 		PM_StopFlight();
 		PM_Land();
 	}
@@ -1471,15 +1475,11 @@ void PM_Footsteps(void){
 	float bobmove;
 	int	old;
 	qboolean footstep;
-	if(pm->ps->bitFlags & usingZanzoken || pm->ps->bitFlags & usingJump || pm->cmd.buttons & BUTTON_POWERLEVEL){return;}
+	if(pm->ps->bitFlags & usingZanzoken || pm->ps->bitFlags & usingJump){return;}
 	if((pm->ps->bitFlags & usingAlter) && (VectorLength(pm->ps->velocity) <= 0)){
 		if(!(pm->cmd.rightmove > 0)){return;}
 		if(pm->ps->powerLevel[plCurrent] > 31000){PM_ContinueLegsAnim(ANIM_KI_CHARGE);}
 		else{pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] ? PM_ContinueLegsAnim(ANIM_KI_CHARGE) : PM_ContinueLegsAnim(ANIM_PL_UP);}
-		return;
-	}
-	if(pm->waterlevel > 0 && !(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing || pm->ps->bitFlags & usingBoost)){
-		PM_ContinueLegsAnim(ANIM_SWIM);
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
@@ -1513,6 +1513,10 @@ void PM_Footsteps(void){
 		} else if(pm->cmd.rightmove < 0){
 			PM_ContinueLegsAnim(ANIM_DASH_LEFT);
 		}
+		return;
+	}
+	if(pm->waterlevel > 1 && !(pm->ps->bitFlags & usingBoost)){
+		PM_ContinueLegsAnim(ANIM_SWIM);
 		return;
 	}
 	if(!(pm->ps->bitFlags & atopGround)){
@@ -1705,9 +1709,11 @@ void PM_TorsoAnimation(void){
 		}
 	}
 	switch(pm->ps->legsAnim & ~ANIM_TOGGLEBIT){
+	case ANIM_DEATH_AIR_LAND:
+		PM_ContinueTorsoAnim(ANIM_DEATH_AIR_LAND);	
+		break;
 	case ANIM_KNOCKBACK:
 		PM_ContinueTorsoAnim(ANIM_KNOCKBACK);
-		break;
 	case ANIM_KNOCKBACK_HIT_WALL:
 		PM_ContinueTorsoAnim(ANIM_KNOCKBACK_HIT_WALL);
 		break;
@@ -2652,10 +2658,12 @@ void PmoveSingle(pmove_t *pmove){
 	if(pml.msec < 1){pml.msec = 1;}
 	else if(pml.msec > 200){pml.msec = 200;}
 	if(abs(pm->cmd.forwardmove)> 64 || abs(pm->cmd.rightmove)> 64){pm->cmd.buttons &= ~BUTTON_WALKING;}
+	pml.previous_waterlevel = pmove->waterlevel;
 	PM_Impede();
 	PM_CheckKnockback();
 	PM_CheckTransform();
 	PM_CheckLoopingSound();
+	PM_SetWaterLevel();
 	if(pm->ps->lockedTarget > 0){
 		meleeRange = Distance(pm->ps->origin,*(pm->ps->lockedPosition)) <= 32 ? qtrue : qfalse;
 	}
@@ -2705,8 +2713,6 @@ void PmoveSingle(pmove_t *pmove){
 	if(pm->ps->pm_type == PM_SPECTATOR){
 		PM_FlyMove();
 	}
-	pml.previous_waterlevel = pmove->waterlevel;
-	PM_SetWaterLevel();
 	PM_TorsoAnimation();
 	//PM_WaterEvents();
 	PM_Freeze();
