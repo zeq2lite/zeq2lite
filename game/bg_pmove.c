@@ -1516,7 +1516,11 @@ void PM_Footsteps(void){
 		return;
 	}
 	if(pm->waterlevel > 1 && !(pm->ps->bitFlags & usingBoost)){
-		PM_ContinueLegsAnim(ANIM_SWIM);
+		if(pm->cmd.forwardmove > 0){
+			PM_ContinueLegsAnim(ANIM_SWIM);
+		}else{
+			PM_ContinueLegsAnim(ANIM_SWIM_IDLE);
+		}
 		return;
 	}
 	if(!(pm->ps->bitFlags & atopGround)){
@@ -1561,7 +1565,7 @@ void PM_Footsteps(void){
 			}
 		}else{
 			if(pm->cmd.forwardmove < 0){
-				PM_ContinueLegsAnim(ANIM_BACK);
+				PM_ContinueLegsAnim(ANIM_BACKRUN);
 			} else if(pm->cmd.forwardmove > 0){
 				PM_ContinueLegsAnim(ANIM_RUN);
 			} else if(pm->cmd.rightmove > 0){
@@ -1810,8 +1814,8 @@ void PM_TorsoAnimation(void){
 	case ANIM_RUN:
 		PM_ContinueTorsoAnim(ANIM_RUN);
 		break;
-	case ANIM_BACK:
-		PM_ContinueTorsoAnim(ANIM_BACK);
+	case ANIM_BACKRUN:
+		PM_ContinueTorsoAnim(ANIM_BACKRUN);
 		break;
 	case ANIM_DASH_FORWARD:
 		PM_ContinueTorsoAnim(ANIM_DASH_FORWARD );
@@ -1830,6 +1834,9 @@ void PM_TorsoAnimation(void){
 		break;
 	case ANIM_BACKWALK:
 		PM_ContinueTorsoAnim(ANIM_BACKWALK );
+		break;
+	case ANIM_SWIM_IDLE:
+		PM_ContinueTorsoAnim(ANIM_SWIM_IDLE );
 		break;
 	case ANIM_SWIM:
 		PM_ContinueTorsoAnim(ANIM_SWIM );

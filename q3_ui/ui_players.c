@@ -461,8 +461,6 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, ANIM_WALK );
 		} else if ( ANIM_RUN == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, ANIM_RUN );
-		} else if ( ANIM_BACK == torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, ANIM_BACK );
 		} else if ( ANIM_JUMP_UP == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, ANIM_JUMP_UP );
 		} else if ( ANIM_LAND_UP == torsoAnimNum ) {
@@ -475,6 +473,8 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, ANIM_JUMP_BACK );
 		} else if ( ANIM_LAND_BACK == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, ANIM_LAND_BACK );
+		} else if ( ANIM_SWIM_IDLE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SWIM_IDLE );
 		} else if ( ANIM_SWIM == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, ANIM_SWIM );
 		} else if ( ANIM_DASH_RIGHT == torsoAnimNum ) {

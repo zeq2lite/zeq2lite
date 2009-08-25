@@ -498,8 +498,8 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 
 	case UI_ANIM_BACK:	
-		s_controls.playerLegs = ANIM_BACK;
-		s_controls.playerTorso = ANIM_BACK;
+		s_controls.playerLegs = ANIM_RUN;
+		s_controls.playerTorso = ANIM_RUN;
 		break;
 
 	case UI_ANIM_JUMP:	

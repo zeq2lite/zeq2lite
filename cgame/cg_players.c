@@ -283,8 +283,8 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	// walk backward animation
 	memcpy(&animations[ANIM_BACKWALK], &animations[ANIM_WALK], sizeof(animation_t));
 	animations[ANIM_BACKWALK].reversed = qtrue;
-	memcpy(&animations[ANIM_BACKWALK], &animations[ANIM_WALK], sizeof(animation_t));
-	animations[ANIM_BACKWALK].reversed = qtrue;
+	memcpy(&animations[ANIM_BACKRUN], &animations[ANIM_RUN], sizeof(animation_t));
+	animations[ANIM_BACKRUN].reversed = qtrue;
 
 	// ZEQ2 NOTE:
 	// The following animate a FLAG, NOT a player model, they should
@@ -1381,8 +1381,8 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_WALK, speedScale );
 		} else if ( ANIM_RUN == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_RUN, speedScale );
-		} else if ( ANIM_BACK == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BACK, speedScale );
+		} else if ( ANIM_BACKRUN == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_BACKRUN, speedScale );
 		} else if ( ANIM_JUMP_UP == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_JUMP_UP, speedScale );
 		} else if ( ANIM_LAND_UP == torsoAnimNum ) {
@@ -1395,6 +1395,8 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_JUMP_BACK, speedScale );
 		} else if ( ANIM_LAND_BACK == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_LAND_BACK, speedScale );
+		} else if ( ANIM_SWIM_IDLE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_SWIM_IDLE, speedScale );
 		} else if ( ANIM_SWIM == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_SWIM, speedScale );
 		} else if ( ANIM_DASH_RIGHT == torsoAnimNum ) {
@@ -1742,7 +1744,7 @@ static void CG_HasteTrail( centity_t *cent ) {
 		return;
 	}
 	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if ( anim != ANIM_RUN && anim != ANIM_BACK ) {
+	if ( anim != ANIM_RUN && anim != ANIM_BACKRUN ) {
 		return;
 	}
 
