@@ -925,12 +925,12 @@ void PM_FlyMove(void){
 			else if(pm->cmd.upmove > 0){pm->ps->soarLimit[PITCH] = -360.0;}
 			pm->ps->bitFlags |= locked360;
 		}
-		else if(pm->cmd.forwardmove != 0){
+		if(pm->cmd.forwardmove != 0){
 			if(pm->cmd.forwardmove < 0){pm->ps->soarLimit[PITCH] += 2.0;}
 			else if(pm->cmd.forwardmove > 0){pm->ps->soarLimit[PITCH] += -2.0;}
 			pm->ps->bitFlags |= lockedPitch;
 		}
-		else if(pm->cmd.rightmove != 0){
+		if(pm->cmd.rightmove != 0){
 			if(pm->cmd.rightmove < 0){
 				if(!(pm->ps->bitFlags & lockedRoll) && !(pm->ps->bitFlags & lockedSpin) && pm->ps->soarLimit[ROLL] > -20){
 					pm->ps->soarLimit[ROLL] -= 2;
