@@ -1748,6 +1748,9 @@ void PM_TorsoAnimation(void){
 	case ANIM_KNOCKBACK_RECOVER_2:
 		PM_ContinueTorsoAnim(ANIM_KNOCKBACK_RECOVER_2);
 		break;
+	case ANIM_STUNNED_MELEE:
+		PM_ContinueTorsoAnim(ANIM_STUNNED_MELEE);
+		break;
 	case ANIM_POWER_MELEE_1_CHARGE:
 		PM_ContinueTorsoAnim(ANIM_POWER_MELEE_1_CHARGE);
 		break;

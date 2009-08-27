@@ -1501,6 +1501,8 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_5_HIT, speedScale );
 		} else if ( ANIM_POWER_MELEE_6_HIT == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_POWER_MELEE_6_HIT, speedScale );
+		} else if ( ANIM_STUNNED_MELEE == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_STUNNED_MELEE, speedScale );
 		} else if ( ANIM_KNOCKBACK == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KNOCKBACK, speedScale );
 		} else if ( ANIM_KNOCKBACK_HIT_WALL == torsoAnimNum ) {

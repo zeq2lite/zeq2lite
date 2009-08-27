@@ -571,6 +571,8 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_5_HIT );
 		} else if ( ANIM_POWER_MELEE_6_HIT == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_6_HIT );
+		} else if ( ANIM_STUNNED_MELEE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_STUNNED_MELEE );
 		} else if ( ANIM_KNOCKBACK == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK );
 		} else if ( ANIM_KNOCKBACK_HIT_WALL == torsoAnimNum ) {
