@@ -872,6 +872,9 @@ typedef struct {
 	qhandle_t	waterSplashModel;
 	qhandle_t	waterRippleSkin;
 	qhandle_t	waterRippleModel;
+	qhandle_t	dirtPushSkin;
+	qhandle_t	dirtPushModel;
+	qhandle_t	dirtPushShader;
 
 	qhandle_t	smokePuffShader;
 	qhandle_t	smokePuffRageProShader;
@@ -1621,6 +1624,7 @@ void CG_PlayerSplash( centity_t *cent, int scale );
 void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing );
 void CG_SpawnEffect( vec3_t org );
 void CG_WaterRipple( vec3_t org, int size );
+void CG_DirtPush( vec3_t org, vec3_t dir, int size );
 void CG_WaterSplash( vec3_t org, int size );
 void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier );
 void CG_BigLightningEffect( vec3_t org );

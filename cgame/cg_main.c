@@ -1698,6 +1698,10 @@ static void CG_RegisterGraphics( void ) {
 
 	cgs.media.railCoreShader = trap_R_RegisterShader( "railCore" );
 
+	cgs.media.dirtPushShader = trap_R_RegisterShader( "DirtPush" );
+	cgs.media.dirtPushSkin = trap_R_RegisterSkin( "effects/shockwave/dirtPush.skin" );
+	cgs.media.dirtPushModel = trap_R_RegisterModel( "effects/shockwave/dirtPush.md3" );
+
 	// ADDING FOR ZEQ2
 	cgs.media.hudShader = trap_R_RegisterShaderNoMip( "interface/hud/main.png" );
 	cgs.media.markerAscendShader = trap_R_RegisterShaderNoMip( "interface/hud/markerAscend.png" );

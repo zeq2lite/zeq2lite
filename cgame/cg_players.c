@@ -2367,6 +2367,46 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 
 /*
 ===============
+CG_PlayerDirtPush
+
+Draw a mark at the water surface
+===============
+*/
+void CG_PlayerDirtPush( centity_t *cent ) {
+	vec3_t			start, end;
+	trace_t			trace;
+	int				scale;
+
+	if ( cent->dustTrailTime > cg.time ) {
+		return;
+	}
+
+	cent->dustTrailTime += 400;
+
+	if ( cent->dustTrailTime < cg.time ) {
+		cent->dustTrailTime = cg.time;
+	}
+
+	VectorCopy( cent->lerpOrigin, end );
+	VectorCopy( cent->lerpOrigin, start );
+
+	scale = 5;
+	end[2] -= 512;
+
+	CG_Trace( &trace, cent->currentState.pos.trBase, NULL, NULL, end, cent->currentState.number, MASK_PLAYERSOLID );
+
+	if (trace.fraction == 1.0f){
+		return;
+	}
+
+	VectorCopy( trace.endpos, end );
+	end[2] += 8;
+
+	CG_DirtPush(end,trace.plane.normal,scale);
+}
+
+/*
+===============
 CG_AddRefEntityWithPowerups
 
 Adds a piece with modifications or duplications for powerups
@@ -2523,6 +2563,7 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerPowerups(cent,&torso);
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
 		CG_AuraStart(cent);
+		CG_PlayerDirtPush(cent);
 		if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
 			CG_AddEarthquake(cent->lerpOrigin, 400, 1, 1, 1, 25);
 		}

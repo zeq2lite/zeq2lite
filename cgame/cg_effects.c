@@ -266,6 +266,66 @@ void CG_SpawnEffect( vec3_t org ) {
 	re->origin[2] += 16;
 }
 
+/*
+==================
+CG_DirtPush
+
+==================
+*/
+void CG_DirtPush( vec3_t org, vec3_t dir, int size ) {
+	localEntity_t	*le;
+	refEntity_t		*re;
+	float			ang;
+	vec3_t			oldAxis[3];
+
+	if (cgs.clientPaused){
+		return;
+	}
+
+	le = CG_AllocLocalEntity();
+	le->leFlags = 0;
+	le->leType = LE_ZEQSPLASH;
+	le->startTime = cg.time;
+	le->endTime = cg.time + 200;
+	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+
+	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
+
+	re = &le->refEntity;
+
+	re->reType = RT_MODEL;
+
+	re->shaderRGBA[0] = le->color[0] * 0xff;
+	re->shaderRGBA[1] = le->color[1] * 0xff;
+	re->shaderRGBA[2] = le->color[2] * 0xff;
+	re->shaderRGBA[3] = 0xff;
+
+	re->customSkin = cgs.media.dirtPushSkin;
+	re->hModel = cgs.media.dirtPushModel;
+
+	// bias the time so all shader effects start correctly
+	re->shaderTime = le->startTime / 1000.0f;
+
+	AxisClear( re->axis );
+
+/*
+	if (!dir) {
+		AxisClear( re->axis );
+	} else {
+		VectorCopy( dir, re->axis[2] );
+	}
+*/
+
+	re->nonNormalizedAxes = qtrue;
+	VectorNormalize(re->axis[0]);
+	VectorNormalize(re->axis[1]);
+	VectorNormalize(re->axis[2]);
+	VectorScale(re->axis[0], size, re->axis[0]);
+	VectorScale(re->axis[1], size, re->axis[1]);
+	VectorScale(re->axis[2], size, re->axis[2]);
+
+	VectorCopy( org, re->origin );
+}
 
 /*
 ==================
