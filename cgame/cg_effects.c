@@ -286,7 +286,7 @@ void CG_DirtPush( vec3_t org, vec3_t dir, int size ) {
 	le->leFlags = 0;
 	le->leType = LE_ZEQSPLASH;
 	le->startTime = cg.time;
-	le->endTime = cg.time + 200;
+	le->endTime = cg.time + 500;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 
 	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
@@ -317,6 +317,7 @@ void CG_DirtPush( vec3_t org, vec3_t dir, int size ) {
 */
 
 	re->nonNormalizedAxes = qtrue;
+
 	VectorNormalize(re->axis[0]);
 	VectorNormalize(re->axis[1]);
 	VectorNormalize(re->axis[2]);
@@ -333,7 +334,7 @@ CG_WaterRipple
 
 ==================
 */
-void CG_WaterRipple( vec3_t org, int size ) {
+void CG_WaterRipple( vec3_t org, int size, qboolean single ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 	float			ang;
@@ -347,7 +348,7 @@ void CG_WaterRipple( vec3_t org, int size ) {
 	le->leFlags = 0;
 	le->leType = LE_ZEQSPLASH;
 	le->startTime = cg.time;
-	le->endTime = cg.time + 100 * size;
+	le->endTime = cg.time + 200 * size;
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 
 	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
@@ -361,8 +362,13 @@ void CG_WaterRipple( vec3_t org, int size ) {
 	re->shaderRGBA[2] = le->color[2] * 0xff;
 	re->shaderRGBA[3] = 0xff;
 
-	re->customSkin = cgs.media.waterRippleSkin;
-	re->hModel = cgs.media.waterRippleModel;
+	if(single){
+		re->customSkin = cgs.media.waterRippleSingleSkin;
+		re->hModel = cgs.media.waterRippleSingleModel;
+	}else{
+		re->customSkin = cgs.media.waterRippleSkin;
+		re->hModel = cgs.media.waterRippleModel;
+	}
 
 	// bias the time so all shader effects start correctly
 	re->shaderTime = le->startTime / 1000.0f;

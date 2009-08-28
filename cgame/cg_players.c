@@ -2308,13 +2308,17 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 			return;
 		}
 
-		cent->trailTime += 500;
+		cent->trailTime += 250;
 
 		if ( cent->trailTime < cg.time ) {
 			cent->trailTime = cg.time;
 		}
 
-		CG_WaterRipple(trace.endpos,powerBoost+(xyzspeed/scale));
+		if (!xyzspeed && cent->currentState.eFlags & EF_AURA) {
+			CG_WaterRipple(trace.endpos,scale/20,qtrue);
+		}else{
+			CG_WaterRipple(trace.endpos,powerBoost+(xyzspeed/scale),qfalse);
+		}
 
 		return;
 	}
@@ -2372,25 +2376,27 @@ CG_PlayerDirtPush
 Draw a mark at the water surface
 ===============
 */
-void CG_PlayerDirtPush( centity_t *cent ) {
+void CG_PlayerDirtPush( centity_t *cent, int scale, qboolean once ) {
 	vec3_t			start, end;
 	trace_t			trace;
-	int				scale;
+	playerState_t	*ps;
+	ps = &cg.snap->ps;
 
-	if ( cent->dustTrailTime > cg.time ) {
-		return;
-	}
+	if (!once){
+		if ( cent->dustTrailTime > cg.time ) {
+			return;
+		}
 
-	cent->dustTrailTime += 400;
+		cent->dustTrailTime += 250;
 
-	if ( cent->dustTrailTime < cg.time ) {
-		cent->dustTrailTime = cg.time;
+		if ( cent->dustTrailTime < cg.time ) {
+			cent->dustTrailTime = cg.time;
+		}
 	}
 
 	VectorCopy( cent->lerpOrigin, end );
 	VectorCopy( cent->lerpOrigin, start );
 
-	scale = 5;
 	end[2] -= 512;
 
 	CG_Trace( &trace, cent->currentState.pos.trBase, NULL, NULL, end, cent->currentState.number, MASK_PLAYERSOLID );
@@ -2486,6 +2492,8 @@ void CG_Player( centity_t *cent ) {
 	qboolean		onBodyQue;
 	int				tier;
 	int				state,enemyState;
+	int				scale;
+	float			xyzspeed;
 	ps = &cg.snap->ps;
 	clientNum = cent->currentState.clientNum;
 	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ){CG_Error( "Bad clientNum on player entity" );}
@@ -2504,7 +2512,19 @@ void CG_Player( centity_t *cent ) {
 		ci->tierMax = ci->tierCurrent;
 	}
 	renderfx = 0;
-	CG_PlayerSplash(cent,100);
+	// Measure the players velocity
+	xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
+	cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] + 
+	cent->currentState.pos.trDelta[2] * cent->currentState.pos.trDelta[2]);
+	if((cent->currentState.number == ps->clientNum) && ps->powerLevel[plCurrent] <= 1000){scale = 5;
+	}else if((cent->currentState.number == ps->clientNum) && ps->powerLevel[plCurrent] <= 5462){scale = 6;
+	}else if((cent->currentState.number == ps->clientNum) && ps->powerLevel[plCurrent] <= 10924){scale = 7;
+	}else if((cent->currentState.number == ps->clientNum) && ps->powerLevel[plCurrent] <= 16386){scale = 8;
+	}else if((cent->currentState.number == ps->clientNum) && ps->powerLevel[plCurrent] <= 21848){scale = 9;
+	}else if((cent->currentState.number == ps->clientNum) && ps->powerLevel[plCurrent] <= 27310){scale = 10;
+	}else{scale = 11;
+	}
+	CG_PlayerSplash(cent,10*scale);
 	//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
 	//else if(cg_cameraMode.integer){return;}
 	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == ps->clientNum) && (ps->bitFlags & usingZanzoken) && !(ps->bitFlags & isUnconcious) && !(ps->bitFlags & isDead))) {
@@ -2563,7 +2583,7 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerPowerups(cent,&torso);
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
 		CG_AuraStart(cent);
-		CG_PlayerDirtPush(cent);
+		if(!xyzspeed){CG_PlayerDirtPush(cent,scale,qfalse);}
 		if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
 			CG_AddEarthquake(cent->lerpOrigin, 400, 1, 1, 1, 25);
 		}

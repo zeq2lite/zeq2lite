@@ -1634,6 +1634,8 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.waterSplashModel = trap_R_RegisterModel( "effects/water/waterSplash.md3" );
 	cgs.media.waterRippleSkin = trap_R_RegisterSkin( "effects/water/waterRipple.skin" );
 	cgs.media.waterRippleModel = trap_R_RegisterModel( "effects/water/waterRipple.md3" );
+	cgs.media.waterRippleSingleSkin = trap_R_RegisterSkin( "effects/water/waterRippleSingle.skin" );
+	cgs.media.waterRippleSingleModel = trap_R_RegisterModel( "effects/water/waterRippleSingle.md3" );
 	cgs.media.teleportEffectModel = trap_R_RegisterModel( "models/misc/telep.md3" );
 	cgs.media.meleeSpeedEffectShader = trap_R_RegisterShader( "skills/energyBlast" );
 	cgs.media.meleePowerEffectShader = trap_R_RegisterShader( "shockwave" );
