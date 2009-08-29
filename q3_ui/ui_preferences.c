@@ -351,7 +351,7 @@ static void Preferences_MenuInit( void ) {
 
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.camerastyle.generic.type        = MTYPE_SPINCONTROL;
-	s_preferences.camerastyle.generic.name	      = "Flight Camera style:";
+	s_preferences.camerastyle.generic.name	      = "Camera style:";
 	s_preferences.camerastyle.generic.flags	      = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_preferences.camerastyle.generic.callback    = Preferences_Event;
 	s_preferences.camerastyle.generic.id          = ID_CAMERASTYLE;
@@ -381,7 +381,7 @@ static void Preferences_MenuInit( void ) {
 
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.particlesQuality.generic.type			= MTYPE_SPINCONTROL;
-	s_preferences.particlesQuality.generic.name			= "Particles Quality:";
+	s_preferences.particlesQuality.generic.name			= "Particle Quality:";
 	s_preferences.particlesQuality.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_preferences.particlesQuality.generic.callback		= Preferences_Event;
 	s_preferences.particlesQuality.generic.id			= ID_PARTICLESQUALITY;
@@ -391,14 +391,14 @@ static void Preferences_MenuInit( void ) {
 
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.particlesOptimise.generic.type		= MTYPE_SPINCONTROL;
-	s_preferences.particlesOptimise.generic.name		= "Particles Optimise:";
+	s_preferences.particlesOptimise.generic.name		= "Particle Physics:";
 	s_preferences.particlesOptimise.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_preferences.particlesOptimise.generic.callback	= Preferences_Event;
 	s_preferences.particlesOptimise.generic.id			= ID_PARTICLESOPTIMISE;
 	s_preferences.particlesOptimise.generic.x			= PREFERENCES_X_POS;
 	s_preferences.particlesOptimise.generic.y			= y;
 	s_preferences.particlesOptimise.itemnames			= particlesOptimise_names;
-
+/*
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.motionblur.generic.type     = MTYPE_RADIOBUTTON;
 	s_preferences.motionblur.generic.name	  = "Motion Blur Effect:";
@@ -409,14 +409,15 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.motionblur.generic.y	      = y;
 
 	y += BIGCHAR_HEIGHT+2;
-	s_preferences.useRunAnimation.generic.type     = MTYPE_RADIOBUTTON;
+	s_preferences.useRunAnimation.generic.type		= MTYPE_RADIOBUTTON;
 	s_preferences.useRunAnimation.generic.name		= "Use Run Animations:";
-	s_preferences.useRunAnimation.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.useRunAnimation.generic.callback = Preferences_Event;
-	s_preferences.useRunAnimation.generic.id       = ID_USERUNANIMATION;
-	s_preferences.useRunAnimation.generic.x	       = PREFERENCES_X_POS;
-	s_preferences.useRunAnimation.generic.y	       = y;
-
+	s_preferences.useRunAnimation.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.useRunAnimation.generic.callback	= Preferences_Event;
+	s_preferences.useRunAnimation.generic.id		= ID_USERUNANIMATION;
+	s_preferences.useRunAnimation.generic.x			= PREFERENCES_X_POS;
+	s_preferences.useRunAnimation.generic.y			= y;
+*/
+	y += BIGCHAR_HEIGHT+2;
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.dynamiclights.generic.type      = MTYPE_RADIOBUTTON;
 	s_preferences.dynamiclights.generic.name	  = "Dynamic Lights:";
@@ -471,6 +472,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.outlines.generic.x			= PREFERENCES_X_POS;
 	s_preferences.outlines.generic.y			= y;
 
+	y += BIGCHAR_HEIGHT+2;
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.bloomQuality.generic.type			= MTYPE_SPINCONTROL;
 	s_preferences.bloomQuality.generic.name			= "Bloom Quality:";
@@ -545,12 +547,12 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.beamdetail );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesQuality );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesOptimise );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.motionblur );
+//	Menu_AddItem( &s_preferences.menu, &s_preferences.motionblur );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.wallmarks );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.dynamiclights );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.identifytarget );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.synceveryframe );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.useRunAnimation );
+//	Menu_AddItem( &s_preferences.menu, &s_preferences.useRunAnimation );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.allowdownload );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.outlines );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomQuality );
