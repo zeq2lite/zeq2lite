@@ -60,7 +60,7 @@ typedef struct{
 } preferences_t;
 static int	initialBloomQuality;
 static preferences_t s_preferences;
-static const char *particlesQuality_names[] = {"Sprites","Models",0};
+static const char *particlesQuality_names[] = {"Off","Sprites","Models",0};
 static const char *particlesOptimise_names[] = {"Remove After Awhile","Remove On Stop",	0};
 static const char *beamdetail_names[] = {"Very Low","Low","Medium","High","Very High", 0};
 static const char *beamcontrol_names[] = {"Beam Head Focus","Crosshair Focus",0};
@@ -75,7 +75,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
 	s_preferences.crosshairSize.curvalue	= Com_Clamp( 0, 6, trap_Cvar_VariableValue( "cg_crosshairSize" ) );
 	s_preferences.beamdetail.curvalue		= Com_Clamp( 0, 4, trap_Cvar_VariableValue( "r_beamDetail" ) );
-	s_preferences.particlesQuality.curvalue	= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_particlesQuality" ) );
+	s_preferences.particlesQuality.curvalue	= Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_particlesQuality" ) );
 	s_preferences.particlesOptimise.curvalue= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_particlesStop" ) );
 	s_preferences.wallmarks.curvalue		= trap_Cvar_VariableValue( "cg_marks" ) != 0;
 	s_preferences.identifytarget.curvalue	= trap_Cvar_VariableValue( "cg_drawCrosshairNames" ) != 0;
@@ -266,7 +266,7 @@ static void Crosshair_Draw( void *self ) {
 	}
 	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
 	if(!s->curvalue){return;}
-	UI_DrawHandlePic( x + SMALLCHAR_WIDTH + 46 - 0.5f * crosshairSizeImage, y - 0.5f * crosshairSizeImage, crosshairSizeImage, crosshairSizeImage, s_preferences.crosshairShader[s->curvalue] );
+	UI_DrawHandlePic( x + SMALLCHAR_WIDTH + 64 - 0.5f * crosshairSizeImage, y + 2 - 0.5f * crosshairSizeImage, crosshairSizeImage, crosshairSizeImage, s_preferences.crosshairShader[s->curvalue] );
 }
 
 /*
@@ -339,7 +339,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.crosshair.generic.left		= PREFERENCES_X_POS - ( ( strlen(s_preferences.crosshair.generic.name) + 1 ) * SMALLCHAR_WIDTH ) - 32;
 	s_preferences.crosshair.generic.right		= PREFERENCES_X_POS + 48 - 32;
 
-	y += BIGCHAR_HEIGHT+2+32;
+	y += BIGCHAR_HEIGHT+26;
 	s_preferences.crosshairSize.generic.type		= MTYPE_SPINCONTROL;
 	s_preferences.crosshairSize.generic.name		= "Crosshair Size:";
 	s_preferences.crosshairSize.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;

@@ -2305,7 +2305,7 @@ void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, int number,
 		CG_Trace( &tr, origin, NULL, NULL, end, -1, MASK_PLAYERSOLID );
 		
 		if (!weaponGraphics->noRockDebris){
-			if (cg_particlesQuality.value) {
+			if (cg_particlesQuality.value == 2) {
 				if (tr.surfaceFlags & SURF_METALSTEPS){
 					if(weaponGraphics->explosionSize <= 10){
 						PSys_SpawnCachedSystem( "SmallExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
@@ -2347,7 +2347,7 @@ void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, int number,
 						PSys_SpawnCachedSystem( "ExtraLargeExplosionDebris", origin, tempAxis, NULL, NULL, qfalse, qfalse );
 					}
 				}
-			}else{
+			}else if (cg_particlesQuality.value == 1){
 				if (tr.surfaceFlags & SURF_METALSTEPS){
 					if(weaponGraphics->explosionSize <= 10){
 						PSys_SpawnCachedSystem( "SmallExplosionDebrisLow", origin, tempAxis, NULL, NULL, qfalse, qfalse );

@@ -502,6 +502,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_FALL_SHORT:
 		DEBUGNAME("EV_FALL_SHORT");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.landSound );
+		CG_PlayerDirtPush(cent,5,qtrue);
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			// smooth landing z changes
 			cg.landChange = -8;
@@ -512,6 +513,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_FALL_MEDIUM");
 		// use normal pain sound
 		trap_S_StartSound( NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*pain100_1.ogg" ) );
+		CG_PlayerDirtPush(cent,10,qtrue);
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			// smooth landing z changes
 			cg.landChange = -16;
@@ -521,6 +523,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_FALL_FAR:
 		DEBUGNAME("EV_FALL_FAR");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.ogg" ) );
+		CG_PlayerDirtPush(cent,15,qtrue);
 		cent->pe.painTime = cg.time;	// don't play a pain sound right after this
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			// smooth landing z changes
