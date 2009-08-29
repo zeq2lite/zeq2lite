@@ -2397,7 +2397,11 @@ void CG_PlayerDirtPush( centity_t *cent, int scale, qboolean once ) {
 	VectorCopy( cent->lerpOrigin, end );
 	VectorCopy( cent->lerpOrigin, start );
 
-	end[2] -= 512;
+	if(once){
+		end[2] -= 4096;
+	}else{
+		end[2] -= 512;
+	}
 
 	CG_Trace( &trace, cent->currentState.pos.trBase, NULL, NULL, end, cent->currentState.number, MASK_PLAYERSOLID );
 
