@@ -1663,7 +1663,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	// allow yaw to drift a bit
 	if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE
 		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE_LOCKED
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE_LOCKED
 		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE_LOCKED ) {
 		// if not standing still, always point all in the same direction
 		cent->pe.torso.yawing = qtrue;	// always center
@@ -1677,7 +1677,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		dir = 0;
 	} else if ( (( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) >= ANIM_DASH_RIGHT ) &&
 				(( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) <= ANIM_DASH_BACKWARD ) ) {
-		// don't let the dash animations adjust angles.
+		// don't let these animations adjust angles.
 		dir = 0;
 	} else {
 		dir = cent->currentState.angles2[YAW];
@@ -1701,7 +1701,13 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
 	torsoAngles[PITCH] = cent->pe.torso.pitchAngle;
-	if ( ci->fixedtorso || cent->currentState.weaponstate == WEAPON_CHARGING || cent->currentState.weaponstate == WEAPON_ALTCHARGING) {
+	if ( ci->fixedtorso || cent->currentState.weaponstate == WEAPON_CHARGING || cent->currentState.weaponstate == WEAPON_ALTCHARGING || 
+				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_DEATH_GROUND || 
+				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_DEATH_AIR || 
+				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_DEATH_AIR_LAND ||
+				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_KNOCKBACK_HIT_WALL ||
+				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_FLOOR_RECOVER ) {
+		headAngles[PITCH] = 0.0f;
 		torsoAngles[PITCH] = 0.0f;
 	}
 	if ( ci->fixedlegs ) {
