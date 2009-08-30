@@ -1523,7 +1523,7 @@ void CG_NextWeapon_f( void ) {
 	int		i;
 	int		original;
 
-	if ( !cg.snap || cg.snap->ps.powerups[PW_MELEE_STATE] ) {
+	if ( !cg.snap || cg.snap->ps.bitFlags & usingMelee ) {
 		return;
 	}
 	if ( cg.snap->ps.pm_flags & PMF_FOLLOW ) {

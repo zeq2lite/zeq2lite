@@ -297,7 +297,7 @@ static void CG_CalcIdealThirdPersonViewTarget(void)
 	float vertOffset = cg_thirdPersonHeight.value;
 	float horzOffset = cg_thirdPersonSlide.value;
 
-	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){vertOffset = 0;}
+	if(cg.snap->ps.bitFlags & usingMelee){vertOffset = 0;}
 
 	VectorCopy(cg.refdef.vieworg, cameraFocusLoc);
 
@@ -321,7 +321,7 @@ static void CG_CalcIdealThirdPersonViewLocation(void)
 {
 	float thirdPersonRange = cg_thirdPersonRange.value;
 
-	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){thirdPersonRange = 70;}
+	if(cg.snap->ps.bitFlags & usingMelee){thirdPersonRange = 70;}
 
 	VectorMA(cameraIdealTarget, -(thirdPersonRange), camerafwd, cameraIdealLoc);
 }
@@ -393,7 +393,7 @@ static void CG_UpdateThirdPersonTargetDamp(void)
 
 		// Now we calculate how much of the difference we cover in the time allotted.
 		// The equation is (Damp)^(time)
-		if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0)
+		if(cg.snap->ps.bitFlags & usingMelee)
 		{
 			dampfactor = 1.0-cg_thirdPersonMeleeTargetDamp.value;	// We must exponent the amount LEFT rather than the amount bled off
 		}
@@ -440,7 +440,7 @@ static void CG_UpdateThirdPersonCameraDamp(void)
 		float pitch;
 		float dFactor;
 
-		if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){
+		if(cg.snap->ps.bitFlags & usingMelee){
 			dFactor = cg_thirdPersonMeleeCameraDamp.value;
 		}else{
 			dFactor = cg_thirdPersonCameraDamp.value;
@@ -562,7 +562,7 @@ static void CG_OffsetThirdPersonView2( void )
 	VectorCopy( cg.refdefViewAngles, cameraFocusAngles );
 
 	// Add in the third Person Angle.
-	if(cg.snap->ps.powerups[PW_MELEE_STATE] > 0){
+	if(cg.snap->ps.bitFlags & usingMelee){
 		cameraFocusAngles[YAW] += 45;
 	} else {
 		cameraFocusAngles[YAW] += cg_thirdPersonAngle.value;
@@ -724,13 +724,6 @@ static void CG_OffsetThirdPersonView( void ) {
 			cg.guide_view = qfalse;
 		}	
 	}
-	//if((ps->powerups[PW_MELEE_STATE] > 0) && (cg.guide_view)) {
-	//	VectorSubtract( cg.guide_target, ps->origin, forward );
-	//	VectorNormalize( forward );
-	//	vectoangles( forward, cg.refdefViewAngles );
-	//	VectorCopy( ps->origin, cg.guide_target);
-	//	cg.guide_view = qfalse;
-	//}
 	// backup for when flying
 	VectorCopy( cg.refdefViewAngles, overrideAngles );
 	VectorCopy( cg.refdef.vieworg, overrideOrg );
@@ -746,7 +739,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	cg.refdefViewAngles[PITCH] *= 0.5;
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 	// MELEE
-	if(ps->powerups[PW_MELEE_STATE] > 0){
+	if(ps->bitFlags & usingMelee){
 		if(!ci->transformStart){
 			ci->transformStart = qtrue;
 			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
@@ -987,12 +980,8 @@ static void CG_OffsetFirstPersonView( void ) {
 	speed = cg.xyspeed > 200 ? cg.xyspeed : 200;
 
 	delta = cg.bobfracsin * cg_bobpitch.value * speed;
-	if (cg.predictedPlayerState.pm_flags & PMF_DUCKED)
-		delta *= 3;		// crouching
 	angles[PITCH] += delta;
 	delta = cg.bobfracsin * cg_bobroll.value * speed;
-	if (cg.predictedPlayerState.pm_flags & PMF_DUCKED)
-		delta *= 3;		// crouching accentuates roll
 	if (cg.bobcycle & 1)
 		delta = -delta;
 	angles[ROLL] += delta;
@@ -1411,7 +1400,7 @@ static int CG_CalcViewValues( void ) {
 
 	if ( cg.renderingThirdPerson ) {
 		// back away from character
-		if(ps->powerups[PW_MELEE_STATE] > 0 || cg_thirdPersonCamera.value >= 2){
+		if(ps->bitFlags & usingMelee || cg_thirdPersonCamera.value >= 2){
 			CG_OffsetThirdPersonView2();
 		}else{
 			CG_OffsetThirdPersonView();

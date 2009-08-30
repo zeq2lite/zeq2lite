@@ -857,6 +857,7 @@ void BotInputToUserCommand(bot_input_t *bi, usercmd_t *ucmd, int delta_angles[3]
 	AngleVectors(angles, forward, right, NULL);
 	//bot input speed is in the range [0, 400]
 	bi->speed = bi->speed * 127 / 400;
+	
 	//set the view independent movement
 	ucmd->forwardmove = DotProduct(forward, bi->dir) * bi->speed;
 	ucmd->rightmove = DotProduct(right, bi->dir) * bi->speed;
@@ -873,6 +874,7 @@ void BotInputToUserCommand(bot_input_t *bi, usercmd_t *ucmd, int delta_angles[3]
 	//
 	//Com_Printf("forward = %d right = %d up = %d\n", ucmd.forwardmove, ucmd.rightmove, ucmd.upmove);
 	//Com_Printf("ucmd->serverTime = %d\n", ucmd->serverTime);
+	
 }
 
 /*

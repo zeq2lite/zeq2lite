@@ -1865,9 +1865,7 @@ static void CG_DrawCrosshair(void) {
 
 	ps = &cg.predictedPlayerState;
 
-	if ( ps->powerups[PW_MELEE_STATE] ) {
-		return;
-	}
+	if(ps->bitFlags & usingMelee){return;}
 
 	AngleVectors( ps->viewangles, forward, NULL, up );
 	VectorCopy( ps->origin, muzzle );
@@ -2809,7 +2807,7 @@ static void CG_Draw2D( void ) {
 			CG_DrawAmmoWarning();  
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
-			if(!cg.snap->ps.powerups[PW_MELEE_STATE]){
+			if(!(cg.snap->ps.bitFlags & usingMelee)){
 				CG_DrawWeaponSelect();
 			}
 			CG_DrawHoldableItem();

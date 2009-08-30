@@ -1079,7 +1079,8 @@ typedef struct {
 	sfxHandle_t	speedMissSound;
 	sfxHandle_t	speedBlockSound;
 	sfxHandle_t	powerMeleeSound;
-	sfxHandle_t	powerStunSound;
+	sfxHandle_t	powerStunSound1;
+	sfxHandle_t	powerStunSound2;
 	sfxHandle_t	powerMissSound;
 	sfxHandle_t	airBrake1;
 	sfxHandle_t	airBrake2;

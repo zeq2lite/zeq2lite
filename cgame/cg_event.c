@@ -462,6 +462,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	//
 	// movement generated events
 	//
+	case EV_CRASH:
+		break;
 	case EV_FOOTSTEP:
 		DEBUGNAME("EV_FOOTSTEP");
 		if (cg_footsteps.integer) {
@@ -944,7 +946,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_POWERUP_REGEN:
 		DEBUGNAME("EV_POWERUP_REGEN");
 		break;
-
 	case EV_GIB_PLAYER:
 		DEBUGNAME("EV_GIB_PLAYER");
 		if ( !(es->eFlags & EF_KAMIKAZE) ) {
@@ -952,13 +953,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		}
 		CG_GibPlayer( cent->lerpOrigin );
 		break;
-
 	case EV_STOPLOOPINGSOUND:
 		DEBUGNAME("EV_STOPLOOPINGSOUND");
 		trap_S_StopLoopingSound( es->number );
 		es->loopSound = 0;
 		break;
-
 	case EV_DEBUG_LINE:
 		DEBUGNAME("EV_DEBUG_LINE");
 		CG_Beam( cent );
@@ -974,12 +973,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_MELEE_KNOCKBACK:
 		DEBUGNAME("EV_MELEE_KNOCKBACK");
-		{
-			trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
-			CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
-			CG_PowerMeleeEffect(cent->lerpOrigin);
-			break;
-		}
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
+		CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
+		CG_PowerMeleeEffect(cent->lerpOrigin);
+		break;
 	case EV_MELEE_STUN:
 		DEBUGNAME("EV_MELEE_STUN");
 		break;
@@ -988,6 +985,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_MELEE_KNOCKOUT:
 		DEBUGNAME("EV_MELEE_KNOCKOUT");
+		break;
+	case EV_MELEE_BREAKER:
+		DEBUGNAME("EV_MELEE_BREAKER");
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerStunSound1);
 		break;
 	case EV_TIERCHECK:
 		DEBUGNAME("EV_TIERCHECK");

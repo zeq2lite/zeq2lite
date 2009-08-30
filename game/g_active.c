@@ -401,28 +401,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_CHANGE_WEAPON:
 			break;
-		case EV_AIRBRAKE:
-			if(ps->timers[tmKnockback] >= 4000) {
-				amount = client->tiers[tier].airBrakeCost * 2;
-				ps->powerLevel[plUseFatigue] += amount;
-			} else if((pm->ps->timers[tmKnockback] < 4000) && (pm->ps->timers[tmKnockback] > 3500)){
-			} else if(ps->timers[tmKnockback] <= 3500){
-				if(ps->timers[tmKnockback] <= 1000){
-					amount = client->tiers[tier].airBrakeCost / 6;
-				}
-				else if(ps->timers[tmKnockback] <= 1500){
-					amount = client->tiers[tier].airBrakeCost / 4;
-				}
-				else if(ps->timers[tmKnockback] <= 2500){
-					amount = client->tiers[tier].airBrakeCost / 2;
-				}
-				else {
-					amount = client->tiers[tier].airBrakeCost;
-				}
-				ps->powerLevel[plUseFatigue] += amount;
-			}
-			pm->ps->timers[tmKnockback] = -500;
-			break;
 		case EV_ZANZOKEN_START:
 			if(!ps->bitFlags & usingMelee){}
 			break;

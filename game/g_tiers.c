@@ -58,7 +58,7 @@ void checkTier(gclient_t *client){
 			   (ps->powerLevel[plMaximum] < baseTier->sustainMaximum)){
 				ps->timers[tmTransform] = -1;
 				--ps->powerLevel[plTierCurrent];
-				continue;
+				break;
 			}
 		}
 		break;

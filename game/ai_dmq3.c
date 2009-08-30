@@ -896,7 +896,7 @@ void BotSetupForMovement(bot_state_t *bs) {
 		initmove.or_moveflags |= MFL_WATERJUMP;
 	}
 	//set presence type
-	if (bs->cur_ps.pm_flags & PMF_DUCKED) initmove.presencetype = PRESENCE_CROUCH;
+	if (bs->cur_ps.pm_flags & PMF_ATTACK1_HELD) initmove.presencetype = PRESENCE_CROUCH;
 	else initmove.presencetype = PRESENCE_NORMAL;
 	//
 	if (bs->walker > 0.5) initmove.or_moveflags |= MFL_WALK;

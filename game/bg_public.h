@@ -156,8 +156,8 @@ typedef enum {
 
 
 // pmove->pm_flags
-#define	PMF_DUCKED			1
-#define	PMF_JUMP_HELD		2		// jump key held
+#define	PMF_ATTACK1_HELD			1
+#define	PMF_ATTACK2_HELD		2		// jump key held
 #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
 #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
 #define	PMF_FORWARDS_JUMP	32		// pm_time is time before rejump
@@ -228,6 +228,7 @@ typedef enum {
 	stEnergyCost,
 	stChargePercentPrimary,	// % of primary attack charged
 	stChargePercentSecondary,	// % of secondary attack charged
+	stMeleeState,
 	stSkills,					// 16 bit bitmask
 }statIndex_t;
 
@@ -247,7 +248,8 @@ typedef enum{
 	plTierCurrent,
 	plTierTotal,
 	plDamageFromEnergy,
-	plDamageFromMelee
+	plDamageFromMelee,
+	plDamageGeneric
 }powerLevel_t;
 
 typedef enum{
@@ -256,30 +258,34 @@ typedef enum{
 	tmTransform,
 	tmKnockback,
 	tmZanzoken,
+	tmBoost,
 	tmAttack1,
 	tmAttack2,
-	tmMelee1,
-	tmMelee2,
+	tmMeleeBreaker,
+	tmMeleeBreakerWait,
+	tmMeleeCharge,
+	tmMeleeSpeed,
+	tmMeleeIdle,
 	tmPowerRaise,
 	tmPowerAuto,
 	tmImpede,
+	tmCrash,
 	tmFreeze,
 	tmRecover,
 	tmBlind,
 	tmSoar,
 	tmFall,
-	tmStun,
 	tmSafe
 }timers_t;
 
 typedef enum {
 	PW_NONE,
 	PW_BOOST,
-	PW_INVULNERABILITY,
 	PW_STATE,
-	PW_MELEE_STATE,
-	PW_KNOCKBACK_SPEED,
 	PW_SKILLS,
+	PW_DRIFTING,
+	PW_INVULNERABILITY,
+	PW_KNOCKBACK_SPEED,
 	PW_NUM_POWERUPS,
 }powerup_t;
 
@@ -302,7 +308,7 @@ typedef enum {
 #define isUnconcious	0x00008000
 #define isDead			0x00010000
 #define isBreakingLimit	0x00020000
-#define isAutoClosing	0x00040000
+#define isCrashed		0x00040000
 #define isGuiding		0x00080000
 #define isCharging		0x00100000
 #define isTargeted		0x00200000
@@ -316,6 +322,29 @@ typedef enum {
 #define lockedRoll		0x20000000
 #define locked360		0x40000000
 #define lockedSpin		0x80000000
+
+// Melee
+typedef enum {
+	stMeleeInactive,
+	stMeleeAggressing,
+	stMeleeDegressing,
+	stMeleeIdle,
+	stMeleeStartPower,
+	stMeleeStartAttack,
+	stMeleeStartDodge,
+	stMeleeStartHit,
+	stMeleeUsingSpeed,
+	stMeleeUsingPower,
+	stMeleeUsingStun,
+	stMeleeUsingBlock,
+	stMeleeUsingEvade,
+	stMeleeUsingSpeedBreaker,
+	stMeleeUsingChargeBreaker,
+	stMeleeUsingZanzoken,
+	stMeleeChargingPower,
+	stMeleeChargingStun,
+} melee_t;
+
 
 // player_state->persistant[] indexes
 // NOTE: may not have more than 16
@@ -437,6 +466,7 @@ typedef enum {
 	EV_CHANGE_WEAPON,
 	EV_FIRE_WEAPON,
 	// ADDING FOR ZEQ2
+	EV_CRASH,
 	EV_DETONATE_WEAPON,
 	EV_ALTFIRE_WEAPON,
 	EV_TIERCHECK,
@@ -446,6 +476,7 @@ typedef enum {
 	EV_MELEE_SPEED,
 	EV_MELEE_MISS,
 	EV_MELEE_KNOCKBACK,
+	EV_MELEE_BREAKER,
 	EV_MELEE_STUN,
 	EV_MELEE_CHECK,
 	EV_MELEE_KNOCKOUT,

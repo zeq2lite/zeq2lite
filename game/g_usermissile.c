@@ -625,10 +625,6 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 		if (!tgClient->ps.pm_time) {
 			tgClient->ps.pm_time = 200;
 			tgClient->ps.pm_flags |= PMF_TIME_KNOCKBACK;
-			if(!tgClient->ps.lockedTarget){
-				tgClient->ps.lockedTarget = attacker->client->ps.clientNum+1;
-				tgClient->ps.clientLockedTarget = attacker->client->ps.clientNum+1;
-			}
 		}
 	}
 	if(tgClient){
@@ -726,7 +722,7 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 				ent->client->ps.timers[tmBlind] = 5000;
 			}
 			if(ent->client){
-				ent->client->ps.powerLevel[plUseHealth] += realDamage;
+				ent->client->ps.powerLevel[plDamageGeneric] += realDamage;
 				if(ent->pain){ent->pain(ent,attacker,realDamage);}
 			}
 			else{

@@ -833,7 +833,7 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText ) 
 		else
 			Com_sprintf (name, sizeof(name), EC"(%s%c%c"EC")"EC": ", 
 				ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
-		color = COLOR_CYAN;
+		color = COLOR_BLUE;
 		break;
 	case SAY_TELL:
 		if (target && g_gametype.integer >= GT_TEAM &&
@@ -842,7 +842,7 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText ) 
 			Com_sprintf (name, sizeof(name), EC"[%s%c%c"EC"] (%s)"EC": ", ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE, location );
 		else
 			Com_sprintf (name, sizeof(name), EC"[%s%c%c"EC"]"EC": ", ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
-		color = COLOR_MAGENTA;
+		color = COLOR_CYAN;
 		break;
 	}
 

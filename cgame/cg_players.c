@@ -2541,10 +2541,6 @@ void CG_Player( centity_t *cent ) {
 		return;
 	}
 	CG_PlayerSprites(cent);
-	//if((cent->currentState.clientNum == cg.clientNum) && (ps->powerups[PW_MELEE_STATE] > 0)){
-	//	VectorCopy(ps->lockedPosition, cg.guide_target);
-	//	cg.guide_view = qtrue;
-	//}
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
 	memset( &head, 0, sizeof(head) );
@@ -2608,7 +2604,7 @@ void CG_Player( centity_t *cent ) {
 		return;
 	}
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
-	if(ci->auraConfig[tier]->showLightning && ps->powerups[PW_MELEE_STATE] > 0){CG_BigLightningEffect(cent->lerpOrigin);}
+	if(ci->auraConfig[tier]->showLightning && ps->bitFlags & usingMelee){CG_BigLightningEffect(cent->lerpOrigin);}
 	//CG_BigLightningEffect(cent->lerpOrigin);
 	// -->
 }
