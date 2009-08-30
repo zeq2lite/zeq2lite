@@ -1084,6 +1084,12 @@ typedef struct {
 	sfxHandle_t	powerMissSound;
 	sfxHandle_t	airBrake1;
 	sfxHandle_t	airBrake2;
+	sfxHandle_t hover;
+	sfxHandle_t hoverFast;
+	sfxHandle_t hoverLong;
+	sfxHandle_t waterSplashSmall;
+	sfxHandle_t waterSplashMedium;
+	sfxHandle_t waterSplashLarge;
 	// END ADDING
 
 } cgMedia_t;

@@ -1022,6 +1022,18 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		CG_PowerStruggleEffect(position,size);
 		trap_S_StartSound(position,es->number,CHAN_BODY,cgs.media.airBrake1);
 		break;
+	case EV_HOVER:
+		DEBUGNAME("EV_HOVER");
+		trap_S_StartSound(position,es->number,CHAN_BODY,cgs.media.hover);
+		break;
+	case EV_HOVER_FAST:
+		DEBUGNAME("EV_HOVER_FAST");
+		trap_S_StartSound(position,es->number,CHAN_BODY,cgs.media.hoverFast);
+		break;
+	case EV_HOVER_LONG:
+		DEBUGNAME("EV_HOVER_LONG");
+		trap_S_StartSound(position,es->number,CHAN_BODY,cgs.media.hoverLong);
+		break;
 	default:
 		DEBUGNAME("UNKNOWN");
 		CG_Error( "Unknown event: %i", event );

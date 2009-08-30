@@ -601,6 +601,15 @@ void PM_CheckPowerLevel(void){
 		pm->ps->bitFlags &= ~isBreakingLimit;
 	}
 }
+void PM_CheckHover(void){
+	if(!(pm->ps->states & isHovering) && VectorLength(pm->ps->velocity) && pm->ps->bitFlags & usingFlight && pm->cmd.buttons & BUTTON_WALKING){
+		pm->ps->states |= isHovering;
+		PM_AddEvent(EV_HOVER);
+	}
+	else if(!VectorLength(pm->ps->velocity) && pm->ps->states & isHovering){
+		pm->ps->states &= ~isHovering;
+	}
+}
 /*===============
 BOOST TYPES
 ===============*/
@@ -2955,6 +2964,7 @@ void PmoveSingle(pmove_t *pmove){
 	pml.previous_waterlevel = pmove->waterlevel;
 	PM_Impede();
 	PM_CheckKnockback();
+	PM_CheckHover();
 	if(PM_CheckTransform()){return;}
 	PM_CheckLoopingSound();
 	PM_SetWaterLevel();

@@ -323,6 +323,9 @@ typedef enum {
 #define locked360		0x40000000
 #define lockedSpin		0x80000000
 
+// States
+#define isHovering		0x00000001
+
 // Melee
 typedef enum {
 	stMeleeInactive,
@@ -549,6 +552,9 @@ typedef enum {
 	EV_BLOCK,
 	EV_PUSH,
 	EV_SWAT,
+	EV_HOVER,
+	EV_HOVER_FAST,
+	EV_HOVER_LONG,
 	// ADDING FOR ZEQ2
 	EV_BEAM_FADE,
 	EV_EARTHQUAKE
