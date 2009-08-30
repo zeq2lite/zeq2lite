@@ -1087,9 +1087,16 @@ typedef struct {
 	sfxHandle_t hover;
 	sfxHandle_t hoverFast;
 	sfxHandle_t hoverLong;
-	sfxHandle_t waterSplashSmall;
-	sfxHandle_t waterSplashMedium;
-	sfxHandle_t waterSplashLarge;
+	sfxHandle_t waterSplashSmall1;
+	sfxHandle_t waterSplashSmall2;
+	sfxHandle_t waterSplashSmall3;
+	sfxHandle_t waterSplashMedium1;
+	sfxHandle_t waterSplashMedium2;
+	sfxHandle_t waterSplashMedium3;
+	sfxHandle_t waterSplashMedium4;
+	sfxHandle_t waterSplashLarge1;
+	sfxHandle_t waterSplashExtraLarge1;
+	sfxHandle_t waterSplashExtraLarge2;
 	// END ADDING
 
 } cgMedia_t;

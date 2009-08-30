@@ -455,6 +455,16 @@ void CG_WaterSplash( vec3_t org, int size ) {
 	VectorScale(re->axis[2], size, re->axis[2]);
 
 	VectorCopy( org, re->origin );
+
+	if(size < 2){
+		trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashSmall1);
+	}else if(size < 4){
+		trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashMedium1);
+	}else if(size < 6){
+		trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashLarge1);
+	}else if(size < 8){
+		trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashExtraLarge1);
+	}
 }
 
 /*

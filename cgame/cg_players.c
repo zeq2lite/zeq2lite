@@ -22,6 +22,10 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*gasp.ogg",
 	"*drown.ogg",
 	"*fall1.ogg",
+	"*fallSoft.ogg",
+	"*fallHard1.ogg",
+	"*fallHard2.ogg",
+	"*fallHard3.ogg",
 	"*taunt.ogg",
 };
 

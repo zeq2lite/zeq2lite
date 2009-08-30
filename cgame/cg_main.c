@@ -686,6 +686,16 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.hover = trap_S_RegisterSound( "effects/hover.ogg", qfalse );
 	cgs.media.hoverFast = trap_S_RegisterSound( "effects/hoverFast.ogg", qfalse );
 	cgs.media.hoverLong = trap_S_RegisterSound( "effects/hoverLong.ogg", qfalse );
+	cgs.media.waterSplashSmall1 = trap_S_RegisterSound( "effects/water/SplashSmall.ogg", qfalse );
+	cgs.media.waterSplashSmall2 = trap_S_RegisterSound( "effects/water/SplashSmall2.ogg", qfalse );
+	cgs.media.waterSplashSmall3 = trap_S_RegisterSound( "effects/water/SplashSmall3.ogg", qfalse );
+	cgs.media.waterSplashMedium1 = trap_S_RegisterSound( "effects/water/SplashMedium.ogg", qfalse );
+	cgs.media.waterSplashMedium2 = trap_S_RegisterSound( "effects/water/SplashMedium2.ogg", qfalse );
+	cgs.media.waterSplashMedium3 = trap_S_RegisterSound( "effects/water/SplashMedium3.ogg", qfalse );
+	cgs.media.waterSplashMedium4 = trap_S_RegisterSound( "effects/water/SplashMedium4.ogg", qfalse );
+	cgs.media.waterSplashLarge1 = trap_S_RegisterSound( "effects/water/SplashLarge.ogg", qfalse );
+	cgs.media.waterSplashExtraLarge1 = trap_S_RegisterSound( "effects/water/SplashExtraLarge.ogg", qfalse );
+	cgs.media.waterSplashExtraLarge2 = trap_S_RegisterSound( "effects/water/SplashExtraLarge2.ogg", qfalse );
 	// END ADDING
 
 }

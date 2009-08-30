@@ -602,17 +602,21 @@ void PM_CheckPowerLevel(void){
 	}
 }
 void PM_CheckHover(void){
-	if(!(pm->ps->states & isDashing) && VectorLength(pm->ps->velocity) && pm->ps->bitFlags & usingFlight){
-		pm->ps->states |= isDashing;
-		PM_AddEvent(EV_HOVER_FAST);
-	}else if(!VectorLength(pm->ps->velocity) && pm->ps->states & isDashing){
+	if(VectorLength(pm->ps->velocity) && pm->ps->bitFlags & usingFlight){
+		if(pm->cmd.buttons & BUTTON_WALKING){
+			if(!(pm->ps->states & isHovering)){
+				pm->ps->states |= isHovering;
+				PM_AddEvent(EV_HOVER);
+			}
+		}else{
+			if(!(pm->ps->states & isDashing)){
+				pm->ps->states |= isDashing;
+				PM_AddEvent(EV_HOVER_FAST);
+			}
+		}
+	}
+	else{
 		pm->ps->states &= ~isDashing;
-	}
-	if(!(pm->ps->states & isHovering) && VectorLength(pm->ps->velocity) && pm->ps->bitFlags & usingFlight && pm->cmd.buttons & BUTTON_WALKING){
-		pm->ps->states |= isHovering;
-		PM_AddEvent(EV_HOVER);
-	}
-	else if(!VectorLength(pm->ps->velocity) && pm->ps->states & isHovering){
 		pm->ps->states &= ~isHovering;
 	}
 }
