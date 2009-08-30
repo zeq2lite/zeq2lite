@@ -2402,6 +2402,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer ||
 							 (cg.snap->ps.powerLevel[plFatigue] <= 0) ||
+							 (cg.snap->ps.bitFlags & isCrashed) ||
 							 (cg.snap->ps.weaponstate == WEAPON_GUIDING) ||
 							 (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING);
 /*

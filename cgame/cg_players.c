@@ -2537,7 +2537,7 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerSplash(cent,10*scale);
 	//if(!cg.renderingThirdPerson){renderfx |= RF_THIRD_PERSON;}
 	//else if(cg_cameraMode.integer){return;}
-	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == ps->clientNum) && (ps->bitFlags & usingZanzoken) && !(ps->bitFlags & isUnconcious) && !(ps->bitFlags & isDead))) {
+	if ((cent->currentState.playerBitFlags & usingZanzoken) || ((cent->currentState.number == ps->clientNum) && (ps->bitFlags & usingZanzoken) && !(ps->bitFlags & isUnconcious) && !(ps->bitFlags & isDead) && !(ps->bitFlags & isCrashed))) {
 		return;
 	}
 	CG_PlayerSprites(cent);

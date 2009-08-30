@@ -718,12 +718,10 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 			// get knocked into the air more
 			dir[2] += 24;
 			G_LocationImpact(origin,ent,attacker);
-			if(ent->client->lasthurt_location == LOCATION_FRONT){
-				ent->client->ps.timers[tmBlind] = 5000;
-			}
 			if(ent->client){
 				ent->client->ps.powerLevel[plDamageGeneric] += realDamage;
 				if(ent->pain){ent->pain(ent,attacker,realDamage);}
+				if(ent->client->lasthurt_location == LOCATION_FRONT){ent->client->ps.timers[tmBlind] = 5000;}
 			}
 			else{
 				ent->powerLevelCurrent = ent->powerLevelCurrent - (realDamage * 8);
@@ -1868,7 +1866,6 @@ void G_RunUserExplosion(gentity_t *ent) {
 		step = (1.0 - ((float)ent->splashEnd - (float)level.time) / (float)ent->splashDuration);
 		radius = step * ent->splashRadius;
 		power = ent->powerLevelCurrent;
-
 		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,ent->powerLevelCurrent,radius,ent->methodOfDeath,ent->extraKnockback);
 	}
 	if(level.time >= ent->splashEnd || ent->powerLevelCurrent <= 0){
