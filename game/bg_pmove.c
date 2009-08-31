@@ -611,7 +611,7 @@ void PM_CheckHover(void){
 		}else{
 			if(!(pm->ps->states & isDashing)){
 				pm->ps->states |= isDashing;
-				PM_AddEvent(EV_HOVER_FAST);
+				//PM_AddEvent(EV_HOVER_FAST);
 			}
 		}
 	}
