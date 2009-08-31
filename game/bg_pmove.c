@@ -1416,7 +1416,7 @@ void PM_Land(void){
 			PM_AddEvent( EV_FALL_FAR );
 		} else if ( delta > 1000 ) {
 			PM_AddEvent( EV_FALL_MEDIUM );
-		} else if ( delta > 500 ) {
+		} else if ( delta > 50 ) {
 			PM_AddEvent( EV_FALL_SHORT );
 		} else {
 			PM_AddEvent( PM_FootstepForSurface() );
