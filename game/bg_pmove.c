@@ -1408,9 +1408,19 @@ void PM_Land(void){
 	if(pm->waterlevel == 1){
 		delta *= 0.5;
 	}
-
 	if(delta < 1){
 		return;
+	}
+	if ( !(pml.groundTrace.surfaceFlags & SURF_NODAMAGE) )  {
+		if ( delta > 2000 ) {
+			PM_AddEvent( EV_FALL_FAR );
+		} else if ( delta > 1000 ) {
+			PM_AddEvent( EV_FALL_MEDIUM );
+		} else if ( delta > 500 ) {
+			PM_AddEvent( EV_FALL_SHORT );
+		} else {
+			PM_AddEvent( PM_FootstepForSurface() );
+		}
 	}
 	// start footstep cycle over
 	pm->ps->bobCycle = 0;
@@ -1485,9 +1495,6 @@ void PM_NearGroundTrace(void){
 	vec3_t		point;
 	trace_t		trace;
 	if(pm->ps->bitFlags & atopGround){
-		if(pm->ps->timers[tmFall] >= 4000){PM_AddEvent(EV_FALL_FAR);}
-		else if(pm->ps->timers[tmFall] >= 2000){PM_AddEvent(EV_FALL_MEDIUM);}
-		else if(pm->ps->timers[tmFall] >= 500){PM_AddEvent(EV_FALL_SHORT);}
 		pm->ps->timers[tmFall] = 0;
 		return;
 	}
@@ -1629,7 +1636,7 @@ void PM_Footsteps(void){
 		else{pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] ? PM_ContinueLegsAnim(ANIM_KI_CHARGE) : PM_ContinueLegsAnim(ANIM_PL_UP);}
 		return;
 	}
-	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
+	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] + pm->ps->velocity[1] * pm->ps->velocity[1]);
 	if(pm->waterlevel > 1 && !(pm->ps->bitFlags & usingBoost)){
 		if(pm->cmd.forwardmove > 0){
 			PM_ContinueLegsAnim(ANIM_SWIM);

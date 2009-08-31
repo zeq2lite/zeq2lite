@@ -197,6 +197,7 @@ typedef struct {
 	int			waterlevel;
 
 	float		xyspeed;
+	float		xyzspeed;
 
 	// for fixed msec Pmove
 	int			pmove_fixed;

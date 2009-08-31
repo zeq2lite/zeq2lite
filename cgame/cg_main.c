@@ -697,7 +697,6 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.waterSplashExtraLarge1 = trap_S_RegisterSound( "effects/water/SplashExtraLarge.ogg", qfalse );
 	cgs.media.waterSplashExtraLarge2 = trap_S_RegisterSound( "effects/water/SplashExtraLarge2.ogg", qfalse );
 	// END ADDING
-
 }
 
 

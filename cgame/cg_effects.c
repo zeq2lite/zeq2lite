@@ -365,9 +365,43 @@ void CG_WaterRipple( vec3_t org, int size, qboolean single ) {
 	if(single){
 		re->customSkin = cgs.media.waterRippleSingleSkin;
 		re->hModel = cgs.media.waterRippleSingleModel;
+		if ((random() * 3)< 1){
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashSmall1 );
+		}else if ((random() * 3) < 2){
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashSmall2 );
+		}else{
+			trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashSmall3 );
+		}
 	}else{
 		re->customSkin = cgs.media.waterRippleSkin;
 		re->hModel = cgs.media.waterRippleModel;
+		if(size > 0 && size < 10){
+			if ((random() * 3)< 1){
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashSmall1 );
+			}else if ((random() * 3) < 2){
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashSmall2 );
+			}else{
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashSmall3 );
+			}
+		}else if(size >= 10){
+			if ((random() * 4)< 1){
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashMedium1 );
+			}else if ((random() * 4) < 2){
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashMedium2 );
+			}else if ((random() * 4) < 3){
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashMedium3 );
+			}else{
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashMedium4 );
+			}
+		}else if(size >= 25){
+			trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashLarge1);
+		}else if(size >= 50){
+			if ((random() * 2)< 1){
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashExtraLarge1 );
+			}else{
+				trap_S_StartSound( org, ENTITYNUM_NONE, CHAN_AUTO, cgs.media.waterSplashExtraLarge2 );
+			}
+		}
 	}
 
 	// bias the time so all shader effects start correctly
@@ -455,16 +489,6 @@ void CG_WaterSplash( vec3_t org, int size ) {
 	VectorScale(re->axis[2], size, re->axis[2]);
 
 	VectorCopy( org, re->origin );
-
-	if(size < 2){
-		trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashSmall1);
-	}else if(size < 4){
-		trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashMedium1);
-	}else if(size < 6){
-		trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashLarge1);
-	}else if(size < 8){
-		trap_S_StartSound(org,ENTITYNUM_NONE,CHAN_AUTO,cgs.media.waterSplashExtraLarge1);
-	}
 }
 
 /*
