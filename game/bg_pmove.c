@@ -113,7 +113,7 @@ CHECK LOOPING SOUND
 void PM_CheckLoopingSound(void){
 	if(pm->ps->timers[tmKnockback] ||
 		pm->ps->timers[tmMeleeCharge] != 0 ||
-		pm->ps->timers[tmMeleeIdle] > 0 ||
+		pm->ps->timers[tmMeleeIdle]  ||
 		pm->ps->bitFlags & usingMelee ||
 		pm->ps->bitFlags & isUnconcious ||
 		pm->ps->bitFlags & isCrashed ||
@@ -2216,7 +2216,7 @@ void PM_Melee(void){
 					state = stMeleeIdle;
 				}
 				else if(pm->ps->lockedPlayer->timers[tmMeleeBreaker]){
-					//PM_AddEvent(EV_MELEE_BREAKER_CLASH);
+					//PM_AddEvent(EV_MELEE_CLASH);
 					PM_AddEvent(EV_MELEE_KNOCKBACK);
 					pm->ps->timers[tmFreeze] = 500;
 					pm->ps->timers[tmMeleeIdle] = -480;
@@ -2242,7 +2242,13 @@ void PM_Melee(void){
 					pm->ps->timers[tmFreeze] = 1000;
 					PM_EndDrift();
 					pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.05;
-					if(enemyState != stMeleeUsingEvade){
+					if(pm->ps->lockedPlayer->timers[tmMeleeCharge] > 200){
+						pm->ps->timers[tmMeleeIdle] = -480;
+						pm->ps->lockedPlayer->timers[tmMeleeIdle] = -480;
+						PM_AddEvent(EV_MELEE_KNOCKBACK);
+						//PM_AddEvent(EV_MELEE_CLASH);
+					}
+					else if(enemyState != stMeleeUsingEvade){
 						damage = (pm->ps->powerLevel[plCurrent] * 0.15) * pm->ps->stats[stMeleeAttack];
 						if(enemyState == stMeleeUsingBlock){damage *= 0.3;}
 						if(state != stMeleeStartPower){PM_AddEvent(EV_MELEE_KNOCKBACK);}
@@ -2261,7 +2267,7 @@ void PM_Melee(void){
 						pm->ps->lockedPlayer->timers[tmKnockback] = 5000;
 						PM_StopMelee();
 					}
-					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;
+					if(!pm->ps->lockedPlayer->timers[tmMeleeCharge] > 200){pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;}
 					state = stMeleeUsingPower;
 					meleeCharge = 0;
 				}
@@ -2270,6 +2276,7 @@ void PM_Melee(void){
 					pm->ps->timers[tmMeleeBreakerWait] = 1500;
 					meleeCharge = 0;
 				}
+				else{meleeCharge = 0;}
 			}
 			else{
 				direction = 5;
@@ -2291,7 +2298,13 @@ void PM_Melee(void){
 					pm->ps->timers[tmFreeze] = 1500;
 					PM_EndDrift();
 					pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.05;
-					if(enemyState != stMeleeUsingEvade){
+					if(pm->ps->lockedPlayer->timers[tmMeleeCharge] > 200){
+						pm->ps->timers[tmMeleeIdle] = -480;
+						pm->ps->lockedPlayer->timers[tmMeleeIdle] = -480;
+						PM_AddEvent(EV_MELEE_KNOCKBACK);
+						//PM_AddEvent(EV_MELEE_CLASH);
+					}
+					else if(enemyState != stMeleeUsingEvade){
 						damage = (pm->ps->powerLevel[plCurrent] * 0.15) * pm->ps->stats[stMeleeAttack];
 						if(pm->ps->bitFlags & usingBoost){damage *= 1.5;}
 						if(enemyState == stMeleeUsingBlock){damage *= 0.3;}
@@ -2305,7 +2318,7 @@ void PM_Melee(void){
 						pm->ps->lockedPlayer->timers[tmFreeze] = 4000;
 						enemyState = stMeleeIdle;
 					}
-					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;
+					if(!pm->ps->lockedPlayer->timers[tmMeleeCharge] > 200){pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;}
 					state = stMeleeUsingStun;
 					meleeCharge = 0;
 				}
@@ -2314,6 +2327,7 @@ void PM_Melee(void){
 					pm->ps->timers[tmMeleeBreakerWait] = 1500;
 					meleeCharge = 0;
 				}
+				else{meleeCharge = 0;}
 			}
 			else{
 				state = stMeleeChargingStun;
@@ -2414,6 +2428,7 @@ void PM_Melee(void){
 	// ===========================
 	// Melee Animations / Events
 	// ===========================
+	if(pm->ps->lockedPlayer->lockedTarget != pm->ps->clientNum + 1){enemyState = 0;}
 	if(state){
 		if(state == stMeleeStartAttack){animation = ANIM_BREAKER_MELEE_ATTACK1;}
 		if(state == stMeleeStartHit){animation = ANIM_BREAKER_MELEE_HIT1;}
