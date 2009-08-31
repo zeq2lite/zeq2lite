@@ -1645,8 +1645,8 @@ void CG_DirtPush( vec3_t org, vec3_t dir, int size );
 void CG_WaterSplash( vec3_t org, int size );
 void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier );
 void CG_BigLightningEffect( vec3_t org );
-void CG_SpeedMeleeEffect( vec3_t org );
-void CG_PowerMeleeEffect( vec3_t org );
+void CG_SpeedMeleeEffect( vec3_t org , int tier );
+void CG_PowerMeleeEffect( vec3_t org , int tier );
 void CG_PowerStruggleEffect( vec3_t org, int size );
 #ifdef MISSIONPACK
 void CG_KamikazeEffect( vec3_t org );

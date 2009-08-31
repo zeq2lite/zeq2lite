@@ -896,7 +896,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake2);
 			}
 			CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
-			CG_PowerMeleeEffect(cent->lerpOrigin);
+			CG_PowerMeleeEffect(cent->lerpOrigin,cent->currentState.tier);
 			break;
 		}
 	case EV_PAIN:
@@ -965,7 +965,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MELEE_SPEED:
 		DEBUGNAME("EV_MELEE_SPEED");
 		trap_S_AddRealLoopingSound(es->number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
-		CG_SpeedMeleeEffect(cent->lerpOrigin);
+		CG_SpeedMeleeEffect(cent->lerpOrigin,cent->currentState.tier);
 		break;
 	case EV_MELEE_MISS:
 		DEBUGNAME("EV_MELEE_MISS");
@@ -975,7 +975,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_MELEE_KNOCKBACK");
 		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
 		CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
-		CG_PowerMeleeEffect(cent->lerpOrigin);
+		CG_PowerMeleeEffect(cent->lerpOrigin,cent->currentState.tier);
 		break;
 	case EV_MELEE_STUN:
 		DEBUGNAME("EV_MELEE_STUN");

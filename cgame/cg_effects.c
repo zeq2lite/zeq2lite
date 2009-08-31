@@ -308,14 +308,6 @@ void CG_DirtPush( vec3_t org, vec3_t dir, int size ) {
 
 	AxisClear( re->axis );
 
-/*
-	if (!dir) {
-		AxisClear( re->axis );
-	} else {
-		VectorCopy( dir, re->axis[2] );
-	}
-*/
-
 	re->nonNormalizedAxes = qtrue;
 
 	VectorNormalize(re->axis[0]);
@@ -663,7 +655,7 @@ CG_SpeedMeleeEffect
 Player receiving hit melee effect
 ==================
 */
-void CG_SpeedMeleeEffect( vec3_t org ) {
+void CG_SpeedMeleeEffect( vec3_t org, int tier ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 	int r,r1,r2,r3,r4,r5,r6;
@@ -687,7 +679,17 @@ void CG_SpeedMeleeEffect( vec3_t org ) {
 		le->leType = LE_SCALE_FADE_RGB;
 		le->endTime = cg.time + 100;
 
-		if (r > 75){
+		if (tier == 7 ){
+			le->radius = 2078;
+		}else if (tier == 6 ){
+			le->radius = 1024;
+		}else if (tier == 5 ){
+			le->radius = 512;
+		}else if (tier == 4 ){
+			le->radius = 256;
+		}else if (tier == 3 ){
+			le->radius = 128;
+		}else if (tier == 2 ){
 			le->radius = 64;
 		}else{
 			le->radius = 32;
@@ -726,7 +728,7 @@ CG_PowerMeleeEffect
 Player receiving hit melee effect
 ==================
 */
-void CG_PowerMeleeEffect( vec3_t org ) {
+void CG_PowerMeleeEffect( vec3_t org, int tier ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 	int r,r1,r2,r3,r4,r5,r6;
@@ -747,7 +749,23 @@ void CG_PowerMeleeEffect( vec3_t org ) {
 	le->startTime = cg.time;
 	le->leType = LE_SCALE_FADE;
 	le->endTime = cg.time + 250;
-	le->radius = 64;
+
+	if (tier == 7 ){
+		le->radius = 2078;
+	}else if (tier == 6 ){
+		le->radius = 1024;
+	}else if (tier == 5 ){
+		le->radius = 512;
+	}else if (tier == 4 ){
+		le->radius = 256;
+	}else if (tier == 3 ){
+		le->radius = 128;
+	}else if (tier == 2 ){
+		le->radius = 64;
+	}else{
+		le->radius = 32;
+	}
+
 	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 	le->color[0] = le->color[1] = le->color[2] = le->color[3] = 1.0;
 
