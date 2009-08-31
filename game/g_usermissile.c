@@ -613,20 +613,9 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	if(tgClient && tgClient->noclip){return;}
 	if(!dir){dflags |= DAMAGE_NO_KNOCKBACK;}
 	else{VectorNormalize(dir);}
-	if(knockback > 1000) {knockback = 1000;}
-	if(knockback < 0) {knockback = 0;}
 	if(target == attacker){knockback = 0;}
 	if(target->flags & FL_NO_KNOCKBACK) {knockback = 0;}
 	if(dflags & DAMAGE_NO_KNOCKBACK) {knockback = 0;}
-	if (knockback && tgClient) {
-		vec3_t	kvel;
-		VectorScale (dir, knockback, kvel);
-		VectorAdd (tgClient->ps.velocity, kvel, tgClient->ps.velocity);
-		if (!tgClient->ps.pm_time) {
-			tgClient->ps.pm_time = 200;
-			tgClient->ps.pm_flags |= PMF_TIME_KNOCKBACK;
-		}
-	}
 	if(tgClient){
 		//VectorCopy(dir ? dir : target->r.currentOrigin,tgClient->damage_from);
 		tgClient->ps.persistant[PERS_ATTACKER] = attacker ? attacker->s.number : ENTITYNUM_WORLD;
@@ -636,9 +625,19 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	}
 	if(damage){
 		if(tgClient){
+			G_LocationImpact(inflictor->r.currentOrigin,target,inflictor);
 			if(target == attacker){damage *= 0.2f;}
 			tgClient->ps.powerLevel[plDamageFromEnergy] += damage;
 			if(inflictor->impede){tgClient->ps.timers[tmImpede] = inflictor->impede;}
+			if(knockback){
+				Com_Printf("%i\n",knockback);
+				tgClient->ps.timers[tmKnockback] = knockback;
+				tgClient->ps.powerups[PW_KNOCKBACK_SPEED] = knockback;
+				if(tgClient->lasthurt_location == LOCATION_BACK){tgClient->ps.knockBackDirection = 6;}
+				else if(tgClient->lasthurt_location == LOCATION_LEFT){tgClient->ps.knockBackDirection = 4;}
+				else if(tgClient->lasthurt_location == LOCATION_RIGHT){tgClient->ps.knockBackDirection = 3;}
+				else{tgClient->ps.knockBackDirection = 5;}
+			}
 			if ( tgClient->ps.powerLevel[plHealth] <= damage && tgClient->ps.powerLevel[plHealth] > 0 ) {
 				target->enemy = attacker;
 				target->die (target, inflictor, attacker, damage, methodOfDeath);
@@ -721,7 +720,9 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 			if(ent->client){
 				ent->client->ps.powerLevel[plDamageGeneric] += realDamage;
 				if(ent->pain){ent->pain(ent,attacker,realDamage);}
-				if(ent->client->lasthurt_location == LOCATION_FRONT){ent->client->ps.timers[tmBlind] = 5000;}
+				if(ent->client->lasthurt_location == LOCATION_FRONT){
+					ent->client->ps.timers[tmBlind] = 10000;
+				}
 			}
 			else{
 				ent->powerLevelCurrent = ent->powerLevelCurrent - (realDamage * 8);

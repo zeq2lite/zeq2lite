@@ -172,6 +172,7 @@ void PM_CheckKnockback(void){
 				pm->cmd.rightmove = 127;
 			}
 			else if(pm->ps->knockBackDirection == 5){pm->cmd.forwardmove = -127;}
+			else if(pm->ps->knockBackDirection == 6){pm->cmd.forwardmove = 127;}
 		}
 		else{
 			pm->ps->timers[tmKnockback] = 0;
@@ -203,12 +204,14 @@ void PM_CheckKnockback(void){
 	}
 }
 void PM_Crash(qboolean vertical){
+	/*
 	pm->ps->powerLevel[plDamageGeneric] = pm->ps->bitFlags & usingSoar ? VectorLength(pm->ps->velocity) * 0.03 : VectorLength(pm->ps->velocity) * 0.3;
 	pm->ps->timers[tmCrash] = vertical ? -2500 : 2500;
 	pm->ps->bitFlags |= isCrashed;
 	PM_AddEvent(EV_CRASH);
 	PM_StopSoar();
 	PM_StopKnockback();
+	*/
 }
 /*===================
 TALK
@@ -2104,13 +2107,13 @@ void PM_SyncMelee(void){
 	pm->ps->bitFlags |= usingMelee;
 	pm->ps->bitFlags |= usingFlight;
 	pm->ps->timers[tmUpdateMelee] = 300;
+	pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
+	pm->ps->lockedPlayer->bitFlags |= usingMelee;
+	pm->ps->lockedPlayer->bitFlags |= usingFlight;
+	pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
 	if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
 		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
 		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK2_HELD;
-		pm->ps->lockedPlayer->bitFlags |= usingMelee;
-		pm->ps->lockedPlayer->bitFlags |= usingFlight;
-		pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
-		pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
 		pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
 		pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
 		pm->ps->lockedPlayer->lockedPlayer = 0;
@@ -2162,8 +2165,11 @@ void PM_Melee(void){
 	else{
 		PM_StopMelee();
 		if(entity = PM_CheckDirection(pml.forward,qtrue)){
-			pm->ps->lockedPlayer->lockedTarget = entity;
-			pm->ps->lockedPlayer->clientLockedTarget = entity;
+			pm->ps->lockedTarget = entity;
+			pm->ps->clientLockedTarget = entity;
+			PM_SyncMelee();
+			pm->ps->lockedPlayer = 0;
+			pm->ps->timers[tmFreeze] = 50;
 		}
 		return;
 	}
@@ -2533,6 +2539,21 @@ void PM_Weapon(void){
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	if(pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar ||  pm->ps->bitFlags & isPreparing){return;}
+	if(pm->ps->timers[tmTransform] > 1){
+		PM_WeaponRelease();
+		return;
+	}
+	if(pm->ps->bitFlags & isStruggling){return;}
+	if(pm->ps->weapon == WP_NONE || pm->ps->bitFlags & usingMelee){
+		PM_WeaponRelease();
+		return;
+	}
+	if(pm->ps->bitFlags & isGuiding){
+		PM_StopMovement();
+		PM_StopDash();
+		return;
+	}
+	if(pm->ps->lockedTarget && pm->ps->lockedPlayer->timers[tmKnockback] && VectorLength(pm->ps->velocity)){return;}
 	if(pm->ps->pm_flags & PMF_ATTACK1_HELD){
 		if(!(pm->cmd.buttons & BUTTON_ATTACK)){pm->ps->pm_flags &= ~PMF_ATTACK1_HELD;}
 		else{return;}
@@ -2540,16 +2561,6 @@ void PM_Weapon(void){
 	if(pm->ps->pm_flags & PMF_ATTACK2_HELD){
 		if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)){pm->ps->pm_flags &= ~PMF_ATTACK2_HELD;}
 		else{return;}
-	}
-	if(pm->ps->timers[tmTransform] > 1){
-		PM_WeaponRelease();
-		return;
-	}
-	if(pm->ps->lockedTarget && pm->ps->lockedPlayer->timers[tmKnockback] && VectorLength(pm->ps->velocity)){return;}
-	if(pm->ps->bitFlags & usingMelee || pm->ps->bitFlags & isStruggling){return;}
-	if(pm->ps->weapon == WP_NONE){
-		PM_WeaponRelease();
-		return;
 	}
 	if(pm->ps->bitFlags & isGuiding){
 		PM_StopMovement();
