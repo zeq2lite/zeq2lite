@@ -25,7 +25,7 @@ int		c_pmove = 0;
 /*===============
 DECLARATIONS
 ===============*/
-qboolean PM_CheckDirection(vec3_t direction);
+int PM_CheckDirection(vec3_t direction,qboolean player);
 void PM_StopBoost(void);
 void PM_StopZanzoken(void);
 void PM_StopDash(void);
@@ -199,7 +199,7 @@ void PM_CheckKnockback(void){
 		VectorScale(pm->ps->velocity,speed,pm->ps->velocity);
 		PM_StepSlideMove(qfalse);
 		VectorNormalize2(pm->ps->velocity,post_vel);
-		if(PM_CheckDirection(direction)){PM_Crash(vertical);}
+		if(PM_CheckDirection(direction,qfalse)){PM_Crash(vertical);}
 	}
 }
 void PM_Crash(qboolean vertical){
@@ -983,7 +983,7 @@ void PM_FlyMove(void){
 		!(pm->ps->bitFlags & usingZanzoken)) ||
 		(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & lockedYaw || pm->ps->bitFlags & lockedRoll)){
 		if(pm->ps->bitFlags & usingJump){return;}
-		if(PM_CheckDirection(pml.forward)){PM_Crash(qtrue);}
+		if(PM_CheckDirection(pml.forward,qfalse)){PM_Crash(qtrue);}
 		pm->ps->timers[tmSoar] += pml.msec;
 		pm->ps->eFlags |= EF_AURA;
 		if(pm->cmd.buttons & BUTTON_POWERLEVEL){pm->cmd.forwardmove = 0;}
@@ -1408,19 +1408,9 @@ void PM_Land(void){
 	if(pm->waterlevel == 1){
 		delta *= 0.5;
 	}
+
 	if(delta < 1){
 		return;
-	}
-	if ( !(pml.groundTrace.surfaceFlags & SURF_NODAMAGE) )  {
-		if ( delta > 2000 ) {
-			PM_AddEvent( EV_FALL_FAR );
-		} else if ( delta > 1000 ) {
-			PM_AddEvent( EV_FALL_MEDIUM );
-		} else if ( delta > 50 ) {
-			PM_AddEvent( EV_FALL_SHORT );
-		} else {
-			PM_AddEvent( PM_FootstepForSurface() );
-		}
 	}
 	// start footstep cycle over
 	pm->ps->bobCycle = 0;
@@ -1464,16 +1454,19 @@ PM_GroundTraceMissed
 The ground trace didn't hit a surface, so we are in freefall
 =============
 */
-qboolean PM_CheckDirection(vec3_t direction){
+int PM_CheckDirection(vec3_t direction,qboolean player){
 	vec3_t	point;
 	trace_t	trace;
+	int flags = pm->tracemask;
 	VectorMA(pm->ps->origin,64,direction,point);
-	pm->trace(&trace,pm->ps->origin,pm->mins,pm->maxs,point,pm->ps->clientNum,pm->tracemask);
-	if(trace.allsolid && (!PM_CorrectAllSolid(&trace))){return qfalse;}
+	if(player){flags = CONTENTS_BODY;}
+	pm->trace(&trace,pm->ps->origin,pm->mins,pm->maxs,point,pm->ps->clientNum,flags);
+	if(trace.allsolid && (!PM_CorrectAllSolid(&trace))){return 0;}
 	if(trace.fraction == 1.0){
-		return qfalse;
+		return 0;
 	}
-	return qtrue;
+	if(player){return trace.entityNum+1;}
+	return 1;
 }
 void PM_GroundTraceMissed(void){
 	trace_t		trace;
@@ -1495,6 +1488,9 @@ void PM_NearGroundTrace(void){
 	vec3_t		point;
 	trace_t		trace;
 	if(pm->ps->bitFlags & atopGround){
+		if(pm->ps->timers[tmFall] >= 4000){PM_AddEvent(EV_FALL_FAR);}
+		else if(pm->ps->timers[tmFall] >= 2000){PM_AddEvent(EV_FALL_MEDIUM);}
+		else if(pm->ps->timers[tmFall] >= 500){PM_AddEvent(EV_FALL_SHORT);}
 		pm->ps->timers[tmFall] = 0;
 		return;
 	}
@@ -1636,8 +1632,8 @@ void PM_Footsteps(void){
 		else{pm->ps->powerLevel[plCurrent] > pm->ps->powerLevel[plFatigue] ? PM_ContinueLegsAnim(ANIM_KI_CHARGE) : PM_ContinueLegsAnim(ANIM_PL_UP);}
 		return;
 	}
-	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] + pm->ps->velocity[1] * pm->ps->velocity[1]);
-	if(pm->waterlevel > 2 && !(pm->ps->bitFlags & usingBoost) && !(pm->ps->bitFlags & usingSoar)){
+	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
+	if(pm->waterlevel > 1 && !(pm->ps->bitFlags & usingBoost)){
 		if(pm->cmd.forwardmove > 0){
 			PM_ContinueLegsAnim(ANIM_SWIM);
 		}else{
@@ -2108,10 +2104,12 @@ void PM_SyncMelee(void){
 	pm->ps->bitFlags |= usingMelee;
 	pm->ps->bitFlags |= usingFlight;
 	pm->ps->timers[tmUpdateMelee] = 300;
-	pm->ps->lockedPlayer->bitFlags |= usingMelee;
-	pm->ps->lockedPlayer->bitFlags |= usingFlight;
-	pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
 	if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
+		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
+		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK2_HELD;
+		pm->ps->lockedPlayer->bitFlags |= usingMelee;
+		pm->ps->lockedPlayer->bitFlags |= usingFlight;
+		pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
 		pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
 		pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
 		pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
@@ -2126,7 +2124,7 @@ void PM_MeleeIdle(void){
 	}
 }
 void PM_Melee(void){
-	int meleeCharge,enemyState,state,option,damage,distance,animation,direction;
+	int meleeCharge,enemyState,state,option,damage,distance,animation,direction,entity;
 	qboolean charging,movingForward,idleTime;
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR || pm->ps->bitFlags & isStruggling || pm->ps->timers[tmMeleeIdle] < 0){return;}
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
@@ -2142,7 +2140,9 @@ void PM_Melee(void){
 			pm->ps->timers[tmUpdateMelee] = 0;
 			PM_AddEvent(EV_MELEE_CHECK);
 		}
+		if(pm->ps->bitFlags & usingZanzoken){return;}
 		if(pm->ps->lockedPlayer){
+			if(pm->ps->lockedPlayer->bitFlags & usingZanzoken){return;}
 			distance = Distance(pm->ps->origin,*(pm->ps->lockedPosition));
 			if(!(pm->ps->bitFlags & usingMelee)){
 				state = stMeleeInactive;
@@ -2161,6 +2161,10 @@ void PM_Melee(void){
 	}
 	else{
 		PM_StopMelee();
+		if(entity = PM_CheckDirection(pml.forward,qtrue)){
+			pm->ps->lockedPlayer->lockedTarget = entity;
+			pm->ps->lockedPlayer->clientLockedTarget = entity;
+		}
 		return;
 	}
 	damage = 0;
@@ -2242,11 +2246,12 @@ void PM_Melee(void){
 					pm->ps->timers[tmFreeze] = 1000;
 					PM_EndDrift();
 					pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.05;
-					if(pm->ps->lockedPlayer->timers[tmMeleeCharge] > 200){
+					if(pm->ps->lockedPlayer->timers[tmMeleeCharge] > 50){
 						pm->ps->timers[tmMeleeIdle] = -480;
 						pm->ps->lockedPlayer->timers[tmMeleeIdle] = -480;
 						PM_AddEvent(EV_MELEE_KNOCKBACK);
 						//PM_AddEvent(EV_MELEE_CLASH);
+						PM_StopMelee();
 					}
 					else if(enemyState != stMeleeUsingEvade){
 						damage = (pm->ps->powerLevel[plCurrent] * 0.15) * pm->ps->stats[stMeleeAttack];
@@ -2267,7 +2272,7 @@ void PM_Melee(void){
 						pm->ps->lockedPlayer->timers[tmKnockback] = 5000;
 						PM_StopMelee();
 					}
-					if(!pm->ps->lockedPlayer->timers[tmMeleeCharge] > 200){pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;}
+					if(!pm->ps->lockedPlayer->timers[tmMeleeCharge] > 50){pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;}
 					state = stMeleeUsingPower;
 					meleeCharge = 0;
 				}
@@ -2298,11 +2303,12 @@ void PM_Melee(void){
 					pm->ps->timers[tmFreeze] = 1500;
 					PM_EndDrift();
 					pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.05;
-					if(pm->ps->lockedPlayer->timers[tmMeleeCharge] > 200){
+					if(pm->ps->lockedPlayer->timers[tmMeleeCharge] > 50){
 						pm->ps->timers[tmMeleeIdle] = -480;
 						pm->ps->lockedPlayer->timers[tmMeleeIdle] = -480;
 						PM_AddEvent(EV_MELEE_KNOCKBACK);
 						//PM_AddEvent(EV_MELEE_CLASH);
+						PM_StopMelee();
 					}
 					else if(enemyState != stMeleeUsingEvade){
 						damage = (pm->ps->powerLevel[plCurrent] * 0.15) * pm->ps->stats[stMeleeAttack];
@@ -2318,7 +2324,7 @@ void PM_Melee(void){
 						pm->ps->lockedPlayer->timers[tmFreeze] = 4000;
 						enemyState = stMeleeIdle;
 					}
-					if(!pm->ps->lockedPlayer->timers[tmMeleeCharge] > 200){pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;}
+					if(!pm->ps->lockedPlayer->timers[tmMeleeCharge] > 50){pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;}
 					state = stMeleeUsingStun;
 					meleeCharge = 0;
 				}
@@ -2535,16 +2541,19 @@ void PM_Weapon(void){
 		if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)){pm->ps->pm_flags &= ~PMF_ATTACK2_HELD;}
 		else{return;}
 	}
-	if(pm->ps->bitFlags & isGuiding){
-		PM_StopMovement();
-		PM_StopDash();
-	}
 	if(pm->ps->timers[tmTransform] > 1){
 		PM_WeaponRelease();
 		return;
 	}
-	if(pm->ps->weapon == WP_NONE || pm->ps->bitFlags & usingMelee){
+	if(pm->ps->lockedTarget && pm->ps->lockedPlayer->timers[tmKnockback] && VectorLength(pm->ps->velocity)){return;}
+	if(pm->ps->bitFlags & usingMelee || pm->ps->bitFlags & isStruggling){return;}
+	if(pm->ps->weapon == WP_NONE){
 		PM_WeaponRelease();
+		return;
+	}
+	if(pm->ps->bitFlags & isGuiding){
+		PM_StopMovement();
+		PM_StopDash();
 		return;
 	}
 	// Retrieve our weapon's settings
