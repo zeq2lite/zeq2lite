@@ -31,45 +31,19 @@ GAME OPTIONS MENU
 #define ID_OUTLINES				146
 #define	NUM_CROSSHAIRS			10
 typedef struct{
-	menuframework_s		menu;
-	menutext_s			banner;
-	menubitmap_s		framel;
-	menubitmap_s		framer;
+
 	menulist_s			crosshair;
 	menulist_s			crosshairSize;
 	menulist_s			camerastyle;
-	menulist_s			beamdetail;
-	menulist_s			particlesOptimise;
-	menulist_s			particlesQuality;
-	menulist_s			bloomQuality;
-	menuslider_s		bloomIntensity;
-	menulist_s			bloomDarken;
-	menuslider_s		bloomAlpha;
-	menuradiobutton_s	wallmarks;
-	menuradiobutton_s	dynamiclights;
-	menuradiobutton_s	identifytarget;
 	menulist_s			beamcontrol;
-	menuradiobutton_s	synceveryframe;
-	menuradiobutton_s	motionblur;
-	menuradiobutton_s	useRunAnimation;
-	menuradiobutton_s	allowdownload;
-	menuradiobutton_s	outlines;
+
 	menubitmap_s		back;
 	menubitmap_s		apply;
 	qhandle_t			crosshairShader[NUM_CROSSHAIRS];
 } preferences_t;
 static int	initialBloomQuality;
 static preferences_t s_preferences;
-static const char *particlesQuality_names[] = {"Off","Sprites","Models",0};
-static const char *particlesOptimise_names[] = {"Remove After Awhile","Remove On Stop",	0};
-static const char *beamdetail_names[] = {"Very Low","Low","Medium","High","Very High", 0};
-static const char *beamcontrol_names[] = {"Beam Head Focus","Crosshair Focus",0};
-static const char *camerastyle_names[] = {"Locked Behind Head","Locked Behind Character","Delay Behind Character",0};
-static const char *crosshairSize_names[] = {"Tiny!","Very Small","Small","Normal","Large","Extra Large!","Extra Extra Large?!",0};
-static const char *bloomQuality_names[] = {"Off","Low","Medium","High","Very High", 0};
-static const char *bloomIntensity_names[] = {"Low","Medium","High", 0};
-static const char *bloomDarken_names[] = {"Low","Medium","High", 0};
-static const char *bloomAlpha_names[] = {"Low","Medium","High", 0};
+
 static void Preferences_SetMenuItems( void ) {
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
 	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );

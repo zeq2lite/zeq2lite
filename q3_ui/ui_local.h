@@ -129,6 +129,7 @@ extern vmCvar_t s_mastermusicvolume;
 #define QMF_LOWERCASE			0x00040000	// edit field is all lower case
 #define QMF_UPPERCASE			0x00080000	// edit field is all upper case
 #define QMF_SILENT				0x00100000
+#define QMF_TINYFONT			0x00200000
 
 // callback notifications
 #define QM_GOTFOCUS				1
@@ -247,6 +248,9 @@ extern void			Menu_Cache( void );
 extern void			Menu_Focus( menucommon_s *m );
 extern void			Menu_AddItem( menuframework_s *menu, void *item );
 extern void			Menu_AdjustCursor( menuframework_s *menu, int dir );
+extern void			Menu_Common(int amount);
+extern void 		Menu_Frame(void);
+extern void 		Menu_Side(void);
 extern void			Menu_Draw( menuframework_s *menu );
 extern void			*Menu_ItemAtCursor( menuframework_s *m );
 extern sfxHandle_t	Menu_ActivateItem( menuframework_s *s, menucommon_s* item );
@@ -284,10 +288,6 @@ extern vec4_t		listbar_color;
 extern vec4_t		text_color_disabled; 
 extern vec4_t		text_color_normal;
 extern vec4_t		text_color_highlight;
-
-extern char	*ui_medalNames[];
-extern char	*ui_medalPicNames[];
-extern char	*ui_medalSounds[];
 
 //
 // ui_mfield.c
@@ -542,6 +542,8 @@ typedef struct {
 	int					cursorx;
 	int					cursory;
 	int					menusp;
+	int					menuamount;
+	qboolean			hideEarth,hideBack,showFrame,showSide;
 	menuframework_s*	activemenu;
 	menuframework_s*	stack[MAX_MENUDEPTH];
 	glconfig_t			glconfig;
@@ -549,13 +551,17 @@ typedef struct {
 	qhandle_t			whiteShader;
 	qhandle_t			menuBackShader;
 	qhandle_t			logoShader;
-	qhandle_t			DragonBall1Star;
-	qhandle_t			DragonBall2Star;
-	qhandle_t			DragonBall3Star;
-	qhandle_t			DragonBall4Star;
-	qhandle_t			DragonBall5Star;
-	qhandle_t			DragonBall6Star;
-	qhandle_t			DragonBall7Star;
+	qhandle_t			nameArea;
+	qhandle_t			blobShadow;
+	qhandle_t			applyButton;
+	qhandle_t			menuSide;
+	qhandle_t			menuFrame;
+	qhandle_t			menuButton1;
+	qhandle_t			menuButton2;
+	qhandle_t			menuButton3;
+	qhandle_t			menuButton4;
+	qhandle_t			menuButton5;
+	qhandle_t			menuButton6;
 	qhandle_t			sceneModel;
 	qhandle_t			logoModel;
 	qhandle_t			charset;
@@ -803,6 +809,7 @@ void Rankings_DrawName( void* self );
 void Rankings_DrawPassword( void* self );
 void Rankings_Cache( void );
 void UI_RankingsMenu( void );
+
 
 //
 // ui_login.c

@@ -65,6 +65,9 @@ void MField_Draw( mfield_t *edit, int x, int y, int style, vec4_t color ) {
 	{
 		charw =	SMALLCHAR_WIDTH;
 	}
+	else if (style & UI_TINYFONT){
+		charw =	6;
+	}
 	else if (style & UI_GIANTFONT)
 	{
 		charw =	GIANTCHAR_WIDTH;
@@ -285,6 +288,11 @@ void MenuField_Init( menufield_s* m ) {
 		w = SMALLCHAR_WIDTH;
 		h = SMALLCHAR_HEIGHT;
 	}
+	else if (m->generic.flags & QMF_TINYFONT)
+	{
+		w = 6;
+		h = 12;
+	}	
 	else
 	{
 		w = BIGCHAR_WIDTH;

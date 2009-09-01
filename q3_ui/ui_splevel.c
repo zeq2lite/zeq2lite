@@ -670,11 +670,6 @@ void UI_SPLevelMenu_Cache( void ) {
 	trap_R_RegisterShaderNoMip( ART_CUSTOM0 );
 	trap_R_RegisterShaderNoMip( ART_CUSTOM1 );
 
-	for( n = 0; n < 6; n++ ) {
-		trap_R_RegisterShaderNoMip( ui_medalPicNames[n] );
-		levelMenuInfo.awardSounds[n] = trap_S_RegisterSound( ui_medalSounds[n], qfalse );
-	}
-
 	levelMenuInfo.levelSelectedPic = trap_R_RegisterShaderNoMip( ART_LEVELFRAME_SELECTED );
 	levelMenuInfo.levelFocusPic = trap_R_RegisterShaderNoMip( ART_LEVELFRAME_FOCUS );
 	levelMenuInfo.levelCompletePic[0] = trap_R_RegisterShaderNoMip( ART_MAP_COMPLETE1 );
@@ -798,28 +793,6 @@ static void UI_SPLevelMenu_Init( void ) {
 
 	y = AWARDS_Y;
 	count = 0;
-	for( n = 0; n < 6; n++ ) {
-		if( levelMenuInfo.awardLevels[n] ) {
-			if( count & 1 ) {
-				x = 224 - (count - 1 ) / 2 * (48 + 16);
-			}
-			else {
-				x = 368 + count / 2 * (48 + 16);
-			}
-
-			levelMenuInfo.item_awards[count].generic.type		= MTYPE_BITMAP;
-			levelMenuInfo.item_awards[count].generic.name		= ui_medalPicNames[n];
-			levelMenuInfo.item_awards[count].generic.flags		= QMF_LEFT_JUSTIFY|QMF_SILENT|QMF_MOUSEONLY;
-			levelMenuInfo.item_awards[count].generic.x			= x;
-			levelMenuInfo.item_awards[count].generic.y			= y;
-			levelMenuInfo.item_awards[count].generic.id			= ID_AWARD1 + n;
-			levelMenuInfo.item_awards[count].generic.callback	= UI_SPLevelMenu_AwardEvent;
-			levelMenuInfo.item_awards[count].width				= 48;
-			levelMenuInfo.item_awards[count].height				= 48;
-			count++;
-		}
-	}
-
 	levelMenuInfo.item_back.generic.type			= MTYPE_BITMAP;
 	levelMenuInfo.item_back.generic.name			= ART_BACK0;
 	levelMenuInfo.item_back.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;

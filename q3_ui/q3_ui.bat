@@ -4,6 +4,8 @@ cd vm
 
 set cc=call ..\..\compile_q3_ui.bat
 
+%cc% ../ui_shared.c
+@if errorlevel 1 goto quit
 %cc% ../ui_main.c
 @if errorlevel 1 goto quit
 %cc% ../ui_cdkey.c

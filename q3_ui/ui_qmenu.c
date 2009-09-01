@@ -484,37 +484,37 @@ static void RadioButton_Draw( menuradiobutton_s *rb )
 	if ( rb->generic.flags & QMF_GRAYED )
 	{
 		color = text_color_disabled;
-		style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
+		style = UI_LEFT|UI_TINYFONT|UI_DROPSHADOW;
 	}
 	else if ( focus )
 	{
 		color = text_color_highlight;
-		style = UI_LEFT|UI_PULSE|UI_SMALLFONT|UI_DROPSHADOW;
+		style = UI_LEFT|UI_PULSE|UI_TINYFONT|UI_DROPSHADOW;
 	}
 	else
 	{
 		color = text_color_normal;
-		style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
+		style = UI_LEFT|UI_TINYFONT|UI_DROPSHADOW;
 	}
 
 	if ( focus )
 	{
 		// draw cursor
-		UI_FillRect( rb->generic.left, rb->generic.top, rb->generic.right-rb->generic.left+1, rb->generic.bottom-rb->generic.top+1, listbar_color ); 
-		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
+		//UI_FillRect( rb->generic.left, rb->generic.top, rb->generic.right-rb->generic.left+1, rb->generic.bottom-rb->generic.top+1, listbar_color ); 
+		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_TINYFONT|UI_DROPSHADOW, color);
 	}
 
 	if ( rb->generic.name )
-		UI_DrawString( x - SMALLCHAR_WIDTH, y, rb->generic.name, UI_RIGHT|UI_SMALLFONT|UI_DROPSHADOW, color );
+		UI_DrawString( x - SMALLCHAR_WIDTH, y, rb->generic.name, UI_RIGHT|UI_TINYFONT|UI_DROPSHADOW, color );
 
 	if ( !rb->curvalue )
 	{
-		UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y + 2, 16, 16, uis.rb_off);
+		UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y, 16, 16, uis.rb_off);
 		UI_DrawString( x + SMALLCHAR_WIDTH + 16, y, "off", style, color );
 	}
 	else
 	{
-		UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y + 2, 16, 16, uis.rb_on );
+		UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y, 16, 16, uis.rb_on );
 		UI_DrawString( x + SMALLCHAR_WIDTH + 16, y, "on", style, color );
 	}
 }
@@ -622,23 +622,23 @@ static void Slider_Draw( menuslider_s *s ) {
 
 	if( s->generic.flags & QMF_GRAYED ) {
 		color = text_color_disabled;
-		style = UI_SMALLFONT | UI_DROPSHADOW;
+		style = UI_TINYFONT | UI_DROPSHADOW;
 	}
 	else if( focus ) {
 		color  = text_color_highlight;
-		style = UI_SMALLFONT | UI_PULSE | UI_DROPSHADOW;
+		style = UI_TINYFONT | UI_DROPSHADOW;
 	}
 	else {
 		color = text_color_normal;
-		style = UI_SMALLFONT | UI_DROPSHADOW;
+		style = UI_TINYFONT | UI_DROPSHADOW;
 	}
 
 	// draw label
-	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, UI_RIGHT|style, color );
+	UI_DrawString( x, y, s->generic.name, UI_RIGHT|style, color );
 
 	// draw slider
 	UI_SetColor( color );
-	UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y, 96, 16, sliderBar );
+	UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y-2, 96, 16, sliderBar );
 	UI_SetColor( NULL );
 
 	// clamp thumb
@@ -655,13 +655,7 @@ static void Slider_Draw( menuslider_s *s ) {
 		s->range = 0;
 	}
 
-	// draw thumb
-	if( style & UI_PULSE) {
-		button = sliderButton_1;
-	}
-	else {
-		button = sliderButton_0;
-	}
+	button = sliderButton_0;
 
 	UI_DrawHandlePic( (int)( x + 2*SMALLCHAR_WIDTH + (SLIDER_RANGE-1)*SMALLCHAR_WIDTH* s->range ) - 2, y - 2, 12, 20, button );
 }
@@ -831,7 +825,7 @@ static void SpinControl_Draw( menulist_s *s )
 	x = s->generic.x;
 	y =	s->generic.y;
 
-	style = UI_SMALLFONT|UI_DROPSHADOW;
+	style = UI_TINYFONT|UI_DROPSHADOW;
 	focus = (s->generic.parent->cursor == s->generic.menuPosition);
 
 	if ( s->generic.flags & QMF_GRAYED )
@@ -852,7 +846,7 @@ static void SpinControl_Draw( menulist_s *s )
 	if ( focus )
 	{
 		// draw cursor
-		UI_FillRect( s->generic.left, s->generic.top, s->generic.right-s->generic.left+1, s->generic.bottom-s->generic.top+1, listbar_color ); 
+		//UI_FillRect( x,y, s->generic.right-s->generic.left+1, s->generic.bottom-s->generic.top+1, listbar_color ); 
 		UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT|UI_DROPSHADOW, color);
 	}
 
@@ -1708,13 +1702,18 @@ void Menu_Cache( void )
 	uis.sceneModel = trap_R_RegisterModel("interface/menu/earthBattle.md3");
 	uis.logoModel = trap_R_RegisterModel("interface/menu/logo.md3");
 
-	uis.DragonBall1Star	= trap_R_RegisterShaderNoMip("1StarDragonBall");
-	uis.DragonBall2Star	= trap_R_RegisterShaderNoMip("2StarDragonBall");
-	uis.DragonBall3Star	= trap_R_RegisterShaderNoMip("3StarDragonBall");
-	uis.DragonBall4Star	= trap_R_RegisterShaderNoMip("4StarDragonBall");
-	uis.DragonBall5Star	= trap_R_RegisterShaderNoMip("5StarDragonBall");
-	uis.DragonBall6Star	= trap_R_RegisterShaderNoMip("6StarDragonBall");
-	uis.DragonBall7Star	= trap_R_RegisterShaderNoMip("7StarDragonBall");
+	uis.menuSide	= trap_R_RegisterShaderNoMip("menuSide");
+	uis.menuFrame	= trap_R_RegisterShaderNoMip("menuFrame");
+
+	uis.blobShadow	= trap_R_RegisterShaderNoMip("blobShadow");
+	uis.nameArea	= trap_R_RegisterShaderNoMip("nameArea");
+
+	uis.menuButton1	= trap_R_RegisterShaderNoMip("mainButton1");
+	uis.menuButton2	= trap_R_RegisterShaderNoMip("mainButton2");
+	uis.menuButton3	= trap_R_RegisterShaderNoMip("mainButton3");
+	uis.menuButton4	= trap_R_RegisterShaderNoMip("mainButton4");
+	uis.menuButton5	= trap_R_RegisterShaderNoMip("mainButton5");
+	uis.menuButton6	= trap_R_RegisterShaderNoMip("mainButton6");
 
 	menu_in_sound	= trap_S_RegisterSound( "interface/menu/click.ogg", qfalse );
 	menu_move_sound	= trap_S_RegisterSound( "interface/menu/hover.ogg", qfalse );

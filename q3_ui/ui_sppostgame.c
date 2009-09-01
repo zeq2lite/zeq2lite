@@ -57,23 +57,6 @@ typedef struct {
 static postgameMenuInfo_t	postgameMenuInfo;
 static char					arenainfo[MAX_INFO_VALUE];
 
-char	*ui_medalNames[] = {"Accuracy", "Impressive", "Excellent", "Gauntlet", "Frags", "Perfect"};
-char	*ui_medalPicNames[] = {
-	"menu/medals/medal_accuracy",
-	"menu/medals/medal_impressive",
-	"menu/medals/medal_excellent",
-	"menu/medals/medal_gauntlet",
-	"menu/medals/medal_frags",
-	"menu/medals/medal_victory"
-};
-char	*ui_medalSounds[] = {
-	"sound/feedback/accuracy.ogg",
-	"sound/feedback/impressive_a.ogg",
-	"sound/feedback/excellent_a.ogg",
-	"sound/feedback/gauntlet.ogg",
-	"sound/feedback/frags.ogg",
-	"sound/feedback/perfect.ogg"
-};
 
 
 /*
@@ -182,59 +165,8 @@ static sfxHandle_t UI_SPPostgameMenu_MenuKey( int key ) {
 
 	return Menu_DefaultKey( &postgameMenuInfo.menu, key );
 }
-
-
-static int medalLocations[6] = {144, 448, 88, 504, 32, 560};
-
-static void UI_SPPostgameMenu_DrawAwardsMedals( int max ) {
-	int		n;
-	int		medal;
-	int		amount;
-	int		x, y;
-	char	buf[16];
-
-	for( n = 0; n < max; n++ ) {
-		x = medalLocations[n];
-		y = 64;
-		medal = postgameMenuInfo.awardsEarned[n];
-		amount = postgameMenuInfo.awardsLevels[n];
-
-		UI_DrawNamedPic( x, y, 48, 48, ui_medalPicNames[medal] );
-
-		if( medal == AWARD_ACCURACY ) {
-			Com_sprintf( buf, sizeof(buf), "%i%%", amount );
-		}
-		else {
-			if( amount == 1 ) {
-				continue;
-			}
-			Com_sprintf( buf, sizeof(buf), "%i", amount );
-		}
-
-		UI_DrawString( x + 24, y + 52, buf, UI_CENTER|UI_DROPSHADOW, color_yellow );
-	}
-}
-
-
-static void UI_SPPostgameMenu_DrawAwardsPresentation( int timer ) {
-	int		awardNum;
-	int		atimer;
-	vec4_t	color;
-
-	awardNum = timer / AWARD_PRESENTATION_TIME;
-	atimer = timer % AWARD_PRESENTATION_TIME;
-
-	color[0] = color[1] = color[2] = 1.0f;
-	color[3] = (float)( AWARD_PRESENTATION_TIME - atimer ) / (float)AWARD_PRESENTATION_TIME;
-	UI_DrawProportionalString( 320, 64, ui_medalNames[postgameMenuInfo.awardsEarned[awardNum]], UI_CENTER|UI_DROPSHADOW, color );
-
-	UI_SPPostgameMenu_DrawAwardsMedals( awardNum + 1 );
-
-	if( !postgameMenuInfo.playedSound[awardNum] ) {
-		postgameMenuInfo.playedSound[awardNum] = qtrue;
-		trap_S_StartLocalSound( trap_S_RegisterSound( ui_medalSounds[postgameMenuInfo.awardsEarned[awardNum]], qfalse ), CHAN_ANNOUNCER );
-	}
-}
+static void UI_SPPostgameMenu_DrawAwardsMedals( int max ) {}
+static void UI_SPPostgameMenu_DrawAwardsPresentation( int timer ) {}
 
 
 /*
@@ -384,22 +316,9 @@ void UI_SPPostgameMenu_Cache( void ) {
 	qboolean	buildscript;
 
 	buildscript = trap_Cvar_VariableValue("com_buildscript");
-
-	trap_R_RegisterShaderNoMip( ART_MENU0 );
-	trap_R_RegisterShaderNoMip( ART_MENU1 );
-	trap_R_RegisterShaderNoMip( ART_REPLAY0 );
-	trap_R_RegisterShaderNoMip( ART_REPLAY1 );
-	trap_R_RegisterShaderNoMip( ART_NEXT0 );
-	trap_R_RegisterShaderNoMip( ART_NEXT1 );
-	for( n = 0; n < 6; n++ ) {
-		trap_R_RegisterShaderNoMip( ui_medalPicNames[n] );
-		trap_S_RegisterSound( ui_medalSounds[n], qfalse );
-	}
-
 	if( buildscript ) {
 		trap_S_RegisterSound( "music/loss.ogg", qfalse );
 		trap_S_RegisterSound( "music/win.ogg", qfalse );
-		trap_S_RegisterSound( "sound/player/announce/youwin.ogg", qfalse );
 	}
 }
 

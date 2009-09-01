@@ -94,13 +94,12 @@ static void UI_CreditMenu_Draw( void ) {
 }
 
 
-/*
-===============
+/*===============
 UI_CreditMenu
-===============
-*/
+===============*/
 void UI_CreditMenu( void ) {
 
+	uis.menuamount = 0;
 	trap_S_StopBackgroundTrack();
 	trap_S_StartBackgroundTrack("music/yamamoto/credits02.ogg", "music/yamamoto/credits02.ogg");
 	trap_S_StartLocalSound( menu_exit_sound, CHAN_LOCAL_SOUND );

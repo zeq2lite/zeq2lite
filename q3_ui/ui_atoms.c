@@ -107,7 +107,6 @@ void UI_PushMenu( menuframework_s *menu )
 			break;
 		}
 	}
-
 	uis.firstdraw = qtrue;
 }
 
@@ -527,6 +526,9 @@ float UI_ProportionalSizeScale( int style ) {
 	if(  style & UI_SMALLFONT ) {
 		return PROP_SMALL_SIZE_SCALE;
 	}
+	if(  style & UI_TINYFONT ) {
+		return 0.6;
+	}
 
 	return 1.00;
 }
@@ -585,7 +587,7 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 		drawcolor[0] = color[0];
 		drawcolor[1] = color[1];
 		drawcolor[2] = color[2];
-		drawcolor[3] = 0.5 + 0.5 * sin( uis.realtime / PULSE_DIVISOR );
+		drawcolor[3] = 1.0;
 		UI_DrawProportionalString2( x, y, str, drawcolor, sizeScale, uis.charsetPropGlow );
 		return;
 	}
@@ -712,6 +714,11 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 		charw =	SMALLCHAR_WIDTH;
 		charh =	SMALLCHAR_HEIGHT;
 	}
+	else if (style & UI_TINYFONT)
+	{
+		charw =	6;
+		charh =	12;
+	}
 	else if (style & UI_GIANTFONT)
 	{
 		charw =	GIANTCHAR_WIDTH;
@@ -825,17 +832,10 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 		UI_MainMenu();
 		return;
 	case UIMENU_NEED_CD:
-		UI_ConfirmMenu( "Insert the CD", 0, NeedCDAction );
 		return;
 	case UIMENU_BAD_CD_KEY:
-		UI_ConfirmMenu( "Bad CD Key", 0, NeedCDKeyAction );
 		return;
 	case UIMENU_INGAME:
-		/*
-		//GRank
-		UI_RankingsMenu();
-		return;
-		*/
 		trap_Cvar_Set( "cl_paused", "1" );
 		UI_InGameMenu();
 		return;
@@ -990,8 +990,6 @@ void UI_Cache_f( void ) {
 	UI_AddBots_Cache();
 	UI_RemoveBots_Cache();
 	UI_SetupMenu_Cache();
-//	UI_LoadConfig_Cache();
-//	UI_SaveConfigMenu_Cache();
 	UI_BotSelectMenu_Cache();
 	UI_CDKeyMenu_Cache();
 	UI_ModsMenu_Cache();
@@ -1339,10 +1337,10 @@ void UI_MenuLogo( void ) {
 
 	AxisClear( refdef.viewaxis );
 
-	x = 0;
-	y = 0;
-	w = 640;
-	h = 480;
+	x = -19;
+	y = -28;
+	w = 205;
+	h = 153;
 	UI_AdjustFrom640( &x, &y, &w, &h );
 	refdef.x = x;
 	refdef.y = y;
@@ -1398,7 +1396,6 @@ JUHOX: UI_DrawBackPic
 */
 void UI_DrawBackPic(qboolean drawPic) {
 	float x, y, w, h;
-
 	if (!drawPic) {
 		UI_FillRect(0, 0, 640, 480, colorBlack);
 	}
@@ -1433,8 +1430,11 @@ void UI_Refresh( int realtime )
 		if (uis.activemenu->fullscreen)
 		{
 			// draw the background
-			UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
-			UI_MenuScene();
+			if(!uis.hideBack){UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader);}
+			if(!uis.hideEarth){UI_MenuScene();}
+			if(uis.showFrame){Menu_Frame();}
+			if(uis.showSide){Menu_Side();}
+			Menu_Common(uis.menuamount);
 		}
 
 		if (uis.activemenu->draw)

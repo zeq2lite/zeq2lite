@@ -12,67 +12,35 @@ MAIN MENU
 #include "ui_local.h"
 
 
-#define ID_SINGLEPLAYER			10
 #define ID_MULTIPLAYER			11
 #define ID_SETUP				12
-#define ID_DEMOS				13
-#define ID_CINEMATICS			14
-#define ID_TEAMARENA			15
-#define ID_MODS					16
 #define ID_EXIT					17
 
 #define	ID_MODEL				18
 #define MAX_NAMELENGTH			20
 
-#define MAIN_MENU_VERTICAL_SPACING		34
+int	multiXpos = 28;
+int multiYpos = 119;
 
-int	singleXpos = 0;
-int singleYpos = 0;
+int setupXpos = 28;
+int setupYpos = 157;
 
-int	multiXpos = 64;
-int multiYpos = 24;
-
-int setupXpos = 230;
-int setupYpos = 24;
-
-int demosXpos = 0;
-int demosYpos = 0;
-
-int cinXpos = 0;
-int cinYpos = 0;
-
-int modsXpos = 390;
-int modsYpos = 24;
-
-int exitXpos = 550;
-int exitYpos = 24;
-
+int exitXpos = 28;
+int exitYpos = 195;
 typedef struct {
 	menuframework_s	menu;
 
-	menutext_s		singleplayer;
 	menutext_s		multiplayer;
 	menutext_s		setup;
-	menutext_s		demos;
-	menutext_s		cinematics;
-	menutext_s		teamArena;
-	menutext_s		mods;
+	menufield_s		name;
 	menutext_s		exit;
-
 	menubitmap_s	player;
 	playerInfo_t	playerinfo;
 	char			playerModel[MAX_QPATH];
-
-	menubitmap_s	player1;
-	playerInfo_t	playerinfo1;
-	char			playerModel1[MAX_QPATH];
-
-	menubitmap_s	player2;
-	playerInfo_t	playerinfo2;
-	char			playerModel2[MAX_QPATH];
 } mainmenu_t;
 
 static mainmenu_t s_main;
+void MainMenu_Save(void);
 
 /*
 =================
@@ -92,63 +60,60 @@ static void MainMenu_DrawPlayer( void *self ) {
 		viewangles[YAW]   = 180 - 30;
 		viewangles[PITCH] = 0;
 		viewangles[ROLL]  = 0;
-		UI_PlayerInfo_SetInfo( &s_main.playerinfo, ANIM_FLY_IDLE, ANIM_FLY_IDLE, viewangles, vec3_origin, WP_NONE, qfalse );
+		UI_PlayerInfo_SetInfo( &s_main.playerinfo, ANIM_IDLE, ANIM_IDLE, viewangles, vec3_origin, WP_NONE, qfalse );
 	}
 
 	b = (menubitmap_s*) self;
 	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo, uis.realtime / PLAYER_MODEL_SPEED );
 }
+static void MainMenu_DrawName( void *self ) {
+	menufield_s		*f;
+	qboolean		focus;
+	int				style;
+	char			*txt;
+	char			c;
+	float			*color;
+	int				n;
+	int				basex, x, y;
+	char			name[32];
 
-/*
-=================
-MainMenu_DrawPlayer1
-=================
-*/
-static void MainMenu_DrawPlayer1( void *self ) {
-	menubitmap_s	*b;
-	vec3_t			viewangles;
-	int				r;
-
-	if ( strcmp( "vegeta", s_main.playerModel1 ) != 0 ) {
-		UI_PlayerInfo_SetModel( &s_main.playerinfo1, "vegeta");
-		strcpy( s_main.playerModel1, "vegeta");
-
-		r = random() * 4;
-
-		viewangles[YAW]   = 90;
-		viewangles[PITCH] = 0;
-		viewangles[ROLL]  = 0;
-		UI_PlayerInfo_SetInfo( &s_main.playerinfo1, ANIM_SPEED_MELEE_ATTACK + r, ANIM_SPEED_MELEE_ATTACK + r, viewangles, vec3_origin, WP_NONE, qfalse );
+	f = (menufield_s*)self;
+	txt = f->field.buffer;
+	basex = (f->generic.right - 8) - (Q_PrintStrlen(txt) + 1) * 6;
+	y = f->generic.y;
+	focus = (f->generic.parent->cursor == f->generic.menuPosition);
+	style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
+	color = text_color_normal;
+	if( focus ) {
+		style |= UI_PULSE;
+		color = text_color_highlight;
 	}
-
-	b = (menubitmap_s*) self;
-	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo1, uis.realtime / PLAYER_MODEL_SPEED );
-}
-
-/*
-=================
-MainMenu_DrawPlayer2
-=================
-*/
-static void MainMenu_DrawPlayer2( void *self ) {
-	menubitmap_s	*b;
-	vec3_t			viewangles;
-	int				r;
-
-	if ( strcmp( "goku", s_main.playerModel2 ) != 0 ) {
-		UI_PlayerInfo_SetModel( &s_main.playerinfo2, "goku");
-		strcpy( s_main.playerModel2, "goku");
-
-		r = random() * 4;
-
-		viewangles[YAW]   = -90;
-		viewangles[PITCH] = 0;
-		viewangles[ROLL]  = 0;
-		UI_PlayerInfo_SetInfo( &s_main.playerinfo2, ANIM_SPEED_MELEE_ATTACK + r, ANIM_SPEED_MELEE_ATTACK + r, viewangles, vec3_origin, WP_NONE, qfalse );
+	//basex += 64;
+	y += PROP_HEIGHT;
+	color = g_color_table[ColorIndex(COLOR_WHITE)];
+	x = basex;
+	while ( (c = *txt) != 0 ) {
+		if ( !focus && Q_IsColorString( txt ) ) {
+			n = ColorIndex( *(txt+1) );
+			if( n == 0 ) {
+				n = 7;
+			}
+			color = g_color_table[n];
+			txt += 2;
+			continue;
+		}
+		UI_DrawChar( x, y, c, style, color );
+		txt++;
+		x += 6;
 	}
-
-	b = (menubitmap_s*) self;
-	UI_DrawPlayer( b->generic.x, b->generic.y, b->width, b->height, &s_main.playerinfo2, uis.realtime / PLAYER_MODEL_SPEED );
+	if( focus ) {
+		if ( trap_Key_GetOverstrikeMode() ) {
+			c = 11;
+		} else {
+			c = 10;
+		}
+		UI_DrawChar( basex + f->field.cursor * 6, y, c, style, color_white );
+	}
 }
 
 /*
@@ -177,36 +142,20 @@ void Main_MenuEvent (void* ptr, int event) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-
-	case ID_SINGLEPLAYER:
-		UI_SPLevelMenu();
-		break;
-
 	case ID_MULTIPLAYER:
+		MainMenu_Save();
 		UI_ArenaServersMenu();
 		break;
-
 	case ID_SETUP:
-		UI_SetupMenu();
+		MainMenu_Save();
+		UI_DisplayOptionsMenu();
 		break;
-
-	case ID_DEMOS:
-		UI_DemosMenu();
-		break;
-
-	case ID_CINEMATICS:
-		UI_CinematicsMenu();
-		break;
-
-	case ID_MODS:
-		UI_ModsMenu();
-		break;
-
 	case ID_EXIT:
-		UI_ConfirmMenu( "Quit ZEQ2Lite?", 0, MainMenu_ExitAction );
+		MainMenu_Save();
+		UI_ConfirmMenu( "Quit?", 0, MainMenu_ExitAction );
 		break;
-
 	case ID_MODEL:
+		MainMenu_Save();
 		UI_PlayerModelMenu();
 		break;
 	}
@@ -218,53 +167,30 @@ void Main_MenuEvent (void* ptr, int event) {
 MainMenu_Cache
 ===============
 */
-void MainMenu_Cache( void ) {
-
+void MainMenu_Cache( void ) {}
+void MainMenu_Save(void){
+	trap_Cvar_Set("name", s_main.name.field.buffer );
 }
-
-/*
-===============
+/*===============
 Main_MenuDraw
-===============
-*/
+===============*/
 static void Main_MenuDraw( void ) {
-	int DBSize = 32;
-	int DBXOffset = DBSize + 4;
-	int DBYOffset = 3;
-
-	// draw logo
-	//UI_SetColor( NULL );
-	//UI_DrawHandlePic( 0, 0, 640, 480, uis.logoShader);
-	UI_MenuLogo();
-
-	// draw dragonballs
-	UI_DrawHandlePic( multiXpos - DBXOffset, multiYpos - DBYOffset, DBSize, DBSize, uis.DragonBall1Star);
-	UI_DrawHandlePic( setupXpos - DBXOffset, setupYpos - DBYOffset, DBSize, DBSize, uis.DragonBall2Star);
-	UI_DrawHandlePic( modsXpos - DBXOffset, modsYpos - DBYOffset, DBSize, DBSize, uis.DragonBall3Star);
-	UI_DrawHandlePic( exitXpos - DBXOffset, exitYpos - DBYOffset, DBSize, DBSize, uis.DragonBall4Star);
-
-	// standard menu drawing
-	Menu_Draw( &s_main.menu );
-
-	if (uis.demoversion) {
-		UI_DrawString( 320, 400, "ZEQ2Lite (C) 2002-2009, www.zeq2.com/lite  All Rights Reserved. Teaser Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-	} else {
-		UI_DrawString( 320, 450, "ZEQ2Lite (C) 2002-2009,  www.zeq2.com/lite  All Rights Reserved.  Beta Build", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-	}
-}
-
-/*
-===============
+	uis.menuamount = 3;
+	uis.hideEarth = qfalse;
+	uis.showFrame = qfalse;
+	UI_DrawHandlePic(464,390,149,49,uis.blobShadow);
+	UI_DrawHandlePic(474,430,132,21,uis.nameArea);
+	Menu_Draw(&s_main.menu);}
+/*===============
 UI_MainMenu
 
 The main menu only comes up when not in a game,
 so make sure that the attract loop server is down
 and that local cinematics are killed
-===============
-*/
+===============*/
 void UI_MainMenu( void ) {
 	qboolean teamArena = qfalse;
-	int		style = UI_LEFT | UI_DROPSHADOW | UI_SMALLFONT;
+	int		style = UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
 
 	trap_S_StopBackgroundTrack();
 	trap_S_StartBackgroundTrack("music/yamamoto/menu01.ogg", "music/yamamoto/menu01.ogg");
@@ -287,16 +213,6 @@ void UI_MainMenu( void ) {
 	s_main.menu.wrapAround = qtrue;
 	s_main.menu.showlogo = qtrue;
 
-	s_main.singleplayer.generic.type		= MTYPE_PTEXT;
-	s_main.singleplayer.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.singleplayer.generic.x			= singleXpos;
-	s_main.singleplayer.generic.y			= singleYpos;
-	s_main.singleplayer.generic.id			= ID_SINGLEPLAYER;
-	s_main.singleplayer.generic.callback	= Main_MenuEvent; 
-	s_main.singleplayer.string				= "Story";
-	s_main.singleplayer.color				= color_white;
-	s_main.singleplayer.style				= style;
-
 	s_main.multiplayer.generic.type			= MTYPE_PTEXT;
 	s_main.multiplayer.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_main.multiplayer.generic.x			= multiXpos;
@@ -317,36 +233,6 @@ void UI_MainMenu( void ) {
 	s_main.setup.color						= color_white;
 	s_main.setup.style						= style;
 
-	s_main.demos.generic.type				= MTYPE_PTEXT;
-	s_main.demos.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.demos.generic.x					= demosXpos;
-	s_main.demos.generic.y					= demosYpos;
-	s_main.demos.generic.id					= ID_DEMOS;
-	s_main.demos.generic.callback			= Main_MenuEvent; 
-	s_main.demos.string						= "DEMOS";
-	s_main.demos.color						= color_white;
-	s_main.demos.style						= style;
-
-	s_main.cinematics.generic.type			= MTYPE_PTEXT;
-	s_main.cinematics.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.cinematics.generic.x				= cinXpos;
-	s_main.cinematics.generic.y				= cinYpos;
-	s_main.cinematics.generic.id			= ID_CINEMATICS;
-	s_main.cinematics.generic.callback		= Main_MenuEvent; 
-	s_main.cinematics.string				= "CINEMATICS";
-	s_main.cinematics.color					= color_white;
-	s_main.cinematics.style					= style;
-
-	s_main.mods.generic.type			= MTYPE_PTEXT;
-	s_main.mods.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.mods.generic.x				= modsXpos;
-	s_main.mods.generic.y				= modsYpos;
-	s_main.mods.generic.id				= ID_MODS;
-	s_main.mods.generic.callback		= Main_MenuEvent; 
-	s_main.mods.string					= "MODS";
-	s_main.mods.color					= color_white;
-	s_main.mods.style					= style;
-
 	s_main.exit.generic.type				= MTYPE_PTEXT;
 	s_main.exit.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_main.exit.generic.x					= exitXpos;
@@ -357,46 +243,35 @@ void UI_MainMenu( void ) {
 	s_main.exit.color						= color_white;
 	s_main.exit.style						= style;
 
+	s_main.name.generic.type				= MTYPE_FIELD;
+	s_main.name.generic.flags				= QMF_NODEFAULTINIT;
+	s_main.name.generic.ownerdraw			= MainMenu_DrawName;
+	s_main.name.field.widthInChars			= 14;
+	s_main.name.field.maxchars				= 14;
+	s_main.name.generic.x					= 454;
+	s_main.name.generic.y					= 405;
+	s_main.name.generic.left				= 474;
+	s_main.name.generic.top					= 430;
+	s_main.name.generic.right				= 610;
+	s_main.name.generic.bottom				= 455;
+
 	s_main.player.generic.type				= MTYPE_BITMAP;
 	s_main.player.generic.flags				= QMF_SILENT;
 	s_main.player.generic.ownerdraw			= MainMenu_DrawPlayer;
 	s_main.player.generic.id				= ID_MODEL;
 	s_main.player.generic.callback			= Main_MenuEvent;
-	s_main.player.generic.x					= 400;
-	s_main.player.generic.y					= 0;
-	s_main.player.width						= 32*10;
-	s_main.player.height					= 56*10;
+	s_main.player.generic.x					= 380;
+	s_main.player.generic.y					= -118;
+	s_main.player.width						= 320;
+	s_main.player.height					= 810;
 
-	s_main.player1.generic.type				= MTYPE_BITMAP;
-	s_main.player1.generic.flags			= QMF_INACTIVE;
-	s_main.player1.generic.ownerdraw		= MainMenu_DrawPlayer1;
-	s_main.player1.generic.x				= 225;
-	s_main.player1.generic.y				= 0;
-	s_main.player1.width					= 32*10;
-	s_main.player1.height					= 56*10;
 
-	s_main.player2.generic.type				= MTYPE_BITMAP;
-	s_main.player2.generic.flags			= QMF_INACTIVE;
-	s_main.player2.generic.ownerdraw		= MainMenu_DrawPlayer2;
-	s_main.player2.generic.x				= 75;
-	s_main.player2.generic.y				= 0;
-	s_main.player2.width					= 32*10;
-	s_main.player2.height					= 56*10;
-
-//	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
-
-//	Menu_AddItem( &s_main.menu,	&s_main.demos );
-//	Menu_AddItem( &s_main.menu,	&s_main.cinematics );
-
-	Menu_AddItem( &s_main.menu,	&s_main.mods );
 	Menu_AddItem( &s_main.menu,	&s_main.exit );
-
-//	Menu_AddItem( &s_main.menu, &s_main.player );
-//	Menu_AddItem( &s_main.menu, &s_main.player1 );
-//	Menu_AddItem( &s_main.menu, &s_main.player2 );
-
+	Menu_AddItem( &s_main.menu, &s_main.name );
+	Q_strncpyz(s_main.name.field.buffer,UI_Cvar_VariableString("name"),sizeof(s_main.name.field.buffer) );
+	Menu_AddItem( &s_main.menu, &s_main.player );
 	trap_Key_SetCatcher( KEYCATCH_UI );
 	uis.menusp = 0;
 	UI_PushMenu ( &s_main.menu );
