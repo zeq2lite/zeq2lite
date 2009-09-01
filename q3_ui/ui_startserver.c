@@ -74,11 +74,7 @@ typedef struct {
 static startserver_t s_startserver;
 
 static const char *gametype_items[] = {
-	"Free For All",
-	"Team Deathmatch",
 	"Struggle",
-	"Tournament",
-	"Capture the Flag",
 	0
 };
 
@@ -503,10 +499,6 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.item_null.generic.y		= 0;
 	s_startserver.item_null.width			= 640;
 	s_startserver.item_null.height			= 480;
-
-	Menu_AddItem( &s_startserver.menu, &s_startserver.banner );
-	Menu_AddItem( &s_startserver.menu, &s_startserver.framel );
-	Menu_AddItem( &s_startserver.menu, &s_startserver.framer );
 
 	Menu_AddItem( &s_startserver.menu, &s_startserver.gametype );
 	for (i=0; i<MAX_MAPSPERPAGE; i++)
@@ -1444,12 +1436,11 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.go.height  		    = 64;
 	s_serveroptions.go.focuspic         = GAMESERVER_FIGHT1;
 
-	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.banner );
+
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.mappic );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.picframe );
 
-	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.botSkill );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.player0 );
 	for( n = 0; n < PLAYER_SLOTS; n++ ) {
 		if( n != 0 ) {
@@ -1955,7 +1946,6 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.go.height				= 64;
 	botSelectInfo.go.focuspic			= BOTSELECT_ACCEPT1;
 
-	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.banner );
 	for( i = 0; i < MAX_MODELSPERPAGE; i++ ) {
 		Menu_AddItem( &botSelectInfo.menu,	&botSelectInfo.pics[i] );
 		Menu_AddItem( &botSelectInfo.menu,	&botSelectInfo.picbuttons[i] );
@@ -1980,6 +1970,7 @@ UI_BotSelectMenu
 =================
 */
 void UI_BotSelectMenu( char *bot ) {
+	uis.menuamount = 0;
 	UI_BotSelectMenu_Init( bot );
 	UI_PushMenu( &botSelectInfo.menu );
 }

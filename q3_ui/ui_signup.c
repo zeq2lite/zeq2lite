@@ -229,7 +229,7 @@ void Signup_MenuInit( void ) {
 		s_signup.signup.color = colorMdGrey;
 	}
 	
-	Menu_AddItem( &s_signup.menu, (void*) &s_signup.frame );
+
 	Menu_AddItem( &s_signup.menu, (void*) &s_signup.name );
 	Menu_AddItem( &s_signup.menu, (void*) &s_signup.name_box );
 	Menu_AddItem( &s_signup.menu, (void*) &s_signup.password );
@@ -260,6 +260,7 @@ UI_SignupMenu
 */
 void UI_SignupMenu( void ) {
 	Signup_MenuInit();
+	uis.menuamount = 0;
 	UI_PushMenu ( &s_signup.menu );
 }
 

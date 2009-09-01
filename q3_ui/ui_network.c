@@ -207,9 +207,6 @@ static void UI_NetworkOptionsMenu_Init( void ) {
 	networkOptionsInfo.back.height				= 64;
 	networkOptionsInfo.back.focuspic			= ART_BACK1;
 
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.banner );
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.framel );
-	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.framer );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.graphics );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.display );
 	Menu_AddItem( &networkOptionsInfo.menu, ( void * ) &networkOptionsInfo.sound );
@@ -255,6 +252,7 @@ UI_NetworkOptionsMenu
 ===============
 */
 void UI_NetworkOptionsMenu( void ) {
+	uis.menuamount = 0;
 	UI_NetworkOptionsMenu_Init();
 	UI_PushMenu( &networkOptionsInfo.menu );
 	Menu_SetCursorToItem( &networkOptionsInfo.menu, &networkOptionsInfo.network );

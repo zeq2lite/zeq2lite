@@ -78,18 +78,12 @@ MULTIPLAYER MENU (SERVER BROWSER)
 
 static const char *master_items[] = {
 	"Local",
-	"Mplayer",
 	"Internet",
 	"Favorites",
 	0
 };
 
 static const char *servertype_items[] = {
-	"All",
-	"Free For All",
-	"Team Deathmatch",
-	"Tournament",
-	"Capture the Flag",
 	"Struggle",
 	0
 };
@@ -1131,7 +1125,7 @@ void ArenaServers_SetType( int type )
 		g_arenaservers.numqueriedservers = *g_arenaservers.numservers; 
 		ArenaServers_UpdateMenu();
 	}
-	strcpy(g_arenaservers.status.string,"hit refresh to update");
+	strcpy(g_arenaservers.status.string,"");
 }
 
 
@@ -1282,7 +1276,7 @@ static void ArenaServers_MenuInit( void ) {
 	memset( &g_arenaservers, 0 ,sizeof(arenaservers_t) );
 
 	ArenaServers_Cache();
-
+	uis.menuamount = 0;
 	g_arenaservers.menu.fullscreen = qtrue;
 	g_arenaservers.menu.wrapAround = qtrue;
     g_arenaservers.menu.draw       = ArenaServers_MenuDraw;
@@ -1477,8 +1471,6 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.go.height				= 64;
 	g_arenaservers.go.focuspic				= ART_CONNECT1;
 
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.banner );
-
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.master );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.gametype );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.sortkey );
@@ -1493,7 +1485,6 @@ static void ArenaServers_MenuInit( void ) {
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.up );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.down );
 
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.remove );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.back );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.specify );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.refresh );

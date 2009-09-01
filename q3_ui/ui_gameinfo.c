@@ -790,7 +790,7 @@ void UI_InitGameinfo( void ) {
 	UI_InitMemory();
 	UI_LoadArenas();
 	UI_LoadBots();
-
+	uis.menuamount = 0;
 	if( (trap_Cvar_VariableValue( "fs_restrict" )) || (ui_numSpecialSinglePlayerArenas == 0 && ui_numSinglePlayerArenas == 4) ) {
 		uis.demoversion = qtrue;
 	}

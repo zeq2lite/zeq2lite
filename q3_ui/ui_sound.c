@@ -252,9 +252,6 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.back.height				= 64;
 	soundOptionsInfo.back.focuspic				= ART_BACK1;
 
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.banner );
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.framel );
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.framer );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.graphics );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.display );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.sound );
@@ -291,6 +288,7 @@ UI_SoundOptionsMenu
 ===============
 */
 void UI_SoundOptionsMenu( void ) {
+	uis.menuamount = 0;
 	UI_SoundOptionsMenu_Init();
 	UI_PushMenu( &soundOptionsInfo.menu );
 	Menu_SetCursorToItem( &soundOptionsInfo.menu, &soundOptionsInfo.sound );

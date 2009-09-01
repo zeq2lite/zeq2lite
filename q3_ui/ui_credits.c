@@ -40,58 +40,44 @@ UI_CreditMenu_Draw
 ===============
 */
 static void UI_CreditMenu_Draw( void ) {
-	int		y;
+	int		x,y;
 
-	y = 12;
-	UI_DrawProportionalString( 320, y, "ZEQ II Lite Team is:", UI_CENTER|UI_DROPSHADOW, color_white );
+	y = 105;
+	x = 30;
+
+	UI_DrawProportionalString( x, y, "Design/Management", UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
+	UI_DrawProportionalString( x, y, "Zeth, MDave", UI_LEFT|UI_TINYFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Programming", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawProportionalString( x, y, "Programming", UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "RiO, Kaiopunk, Brad, MDave", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( x, y, "RiO, Zeth, MDave", UI_LEFT|UI_TINYFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Animations", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawProportionalString( x, y, "2D/3D Animation", UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "MDave", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( x, y, "MDave", UI_LEFT|UI_TINYFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Modellers", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawProportionalString( x, y, "2D Artists", UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Blaize, MDave, Super Vegetto, RiO, DarkLink", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( x, y, "Super Vegetto, MDave", UI_LEFT|UI_TINYFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Mappers", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawProportionalString( x, y, "3D Artists", UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Element X, Brad, MDave, RiO, Rammek, NJ", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( x, y, "Blaize, MDave, Super Vegetto, DarkLink", UI_LEFT|UI_TINYFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Skinners", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawProportionalString( x, y, "Mappers", UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "MDave, Super Vegetto", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( x, y, "MDave, Zeth", UI_LEFT|UI_TINYFONT|UI_DROPSHADOW, color_white );
 
 	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Sounds", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawProportionalString( x, y, "Sounds/Music", UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
 	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Wolf, Son Davie, Circlerun", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-
-	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Music", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
-	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Circlerun", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-
-	y += 1.42 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Retired Members", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
-	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "Eclipse, IrishBlood, Bruno", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-	y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawProportionalString( 320, y, "An@kin, Mystic Mike, Tenken", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-
-	y += 1.35 * PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-	UI_DrawString( 320, y, "A Dragon Ball Z Quake III Arena Total Conversion.  www.zeq2.com/lite", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-	y += SMALLCHAR_HEIGHT;
-	UI_DrawString( 320, y, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
-}
+	UI_DrawProportionalString( x, y, "Circlerun", UI_LEFT|UI_TINYFONT|UI_DROPSHADOW, color_white );}
 
 
 /*===============
@@ -101,7 +87,7 @@ void UI_CreditMenu( void ) {
 
 	uis.menuamount = 0;
 	trap_S_StopBackgroundTrack();
-	trap_S_StartBackgroundTrack("music/yamamoto/credits02.ogg", "music/yamamoto/credits02.ogg");
+	trap_S_StartBackgroundTrack("music/credits.ogg", "music/credits.ogg");
 	trap_S_StartLocalSound( menu_exit_sound, CHAN_LOCAL_SOUND );
 
 	memset( &s_credits, 0 ,sizeof(s_credits) );

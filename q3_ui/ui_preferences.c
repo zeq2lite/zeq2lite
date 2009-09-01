@@ -511,9 +511,6 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.apply.height  		 = 64;
 	s_preferences.apply.focuspic         = ART_ACCEPT1;
 
-	Menu_AddItem( &s_preferences.menu, &s_preferences.banner );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.framel );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.framer );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshair );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshairSize );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.camerastyle );
@@ -558,6 +555,7 @@ void Preferences_Cache(void){
 UI_PreferencesMenu
 ===============*/
 void UI_PreferencesMenu( void ) {
+	uis.menuamount = 0;
 	Preferences_MenuInit();
 	UI_PushMenu( &s_preferences.menu );
 }

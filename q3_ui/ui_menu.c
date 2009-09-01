@@ -148,7 +148,7 @@ void Main_MenuEvent (void* ptr, int event) {
 		break;
 	case ID_SETUP:
 		MainMenu_Save();
-		UI_DisplayOptionsMenu();
+		UI_SetupMenu();
 		break;
 	case ID_EXIT:
 		MainMenu_Save();
@@ -180,7 +180,8 @@ static void Main_MenuDraw( void ) {
 	uis.showFrame = qfalse;
 	UI_DrawHandlePic(464,390,149,49,uis.blobShadow);
 	UI_DrawHandlePic(474,430,132,21,uis.nameArea);
-	Menu_Draw(&s_main.menu);}
+	Menu_Draw(&s_main.menu);
+}
 /*===============
 UI_MainMenu
 
@@ -193,7 +194,7 @@ void UI_MainMenu( void ) {
 	int		style = UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
 
 	trap_S_StopBackgroundTrack();
-	trap_S_StartBackgroundTrack("music/yamamoto/menu01.ogg", "music/yamamoto/menu01.ogg");
+	trap_S_StartBackgroundTrack("music/menu.ogg", "music/menu.ogg");
 	trap_Cvar_Set( "sv_killserver", "1" );
 
 	// set menu cursor to a nice location

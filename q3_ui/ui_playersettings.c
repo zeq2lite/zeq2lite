@@ -440,10 +440,6 @@ static void PlayerSettings_MenuInit( void ) {
 	s_playersettings.item_null.width			= 640;
 	s_playersettings.item_null.height			= 480;
 
-	Menu_AddItem( &s_playersettings.menu, &s_playersettings.banner );
-	Menu_AddItem( &s_playersettings.menu, &s_playersettings.framel );
-	Menu_AddItem( &s_playersettings.menu, &s_playersettings.framer );
-
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.name );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.handicap );
 	Menu_AddItem( &s_playersettings.menu, &s_playersettings.effects );
@@ -488,6 +484,7 @@ UI_PlayerSettingsMenu
 =================
 */
 void UI_PlayerSettingsMenu( void ) {
+	uis.menuamount = 0;
 	PlayerSettings_MenuInit();
 	UI_PushMenu( &s_playersettings.menu );
 }

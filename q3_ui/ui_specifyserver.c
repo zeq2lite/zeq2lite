@@ -151,9 +151,7 @@ void SpecifyServer_MenuInit( void )
 	s_specifyserver.back.height  		  = 64;
 	s_specifyserver.back.focuspic         = SPECIFYSERVER_BACK1;
 
-	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.banner );
-	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.framel );
-	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.framer );
+
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.domain );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.port );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.go );
@@ -187,6 +185,7 @@ UI_SpecifyServerMenu
 */
 void UI_SpecifyServerMenu( void )
 {
+	uis.menuamount = 0;
 	SpecifyServer_MenuInit();
 	UI_PushMenu( &s_specifyserver.menu );
 }

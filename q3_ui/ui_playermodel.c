@@ -543,10 +543,10 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.ports.width         = 274;
 	s_playermodel.ports.height        = 274;
 
-	y =	59;
+	y =	85;
 	for (i=0,k=0; i<PLAYERGRID_ROWS; i++)
 	{
-		x =	50;
+		x =	190;
 		for (j=0; j<PLAYERGRID_COLS; j++,k++)
 		{
 			s_playermodel.pics[k].generic.type	   = MTYPE_BITMAP;
@@ -649,14 +649,6 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.back.height  		    = 64;
 	s_playermodel.back.focuspic         = MODEL_BACK1;
 
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.banner );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.framel );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.framer );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.ports );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.playername );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.modelname );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.skinname );
-
 	for (i=0; i<MAX_MODELSPERPAGE; i++)
 	{
 		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.pics[i] );
@@ -664,9 +656,6 @@ static void PlayerModel_MenuInit( void )
 	}
 
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.player );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.arrows );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.left );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.right );
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.back );
 
 	// find all available models
@@ -701,6 +690,7 @@ void PlayerModel_Cache( void )
 
 void UI_PlayerModelMenu(void)
 {
+	uis.menuamount = 0;
 	PlayerModel_MenuInit();
 
 	UI_PushMenu( &s_playermodel.menu );

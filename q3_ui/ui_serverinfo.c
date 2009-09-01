@@ -172,7 +172,7 @@ void UI_ServerInfoMenu( void )
 	memset( &s_serverinfo, 0 ,sizeof(serverinfo_t) );
 
 	ServerInfo_Cache();
-
+	uis.menuamount = 0;
 	s_serverinfo.menu.draw       = ServerInfo_MenuDraw;
 	s_serverinfo.menu.key        = ServerInfo_MenuKey;
 	s_serverinfo.menu.wrapAround = qtrue;
@@ -240,9 +240,7 @@ void UI_ServerInfoMenu( void )
 	if (s_serverinfo.numlines > 16)
 		s_serverinfo.numlines = 16;
 
-	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.banner );
-	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.framel );
-	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.framer );
+
 	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.add );
 	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.back );
 

@@ -1100,7 +1100,6 @@ UI_Init
 */
 void UI_Init( void ) {
 	UI_RegisterCvars();
-
 	UI_InitGameinfo();
 
 	// cache redundant calulations

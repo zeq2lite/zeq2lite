@@ -129,6 +129,7 @@ void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)(
 	int	n1, n2, n3;
 	int	l1, l2, l3;
 
+	uis.menuamount = 0;
 	// zero set all our globals
 	memset( &s_confirm, 0, sizeof(s_confirm) );
 

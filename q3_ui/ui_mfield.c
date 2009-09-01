@@ -285,8 +285,8 @@ void MenuField_Init( menufield_s* m ) {
 
 	if (m->generic.flags & QMF_SMALLFONT)
 	{
-		w = SMALLCHAR_WIDTH;
-		h = SMALLCHAR_HEIGHT;
+		w = 6;
+		h = 12;
 	}
 	else if (m->generic.flags & QMF_TINYFONT)
 	{
@@ -332,9 +332,9 @@ void MenuField_Draw( menufield_s *f )
 
 	if (f->generic.flags & QMF_SMALLFONT)
 	{
-		w = SMALLCHAR_WIDTH;
-		h = SMALLCHAR_HEIGHT;
-		style = UI_SMALLFONT|UI_DROPSHADOW;
+		w = 6;
+		h = 12;
+		style = UI_TINYFONT|UI_DROPSHADOW;
 	}
 	else
 	{
