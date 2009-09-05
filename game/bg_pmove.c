@@ -612,7 +612,7 @@ void PM_CheckHover(void){
 				PM_AddEvent(EV_HOVER);
 			}
 		}else{
-			if(!(pm->ps->states & isDashing)){
+			if(!(pm->ps->states & isDashing && pm->cmd.forwardmove)){
 				pm->ps->states |= isDashing;
 				//PM_AddEvent(EV_HOVER_FAST);
 			}
