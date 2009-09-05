@@ -1636,7 +1636,7 @@ void PM_Footsteps(void){
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
-	if(pm->waterlevel > 1 && !(pm->ps->bitFlags & usingBoost)){
+	if(pm->waterlevel > 2 && !(pm->ps->bitFlags & usingBoost) && !(pm->ps->bitFlags & usingSoar)){
 		if(pm->cmd.forwardmove > 0){
 			PM_ContinueLegsAnim(ANIM_SWIM);
 		}else{
