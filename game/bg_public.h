@@ -230,6 +230,7 @@ typedef enum {
 	stChargePercentPrimary,	// % of primary attack charged
 	stChargePercentSecondary,	// % of secondary attack charged
 	stMeleeState,
+	stAnimState,
 	stSkills,					// 16 bit bitmask
 }statIndex_t;
 
@@ -408,7 +409,6 @@ typedef enum {
 
 typedef enum {
 	WP_NONE,
-
 	WP_GAUNTLET,
 	WP_MACHINEGUN,
 	WP_SHOTGUN,

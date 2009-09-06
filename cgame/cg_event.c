@@ -400,22 +400,14 @@ void CG_PainEvent( centity_t *cent, int powerLevel ) {
 	if ( cg.time - cent->pe.painTime < 500 ) {
 		return;
 	}
-
-	if ( powerLevel < 25 ) {
-		snd = "*pain25_1.ogg";
-	} else if ( powerLevel < 50 ) {
-		snd = "*pain50_1.ogg";
-	} else if ( powerLevel < 75 ) {
-		snd = "*pain75_1.ogg";
-	} else {
-		snd = "*pain100_1.ogg";
-	}
+	/*
 	trap_S_StartSound( NULL, cent->currentState.number, CHAN_VOICE, 
 		CG_CustomSound( cent->currentState.number, snd ) );
 
 	// save pain time for programitic twitch animation
 	cent->pe.painTime = cg.time;
 	cent->pe.painDirection ^= 1;
+	*/
 }
 
 
@@ -896,7 +888,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.airBrake2);
 			}
 			CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
-			CG_PowerMeleeEffect(cent->lerpOrigin,cent->currentState.tier);
+			CG_PowerMeleeEffect(cent->lerpOrigin);
 			break;
 		}
 	case EV_PAIN:
@@ -965,7 +957,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MELEE_SPEED:
 		DEBUGNAME("EV_MELEE_SPEED");
 		trap_S_AddRealLoopingSound(es->number,cent->lerpOrigin,vec3_origin,cgs.media.speedMeleeSound);
-		CG_SpeedMeleeEffect(cent->lerpOrigin,cent->currentState.tier);
+		CG_SpeedMeleeEffect(cent->lerpOrigin);
 		break;
 	case EV_MELEE_MISS:
 		DEBUGNAME("EV_MELEE_MISS");
@@ -975,7 +967,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_MELEE_KNOCKBACK");
 		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerMeleeSound);
 		CG_AddEarthquake(cent->lerpOrigin, 1000, 1, 0, 1, 500);
-		CG_PowerMeleeEffect(cent->lerpOrigin,cent->currentState.tier);
+		CG_PowerMeleeEffect(cent->lerpOrigin);
 		break;
 	case EV_MELEE_STUN:
 		DEBUGNAME("EV_MELEE_STUN");

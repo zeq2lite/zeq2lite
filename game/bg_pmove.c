@@ -409,6 +409,7 @@ void PM_CheckStatus(void){
 			pm->ps->powerLevel[plCurrent] = 1;
 			PM_StopMovement();
 			PM_StopFlight();
+			PM_StopBoost();
 			PM_WeaponRelease();
 			PM_AddEvent(EV_UNCONCIOUS);
 			if(pm->ps->powerLevel[plFatigue] > -2500){
@@ -612,7 +613,7 @@ void PM_CheckHover(void){
 				PM_AddEvent(EV_HOVER);
 			}
 		}else{
-			if(!(pm->ps->states & isDashing && pm->cmd.forwardmove)){
+			if(!(pm->ps->states & isDashing)){
 				pm->ps->states |= isDashing;
 				//PM_AddEvent(EV_HOVER_FAST);
 			}
@@ -1636,7 +1637,7 @@ void PM_Footsteps(void){
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
-	if(pm->waterlevel > 2 && !(pm->ps->bitFlags & usingBoost) && !(pm->ps->bitFlags & usingSoar)){
+	if(pm->waterlevel > 1 && !(pm->ps->bitFlags & usingBoost)){
 		if(pm->cmd.forwardmove > 0){
 			PM_ContinueLegsAnim(ANIM_SWIM);
 		}else{
@@ -2074,7 +2075,6 @@ void PM_StopMelee(void){
 		pm->ps->timers[tmMeleeCharge] = 0;
 		pm->ps->timers[tmMeleeIdle] = 0;
 		pm->ps->timers[tmMeleeBreaker] = 0;
-		pm->ps->powerups[PW_DRIFTING] = 0;
 		pm->ps->bitFlags &= ~usingMelee;
 		PM_AddEvent(EV_STOPLOOPINGSOUND);
 		PM_EndDrift();
@@ -2102,6 +2102,7 @@ void PM_StopDrift(void){
 	if(pm->ps->powerups[PW_DRIFTING] == 1){PM_EndDrift();}
 }
 void PM_SyncMelee(void){
+	if(pm->ps->lockedPlayer->bitFlags & usingZanzoken || pm->ps->lockedPlayer->bitFlags & usingZanzoken){return;}
 	pm->ps->pm_flags |= PMF_ATTACK1_HELD;
 	pm->ps->pm_flags |= PMF_ATTACK2_HELD;
 	pm->ps->bitFlags |= usingMelee;
@@ -2128,7 +2129,9 @@ void PM_MeleeIdle(void){
 }
 void PM_Melee(void){
 	int meleeCharge,enemyState,state,option,damage,distance,animation,direction,entity;
-	qboolean charging,movingForward,idleTime;
+	qboolean charging,movingForward,idleTime,enemyChanged,enemyDefense;
+	qtime_t realRandom;
+	trap_RealTime(&realRandom);
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR || pm->ps->bitFlags & isStruggling || pm->ps->timers[tmMeleeIdle] < 0){return;}
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
 	state = pm->ps->stats[stMeleeState];
@@ -2143,9 +2146,15 @@ void PM_Melee(void){
 			pm->ps->timers[tmUpdateMelee] = 0;
 			PM_AddEvent(EV_MELEE_CHECK);
 		}
-		if(pm->ps->bitFlags & usingZanzoken){return;}
+		if(pm->ps->bitFlags & usingZanzoken){
+			PM_StopMelee();
+			return;
+		}
 		if(pm->ps->lockedPlayer){
-			if(pm->ps->lockedPlayer->bitFlags & usingZanzoken){return;}
+			if(pm->ps->lockedPlayer->bitFlags & usingZanzoken){
+				PM_StopMelee();
+				return;
+			}
 			distance = Distance(pm->ps->origin,*(pm->ps->lockedPosition));
 			if(!(pm->ps->bitFlags & usingMelee)){
 				state = stMeleeInactive;
@@ -2158,7 +2167,6 @@ void PM_Melee(void){
 				return;
 			}
 			if(state != stMeleeIdle){pm->ps->timers[tmMeleeIdle] = 0;}
-			if(distance <= 192){animation = ANIM_FLY_IDLE;}
 			if(distance > 64 && pm->ps->bitFlags & usingMelee){PM_StopMelee();}
 		}
 	}
@@ -2174,9 +2182,10 @@ void PM_Melee(void){
 		return;
 	}
 	damage = 0;
-	animation = 0;
+	animation = pm->ps->bitFlags & usingMelee ? ANIM_FLY_IDLE : 0;
 	meleeCharge = pm->ps->timers[tmMeleeCharge];
 	enemyState = pm->ps->lockedPlayer->stats[stMeleeState];
+	enemyDefense = enemyState == stMeleeUsingEvade || enemyState == stMeleeUsingBlock ? qtrue : qfalse;
 	// ===================
 	// Melee Logic
 	// ===================
@@ -2285,6 +2294,7 @@ void PM_Melee(void){
 				else if(!pm->ps->timers[tmMeleeBreakerWait]){
 					pm->ps->timers[tmMeleeBreaker] = 1;
 					pm->ps->timers[tmMeleeBreakerWait] = 1500;
+					pm->ps->stats[stAnimState] = (Q_random(&realRandom.tm_sec) * 5)+1;
 					meleeCharge = 0;
 				}
 				else{meleeCharge = 0;}
@@ -2337,6 +2347,7 @@ void PM_Melee(void){
 				else if(!pm->ps->timers[tmMeleeBreakerWait]){
 					pm->ps->timers[tmMeleeBreaker] = -1;
 					pm->ps->timers[tmMeleeBreakerWait] = 1500;
+					pm->ps->stats[stAnimState] = (Q_random(&realRandom.tm_sec) * 5)+1;
 					meleeCharge = 0;
 				}
 				else{meleeCharge = 0;}
@@ -2390,15 +2401,25 @@ void PM_Melee(void){
 						else{
 							pm->ps->powerups[PW_DRIFTING] = 1;
 							pm->ps->lockedPlayer->powerups[PW_DRIFTING] = 2;
-							pm->ps->lockedPlayer->timers[tmFreeze] = 2500;
-							enemyState = stMeleeStartHit;
-							PM_AddEvent(EV_MELEE_KNOCKBACK);
+							if(pm->ps->timers[tmBoost]){
+								pm->ps->powerups[PW_DRIFTING] = 1;
+								pm->ps->lockedPlayer->powerups[PW_DRIFTING] = 2;
+								pm->ps->timers[tmFreeze] = 0;
+								pm->ps->lockedPlayer->timers[tmFreeze] = 0;
+								state = stMeleeUsingSpeed;
+							}
+							else{
+								pm->ps->lockedPlayer->timers[tmFreeze] = 2500;
+								enemyState = stMeleeStartHit;
+								PM_AddEvent(EV_MELEE_KNOCKBACK);
+							}
 						}
 					}
 				}
 				// Speed Melee
 				else{
 					damage = (pm->ps->powerLevel[plFatigue] * 0.013) * pm->ps->stats[stMeleeAttack];
+					if(pm->ps->powerups[PW_DRIFTING]==1){damage *= 1.2;}
 					if(pm->ps->bitFlags & usingBoost){damage *= 1.5;}
 					pm->ps->timers[tmMeleeSpeed] += pml.msec;
 					if(pm->ps->timers[tmMeleeSpeed] >= 100){
@@ -2420,7 +2441,7 @@ void PM_Melee(void){
 			}
 			// Evade
 			else{
-				if(pm->ps->lockedPlayer->timers[tmFreeze] > 0){PM_StopMelee();}
+				if(pm->ps->lockedPlayer->timers[tmFreeze] > 0 || enemyDefense){PM_StopMelee();}
 				else{state = stMeleeUsingEvade;}
 				PM_MeleeIdle();
 			}
@@ -2430,6 +2451,7 @@ void PM_Melee(void){
 			meleeCharge = 0;
 			state = stMeleeUsingBlock;
 			PM_MeleeIdle();
+			if(enemyDefense){PM_StopMelee();}
 		}
 		else{
 			meleeCharge = 0;
@@ -2440,7 +2462,9 @@ void PM_Melee(void){
 	// ===========================
 	// Melee Animations / Events
 	// ===========================
-	if(pm->ps->lockedPlayer->lockedTarget != pm->ps->clientNum + 1){enemyState = 0;}
+	enemyChanged = pm->ps->lockedPlayer->stats[stMeleeState] == enemyState ? qfalse : qtrue;
+	if(pm->ps->lockedPlayer->lockedTarget != pm->ps->clientNum + 1 && !enemyChanged){enemyState = -1;}
+	if((pm->ps->lockedPlayer->timers[tmKnockback] || pm->ps->lockedPlayer->timers[tmFreeze]) && !enemyChanged){enemyState = -1;}
 	if(state){
 		if(state == stMeleeStartAttack){animation = ANIM_BREAKER_MELEE_ATTACK1;}
 		if(state == stMeleeStartHit){animation = ANIM_BREAKER_MELEE_HIT1;}
@@ -2495,25 +2519,29 @@ void PM_Melee(void){
 		if(state == stMeleeChargingStun){
 			animation = ANIM_POWER_MELEE_1_CHARGE;
 		}
-		if(state == stMeleeUsingSpeedBreaker || enemyState == stMeleeUsingSpeedBreaker){
-			if(state == stMeleeUsingSpeedBreaker){
-				animation = ANIM_BREAKER_MELEE_ATTACK1;
+		if(state == stMeleeUsingSpeedBreaker || enemyState == stMeleeUsingSpeedBreaker || state == stMeleeUsingChargeBreaker || enemyState == stMeleeUsingChargeBreaker){
+			int breaker = pm->ps->stats[stAnimState];
+			int enemyBreaker = pm->ps->lockedPlayer->stats[stAnimState];
+			if(state == stMeleeUsingSpeedBreaker || state == stMeleeUsingChargeBreaker){
+				if(breaker == 1){animation = ANIM_BREAKER_MELEE_ATTACK1;}
+				else if(breaker == 2){animation = ANIM_BREAKER_MELEE_ATTACK2;}
+				else if(breaker == 3){animation = ANIM_BREAKER_MELEE_ATTACK3;}
+				else if(breaker == 4){animation = ANIM_BREAKER_MELEE_ATTACK4;}
+				else if(breaker == 5){animation = ANIM_BREAKER_MELEE_ATTACK5;}
+				else if(breaker == 6){animation = ANIM_BREAKER_MELEE_ATTACK6;}
 			}
 			else{
-				animation = ANIM_BREAKER_MELEE_HIT1;
-			}
-		}
-		if(state == stMeleeUsingChargeBreaker || enemyState == stMeleeUsingChargeBreaker){
-			if(state == stMeleeUsingChargeBreaker){
-				animation = ANIM_BREAKER_MELEE_ATTACK1;
-			}
-			else{
-				animation = ANIM_BREAKER_MELEE_HIT1;
+				if(enemyBreaker == 1){animation = ANIM_BREAKER_MELEE_HIT1;}
+				else if(enemyBreaker == 2){animation = ANIM_BREAKER_MELEE_HIT2;}
+				else if(enemyBreaker == 3){animation = ANIM_BREAKER_MELEE_HIT3;}
+				else if(enemyBreaker == 4){animation = ANIM_BREAKER_MELEE_HIT4;}
+				else if(enemyBreaker == 5){animation = ANIM_BREAKER_MELEE_HIT5;}
+				else if(enemyBreaker == 6){animation = ANIM_BREAKER_MELEE_HIT6;}
 			}
 		}
 	}
 	if(animation){PM_ContinueLegsAnim(animation);}
-	pm->ps->lockedPlayer->stats[stMeleeState] = enemyState;
+	if(enemyState != -1){pm->ps->lockedPlayer->stats[stMeleeState] = enemyState;}
 	pm->ps->stats[stMeleeState] = state;
 	pm->ps->timers[tmMeleeCharge] = meleeCharge;
 	if(distance <= 64){pm->cmd.rightmove = 0;}

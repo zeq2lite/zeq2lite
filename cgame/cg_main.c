@@ -657,7 +657,7 @@ static void CG_RegisterSounds( void ) {
 	}
 	// ADDING FOR ZEQ2
 
-	cgs.media.radarwarningSound = trap_S_RegisterSound( "interface/radar/warning.ogg", qfalse );
+	cgs.media.radarwarningSound = trap_S_RegisterSound( "interface/sense/warning.ogg", qfalse );
 	cgs.media.lightspeedSound1 = trap_S_RegisterSound( "effects/zanzoken/zanzoken1.ogg", qfalse );
 	cgs.media.lightspeedSound2 = trap_S_RegisterSound( "effects/zanzoken/zanzoken2.ogg", qfalse );
 	cgs.media.lightspeedSound3 = trap_S_RegisterSound( "effects/zanzoken/zanzoken3.ogg", qfalse );
@@ -684,7 +684,7 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.airBrake1 = trap_S_RegisterSound( "effects/airBrake1.ogg", qfalse );
 	cgs.media.airBrake2 = trap_S_RegisterSound( "effects/airBrake2.ogg", qfalse );
 	cgs.media.hover = trap_S_RegisterSound( "effects/hover.ogg", qfalse );
-	cgs.media.hoverFast = trap_S_RegisterSound( "effects/aura/dash.ogg", qfalse );
+	cgs.media.hoverFast = trap_S_RegisterSound( "effects/hoverFast.ogg", qfalse );
 	cgs.media.hoverLong = trap_S_RegisterSound( "effects/hoverLong.ogg", qfalse );
 	cgs.media.waterSplashSmall1 = trap_S_RegisterSound( "effects/water/SplashSmall.ogg", qfalse );
 	cgs.media.waterSplashSmall2 = trap_S_RegisterSound( "effects/water/SplashSmall2.ogg", qfalse );
@@ -697,6 +697,7 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.waterSplashExtraLarge1 = trap_S_RegisterSound( "effects/water/SplashExtraLarge.ogg", qfalse );
 	cgs.media.waterSplashExtraLarge2 = trap_S_RegisterSound( "effects/water/SplashExtraLarge2.ogg", qfalse );
 	// END ADDING
+
 }
 
 
@@ -1722,11 +1723,11 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.markerAscendShader = trap_R_RegisterShaderNoMip( "interface/hud/markerAscend.png" );
 	cgs.media.markerDescendShader = trap_R_RegisterShaderNoMip( "interface/hud/markerDescend.png" );
 	cgs.media.breakLimitShader = trap_R_RegisterShaderNoMip( "breakLimit" );
-	cgs.media.RadarBlipShader = trap_R_RegisterShaderNoMip( "interface/radar/blip.png" );
-	cgs.media.RadarBlipTeamShader = trap_R_RegisterShaderNoMip( "interface/radar/blipteam.png" );
-	cgs.media.RadarBurstShader = trap_R_RegisterShaderNoMip( "interface/radar/burst.png" );
-	cgs.media.RadarWarningShader = trap_R_RegisterShaderNoMip( "interface/radar/warning.png" );
-	cgs.media.RadarMidpointShader = trap_R_RegisterShaderNoMip( "interface/radar/midpoint.png" );
+	cgs.media.RadarBlipShader = trap_R_RegisterShaderNoMip( "interface/sense/blip.png" );
+	cgs.media.RadarBlipTeamShader = trap_R_RegisterShaderNoMip( "interface/sense/blipteam.png" );
+	cgs.media.RadarBurstShader = trap_R_RegisterShaderNoMip( "interface/sense/burst.png" );
+	cgs.media.RadarWarningShader = trap_R_RegisterShaderNoMip( "interface/sense/warning.png" );
+	cgs.media.RadarMidpointShader = trap_R_RegisterShaderNoMip( "interface/sense/midpoint.png" );
 	// END ADDING
 
 	// register the inline models

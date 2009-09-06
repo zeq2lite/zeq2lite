@@ -617,7 +617,7 @@ static void CG_AddZEQExplosion( localEntity_t *le ) {
 	ent->shaderRGBA[3] = 0xff * RGBfade;
 	
 	// grow time
-	phase = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime ) * M_PI / 1.5f;
+	phase = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime ) * M_PI / 2.0f;
 	c = 1.0f + (sin(phase));
 
 	// preserve the full scale
@@ -678,7 +678,7 @@ static void CG_AddZEQSplash( localEntity_t *le ) {
 	ent->shaderRGBA[3] = 0xff * RGBfade;
 	
 	// grow time
-	c = ( le->endTime - cg.time ) * le->lifeRate / 1.1;
+	c = ( le->endTime - cg.time ) * le->lifeRate;// / 2;
 
 	// grow time
 	//phase = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime ) * M_PI / 1.5f;

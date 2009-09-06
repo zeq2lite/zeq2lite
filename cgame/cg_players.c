@@ -14,10 +14,10 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*pain3.ogg",
 	"*pain4.ogg",
 	"*pain5.ogg",
-	"*pain25_1.ogg",
-	"*pain50_1.ogg",
-	"*pain75_1.ogg",
-	"*pain100_1.ogg",
+	"*pain6.ogg",
+	"*pain7.ogg",
+	"*pain8.ogg",
+	"*pain9.ogg",
 	"*falling1.ogg",
 	"*gasp.ogg",
 	"*drown.ogg",
@@ -2248,7 +2248,7 @@ Draw a mark at the water surface
 */
 void CG_PlayerSplash( centity_t *cent, int scale ) {
 	vec3_t			start, end;
-	vec3_t			origin;
+	vec3_t			origin, lastPos;
 	trace_t			trace;
 	polyVert_t		verts[4];
 	entityState_t	*s1;
@@ -2330,8 +2330,10 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 			CG_WaterRipple(trace.endpos,powerBoost+(xyzspeed/scale),qfalse);
 		}
 
-		//return;
+		return;
 	}
+
+	cent->trailTime = cg.time;
 
 	// create a mark polygon
 	VectorCopy( trace.endpos, verts[0].xyz );

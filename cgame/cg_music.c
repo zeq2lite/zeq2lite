@@ -101,7 +101,10 @@ void CG_ParsePlaylist(void){
 				if(!token[0]){break;}
 				cgs.music.fadeAmount = CG_GetMilliseconds(token);
 			}
-			else if(strcmp(&last,"{") == 0){++typeIndex;}
+			else if(strcmp(&last,"{") == 0){
+				cgs.music.lastTrack[typeIndex] = -1;
+				++typeIndex;
+			}
 			else if(strcmp(&first,"}") == 0){
 				cgs.music.playlistSize[typeIndex] = trackIndex;
 				trackIndex = 0;
@@ -134,7 +137,7 @@ void CG_NextTrack(void){
 	nextIndex = (nextIndex < playlistSize) ? cgs.music.currentIndex + 1 : 0;
 	if(cgs.music.random){
 		trap_RealTime(&realRandom);
-		nextIndex = (int)(Q_random(&realRandom.tm_sec) * (float)(playlistSize-1));
+		nextIndex = Q_random(&realRandom.tm_sec) * playlistSize;
 	}
 	if(nextIndex == cgs.music.lastTrack[cgs.music.currentType]){nextIndex += 1;}
 	if(nextIndex < 0){nextIndex = playlistSize-1;}
