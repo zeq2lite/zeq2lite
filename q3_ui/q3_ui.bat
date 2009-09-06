@@ -2,7 +2,7 @@
 md vm
 cd vm
 
-set cc=call ..\..\compile_q3_ui.bat
+set cc=call ..\..\Perform.bat
 
 %cc% ../ui_shared.c
 @if errorlevel 1 goto quit

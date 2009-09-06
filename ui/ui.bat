@@ -2,7 +2,7 @@
 md vm
 cd vm
 
-set cc=call ..\..\compile.bat
+set cc=call ..\..\Perform.bat
 
 %cc% ../ui_main.c
 @if errorlevel 1 goto quit

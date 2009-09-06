@@ -2,7 +2,7 @@
 md vm
 cd vm
 
-set cc=call ..\..\compile.bat
+set cc=call ..\..\Perform.bat
 if "%1"=="TA" goto TA
 
 %cc%  ../g_main.c

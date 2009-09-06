@@ -2,7 +2,7 @@
 md vm
 cd vm
 
-set cc=call ..\..\compile.bat -DCGAME
+set cc=call ..\..\Perform.bat -DCGAME
 
 if "%1"=="TA" goto TA
 
