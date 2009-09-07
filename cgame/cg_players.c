@@ -2248,7 +2248,7 @@ Draw a mark at the water surface
 */
 void CG_PlayerSplash( centity_t *cent, int scale ) {
 	vec3_t			start, end;
-	vec3_t			origin, lastPos;
+	vec3_t			origin;
 	trace_t			trace;
 	polyVert_t		verts[4];
 	entityState_t	*s1;
@@ -2329,11 +2329,7 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 		}else{
 			CG_WaterRipple(trace.endpos,powerBoost+(xyzspeed/scale),qfalse);
 		}
-
-		return;
 	}
-
-	cent->trailTime = cg.time;
 
 	// create a mark polygon
 	VectorCopy( trace.endpos, verts[0].xyz );

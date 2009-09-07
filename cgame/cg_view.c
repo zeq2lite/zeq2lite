@@ -297,7 +297,7 @@ static void CG_CalcIdealThirdPersonViewTarget(void)
 	float vertOffset = cg_thirdPersonHeight.value;
 	float horzOffset = cg_thirdPersonSlide.value;
 
-	if(cg.snap->ps.bitFlags & usingMelee){vertOffset = 0;}
+	if(cg.snap->ps.bitFlags & usingMelee){vertOffset = horzOffset = 0;}
 
 	VectorCopy(cg.refdef.vieworg, cameraFocusLoc);
 

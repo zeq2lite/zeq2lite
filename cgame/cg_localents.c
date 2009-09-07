@@ -678,7 +678,7 @@ static void CG_AddZEQSplash( localEntity_t *le ) {
 	ent->shaderRGBA[3] = 0xff * RGBfade;
 	
 	// grow time
-	c = ( le->endTime - cg.time ) * le->lifeRate;// / 2;
+	c = ( le->endTime - cg.time ) * le->lifeRate / 1.1;
 
 	// grow time
 	//phase = (float)( cg.time - le->startTime ) / ( le->endTime - le->startTime ) * M_PI / 1.5f;
