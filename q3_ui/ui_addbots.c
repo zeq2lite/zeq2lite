@@ -12,14 +12,14 @@ ADD BOTS MENU
 #include "ui_local.h"
 
 
-#define ART_BACK0			"menu/art/back_0"
-#define ART_BACK1			"menu/art/back_1"	
-#define ART_FIGHT0			"menu/art/accept_0"
-#define ART_FIGHT1			"menu/art/accept_1"
-#define ART_BACKGROUND		"menu/art/addbotframe"
-#define ART_ARROWS			"menu/art/arrows_vert_0"
-#define ART_ARROWUP			"menu/art/arrows_vert_top"
-#define ART_ARROWDOWN		"menu/art/arrows_vert_bot"
+#define ART_BACK0			"interface/art/back_0"
+#define ART_BACK1			"interface/art/back_1"	
+#define ART_FIGHT0			"interface/art/accept_0"
+#define ART_FIGHT1			"interface/art/accept_1"
+#define ART_BACKGROUND		"interface/art/addbotframe"
+#define ART_ARROWS			"interface/art/arrows_vert_0"
+#define ART_ARROWUP			"interface/art/arrows_vert_top"
+#define ART_ARROWDOWN		"interface/art/arrows_vert_bot"
 
 #define ID_BACK				10
 #define ID_GO				11

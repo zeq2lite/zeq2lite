@@ -9,15 +9,15 @@ MUSIC MENU
 
 #include "ui_local.h"
 
-#define ART_BACK0			"menu/art/back_0"
-#define ART_BACK1			"menu/art/back_1"	
-#define ART_GO0				"menu/art/play_0"
-#define ART_GO1				"menu/art/play_1"
-#define ART_FRAMEL			"menu/art/frame2_l"
-#define ART_FRAMER			"menu/art/frame1_r"
-#define ART_ARROWS			"menu/art/arrows_horz_0"
-#define ART_ARROWLEFT		"menu/art/arrows_horz_left"
-#define ART_ARROWRIGHT		"menu/art/arrows_horz_right"
+#define ART_BACK0			"interface/art/back_0"
+#define ART_BACK1			"interface/art/back_1"	
+#define ART_GO0				"interface/art/play_0"
+#define ART_GO1				"interface/art/play_1"
+#define ART_FRAMEL			"interface/art/frame2_l"
+#define ART_FRAMER			"interface/art/frame1_r"
+#define ART_ARROWS			"interface/art/arrows_horz_0"
+#define ART_ARROWLEFT		"interface/art/arrows_horz_left"
+#define ART_ARROWRIGHT		"interface/art/arrows_horz_right"
 
 #define MAX_MUSIC			128
 #define NAMEBUFSIZE			( MAX_MUSIC * 16 )

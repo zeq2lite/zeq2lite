@@ -1,4 +1,4 @@
--o "..\..\..\Build\ZEQ2Contents\vm\cgame.qvm"
+-o "..\..\..\Build\ZEQ2\vm\cgame.qvm"
 cg_main
 ..\cg_syscalls
 cg_consolecmds

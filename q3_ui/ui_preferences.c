@@ -2,12 +2,12 @@
 GAME OPTIONS MENU
 =======================================================================*/
 #include "ui_local.h"
-#define ART_FRAMEL				"menu/art/frame2_l"
-#define ART_FRAMER				"menu/art/frame1_r"
-#define ART_BACK0				"menu/art/back_0"
-#define ART_BACK1				"menu/art/back_1"
-#define ART_ACCEPT0				"menu/art/accept_0"
-#define ART_ACCEPT1				"menu/art/accept_1"
+#define ART_FRAMEL				"interface/art/frame2_l"
+#define ART_FRAMER				"interface/art/frame1_r"
+#define ART_BACK0				"interface/art/back_0"
+#define ART_BACK1				"interface/art/back_1"
+#define ART_ACCEPT0				"interface/art/accept_0"
+#define ART_ACCEPT1				"interface/art/accept_1"
 #define PREFERENCES_X_POS		320
 #define ID_CROSSHAIR			127
 #define ID_CAMERASTYLE			128

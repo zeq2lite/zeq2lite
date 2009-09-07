@@ -11,8 +11,8 @@ SETUP MENU
 
 #include "ui_local.h"
 
-#define ART_BACK0				"menu/art/back_0"
-#define ART_BACK1				"menu/art/back_1"
+#define ART_BACK0				"interface/art/back_0"
+#define ART_BACK1				"interface/art/back_1"
 
 #define ID_RANGE		10
 #define ID_HEIGHT		11

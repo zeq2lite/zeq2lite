@@ -8,3 +8,4 @@ cd..
 cd q3_ui
 call q3_ui.bat
 cd..
+pause

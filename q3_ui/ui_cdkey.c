@@ -12,11 +12,11 @@ CD KEY MENU
 #include "ui_local.h"
 
 
-#define ART_FRAME		"menu/art/cut_frame"
-#define ART_ACCEPT0		"menu/art/accept_0"
-#define ART_ACCEPT1		"menu/art/accept_1"	
-#define ART_BACK0		"menu/art/back_0"
-#define ART_BACK1		"menu/art/back_1"	
+#define ART_FRAME		"interface/art/cut_frame"
+#define ART_ACCEPT0		"interface/art/accept_0"
+#define ART_ACCEPT1		"interface/art/accept_1"	
+#define ART_BACK0		"interface/art/back_0"
+#define ART_BACK1		"interface/art/back_1"	
 
 #define ID_CDKEY		10
 #define ID_ACCEPT		11

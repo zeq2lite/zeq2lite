@@ -7,7 +7,7 @@
 #include "ui_local.h"
 
 
-#define RANKINGS_FRAME	"menu/art/cut_frame"
+#define RANKINGS_FRAME	"interface/art/cut_frame"
 
 #define ID_LOGIN		100
 #define ID_LOGOUT		101

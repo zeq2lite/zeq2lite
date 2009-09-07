@@ -7,7 +7,7 @@
 #include "ui_local.h"
 
 
-#define RANKSTATUS_FRAME		"menu/art/cut_frame"
+#define RANKSTATUS_FRAME		"interface/art/cut_frame"
 
 #define ID_MESSAGE		100
 #define ID_OK			101

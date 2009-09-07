@@ -122,7 +122,7 @@ MainMenu_ExitAction
 =================
 */
 static void MainMenu_ExitAction( qboolean result ) {
-	if( !result ) {
+	if(!result){
 		return;
 	}
 	UI_PopMenu();
@@ -175,6 +175,7 @@ void MainMenu_Save(void){
 Main_MenuDraw
 ===============*/
 static void Main_MenuDraw( void ) {
+	//Com_Printf(syscall(HTTPGet,"http://zeq2.com/lite/master/server.php"));
 	uis.menuamount = 3;
 	uis.hideEarth = qfalse;
 	uis.showFrame = qfalse;

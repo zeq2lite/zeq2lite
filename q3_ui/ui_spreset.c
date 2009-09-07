@@ -9,7 +9,7 @@ RESET MENU
 #include "ui_local.h"
 
 
-#define ART_FRAME					"menu/art/cut_frame"
+#define ART_FRAME					"interface/art/cut_frame"
 
 #define ID_NO		100
 #define ID_YES		101

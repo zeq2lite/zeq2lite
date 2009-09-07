@@ -12,20 +12,20 @@ START SERVER MENU *****
 #include "ui_local.h"
 
 
-#define GAMESERVER_BACK0		"menu/art/back_0"
-#define GAMESERVER_BACK1		"menu/art/back_1"
-#define GAMESERVER_NEXT0		"menu/art/next_0"
-#define GAMESERVER_NEXT1		"menu/art/next_1"
-#define GAMESERVER_FRAMEL		"menu/art/frame2_l"
-#define GAMESERVER_FRAMER		"menu/art/frame1_r"
-#define GAMESERVER_SELECT		"menu/art/maps_select"
-#define GAMESERVER_SELECTED		"menu/art/maps_selected"
-#define GAMESERVER_FIGHT0		"menu/art/fight_0"
-#define GAMESERVER_FIGHT1		"menu/art/fight_1"
-#define GAMESERVER_UNKNOWNMAP	"menu/art/unknownmap"
-#define GAMESERVER_ARROWS		"menu/art/gs_arrows_0"
-#define GAMESERVER_ARROWSL		"menu/art/gs_arrows_l"
-#define GAMESERVER_ARROWSR		"menu/art/gs_arrows_r"
+#define GAMESERVER_BACK0		"interface/art/back_0"
+#define GAMESERVER_BACK1		"interface/art/back_1"
+#define GAMESERVER_NEXT0		"interface/art/next_0"
+#define GAMESERVER_NEXT1		"interface/art/next_1"
+#define GAMESERVER_FRAMEL		"interface/art/frame2_l"
+#define GAMESERVER_FRAMER		"interface/art/frame1_r"
+#define GAMESERVER_SELECT		"interface/art/maps_select"
+#define GAMESERVER_SELECTED		"interface/art/maps_selected"
+#define GAMESERVER_FIGHT0		"interface/art/fight_0"
+#define GAMESERVER_FIGHT1		"interface/art/fight_1"
+#define GAMESERVER_UNKNOWNMAP	"interface/art/unknownmap"
+#define GAMESERVER_ARROWS		"interface/art/gs_arrows_0"
+#define GAMESERVER_ARROWSL		"interface/art/gs_arrows_l"
+#define GAMESERVER_ARROWSR		"interface/art/gs_arrows_r"
 
 #define MAX_MAPROWS		2
 #define MAX_MAPCOLS		2
@@ -1515,15 +1515,15 @@ BOT SELECT MENU *****
 */
 
 
-#define BOTSELECT_BACK0			"menu/art/back_0"
-#define BOTSELECT_BACK1			"menu/art/back_1"
-#define BOTSELECT_ACCEPT0		"menu/art/accept_0"
-#define BOTSELECT_ACCEPT1		"menu/art/accept_1"
-#define BOTSELECT_SELECT		"menu/art/opponents_select"
-#define BOTSELECT_SELECTED		"menu/art/opponents_selected"
-#define BOTSELECT_ARROWS		"menu/art/gs_arrows_0"
-#define BOTSELECT_ARROWSL		"menu/art/gs_arrows_l"
-#define BOTSELECT_ARROWSR		"menu/art/gs_arrows_r"
+#define BOTSELECT_BACK0			"interface/art/back_0"
+#define BOTSELECT_BACK1			"interface/art/back_1"
+#define BOTSELECT_ACCEPT0		"interface/art/accept_0"
+#define BOTSELECT_ACCEPT1		"interface/art/accept_1"
+#define BOTSELECT_SELECT		"interface/art/opponents_select"
+#define BOTSELECT_SELECTED		"interface/art/opponents_selected"
+#define BOTSELECT_ARROWS		"interface/art/gs_arrows_0"
+#define BOTSELECT_ARROWSL		"interface/art/gs_arrows_l"
+#define BOTSELECT_ARROWSR		"interface/art/gs_arrows_r"
 
 #define PLAYERGRID_COLS			4
 #define PLAYERGRID_ROWS			4

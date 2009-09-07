@@ -7,7 +7,7 @@
 #include "ui_local.h"
 
 
-#define LOGIN_FRAME		"menu/art/cut_frame"
+#define LOGIN_FRAME		"interface/art/cut_frame"
 
 #define ID_NAME			100
 #define ID_NAME_BOX		101

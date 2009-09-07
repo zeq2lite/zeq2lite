@@ -10,15 +10,15 @@
 #define MAX_LISTBOXWIDTH		40
 #define MAX_LEAGUENAME			80
 
-#define SPECIFYLEAGUE_FRAMEL	"menu/art/frame2_l"
-#define SPECIFYLEAGUE_FRAMER	"menu/art/frame1_r"
-#define SPECIFYLEAGUE_BACK0		"menu/art/back_0"
-#define SPECIFYLEAGUE_BACK1		"menu/art/back_1"
-#define SPECIFYLEAGUE_ARROWS0	"menu/art/arrows_vert_0"
-#define SPECIFYLEAGUE_UP		"menu/art/arrows_vert_top"
-#define SPECIFYLEAGUE_DOWN		"menu/art/arrows_vert_bot"
-#define GLOBALRANKINGS_LOGO		"menu/art/gr/grlogo"
-#define GLOBALRANKINGS_LETTERS	"menu/art/gr/grletters"
+#define SPECIFYLEAGUE_FRAMEL	"interface/art/frame2_l"
+#define SPECIFYLEAGUE_FRAMER	"interface/art/frame1_r"
+#define SPECIFYLEAGUE_BACK0		"interface/art/back_0"
+#define SPECIFYLEAGUE_BACK1		"interface/art/back_1"
+#define SPECIFYLEAGUE_ARROWS0	"interface/art/arrows_vert_0"
+#define SPECIFYLEAGUE_UP		"interface/art/arrows_vert_top"
+#define SPECIFYLEAGUE_DOWN		"interface/art/arrows_vert_bot"
+#define GLOBALRANKINGS_LOGO		"interface/art/gr/grlogo"
+#define GLOBALRANKINGS_LETTERS	"interface/art/gr/grletters"
 
 #define ID_SPECIFYLEAGUENAME	100
 #define ID_SPECIFYLEAGUELIST	101

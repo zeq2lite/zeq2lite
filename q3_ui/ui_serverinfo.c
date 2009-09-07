@@ -2,10 +2,10 @@
 //
 #include "ui_local.h"
 
-#define SERVERINFO_FRAMEL	"menu/art/frame2_l"
-#define SERVERINFO_FRAMER	"menu/art/frame1_r"
-#define SERVERINFO_BACK0	"menu/art/back_0"
-#define SERVERINFO_BACK1	"menu/art/back_1"
+#define SERVERINFO_FRAMEL	"interface/art/frame2_l"
+#define SERVERINFO_FRAMER	"interface/art/frame1_r"
+#define SERVERINFO_BACK0	"interface/art/back_0"
+#define SERVERINFO_BACK1	"interface/art/back_1"
 
 static char* serverinfo_artlist[] =
 {

@@ -7,7 +7,7 @@
 #include "ui_local.h"
 
 
-#define TEAMMAIN_FRAME	"menu/art/cut_frame"
+#define TEAMMAIN_FRAME	"interface/art/cut_frame"
 
 #define ID_JOINRED		100
 #define ID_JOINBLUE		101
