@@ -21,6 +21,7 @@
 #define	RF_SHADOW_PLANE		256		// use refEntity->shadowPlane
 #define	RF_WRAP_FRAMES		512		// mod the model frames by the maxframes to allow continuous
 									// animation without needing to know the frame count
+#define RF_SKEL				1024	// use refExtEntity->skel
 
 // refdef flags
 #define RDF_NOWORLDMODEL	1		// used for player configuration screen
@@ -92,6 +93,71 @@ typedef struct {
 	float		rotation;
 } refEntity_t;
 
+// ----------------------------------------
+// skeletal animation stuff below
+// ----------------------------------------
+
+#define MAX_SKEL_BONES	128
+
+typedef enum
+{
+	SKEL_FLAG_NONE,
+	SKEL_FLAG_A,
+	SKEL_FLAG_B,
+	SKEL_FLAG_C
+} skelFlag_t;
+
+typedef struct
+{
+	char		name[32];
+	int			parent;
+	skelFlag_t	flags;
+	vec3_t		axis[3];
+	vec3_t		origin;
+} skelBone_t;
+
+typedef struct
+{
+	vec3_t		bounds[2];
+	float		radius;
+	vec3_t		origin;
+	int			numBones;
+	skelBone_t	bones[MAX_SKEL_BONES];
+} skel_t;
+
+typedef struct
+{
+	// ----------------------------------------
+	// keep this the same as refEntity_t struct
+	// ----------------------------------------
+
+	refEntityType_t	reType;
+	int				renderfx;
+	qhandle_t		hModel;
+	vec3_t			lightingOrigin;
+	float			shadowPlane;
+	vec3_t			axis[3];
+	qboolean		nonNormalizedAxes;
+	float			origin[3];
+	int				frame;
+	float			oldorigin[3];
+	int				oldframe;
+	float			backlerp;
+	int				skinNum;
+	qhandle_t		customSkin;
+	qhandle_t		customShader;
+	byte			shaderRGBA[4];
+	float			shaderTexCoord[2];
+	float			shaderTime;
+	float			radius;
+	float			rotation;
+
+	// ----------------------------------------
+	// skeletal animation stuff below
+	// ----------------------------------------
+
+	skel_t			skel;
+} refExtEntity_t;
 
 #define	MAX_RENDER_STRINGS			8
 #define	MAX_RENDER_STRING_LENGTH	32

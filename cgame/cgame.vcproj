@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="cgame"
 	ProjectGUID="{39129A7F-66C3-4DEB-981C-611BE5213FFA}"
+	RootNamespace="cgame"
 	TargetFrameworkVersion="0"
 	>
 	<Platforms>
@@ -12,6 +13,9 @@
 		/>
 	</Platforms>
 	<ToolFiles>
+		<DefaultToolFile
+			FileName="masm.rules"
+		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
@@ -28,6 +32,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -125,6 +132,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -225,6 +235,9 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
+				Name="MASM"
+			/>
+			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -320,6 +333,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -1467,6 +1483,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\cg_syscalls.asm"
+				>
+			</File>
+			<File
 				RelativePath="cg_syscalls.c"
 				>
 				<FileConfiguration
@@ -1957,6 +1977,10 @@
 			</File>
 			<File
 				RelativePath="..\game\surfaceflags.h"
+				>
+			</File>
+			<File
+				RelativePath=".\tr_types.h"
 				>
 			</File>
 		</Filter>

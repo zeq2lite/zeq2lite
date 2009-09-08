@@ -285,6 +285,18 @@ void	trap_R_RemapShader( const char *oldShader, const char *newShader, const cha
 	syscall( CG_R_REMAP_SHADER, oldShader, newShader, timeOffset );
 }
 
+void	trap_R_AddRefExtendedEntityToScene( const refExtEntity_t *re ) {
+	syscall( CG_R_ADDREFEXTENTITYTOSCENE, re );
+}
+
+int		trap_R_GetLerpPose( skel_t *skel, qhandle_t mod, int startFrame, int endFrame, float frontLerp ) {
+	return syscall( CG_R_GETLERPPOSE, skel, mod, startFrame, endFrame, PASSFLOAT(frontLerp) );
+}
+
+int		trap_R_SetBlendPose( skel_t *skel, qhandle_t mod, int startFrame[3], int endFrame[3], float frontLerp[3], vec3_t angles[3] ) {
+	return syscall( CG_R_SETBLENDPOSE, skel, mod, startFrame, endFrame, frontLerp, angles );
+}
+
 void		trap_GetGlconfig( glconfig_t *glconfig ) {
 	syscall( CG_GETGLCONFIG, glconfig );
 }

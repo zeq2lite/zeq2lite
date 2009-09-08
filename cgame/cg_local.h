@@ -1507,6 +1507,7 @@ qhandle_t CG_StatusHandle(int task);
 void CG_Player( centity_t *cent );
 void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team, qboolean auraAlways );
+void CG_AddRefExtEntityWithPowerups( refExtEntity_t *ent, entityState_t *state, int team, qboolean auraAlways );
 void CG_NewClientInfo( int clientNum );
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
 qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci );
@@ -1837,6 +1838,10 @@ void		trap_R_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
 int			trap_R_LerpTag( orientation_t *tag, clipHandle_t mod, int startFrame, int endFrame, 
 					   float frac, const char *tagName );
 void		trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset );
+
+void		trap_R_AddRefExtendedEntityToScene( const refExtEntity_t *re );
+int			trap_R_GetLerpPose( skel_t *skel, qhandle_t mod, int startFrame, int endFrame, float frontLerp );
+int			trap_R_SetBlendPose( skel_t *skel, qhandle_t mod, int startFrame[3], int endFrame[3], float frontLerp[3], vec3_t angles[3] );
 
 // The glconfig_t will not change during the life of a cgame.
 // If it needs to change, the entire cgame will be restarted, because

@@ -1911,7 +1911,7 @@ static void CG_PlayerFlag( centity_t *cent, qhandle_t hSkin, refEntity_t *torso 
 	VectorCopy( torso->lightingOrigin, pole.lightingOrigin );
 	pole.shadowPlane = torso->shadowPlane;
 	pole.renderfx = torso->renderfx;
-	CG_PositionEntityOnTag( &pole, torso, torso->hModel, "tag_flag" );
+//	CG_PositionEntityOnTag( &pole, torso, torso->hModel, "tag_flag" );
 	trap_R_AddRefEntityToScene( &pole );
 
 	// show the flag model
@@ -2423,6 +2423,22 @@ void CG_PlayerDirtPush( centity_t *cent, int scale, qboolean once ) {
 
 /*
 ===============
+CG_AddRefExtEntityWithPowerups
+
+Adds a piece with modifications or duplications for powerups
+Also called by CG_Missile for quad rockets, but nobody can tell...
+===============
+*/
+void CG_AddRefExtEntityWithPowerups( refExtEntity_t *ent, entityState_t *state, int team, qboolean auraAlways ) {
+	trap_R_AddRefExtendedEntityToScene( ent );
+	if(!auraAlways){
+		ent->customShader = cgs.media.globalCelLighting;
+		trap_R_AddRefExtendedEntityToScene( ent );
+	}
+}
+
+/*
+===============
 CG_AddRefEntityWithPowerups
 
 Adds a piece with modifications or duplications for powerups
@@ -2436,6 +2452,7 @@ void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int te
 		trap_R_AddRefEntityToScene( ent );
 	}
 }
+
 
 /*
 =================
@@ -2491,14 +2508,16 @@ CG_Player
 */
 void CG_Player( centity_t *cent ) {
 	clientInfo_t	*ci;
-	refEntity_t		legs;
-	refEntity_t		torso;
-	refEntity_t		head;
+	refEntity_t		legs,torso,head;
+	refExtEntity_t	altLegs, altTorso;
 	playerState_t	*ps;
 	int				clientNum;
 	int				renderfx;
 	qboolean		shadow;
 	float			shadowPlane;
+	int				oframes[3],nframes[3];
+	float			lerps[3];
+	vec3_t			angles[3];
 	qboolean		onBodyQue;
 	int				tier;
 	int				state,enemyState;
@@ -2561,7 +2580,34 @@ void CG_Player( centity_t *cent ) {
 	legs.renderfx = renderfx;
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
 	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	memcpy(&altLegs, &legs, sizeof(legs));
 	if (!legs.hModel){return;}
+	/*
+	memcpy(&altTorso, &torso, sizeof(torso));
+	oframes[0] = altLegs.oldframe;
+	oframes[1] = altTorso.oldframe;
+	oframes[2] = oframes[1];
+	nframes[0] = altLegs.frame;
+	nframes[1] = altTorso.frame;
+	nframes[2] = nframes[1];
+	lerps[0] = 1.0 - altLegs.backlerp;
+	lerps[1] = 1.0 - altTorso.backlerp;
+	lerps[2] = lerps[1];
+	angles[0][PITCH] = 0;
+	angles[0][YAW] = 0;
+	angles[0][ROLL] = 0;
+	angles[1][PITCH] = cent->pe.torso.pitchAngle - cent->pe.legs.pitchAngle;
+	angles[1][YAW] = cent->pe.torso.yawAngle - cent->pe.legs.yawAngle;
+	angles[1][ROLL] = 0;
+	angles[2][PITCH] = cent->lerpAngles[PITCH];
+	angles[2][YAW] = cent->lerpAngles[YAW] - cent->pe.legs.yawAngle;
+	angles[2][ROLL] = 0;
+	trap_R_SetBlendPose(&altLegs.skel,altLegs.hModel,oframes,nframes,lerps,angles);
+		altLegs.renderfx |= RF_SKEL;
+
+	CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	*/
+
 	torso.hModel = ci->torsoModel[tier];
 	torso.customSkin = ci->torsoSkin[tier];
 	if(!torso.hModel){return;}
