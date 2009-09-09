@@ -2607,7 +2607,6 @@ void CG_Player( centity_t *cent ) {
 
 	CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	*/
-
 	torso.hModel = ci->torsoModel[tier];
 	torso.customSkin = ci->torsoSkin[tier];
 	if(!torso.hModel){return;}

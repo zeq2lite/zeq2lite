@@ -441,9 +441,9 @@ static void ArenaServers_UpdateMenu( void ) {
 		if( !g_fullservers && ( servernodeptr->numclients == servernodeptr->maxclients ) ) {
 			continue;
 		}
-		if( Q_strncmp( "ZEQ2", servernodeptr->gamename, 4) ) {
-			continue;
-		}
+		//if( Q_strncmp( "ZEQ2", servernodeptr->gamename, 4) ) {
+		//	continue;
+		//}
 		switch( g_gametype ) {
 		case GAMES_ALL:
 			break;
@@ -931,9 +931,9 @@ static void ArenaServers_DoRefresh( void )
 
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "ping %s\n", adrstr )  );
 
-		if( Q_strncmp( "ZEQ2", g_arenaservers.serverlist->gamename, 4) ) {
-			break;
-		}
+		//if( Q_strncmp( "ZEQ2", g_arenaservers.serverlist->gamename, 4) ) {
+		//	break;
+		//}
 
 		// advance to next server
 		g_arenaservers.currentping++;
