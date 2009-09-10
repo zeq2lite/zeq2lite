@@ -2582,7 +2582,7 @@ void CG_Player( centity_t *cent ) {
 	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	memcpy(&altLegs, &legs, sizeof(legs));
 	if (!legs.hModel){return;}
-	/*
+//	/*
 	memcpy(&altTorso, &torso, sizeof(torso));
 	oframes[0] = altLegs.oldframe;
 	oframes[1] = altTorso.oldframe;
@@ -2606,7 +2606,7 @@ void CG_Player( centity_t *cent ) {
 		altLegs.renderfx |= RF_SKEL;
 
 	CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-	*/
+//	*/
 	torso.hModel = ci->torsoModel[tier];
 	torso.customSkin = ci->torsoSkin[tier];
 	if(!torso.hModel){return;}

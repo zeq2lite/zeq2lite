@@ -39,24 +39,32 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		// ===================================
 		// Models
 		// ===================================
-		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", modelName, i+1);
+		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/body.md4", modelName, i+1);
 		ci->legsModel[i] = trap_R_RegisterModel(filename);
 		if(!ci->legsModel[i]){
 			if(i == 0){
-				Com_Printf("Failed to load model file %s\n", filename);
-				return qfalse;
+				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", modelName, i+1);
+				ci->legsModel[i] = trap_R_RegisterModel(filename);
+				if(!ci->legsModel[i]){
+					if(i == 0){
+						Com_Printf("Failed to load model file %s\n", filename);
+						return qfalse;
+					}else {
+						ci->legsModel[i] = ci->legsModel[i - 1];
+					}
+				}
+				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/upper.md3", modelName, i+1);
+				ci->torsoModel[i] = trap_R_RegisterModel(filename);
+				if(!ci->torsoModel[i]){
+					if(i == 0){
+						Com_Printf("Failed to load model file %s\n", filename);
+						return qfalse;
+					}else {
+						ci->torsoModel[i] = ci->torsoModel[i - 1];
+					}
+				}
 			}else {
 				ci->legsModel[i] = ci->legsModel[i - 1];
-			}
-		}
-		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/upper.md3", modelName, i+1);
-		ci->torsoModel[i] = trap_R_RegisterModel(filename);
-		if(!ci->torsoModel[i]){
-			if(i == 0){
-				Com_Printf("Failed to load model file %s\n", filename);
-				return qfalse;
-			}else {
-				ci->torsoModel[i] = ci->torsoModel[i - 1];
 			}
 		}
 		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head.md3", modelName, i+1);
