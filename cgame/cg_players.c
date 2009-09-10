@@ -2579,7 +2579,6 @@ void CG_Player( centity_t *cent ) {
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
-	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	memcpy(&altLegs, &legs, sizeof(legs));
 	if (!legs.hModel){return;}
 //	/*
@@ -2615,7 +2614,6 @@ void CG_Player( centity_t *cent ) {
 	CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel, "tag_torso");
 	torso.shadowPlane = shadowPlane;
 	torso.renderfx = renderfx;
-	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	head.hModel = ci->headModel[tier];
 	head.customSkin = ci->headSkin[tier];
 	if(!head.hModel){return;}
@@ -2623,7 +2621,11 @@ void CG_Player( centity_t *cent ) {
 	CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
 	head.shadowPlane = shadowPlane;
 	head.renderfx = renderfx;
+	/*
+	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	*/
 	CG_BreathPuffs(cent,&head);
 	memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
 	memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));

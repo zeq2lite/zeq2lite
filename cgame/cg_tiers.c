@@ -63,18 +63,18 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 						ci->torsoModel[i] = ci->torsoModel[i - 1];
 					}
 				}
+				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head.md3", modelName, i+1);
+				ci->headModel[i] = trap_R_RegisterModel(filename);
+				if(!ci->headModel[i]){
+					if(i == 0){
+						Com_Printf("Failed to load model file %s\n", filename);
+						return qfalse;
+					}else {
+						ci->headModel[i] = ci->headModel[i - 1];
+					}
+				}
 			}else {
 				ci->legsModel[i] = ci->legsModel[i - 1];
-			}
-		}
-		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head.md3", modelName, i+1);
-		ci->headModel[i] = trap_R_RegisterModel(filename);
-		if(!ci->headModel[i]){
-			if(i == 0){
-				Com_Printf("Failed to load model file %s\n", filename);
-				return qfalse;
-			}else {
-				ci->headModel[i] = ci->headModel[i - 1];
 			}
 		}
 		// ===================================
