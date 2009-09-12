@@ -1471,6 +1471,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.go.height				= 64;
 	g_arenaservers.go.focuspic				= ART_CONNECT1;
 
+	/*
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.master );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.gametype );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.sortkey );
@@ -1489,6 +1490,7 @@ static void ArenaServers_MenuInit( void ) {
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.specify );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.refresh );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.create );
+	*/
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.go );
 
 	ArenaServers_LoadFavorites();
@@ -1553,5 +1555,7 @@ void UI_ArenaServersMenu( void ) {
 	//trap_S_StopBackgroundTrack();
 	//trap_S_StartBackgroundTrack("music/yamamoto/menu02.ogg", "music/yamamoto/menu02.ogg");
 	ArenaServers_MenuInit();
+	uis.menuamount = 5;
+	uis.hideEarth = qtrue;
 	UI_PushMenu( &g_arenaservers.menu );
 }						  

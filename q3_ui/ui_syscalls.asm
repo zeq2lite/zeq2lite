@@ -86,6 +86,9 @@ equ trap_LAN_ServerStatus					-83
 equ trap_LAN_GetServerPing					-84
 equ trap_LAN_ServerIsVisible				-85
 equ trap_LAN_CompareServers					-86
+equ trap_HTTPGet							-110
+equ trap_HTTPBuffer							-111
+
 
 
 equ	memset						-101
@@ -98,6 +101,4 @@ equ	sqrt						-107
 equ floor						-108
 equ	ceil						-109
 
-equ trap_HTTPGet				-110
-equ trap_HTTPBuffer				-111
 

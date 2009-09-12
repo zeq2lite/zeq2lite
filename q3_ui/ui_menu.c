@@ -175,7 +175,12 @@ void MainMenu_Save(void){
 Main_MenuDraw
 ===============*/
 static void Main_MenuDraw( void ) {
-	//Com_Printf(syscall(HTTPGet,"http://zeq2.com/lite/master/server.php"));
+	char *result,*segment;
+	if(uis.menuamount != 3){
+		trap_HTTPGet("http://zeq2.com/lite",segment,Q_PrintStrlen(segment));
+		Com_Printf("%i\n",Q_PrintStrlen(segment));
+		//Com_Printf("%s\n",segment);
+	}
 	uis.menuamount = 3;
 	uis.hideEarth = qfalse;
 	uis.showFrame = qfalse;

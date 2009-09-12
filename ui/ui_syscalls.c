@@ -28,7 +28,6 @@ void trap_Error( const char *string ) {
 int trap_Milliseconds( void ) {
 	return syscall( UI_MILLISECONDS ); 
 }
-
 void trap_Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *value, int flags ) {
 	syscall( UI_CVAR_REGISTER, cvar, var_name, value, flags );
 }

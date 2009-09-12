@@ -2985,7 +2985,7 @@ void Item_Text_Paint(itemDef_t *item) {
 
 
 //float			trap_Cvar_VariableValue( const char *var_name );
-//void			trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
+void			trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 
 void Item_TextField_Paint(itemDef_t *item) {
 	char buff[1024];
