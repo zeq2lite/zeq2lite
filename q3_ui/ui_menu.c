@@ -11,7 +11,6 @@ MAIN MENU
 
 #include "ui_local.h"
 
-
 #define ID_MULTIPLAYER			11
 #define ID_SETUP				12
 #define ID_EXIT					17
@@ -175,11 +174,15 @@ void MainMenu_Save(void){
 Main_MenuDraw
 ===============*/
 static void Main_MenuDraw( void ) {
-	char *result,*segment;
+	char *result;
+	char segment[6400];
 	if(uis.menuamount != 3){
-		trap_HTTPGet("http://zeq2.com/lite",segment,Q_PrintStrlen(segment));
-		Com_Printf("%i\n",Q_PrintStrlen(segment));
-		//Com_Printf("%s\n",segment);
+		trap_HTTPGet("http://zeq2.com/lite/forums/");
+		
+		trap_Cvar_VariableStringBuffer( "httpContents", segment, sizeof( segment )+1 );
+		segment[strlen(segment)] = '\0';
+		Com_Printf("SEGMENT SIZE --------------------- %i\n",strlen(segment));
+		Com_Printf("%s\n",segment);
 	}
 	uis.menuamount = 3;
 	uis.hideEarth = qfalse;
