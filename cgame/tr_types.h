@@ -132,25 +132,42 @@ typedef struct
 	// ----------------------------------------
 
 	refEntityType_t	reType;
-	int				renderfx;
-	qhandle_t		hModel;
-	vec3_t			lightingOrigin;
-	float			shadowPlane;
-	vec3_t			axis[3];
-	qboolean		nonNormalizedAxes;
-	float			origin[3];
-	int				frame;
-	float			oldorigin[3];
-	int				oldframe;
-	float			backlerp;
-	int				skinNum;
-	qhandle_t		customSkin;
-	qhandle_t		customShader;
-	byte			shaderRGBA[4];
-	float			shaderTexCoord[2];
-	float			shaderTime;
-	float			radius;
-	float			rotation;
+	int			renderfx;
+
+	qhandle_t	hModel;				// opaque type outside refresh
+
+	// most recent data
+	vec3_t		lightingOrigin;		// so multi-part models can be lit identically (RF_LIGHTING_ORIGIN)
+	float		shadowPlane;		// projection shadows go here, stencils go slightly lower
+
+	vec3_t		axis[3];			// rotation vectors
+	qboolean	nonNormalizedAxes;	// axis are not normalized, i.e. they have scale
+	float		origin[3];			// also used as MODEL_BEAM's "from"
+	int			frame;				// also used as MODEL_BEAM's diameter
+
+	// previous data for frame interpolation
+	float		oldorigin[3];		// also used as MODEL_BEAM's "to"
+	int			oldframe;
+	float		backlerp;			// 0.0 = current, 1.0 = old
+
+	// texturing
+	int			skinNum;			// inline skin index
+	qhandle_t	customSkin;			// NULL for default skin
+	qhandle_t	customShader;		// use one image for the entire thing
+
+	// misc
+	byte		shaderRGBA[4];		// colors used by rgbgen entity shaders
+	float		shaderTexCoord[2];	// texture coordinates used by tcMod entity modifiers
+	float		shaderTime;			// subtracted from refdef time to control effect start times
+
+	// <-- RiO_Outlines: needed to specify cell outlines correctly
+	byte		outlineRGBA[4];
+	byte		outlineWidth;
+	// -->
+
+	// extra sprite information
+	float		radius;
+	float		rotation;
 
 	// ----------------------------------------
 	// skeletal animation stuff below

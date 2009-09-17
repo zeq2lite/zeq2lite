@@ -2581,7 +2581,7 @@ void CG_Player( centity_t *cent ) {
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
 	memcpy(&altLegs, &legs, sizeof(legs));
 	if (!legs.hModel){return;}
-//	/*
+	/*
 	memcpy(&altTorso, &torso, sizeof(torso));
 	oframes[0] = altLegs.oldframe;
 	oframes[1] = altTorso.oldframe;
@@ -2605,7 +2605,9 @@ void CG_Player( centity_t *cent ) {
 		altLegs.renderfx |= RF_SKEL;
 
 	CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-//	*/
+	CG_AddPlayerWeaponMD4(&altLegs,NULL,cent,ci->team);
+	CG_PlayerPowerups(cent,&torso);
+	*/
 	torso.hModel = ci->torsoModel[tier];
 	torso.customSkin = ci->torsoSkin[tier];
 	if(!torso.hModel){return;}
@@ -2621,19 +2623,21 @@ void CG_Player( centity_t *cent ) {
 	CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
 	head.shadowPlane = shadowPlane;
 	head.renderfx = renderfx;
-	/*
+//	/*
 	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-	*/
+//	*/
 	CG_BreathPuffs(cent,&head);
 	memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
 	memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
 	memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
 	memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
 	if(onBodyQue){return;}
+//	/*
 	CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
 	CG_PlayerPowerups(cent,&torso);
+//	*/
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
 		CG_AuraStart(cent);
 		if(!xyzspeed){CG_PlayerDirtPush(cent,scale,qfalse);}
@@ -2652,8 +2656,6 @@ void CG_Player( centity_t *cent ) {
 	}
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
 	if(ci->auraConfig[tier]->showLightning && ps->bitFlags & usingMelee){CG_BigLightningEffect(cent->lerpOrigin);}
-	//CG_BigLightningEffect(cent->lerpOrigin);
-	// -->
 }
 qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *tagName, orientation_t *tagOrient ) {
 	int				i, clientNum;
@@ -2702,7 +2704,26 @@ qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *t
 		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
 
 		return qtrue;
-	}
+	}/* else if(pe->headRef.renderfx & RF_SKEL) {
+		for(i=0;i<pe->headRef.skel.numBones;i++)
+		{
+			if(!strcmp(pe->headRef.skel.bones[i].name,tagName))
+			{
+				VectorCopy(pe->headRef.skel.bones[i].origin,lerped.origin);
+				VectorCopy(pe->headRef.skel.bones[i].axis[0],lerped.axis[0]);
+				VectorCopy(pe->headRef.skel.bones[i].axis[1],lerped.axis[1]);
+				VectorCopy(pe->headRef.skel.bones[i].axis[2],lerped.axis[2]);
+			}
+		}
+		VectorCopy( pe->headRef.origin, tagOrient->origin );
+		for ( i = 0 ; i < 3 ; i++ ) {
+			VectorMA( tagOrient->origin, lerped.origin[i], pe->headRef.axis[i], tagOrient->origin );
+		}
+
+		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
+		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
+		return qtrue;
+	}*/
 
 	// If we didn't find the tag, return false
 	return qfalse;
@@ -2756,7 +2777,26 @@ qboolean CG_GetTagOrientationFromPlayerEntityTorsoModel( centity_t *cent, char *
 		MatrixMultiply( tempAxis, pe->torsoRef.axis, tagOrient->axis );
 
 		return qtrue;
-	}
+	}/* else if(pe->torsoRef.renderfx & RF_SKEL) {
+		for(i=0;i<pe->torsoRef.skel.numBones;i++)
+		{
+			if(!strcmp(pe->torsoRef.skel.bones[i].name,tagName))
+			{
+				VectorCopy(pe->torsoRef.skel.bones[i].origin,lerped.origin);
+				VectorCopy(pe->torsoRef.skel.bones[i].axis[0],lerped.axis[0]);
+				VectorCopy(pe->torsoRef.skel.bones[i].axis[1],lerped.axis[1]);
+				VectorCopy(pe->torsoRef.skel.bones[i].axis[2],lerped.axis[2]);
+			}
+		}
+		VectorCopy( pe->headRef.origin, tagOrient->origin );
+		for ( i = 0 ; i < 3 ; i++ ) {
+			VectorMA( tagOrient->origin, lerped.origin[i], pe->headRef.axis[i], tagOrient->origin );
+		}
+
+		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
+		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
+		return qtrue;
+	}*/
 
 	// If we didn't find the tag, return false
 	return qfalse;
@@ -2809,7 +2849,26 @@ qboolean CG_GetTagOrientationFromPlayerEntityLegsModel( centity_t *cent, char *t
 		MatrixMultiply( tempAxis, pe->legsRef.axis, tagOrient->axis );
 
 		return qtrue;
-	}
+	}/* else if(pe->legsRef.renderfx & RF_SKEL) {
+		for(i=0;i<pe->legsRef.skel.numBones;i++)
+		{
+			if(!strcmp(pe->legsRef.skel.bones[i].name,tagName))
+			{
+				VectorCopy(pe->legsRef.skel.bones[i].origin,lerped.origin);
+				VectorCopy(pe->legsRef.skel.bones[i].axis[0],lerped.axis[0]);
+				VectorCopy(pe->legsRef.skel.bones[i].axis[1],lerped.axis[1]);
+				VectorCopy(pe->legsRef.skel.bones[i].axis[2],lerped.axis[2]);
+			}
+		}
+		VectorCopy( pe->headRef.origin, tagOrient->origin );
+		for ( i = 0 ; i < 3 ; i++ ) {
+			VectorMA( tagOrient->origin, lerped.origin[i], pe->headRef.axis[i], tagOrient->origin );
+		}
+
+		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
+		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
+		return qtrue;
+	}*/
 
 	// If we didn't find the tag, return false
 	return qfalse;

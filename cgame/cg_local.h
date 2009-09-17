@@ -149,7 +149,7 @@ typedef struct {
 
 	// needed to obtain tag positions after player entity has been processed.
 	// For linking beam attacks, particle systems, etc.
-	refEntity_t		legsRef, torsoRef, headRef;
+	refExtEntity_t		legsRef, torsoRef, headRef;
 } playerEntity_t;
 
 //=================================================
@@ -1551,10 +1551,13 @@ void CG_SetEntitySoundPosition( centity_t *cent );
 void CG_AddPacketEntities( void );
 void CG_Beam( centity_t *cent );
 void CG_AdjustPositionForMover( const vec3_t in, int moverNum, int fromTime, int toTime, vec3_t out );
-
 void CG_PositionEntityOnTag( refEntity_t *entity, const refEntity_t *parent, 
 							qhandle_t parentModel, char *tagName );
+void CG_PositionEntityOnTagMD4( refEntity_t *entity, const refExtEntity_t *parent, 
+							qhandle_t parentModel, char *tagName );
 void CG_PositionRotatedEntityOnTag( refEntity_t *entity, const refEntity_t *parent, 
+							qhandle_t parentModel, char *tagName );
+void CG_PositionRotatedEntityOnTagMD4( refEntity_t *entity, const refExtEntity_t *parent, 
 							qhandle_t parentModel, char *tagName );
 void CG_GetTagPosition( refEntity_t *parent, char *tagName, vec3_t outpos);
 void CG_GetTagOrientation( refEntity_t *parent, char *tagName, vec3_t dir);
@@ -1584,6 +1587,7 @@ void CG_RailTrail( clientInfo_t *ci, vec3_t start, vec3_t end );
 void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi );
 void CG_AddViewWeapon (playerState_t *ps);
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team );
+void CG_AddPlayerWeaponMD4( refExtEntity_t *parent, playerState_t *ps, centity_t *cent, int team );
 void CG_DrawWeaponSelect( void );
 
 void CG_OutOfAmmoChange( void );	// should this be in pmove?
