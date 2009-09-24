@@ -326,36 +326,7 @@ static void UI_LoadBotsFromFile( char *filename ) {
 UI_LoadBots
 ===============
 */
-static void UI_LoadBots( void ) {
-	vmCvar_t	botsFile;
-	int			numdirs;
-	char		filename[128];
-	char		dirlist[1024];
-	char*		dirptr;
-	int			i;
-	int			dirlen;
-
-	ui_numBots = 0;
-
-	trap_Cvar_Register( &botsFile, "g_botsFile", "", CVAR_INIT|CVAR_ROM );
-	if( *botsFile.string ) {
-		UI_LoadBotsFromFile(botsFile.string);
-	}
-	else {
-		UI_LoadBotsFromFile("scripts/bots.txt");
-	}
-
-	// get all bots from .bot files
-	numdirs = trap_FS_GetFileList("scripts", ".bot", dirlist, 1024 );
-	dirptr  = dirlist;
-	for (i = 0; i < numdirs; i++, dirptr += dirlen+1) {
-		dirlen = strlen(dirptr);
-		strcpy(filename, "scripts/");
-		strcat(filename, dirptr);
-		UI_LoadBotsFromFile(filename);
-	}
-	trap_Print( va( "%i bots parsed\n", ui_numBots ) );
-}
+static void UI_LoadBots( void ) {}
 
 
 /*

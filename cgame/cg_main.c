@@ -1423,7 +1423,7 @@ static void CG_RegisterGraphics( void ) {
 
 	cgs.media.waterBubbleShader = trap_R_RegisterShader( "waterBubble" );
 	cgs.media.selectShader = trap_R_RegisterShader( "interface/hud/select.png" );
-	cgs.media.chatBubble = trap_R_RegisterShader( "interface/menu/chat.png" );
+	cgs.media.chatBubble = trap_R_RegisterShader( "chatBubble");
 
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
 		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("crosshair%c", 'a'+i) );
