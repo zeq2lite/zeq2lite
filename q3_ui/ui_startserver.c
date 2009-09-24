@@ -321,11 +321,6 @@ static void StartServer_LevelshotDraw( void *self ) {
 			b->shader = trap_R_RegisterShaderNoMip( b->errorpic );
 		}
 	}
-
-	if( b->focuspic && !b->focusshader ) {
-		b->focusshader = trap_R_RegisterShaderNoMip( b->focuspic );
-	}
-
 	x = b->generic.x;
 	y = b->generic.y;
 	w = b->width;
@@ -347,11 +342,7 @@ static void StartServer_LevelshotDraw( void *self ) {
 	y = b->generic.y;
 	w = b->width;
 	h =	b->height + 28;
-	if( b->generic.flags & QMF_HIGHLIGHT ) {	
-		UI_DrawHandlePic( x, y, w, h, b->focusshader );
-	}
 }
-
 
 /*
 =================

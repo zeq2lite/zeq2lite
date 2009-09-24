@@ -789,58 +789,7 @@ typedef struct {
 	qhandle_t	charsetPropGlow;
 	qhandle_t	charsetPropB;
 	qhandle_t	whiteShader;
-
-	qhandle_t	redCubeModel;
-	qhandle_t	blueCubeModel;
-	qhandle_t	redCubeIcon;
-	qhandle_t	blueCubeIcon;
-	qhandle_t	redFlagModel;
-	qhandle_t	blueFlagModel;
-	qhandle_t	neutralFlagModel;
-	qhandle_t	redFlagShader[3];
-	qhandle_t	blueFlagShader[3];
-	qhandle_t	flagShader[4];
-
-	qhandle_t	flagPoleModel;
-	qhandle_t	flagFlapModel;
-
-	qhandle_t	redFlagFlapSkin;
-	qhandle_t	blueFlagFlapSkin;
-	qhandle_t	neutralFlagFlapSkin;
-
-	qhandle_t	redFlagBaseModel;
-	qhandle_t	blueFlagBaseModel;
-	qhandle_t	neutralFlagBaseModel;
-	qhandle_t	armorModel;
-	qhandle_t	armorIcon;
-
-	qhandle_t	teamStatusBar;
-
 	qhandle_t	deferShader;
-
-	// gib explosions
-	qhandle_t	gibAbdomen;
-	qhandle_t	gibArm;
-	qhandle_t	gibChest;
-	qhandle_t	gibFist;
-	qhandle_t	gibFoot;
-	qhandle_t	gibForearm;
-	qhandle_t	gibIntestine;
-	qhandle_t	gibLeg;
-	qhandle_t	gibSkull;
-	qhandle_t	gibBrain;
-
-	qhandle_t	smoke2;
-
-	qhandle_t	machinegunBrassModel;
-	qhandle_t	shotgunBrassModel;
-
-	qhandle_t	railRingsShader;
-	qhandle_t	railCoreShader;
-
-	qhandle_t	lightningShader;
-
-	// ADDING FOR ZEQ2
 	qhandle_t	hudShader;
 	qhandle_t	markerAscendShader;
 	qhandle_t	markerDescendShader;
@@ -851,22 +800,14 @@ typedef struct {
 	qhandle_t	RadarBurstShader;
 	qhandle_t	RadarWarningShader;
 	qhandle_t	RadarMidpointShader;
-
-	// END ADDING
-
 	qhandle_t	friendShader;
-
-	qhandle_t	balloonShader;
+	qhandle_t	chatBubble;
 	qhandle_t	connectionShader;
-
 	qhandle_t	selectShader;
 	qhandle_t	viewBloodShader;
 	qhandle_t	tracerShader;
 	qhandle_t	crosshairShader[NUM_CROSSHAIRS];
-	qhandle_t	lagometerShader;
 	qhandle_t	backTileShader;
-	qhandle_t	noammoShader;
-
 	qhandle_t	globalCelLighting;
 	qhandle_t	waterSplashSkin;
 	qhandle_t	waterSplashModel;
@@ -877,11 +818,6 @@ typedef struct {
 	qhandle_t	dirtPushSkin;
 	qhandle_t	dirtPushModel;
 	qhandle_t	dirtPushShader;
-
-	qhandle_t	smokePuffShader;
-	qhandle_t	smokePuffRageProShader;
-	qhandle_t	shotgunSmokePuffShader;
-	qhandle_t	plasmaBallShader;
 	qhandle_t	waterBubbleShader;
 	qhandle_t	bloodTrailShader;
 	qhandle_t	bfgLFGlare;	// JUHOX
@@ -889,49 +825,9 @@ typedef struct {
 	qhandle_t	bfgLFRing;	// JUHOX
 	qhandle_t	bfgLFLine;	// JUHOX
 	qhandle_t	bfgLFStar;	// JUHOX
-
 	qhandle_t	numberShaders[11];
-
 	qhandle_t	shadowMarkShader;
-
-	qhandle_t	botSkillShaders[5];
-
-	// wall mark shaders
 	qhandle_t	wakeMarkShader;
-	qhandle_t	bloodMarkShader;
-	qhandle_t	bulletMarkShader;
-	qhandle_t	burnMarkShader;
-	qhandle_t	holeMarkShader;
-	qhandle_t	energyMarkShader;
-
-	// powerup shaders
-	qhandle_t	quadShader;
-	qhandle_t	redQuadShader;
-	qhandle_t	quadWeaponShader;
-	qhandle_t	invisShader;
-	qhandle_t	regenShader;
-	qhandle_t	battleSuitShader;
-	qhandle_t	battleWeaponShader;
-	qhandle_t	hastePuffShader;
-	qhandle_t	redKamikazeShader;
-	qhandle_t	blueKamikazeShader;
-
-	// weapon effect models
-	qhandle_t	bulletFlashModel;
-	qhandle_t	ringFlashModel;
-	qhandle_t	dishFlashModel;
-	qhandle_t	lightningExplosionModel;
-
-	// weapon effect shaders
-	qhandle_t	railExplosionShader;
-	qhandle_t	plasmaExplosionShader;
-	qhandle_t	bulletExplosionShader;
-	qhandle_t	rocketExplosionShader;
-	qhandle_t	grenadeExplosionShader;
-	qhandle_t	bfgExplosionShader;
-	qhandle_t	bloodExplosionShader;
-
-	// special effects models
 	qhandle_t	teleportEffectModel;
 	qhandle_t	teleportEffectShader;
 	qhandle_t	meleeSpeedEffectShader;
@@ -942,121 +838,22 @@ typedef struct {
 	qhandle_t	auraLightningSparks1;
 	qhandle_t	auraLightningSparks2;
 	qhandle_t	invulnerabilityPowerupModel;
-
-	// scoreboard headers
-	qhandle_t	scoreboardName;
-	qhandle_t	scoreboardPing;
-	qhandle_t	scoreboardScore;
-	qhandle_t	scoreboardTime;
-
-	// medals shown during gameplay
-	qhandle_t	medalImpressive;
-	qhandle_t	medalExcellent;
-	qhandle_t	medalGauntlet;
-	qhandle_t	medalDefend;
-	qhandle_t	medalAssist;
-	qhandle_t	medalCapture;
-
-	// sounds
-	sfxHandle_t	quadSound;
-	sfxHandle_t	tracerSound;
 	sfxHandle_t	selectSound;
 	sfxHandle_t	useNothingSound;
 	sfxHandle_t	wearOffSound;
 	sfxHandle_t	footsteps[FOOTSTEP_TOTAL][4];
-	sfxHandle_t	sfx_lghit1;
-	sfxHandle_t	sfx_lghit2;
-	sfxHandle_t	sfx_lghit3;
-	sfxHandle_t	sfx_ric1;
-	sfxHandle_t	sfx_ric2;
-	sfxHandle_t	sfx_ric3;
-	sfxHandle_t	sfx_railg;
-	sfxHandle_t	sfx_rockexp;
-	sfxHandle_t	sfx_plasmaexp;
-	sfxHandle_t	gibSound;
-	sfxHandle_t	gibBounce1Sound;
-	sfxHandle_t	gibBounce2Sound;
-	sfxHandle_t	gibBounce3Sound;
 	sfxHandle_t	teleInSound;
 	sfxHandle_t	teleOutSound;
-	sfxHandle_t	noAmmoSound;
 	sfxHandle_t	respawnSound;
 	sfxHandle_t talkSound;
 	sfxHandle_t landSound;
 	sfxHandle_t fallSound;
-	sfxHandle_t jumpPadSound;
-	sfxHandle_t oneMinuteSound;
-	sfxHandle_t fiveMinuteSound;
-	sfxHandle_t suddenDeathSound;
-	sfxHandle_t threeFragSound;
-	sfxHandle_t twoFragSound;
-	sfxHandle_t oneFragSound;
-	sfxHandle_t hitSound;
-	sfxHandle_t hitSoundHighArmor;
-	sfxHandle_t hitSoundLowArmor;
-	sfxHandle_t hitTeamSound;
-	sfxHandle_t impressiveSound;
-	sfxHandle_t excellentSound;
-	sfxHandle_t deniedSound;
-	sfxHandle_t humiliationSound;
-	sfxHandle_t assistSound;
-	sfxHandle_t defendSound;
-	sfxHandle_t firstImpressiveSound;
-	sfxHandle_t firstExcellentSound;
-	sfxHandle_t firstHumiliationSound;
-	sfxHandle_t takenLeadSound;
-	sfxHandle_t tiedLeadSound;
-	sfxHandle_t lostLeadSound;
-	sfxHandle_t voteNow;
-	sfxHandle_t votePassed;
-	sfxHandle_t voteFailed;
 	sfxHandle_t watrInSound;
 	sfxHandle_t watrOutSound;
 	sfxHandle_t watrUnSound;
-	sfxHandle_t flightSound;
-	sfxHandle_t medkitSound;
-	sfxHandle_t weaponHoverSound;
-	// teamplay sounds
-	sfxHandle_t captureAwardSound;
-	sfxHandle_t redScoredSound;
-	sfxHandle_t blueScoredSound;
-	sfxHandle_t redLeadsSound;
-	sfxHandle_t blueLeadsSound;
-	sfxHandle_t teamsTiedSound;
-	sfxHandle_t	captureYourTeamSound;
-	sfxHandle_t	captureOpponentSound;
-	sfxHandle_t	returnYourTeamSound;
-	sfxHandle_t	returnOpponentSound;
-	sfxHandle_t	takenYourTeamSound;
-	sfxHandle_t	takenOpponentSound;
-	sfxHandle_t redFlagReturnedSound;
-	sfxHandle_t blueFlagReturnedSound;
-	sfxHandle_t neutralFlagReturnedSound;
-	sfxHandle_t	enemyTookYourFlagSound;
-	sfxHandle_t	enemyTookTheFlagSound;
-	sfxHandle_t yourTeamTookEnemyFlagSound;
-	sfxHandle_t yourTeamTookTheFlagSound;
-	sfxHandle_t	youHaveFlagSound;
-	sfxHandle_t yourBaseIsUnderAttackSound;
-	sfxHandle_t holyShitSound;
-	// tournament sounds
-	sfxHandle_t	count3Sound;
-	sfxHandle_t	count2Sound;
-	sfxHandle_t	count1Sound;
-	sfxHandle_t	countFightSound;
-	sfxHandle_t	countPrepareSound;
 	qhandle_t cursor;
 	qhandle_t selectCursor;
 	qhandle_t sizeCursor;
-	sfxHandle_t	regenSound;
-	sfxHandle_t	protectSound;
-	sfxHandle_t	n_powerLevelSound;
-	sfxHandle_t	hgrenb1aSound;
-	sfxHandle_t	hgrenb2aSound;
-	sfxHandle_t	wstbimplSound;
-	sfxHandle_t	wstbimpmSound;
-	sfxHandle_t	wstbimpdSound;
-	sfxHandle_t	wstbactvSound;
 	// ADDING FOR ZEQ2
 	sfxHandle_t	radarwarningSound;
 	sfxHandle_t	lightspeedSound1;
@@ -1098,7 +895,6 @@ typedef struct {
 	sfxHandle_t waterSplashExtraLarge1;
 	sfxHandle_t waterSplashExtraLarge2;
 	// END ADDING
-
 } cgMedia_t;
 
 
@@ -1294,7 +1090,6 @@ extern	vmCvar_t		cg_thirdPersonHeight;
 extern	vmCvar_t		cg_thirdPersonSlide;
 extern	vmCvar_t		cg_thirdPerson;
 extern	vmCvar_t		cg_stereoSeparation;
-extern	vmCvar_t		cg_lagometer;
 extern	vmCvar_t		cg_synchronousClients;
 extern	vmCvar_t		cg_teamChatTime;
 extern	vmCvar_t		cg_teamChatHeight;
@@ -1469,8 +1264,6 @@ extern  char systemChat[256];
 extern  char teamChat1[256];
 extern  char teamChat2[256];
 
-void CG_AddLagometerFrameInfo( void );
-void CG_AddLagometerSnapshotInfo( snapshot_t *snap );
 void CG_CenterPrint( const char *str, int y, int charWidth );
 void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t headAngles );
 void CG_DrawActive( stereoFrame_t stereoView );

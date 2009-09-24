@@ -860,7 +860,6 @@ void ClientBegin( int clientNum ) {
 	client->pers.connected = CON_CONNECTED;
 	client->pers.enterTime = level.time;
 	client->pers.teamState.state = TEAM_BEGIN;
-	client->ps.gravity = g_gravity.value;
 	// save eflags around this, because changing teams will
 	// cause this to happen with a valid entity, and we
 	// want to make sure the teleport bit is set right
@@ -921,7 +920,6 @@ void ClientSpawn(gentity_t *ent) {
 	char	userinfo[MAX_INFO_STRING];
 	index = ent - g_entities;
 	client = ent->client;
-	client->ps.gravity = g_gravity.value;
 	// find a spawn point
 	// do it before setting powerLevel back up, so farthest
 	// ranging doesn't count this client

@@ -74,24 +74,6 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 	iconx = SB_BOTICON_X + (SB_RATING_WIDTH / 2);
 	headx = SB_HEAD_X + (SB_RATING_WIDTH / 2);
 
-	// draw the handicap or bot skill marker (unless player has flag)
-	if ( ci->botSkill > 0 && ci->botSkill <= 5 ) {
-		if ( cg_drawIcons.integer ) {
-			if( largeFormat ) {
-				CG_DrawPic( iconx, y - ( 32 - BIGCHAR_HEIGHT ) / 2, 32, 32, cgs.media.botSkillShaders[ ci->botSkill - 1 ] );
-			}
-			else {
-				CG_DrawPic( iconx, y, 16, 16, cgs.media.botSkillShaders[ ci->botSkill - 1 ] );
-			}
-		}
-	} else if ( ci->handicap < 100 ) {
-		Com_sprintf( string, sizeof( string ), "%i", ci->handicap );
-		if ( cgs.gametype == GT_TOURNAMENT )
-			CG_DrawSmallStringColor( iconx, y - SMALLCHAR_HEIGHT/2, string, color );
-		else
-			CG_DrawSmallStringColor( iconx, y, string, color );
-	}
-
 	// draw the wins / losses
 	if ( cgs.gametype == GT_TOURNAMENT ) {
 		Com_sprintf( string, sizeof( string ), "%i/%i", ci->wins, ci->losses );
@@ -112,18 +94,6 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 	else {
 		CG_DrawHead( headx, y, 16, 16, score->client, headAngles );
 	}
-
-#ifdef MISSIONPACK
-	// draw the team task
-	if ( ci->teamTask != TEAMTASK_NONE ) {
-		if ( ci->teamTask == TEAMTASK_OFFENSE ) {
-			CG_DrawPic( headx + 48, y, 16, 16, cgs.media.assaultShader );
-		}
-		else if ( ci->teamTask == TEAMTASK_DEFENSE ) {
-			CG_DrawPic( headx + 48, y, 16, 16, cgs.media.defendShader );
-		}
-	}
-#endif
 	// draw the score line
 	if ( score->ping == -1 ) {
 		Com_sprintf(string, sizeof(string),
@@ -303,11 +273,6 @@ qboolean CG_DrawOldScoreboard( void ) {
 
 	// scoreboard
 	y = SB_HEADER;
-
-	CG_DrawPic( SB_SCORE_X + (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardScore );
-	CG_DrawPic( SB_PING_X - (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardPing );
-	CG_DrawPic( SB_TIME_X - (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardTime );
-	CG_DrawPic( SB_NAME_X - (SB_RATING_WIDTH / 2), y, 64, 32, cgs.media.scoreboardName );
 
 	y = SB_TOP;
 

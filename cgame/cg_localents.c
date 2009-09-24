@@ -98,34 +98,7 @@ CG_BloodTrail
 Leave expanding blood puffs behind gibs
 ================
 */
-void CG_BloodTrail( localEntity_t *le ) {
-	int		t;
-	int		t2;
-	int		step;
-	vec3_t	newOrigin;
-	localEntity_t	*blood;
-
-	step = 150;
-	t = step * ( (cg.time - cg.frametime + step ) / step );
-	t2 = step * ( cg.time / step );
-
-	for ( ; t <= t2; t += step ) {
-		BG_EvaluateTrajectory( NULL, &le->pos, t, newOrigin );
-
-		blood = CG_SmokePuff( newOrigin, vec3_origin, 
-					  20,		// radius
-					  1, 1, 1, 1,	// color
-					  2000,		// trailTime
-					  t,		// startTime
-					  0,		// fadeInTime
-					  0,		// flags
-					  cgs.media.bloodTrailShader );
-		// use the optimized version
-		blood->leType = LE_FALL_SCALE_FADE;
-		// drop a total of 40 units over its lifetime
-		blood->pos.trDelta[2] = 40;
-	}
-}
+void CG_BloodTrail( localEntity_t *le ) {}
 
 
 /*
@@ -133,55 +106,14 @@ void CG_BloodTrail( localEntity_t *le ) {
 CG_FragmentBounceMark
 ================
 */
-void CG_FragmentBounceMark( localEntity_t *le, trace_t *trace ) {
-	int			radius;
-
-	if ( le->leMarkType == LEMT_BLOOD ) {
-
-		radius = 16 + (rand()&31);
-		CG_ImpactMark( cgs.media.bloodMarkShader, trace->endpos, trace->plane.normal, random()*360,
-			1,1,1,1, qtrue, radius, qfalse );
-	} else if ( le->leMarkType == LEMT_BURN ) {
-
-		radius = 8 + (rand()&15);
-		CG_ImpactMark( cgs.media.burnMarkShader, trace->endpos, trace->plane.normal, random()*360,
-			1,1,1,1, qtrue, radius, qfalse );
-	}
-
-	// don't allow a fragment to make multiple marks, or they
-	// pile up while settling
-	le->leMarkType = LEMT_NONE;
-}
+void CG_FragmentBounceMark( localEntity_t *le, trace_t *trace ) {}
 
 /*
 ================
 CG_FragmentBounceSound
 ================
 */
-void CG_FragmentBounceSound( localEntity_t *le, trace_t *trace ) {
-	if ( le->leBounceSoundType == LEBS_BLOOD ) {
-		// half the gibs will make splat sounds
-		if ( rand() & 1 ) {
-			int r = rand()&3;
-			sfxHandle_t	s;
-
-			if ( r == 0 ) {
-				s = cgs.media.gibBounce1Sound;
-			} else if ( r == 1 ) {
-				s = cgs.media.gibBounce2Sound;
-			} else {
-				s = cgs.media.gibBounce3Sound;
-			}
-			trap_S_StartSound( trace->endpos, ENTITYNUM_WORLD, CHAN_AUTO, s );
-		}
-	} else if ( le->leBounceSoundType == LEBS_BRASS ) {
-
-	}
-
-	// don't allow a fragment to make multiple bounce sounds,
-	// or it gets too noisy as they settle
-	le->leBounceSoundType = LEBS_NONE;
-}
+void CG_FragmentBounceSound( localEntity_t *le, trace_t *trace ) {}
 
 
 /*
@@ -888,23 +820,7 @@ void CG_AddInvulnerabilityImpact( localEntity_t *le ) {
 CG_AddInvulnerabilityJuiced
 ===================
 */
-void CG_AddInvulnerabilityJuiced( localEntity_t *le ) {
-	int t;
-
-	t = cg.time - le->startTime;
-	if ( t > 3000 ) {
-		le->refEntity.axis[0][0] = (float) 1.0 + 0.3 * (t - 3000) / 2000;
-		le->refEntity.axis[1][1] = (float) 1.0 + 0.3 * (t - 3000) / 2000;
-		le->refEntity.axis[2][2] = (float) 0.7 + 0.3 * (2000 - (t - 3000)) / 2000;
-	}
-	if ( t > 5000 ) {
-		le->endTime = 0;
-		CG_GibPlayer( le->refEntity.origin );
-	}
-	else {
-		trap_R_AddRefEntityToScene( &le->refEntity );
-	}
-}
+void CG_AddInvulnerabilityJuiced( localEntity_t *le ) {}
 
 /*
 ===================

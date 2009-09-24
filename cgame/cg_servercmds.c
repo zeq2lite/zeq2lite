@@ -154,25 +154,9 @@ CG_ParseWarmup
 static void CG_ParseWarmup( void ) {
 	const char	*info;
 	int			warmup;
-
 	info = CG_ConfigString( CS_WARMUP );
-
 	warmup = atoi( info );
 	cg.warmupCount = -1;
-
-	if ( warmup == 0 && cg.warmup ) {
-
-	} else if ( warmup > 0 && cg.warmup <= 0 ) {
-#ifdef MISSIONPACK
-		if (cgs.gametype >= GT_CTF && cgs.gametype <= GT_HARVESTER) {
-			trap_S_StartLocalSound( cgs.media.countPrepareTeamSound, CHAN_ANNOUNCER );
-		} else
-#endif
-		{
-			trap_S_StartLocalSound( cgs.media.countPrepareSound, CHAN_ANNOUNCER );
-		}
-	}
-
 	cg.warmup = warmup;
 }
 

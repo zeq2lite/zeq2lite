@@ -91,39 +91,21 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 	case ID_CUSTOMIZEPLAYER:
 		UI_PlayerSettingsMenu();
 		break;
-
 	case ID_CUSTOMIZECONTROLS:
 		UI_ControlsMenu();
 		break;
-
 	case ID_SYSTEMCONFIG:
 		UI_GraphicsOptionsMenu();
 		break;
-
 	case ID_GAME:
 		UI_PreferencesMenu();
 		break;
-
 	case ID_CAMERA:
 		UI_CameraMenu();
 		break;
-
-	case ID_CDKEY:
-//		UI_CDKeyMenu();
-		break;
-
-//	case ID_LOAD:
-//		UI_LoadConfigMenu();
-//		break;
-
-//	case ID_SAVE:
-//		UI_SaveConfigMenu();
-//		break;
-
 	case ID_DEFAULTS:
 		UI_ConfirmMenu( "SET TO DEFAULTS?", Setup_ResetDefaults_Draw, Setup_ResetDefaults_Action );
 		break;
-
 	case ID_BACK:
 		UI_PopMenu();
 		break;

@@ -252,7 +252,6 @@ void Bitmap_Init( menubitmap_s *b )
 	b->generic.bottom = y + h;
 
 	b->shader      = 0;
-	b->focusshader = 0;
 }
 
 /*
@@ -290,10 +289,6 @@ void Bitmap_Draw( menubitmap_s *b )
 		if (!b->shader && b->errorpic)
 			b->shader = trap_R_RegisterShaderNoMip( b->errorpic );
 	}
-
-	if (b->focuspic && !b->focusshader)
-		b->focusshader = trap_R_RegisterShaderNoMip( b->focuspic );
-
 	if (b->generic.flags & QMF_GRAYED)
 	{
 		if (b->shader)
@@ -325,7 +320,6 @@ void Bitmap_Draw( menubitmap_s *b )
 			color[3] = 0.5+0.5*sin(uis.realtime/PULSE_DIVISOR);
 
 			trap_R_SetColor( color );
-			UI_DrawHandlePic( x, y, w, h, b->focusshader );
 			trap_R_SetColor( NULL );
 		}
 		else if ((b->generic.flags & QMF_HIGHLIGHT) || ((b->generic.flags & QMF_HIGHLIGHT_IF_FOCUS) && (Menu_ItemAtCursor( b->generic.parent ) == b)))
@@ -333,11 +327,8 @@ void Bitmap_Draw( menubitmap_s *b )
 			if (b->focuscolor)
 			{
 				trap_R_SetColor( b->focuscolor );
-				UI_DrawHandlePic( x, y, w, h, b->focusshader );
 				trap_R_SetColor( NULL );
 			}
-			else
-				UI_DrawHandlePic( x, y, w, h, b->focusshader );
 		}
 	}
 }

@@ -209,67 +209,7 @@ CG_AddMarks
 #define	MARK_TOTAL_TIME		10000
 #define	MARK_FADE_TIME		1000
 
-void CG_AddMarks( void ) {
-	int			j;
-	markPoly_t	*mp, *next;
-	int			t;
-	int			fade;
-
-	if ( !cg_addMarks.integer ) {
-		return;
-	}
-
-	mp = cg_activeMarkPolys.nextMark;
-	for ( ; mp != &cg_activeMarkPolys ; mp = next ) {
-		// grab next now, so if the local entity is freed we
-		// still have it
-		next = mp->nextMark;
-
-		// see if it is time to completely remove it
-		if ( cg.time > mp->time + MARK_TOTAL_TIME ) {
-			CG_FreeMarkPoly( mp );
-			continue;
-		}
-
-		// fade out the energy bursts
-		if ( mp->markShader == cgs.media.energyMarkShader ) {
-
-			fade = 450 - 450 * ( (cg.time - mp->time ) / 3000.0 );
-			if ( fade < 255 ) {
-				if ( fade < 0 ) {
-					fade = 0;
-				}
-				if ( mp->verts[0].modulate[0] != 0 ) {
-					for ( j = 0 ; j < mp->poly.numVerts ; j++ ) {
-						mp->verts[j].modulate[0] = mp->color[0] * fade;
-						mp->verts[j].modulate[1] = mp->color[1] * fade;
-						mp->verts[j].modulate[2] = mp->color[2] * fade;
-					}
-				}
-			}
-		}
-
-		// fade all marks out with time
-		t = mp->time + MARK_TOTAL_TIME - cg.time;
-		if ( t < MARK_FADE_TIME ) {
-			fade = 255 * t / MARK_FADE_TIME;
-			if ( mp->alphaFade ) {
-				for ( j = 0 ; j < mp->poly.numVerts ; j++ ) {
-					mp->verts[j].modulate[3] = fade;
-				}
-			} else {
-				for ( j = 0 ; j < mp->poly.numVerts ; j++ ) {
-					mp->verts[j].modulate[0] = mp->color[0] * fade;
-					mp->verts[j].modulate[1] = mp->color[1] * fade;
-					mp->verts[j].modulate[2] = mp->color[2] * fade;
-				}
-			}
-		}
-
-
-		trap_R_AddPolyToScene( mp->markShader, mp->poly.numVerts, mp->verts );
-	}
-}
+void CG_AddMarks( void ) {}
 
 // cg_particles.c  
 
@@ -1607,7 +1547,7 @@ int CG_NewParticleArea (int num)
 	return (1);
 }
 
-void	CG_SnowLink (centity_t *cent, qboolean particleOn)
+void CG_SnowLink (centity_t *cent, qboolean particleOn)
 {
 	cparticle_t		*p, *next;
 	int id;
@@ -1631,99 +1571,9 @@ void	CG_SnowLink (centity_t *cent, qboolean particleOn)
 
 	}
 }
-
-void CG_ParticleImpactSmokePuff (qhandle_t pshader, vec3_t origin)
-{
-	cparticle_t	*p;
-
-	if (!pshader)
-		CG_Printf ("CG_ParticleImpactSmokePuff pshader == ZERO!\n");
-
-	if (!free_particles)
-		return;
-	p = free_particles;
-	free_particles = p->next;
-	p->next = active_particles;
-	active_particles = p;
-	p->time = cg.time;
-	p->alpha = 0.25;
-	p->alphavel = 0;
-	p->roll = crandom()*179;
-
-	p->pshader = pshader;
-
-	p->endtime = cg.time + 1000;
-	p->startfade = cg.time + 100;
-
-	p->width = rand()%4 + 8;
-	p->height = rand()%4 + 8;
-
-	p->endheight = p->height *2;
-	p->endwidth = p->width * 2;
-
-	p->endtime = cg.time + 500;
-
-	p->type = P_SMOKE_IMPACT;
-
-	VectorCopy( origin, p->org );
-	VectorSet(p->vel, 0, 0, 20);
-	VectorSet(p->accel, 0, 0, 20);
-
-	p->rotate = qtrue;
-}
-
-void CG_Particle_Bleed (qhandle_t pshader, vec3_t start, vec3_t dir, int fleshEntityNum, int duration)
-{
-	cparticle_t	*p;
-
-	if (!pshader)
-		CG_Printf ("CG_Particle_Bleed pshader == ZERO!\n");
-
-	if (!free_particles)
-		return;
-	p = free_particles;
-	free_particles = p->next;
-	p->next = active_particles;
-	active_particles = p;
-	p->time = cg.time;
-	p->alpha = 1.0;
-	p->alphavel = 0;
-	p->roll = 0;
-
-	p->pshader = pshader;
-
-	p->endtime = cg.time + duration;
-	
-	if (fleshEntityNum)
-		p->startfade = cg.time;
-	else
-		p->startfade = cg.time + 100;
-
-	p->width = 4;
-	p->height = 4;
-
-	p->endheight = 4+rand()%3;
-	p->endwidth = p->endheight;
-
-	p->type = P_SMOKE;
-
-	VectorCopy( start, p->org );
-	p->vel[0] = 0;
-	p->vel[1] = 0;
-	p->vel[2] = -20;
-	VectorClear( p->accel );
-
-	p->rotate = qfalse;
-
-	p->roll = rand()%179;
-	
-	p->color = BLOODRED;
-	p->alpha = 0.75;
-
-}
-
-void CG_Particle_OilParticle (qhandle_t pshader, centity_t *cent)
-{
+void CG_ParticleImpactSmokePuff (qhandle_t pshader, vec3_t origin){}
+void CG_Particle_Bleed (qhandle_t pshader, vec3_t start, vec3_t dir, int fleshEntityNum, int duration){}
+void CG_Particle_OilParticle (qhandle_t pshader, centity_t *cent){
 	cparticle_t	*p;
 
 	int			time;
@@ -1989,82 +1839,7 @@ void CG_BloodPool (localEntity_t *le, qhandle_t pshader, trace_t *tr)
 #define NORMALSIZE	16
 #define LARGESIZE	32
 
-void CG_ParticleBloodCloud (centity_t *cent, vec3_t origin, vec3_t dir)
-{
-	float	length;
-	float	dist;
-	float	crittersize;
-	vec3_t	angles, forward;
-	vec3_t	point;
-	cparticle_t	*p;
-	int		i;
-	
-	dist = 0;
-
-	length = VectorLength (dir);
-	vectoangles (dir, angles);
-	AngleVectors (angles, forward, NULL, NULL);
-
-	crittersize = LARGESIZE;
-
-	if (length)
-		dist = length / crittersize;
-
-	if (dist < 1)
-		dist = 1;
-
-	VectorCopy (origin, point);
-
-	for (i=0; i<dist; i++)
-	{
-		VectorMA (point, crittersize, forward, point);	
-		
-		if (!free_particles)
-			return;
-
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
-
-		p->time = cg.time;
-		p->alpha = 1.0;
-		p->alphavel = 0;
-		p->roll = 0;
-
-		p->pshader = cgs.media.smokePuffShader;
-
-		p->endtime = cg.time + 350 + (crandom() * 100);
-		
-		p->startfade = cg.time;
-		
-		p->width = LARGESIZE;
-		p->height = LARGESIZE;
-		p->endheight = LARGESIZE;
-		p->endwidth = LARGESIZE;
-
-		p->type = P_SMOKE;
-
-		VectorCopy( origin, p->org );
-		
-		p->vel[0] = 0;
-		p->vel[1] = 0;
-		p->vel[2] = -1;
-		
-		VectorClear( p->accel );
-
-		p->rotate = qfalse;
-
-		p->roll = rand()%179;
-		
-		p->color = BLOODRED;
-		
-		p->alpha = 0.75;
-		
-	}
-
-	
-}
+void CG_ParticleBloodCloud (centity_t *cent, vec3_t origin, vec3_t dir){}
 
 void CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, float speed)
 {
@@ -2113,110 +1888,10 @@ void CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, 
 	p->accel[1] = crandom () * 4;
 	
 }
-
-void CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir)
-{
-	float	length;
-	float	dist;
-	float	crittersize;
-	vec3_t	angles, forward;
-	vec3_t	point;
-	cparticle_t	*p;
-	int		i;
-	
-	dist = 0;
-
-	VectorNegate (dir, dir);
-	length = VectorLength (dir);
-	vectoangles (dir, angles);
-	AngleVectors (angles, forward, NULL, NULL);
-
-	crittersize = LARGESIZE;
-
-	if (length)
-		dist = length / crittersize;
-
-	if (dist < 1)
-		dist = 1;
-
-	VectorCopy (origin, point);
-
-	for (i=0; i<dist; i++)
-	{
-		VectorMA (point, crittersize, forward, point);	
-				
-		if (!free_particles)
-			return;
-
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
-
-		p->time = cg.time;
-		p->alpha = 5.0;
-		p->alphavel = 0;
-		p->roll = 0;
-
-		p->pshader = cgs.media.smokePuffShader;
-
-		// RF, stay around for long enough to expand and dissipate naturally
-		if (length)
-			p->endtime = cg.time + 4500 + (crandom() * 3500);
-		else
-			p->endtime = cg.time + 750 + (crandom() * 500);
-		
-		p->startfade = cg.time;
-		
-		p->width = LARGESIZE;
-		p->height = LARGESIZE;
-
-		// RF, expand while falling
-		p->endheight = LARGESIZE*3.0;
-		p->endwidth = LARGESIZE*3.0;
-
-		if (!length)
-		{
-			p->width *= 0.2f;
-			p->height *= 0.2f;
-
-			p->endheight = NORMALSIZE;
-			p->endwidth = NORMALSIZE;
-		}
-
-		p->type = P_SMOKE;
-
-		VectorCopy( point, p->org );
-		
-		p->vel[0] = crandom()*6;
-		p->vel[1] = crandom()*6;
-		p->vel[2] = random()*20;
-
-		// RF, add some gravity/randomness
-		p->accel[0] = crandom()*3;
-		p->accel[1] = crandom()*3;
-		p->accel[2] = -PARTICLE_GRAVITY*0.4;
-
-		VectorClear( p->accel );
-
-		p->rotate = qfalse;
-
-		p->roll = rand()%179;
-		
-		p->alpha = 0.75;
-		
-	}
-
-	
-}
-
+void CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir){}
 void CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, float alpha)
 {
 	cparticle_t	*p;
-
-	if (!pshader)
-		CG_Printf ("CG_ParticleImpactSmokePuff pshader == ZERO!\n");
-
 	if (!free_particles)
 		return;
 

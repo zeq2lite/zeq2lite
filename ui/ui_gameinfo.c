@@ -125,14 +125,6 @@ void UI_LoadArenas( void ) {
 	ui_numArenas = 0;
 	uiInfo.mapCount = 0;
 
-	trap_Cvar_Register( &arenasFile, "g_arenasFile", "", CVAR_INIT|CVAR_ROM );
-	if( *arenasFile.string ) {
-		UI_LoadArenasFromFile(arenasFile.string);
-	}
-	else {
-		UI_LoadArenasFromFile("scripts/arenas.txt");
-	}
-
 	// get all arenas from .arena files
 	numdirs = trap_FS_GetFileList("maps", ".arena", dirlist, 1024 );
 	dirptr  = dirlist;

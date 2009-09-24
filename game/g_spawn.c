@@ -550,7 +550,6 @@ qboolean G_ParseSpawnVars( void ) {
 
 Every map should have exactly one worldspawn.
 "music"		music wav file
-"gravity"	800 is default gravity
 "message"	Text to print during connection process
 */
 void SP_worldspawn( void ) {
@@ -573,10 +572,6 @@ void SP_worldspawn( void ) {
 	trap_SetConfigstring( CS_MESSAGE, s );				// map specific message
 
 	trap_SetConfigstring( CS_MOTD, g_motd.string );		// message of the day
-
-	G_SpawnString( "gravity", "800", &s );
-	trap_Cvar_Set( "g_gravity", s );
-
 	G_SpawnString( "enableDust", "0", &s );
 	trap_Cvar_Set( "g_enableDust", s );
 

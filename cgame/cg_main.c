@@ -120,7 +120,6 @@ vmCvar_t	cg_thirdPersonTargetDamp;
 vmCvar_t	cg_thirdPersonMeleeCameraDamp;
 vmCvar_t	cg_thirdPersonMeleeTargetDamp;
 vmCvar_t	cg_stereoSeparation;
-vmCvar_t	cg_lagometer;
 vmCvar_t	cg_synchronousClients;
 vmCvar_t 	cg_teamChatTime;
 vmCvar_t 	cg_teamChatHeight;
@@ -230,7 +229,6 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_brassTime, "cg_brassTime", "2500", CVAR_ARCHIVE },
 	{ &cg_simpleItems, "cg_simpleItems", "0", CVAR_ARCHIVE },
 	{ &cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE },
-	{ &cg_lagometer, "cg_lagometer", "1", CVAR_ARCHIVE },
 	{ &cg_railTrailTime, "cg_railTrailTime", "400", CVAR_ARCHIVE  },
 	{ &cg_gun_x, "cg_gunX", "0", CVAR_CHEAT },
 	{ &cg_gun_y, "cg_gunY", "0", CVAR_CHEAT },
@@ -1423,13 +1421,12 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.numberShaders[i] = trap_R_RegisterShader( sb_nums[i] );
 	}
 
-	cgs.media.smokePuffShader = trap_R_RegisterShader( "smokePuff" );
 	cgs.media.waterBubbleShader = trap_R_RegisterShader( "waterBubble" );
 	cgs.media.selectShader = trap_R_RegisterShader( "interface/hud/select.png" );
-	cgs.media.balloonShader = trap_R_RegisterShader( "interface/menu/chat.png" );
+	cgs.media.chatBubble = trap_R_RegisterShader( "interface/menu/chat.png" );
 
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
-		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("interface/hud/crosshair%c", 'a'+i) );
+		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("crosshair%c", 'a'+i) );
 	}
 	cgs.media.globalCelLighting = trap_R_RegisterShader("GlobalCelLighting");
 	cgs.media.waterSplashSkin = trap_R_RegisterSkin( "effects/water/waterSplash.skin" );
@@ -1452,28 +1449,11 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.bfgLFStar = trap_R_RegisterShader("bfgLFStar");
 	cgs.media.bfgLFLine = trap_R_RegisterShader("bfgLFLine");
 
-	cgs.media.invulnerabilityPowerupModel = trap_R_RegisterModel( "models/powerups/shield/shield.md3" );
-	cgs.media.medalImpressive = trap_R_RegisterShaderNoMip( "medal_impressive" );
-	cgs.media.medalExcellent = trap_R_RegisterShaderNoMip( "medal_excellent" );
-	cgs.media.medalGauntlet = trap_R_RegisterShaderNoMip( "medal_gauntlet" );
-	cgs.media.medalDefend = trap_R_RegisterShaderNoMip( "medal_defend" );
-	cgs.media.medalAssist = trap_R_RegisterShaderNoMip( "medal_assist" );
-	cgs.media.medalCapture = trap_R_RegisterShaderNoMip( "medal_capture" );
-
-
 	memset( cg_items, 0, sizeof( cg_items ) );
 	memset( cg_weapons, 0, sizeof( cg_weapons ) );
 
 	// only register the items that the server says we need
 	strcpy( items, CG_ConfigString( CS_ITEMS) );
-
-	for ( i = 1 ; i < bg_numItems ; i++ ) {
-		if ( items[ i ] == '1' || cg_buildScript.integer ) {
-			CG_LoadingItem( i );
-			CG_RegisterItemVisuals( i );
-		}
-	}
-
 	cgs.media.wakeMarkShader = trap_R_RegisterShader( "wake" );
 	cgs.media.dirtPushShader = trap_R_RegisterShader( "DirtPush" );
 	cgs.media.dirtPushSkin = trap_R_RegisterSkin( "effects/shockwave/dirtPush.skin" );

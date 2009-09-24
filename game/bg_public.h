@@ -328,6 +328,7 @@ typedef enum {
 // States
 #define isHovering		0x00000001
 #define isDashing		0x00000002
+#define isWallWalking	0x00000004
 
 // Melee
 typedef enum {

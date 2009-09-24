@@ -158,15 +158,6 @@ static void UI_LoadArenas( void ) {
 	int			singlePlayerNum, specialNum, otherNum;
 
 	ui_numArenas = 0;
-
-	trap_Cvar_Register( &arenasFile, "g_arenasFile", "", CVAR_INIT|CVAR_ROM );
-	if( *arenasFile.string ) {
-		UI_LoadArenasFromFile(arenasFile.string);
-	}
-	else {
-		UI_LoadArenasFromFile("scripts/arenas.txt");
-	}
-
 	// get all arenas from .arena files
 	numdirs = trap_FS_GetFileList("maps", ".arena", dirlist, 1024 );
 	dirptr  = dirlist;
@@ -520,116 +511,6 @@ void UI_LogAwardData( int award, int data ) {
 	trap_Cvar_Set( "g_spAwards", awardData );
 }
 
-
-/*
-===============
-UI_GetAwardLevel
-===============
-*/
-int UI_GetAwardLevel( int award ) {
-	char	key[16];
-	char	awardData[MAX_INFO_VALUE];
-
-	trap_Cvar_VariableStringBuffer( "g_spAwards", awardData, sizeof(awardData) );
-
-	Com_sprintf( key, sizeof(key), "a%i", award );
-	return atoi( Info_ValueForKey( awardData, key ) );
-}
-
-
-/*
-===============
-UI_TierCompleted
-===============
-*/
-int UI_TierCompleted( int levelWon ) {
-	int			level;
-	int			n;
-	int			tier;
-	int			score;
-	int			skill;
-	const char	*info;
-
-	tier = levelWon / ARENAS_PER_TIER;
-	level = tier * ARENAS_PER_TIER;
-
-	if( tier == UI_GetNumSPTiers() ) {
-		info = UI_GetSpecialArenaInfo( "training" );
-		if( levelWon == atoi( Info_ValueForKey( info, "num" ) ) ) {
-			return 0;
-		}
-		info = UI_GetSpecialArenaInfo( "final" );
-		if( !info || levelWon == atoi( Info_ValueForKey( info, "num" ) ) ) {
-			return tier + 1;
-		}
-		return -1;
-	}
-
-	for( n = 0; n < ARENAS_PER_TIER; n++, level++ ) {
-		UI_GetBestScore( level, &score, &skill );
-		if ( score != 1 ) {
-			return -1;
-		}
-	}
-	return tier + 1;
-}
-
-
-/*
-===============
-UI_ShowTierVideo
-===============
-*/
-qboolean UI_ShowTierVideo( int tier ) {
-	char	key[16];
-	char	videos[MAX_INFO_VALUE];
-
-	if( tier <= 0 ) {
-		return qfalse;
-	}
-
-	trap_Cvar_VariableStringBuffer( "g_spVideos", videos, sizeof(videos) );
-
-	Com_sprintf( key, sizeof(key), "tier%i", tier );
-	if( atoi( Info_ValueForKey( videos, key ) ) ) {
-		return qfalse;
-	}
-
-	Info_SetValueForKey( videos, key, va( "%i", 1 ) );
-	trap_Cvar_Set( "g_spVideos", videos );
-
-	return qtrue;
-}
-
-
-/*
-===============
-UI_CanShowTierVideo
-===============
-*/
-qboolean UI_CanShowTierVideo( int tier ) {
-	char	key[16];
-	char	videos[MAX_INFO_VALUE];
-
-	if( !tier ) {
-		return qfalse;
-	}
-
-	if( uis.demoversion && tier != 8 ) {
-		return qfalse;
-	}
-
-	trap_Cvar_VariableStringBuffer( "g_spVideos", videos, sizeof(videos) );
-
-	Com_sprintf( key, sizeof(key), "tier%i", tier );
-	if( atoi( Info_ValueForKey( videos, key ) ) ) {
-		return qtrue;
-	}
-
-	return qfalse;
-}
-
-
 /*
 ===============
 UI_GetCurrentGame
@@ -694,27 +575,6 @@ int UI_GetNumArenas( void ) {
 	return ui_numArenas;
 }
 
-
-/*
-===============
-UI_GetNumSPArenas
-===============
-*/
-int UI_GetNumSPArenas( void ) {
-	return ui_numSinglePlayerArenas;
-}
-
-
-/*
-===============
-UI_GetNumSPTiers
-===============
-*/
-int UI_GetNumSPTiers( void ) {
-	return ui_numSinglePlayerArenas / ARENAS_PER_TIER;
-}
-
-
 /*
 ===============
 UI_GetNumBots
@@ -722,61 +582,6 @@ UI_GetNumBots
 */
 int UI_GetNumBots( void ) {
 	return ui_numBots;
-}
-
-
-/*
-===============
-UI_SPUnlock_f
-===============
-*/
-void UI_SPUnlock_f( void ) {
-	char	arenaKey[16];
-	char	scores[MAX_INFO_VALUE];
-	int		level;
-	int		tier;
-
-	// get scores for skill 1
-	trap_Cvar_VariableStringBuffer( "g_spScores1", scores, MAX_INFO_VALUE );
-
-	// update scores
-	for( level = 0; level < ui_numSinglePlayerArenas + ui_numSpecialSinglePlayerArenas; level++ ) {
-		Com_sprintf( arenaKey, sizeof( arenaKey ), "l%i", level );
-		Info_SetValueForKey( scores, arenaKey, "1" );
-	}
-	trap_Cvar_Set( "g_spScores1", scores );
-
-	// unlock cinematics
-	for( tier = 1; tier <= 8; tier++ ) {
-		UI_ShowTierVideo( tier );
-	}
-
-	trap_Print( "All levels unlocked at skill level 1\n" );
-
-	UI_SPLevelMenu_ReInit();
-}
-
-
-/*
-===============
-UI_SPUnlockMedals_f
-===============
-*/
-void UI_SPUnlockMedals_f( void ) {
-	int		n;
-	char	key[16];
-	char	awardData[MAX_INFO_VALUE];
-
-	trap_Cvar_VariableStringBuffer( "g_spAwards", awardData, MAX_INFO_VALUE );
-
-	for( n = 0; n < 6; n++ ) {
-		Com_sprintf( key, sizeof(key), "a%i", n );
-		Info_SetValueForKey( awardData, key, "100" );
-	}
-
-	trap_Cvar_Set( "g_spAwards", awardData );
-
-	trap_Print( "All levels unlocked at 100\n" );
 }
 
 

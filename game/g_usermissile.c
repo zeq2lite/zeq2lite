@@ -1010,7 +1010,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		// Gravity affection takes precedence over acceleration.
 		// FIXME: Can we get both simultaneously?
 		if (weaponInfo->physics_gravity > 0) {
-			bolt->gravity = (weaponInfo->physics_gravity / 100) * g_gravity.value; 
+			bolt->gravity = (weaponInfo->physics_gravity / 100) * 1000; 
 			bolt->s.pos.trType = TR_MAPGRAVITY;
 			bolt->s.pos.trDuration = bolt->gravity;
 		} else {
@@ -1448,7 +1448,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 				// FIXME: Can we get both simultaneously?
 				if (weaponInfo->physics_gravity > 0) {
 					trigTarget->accel = 0;
-					trigTarget->gravity = (weaponInfo->physics_gravity / 100) * g_gravity.value; 
+					trigTarget->gravity = (weaponInfo->physics_gravity / 100) * 1000; 
 					trigTarget->s.pos.trType = TR_MAPGRAVITY;
 					trigTarget->s.pos.trDuration = trigTarget->gravity;
 				} else if (weaponInfo->physics_acceleration != 0.0f) {

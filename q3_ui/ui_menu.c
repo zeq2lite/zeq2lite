@@ -177,12 +177,8 @@ static void Main_MenuDraw( void ) {
 	char *result;
 	char segment[6400];
 	if(uis.menuamount != 3){
-		trap_HTTPGet("http://zeq2.com/lite/forums/");
-		
-		trap_Cvar_VariableStringBuffer( "httpContents", segment, sizeof( segment )+1 );
-		segment[strlen(segment)] = '\0';
-		Com_Printf("SEGMENT SIZE --------------------- %i\n",strlen(segment));
-		Com_Printf("%s\n",segment);
+		trap_HTTPGet("http://zeq2.com/lite/forums/");		
+		trap_Cvar_VariableStringBuffer("httpContents",segment,sizeof(segment));
 	}
 	uis.menuamount = 3;
 	uis.hideEarth = qfalse;

@@ -1747,124 +1747,14 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 CG_HasteTrail
 ===============
 */
-static void CG_HasteTrail( centity_t *cent ) {
-	localEntity_t	*smoke;
-	vec3_t			origin;
-	int				anim;
-
-	if ( cent->trailTime > cg.time ) {
-		return;
-	}
-	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if ( anim != ANIM_RUN && anim != ANIM_BACKRUN ) {
-		return;
-	}
-
-	cent->trailTime += 100;
-	if ( cent->trailTime < cg.time ) {
-		cent->trailTime = cg.time;
-	}
-
-	VectorCopy( cent->lerpOrigin, origin );
-	origin[2] -= 16;
-
-	smoke = CG_SmokePuff( origin, vec3_origin, 
-				  8, 
-				  1, 1, 1, 1,
-				  500, 
-				  cg.time,
-				  0,
-				  0,
-				  cgs.media.hastePuffShader );
-
-	// use the optimized local entity add
-	smoke->leType = LE_SCALE_FADE;
-}
+static void CG_HasteTrail( centity_t *cent ) {}
 
 /*
 ===============
 CG_BreathPuffs
 ===============
 */
-static void CG_BreathPuffs( centity_t *cent, refEntity_t *head) {
-	clientInfo_t *ci;
-	vec3_t up, origin;
-	int contents;
-
-	ci = &cgs.clientinfo[ cent->currentState.number ];
-
-	if ( cent->currentState.number == cg.snap->ps.clientNum && !cg.renderingThirdPerson) {
-		return;
-	}
-	if ( cent->currentState.eFlags & EF_DEAD ) {
-		return;
-	}
-	contents = trap_CM_PointContents( head->origin, 0 );
-	if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
-
-		if ( ci->breathPuffTime > cg.time ) {
-			return;
-		}
-
-		VectorSet( up, 0, 0, 32 + rand() % 32 );
-		VectorMA(head->origin, 8, head->axis[0], origin);
-		VectorMA(origin, -4, head->axis[2], origin);
-		CG_WaterBubble( origin, up, 1 + rand() % 5, 1, 1, 1, 1, 1500, cg.time, cg.time + 400 + rand() % 400, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleShader );
-		ci->breathPuffTime = cg.time + rand() % 2000;
-	}
-}
-
-#ifdef MISSIONPACK
-/*
-===============
-CG_DustTrail
-===============
-*/
-static void CG_DustTrail( centity_t *cent ) {
-	int				anim;
-	localEntity_t	*dust;
-	vec3_t end, vel;
-	trace_t tr;
-
-	if (!cg_enableDust.integer)
-		return;
-
-	if ( cent->dustTrailTime > cg.time ) {
-		return;
-	}
-
-	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if ( anim != ANIM_LAND_BACK && anim != ANIM_LAND_UP && anim != ANIM_LAND_FORWARD) {
-		return;
-	}
-
-	cent->dustTrailTime += 40;
-	if ( cent->dustTrailTime < cg.time ) {
-		cent->dustTrailTime = cg.time;
-	}
-
-	VectorCopy(cent->currentState.pos.trBase, end);
-	end[2] -= 64;
-	CG_Trace( &tr, cent->currentState.pos.trBase, NULL, NULL, end, cent->currentState.number, MASK_PLAYERSOLID );
-
-	if ( !(tr.surfaceFlags & SURF_DUST) )
-		return;
-
-	VectorCopy( cent->currentState.pos.trBase, end );
-	end[2] -= 16;
-
-	VectorSet(vel, 0, 0, -30);
-	dust = CG_SmokePuff( end, vel,
-				  24,
-				  .8f, .8f, 0.7f, 0.33f,
-				  500,
-				  cg.time,
-				  0,
-				  0,
-				  cgs.media.dustPuffShader );
-}
-
-#endif
+static void CG_BreathPuffs( centity_t *cent, refEntity_t *head) {}
 
 /*
 ===============
@@ -1897,195 +1787,15 @@ static void CG_TrailItem( centity_t *cent, qhandle_t hModel ) {
 CG_PlayerFlag
 ===============
 */
-static void CG_PlayerFlag( centity_t *cent, qhandle_t hSkin, refEntity_t *torso ) {
-	clientInfo_t	*ci;
-	refEntity_t	pole;
-	refEntity_t	flag;
-	vec3_t		angles, dir;
-	int			legsAnim, flagAnim, updateangles;
-	float		angle, d;
-
-	// show the flag pole model
-	memset( &pole, 0, sizeof(pole) );
-	pole.hModel = cgs.media.flagPoleModel;
-	VectorCopy( torso->lightingOrigin, pole.lightingOrigin );
-	pole.shadowPlane = torso->shadowPlane;
-	pole.renderfx = torso->renderfx;
-//	CG_PositionEntityOnTag( &pole, torso, torso->hModel, "tag_flag" );
-	trap_R_AddRefEntityToScene( &pole );
-
-	// show the flag model
-	memset( &flag, 0, sizeof(flag) );
-	flag.hModel = cgs.media.flagFlapModel;
-	flag.customSkin = hSkin;
-	VectorCopy( torso->lightingOrigin, flag.lightingOrigin );
-	flag.shadowPlane = torso->shadowPlane;
-	flag.renderfx = torso->renderfx;
-
-	VectorClear(angles);
-
-	updateangles = qfalse;
-	legsAnim = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
-	if( legsAnim == ANIM_IDLE || legsAnim == ANIM_IDLE_LOCKED ) {
-		flagAnim = FLAG_STAND;
-	} else if ( legsAnim == ANIM_WALK ) {
-		flagAnim = FLAG_STAND;
-		updateangles = qtrue;
-	} else {
-		flagAnim = FLAG_RUN;
-		updateangles = qtrue;
-	}
-
-	if ( updateangles ) {
-
-		VectorCopy( cent->currentState.pos.trDelta, dir );
-		// add gravity
-		dir[2] += 100;
-		VectorNormalize( dir );
-		d = DotProduct(pole.axis[2], dir);
-		// if there is anough movement orthogonal to the flag pole
-		if (fabs(d) < 0.9) {
-			//
-			d = DotProduct(pole.axis[0], dir);
-			if (d > 1.0f) {
-				d = 1.0f;
-			}
-			else if (d < -1.0f) {
-				d = -1.0f;
-			}
-			angle = acos(d);
-
-			d = DotProduct(pole.axis[1], dir);
-			if (d < 0) {
-				angles[YAW] = 360 - angle * 180 / M_PI;
-			}
-			else {
-				angles[YAW] = angle * 180 / M_PI;
-			}
-			if (angles[YAW] < 0)
-				angles[YAW] += 360;
-			if (angles[YAW] > 360)
-				angles[YAW] -= 360;
-
-			//vectoangles( cent->currentState.pos.trDelta, tmpangles );
-			//angles[YAW] = tmpangles[YAW] + 45 - cent->pe.torso.yawAngle;
-			// change the yaw angle
-			CG_SwingAngles( angles[YAW], 25, 90, 0.15f, &cent->pe.flag.yawAngle, &cent->pe.flag.yawing );
-		}
-
-		/*
-		d = DotProduct(pole.axis[2], dir);
-		angle = Q_acos(d);
-
-		d = DotProduct(pole.axis[1], dir);
-		if (d < 0) {
-			angle = 360 - angle * 180 / M_PI;
-		}
-		else {
-			angle = angle * 180 / M_PI;
-		}
-		if (angle > 340 && angle < 20) {
-			flagAnim = FLAG_RUNUP;
-		}
-		if (angle > 160 && angle < 200) {
-			flagAnim = FLAG_RUNDOWN;
-		}
-		*/
-	}
-
-	// set the yaw angle
-	angles[YAW] = cent->pe.flag.yawAngle;
-	// lerp the flag animation frames
-	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
-	CG_RunLerpFrame( ci, &cent->pe.flag, flagAnim, 1 );
-	flag.oldframe = cent->pe.flag.oldFrame;
-	flag.frame = cent->pe.flag.frame;
-	flag.backlerp = cent->pe.flag.backlerp;
-
-	AnglesToAxis( angles, flag.axis );
-	CG_PositionRotatedEntityOnTag( &flag, &pole, pole.hModel, "tag_flag" );
-
-	trap_R_AddRefEntityToScene( &flag );
-}
+static void CG_PlayerFlag( centity_t *cent, qhandle_t hSkin, refEntity_t *torso ) {}
 
 
-#ifdef MISSIONPACK // bk001204
-/*
-===============
-CG_PlayerTokens
-===============
-*/
-static void CG_PlayerTokens( centity_t *cent, int renderfx ) {
-	int			tokens, i, j;
-	float		angle;
-	refEntity_t	ent;
-	vec3_t		dir, origin;
-	skulltrail_t *trail;
-	trail = &cg.skulltrails[cent->currentState.number];
-	tokens = cent->currentState.generic1;
-	if ( !tokens ) {
-		trail->numpositions = 0;
-		return;
-	}
-
-	if ( tokens > MAX_SKULLTRAIL ) {
-		tokens = MAX_SKULLTRAIL;
-	}
-
-	// add skulls if there are more than last time
-	for (i = 0; i < tokens - trail->numpositions; i++) {
-		for (j = trail->numpositions; j > 0; j--) {
-			VectorCopy(trail->positions[j-1], trail->positions[j]);
-		}
-		VectorCopy(cent->lerpOrigin, trail->positions[0]);
-	}
-	trail->numpositions = tokens;
-
-	// move all the skulls along the trail
-	VectorCopy(cent->lerpOrigin, origin);
-	for (i = 0; i < trail->numpositions; i++) {
-		VectorSubtract(trail->positions[i], origin, dir);
-		if (VectorNormalize(dir) > 30) {
-			VectorMA(origin, 30, dir, trail->positions[i]);
-		}
-		VectorCopy(trail->positions[i], origin);
-	}
-
-	memset( &ent, 0, sizeof( ent ) );
-	if( cgs.clientinfo[ cent->currentState.clientNum ].team == TEAM_BLUE ) {
-		ent.hModel = cgs.media.redCubeModel;
-	} else {
-		ent.hModel = cgs.media.blueCubeModel;
-	}
-	ent.renderfx = renderfx;
-
-	VectorCopy(cent->lerpOrigin, origin);
-	for (i = 0; i < trail->numpositions; i++) {
-		VectorSubtract(origin, trail->positions[i], ent.axis[0]);
-		ent.axis[0][2] = 0;
-		VectorNormalize(ent.axis[0]);
-		VectorSet(ent.axis[2], 0, 0, 1);
-		CrossProduct(ent.axis[0], ent.axis[2], ent.axis[1]);
-
-		VectorCopy(trail->positions[i], ent.origin);
-		angle = (((cg.time + 500 * MAX_SKULLTRAIL - 500 * i) / 16) & 255) * (M_PI * 2) / 255;
-		ent.origin[2] += sin(angle) * 10;
-		trap_R_AddRefEntityToScene( &ent );
-		VectorCopy(trail->positions[i], origin);
-	}
-}
-#endif
-
-
-/*
-===============
+/*===============
 CG_PlayerPowerups
-===============
-*/
+===============*/
 static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 	int		powerups;
 	clientInfo_t	*ci;
-
 	powerups = cent->currentState.powerups;
 	if ( !powerups ) {
 		return;
@@ -2094,13 +1804,10 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 }
 
 
-/*
-===============
+/*===============
 CG_PlayerFloatSprite
-
 Float a sprite over the player's head
-===============
-*/
+===============*/
 static void CG_PlayerFloatSprite( centity_t *cent, qhandle_t shader ) {
 	int				rf;
 	refEntity_t		ent;
@@ -2136,47 +1843,14 @@ Float sprites over the player's head
 */
 static void CG_PlayerSprites( centity_t *cent ) {
 	int		team;
-
-	if ( cent->currentState.eFlags & EF_CONNECTION ) {
+	if(cent->currentState.eFlags & EF_CONNECTION){
 		CG_PlayerFloatSprite( cent, cgs.media.connectionShader );
 		return;
 	}
-
 	if ( cent->currentState.eFlags & EF_TALK ) {
-		CG_PlayerFloatSprite( cent, cgs.media.balloonShader );
+		CG_PlayerFloatSprite( cent, cgs.media.chatBubble );
 		return;
 	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_IMPRESSIVE ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalImpressive );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_EXCELLENT ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalExcellent );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_GAUNTLET ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalGauntlet );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_DEFEND ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalDefend );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_ASSIST ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalAssist );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_CAP ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalCapture );
-		return;
-	}
-
 	team = cgs.clientinfo[ cent->currentState.clientNum ].team;
 	if ( !(cent->currentState.eFlags & EF_DEAD) && 
 		cg.snap->ps.persistant[PERS_TEAM] == team &&

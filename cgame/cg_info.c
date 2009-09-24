@@ -132,7 +132,6 @@ void CG_DrawInformation( void ) {
 	int			y;
 	int			value;
 	qhandle_t	levelshot;
-	qhandle_t	detail;
 	char		buf[1024];
 
 	info = CG_ConfigString( CS_SERVERINFO );
@@ -140,15 +139,8 @@ void CG_DrawInformation( void ) {
 
 	s = Info_ValueForKey( info, "mapname" );
 	levelshot = trap_R_RegisterShaderNoMip( va( "maps/%s.jpg", s ) );
-	if ( !levelshot ) {
-		levelshot = trap_R_RegisterShaderNoMip( "maps/unknown" );
-	}
 	trap_R_SetColor( NULL );
 	CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, levelshot );
-
-	// blend a detail texture over it
-	detail = trap_R_RegisterShader( "levelShotDetail" );
-	trap_R_DrawStretchPic( 0, 0, cgs.glconfig.vidWidth, cgs.glconfig.vidHeight, 0, 0, 2.5, 2, detail );
 
 	// draw the icons of things as they are loaded
 	CG_DrawLoadingIcons();

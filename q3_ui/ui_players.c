@@ -1022,7 +1022,7 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	// add the chat icon
 	//
 	if ( pi->chat ) {
-		UI_PlayerFloatSprite( pi, origin, trap_R_RegisterShaderNoMip( "gfx/misc/balloon" ) );
+		UI_PlayerFloatSprite( pi, origin, trap_R_RegisterShaderNoMip( "chatBubble" ) );
 	}
 
 	//

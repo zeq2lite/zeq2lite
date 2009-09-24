@@ -230,7 +230,6 @@ typedef struct
 	char*			focuspic;	
 	char*			errorpic;
 	qhandle_t		shader;
-	qhandle_t		focusshader;
 	int				width;
 	int				height;
 	float*			focuscolor;

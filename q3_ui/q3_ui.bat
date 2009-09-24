@@ -8,8 +8,6 @@ set cc=call ..\..\Perform.bat
 @if errorlevel 1 goto quit
 %cc% ../ui_main.c
 @if errorlevel 1 goto quit
-%cc% ../ui_cdkey.c
-@if errorlevel 1 goto quit
 %cc% ../ui_ingame.c
 @if errorlevel 1 goto quit
 %cc% ../ui_serverinfo.c
@@ -33,8 +31,6 @@ set cc=call ..\..\Perform.bat
 %cc% ../ui_connect.c
 @if errorlevel 1 goto quit
 %cc% ../ui_controls2.c
-@if errorlevel 1 goto quit
-%cc% ../ui_demo2.c
 @if errorlevel 1 goto quit
 %cc% ../ui_mfield.c
 @if errorlevel 1 goto quit
@@ -62,39 +58,13 @@ set cc=call ..\..\Perform.bat
 @if errorlevel 1 goto quit
 %cc% ../ui_servers2.c
 @if errorlevel 1 goto quit
-%cc% ../ui_sparena.c
-@if errorlevel 1 goto quit
 %cc% ../ui_specifyserver.c
-@if errorlevel 1 goto quit
-%cc% ../ui_splevel.c
-@if errorlevel 1 goto quit
-%cc% ../ui_sppostgame.c
 @if errorlevel 1 goto quit
 %cc% ../ui_startserver.c
 @if errorlevel 1 goto quit
-%cc% ../ui_team.c
-@if errorlevel 1 goto quit
-%cc% ../ui_video.c
-@if errorlevel 1 goto quit
-%cc% ../ui_cinematics.c
-@if errorlevel 1 goto quit
-%cc% ../ui_spskill.c
-@if errorlevel 1 goto quit
-%cc% ../ui_addbots.c
-@if errorlevel 1 goto quit
-%cc% ../ui_removebots.c
-@if errorlevel 1 goto quit
-rem %cc% ../ui_loadconfig.c
-rem @if errorlevel 1 goto quit
-rem %cc% ../ui_saveconfig.c
-rem @if errorlevel 1 goto quit
-%cc% ../ui_teamorders.c
-@if errorlevel 1 goto quit
-%cc% ../ui_mods.c
-@if errorlevel 1 goto quit
 %cc% ../ui_camera.c
 @if errorlevel 1 goto quit
-%cc% ../ui_music.c
+%cc% ../ui_video.c
 @if errorlevel 1 goto quit
 
 ..\..\q3asm -f ../q3_ui

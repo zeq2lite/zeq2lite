@@ -154,7 +154,6 @@
 #define CG_CTF_POWERUP 35
                                         
 #define CG_AREA_POWERUP	36
-#define CG_AREA_LAGOMETER	37            // painted with old system
 #define CG_PLAYER_HASFLAG 38            
 #define CG_GAME_TYPE 39                 // not done
 

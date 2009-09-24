@@ -881,7 +881,7 @@ void PM_CheckJump(void){
 	jumpScale = pm->ps->bitFlags & usingBoost ? 2.0 : 1.0;
 	jumpPower = pm->ps->stats[stSpeed] * jumpScale;
 	jumpEmphasis = 2500.0;
-	pm->ps->gravity = 12000 * jumpScale;
+	pm->ps->gravity[2] = 12000 * jumpScale;
 	pm->ps->velocity[2] = 0;
 	VectorNormalize(pm->ps->velocity);
 	VectorCopy(pm->ps->velocity,pre_vel);
@@ -895,7 +895,7 @@ void PM_CheckJump(void){
 		pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.01;
 		PM_AddEvent(EV_HIGHJUMP);
 	} else{
-		pm->ps->gravity = 6000;
+		pm->ps->gravity[2] = 6000;
 		pm->ps->velocity[2] = jumpPower * 8;
 		jumpEmphasis *= jumpScale;
 		pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.06;
@@ -1144,13 +1144,13 @@ void PM_AirMove(void){
 	if(pm->ps->bitFlags & isGuiding){return;}
 	if(!(pm->ps->bitFlags & usingFlight)){
 		if(pm->ps->bitFlags & usingJump && pm->cmd.upmove < 0){
-			pm->ps->gravity = 3000;
+			pm->ps->gravity[2] = 3000;
 			pm->ps->bitFlags |= usingBallFlip;
 			if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){PM_ContinueLegsAnim(ANIM_FLY_DOWN);}
 			else{PM_ContinueLegsAnim(ANIM_JUMP_FORWARD);}
 		}
 		else if(pm->ps->bitFlags & usingJump && pm->ps->bitFlags & usingBallFlip && pm->cmd.upmove == 0){
-			pm->ps->gravity = 6000;
+			pm->ps->gravity[2] = 6000;
 			pm->ps->bitFlags &= ~usingBallFlip;
 		}
 		if(pm->ps->bitFlags & usingBallFlip){PM_StopDirections();}
@@ -1186,7 +1186,7 @@ void PM_AirMove(void){
 		PM_ClipVelocity(pm->ps->velocity, pml.groundTrace.plane.normal,pm->ps->velocity, OVERCLIP);
 	}
 	if(pm->waterlevel == 3){
-		pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
+		pm->ps->velocity[2] += 0.7f * pm->ps->gravity[2] * pml.frametime;
 	}
 	gravity = pm->ps->bitFlags & usingFlight ? qfalse : qtrue;
 	if(pm->ps->bitFlags & usingZanzoken){
@@ -1241,7 +1241,7 @@ void PM_WalkMove(void){
 		return;
 	}
 	if(pm->waterlevel == 3){
-		pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
+		pm->ps->velocity[2] += 0.7f * pm->ps->gravity[2] * pml.frametime;
 	}
 	PM_StepSlideMove(qfalse);
 }
@@ -1302,7 +1302,7 @@ void PM_DashMove(void){
 			PM_ClipVelocity(pm->ps->velocity,pml.groundTrace.plane.normal,pm->ps->velocity,OVERCLIP);
 		}
 		if(pm->waterlevel == 3){
-			pm->ps->velocity[2] += 0.7f * pm->ps->gravity * pml.frametime;
+			pm->ps->velocity[2] += 0.7f * pm->ps->gravity[2] * pml.frametime;
 		}
 		PM_StepSlideMove(qtrue);
 	}
@@ -1391,7 +1391,7 @@ void PM_Land(void){
 	// calculate the exact velocity on landing
 	dist = pm->ps->origin[2] - pml.previous_origin[2];
 	vel = pml.previous_velocity[2];
-	acc = -pm->ps->gravity;
+	acc = -pm->ps->gravity[2];
 
 	a = acc / 2;
 	b = vel;
@@ -3034,7 +3034,7 @@ void PmoveSingle(pmove_t *pmove){
 	pm->numtouch = 0;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
-	pm->ps->gravity = pm->ps->bitFlags & usingJump ? pm->ps->gravity : 800;
+	pm->ps->gravity[2] = pm->ps->bitFlags & usingJump ? pm->ps->gravity[2] : 800;
 	pm->ps->eFlags &= ~EF_AURA;
 	memset (&pml, 0, sizeof(pml));
 	pml.msec = pmove->cmd.serverTime - pm->ps->commandTime;
