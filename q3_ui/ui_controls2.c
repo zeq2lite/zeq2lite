@@ -1282,14 +1282,6 @@ Controls_InitWeapons
 =================
 */
 static void Controls_InitWeapons( void ) {
-	gitem_t *	item;
-
-	for ( item = bg_itemlist + 1 ; item->classname ; item++ ) {
-		if ( item->giType != IT_WEAPON ) {
-			continue;
-		}
-		trap_R_RegisterModel( item->world_model[0] );
-	}
 }
 
 /*

@@ -502,28 +502,7 @@ Kills all entities that would touch the proposed new positioning
 of ent.  Ent should be unlinked before calling this!
 =================
 */
-void G_KillBox (gentity_t *ent) {
-	int			i, num;
-	int			touch[MAX_GENTITIES];
-	gentity_t	*hit;
-	vec3_t		mins, maxs;
-
-	VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
-	VectorAdd( ent->client->ps.origin, ent->r.maxs, maxs );
-	num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
-
-	for (i=0 ; i<num ; i++) {
-		hit = &g_entities[touch[i]];
-		if ( !hit->client ) {
-			continue;
-		}
-
-		// nail it
-		G_Damage ( hit, ent, ent, NULL, NULL,
-			100000, DAMAGE_NO_PROTECTION, MOD_TELEFRAG);
-	}
-
-}
+void G_KillBox (gentity_t *ent) {}
 
 //==============================================================================
 

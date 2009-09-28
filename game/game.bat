@@ -21,31 +21,15 @@ if "%1"=="TA" goto TA
 @if errorlevel 1 goto quit
 %cc%  ../q_shared.c
 @if errorlevel 1 goto quit
-%cc%  ../ai_dmnet.c
-@if errorlevel 1 goto quit
-%cc%  ../ai_dmq3.c
-@if errorlevel 1 goto quit
-%cc%  ../ai_main.c
-@if errorlevel 1 goto quit
-%cc%  ../ai_chat.c
-@if errorlevel 1 goto quit
-%cc%  ../ai_cmd.c
-@if errorlevel 1 goto quit
-%cc%  ../ai_team.c
-@if errorlevel 1 goto quit
 %cc%  ../g_active.c
 @if errorlevel 1 goto quit
 %cc%  ../g_arenas.c
-@if errorlevel 1 goto quit
-%cc%  ../g_bot.c
 @if errorlevel 1 goto quit
 %cc%  ../g_client.c
 @if errorlevel 1 goto quit
 %cc%  ../g_cmds.c
 @if errorlevel 1 goto quit
 %cc%  ../g_combat.c
-@if errorlevel 1 goto quit
-%cc%  ../g_items.c
 @if errorlevel 1 goto quit
 %cc%  ../g_mem.c
 @if errorlevel 1 goto quit
@@ -70,8 +54,6 @@ if "%1"=="TA" goto TA
 %cc%  ../g_utils.c
 @if errorlevel 1 goto quit
 %cc%  ../g_weapon.c
-@if errorlevel 1 goto quit
-%cc%  ../ai_vcmd.c
 @if errorlevel 1 goto quit
 %cc%  ../g_usermissile.c
 @if errorlevel 1 goto quit

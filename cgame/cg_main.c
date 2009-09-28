@@ -55,7 +55,6 @@ cg_t				cg;
 cgs_t				cgs;
 centity_t			cg_entities[MAX_GENTITIES];
 weaponInfo_t		cg_weapons[MAX_WEAPONS];
-itemInfo_t			cg_items[MAX_ITEMS];
 
 vmCvar_t	cg_railTrailTime;
 vmCvar_t	cg_centertime;
@@ -107,7 +106,6 @@ vmCvar_t	cg_tracerLength;
 vmCvar_t	cg_autoswitch;
 vmCvar_t	cg_displayObituary;
 vmCvar_t	cg_ignore;
-vmCvar_t	cg_simpleItems;
 vmCvar_t	cg_fov;
 vmCvar_t	cg_zoomFov;
 vmCvar_t	cg_thirdPerson;
@@ -128,7 +126,6 @@ vmCvar_t 	cg_buildScript;
 vmCvar_t 	cg_forceModel;
 vmCvar_t	cg_paused;
 vmCvar_t	cg_blood;
-vmCvar_t	cg_predictItems;
 vmCvar_t	cg_deferPlayers;
 vmCvar_t	cg_drawTeamOverlay;
 vmCvar_t	cg_teamOverlayUserinfo;
@@ -227,7 +224,6 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_crosshairX, "cg_crosshairX", "0", CVAR_ARCHIVE },
 	{ &cg_crosshairY, "cg_crosshairY", "0", CVAR_ARCHIVE },
 	{ &cg_brassTime, "cg_brassTime", "2500", CVAR_ARCHIVE },
-	{ &cg_simpleItems, "cg_simpleItems", "0", CVAR_ARCHIVE },
 	{ &cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE },
 	{ &cg_railTrailTime, "cg_railTrailTime", "400", CVAR_ARCHIVE  },
 	{ &cg_gun_x, "cg_gunX", "0", CVAR_CHEAT },
@@ -264,7 +260,6 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE  },
 	{ &cg_teamChatHeight, "cg_teamChatHeight", "0", CVAR_ARCHIVE  },
 	{ &cg_forceModel, "cg_forceModel", "0", CVAR_ARCHIVE  },
-	{ &cg_predictItems, "cg_predictItems", "1", CVAR_ARCHIVE },
 #ifdef MISSIONPACK
 	{ &cg_deferPlayers, "cg_deferPlayers", "0", CVAR_ARCHIVE },
 #else
@@ -499,57 +494,6 @@ const char *CG_Argv( int arg ) {
 }
 
 
-//========================================================================
-
-/*
-=================
-CG_RegisterItemSounds
-
-The server says this item is used on this level
-=================
-*/
-static void CG_RegisterItemSounds( int itemNum ) {
-	gitem_t			*item;
-	char			data[MAX_QPATH];
-	char			*s, *start;
-	int				len;
-
-	item = &bg_itemlist[ itemNum ];
-
-	if( item->pickup_sound ) {
-		trap_S_RegisterSound( item->pickup_sound, qfalse );
-	}
-
-	// parse the space seperated precache string for other media
-	s = item->sounds;
-	if (!s || !s[0])
-		return;
-
-	while (*s) {
-		start = s;
-		while (*s && *s != ' ') {
-			s++;
-		}
-
-		len = s-start;
-		if (len >= MAX_QPATH || len < 5) {
-			CG_Error( "PrecacheItem: %s has bad precache string", 
-				item->classname);
-			return;
-		}
-		memcpy (data, start, len);
-		data[len] = 0;
-		if ( *s ) {
-			s++;
-		}
-
-		if ( !strcmp(data+len-3, "ogg" )) {
-			trap_S_RegisterSound( data, qfalse );
-		}
-	}
-}
-
-
 /*
 =================
 CG_RegisterSounds
@@ -559,16 +503,8 @@ called during a precache command
 */
 static void CG_RegisterSounds( void ) {
 	int		i;
-	char	items[MAX_ITEMS+1];
 	char	name[MAX_QPATH];
 	const char	*soundName;
-
-	// only register the items that the server says we need
-	strcpy( items, CG_ConfigString( CS_ITEMS ) );
-
-	for ( i = 1 ; i < bg_numItems ; i++ ) {
-		CG_RegisterItemSounds( i );
-	}
 
 	for ( i = 1 ; i < MAX_SOUNDS ; i++ ) {
 		soundName = CG_ConfigString( CS_SOUNDS+i );
@@ -1383,7 +1319,6 @@ This function may execute for a couple of minutes with a slow disk.
 */
 static void CG_RegisterGraphics( void ) {
 	int			i;
-	char		items[MAX_ITEMS+1];
 	static char		*sb_nums[11] = {
 		"interface/fonts/numbers/0",
 		"interface/fonts/numbers/1",
@@ -1449,11 +1384,8 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.bfgLFStar = trap_R_RegisterShader("bfgLFStar");
 	cgs.media.bfgLFLine = trap_R_RegisterShader("bfgLFLine");
 
-	memset( cg_items, 0, sizeof( cg_items ) );
 	memset( cg_weapons, 0, sizeof( cg_weapons ) );
 
-	// only register the items that the server says we need
-	strcpy( items, CG_ConfigString( CS_ITEMS) );
 	cgs.media.wakeMarkShader = trap_R_RegisterShader( "wake" );
 	cgs.media.dirtPushShader = trap_R_RegisterShader( "DirtPush" );
 	cgs.media.dirtPushSkin = trap_R_RegisterSkin( "effects/shockwave/dirtPush.skin" );
@@ -1584,7 +1516,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	memset( &cg, 0, sizeof( cg ) );
 	memset( cg_entities, 0, sizeof(cg_entities) );
 	memset( cg_weapons, 0, sizeof(cg_weapons) );
-	memset( cg_items, 0, sizeof(cg_items) );
 
 	cg.clientNum = clientNum;
 

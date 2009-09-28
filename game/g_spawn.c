@@ -156,23 +156,6 @@ void SP_misc_model(gentity_t *ent);
 void SP_misc_portal_camera(gentity_t *ent);
 void SP_misc_portal_surface(gentity_t *ent);
 
-void SP_shooter_rocket( gentity_t *ent );
-void SP_shooter_plasma( gentity_t *ent );
-void SP_shooter_grenade( gentity_t *ent );
-
-void SP_team_CTF_redplayer( gentity_t *ent );
-void SP_team_CTF_blueplayer( gentity_t *ent );
-
-void SP_team_CTF_redspawn( gentity_t *ent );
-void SP_team_CTF_bluespawn( gentity_t *ent );
-
-#ifdef MISSIONPACK
-void SP_team_blueobelisk( gentity_t *ent );
-void SP_team_redobelisk( gentity_t *ent );
-void SP_team_neutralobelisk( gentity_t *ent );
-#endif
-void SP_item_botroam( gentity_t *ent ) {}
-
 spawn_t	spawns[] = {
 	// info entities don't do anything at all, but provide positional
 	// information for things controlled by other processes
@@ -229,23 +212,6 @@ spawn_t	spawns[] = {
 	{"misc_portal_surface", SP_misc_portal_surface},
 	{"misc_portal_camera", SP_misc_portal_camera},
 
-//	{"shooter_rocket", SP_shooter_rocket},
-//	{"shooter_grenade", SP_shooter_grenade},
-//	{"shooter_plasma", SP_shooter_plasma},
-
-	{"team_CTF_redplayer", SP_team_CTF_redplayer},
-	{"team_CTF_blueplayer", SP_team_CTF_blueplayer},
-
-	{"team_CTF_redspawn", SP_team_CTF_redspawn},
-	{"team_CTF_bluespawn", SP_team_CTF_bluespawn},
-
-#ifdef MISSIONPACK
-	{"team_redobelisk", SP_team_redobelisk},
-	{"team_blueobelisk", SP_team_blueobelisk},
-	{"team_neutralobelisk", SP_team_neutralobelisk},
-#endif
-	{"item_botroam", SP_item_botroam},
-
 	{0, 0}
 };
 
@@ -259,26 +225,9 @@ returning qfalse if not found
 */
 qboolean G_CallSpawn( gentity_t *ent ) {
 	spawn_t	*s;
-	gitem_t	*item;
-
 	if ( !ent->classname ) {
 		G_Printf ("G_CallSpawn: NULL classname\n");
 		return qfalse;
-	}
-
-	// check item spawn functions
-	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
-		if ( !strcmp(item->classname, ent->classname) ) {
-#if MAPLENSFLARES	// JUHOX: no items in lens flare editor
-			if (g_editmode.integer == EM_mlf) {
-				// don't remove, otherwise movers could change their entity number
-				ent->s.eType = ET_INVISIBLE;
-				return qtrue;
-			}
-#endif
-			G_SpawnItem( ent, item );
-			return qtrue;
-		}
 	}
 
 	// check normal spawn functions

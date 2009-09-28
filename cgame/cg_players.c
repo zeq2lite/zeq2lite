@@ -296,28 +296,6 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	// Perhaps they'll have a future use for a similar animated attachment
 	// to a player model?
 
-	// flag moving fast
-	animations[FLAG_RUN].firstFrame = 0;
-	animations[FLAG_RUN].numFrames = 16;
-	animations[FLAG_RUN].loopFrames = 16;
-	animations[FLAG_RUN].frameLerp = 1000 / 15;
-	animations[FLAG_RUN].initialLerp = 1000 / 15;
-	animations[FLAG_RUN].reversed = qfalse;
-	// flag not moving or moving slowly
-	animations[FLAG_STAND].firstFrame = 16;
-	animations[FLAG_STAND].numFrames = 5;
-	animations[FLAG_STAND].loopFrames = 0;
-	animations[FLAG_STAND].frameLerp = 1000 / 20;
-	animations[FLAG_STAND].initialLerp = 1000 / 20;
-	animations[FLAG_STAND].reversed = qfalse;
-	// flag speeding up
-	animations[FLAG_STAND2RUN].firstFrame = 16;
-	animations[FLAG_STAND2RUN].numFrames = 5;
-	animations[FLAG_STAND2RUN].loopFrames = 1;
-	animations[FLAG_STAND2RUN].frameLerp = 1000 / 15;
-	animations[FLAG_STAND2RUN].initialLerp = 1000 / 15;
-	animations[FLAG_STAND2RUN].reversed = qtrue;
-	//
 	// new anims changes
 	//
 //	animations[ANIM_GETFLAG].flipflop = qtrue;

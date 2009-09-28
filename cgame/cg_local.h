@@ -373,8 +373,6 @@ typedef struct {
 // weapon and its effects
 typedef struct weaponInfo_s {
 	qboolean		registered;
-	gitem_t			*item;
-
 	qhandle_t		handsModel;			// the hands don't actually draw, they just position the weapon
 	qhandle_t		weaponModel;
 	qhandle_t		barrelModel;
@@ -414,7 +412,6 @@ typedef struct weaponInfo_s {
 // item and its effects
 typedef struct {
 	qboolean		registered;
-	qhandle_t		models[MAX_ITEM_MODELS];
 	qhandle_t		icon;
 } itemInfo_t;
 
@@ -1477,7 +1474,6 @@ void CG_ProcessSnapshots( void );
 // cg_info.c
 //
 void CG_LoadingString( const char *s );
-void CG_LoadingItem( int itemNum );
 void CG_LoadingClient( int clientNum );
 void CG_DrawInformation( void );
 

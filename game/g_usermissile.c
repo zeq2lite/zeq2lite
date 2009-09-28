@@ -446,6 +446,15 @@ Think_NormalMissile
 void Think_NormalMissile (gentity_t *self) {
 	gentity_t	*missileOwner = GetMissileOwnerEntity(self);
 
+	if(level.time > self->startTimer && self->radius){
+		int radius = self->radius;
+		self->radius = 0;
+		VectorSet( self->r.mins, -radius, -radius, -radius );
+		VectorSet( self->r.maxs, radius, radius, radius );
+		VectorCopy( self->r.mins, self->r.absmin );
+		VectorCopy( self->r.maxs, self->r.absmax );
+	}
+
 	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent; // Use this free field to transfer current power level
 
 	if ((self->missileSpawnTime + self->maxMissileTime) <= level.time){
@@ -611,17 +620,15 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	if(!attacker){attacker = &g_entities[ENTITYNUM_WORLD];}
 	tgClient = target->client;
 	if(tgClient && tgClient->noclip){return;}
-	if(!dir){dflags |= DAMAGE_NO_KNOCKBACK;}
 	else{VectorNormalize(dir);}
 	if(target == attacker){knockback = 0;}
 	if(target->flags & FL_NO_KNOCKBACK) {knockback = 0;}
-	if(dflags & DAMAGE_NO_KNOCKBACK) {knockback = 0;}
 	if(tgClient){
 		//VectorCopy(dir ? dir : target->r.currentOrigin,tgClient->damage_from);
 		tgClient->ps.persistant[PERS_ATTACKER] = attacker ? attacker->s.number : ENTITYNUM_WORLD;
 		tgClient->damage_fromWorld = dir ? qfalse : qtrue;
 		tgClient->lasthurt_client = attacker->s.number;
-		tgClient->lasthurt_mod = methodOfDeath;
+		tgClient->lasthurt_mod = 1;
 	}
 	if(damage){
 		if(tgClient){
@@ -640,7 +647,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 			}
 			if ( tgClient->ps.powerLevel[plHealth] <= damage && tgClient->ps.powerLevel[plHealth] > 0 ) {
 				target->enemy = attacker;
-				target->die (target, inflictor, attacker, damage, methodOfDeath);
+				target->die (target, inflictor, attacker, damage, 1);
 				return;
 			} else if ( target->pain ) {
 				target->pain (target, attacker, damage);
@@ -784,9 +791,6 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 			tempEnt->s.otherEntityNum = traceEnt->s.number;
 			
 			// Log an accuracy hit for this weapon
-			if( LogAccuracyHit( traceEnt, self ) ) {
-				self->client->accuracy_hits++;
-			}
 
 		} else if( tr.fraction == 1.0f || tr.surfaceFlags & SURF_NOIMPACT ) {
 			G_AddEvent( tempEnt, EV_MISSILE_MISS_AIR, DirToByte( tr.plane.normal ) );
@@ -814,8 +818,7 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 		
 		if ( traceEnt->takedamage) {
 		G_UserWeaponDamage( traceEnt, self, self, forward, tr.endpos,
-							weaponInfo->damage_damage, 0,
-							MOD_KI + weaponInfo->damage_meansOfDeath,
+							weaponInfo->damage_damage, 0,0,
 							weaponInfo->damage_extraKnockback );
 		}
 		break;
@@ -941,7 +944,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt = G_Spawn();
 		bolt->classname = "rocket";
 		bolt->s.eType = ET_MISSILE;
-
+		bolt->startTimer = level.time + 800;
 		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 
 		// Set the weapon number correct, depending on altfire status.
@@ -974,8 +977,8 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->powerLevelCurrent = bolt->powerLevelTotal = bolt->damage * (1.0f+(float)bolt->chargelvl / 100.0f) * powerScale;
 		bolt->s.dashDir[0] = self->client->ps.attackPowerTotal = bolt->powerLevelTotal; // Use this free field to transfer total power level
 		// FIXME: Hack into the old mod style, since it's still needed for now
-		bolt->methodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
-		bolt->splashMethodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
+		bolt->methodOfDeath = 1;
+		bolt->splashMethodOfDeath = 1;
 		
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
@@ -989,7 +992,8 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			float radius;
 			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
 			radius = sqrt((radius * radius) / 3); // inverse of Pythagoras
-
+			bolt->radius = radius;
+			radius = 50;
 			VectorSet( bolt->r.mins, -radius, -radius, -radius );
 			VectorSet( bolt->r.maxs, radius, radius, radius );
 			VectorCopy( bolt->r.mins, bolt->r.absmin );
@@ -1138,7 +1142,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->classname = "user_beam";
 		bolt->s.eType = ET_BEAMHEAD;
 		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-
+		bolt->startTimer = level.time + 800;
 		// Set the weapon number correct, depending on altfire status.
 		if ( !altfire ) {
 			bolt->s.weapon = self->s.weapon;
@@ -1169,8 +1173,8 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->s.dashDir[0] = self->client->ps.attackPowerTotal = bolt->powerLevelTotal; // Use this free field to transfer total power level
 		// FIXME: Hack into the old mod style, since it's still needed for now
 		bolt->takedamage = qtrue;
-		bolt->methodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
-		bolt->splashMethodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
+		bolt->methodOfDeath = 1;
+		bolt->splashMethodOfDeath = 1;
 				
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
@@ -1183,7 +1187,8 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			float radius;
 			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
 			radius = sqrt((radius * radius) / 3); // inverse of Pythagoras
-
+			bolt->radius = radius;
+			radius = 1;
 			VectorSet( bolt->r.mins, -radius, -radius, -radius );
 			VectorSet( bolt->r.maxs, radius, radius, radius );
 			VectorCopy( bolt->r.mins, bolt->r.absmin );
@@ -1274,7 +1279,6 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->classname = "user_groundskim";
 		bolt->s.eType = ET_SKIMMER;
 		bolt->onGround = qfalse;
-
 		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 
 		// Set the weapon number correct, depending on altfire status.
@@ -1303,8 +1307,8 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		}
 		
 		// FIXME: Hack into the old mod style, since it's still needed for now
-		bolt->methodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
-		bolt->splashMethodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
+		bolt->methodOfDeath = 1;
+		bolt->splashMethodOfDeath = 1;
 		
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
@@ -1378,8 +1382,8 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->s.pos.trDelta[1] = Q_fabs(weaponInfo->physics_radius);
 	
 		// Set the MoD
-		bolt->methodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
-		bolt->splashMethodOfDeath = MOD_KI + weaponInfo->damage_meansOfDeath;
+		bolt->methodOfDeath = 1;
+		bolt->splashMethodOfDeath = 1;
 
 		// Set the think function that will demolish the torch if it persists too long
 		bolt->think = Think_Torch;
@@ -1781,7 +1785,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		&& !self->strugglingAllyAttack 
 		&& !other->strugglingAttack){
 		G_BounceUserMissile( self, trace );
-		G_AddEvent( self, EV_GRENADE_BOUNCE, 0 );
 		self->bouncesLeft--;
 		return;
 	// Hit a player or the world
@@ -1793,7 +1796,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			if(VectorLength( velocity ) == 0){
 				velocity[2] = 1;
 			}
-			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->powerLevelCurrent,0,self->methodOfDeath, self->extraKnockback);
+			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->powerLevelCurrent,0,1, self->extraKnockback);
 		}
 	}
 	if((self->powerLevelCurrent <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
@@ -1867,7 +1870,7 @@ void G_RunUserExplosion(gentity_t *ent) {
 		step = (1.0 - ((float)ent->splashEnd - (float)level.time) / (float)ent->splashDuration);
 		radius = step * ent->splashRadius;
 		power = ent->powerLevelCurrent;
-		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,ent->powerLevelCurrent,radius,ent->methodOfDeath,ent->extraKnockback);
+		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,ent->powerLevelCurrent,radius,1,ent->extraKnockback);
 	}
 	if(level.time >= ent->splashEnd || ent->powerLevelCurrent <= 0){
 		ent->freeAfterEvent = qtrue;
@@ -2191,7 +2194,7 @@ void G_RunRiftFrame( gentity_t *ent, int time ) {
 		if ( traceEnt->takedamage) {
 
 			G_UserWeaponDamage( traceEnt, &g_entities[ent->r.ownerNum], ent, upVec,
-								trace.endpos, ent->damage, 0, ent->methodOfDeath, 0 );
+								trace.endpos, ent->damage, 0, 1, 0 );
 		}
 	}
 }
@@ -2267,7 +2270,7 @@ void G_RunUserTorch( gentity_t *ent ) {
 			dmgFrac = 1;
 		}
 		
-		G_UserWeaponDamage( target, owner, ent, forward, muzzle, dmgFrac * ent->damage, 0, ent->methodOfDeath, 0 );
+		G_UserWeaponDamage( target, owner, ent, forward, muzzle, dmgFrac * ent->damage, 0,1, 0 );
 	}
 
 	// Round off stored vectors

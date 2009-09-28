@@ -10,17 +10,7 @@
 ScorePlum
 ============
 */
-void ScorePlum( gentity_t *ent, vec3_t origin, int score ) {
-	gentity_t *plum;
-
-	plum = G_TempEntity( origin, EV_SCOREPLUM );
-	// only send this temp entity to a single client
-	plum->r.svFlags |= SVF_SINGLECLIENT;
-	plum->r.singleClient = ent->s.number;
-	//
-	plum->s.otherEntityNum = ent->s.number;
-	plum->s.time = score;
-}
+void ScorePlum( gentity_t *ent, vec3_t origin, int score ) {}
 
 /*
 ============
@@ -38,163 +28,12 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 		return;
 	}
 	// show score plum
-	ScorePlum(ent, origin, score);
 	//
 	ent->client->ps.persistant[PERS_SCORE] += score;
 	if ( g_gametype.integer == GT_TEAM )
 		level.teamScores[ ent->client->ps.persistant[PERS_TEAM] ] += score;
 	CalculateRanks();
 }
-
-/*
-=================
-TossClientItems
-
-Toss the weapon and powerups for the killed player
-=================
-*/
-void TossClientItems( gentity_t *self ) {
-	// ADDING FOR ZEQ2
-	// Weapons and powerups aren't tossed at all.
-	return;
-	// END ADDING
-
-	/*
-	gitem_t		*item;
-	int			weapon;
-	float		angle;
-	int			i;
-	gentity_t	*drop;
-
-	// drop the weapon if not a gauntlet or machinegun
-	weapon = self->s.weapon;
-
-	// make a special check to see if they are changing to a new
-	// weapon that isn't the mg or gauntlet.  Without this, a client
-	// can pick up a weapon, be killed, and not drop the weapon because
-	// their weapon change hasn't completed yet and they are still holding the MG.
-	if ( weapon == WP_MACHINEGUN || weapon == WP_GRAPPLING_HOOK ) {
-		if ( self->client->ps.weaponstate == WEAPON_DROPPING ) {
-			weapon = self->client->pers.cmd.weapon;
-		}
-		if ( !( self->client->ps.stats[stSkills] & ( 1 << weapon ) ) ) {
-			weapon = WP_NONE;
-		}
-	}
-
-	if ( weapon > WP_MACHINEGUN && weapon != WP_GRAPPLING_HOOK && 
-		self->client->ps.currentSkill[ weapon ] ) {
-		// find the item type for this weapon
-		item = BG_FindItemForWeapon( weapon );
-
-		// spawn the item
-		Drop_Item( self, item, 0 );
-	}
-
-	// drop all the powerups if not in teamplay
-	if ( g_gametype.integer != GT_TEAM ) {
-		angle = 45;
-		for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
-			if ( self->client->ps.powerups[ i ] > level.time ) {
-				item = BG_FindItemForPowerup( i );
-				if ( !item ) {
-					continue;
-				}
-				drop = Drop_Item( self, item, angle );
-				// decide how many seconds it has left
-				drop->count = ( self->client->ps.powerups[ i ] - level.time ) / 1000;
-				if ( drop->count < 1 ) {
-					drop->count = 1;
-				}
-				angle += 45;
-			}
-		}
-	}
-	*/
-}
-
-#ifdef MISSIONPACK
-
-/*
-=================
-TossClientCubes
-=================
-*/
-extern gentity_t	*neutralObelisk;
-
-void TossClientCubes( gentity_t *self ) {
-	gitem_t		*item;
-	gentity_t	*drop;
-	vec3_t		velocity;
-	vec3_t		angles;
-	vec3_t		origin;
-
-	self->client->ps.generic1 = 0;
-
-	// this should never happen but we should never
-	// get the server to crash due to skull being spawned in
-	if (!G_EntitiesFree()) {
-		return;
-	}
-
-	if( self->client->sess.sessionTeam == TEAM_RED ) {
-		item = BG_FindItem( "Red Cube" );
-	}
-	else {
-		item = BG_FindItem( "Blue Cube" );
-	}
-
-	angles[YAW] = (float)(level.time % 360);
-	angles[PITCH] = 0;	// always forward
-	angles[ROLL] = 0;
-
-	AngleVectors( angles, velocity, NULL, NULL );
-	VectorScale( velocity, 150, velocity );
-	velocity[2] += 200 + crandom() * 50;
-
-	if( neutralObelisk ) {
-		VectorCopy( neutralObelisk->s.pos.trBase, origin );
-		origin[2] += 44;
-	} else {
-		VectorClear( origin ) ;
-	}
-
-	drop = LaunchItem( item, origin, velocity );
-
-	drop->nextthink = level.time + g_cubeTimeout.integer * 1000;
-	drop->think = G_FreeEntity;
-	drop->spawnflags = self->client->sess.sessionTeam;
-}
-
-
-/*
-=================
-TossClientPersistantPowerups
-=================
-*/
-void TossClientPersistantPowerups( gentity_t *ent ) {
-	gentity_t	*powerup;
-
-	if( !ent->client ) {
-		return;
-	}
-
-	if( !ent->client->persistantPowerup ) {
-		return;
-	}
-
-	powerup = ent->client->persistantPowerup;
-
-	powerup->r.svFlags &= ~SVF_NOCLIENT;
-	powerup->s.eFlags &= ~EF_NODRAW;
-	powerup->r.contents = CONTENTS_TRIGGER;
-	trap_LinkEntity( powerup );
-
-	// ent->client->ps.stats[STAT_PERSISTANT_POWERUP] = 0;
-	ent->client->persistantPowerup = NULL;
-}
-#endif
-
 
 /*
 ==================
@@ -223,86 +62,7 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) 
 	*/
 }
 
-/*
-==================
-GibEntity
-==================
-*/
-void GibEntity( gentity_t *self, int killer ) {
-	gentity_t *ent;
-	int i;
-
-	//if this entity still has kamikaze
-	if (self->s.eFlags & EF_KAMIKAZE) {
-		// check if there is a kamikaze timer around for this owner
-		for (i = 0; i < MAX_GENTITIES; i++) {
-			ent = &g_entities[i];
-			if (!ent->inuse)
-				continue;
-			if (ent->activator != self)
-				continue;
-			if (strcmp(ent->classname, "kamikaze timer"))
-				continue;
-			G_FreeEntity(ent);
-			break;
-		}
-	}
-	G_AddEvent( self, EV_GIB_PLAYER, killer );
-	self->takedamage = qfalse;
-	self->s.eType = ET_INVISIBLE;
-	self->r.contents = 0;
-}
-
-/*
-==================
-body_die
-==================
-*/
-void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath ) {
-	if ( self->powerLevelTotal > GIB_HEALTH ) {
-		return;
-	}
-	if ( !g_blood.integer ) {
-		self->powerLevelTotal = GIB_HEALTH+1;
-		return;
-	}
-
-	GibEntity( self, 0 );
-}
-
-
 // these are just for logging, the client prints its own messages
-char	*modNames[] = {
-	"MOD_UNKNOWN",
-	"MOD_SHOTGUN",
-	"MOD_GAUNTLET",
-	"MOD_MACHINEGUN",
-	"MOD_GRENADE",
-	"MOD_GRENADE_SPLASH",
-	"MOD_ROCKET",
-	"MOD_ROCKET_SPLASH",
-	"MOD_PLASMA",
-	"MOD_PLASMA_SPLASH",
-	"MOD_RAILGUN",
-	"MOD_LIGHTNING",
-	"MOD_BFG",
-	"MOD_BFG_SPLASH",
-	"MOD_WATER",
-	"MOD_SLIME",
-	"MOD_LAVA",
-	"MOD_CRUSH",
-	"MOD_TELEFRAG",
-	"MOD_FALLING",
-	"MOD_SUICIDE",
-	"MOD_TARGET_LASER",
-	"MOD_TRIGGER_HURT",
-#ifdef MISSIONPACK
-	"MOD_NAIL",
-	"MOD_CHAINGUN",
-	"MOD_PROXIMITY_MINE",
-#endif
-	"MOD_GRAPPLE"
-};
 
 #ifdef MISSIONPACK
 /*
@@ -350,33 +110,7 @@ void CheckAlmostCapture( gentity_t *self, gentity_t *attacker ) {
 CheckAlmostScored
 ==================
 */
-void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {
-	gentity_t	*ent;
-	vec3_t		dir;
-	char		*classname;
-
-	// if the player was carrying cubes
-	if ( self->client->ps.generic1 ) {
-		if ( self->client->sess.sessionTeam == TEAM_BLUE ) {
-			classname = "team_redobelisk";
-		}
-		else {
-			classname = "team_blueobelisk";
-		}
-		ent = G_Find(NULL, FOFS(classname), classname);
-		// if we found the destination obelisk
-		if ( ent ) {
-			// if the player was *very* close
-			VectorSubtract( self->client->ps.origin, ent->s.origin, dir );
-			if ( VectorLength(dir) < 200 ) {
-				self->client->ps.persistant[PERS_PLAYEREVENTS] ^= PLAYEREVENT_HOLYSHIT;
-				if ( attacker->client ) {
-					attacker->client->ps.persistant[PERS_PLAYEREVENTS] ^= PLAYEREVENT_HOLYSHIT;
-				}
-			}
-		}
-	}
-}
+void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {}
 
 /*
 ==================
@@ -416,12 +150,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	if ( killer < 0 || killer >= MAX_CLIENTS ) {
 		killer = ENTITYNUM_WORLD;
 		killerName = "<world>";
-	}
-
-	if ( meansOfDeath < 0 || meansOfDeath >= sizeof( modNames ) / sizeof( modNames[0] ) ) {
-		obit = "<bad obituary>";
-	} else {
-		obit = modNames[ meansOfDeath ];
 	}
 
 	G_LogPrintf("Kill: %i %i %i: %s killed %s by %s\n", 
@@ -523,7 +251,6 @@ knockback	force to be applied against targ as a result of the damage
 inflictor, attacker, dir, and point can be NULL for environmental effects
 
 dflags		these flags are used to control how T_Damage works
-	DAMAGE_RADIUS			damage was indirect (from a nearby explosion)
 	DAMAGE_NO_ARMOR			armor does not protect from this damage
 	DAMAGE_NO_KNOCKBACK		do not affect velocity, just view angles
 	DAMAGE_NO_PROTECTION	kills godmode, armor, everything
@@ -649,9 +376,6 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 		points = damage * ( 1.0 - dist / radius );
 
 		if( CanDamage (ent, origin) ) {
-			if( LogAccuracyHit( ent, attacker ) ) {
-				hitClient = qtrue;
-			}
 			VectorSubtract (ent->r.currentOrigin, origin, dir);
 			// push the center of mass higher than the origin so players
 			// get knocked into the air more

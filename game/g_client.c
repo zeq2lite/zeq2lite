@@ -604,11 +604,6 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	// check the item prediction
 	s = Info_ValueForKey( userinfo, "cg_predictItems" );
-	if ( !atoi( s ) ) {
-		client->pers.predictItemPickup = qfalse;
-	} else {
-		client->pers.predictItemPickup = qtrue;
-	}
 
 	// set name
 	Q_strncpyz ( oldname, client->pers.netname, sizeof( oldname ) );
@@ -804,15 +799,6 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		G_InitSessionData( client, userinfo );
 	}
 	G_ReadSessionData( client );
-
-	if( isBot ) {
-		ent->r.svFlags |= SVF_BOT;
-		ent->inuse = qtrue;
-		if( !G_BotConnect( clientNum, !firstTime ) ) {
-			return "BotConnectfailed";
-		}
-	}
-
 	// get and distribute relevent paramters
 	G_LogPrintf( "ClientConnect: %i\n", clientNum );
 	client->ps.bitFlags |= isSafe;
@@ -914,7 +900,6 @@ void ClientSpawn(gentity_t *ent) {
 	gentity_t	*spawnPoint;
 	int		flags;
 	int		savedPing;
-	int		accuracy_hits, accuracy_shots;
 	int		eventSequence;
 	char	model[MAX_QPATH];
 	char	userinfo[MAX_INFO_STRING];
@@ -962,8 +947,6 @@ void ClientSpawn(gentity_t *ent) {
 	saved = client->pers;
 	savedSess = client->sess;
 	savedPing = client->ps.ping;
-	accuracy_hits = client->accuracy_hits;
-	accuracy_shots = client->accuracy_shots;
 	for ( i = 0 ; i < MAX_PERSISTANT ; i++ ) {
 		persistant[i] = client->ps.persistant[i];
 	}
@@ -974,8 +957,6 @@ void ClientSpawn(gentity_t *ent) {
 	client->pers = saved;
 	client->sess = savedSess;
 	client->ps.ping = savedPing;
-	client->accuracy_hits = accuracy_hits;
-	client->accuracy_shots = accuracy_shots;
 	client->lastkilled_client = -1;
 
 	for ( i = 0 ; i < MAX_PERSISTANT ; i++ ) {
@@ -1111,7 +1092,6 @@ void ClientDisconnect( int clientNum ) {
 
 	// cleanup if we are kicking a bot that
 	// hasn't spawned yet
-	G_RemoveQueuedBotBegin( clientNum );
 
 	ent = g_entities + clientNum;
 	if ( !ent->client ) {
@@ -1135,7 +1115,6 @@ void ClientDisconnect( int clientNum ) {
 
 		// They don't get to take powerups with them!
 		// Especially important for stuff like CTF flags
-		TossClientItems( ent );
 }
 	G_LogPrintf( "ClientDisconnect: %i\n", clientNum );
 
@@ -1168,10 +1147,6 @@ void ClientDisconnect( int clientNum ) {
 	trap_SetConfigstring( CS_PLAYERS + clientNum, "");
 
 	CalculateRanks();
-
-	if ( ent->r.svFlags & SVF_BOT ) {
-		BotAIShutdownClient( clientNum, qfalse );
-	}
 }
 
 

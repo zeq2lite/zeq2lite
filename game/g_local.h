@@ -31,7 +31,6 @@
 #define	FL_NOTARGET				0x00000020
 #define	FL_TEAMSLAVE			0x00000400	// not the first on the team
 #define FL_NO_KNOCKBACK			0x00000800
-#define FL_DROPPED_ITEM			0x00001000
 #define FL_NO_BOTS				0x00002000	// spawn point not for bot use
 #define FL_NO_HUMANS			0x00004000	// spawn point just for bots
 #define FL_FORCE_GESTURE		0x00008000	// force gesture on client
@@ -118,7 +117,7 @@ struct gentity_s {
 	float		accel;
 	float		gravity;
 	float		bounceFrac;
-	int			bouncesLeft;
+	int			radius;	int			bouncesLeft;
 	int			timesTriggered;
 	float		homAccel;
 	float		homRange;
@@ -126,7 +125,7 @@ struct gentity_s {
 	int			powerLevelTotal;
 	int			powerLevelCurrent;
 	int			impede;
-	qboolean	strugglingPlayer;
+	int			startTimer;	qboolean	strugglingPlayer;
 	qboolean	strugglingAttack;
 	qboolean	strugglingAllyAttack;
 	qboolean	isSwattable;
@@ -174,8 +173,6 @@ struct gentity_s {
 	// timing variables
 	float		wait;
 	float		random;
-
-	gitem_t		*item;			// for bonus items
 
 	// ADDING FOR ZEQ2
 	int			maxMissileTime;	// Anything more than this will always explode a guided missile.
@@ -232,7 +229,6 @@ typedef struct {
 	float		flagsince;
 	float		lastfraggedcarrier;
 } playerTeamState_t;
-
 // the auto following clients don't follow a specific client
 // number, but instead follow the first two active players
 #define	FOLLOW_ACTIVE1	-1
@@ -256,13 +252,12 @@ typedef struct {
 #define	MAX_VOTE_COUNT		3
 
 // client data that stays across multiple respawns, but is cleared
-// on each level change or team change at ClientBegin()
+// on each level change or change at ClientBegin()
 typedef struct {
 	clientConnected_t	connected;	
 	usercmd_t	cmd;				// we would lose angles if not persistant
 	qboolean	localClient;		// true if "ip" info key is "localhost"
 	qboolean	initialSpawn;		// the first spawn should be at a cool location
-	qboolean	predictItemPickup;	// based on cg_predictItems userinfo
 	qboolean	pmoveFixed;			//
 	char		netname[MAX_NETNAME];
 	int			maxHealth;			// for handicapping
@@ -304,13 +299,6 @@ extern struct gclient_s {
 	int			damage_knockback;	// impact damage
 	vec3_t		damage_from;		// origin for vector calculation
 	qboolean	damage_fromWorld;	// if true, don't use the damage_from vector
-
-	int			accurateCount;		// for "impressive" reward sound
-
-	int			accuracy_shots;		// total number of shots
-	int			accuracy_hits;		// total number of hits
-
-	//
 	int			lastkilled_client;	// last client that this client killed
 	int			lasthurt_client;	// last client that damaged this client
 	int			lasthurt_mod;		// type of damage the client did
@@ -319,7 +307,6 @@ extern struct gclient_s {
 	int			respawnTime;		// can respawn when time > this, force after g_forcerespwan
 	int			inactivityTime;		// kick players when time > this
 	qboolean	inactivityWarning;	// qtrue if the five seoond warning has been given
-	int			rewardTime;			// clear the EF_AWARD_IMPRESSIVE, etc when time > this
 
 	int			airOutTime;
 
@@ -366,7 +353,6 @@ typedef struct {
 	int			previousTime;			// so movers can back up when blocked
 
 	int			startTime;				// level.time the map was started
-
 	int			teamScores[TEAM_NUM_TEAMS];
 	int			lastTeamLocationTime;		// last time of client team location update
 
@@ -398,7 +384,6 @@ typedef struct {
 	int			teamVoteYes[2];
 	int			teamVoteNo[2];
 	int			numteamVotingClients[2];// set by CalculateRanks
-
 	// spawn variables
 	qboolean	spawning;				// the G_Spawn*() functions are valid
 	int			numSpawnVars;
@@ -455,29 +440,6 @@ void SetTeam( gentity_t *ent, char *s );
 void Cmd_FollowCycle_f( gentity_t *ent, int dir );
 
 //
-// g_items.c
-//
-void G_CheckTeamItems( void );
-void G_RunItem( gentity_t *ent );
-void RespawnItem( gentity_t *ent );
-
-void UseHoldableItem( gentity_t *ent );
-void PrecacheItem (gitem_t *it);
-gentity_t *Drop_Item( gentity_t *ent, gitem_t *item, float angle );
-gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity );
-void SetRespawn (gentity_t *ent, float delay);
-void G_SpawnItem (gentity_t *ent, gitem_t *item);
-void FinishSpawningItem( gentity_t *ent );
-void Think_Weapon (gentity_t *ent);
-int ArmorIndex (gentity_t *ent);
-void	Add_Ammo (gentity_t *ent, int weapon, int count);
-void Touch_Item (gentity_t *ent, gentity_t *other, trace_t *trace);
-
-void ClearRegisteredItems( void );
-void RegisterItem( gitem_t *item );
-void SaveRegisteredItems( void );
-
-//
 // g_utils.c
 //
 int G_ModelIndex( char *name );
@@ -518,21 +480,8 @@ void G_Damage (gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 qboolean G_RadiusDamage (vec3_t origin, gentity_t *attacker, float damage, float radius, gentity_t *ignore, int mod);
 int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t impactpoint, vec3_t bouncedir );
 void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath );
-void TossClientItems( gentity_t *self );
-#ifdef MISSIONPACK
-void TossClientPersistantPowerups( gentity_t *self );
-#endif
-void TossClientCubes( gentity_t *self );
 
-// damage flags
 #define DAMAGE_RADIUS				0x00000001	// damage was indirect
-#define DAMAGE_NO_ARMOR				0x00000002	// armour does not protect from this damage
-#define DAMAGE_NO_KNOCKBACK			0x00000004	// do not affect velocity, just view angles
-#define DAMAGE_NO_PROTECTION		0x00000008  // armor, shields, invulnerability, and godmode have no effect
-#ifdef MISSIONPACK
-#define DAMAGE_NO_TEAM_PROTECTION	0x00000010  // armor, shields, invulnerability, and godmode have no effect
-#endif
-
 //
 // g_missile.c
 //
@@ -578,7 +527,6 @@ void DropPortalDestination( gentity_t *ent );
 //
 // g_weapon.c
 //
-qboolean LogAccuracyHit( gentity_t *target, gentity_t *attacker );
 void CalcMuzzlePoint ( gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint );
 void SnapVectorTowards( vec3_t v, vec3_t to );
 qboolean CheckGauntletAttack( gentity_t *ent );
@@ -766,8 +714,6 @@ int BotAIStartFrame( int time );
 void BotTestAAS(vec3_t origin);
 
 #include "g_team.h" // teamplay specific stuff
-
-
 extern	level_locals_t	level;
 extern	gentity_t		g_entities[MAX_GENTITIES];
 
@@ -783,36 +729,24 @@ extern	vmCvar_t	g_restarted;
 extern	vmCvar_t	g_dmflags;
 extern	vmCvar_t	g_fraglimit;
 extern	vmCvar_t	g_timelimit;
-extern	vmCvar_t	g_capturelimit;
 extern	vmCvar_t	g_friendlyFire;
 extern	vmCvar_t	g_password;
 extern	vmCvar_t	g_needpass;
 extern	vmCvar_t	g_knockback;
-extern	vmCvar_t	g_quadfactor;
 extern	vmCvar_t	g_forcerespawn;
 extern	vmCvar_t	g_inactivity;
 extern	vmCvar_t	g_debugMove;
 extern	vmCvar_t	g_debugAlloc;
 extern	vmCvar_t	g_debugDamage;
-extern	vmCvar_t	g_weaponRespawn;
-extern	vmCvar_t	g_weaponTeamRespawn;
 extern	vmCvar_t	g_synchronousClients;
 extern	vmCvar_t	g_motd;
 extern	vmCvar_t	g_warmup;
 extern	vmCvar_t	g_doWarmup;
-extern	vmCvar_t	g_blood;
 extern	vmCvar_t	g_allowVote;
 extern	vmCvar_t	g_teamAutoJoin;
 extern	vmCvar_t	g_teamForceBalance;
 extern	vmCvar_t	g_banIPs;
 extern	vmCvar_t	g_filterBan;
-extern	vmCvar_t	g_obeliskHealth;
-extern	vmCvar_t	g_obeliskRegenPeriod;
-extern	vmCvar_t	g_obeliskRegenAmount;
-extern	vmCvar_t	g_obeliskRespawnDelay;
-extern	vmCvar_t	g_cubeTimeout;
-extern	vmCvar_t	g_redteam;
-extern	vmCvar_t	g_blueteam;
 extern	vmCvar_t	g_smoothClients;
 extern	vmCvar_t	pmove_fixed;
 extern	vmCvar_t	pmove_msec;
@@ -952,84 +886,11 @@ void	trap_EA_EndRegular(int client, float thinktime);
 void	trap_EA_GetInput(int client, float thinktime, void /* struct bot_input_s */ *input);
 void	trap_EA_ResetInput(int client);
 
-
-int		trap_BotLoadCharacter(char *charfile, float skill);
-void	trap_BotFreeCharacter(int character);
 float	trap_Characteristic_Float(int character, int index);
 float	trap_Characteristic_BFloat(int character, int index, float min, float max);
 int		trap_Characteristic_Integer(int character, int index);
 int		trap_Characteristic_BInteger(int character, int index, int min, int max);
 void	trap_Characteristic_String(int character, int index, char *buf, int size);
-
-int		trap_BotAllocChatState(void);
-void	trap_BotFreeChatState(int handle);
-void	trap_BotQueueConsoleMessage(int chatstate, int type, char *message);
-void	trap_BotRemoveConsoleMessage(int chatstate, int handle);
-int		trap_BotNextConsoleMessage(int chatstate, void /* struct bot_consolemessage_s */ *cm);
-int		trap_BotNumConsoleMessages(int chatstate);
-void	trap_BotInitialChat(int chatstate, char *type, int mcontext, char *var0, char *var1, char *var2, char *var3, char *var4, char *var5, char *var6, char *var7 );
-int		trap_BotNumInitialChats(int chatstate, char *type);
-int		trap_BotReplyChat(int chatstate, char *message, int mcontext, int vcontext, char *var0, char *var1, char *var2, char *var3, char *var4, char *var5, char *var6, char *var7 );
-int		trap_BotChatLength(int chatstate);
-void	trap_BotEnterChat(int chatstate, int client, int sendto);
-void	trap_BotGetChatMessage(int chatstate, char *buf, int size);
-int		trap_StringContains(char *str1, char *str2, int casesensitive);
-int		trap_BotFindMatch(char *str, void /* struct bot_match_s */ *match, unsigned long int context);
-void	trap_BotMatchVariable(void /* struct bot_match_s */ *match, int variable, char *buf, int size);
-void	trap_UnifyWhiteSpaces(char *string);
-void	trap_BotReplaceSynonyms(char *string, unsigned long int context);
-int		trap_BotLoadChatFile(int chatstate, char *chatfile, char *chatname);
-void	trap_BotSetChatGender(int chatstate, int gender);
-void	trap_BotSetChatName(int chatstate, char *name, int client);
-void	trap_BotResetGoalState(int goalstate);
-void	trap_BotRemoveFromAvoidGoals(int goalstate, int number);
-void	trap_BotResetAvoidGoals(int goalstate);
-void	trap_BotPushGoal(int goalstate, void /* struct bot_goal_s */ *goal);
-void	trap_BotPopGoal(int goalstate);
-void	trap_BotEmptyGoalStack(int goalstate);
-void	trap_BotDumpAvoidGoals(int goalstate);
-void	trap_BotDumpGoalStack(int goalstate);
-void	trap_BotGoalName(int number, char *name, int size);
-int		trap_BotGetTopGoal(int goalstate, void /* struct bot_goal_s */ *goal);
-int		trap_BotGetSecondGoal(int goalstate, void /* struct bot_goal_s */ *goal);
-int		trap_BotChooseLTGItem(int goalstate, vec3_t origin, int *inventory, int travelflags);
-int		trap_BotChooseNBGItem(int goalstate, vec3_t origin, int *inventory, int travelflags, void /* struct bot_goal_s */ *ltg, float maxtime);
-int		trap_BotTouchingGoal(vec3_t origin, void /* struct bot_goal_s */ *goal);
-int		trap_BotItemGoalInVisButNotVisible(int viewer, vec3_t eye, vec3_t viewangles, void /* struct bot_goal_s */ *goal);
-int		trap_BotGetNextCampSpotGoal(int num, void /* struct bot_goal_s */ *goal);
-int		trap_BotGetMapLocationGoal(char *name, void /* struct bot_goal_s */ *goal);
-int		trap_BotGetLevelItemGoal(int index, char *classname, void /* struct bot_goal_s */ *goal);
-float	trap_BotAvoidGoalTime(int goalstate, int number);
-void	trap_BotSetAvoidGoalTime(int goalstate, int number, float avoidtime);
-void	trap_BotInitLevelItems(void);
-void	trap_BotUpdateEntityItems(void);
-int		trap_BotLoadItemWeights(int goalstate, char *filename);
-void	trap_BotFreeItemWeights(int goalstate);
-void	trap_BotInterbreedGoalFuzzyLogic(int parent1, int parent2, int child);
-void	trap_BotSaveGoalFuzzyLogic(int goalstate, char *filename);
-void	trap_BotMutateGoalFuzzyLogic(int goalstate, float range);
-int		trap_BotAllocGoalState(int state);
-void	trap_BotFreeGoalState(int handle);
-
-void	trap_BotResetMoveState(int movestate);
-void	trap_BotMoveToGoal(void /* struct bot_moveresult_s */ *result, int movestate, void /* struct bot_goal_s */ *goal, int travelflags);
-int		trap_BotMoveInDirection(int movestate, vec3_t dir, float speed, int type);
-void	trap_BotResetAvoidReach(int movestate);
-void	trap_BotResetLastAvoidReach(int movestate);
-int		trap_BotReachabilityArea(vec3_t origin, int testground);
-int		trap_BotMovementViewTarget(int movestate, void /* struct bot_goal_s */ *goal, int travelflags, float lookahead, vec3_t target);
-int		trap_BotPredictVisiblePosition(vec3_t origin, int areanum, void /* struct bot_goal_s */ *goal, int travelflags, vec3_t target);
-int		trap_BotAllocMoveState(void);
-void	trap_BotFreeMoveState(int handle);
-void	trap_BotInitMoveState(int handle, void /* struct bot_initmove_s */ *initmove);
-void	trap_BotAddAvoidSpot(int movestate, vec3_t origin, float radius, int type);
-
-int		trap_BotChooseBestFightWeapon(int weaponstate, int *inventory);
-void	trap_BotGetWeaponInfo(int weaponstate, int weapon, void /* struct weaponinfo_s */ *weaponinfo);
-int		trap_BotLoadWeaponWeights(int weaponstate, char *filename);
-int		trap_BotAllocWeaponState(void);
-void	trap_BotFreeWeaponState(int weaponstate);
-void	trap_BotResetWeaponState(int weaponstate);
 
 int		trap_GeneticParentsAndChildSelection(int numranks, float *ranks, int *parent1, int *parent2, int *child);
 

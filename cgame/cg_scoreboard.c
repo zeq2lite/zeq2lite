@@ -116,8 +116,6 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR 
 			|| cgs.gametype >= GT_TEAM ) {
 			rank = -1;
-		} else {
-			rank = cg.snap->ps.persistant[PERS_RANK] & ~RANK_TIED_FLAG;
 		}
 		if ( rank == 0 ) {
 			hcolor[0] = 0;
@@ -249,8 +247,7 @@ qboolean CG_DrawOldScoreboard( void ) {
 	if ( cgs.gametype < GT_TEAM) {
 		if (cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
 			s = va("%s place with %i",
-				CG_PlaceString( cg.snap->ps.persistant[PERS_RANK] + 1 ),
-				cg.snap->ps.persistant[PERS_SCORE] );
+			cg.snap->ps.persistant[PERS_SCORE] );
 			w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 			x = ( SCREEN_WIDTH - w ) / 2;
 			y = 60;

@@ -327,56 +327,9 @@ void hurt_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {
 	}
 }
 
-void hurt_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {
-	int		dflags;
+void hurt_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {}
 
-	if ( !other->takedamage ) {
-		return;
-	}
-
-	if ( self->timestamp > level.time ) {
-		return;
-	}
-
-	if ( self->spawnflags & 16 ) {
-		self->timestamp = level.time + 1000;
-	} else {
-		self->timestamp = level.time + FRAMETIME;
-	}
-
-	// play sound
-	if ( !(self->spawnflags & 4) ) {
-		G_Sound( other, CHAN_AUTO, self->noise_index );
-	}
-
-	if (self->spawnflags & 8)
-		dflags = DAMAGE_NO_PROTECTION;
-	else
-		dflags = 0;
-	G_Damage (other, self, self, NULL, NULL, self->damage, dflags, MOD_TRIGGER_HURT);
-}
-
-void SP_trigger_hurt( gentity_t *self ) {
-	InitTrigger (self);
-
-	self->noise_index = G_SoundIndex( "sound/world/electro.ogg" );
-	self->touch = hurt_touch;
-
-	if ( !self->damage ) {
-		self->damage = 5;
-	}
-
-	self->r.contents = CONTENTS_TRIGGER;
-
-	if ( self->spawnflags & 2 ) {
-		self->use = hurt_use;
-	}
-
-	// link in to the world if starting active
-	if ( ! (self->spawnflags & 1) ) {
-		trap_LinkEntity (self);
-	}
-}
+void SP_trigger_hurt( gentity_t *self ) {}
 
 
 /*

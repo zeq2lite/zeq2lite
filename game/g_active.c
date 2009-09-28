@@ -64,40 +64,7 @@ P_WorldEffects
 Check for lava / slime contents and drowning
 =============
 */
-void P_WorldEffects( gentity_t *ent ) {
-	qboolean	envirosuit;
-	int			waterlevel;
-
-	if ( ent->client->noclip ) {
-		ent->client->airOutTime = level.time + 12000;	// don't need air
-		return;
-	}
-
-	waterlevel = ent->waterlevel;
-
-	envirosuit = qfalse;
-	ent->client->airOutTime = level.time + 12000;
-	if (waterlevel && 
-		(ent->watertype&(CONTENTS_LAVA|CONTENTS_SLIME)) ) {
-		if (ent->powerLevelTotal > 0
-			&& ent->pain_debounce_time <= level.time	) {
-
-			if ( envirosuit ) {
-				G_AddEvent( ent, EV_POWERUP_BATTLESUIT, 0 );
-			} else {
-				if (ent->watertype & CONTENTS_LAVA) {
-					G_Damage (ent, NULL, NULL, NULL, NULL, 
-						30*waterlevel, 0, MOD_LAVA);
-				}
-
-				if (ent->watertype & CONTENTS_SLIME) {
-					G_Damage (ent, NULL, NULL, NULL, NULL, 
-						10*waterlevel, 0, MOD_SLIME);
-				}
-			}
-		}
-	}
-}
+void P_WorldEffects( gentity_t *ent ) {}
 
 
 
@@ -201,18 +168,9 @@ void	G_TouchTriggers( gentity_t *ent ) {
 			}
 		}
 
-		// use seperate code for determining if an item is picked up
-		// so you don't have to actually contact its bounding box
-		if ( hit->s.eType == ET_ITEM ) {
-			if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
+		if ( !trap_EntityContact( mins, maxs, hit ) ) {
 				continue;
-			}
-		} else {
-			if ( !trap_EntityContact( mins, maxs, hit ) ) {
-				continue;
-			}
 		}
-
 		memset( &trace, 0, sizeof(trace) );
 
 		if ( hit->touch ) {
@@ -364,7 +322,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	vec3_t		dir;
 	vec3_t		origin, angles;
 //	qboolean	fired;
-	gitem_t		*item;
 	gentity_t	*drop;
 	playerState_t *ps;
 	playerState_t *enemyPS;
@@ -418,7 +375,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_MELEE_KNOCKOUT:
 			enemy = &g_entities[ps->lockedTarget-1];
 			enemy->enemy = ent;
-			enemy->die (enemy, ent, ent, 1, MOD_MELEE);
 			break;
 		case EV_TIERCHECK:
 			checkTier(client);
@@ -446,23 +402,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			}
 			ps->powerLevel[plTierCurrent] = 0;
 			syncTier(client);
-			break;
-		case EV_USE_ITEM1:
-			item = NULL;
-			j = 0;
-			if ( item ) {
-				drop = Drop_Item( ent, item, 0 );
-				drop->count = ( ent->client->ps.powerups[ j ] - level.time ) / 1000;
-				if ( drop->count < 1 ) {
-					drop->count = 1;
-				}
-
-				ent->client->ps.powerups[ j ] = 0;
-			}
-			SelectSpawnPoint(ent->client->ps.origin,origin,angles);
-			TeleportPlayer(ent,origin,angles);
-			break;
-		case EV_USE_ITEM2:
 			break;
 		default:
 			break;
@@ -646,7 +585,6 @@ void ClientThink_real( gentity_t *ent ) {
 		G_TouchTriggers( ent );
 	}
 	VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
-	BotTestAAS(ent->r.currentOrigin);
 	ClientImpacts(ent,&pm);
 	if(ent->client->ps.eventSequence != oldEventSequence) {
 		ent->eventTime = level.time;

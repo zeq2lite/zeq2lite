@@ -192,38 +192,35 @@ This must be the very first function compiled into the .q3vm file
 */
 int vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
 	switch ( command ) {
-	case GAME_INIT:
-		G_InitGame( arg0, arg1, arg2 );
-		return 0;
-	case GAME_SHUTDOWN:
-		G_ShutdownGame( arg0 );
-		return 0;
-	case GAME_CLIENT_CONNECT:
-		return (int)ClientConnect( arg0, arg1, arg2 );
-	case GAME_CLIENT_THINK:
-		ClientThink( arg0 );
-		return 0;
-	case GAME_CLIENT_USERINFO_CHANGED:
-		ClientUserinfoChanged( arg0 );
-		return 0;
-	case GAME_CLIENT_DISCONNECT:
-		ClientDisconnect( arg0 );
-		return 0;
-	case GAME_CLIENT_BEGIN:
-		ClientBegin( arg0 );
-		return 0;
-	case GAME_CLIENT_COMMAND:
-		ClientCommand( arg0 );
-		return 0;
-	case GAME_RUN_FRAME:
-		G_RunFrame( arg0 );
-		return 0;
-	case GAME_CONSOLE_COMMAND:
-		return ConsoleCommand();
-	case BOTAI_START_FRAME:
-		return BotAIStartFrame( arg0 );
+		case GAME_INIT:
+			G_InitGame( arg0, arg1, arg2 );
+			return 0;
+		case GAME_SHUTDOWN:
+			G_ShutdownGame( arg0 );
+			return 0;
+		case GAME_CLIENT_CONNECT:
+			return (int)ClientConnect( arg0, arg1, arg2 );
+		case GAME_CLIENT_THINK:
+			ClientThink( arg0 );
+			return 0;
+		case GAME_CLIENT_USERINFO_CHANGED:
+			ClientUserinfoChanged( arg0 );
+			return 0;
+		case GAME_CLIENT_DISCONNECT:
+			ClientDisconnect( arg0 );
+			return 0;
+		case GAME_CLIENT_BEGIN:
+			ClientBegin( arg0 );
+			return 0;
+		case GAME_CLIENT_COMMAND:
+			ClientCommand( arg0 );
+			return 0;
+		case GAME_RUN_FRAME:
+			G_RunFrame( arg0 );
+			return 0;
+		case GAME_CONSOLE_COMMAND:
+			return ConsoleCommand();
 	}
-
 	return -1;
 }
 
@@ -463,7 +460,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// reserve some spots for dead player bodies
 	InitBodyQue();
 
-	ClearRegisteredItems();
 
 	// parse the key/value pairs and spawn gentities
 	G_SpawnEntitiesFromString();
@@ -472,12 +468,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	G_FindTeams();
 
 	// make sure we have flags for CTF, etc
-	if( g_gametype.integer >= GT_TEAM ) {
-		G_CheckTeamItems();
-	}
-
-	SaveRegisteredItems();
-
 	// ADDING FOR ZEQ2
 	// Parse the weapon lists.
 	// FIXME: As soon as these become variable, move them
@@ -486,11 +476,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 		G_ModelIndex( SP_PODIUM_MODEL );
 		G_SoundIndex( "sound/player/gurp1.ogg" );
 		G_SoundIndex( "sound/player/gurp2.ogg" );
-	}
-	if ( trap_Cvar_VariableIntegerValue( "bot_enable" ) ) {
-		BotAISetup( restart );
-		BotAILoadMap( restart );
-		G_InitBots( restart );
 	}
 	G_RemapTeamShaders();
 }
@@ -513,10 +498,6 @@ void G_ShutdownGame( int restart ) {
 
 	// write all the client session data so we can get it back
 	G_WriteSessionData();
-
-	if ( trap_Cvar_VariableIntegerValue( "bot_enable" ) ) {
-		BotAIShutdown( restart );
-	}
 }
 
 
@@ -762,71 +743,8 @@ void CalculateRanks( void ) {
 	for ( i = 0; i < TEAM_NUM_TEAMS; i++ ) {
 		level.numteamVotingClients[i] = 0;
 	}
-	for ( i = 0 ; i < level.maxclients ; i++ ) {
-		if ( level.clients[i].pers.connected != CON_DISCONNECTED ) {
-			level.sortedClients[level.numConnectedClients] = i;
-			level.numConnectedClients++;
-
-			if ( level.clients[i].sess.sessionTeam != TEAM_SPECTATOR ) {
-				level.numNonSpectatorClients++;
-			
-				// decide if this should be auto-followed
-				if ( level.clients[i].pers.connected == CON_CONNECTED ) {
-					level.numPlayingClients++;
-					if ( !(g_entities[i].r.svFlags & SVF_BOT) ) {
-						level.numVotingClients++;
-						if ( level.clients[i].sess.sessionTeam == TEAM_RED )
-							level.numteamVotingClients[0]++;
-						else if ( level.clients[i].sess.sessionTeam == TEAM_BLUE )
-							level.numteamVotingClients[1]++;
-					}
-					if ( level.follow1 == -1 ) {
-						level.follow1 = i;
-					} else if ( level.follow2 == -1 ) {
-						level.follow2 = i;
-					}
-				}
-			}
-		}
-	}
-
 	qsort( level.sortedClients, level.numConnectedClients, 
 		sizeof(level.sortedClients[0]), SortRanks );
-
-	// set the rank value for all clients that are connected and not spectators
-	if ( g_gametype.integer >= GT_TEAM ) {
-		// in team games, rank is just the order of the teams, 0=red, 1=blue, 2=tied
-		for ( i = 0;  i < level.numConnectedClients; i++ ) {
-			cl = &level.clients[ level.sortedClients[i] ];
-			if ( level.teamScores[TEAM_RED] == level.teamScores[TEAM_BLUE] ) {
-				cl->ps.persistant[PERS_RANK] = 2;
-			} else if ( level.teamScores[TEAM_RED] > level.teamScores[TEAM_BLUE] ) {
-				cl->ps.persistant[PERS_RANK] = 0;
-			} else {
-				cl->ps.persistant[PERS_RANK] = 1;
-			}
-		}
-	} else {	
-		rank = -1;
-		score = 0;
-		for ( i = 0;  i < level.numPlayingClients; i++ ) {
-			cl = &level.clients[ level.sortedClients[i] ];
-			newScore = cl->ps.persistant[PERS_SCORE];
-			if ( i == 0 || newScore != score ) {
-				rank = i;
-				// assume we aren't tied until the next client is checked
-				level.clients[ level.sortedClients[i] ].ps.persistant[PERS_RANK] = rank;
-			} else {
-				// we are tied with the previous client
-				level.clients[ level.sortedClients[i-1] ].ps.persistant[PERS_RANK] = rank | RANK_TIED_FLAG;
-				level.clients[ level.sortedClients[i] ].ps.persistant[PERS_RANK] = rank | RANK_TIED_FLAG;
-			}
-			score = newScore;
-			if ( g_gametype.integer == GT_SINGLE_PLAYER && level.numPlayingClients == 1 ) {
-				level.clients[ level.sortedClients[i] ].ps.persistant[PERS_RANK] = rank | RANK_TIED_FLAG;
-			}
-		}
-	}
 
 	// set the CS_SCORES1/2 configstrings, which will be visible to everyone
 	if ( g_gametype.integer >= GT_TEAM ) {
@@ -1009,9 +927,6 @@ void ExitLevel (void) {
 	int		i;
 	gclient_t *cl;
 
-	//bot interbreeding
-	BotInterbreedEndMatch();
-
 	// if we are running a tournement map, kick the loser to spectator status,
 	// which will automatically grab the next spectator and restart
 	if ( g_gametype.integer == GT_TOURNAMENT  ) {
@@ -1137,25 +1052,8 @@ void LogExit( const char *string ) {
 		ping = cl->ps.ping < 999 ? cl->ps.ping : 999;
 
 		G_LogPrintf( "score: %i  ping: %i  client: %i %s\n", cl->ps.persistant[PERS_SCORE], ping, level.sortedClients[i],	cl->pers.netname );
-#ifdef MISSIONPACK
-		if (g_singlePlayer.integer && g_gametype.integer == GT_TOURNAMENT) {
-			if (g_entities[cl - level.clients].r.svFlags & SVF_BOT && cl->ps.persistant[PERS_RANK] == 0) {
-				won = qfalse;
-			}
-		}
-#endif
 
 	}
-
-#ifdef MISSIONPACK
-	if (g_singlePlayer.integer) {
-		if (g_gametype.integer >= GT_CTF) {
-			won = level.teamScores[TEAM_RED] > level.teamScores[TEAM_BLUE];
-		}
-		trap_SendConsoleCommand( EXEC_APPEND, (won) ? "spWin\n" : "spLose\n" );
-	}
-#endif
-
 
 }
 
@@ -1170,81 +1068,7 @@ If one or more players have not acknowledged the continue, the game will
 wait 10 seconds before going on.
 =================
 */
-void CheckIntermissionExit( void ) {
-	int			ready, notReady;
-	int			i;
-	gclient_t	*cl;
-	int			readyMask;
-
-	if ( g_gametype.integer == GT_SINGLE_PLAYER ) {
-		return;
-	}
-
-	// see which players are ready
-	ready = 0;
-	notReady = 0;
-	readyMask = 0;
-	for (i=0 ; i< g_maxclients.integer ; i++) {
-		cl = level.clients + i;
-		if ( cl->pers.connected != CON_CONNECTED ) {
-			continue;
-		}
-		if ( g_entities[cl->ps.clientNum].r.svFlags & SVF_BOT ) {
-			continue;
-		}
-
-		if ( cl->readyToExit ) {
-			ready++;
-			if ( i < 16 ) {
-				readyMask |= 1 << i;
-			}
-		} else {
-			notReady++;
-		}
-	}
-
-	// copy the readyMask to each player's stats so
-	// it can be displayed on the scoreboard
-	for (i=0 ; i< g_maxclients.integer ; i++) {
-		cl = level.clients + i;
-		if ( cl->pers.connected != CON_CONNECTED ) {
-			continue;
-		}
-		//cl->ps.stats[STAT_CLIENTS_READY] = readyMask;
-		trap_SetConfigstring(CS_CLIENTSREADY, va("%i", readyMask));
-	}
-
-	// never exit in less than five seconds
-	if ( level.time < level.intermissiontime + 5000 ) {
-		return;
-	}
-
-	// if nobody wants to go, clear timer
-	if ( !ready ) {
-		level.readyToExit = qfalse;
-		return;
-	}
-
-	// if everyone wants to go, go now
-	if ( !notReady ) {
-		ExitLevel();
-		return;
-	}
-
-	// the first person to ready starts the ten second timeout
-	if ( !level.readyToExit ) {
-		level.readyToExit = qtrue;
-		level.exitTime = level.time;
-	}
-
-	// if we have waited ten seconds since at least one player
-	// wanted to exit, go ahead
-	if ( level.time < level.exitTime + 10000 ) {
-		return;
-	}
-
-	ExitLevel();
-}
+void CheckIntermissionExit( void ) {ExitLevel();}
 
 /*
 =============
@@ -1277,96 +1101,7 @@ and the time everyone is moved to the intermission spot, so you
 can see the last frag.
 =================
 */
-void CheckExitRules( void ) {
- 	int			i;
-	gclient_t	*cl;
-	// if at the intermission, wait for all non-bots to
-	// signal ready, then go to next level
-	if ( level.intermissiontime ) {
-		CheckIntermissionExit ();
-		return;
-	}
-
-	if ( level.intermissionQueued ) {
-#ifdef MISSIONPACK
-		int time = (g_singlePlayer.integer) ? SP_INTERMISSION_DELAY_TIME : INTERMISSION_DELAY_TIME;
-		if ( level.time - level.intermissionQueued >= time ) {
-			level.intermissionQueued = 0;
-			BeginIntermission();
-		}
-#else
-		if ( level.time - level.intermissionQueued >= INTERMISSION_DELAY_TIME ) {
-			level.intermissionQueued = 0;
-			BeginIntermission();
-		}
-#endif
-		return;
-	}
-
-	// check for sudden death
-	if ( ScoreIsTied() ) {
-		// always wait for sudden death
-		return;
-	}
-
-	if ( g_timelimit.integer && !level.warmupTime ) {
-		if ( level.time - level.startTime >= g_timelimit.integer*60000 ) {
-			trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
-			LogExit( "Timelimit hit." );
-			return;
-		}
-	}
-
-	if ( level.numPlayingClients < 2 ) {
-		return;
-	}
-
-	if ( g_gametype.integer < GT_CTF && g_fraglimit.integer ) {
-		if ( level.teamScores[TEAM_RED] >= g_fraglimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
-			LogExit( "Fraglimit hit." );
-			return;
-		}
-
-		if ( level.teamScores[TEAM_BLUE] >= g_fraglimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
-			LogExit( "Fraglimit hit." );
-			return;
-		}
-
-		for ( i=0 ; i< g_maxclients.integer ; i++ ) {
-			cl = level.clients + i;
-			if ( cl->pers.connected != CON_CONNECTED ) {
-				continue;
-			}
-			if ( cl->sess.sessionTeam != TEAM_FREE ) {
-				continue;
-			}
-
-			if ( cl->ps.persistant[PERS_SCORE] >= g_fraglimit.integer ) {
-				LogExit( "Fraglimit hit." );
-				trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " hit the fraglimit.\n\"",
-					cl->pers.netname ) );
-				return;
-			}
-		}
-	}
-
-	if ( g_gametype.integer >= GT_CTF && g_capturelimit.integer ) {
-
-		if ( level.teamScores[TEAM_RED] >= g_capturelimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
-			LogExit( "Capturelimit hit." );
-			return;
-		}
-
-		if ( level.teamScores[TEAM_BLUE] >= g_capturelimit.integer ) {
-			trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
-			LogExit( "Capturelimit hit." );
-			return;
-		}
-	}
-}
+void CheckExitRules( void ) {}
 
 
 
@@ -1579,32 +1314,7 @@ void SetLeader(int team, int client) {
 CheckTeamLeader
 ==================
 */
-void CheckTeamLeader( int team ) {
-	int i;
-
-	for ( i = 0 ; i < level.maxclients ; i++ ) {
-		if (level.clients[i].sess.sessionTeam != team)
-			continue;
-		if (level.clients[i].sess.teamLeader)
-			break;
-	}
-	if (i >= level.maxclients) {
-		for ( i = 0 ; i < level.maxclients ; i++ ) {
-			if (level.clients[i].sess.sessionTeam != team)
-				continue;
-			if (!(g_entities[i].r.svFlags & SVF_BOT)) {
-				level.clients[i].sess.teamLeader = qtrue;
-				break;
-			}
-		}
-		for ( i = 0 ; i < level.maxclients ; i++ ) {
-			if (level.clients[i].sess.sessionTeam != team)
-				continue;
-			level.clients[i].sess.teamLeader = qtrue;
-			break;
-		}
-	}
-}
+void CheckTeamLeader( int team ) {}
 
 /*
 ==================
@@ -1743,11 +1453,9 @@ void G_RunFrame( int levelTime ) {
 				}
 			}
 			if ( ent->freeAfterEvent ) {
-				// tempEntities or dropped items completely go away after their event
 				G_FreeEntity( ent );
 				continue;
 			} else if ( ent->unlinkAfterEvent ) {
-				// items that will respawn will hide themselves after their pickup event
 				ent->unlinkAfterEvent = qfalse;
 				trap_UnlinkEntity( ent );
 			}
@@ -1785,12 +1493,6 @@ void G_RunFrame( int levelTime ) {
 		if ( ent->s.eType == ET_TORCH ) {
 			G_RunUserTorch( ent );
 		}
-
-		if ( ent->s.eType == ET_ITEM || ent->physicsObject ) {
-			G_RunItem( ent );
-			continue;
-		}
-
 		if ( ent->s.eType == ET_MOVER ) {
 			G_RunMover( ent );
 			continue;

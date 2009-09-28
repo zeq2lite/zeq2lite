@@ -153,6 +153,7 @@ void PM_CheckKnockback(void){
 		PM_StopDirections();
 		VectorScale(pml.forward,-1,direction);
 		if(pm->ps->timers[tmKnockback] > 0){
+			PM_WeaponRelease();
 			if(pm->ps->knockBackDirection == 1){
 				VectorCopy(pml.up,direction);
 				vertical = qtrue;
@@ -543,7 +544,8 @@ void PM_CheckPowerLevel(void){
 		pm->ps->bitFlags &= ~keyTierUp;
 		pm->ps->bitFlags |= usingAlter;
 		canAlter = qtrue;
-		if(pm->ps->bitFlags & usingBoost || pm->ps->timers[tmTransform] < 0 || pm->ps->bitFlags & usingSoar){
+		if(pm->ps->bitFlags & usingBoost || pm->ps->timers[tmTransform] < 0 || pm->ps->bitFlags & usingSoar ||
+		   pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING){
 			canAlter = qfalse;
 		}
 		if(canAlter && pm->cmd.upmove < 0){
@@ -878,17 +880,13 @@ void PM_CheckJump(void){
 	PM_NotOnGround();
 	PM_StopDash();
 	pm->ps->bitFlags |= usingJump;
-	jumpScale = pm->ps->bitFlags & usingBoost ? 2.0 : 1.0;
-	jumpPower = pm->ps->stats[stSpeed] * jumpScale;
+	jumpPower = pm->ps->stats[stSpeed];
 	jumpEmphasis = 2500.0;
-	pm->ps->gravity[2] = 12000 * jumpScale;
+	pm->ps->gravity[2] = 12000;
 	pm->ps->velocity[2] = 0;
 	VectorNormalize(pm->ps->velocity);
 	VectorCopy(pm->ps->velocity,pre_vel);
-	if(!((pm->cmd.forwardmove != 0) || (pm->cmd.rightmove != 0))){
-		jumpEmphasis *= jumpScale;
-	}
-	VectorScale(pm->ps->velocity,2500.0 * jumpScale,pm->ps->velocity);
+	VectorScale(pm->ps->velocity,2500.0,pm->ps->velocity);
 	VectorNormalize2(pm->ps->velocity,post_vel);
 	if((pm->cmd.forwardmove != 0) || (pm->cmd.rightmove != 0)){
 		pm->ps->velocity[2] = jumpPower * 6;
@@ -897,7 +895,6 @@ void PM_CheckJump(void){
 	} else{
 		pm->ps->gravity[2] = 6000;
 		pm->ps->velocity[2] = jumpPower * 8;
-		jumpEmphasis *= jumpScale;
 		pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.06;
 		PM_AddEvent(EV_JUMP);
 	}
@@ -945,6 +942,7 @@ void PM_CheckBlock(void){
 		&& !(pm->ps->bitFlags & usingSoar)
 		&& !(pm->ps->bitFlags & usingZanzoken)
 		&& !(pm->ps->bitFlags & usingWeapon)
+		&& !(pm->ps->bitFlags & isStruggling)
 		&& !(pm->ps->bitFlags & isPreparing)){
 		pm->ps->bitFlags |= usingBlock;
 	}
@@ -983,7 +981,8 @@ void PM_FlyMove(void){
 		boostFactor = 1.0;
 	}
 	if((pm->cmd.buttons & BUTTON_JUMP &&
-		pm->ps->weaponstate != WEAPON_CHARGING && 
+		!(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) && 
+		!(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING) && 
 		!(pm->ps->bitFlags & usingZanzoken)) ||
 		(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & lockedYaw || pm->ps->bitFlags & lockedRoll)){
 		if(pm->ps->bitFlags & usingJump){return;}
@@ -2277,7 +2276,7 @@ void PM_Melee(void){
 						pm->ps->powerLevel[plUseFatigue] = damage * 0.8;
 						pm->ps->lockedPlayer->powerLevel[plUseFatigue] = damage * 0.4;
 					}
-					if(enemyState != stMeleeUsingBlock || enemyState != stMeleeUsingEvade){
+					if(enemyState != stMeleeUsingBlock && enemyState != stMeleeUsingEvade){
 						pm->ps->lockedPlayer->powerups[PW_KNOCKBACK_SPEED] = (pm->ps->powerLevel[plCurrent] / 21.84) + pm->ps->stats[stKnockbackPower];
 						if(pm->ps->lockedPlayer->timers[tmKnockback]){pm->ps->lockedPlayer->powerups[PW_KNOCKBACK_SPEED] *= 2;}
 						if(pm->ps->bitFlags & usingBoost){
@@ -2293,7 +2292,7 @@ void PM_Melee(void){
 				}
 				else if(!pm->ps->timers[tmMeleeBreakerWait]){
 					pm->ps->timers[tmMeleeBreaker] = 1;
-					pm->ps->timers[tmMeleeBreakerWait] = 1500;
+					pm->ps->timers[tmMeleeBreakerWait] = 800;
 					pm->ps->stats[stAnimState] = (Q_random(&realRandom.tm_sec) * 5)+1;
 					meleeCharge = 0;
 				}
@@ -2346,7 +2345,7 @@ void PM_Melee(void){
 				}
 				else if(!pm->ps->timers[tmMeleeBreakerWait]){
 					pm->ps->timers[tmMeleeBreaker] = -1;
-					pm->ps->timers[tmMeleeBreakerWait] = 1500;
+					pm->ps->timers[tmMeleeBreakerWait] = 800;
 					pm->ps->stats[stAnimState] = (Q_random(&realRandom.tm_sec) * 5)+1;
 					meleeCharge = 0;
 				}
@@ -2551,7 +2550,7 @@ PM_Weapon
 Generates weapon events and modifes the weapon counter
 ==============*/
 void PM_WeaponRelease(void){
-	if(pm->ps->bitFlags & isGuiding){
+	if(pm->ps->bitFlags & isGuiding || pm->ps->bitFlags & isStruggling){
 		PM_AddEvent(EV_DETONATE_WEAPON);
 		pm->ps->bitFlags &= ~isGuiding;
 	}

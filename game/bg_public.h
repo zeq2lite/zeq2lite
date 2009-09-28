@@ -357,56 +357,29 @@ typedef enum {
 // NOTE: may not have more than 16
 typedef enum {
 	PERS_SCORE,						// !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
-	PERS_HITS,						// total points damage inflicted so damage beeps can sound on change
-	PERS_RANK,						// player rank or team rank
 	PERS_TEAM,						// player team
 	PERS_SPAWN_COUNT,				// incremented every respawn
 	PERS_PLAYEREVENTS,				// 16 bits that can be flipped for events
 	PERS_ATTACKER,					// clientnum of last damage inflicter
-	PERS_ATTACKEE_ARMOR,			// powerLevel/armor of last person we attacked
-	PERS_KILLED,					// count of the number of times you died
-	PERS_IMPRESSIVE_COUNT,			// two railgun hits in a row
-	PERS_EXCELLENT_COUNT,			// two successive kills in a short amount of time
-	PERS_DEFEND_COUNT,				// defend awards
-	PERS_ASSIST_COUNT,				// assist awards
-	PERS_GAUNTLET_FRAG_COUNT,		// kills with the gauntlet
-	PERS_CAPTURES,					// captures
+	PERS_KILLED					// count of the number of times you died
 } persEnum_t;
 
 
 // entityState_t->eFlags
 #define	EF_DEAD				0x00000001		// don't draw a foe marker over players with EF_DEAD
 #define	EF_TELEPORT_BIT		0x00000004		// toggled every time the origin abruptly changes
-#define	EF_AWARD_EXCELLENT	0x00000008		// draw an excellent sprite
 #define EF_PLAYER_EVENT		0x00000010
 #define	EF_BOUNCE			0x00000010		// for missiles
 #define	EF_BOUNCE_HALF		0x00000020		// for missiles
-#define	EF_AWARD_GAUNTLET	0x00000040		// draw a gauntlet sprite
 #define	EF_NODRAW			0x00000080		// may have an event, but no model (unspawned items)
 #define	EF_FIRING			0x00000100		// for lightning gun
-#define	EF_KAMIKAZE			0x00000200
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
-#define EF_AWARD_CAP		0x00000800		// draw the capture sprite
 #define	EF_TALK				0x00001000		// draw a talk balloon
 #define	EF_CONNECTION		0x00002000		// draw a connection trouble sprite
 #define	EF_VOTED			0x00004000		// already cast a vote
-#define	EF_AWARD_IMPRESSIVE	0x00008000		// draw an impressive sprite
-#define	EF_AWARD_DEFEND		0x00010000		// draw a defend sprite
-#define	EF_AWARD_ASSIST		0x00020000		// draw a assist sprite
-#define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
 #define EF_GUIDED			0x00004000		// To distinguish a guided missile (Missiles can't vote anyway)
 #define EF_AURA				0x00000010		// used to make players display their aura
-
-typedef enum {
-	HI_NONE,
-	HI_TELEPORTER,
-	HI_MEDKIT,
-	HI_KAMIKAZE,
-	HI_PORTAL,
-	HI_INVULNERABILITY,
-	HI_NUM_HOLDABLE
-} holdable_t;
 
 typedef enum {
 	WP_NONE,
@@ -423,11 +396,6 @@ typedef enum {
 	WP_NUM_WEAPONS
 } weapon_t;
 
-
-// reward sounds (stored in ps->persistant[PERS_PLAYEREVENTS])
-#define	PLAYEREVENT_DENIEDREWARD		0x0001
-#define	PLAYEREVENT_GAUNTLETREWARD		0x0002
-#define PLAYEREVENT_HOLYSHIT			0x0004
 
 // entityState_t->event values
 // entity events are for effects that take place reletive
@@ -466,9 +434,6 @@ typedef enum {
 	EV_WATER_UNDER,	// head touches
 	EV_WATER_CLEAR,	// head leaves
 	EV_WATER_SPLASH,	// something hits water fast
-	EV_ITEM_PICKUP,			// normal item pickups are predictable
-	EV_GLOBAL_ITEM_PICKUP,	// powerup / team sounds are broadcast to everyon
-	EV_NOAMMO,
 	EV_CHANGE_WEAPON,
 	EV_FIRE_WEAPON,
 	// ADDING FOR ZEQ2
@@ -489,28 +454,8 @@ typedef enum {
 	EV_ZANZOKEN_END,
 	EV_ZANZOKEN_START,
 	EV_POWER_STRUGGLE_START,
-	// END ADDING
-	EV_USE_ITEM0,
-	EV_USE_ITEM1,
-	EV_USE_ITEM2,
-	EV_USE_ITEM3,
-	EV_USE_ITEM4,
-	EV_USE_ITEM5,
-	EV_USE_ITEM6,
-	EV_USE_ITEM7,
-	EV_USE_ITEM8,
-	EV_USE_ITEM9,
-	EV_USE_ITEM10,
-	EV_USE_ITEM11,
-	EV_USE_ITEM12,
-	EV_USE_ITEM13,
-	EV_USE_ITEM14,
-	EV_USE_ITEM15,
-	EV_ITEM_RESPAWN,
-	EV_ITEM_POP,
 	EV_PLAYER_TELEPORT_IN,
 	EV_PLAYER_TELEPORT_OUT,
-	EV_GRENADE_BOUNCE,		// eventParm will be the soundindex
 	EV_GENERAL_SOUND,
 	EV_GLOBAL_SOUND,		// no attenuation
 	EV_GLOBAL_TEAM_SOUND,
@@ -536,21 +481,10 @@ typedef enum {
 	EV_DEATH3,
 	EV_UNCONCIOUS,
 	EV_OBITUARY,
-	EV_POWERUP_QUAD,
-	EV_POWERUP_BATTLESUIT,
-	EV_POWERUP_REGEN,
-	EV_GIB_PLAYER,			// gib a previously living player
-	EV_SCOREPLUM,			// score plum
 	EV_DEBUG_LINE,
 	EV_STOPLOOPINGSOUND,
 	EV_LOCKON_START,
 	EV_LOCKON_END,
-	EV_LOCKON_START_YES,
-	EV_LOCKON_START_NO,
-	EV_LOCKON_START_FOLLOWME,
-	EV_LOCKON_START_GETFLAG,
-	EV_LOCKON_START_GUARDBASE,
-	EV_LOCKON_START_PATROL,
 	EV_STUNNED,
 	EV_BLOCK,
 	EV_PUSH,
@@ -563,22 +497,6 @@ typedef enum {
 	EV_EARTHQUAKE
 	// END ADDING
 } entity_event_t;
-typedef enum {
-	GTS_RED_CAPTURE,
-	GTS_BLUE_CAPTURE,
-	GTS_RED_RETURN,
-	GTS_BLUE_RETURN,
-	GTS_RED_TAKEN,
-	GTS_BLUE_TAKEN,
-	GTS_REDOBELISK_ATTACKED,
-	GTS_BLUEOBELISK_ATTACKED,
-	GTS_REDTEAM_SCORED,
-	GTS_BLUETEAM_SCORED,
-	GTS_REDTEAM_TOOK_LEAD,
-	GTS_BLUETEAM_TOOK_LEAD,
-	GTS_TEAMS_ARE_TIED,
-	GTS_KAMIKAZE
-} global_team_sound_t;
 typedef enum {
 // DEATH
 	ANIM_DEATH_GROUND,
@@ -697,9 +615,6 @@ typedef enum {
 	MAX_ANIMATIONS,
 	ANIM_BACKWALK,
 	ANIM_BACKRUN,
-	FLAG_RUN,
-	FLAG_STAND,
-	FLAG_STAND2RUN,
 	MAX_TOTALANIMATIONS
 } animNumber_t;
 
@@ -737,7 +652,6 @@ typedef enum {
 
 	TEAM_NUM_TEAMS
 } team_t;
-
 // Time between location updates
 #define TEAM_LOCATION_UPDATE_TIME		1000
 
@@ -755,94 +669,7 @@ typedef enum {
 	TEAMTASK_ESCORT,
 	TEAMTASK_CAMP
 } teamtask_t;
-// means of death
-typedef enum {
-	MOD_UNKNOWN,
-	MOD_SHOTGUN,
-	MOD_GAUNTLET,
-	MOD_MACHINEGUN,
-	MOD_GRENADE,
-	MOD_GRENADE_SPLASH,
-	MOD_ROCKET,
-	MOD_ROCKET_SPLASH,
-	MOD_PLASMA,
-	MOD_PLASMA_SPLASH,
-	MOD_RAILGUN,
-	MOD_LIGHTNING,
-	MOD_BFG,
-	MOD_BFG_SPLASH,
-	MOD_WATER,
-	MOD_SLIME,
-	MOD_LAVA,
-	MOD_CRUSH,
-	MOD_TELEFRAG,
-	MOD_FALLING,
-	MOD_SUICIDE,
-	MOD_TARGET_LASER,
-	MOD_TRIGGER_HURT,
-	MOD_GRAPPLE,
-	// ADDING FOR ZEQ2
-	// FIXME: Until all of the bot-chat is fixed as well, we have to keep the old ones around
-	//        in combination with our own ones.
-	MOD_KI,		//	Ki attack
-	MOD_MELEE,	//	Punch / Kick
-	MOD_SLICE,	//	Sliced in half by disc attack / melee weapon ( Trunks' sword )
-	MOD_PIERCE, //  Pierced / stabbed ( Freeza beam, Ki no Tsurugi, etc. )
-	MOD_STONE,	//	Turned to stone ( Dabura's spit )
-	MOD_BURN,	//	Burned ( Dabura's firebreath, 4-star Dragon's attacks )
-	MOD_CANDY	//	'Turn to chocolate!'
-	// END ADDING
-} meansOfDeath_t;
-
-
 //---------------------------------------------------------
-
-// gitem_t->type
-typedef enum {
-	IT_BAD,
-	IT_WEAPON,				// EFX: rotate + upscale + minlight
-	IT_AMMO,				// EFX: rotate
-	IT_ARMOR,				// EFX: rotate + minlight
-	IT_HEALTH,				// EFX: static external sphere + rotating internal
-	IT_POWERUP,				// instant on, timer based
-							// EFX: rotate + external ring that rotates
-	IT_HOLDABLE,			// single use, holdable item
-							// EFX: rotate + bob
-	IT_PERSISTANT_POWERUP,
-	IT_TEAM
-} itemType_t;
-
-#define MAX_ITEM_MODELS 4
-
-typedef struct gitem_s {
-	char		*classname;		// spawning name
-	char		*pickup_sound;
-	char		*world_model[MAX_ITEM_MODELS];
-
-	char		*icon;
-	char		*pickup_name;	// for printing on pickup
-
-	int			quantity;		// for ammo how much, or duration of powerup
-	itemType_t  giType;			// IT_* flags
-
-	int			giTag;
-
-	char		*precaches;		// string of all models and images this item will use
-	char		*sounds;		// string of all sounds this item will use
-} gitem_t;
-
-// included in both the game dll and the client
-extern	gitem_t	bg_itemlist[];
-extern	int		bg_numItems;
-
-gitem_t	*BG_FindItem( const char *pickupName );
-gitem_t	*BG_FindItemForWeapon( weapon_t weapon );
-gitem_t	*BG_FindItemForPowerup( powerup_t pw );
-gitem_t	*BG_FindItemForHoldable( holdable_t pw );
-#define	ITEM_INDEX(x) ((x)-bg_itemlist)
-
-qboolean	BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const playerState_t *ps );
-
 
 // g_dmflags->integer flags
 #define	DF_NO_FALLING			8
@@ -857,7 +684,6 @@ qboolean	BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 #define	MASK_WATER				(CONTENTS_WATER|CONTENTS_LAVA|CONTENTS_SLIME)
 #define	MASK_OPAQUE				(CONTENTS_SOLID|CONTENTS_SLIME|CONTENTS_LAVA)
 #define	MASK_SHOT				(CONTENTS_SOLID|CONTENTS_BODY|CONTENTS_CORPSE)
-
 
 //
 // entityState_t->eType
@@ -884,7 +710,6 @@ typedef enum {
 	ET_RIFT,
 	ET_EXPLOSION,
 	// -->
-
 	ET_EVENTS				// any of the EV_* events can be added freestanding
 							// by setting eType to ET_EVENTS + eventNum
 							// this avoids having to set eFlags and eventNum
@@ -908,35 +733,9 @@ int		BG_IntLoBits( const int i );
 int		BG_IntHiBits( const int i );
 int		BG_IntMergeBits( const int hi, const int lo );
 
-qboolean	BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTime );
-
 #define ARENAS_PER_TIER		4
 #define MAX_ARENAS			1024
 #define	MAX_ARENAS_TEXT		8192
 
 #define MAX_BOTS			1024
 #define MAX_BOTS_TEXT		8192
-
-
-// Kamikaze
-
-// 1st shockwave times
-#define KAMI_SHOCKWAVE_STARTTIME		0
-#define KAMI_SHOCKWAVEFADE_STARTTIME	1500
-#define KAMI_SHOCKWAVE_ENDTIME			2000
-// explosion/implosion times
-#define KAMI_EXPLODE_STARTTIME			250
-#define KAMI_IMPLODE_STARTTIME			2000
-#define KAMI_IMPLODE_ENDTIME			2250
-// 2nd shockwave times
-#define KAMI_SHOCKWAVE2_STARTTIME		2000
-#define KAMI_SHOCKWAVE2FADE_STARTTIME	2500
-#define KAMI_SHOCKWAVE2_ENDTIME			3000
-// radius of the models without scaling
-#define KAMI_SHOCKWAVEMODEL_RADIUS		88
-#define KAMI_BOOMSPHEREMODEL_RADIUS		72
-// maximum radius of the models during the effect
-#define KAMI_SHOCKWAVE_MAXRADIUS		1320
-#define KAMI_BOOMSPHERE_MAXRADIUS		720
-#define KAMI_SHOCKWAVE2_MAXRADIUS		704
-

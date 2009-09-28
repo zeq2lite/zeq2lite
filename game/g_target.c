@@ -7,31 +7,7 @@
 /*QUAKED target_give (1 0 0) (-8 -8 -8) (8 8 8)
 Gives the activator all the items pointed to.
 */
-void Use_Target_Give( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
-	gentity_t	*t;
-	trace_t		trace;
-
-	if ( !activator->client ) {
-		return;
-	}
-
-	if ( !ent->target ) {
-		return;
-	}
-
-	memset( &trace, 0, sizeof( trace ) );
-	t = NULL;
-	while ( (t = G_Find (t, FOFS(targetname), ent->target)) != NULL ) {
-		if ( !t->item ) {
-			continue;
-		}
-		Touch_Item( t, activator, &trace );
-
-		// make sure it isn't going to respawn or show any events
-		t->nextthink = 0;
-		trap_UnlinkEntity( t );
-	}
-}
+void Use_Target_Give( gentity_t *ent, gentity_t *other, gentity_t *activator ) {}
 
 void SP_target_give( gentity_t *ent ) {
 	ent->use = Use_Target_Give;
@@ -222,35 +198,7 @@ void SP_target_speaker( gentity_t *ent ) {
 /*QUAKED target_laser (0 .5 .8) (-8 -8 -8) (8 8 8) START_ON
 When triggered, fires a laser.  You can either set a target or a direction.
 */
-void target_laser_think (gentity_t *self) {
-	vec3_t	end;
-	trace_t	tr;
-	vec3_t	point;
-
-	// if pointed at another entity, set movedir to point at it
-	if ( self->enemy ) {
-		VectorMA (self->enemy->s.origin, 0.5, self->enemy->r.mins, point);
-		VectorMA (point, 0.5, self->enemy->r.maxs, point);
-		VectorSubtract (point, self->s.origin, self->movedir);
-		VectorNormalize (self->movedir);
-	}
-
-	// fire forward and see what we hit
-	VectorMA (self->s.origin, 2048, self->movedir, end);
-
-	trap_Trace( &tr, self->s.origin, NULL, NULL, end, self->s.number, CONTENTS_SOLID|CONTENTS_BODY|CONTENTS_CORPSE);
-
-	if ( tr.entityNum ) {
-		// hurt it if we can
-		G_Damage ( &g_entities[tr.entityNum], self, self->activator, self->movedir, 
-			tr.endpos, self->damage, DAMAGE_NO_KNOCKBACK, MOD_TARGET_LASER);
-	}
-
-	VectorCopy (tr.endpos, self->s.origin2);
-
-	trap_LinkEntity( self );
-	self->nextthink = level.time + FRAMETIME;
-}
+void target_laser_think (gentity_t *self) {}
 
 void target_laser_on (gentity_t *self)
 {
@@ -376,9 +324,7 @@ void SP_target_relay (gentity_t *self) {
 /*QUAKED target_kill (.5 .5 .5) (-8 -8 -8) (8 8 8)
 Kills the activator.
 */
-void target_kill_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {
-	G_Damage ( activator, NULL, NULL, NULL, NULL, 100000, DAMAGE_NO_PROTECTION, MOD_TELEFRAG);
-}
+void target_kill_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {}
 
 void SP_target_kill( gentity_t *self ) {
 	self->use = target_kill_use;

@@ -5,67 +5,12 @@
 #include "../../ui/menudef.h"			// for the voice chats
 
 /*
-==================
+=================
 DeathmatchScoreboardMessage
 
 ==================
 */
-void DeathmatchScoreboardMessage( gentity_t *ent ) {
-	char		entry[1024];
-	char		string[1400];
-	int			stringlength;
-	int			i, j;
-	gclient_t	*cl;
-	int			numSorted, scoreFlags, accuracy, perfect;
-
-	// send the latest information on all clients
-	string[0] = 0;
-	stringlength = 0;
-	scoreFlags = 0;
-
-	numSorted = level.numConnectedClients;
-	
-	for (i=0 ; i < numSorted ; i++) {
-		int		ping;
-
-		cl = &level.clients[level.sortedClients[i]];
-
-		if ( cl->pers.connected == CON_CONNECTING ) {
-			ping = -1;
-		} else {
-			ping = cl->ps.ping < 999 ? cl->ps.ping : 999;
-		}
-
-		if( cl->accuracy_shots ) {
-			accuracy = cl->accuracy_hits * 100 / cl->accuracy_shots;
-		}
-		else {
-			accuracy = 0;
-		}
-		perfect = ( cl->ps.persistant[PERS_RANK] == 0 && cl->ps.persistant[PERS_KILLED] == 0 ) ? 1 : 0;
-
-		Com_sprintf (entry, sizeof(entry),
-			" %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
-			cl->ps.persistant[PERS_SCORE], ping, (level.time - cl->pers.enterTime)/60000,
-			scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy, 
-			cl->ps.persistant[PERS_IMPRESSIVE_COUNT],
-			cl->ps.persistant[PERS_EXCELLENT_COUNT],
-			cl->ps.persistant[PERS_GAUNTLET_FRAG_COUNT], 
-			cl->ps.persistant[PERS_DEFEND_COUNT], 
-			cl->ps.persistant[PERS_ASSIST_COUNT], 
-			perfect,
-			cl->ps.persistant[PERS_CAPTURES]);
-		j = strlen(entry);
-		if (stringlength + j > 1024)
-			break;
-		strcpy (string + stringlength, entry);
-		stringlength += j;
-	}
-
-	trap_SendServerCommand( ent-g_entities, va("scores %i %i %i%s", i, 
-		level.teamScores[TEAM_RED], level.teamScores[TEAM_BLUE],
-		string ) );
-}
+void DeathmatchScoreboardMessage( gentity_t *ent ) {}
 
 
 /*
@@ -199,108 +144,6 @@ int ClientNumberFromString( gentity_t *to, char *s ) {
 	trap_SendServerCommand( to-g_entities, va("print \"User %s is not on the server\n\"", s));
 	return -1;
 }
-
-/*
-==================
-Cmd_Give_f
-
-Give items to a client
-==================
-*/
-void Cmd_Give_f (gentity_t *ent)
-{
-	char		*name;
-	gitem_t		*it;
-	int			i;
-	qboolean	give_all;
-	gentity_t		*it_ent;
-	trace_t		trace;
-
-	if ( !CheatsOk( ent ) ) {
-		return;
-	}
-
-	name = ConcatArgs( 1 );
-
-	if (Q_stricmp(name, "all") == 0)
-		give_all = qtrue;
-	else
-		give_all = qfalse;
-
-	if (give_all || Q_stricmp( name, "powerLevel") == 0)
-	{
-		ent->powerLevelTotal = ent->client->ps.powerLevel[plFatigue];
-		if (!give_all)
-			return;
-	}
-
-	if (give_all || Q_stricmp(name, "weapons") == 0)
-	{
-		ent->client->ps.stats[stSkills] = (1 << WP_NUM_WEAPONS) - 1 - 
-			( 1 << WP_GRAPPLING_HOOK ) - ( 1 << WP_NONE );
-		if (!give_all)
-			return;
-	}
-
-	if (give_all || Q_stricmp(name, "ammo") == 0)
-	{
-		for ( i = 0 ; i < MAX_WEAPONS ; i++ ) {
-			ent->client->ps.currentSkill[i] = 999;
-		}
-		if (!give_all)
-			return;
-	}
-
-	if (give_all || Q_stricmp(name, "armor") == 0)
-	{
-//		ent->client->ps.stats[STAT_ARMOR] = 200;
-
-		if (!give_all)
-			return;
-	}
-
-	if (Q_stricmp(name, "excellent") == 0) {
-		ent->client->ps.persistant[PERS_EXCELLENT_COUNT]++;
-		return;
-	}
-	if (Q_stricmp(name, "impressive") == 0) {
-		ent->client->ps.persistant[PERS_IMPRESSIVE_COUNT]++;
-		return;
-	}
-	if (Q_stricmp(name, "gauntletaward") == 0) {
-		ent->client->ps.persistant[PERS_GAUNTLET_FRAG_COUNT]++;
-		return;
-	}
-	if (Q_stricmp(name, "defend") == 0) {
-		ent->client->ps.persistant[PERS_DEFEND_COUNT]++;
-		return;
-	}
-	if (Q_stricmp(name, "assist") == 0) {
-		ent->client->ps.persistant[PERS_ASSIST_COUNT]++;
-		return;
-	}
-
-	// spawn a specific item right on the player
-	if ( !give_all ) {
-		it = BG_FindItem (name);
-		if (!it) {
-			return;
-		}
-
-		it_ent = G_Spawn();
-		VectorCopy( ent->r.currentOrigin, it_ent->s.origin );
-		it_ent->classname = it->classname;
-		G_SpawnItem (it_ent, it);
-		FinishSpawningItem(it_ent );
-		memset( &trace, 0, sizeof( trace ) );
-		Touch_Item (it_ent, ent, &trace);
-		if (it_ent->inuse) {
-			G_FreeEntity( it_ent );
-		}
-	}
-}
-
-
 /*
 ==================
 Cmd_God_f
@@ -449,7 +292,6 @@ void Cmd_Kill_f( gentity_t *ent ) {
 		return;
 	}
 	ent->flags &= ~FL_GODMODE;
-	player_die (ent, ent, ent, 100000, MOD_SUICIDE);
 }
 
 /*
@@ -571,7 +413,6 @@ void SetTeam( gentity_t *ent, char *s ) {
 		// Kill him (makes sure he loses flags, etc)
 		ent->flags &= ~FL_GODMODE;
 		ent->client->ps.powerLevel[plCurrent] = ent->powerLevelTotal = 0;
-		player_die(ent,ent,ent,100000,MOD_SUICIDE);
 
 	}
 	// they go to the end of the line for tournements
@@ -1060,65 +901,9 @@ Cmd_VoiceTaunt_f
 static void Cmd_VoiceTaunt_f( gentity_t *ent ) {
 	gentity_t *who;
 	int i;
-
 	if (!ent->client) {
 		return;
 	}
-
-	// insult someone who just killed you
-	if (ent->enemy && ent->enemy->client && ent->enemy->client->lastkilled_client == ent->s.number) {
-		if (!(ent->enemy->r.svFlags & SVF_BOT)) {
-			G_Voice( ent, ent->enemy, SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
-		}
-		if (!(ent->r.svFlags & SVF_BOT)) {
-			G_Voice( ent, ent,        SAY_TELL, VOICECHAT_DEATHINSULT, qfalse );
-		}
-		ent->enemy = NULL;
-		return;
-	}
-	// insult someone you just killed
-	if (ent->client->lastkilled_client >= 0 && ent->client->lastkilled_client != ent->s.number) {
-		who = g_entities + ent->client->lastkilled_client;
-		if (who->client) {
-			// who is the person I just killed
-			if (who->client->lasthurt_mod == MOD_GAUNTLET) {
-				if (!(who->r.svFlags & SVF_BOT)) {
-					G_Voice( ent, who, SAY_TELL, VOICECHAT_KILLGAUNTLET, qfalse );	// and I killed them with a gauntlet
-				}
-				if (!(ent->r.svFlags & SVF_BOT)) {
-					G_Voice( ent, ent, SAY_TELL, VOICECHAT_KILLGAUNTLET, qfalse );
-				}
-			} else {
-				if (!(who->r.svFlags & SVF_BOT)) {
-					G_Voice( ent, who, SAY_TELL, VOICECHAT_KILLINSULT, qfalse );	// and I killed them with something else
-				}
-				if (!(ent->r.svFlags & SVF_BOT)) {
-					G_Voice( ent, ent, SAY_TELL, VOICECHAT_KILLINSULT, qfalse );
-				}
-			}
-			ent->client->lastkilled_client = -1;
-			return;
-		}
-	}
-
-	if (g_gametype.integer >= GT_TEAM) {
-		// praise a team mate who just got a reward
-		for(i = 0; i < MAX_CLIENTS; i++) {
-			who = g_entities + i;
-			if (who->client && who != ent && who->client->sess.sessionTeam == ent->client->sess.sessionTeam) {
-				if (who->client->rewardTime > level.time) {
-					if (!(who->r.svFlags & SVF_BOT)) {
-						G_Voice( ent, who, SAY_TELL, VOICECHAT_PRAISE, qfalse );
-					}
-					if (!(ent->r.svFlags & SVF_BOT)) {
-						G_Voice( ent, ent, SAY_TELL, VOICECHAT_PRAISE, qfalse );
-					}
-					return;
-				}
-			}
-		}
-	}
-
 	// just say something
 	G_Voice( ent, NULL, SAY_ALL, VOICECHAT_TAUNT, qfalse );
 }
@@ -1678,9 +1463,7 @@ void ClientCommand( int clientNum ) {
 		return;
 	}
 
-	if (Q_stricmp (cmd, "give") == 0)
-		Cmd_Give_f (ent);
-	else if (Q_stricmp (cmd, "god") == 0)
+	if (Q_stricmp (cmd, "god") == 0)
 		Cmd_God_f (ent);
 	else if (Q_stricmp (cmd, "notarget") == 0)
 		Cmd_Notarget_f (ent);

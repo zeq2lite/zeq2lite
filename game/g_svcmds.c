@@ -285,9 +285,6 @@ void	Svcmd_EntityList_f (void) {
 		case ET_PLAYER:
 			G_Printf("ET_PLAYER           ");
 			break;
-		case ET_ITEM:
-			G_Printf("ET_ITEM             ");
-			break;
 		case ET_MISSILE:
 			G_Printf("ET_MISSILE          ");
 			break;
@@ -314,9 +311,6 @@ void	Svcmd_EntityList_f (void) {
 			break;
 		case ET_INVISIBLE:
 			G_Printf("ET_INVISIBLE        ");
-			break;
-		case ET_GRAPPLE:
-			G_Printf("ET_GRAPPLE          ");
 			break;
 		case ET_TEAM:
 			G_Printf("ET_TEAM	          ");
@@ -384,7 +378,6 @@ gclient_t	*ClientForString( const char *s ) {
 
 	return NULL;
 }
-
 /*
 ===================
 Svcmd_ForceTeam_f
@@ -407,7 +400,6 @@ void	Svcmd_ForceTeam_f( void ) {
 	trap_Argv( 2, str, sizeof( str ) );
 	SetTeam( &g_entities[cl - level.clients], str );
 }
-
 char	*ConcatArgs( int start );
 
 /*
@@ -430,19 +422,8 @@ qboolean	ConsoleCommand( void ) {
 		Svcmd_ForceTeam_f();
 		return qtrue;
 	}
-
 	if (Q_stricmp (cmd, "game_memory") == 0) {
 		Svcmd_GameMem_f();
-		return qtrue;
-	}
-
-	if (Q_stricmp (cmd, "addbot") == 0) {
-		Svcmd_AddBot_f();
-		return qtrue;
-	}
-
-	if (Q_stricmp (cmd, "botlist") == 0) {
-		Svcmd_BotList_f();
 		return qtrue;
 	}
 

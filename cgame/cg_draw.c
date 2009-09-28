@@ -762,7 +762,6 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 	int plyrs;
 	char st[16];
 	clientInfo_t *ci;
-	gitem_t	*item;
 	int ret_y, count;
 
 	if ( !cg_drawTeamOverlay.integer){
@@ -895,20 +894,7 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 				xx = x + w - TINYCHAR_WIDTH;
 			}
 			for (j = 0; j <= PW_NUM_POWERUPS; j++) {
-				if (ci->powerups & (1 << j)) {
-
-					item = BG_FindItemForPowerup( j );
-
-					if (item) {
-						CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
-						trap_R_RegisterShader( item->icon ) );
-						if (right) {
-							xx -= TINYCHAR_WIDTH;
-						} else {
-							xx += TINYCHAR_WIDTH;
-						}
-					}
-				}
+				if (ci->powerups & (1 << j)) {}
 			}
 
 			y += TINYCHAR_HEIGHT;
@@ -975,7 +961,6 @@ static float CG_DrawScores( float y ) {
 	int			v;
 	vec4_t		color;
 	float		y1;
-	gitem_t		*item;
 
 	s1 = cgs.scores1;
 	s2 = cgs.scores2;
@@ -1103,7 +1088,6 @@ static float CG_DrawPowerups( float y ) {
 	int		active;
 	playerState_t	*ps;
 	int		t;
-	gitem_t	*item;
 	int		x;
 	int		color;
 	float	size;
@@ -1149,42 +1133,7 @@ static float CG_DrawPowerups( float y ) {
 
 	// draw the icons and timers
 	x = 640 - ICON_SIZE - CHAR_WIDTH * 2;
-	for ( i = 0 ; i < active ; i++ ) {
-		item = BG_FindItemForPowerup( sorted[i] );
-
-    if (item) {
-
-		  color = 1;
-
-		  y -= ICON_SIZE;
-
-		  trap_R_SetColor( colors[color] );
-		  CG_DrawField( x, y, 2, sortedTime[ i ] / 1000 );
-
-		  t = ps->powerups[ sorted[i] ];
-		  if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
-			  trap_R_SetColor( NULL );
-		  } else {
-			  vec4_t	modulate;
-
-			  f = (float)( t - cg.time ) / POWERUP_BLINK_TIME;
-			  f -= (int)f;
-			  modulate[0] = modulate[1] = modulate[2] = modulate[3] = f;
-			  trap_R_SetColor( modulate );
-		  }
-
-		  if ( cg.powerupActive == sorted[i] && 
-			  cg.time - cg.powerupTime < PULSE_TIME ) {
-			  f = 1.0 - ( ( (float)cg.time - cg.powerupTime ) / PULSE_TIME );
-			  size = ICON_SIZE * ( 1.0 + ( PULSE_SCALE - 1.0 ) * f );
-		  } else {
-			  size = ICON_SIZE;
-		  }
-
-		  CG_DrawPic( 640 - size, y + ICON_SIZE / 2 - size / 2, 
-			  size, size, trap_R_RegisterShader( item->icon ) );
-    }
-	}
+	for ( i = 0 ; i < active ; i++ ) {}
 	trap_R_SetColor( NULL );
 
 	return y;
@@ -1291,116 +1240,6 @@ static void CG_DrawTeamInfo( void ) {
 	}
 }
 #endif // !MISSIONPACK
-
-/*
-===================
-CG_DrawHoldableItem
-===================
-*/
-#ifndef MISSIONPACK
-static void CG_DrawHoldableItem( void ) { 
-//	int		value;
-
-//	value = cg.snap->ps.stats[STAT_HOLDABLE_ITEM];
-//	if ( value ) {
-//		CG_RegisterItemVisuals( value );
-//		CG_DrawPic( 640-ICON_SIZE, (SCREEN_HEIGHT-ICON_SIZE)/2, ICON_SIZE, ICON_SIZE, cg_items[ value ].icon );
-//	}
-
-}
-#endif // !MISSIONPACK
-
-#ifdef MISSIONPACK
-/*
-===================
-CG_DrawPersistantPowerup
-===================
-*/
-#if 0 // sos001208 - DEAD
-static void CG_DrawPersistantPowerup( void ) { 
-	int		value;
-
-	value = cg.snap->ps.stats[STAT_PERSISTANT_POWERUP];
-	if ( value ) {
-		CG_RegisterItemVisuals( value );
-		CG_DrawPic( 640-ICON_SIZE, (SCREEN_HEIGHT-ICON_SIZE)/2 - ICON_SIZE, ICON_SIZE, ICON_SIZE, cg_items[ value ].icon );
-	}
-}
-#endif
-#endif // MISSIONPACK
-
-
-/*
-===================
-CG_DrawReward
-===================
-*/
-static void CG_DrawReward( void ) { 
-	float	*color;
-	int		i, count;
-	float	x, y;
-	char	buf[32];
-
-	if ( !cg_drawRewards.integer ) {
-		return;
-	}
-
-	color = CG_FadeColor( cg.rewardTime, REWARD_TIME, 200 );
-	if ( !color ) {
-		if (cg.rewardStack > 0) {
-			for(i = 0; i < cg.rewardStack; i++) {
-				cg.rewardSound[i] = cg.rewardSound[i+1];
-				cg.rewardShader[i] = cg.rewardShader[i+1];
-				cg.rewardCount[i] = cg.rewardCount[i+1];
-			}
-			cg.rewardTime = cg.time;
-			cg.rewardStack--;
-			color = CG_FadeColor( cg.rewardTime, REWARD_TIME, 200 );
-			trap_S_StartLocalSound(cg.rewardSound[0], CHAN_ANNOUNCER);
-		} else {
-			return;
-		}
-	}
-
-	trap_R_SetColor( color );
-
-	/*
-	count = cg.rewardCount[0]/10;				// number of big rewards to draw
-
-	if (count) {
-		y = 4;
-		x = 320 - count * ICON_SIZE;
-		for ( i = 0 ; i < count ; i++ ) {
-			CG_DrawPic( x, y, (ICON_SIZE*2)-4, (ICON_SIZE*2)-4, cg.rewardShader[0] );
-			x += (ICON_SIZE*2);
-		}
-	}
-
-	count = cg.rewardCount[0] - count*10;		// number of small rewards to draw
-	*/
-
-	if ( cg.rewardCount[0] >= 10 ) {
-		y = 56;
-		x = 320 - ICON_SIZE/2;
-		CG_DrawPic( x, y, ICON_SIZE-4, ICON_SIZE-4, cg.rewardShader[0] );
-		Com_sprintf(buf, sizeof(buf), "%d", cg.rewardCount[0]);
-		x = ( SCREEN_WIDTH - SMALLCHAR_WIDTH * CG_DrawStrlen( buf ) ) / 2;
-		CG_DrawStringExt( x, y+ICON_SIZE, buf, color, qfalse, qtrue,
-								SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
-	}
-	else {
-
-		count = cg.rewardCount[0];
-
-		y = 56;
-		x = 320 - count * ICON_SIZE/2;
-		for ( i = 0 ; i < count ; i++ ) {
-			CG_DrawPic( x, y, ICON_SIZE-4, ICON_SIZE-4, cg.rewardShader[0] );
-			x += ICON_SIZE;
-		}
-	}
-	trap_R_SetColor( NULL );
-}
 
 /*==============
 CG_DrawDisconnect
@@ -2519,7 +2358,6 @@ static void CG_Draw2D( void ) {
 			if(!(cg.snap->ps.bitFlags & usingMelee)){
 				CG_DrawWeaponSelect();
 			}
-			CG_DrawHoldableItem();
 		}
 		if ( cgs.gametype >= GT_TEAM ) {
 			CG_DrawTeamInfo();

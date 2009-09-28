@@ -245,90 +245,21 @@ void G_RankDamage( int self, int attacker, int damage, int means_of_death )
 	// don't track hazard damage, just deaths
 	switch( means_of_death )
 	{
-	case MOD_WATER:
-	case MOD_SLIME:
-	case MOD_LAVA:
 	case MOD_CRUSH:
 	case MOD_TELEFRAG:
 	case MOD_FALLING:
-	case MOD_SUICIDE:
 	case MOD_TRIGGER_HURT:
 		return;
 	default:
 		break;
 	}
-
-	// get splash damage
-	switch( means_of_death )
-	{
-	case MOD_GRENADE_SPLASH:
-	case MOD_ROCKET_SPLASH:
-	case MOD_PLASMA_SPLASH:
-	case MOD_BFG_SPLASH:
-		splash = damage;
-		break;
-	default:
-		splash = 0;
-		key_splash = -1;
-		break;
-	}
+	splash = 0;
+	key_splash = -1;
 	
 	// hit, damage, and splash taken
-	switch( means_of_death )
-	{
-	case MOD_GAUNTLET:
-		key_hit = QGR_KEY_HIT_TAKEN_GAUNTLET;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_GAUNTLET;
-		break;
-	case MOD_MACHINEGUN:
-		key_hit = QGR_KEY_HIT_TAKEN_MACHINEGUN;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_MACHINEGUN;
-		break;
-	case MOD_SHOTGUN:
-		key_hit = QGR_KEY_HIT_TAKEN_SHOTGUN;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_SHOTGUN;
-		break;
-	case MOD_GRENADE:
-	case MOD_GRENADE_SPLASH:
-		key_hit = QGR_KEY_HIT_TAKEN_GRENADE;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_GRENADE;
-		key_splash = QGR_KEY_SPLASH_TAKEN_GRENADE;
-		break;
-	case MOD_ROCKET:
-	case MOD_ROCKET_SPLASH:
-		key_hit = QGR_KEY_HIT_TAKEN_ROCKET;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_ROCKET;
-		key_splash = QGR_KEY_SPLASH_TAKEN_ROCKET;
-		break;
-	case MOD_PLASMA:
-	case MOD_PLASMA_SPLASH:
-		key_hit = QGR_KEY_HIT_TAKEN_PLASMA;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_PLASMA;
-		key_splash = QGR_KEY_SPLASH_TAKEN_PLASMA;
-		break;
-	case MOD_RAILGUN:
-		key_hit = QGR_KEY_HIT_TAKEN_RAILGUN;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_RAILGUN;
-		break;
-	case MOD_LIGHTNING:
-		key_hit = QGR_KEY_HIT_TAKEN_LIGHTNING;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_LIGHTNING;
-		break;
-	case MOD_BFG:
-	case MOD_BFG_SPLASH:
-		key_hit = QGR_KEY_HIT_TAKEN_BFG;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_BFG;
-		key_splash = QGR_KEY_SPLASH_TAKEN_BFG;
-		break;
-	case MOD_GRAPPLE:
-		key_hit = QGR_KEY_HIT_TAKEN_GRAPPLE;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_GRAPPLE;
-		break;
-	default:
-		key_hit = QGR_KEY_HIT_TAKEN_UNKNOWN;
-		key_damage = QGR_KEY_DAMAGE_TAKEN_UNKNOWN;
-		break;
-	}
+	key_hit = QGR_KEY_HIT_TAKEN_UNKNOWN;
+	key_damage = QGR_KEY_DAMAGE_TAKEN_UNKNOWN;
+	break;
 
 	// report general and specific hit taken
 	if( new_hit )
@@ -351,62 +282,9 @@ void G_RankDamage( int self, int attacker, int damage, int means_of_death )
 	// hit, damage, and splash given
 	if( (attacker != ENTITYNUM_WORLD) && (attacker != self) )
 	{
-		switch( means_of_death )
-		{
-		case MOD_GAUNTLET:
-			key_hit = QGR_KEY_HIT_GIVEN_GAUNTLET;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_GAUNTLET;
-			break;
-		case MOD_MACHINEGUN:
-			key_hit = QGR_KEY_HIT_GIVEN_MACHINEGUN;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_MACHINEGUN;
-			break;
-		case MOD_SHOTGUN:
-			key_hit = QGR_KEY_HIT_GIVEN_SHOTGUN;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_SHOTGUN;
-			break;
-		case MOD_GRENADE:
-		case MOD_GRENADE_SPLASH:
-			key_hit = QGR_KEY_HIT_GIVEN_GRENADE;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_GRENADE;
-			key_splash = QGR_KEY_SPLASH_GIVEN_GRENADE;
-			break;
-		case MOD_ROCKET:
-		case MOD_ROCKET_SPLASH:
-			key_hit = QGR_KEY_HIT_GIVEN_ROCKET;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_ROCKET;
-			key_splash = QGR_KEY_SPLASH_GIVEN_ROCKET;
-			break;
-		case MOD_PLASMA:
-		case MOD_PLASMA_SPLASH:
-			key_hit = QGR_KEY_HIT_GIVEN_PLASMA;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_PLASMA;
-			key_splash = QGR_KEY_SPLASH_GIVEN_PLASMA;
-			break;
-		case MOD_RAILGUN:
-			key_hit = QGR_KEY_HIT_GIVEN_RAILGUN;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_RAILGUN;
-			break;
-		case MOD_LIGHTNING:
-			key_hit = QGR_KEY_HIT_GIVEN_LIGHTNING;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_LIGHTNING;
-			break;
-		case MOD_BFG:
-		case MOD_BFG_SPLASH:
-			key_hit = QGR_KEY_HIT_GIVEN_BFG;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_BFG;
-			key_splash = QGR_KEY_SPLASH_GIVEN_BFG;
-			break;
-		case MOD_GRAPPLE:
-			key_hit = QGR_KEY_HIT_GIVEN_GRAPPLE;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_GRAPPLE;
-			break;
-		default:
-			key_hit = QGR_KEY_HIT_GIVEN_UNKNOWN;
-			key_damage = QGR_KEY_DAMAGE_GIVEN_UNKNOWN;
-			break;
-		}
-		
+		key_hit = QGR_KEY_HIT_GIVEN_UNKNOWN;
+		key_damage = QGR_KEY_DAMAGE_GIVEN_UNKNOWN;
+		break;		
 		// report general and specific hit given
 		// jwu 8/26/00
 		// had a case where attacker is 245 which is grnadeshooter attacker is 
@@ -466,152 +344,7 @@ void G_RankDamage( int self, int attacker, int damage, int means_of_death )
 G_RankPlayerDie
 ================
 */
-void G_RankPlayerDie( int self, int attacker, int means_of_death )
-{
-	int	p1;
-	int	p2;
-
-	if( level.warmupTime != 0 )
-	{
-		// no reports during warmup period
-		return;
-	}
-	
-	if( attacker == ENTITYNUM_WORLD )
-	{
-		p1 = self;
-		p2 = -1;
-		
-		trap_RankReportInt( p1, p2, QGR_KEY_HAZARD_DEATH, 1, 1 );
-
-		switch( means_of_death )
-		{
-		case MOD_WATER:
-			trap_RankReportInt( p1, p2, QGR_KEY_WATER, 1, 1 );
-			break;
-		case MOD_SLIME:
-			trap_RankReportInt( p1, p2, QGR_KEY_SLIME, 1, 1 );
-			break;
-		case MOD_LAVA:
-			trap_RankReportInt( p1, p2, QGR_KEY_LAVA, 1, 1 );
-			break;
-		case MOD_CRUSH:
-			trap_RankReportInt( p1, p2, QGR_KEY_CRUSH, 1, 1 );
-			break;
-		case MOD_TELEFRAG:
-			trap_RankReportInt( p1, p2, QGR_KEY_TELEFRAG, 1, 1 );
-			break;
-		case MOD_FALLING:
-			trap_RankReportInt( p1, p2, QGR_KEY_FALLING, 1, 1 );
-			break;
-		case MOD_SUICIDE:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_CMD, 1, 1 );
-			break;
-		case MOD_TRIGGER_HURT:
-			trap_RankReportInt( p1, p2, QGR_KEY_TRIGGER_HURT, 1, 1 );
-			break;
-		default:
-			trap_RankReportInt( p1, p2, QGR_KEY_HAZARD_MISC, 1, 1 );
-			break;
-		}
-	}
-	else if( attacker == self )
-	{
-		p1 = self;
-		p2 = -1;
-		
-		trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE, 1, 1 );
-		
-		switch( means_of_death )
-		{
-		case MOD_GAUNTLET:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_GAUNTLET, 1, 1 );
-			break;
-		case MOD_MACHINEGUN:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_MACHINEGUN, 1, 1 );
-			break;
-		case MOD_SHOTGUN:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_SHOTGUN, 1, 1 );
-			break;
-		case MOD_GRENADE:
-		case MOD_GRENADE_SPLASH:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_GRENADE, 1, 1 );
-			break;
-		case MOD_ROCKET:
-		case MOD_ROCKET_SPLASH:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_ROCKET, 1, 1 );
-			break;
-		case MOD_PLASMA:
-		case MOD_PLASMA_SPLASH:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_PLASMA, 1, 1 );
-			break;
-		case MOD_RAILGUN:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_RAILGUN, 1, 1 );
-			break;
-		case MOD_LIGHTNING:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_LIGHTNING, 1, 1 );
-			break;
-		case MOD_BFG:
-		case MOD_BFG_SPLASH:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_BFG, 1, 1 );
-			break;
-		case MOD_GRAPPLE:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_GRAPPLE, 1, 1 );
-			break;
-		default:
-			trap_RankReportInt( p1, p2, QGR_KEY_SUICIDE_UNKNOWN, 1, 1 );
-			break;
-		}
-	}
-	else
-	{
-		p1 = attacker;
-		p2 = self;
-
-		trap_RankReportInt( p1, p2, QGR_KEY_FRAG, 1, 1 );
-		
-		switch( means_of_death )
-		{
-		case MOD_GAUNTLET:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_GAUNTLET, 1, 1 );
-			break;
-		case MOD_MACHINEGUN:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_MACHINEGUN, 1, 1 );
-			break;
-		case MOD_SHOTGUN:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_SHOTGUN, 1, 1 );
-			break;
-		case MOD_GRENADE:
-		case MOD_GRENADE_SPLASH:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_GRENADE, 1, 1 );
-			break;
-		case MOD_ROCKET:
-		case MOD_ROCKET_SPLASH:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_ROCKET, 1, 1 );
-			break;
-		case MOD_PLASMA:
-		case MOD_PLASMA_SPLASH:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_PLASMA, 1, 1 );
-			break;
-		case MOD_RAILGUN:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_RAILGUN, 1, 1 );
-			break;
-		case MOD_LIGHTNING:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_LIGHTNING, 1, 1 );
-			break;
-		case MOD_BFG:
-		case MOD_BFG_SPLASH:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_BFG, 1, 1 );
-			break;
-		case MOD_GRAPPLE:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_GRAPPLE, 1, 1 );
-			break;
-		default:
-			trap_RankReportInt( p1, p2, QGR_KEY_FRAG_UNKNOWN, 1, 1 );
-			break;
-		}
-	}
-}
+void G_RankPlayerDie( int self, int attacker, int means_of_death ){}
 
 /*
 ================

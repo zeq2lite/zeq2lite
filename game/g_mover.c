@@ -329,7 +329,6 @@ qboolean G_MoverPush( gentity_t *pusher, vec3_t move, vec3_t amove, gentity_t **
 
 		// bobbing entities are instant-kill and never get blocked
 		if ( pusher->s.pos.trType == TR_SINE || pusher->s.apos.trType == TR_SINE ) {
-			G_Damage( check, pusher, pusher, NULL, NULL, 99999, 0, MOD_CRUSH );
 			continue;
 		}
 
@@ -741,29 +740,7 @@ targeted by another entity.
 Blocked_Door
 ================
 */
-void Blocked_Door( gentity_t *ent, gentity_t *other ) {
-	// remove anything other than a client
-	if ( !other->client ) {
-		// except CTF flags!!!!
-		if( other->s.eType == ET_ITEM && other->item->giType == IT_TEAM ) {
-			Team_DroppedFlagThink( other );
-			return;
-		}
-		G_TempEntity( other->s.origin, EV_ITEM_POP );
-		G_FreeEntity( other );
-		return;
-	}
-
-	if ( ent->damage ) {
-		G_Damage( other, ent, ent, NULL, NULL, ent->damage, 0, MOD_CRUSH );
-	}
-	if ( ent->spawnflags & 4 ) {
-		return;		// crushers don't reverse
-	}
-
-	// reverse direction
-	Use_BinaryMover( ent, ent, other );
-}
+void Blocked_Door( gentity_t *ent, gentity_t *other ) {}
 
 /*
 ================
