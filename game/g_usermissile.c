@@ -768,7 +768,6 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 	// Set the player to not be able of being hurt by this shot
 	passent = self->s.number;
 
-
 	// Note; if bounce is enabled, this will let the projectile bounce a max. of 10 times
 	for (i = 0; i < 10; i++) {
 
@@ -776,7 +775,6 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 		traceEnt = &g_entities[ tr.entityNum ];
 		// snap the endpos to integers, but nudged towards the line
 		SnapVectorTowards( tr.endpos, muzzle );
-
 
 		// Add an explosion event entity, and make it free itself after the event.
 		tempEnt = G_Spawn();
@@ -807,7 +805,7 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 
 		// Send railgun beam effect. The client will draw it only if set through the 
 		// weapon's scripted graphics clientside, but we _always_ have to send the event.
-		tempEnt2 = G_TempEntity( tr.endpos, EV_RAILTRAIL );
+		tempEnt2 = G_TempEntity( tr.endpos, EV_NULL );
 		tempEnt2->s.clientNum = self->s.number;
 		tempEnt2->s.weapon = weaponNum;
 		VectorCopy( muzzle, tempEnt2->s.origin2 );
