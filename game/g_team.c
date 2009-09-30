@@ -102,7 +102,7 @@ void QDECL PrintMsg( gentity_t *ent, const char *fmt, ... ) {
 AddTeamScore
 
  used for gametype > GT_TEAM
- for gametype GT_TEAM the level.teamScores is updated in AddScore in g_combat.c
+ for gametype GT_TEAM the level.teamScores is updated in in g_combat.c
 ==============
 */
 void AddTeamScore(vec3_t origin, int team, int score) {
@@ -655,77 +655,12 @@ static void ObeliskRespawn( gentity_t *self ) {
 }
 
 
-static void ObeliskDie( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod ) {
-	int			otherTeam;
-
-	otherTeam = OtherTeam( self->spawnflags );
-	AddTeamScore(self->s.pos.trBase, otherTeam, 1);
-	Team_ForceGesture(otherTeam);
-
-	CalculateRanks();
-
-	self->takedamage = qfalse;
-	self->think = ObeliskRespawn;
-	self->nextthink = level.time + g_obeliskRespawnDelay.integer * 1000;
-
-	self->activator->s.modelindex2 = 0xff;
-	self->activator->s.frame = 2;
-
-	G_AddEvent( self->activator, EV_OBELISKEXPLODE, 0 );
-
-	AddScore(attacker, self->r.currentOrigin, CTF_CAPTURE_BONUS);
-
-	// add the sprite over the player's head
-
-	teamgame.redObeliskAttackedTime = 0;
-	teamgame.blueObeliskAttackedTime = 0;
-}
+static void ObeliskDie( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod ) {}
 
 
-static void ObeliskTouch( gentity_t *self, gentity_t *other, trace_t *trace ) {
-	int			tokens;
+static void ObeliskTouch( gentity_t *self, gentity_t *other, trace_t *trace ) {}
 
-	if ( !other->client ) {
-		return;
-	}
-
-	if ( OtherTeam(other->client->sess.sessionTeam) != self->spawnflags ) {
-		return;
-	}
-
-	tokens = other->client->ps.generic1;
-	if( tokens <= 0 ) {
-		return;
-	}
-
-	PrintMsg(NULL, "%s" S_COLOR_WHITE " brought in %i skull%s.\n",
-					other->client->pers.netname, tokens, tokens ? "s" : "" );
-
-	AddTeamScore(self->s.pos.trBase, other->client->sess.sessionTeam, tokens);
-	Team_ForceGesture(other->client->sess.sessionTeam);
-
-	AddScore(other, self->r.currentOrigin, CTF_CAPTURE_BONUS*tokens);
-
-	// add the sprite over the player's head
-	
-	other->client->ps.generic1 = 0;
-	CalculateRanks();
-
-	Team_CaptureFlagSound( self, self->spawnflags );
-}
-
-static void ObeliskPain( gentity_t *self, gentity_t *attacker, int damage ) {
-	int actualDamage = damage / 10;
-	if (actualDamage <= 0) {
-		actualDamage = 1;
-	}
-	self->activator->s.modelindex2 = self->powerLevelTotal * 0xff / g_obeliskHealth.integer;
-	if (!self->activator->s.frame) {
-		G_AddEvent(self, EV_OBELISKPAIN, 0);
-	}
-	self->activator->s.frame = 1;
-	AddScore(attacker, self->r.currentOrigin, actualDamage);
-}
+static void ObeliskPain( gentity_t *self, gentity_t *attacker, int damage ) {}
 
 gentity_t *SpawnObelisk( vec3_t origin, int team, int spawnflags) {
 	trace_t		tr;

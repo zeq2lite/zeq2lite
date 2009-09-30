@@ -836,11 +836,9 @@ void CG_AddRefEntity( localEntity_t *le ) {
 }
 
 #endif
-/*
-===================
+/*===================
 CG_AddScorePlum
-===================
-*/
+===================*/
 #define NUMBER_SIZE		8
 
 void CG_AddScorePlum( localEntity_t *le ) {

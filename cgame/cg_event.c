@@ -188,6 +188,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	//
 	// movement generated events
 	//
+	case EV_NULL:
+		break;
 	case EV_CRASH:
 		break;
 	case EV_FOOTSTEP:
@@ -299,7 +301,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_JUMP_PAD:
 		DEBUGNAME("EV_JUMP_PAD");
 		break;
-
 	case EV_HIGHJUMP:
 		DEBUGNAME("EV_HIGHJUMP");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*highjump1.ogg" ) );
@@ -330,8 +331,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_PUSH:
 		DEBUGNAME("EV_PUSH");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
-		break;
-	case EV_NULL:   
 		break;
 	case EV_SWAT:
 		DEBUGNAME("EV_SWAT");

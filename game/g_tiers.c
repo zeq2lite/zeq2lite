@@ -22,11 +22,19 @@ void syncTier(gclient_t *client){
 	ps->powerLevel[plDrainMaximum] = tier->effectMaximum;
 }
 void checkTier(gclient_t *client){
-	int tier;
+	int trigger;
+	int tier = 1;
 	playerState_t *ps;
 	tierConfig_g *nextTier,*baseTier;
 	ps = &client->ps;
 	if(ps->timers[tmTransform]){return;}
+	while(client->tiers[tier].exists){
+		if(client->tiers[tier].requirementUseSkill && (ps->weapon == client->tiers[tier].requirementUseSkill)){
+			trigger = tier;
+			break;
+		}
+		++tier;
+	}
 	while(1){
 		tier = ps->powerLevel[plTierCurrent];
 		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
@@ -221,6 +229,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->transformTime = atoi(token);
+			}
+			else if(!Q_stricmp(token,"requirementUseSkill")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementUseSkill = atoi(token);
 			}
 			else if(!Q_stricmp(token,"requirementButton")){
 				token = COM_Parse(&parse);

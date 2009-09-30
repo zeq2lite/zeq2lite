@@ -389,17 +389,11 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_LOCKON_END:
 			break;
 		case EV_DEATH:
-			if (ps->persistant[PERS_SCORE] >= 1){
-				AddScore( ent, ent->r.currentOrigin, -1 );
-			}
 			ps->powerLevel[plTierCurrent] = 0;
 			syncTier(client);
 			client->respawnTime = level.time + 10000;
 			break;
 		case EV_UNCONCIOUS:
-			if (ps->persistant[PERS_SCORE] >= 1){
-				AddScore( ent, ent->r.currentOrigin, -1 );
-			}
 			ps->powerLevel[plTierCurrent] = 0;
 			syncTier(client);
 			break;

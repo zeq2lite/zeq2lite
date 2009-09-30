@@ -68,17 +68,6 @@ void SP_target_delay( gentity_t *ent ) {
 
 The activator is given this many points.
 */
-void Use_Target_Score (gentity_t *ent, gentity_t *other, gentity_t *activator) {
-	AddScore( activator, ent->r.currentOrigin, ent->count );
-}
-
-void SP_target_score( gentity_t *ent ) {
-	if ( !ent->count ) {
-		ent->count = 1;
-	}
-	ent->use = Use_Target_Score;
-}
-
 
 //==========================================================
 

@@ -5,18 +5,12 @@
 #define BEAM_SECTION_TIME		520  // Timeframe to spawn a new beam section
 #define SKIM_MIN_GROUNDCLEARANCE	 5	// Amount the attack will 'hover' above ground
 #define	SKIM_MAX_GROUNDCLEARANCE	25	// How much distance are we allowed to take to reach ground level again.
-										// Used in a check for passing steep cliffs, etc. while skimming.
-
 /*-------------------------------
  M I S C   F U N C T I O N S
 -------------------------------*/
-
-
-/*
-=======================
+/*=======================
 GetMissileOwnerEntity
-=======================
-*/
+=======================*/
 gentity_t *GetMissileOwnerEntity (gentity_t *missile) {
 	gentity_t *parent;
 
@@ -26,14 +20,9 @@ gentity_t *GetMissileOwnerEntity (gentity_t *missile) {
 	}
 	return parent;
 }
-
-
-
-/*
-   ---------------------------------
-     T H I N K   F U N C T I O N S
-   ---------------------------------
-*/
+/*---------------------------------
+  T H I N K   F U N C T I O N S
+---------------------------------*/
 
 // Prototypes
 void Think_NormalMissile (gentity_t *self);
@@ -42,7 +31,7 @@ static void Think_NormalMissileStrugglePlayer (gentity_t *self);
 static void G_StruggleUserMissile( gentity_t *self, gentity_t *other );
 static void G_PushUserMissile( gentity_t *self, gentity_t *other );
 static void G_BounceUserMissile( gentity_t *self, trace_t *trace );
-void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int knockback);
+void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int knockback);
 void G_LocationImpact(vec3_t point, gentity_t* targ, gentity_t* attacker);
 /*
 =============
@@ -611,7 +600,7 @@ attacker = entity the inflictor belongs to
 dir = direction for knockback
 point = origin of attack
 */
-void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int methodOfDeath,int knockback){
+void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int knockback){
 	gclient_t *tgClient;
 	if(!target->takedamage){return;}
 	if(level.intermissionQueued){return;}
@@ -664,7 +653,7 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 G_UserRadiusDamage
 =====================
 */
-qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ignore, float centerDamage, float radius, int methodOfDeath, int extraKnockback ) {
+qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ignore, float centerDamage, float radius,int extraKnockback ) {
 	int			entityList[MAX_GENTITIES];
 	int			numListedEntities;
 	
@@ -816,7 +805,7 @@ void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNu
 		
 		if ( traceEnt->takedamage) {
 		G_UserWeaponDamage( traceEnt, self, self, forward, tr.endpos,
-							weaponInfo->damage_damage, 0,0,
+							weaponInfo->damage_damage, 0,
 							weaponInfo->damage_extraKnockback );
 		}
 		break;
@@ -974,9 +963,6 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
 		bolt->powerLevelCurrent = bolt->powerLevelTotal = bolt->damage * (1.0f+(float)bolt->chargelvl / 100.0f) * powerScale;
 		bolt->s.dashDir[0] = self->client->ps.attackPowerTotal = bolt->powerLevelTotal; // Use this free field to transfer total power level
-		// FIXME: Hack into the old mod style, since it's still needed for now
-		bolt->methodOfDeath = 1;
-		bolt->splashMethodOfDeath = 1;
 		
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
@@ -1171,8 +1157,6 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->s.dashDir[0] = self->client->ps.attackPowerTotal = bolt->powerLevelTotal; // Use this free field to transfer total power level
 		// FIXME: Hack into the old mod style, since it's still needed for now
 		bolt->takedamage = qtrue;
-		bolt->methodOfDeath = 1;
-		bolt->splashMethodOfDeath = 1;
 				
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
@@ -1303,11 +1287,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
 			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
 		}
-		
-		// FIXME: Hack into the old mod style, since it's still needed for now
-		bolt->methodOfDeath = 1;
-		bolt->splashMethodOfDeath = 1;
-		
+				
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
 
@@ -1379,10 +1359,6 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->s.pos.trDelta[0] = Q_fabs(weaponInfo->physics_range_max);
 		bolt->s.pos.trDelta[1] = Q_fabs(weaponInfo->physics_radius);
 	
-		// Set the MoD
-		bolt->methodOfDeath = 1;
-		bolt->splashMethodOfDeath = 1;
-
 		// Set the think function that will demolish the torch if it persists too long
 		bolt->think = Think_Torch;
 		bolt->nextthink = weaponInfo->physics_lifetime;
@@ -1794,7 +1770,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			if(VectorLength( velocity ) == 0){
 				velocity[2] = 1;
 			}
-			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->powerLevelCurrent,0,1, self->extraKnockback);
+			G_UserWeaponDamage(other,self,GetMissileOwnerEntity(self),velocity,self->s.origin,self->powerLevelCurrent,0,self->extraKnockback);
 		}
 	}
 	if((self->powerLevelCurrent <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
@@ -1820,11 +1796,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 // things like fading trails need to be handled.
 void G_RemoveUserWeapon (gentity_t *self) {
 	gentity_t *other;
-/*
-	if(self->strugglingAttack || self->strugglingPlayer){
-		return;
-	}
-*/
 	other = self->enemy;
 	other->client->ps.bitFlags &= ~isStruggling;
 	self->client->ps.bitFlags &= ~isStruggling;
@@ -1868,7 +1839,7 @@ void G_RunUserExplosion(gentity_t *ent) {
 		step = (1.0 - ((float)ent->splashEnd - (float)level.time) / (float)ent->splashDuration);
 		radius = step * ent->splashRadius;
 		power = ent->powerLevelCurrent;
-		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,ent->powerLevelCurrent,radius,1,ent->extraKnockback);
+		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,ent->powerLevelCurrent,radius,ent->extraKnockback);
 	}
 	if(level.time >= ent->splashEnd || ent->powerLevelCurrent <= 0){
 		ent->freeAfterEvent = qtrue;
@@ -1954,7 +1925,7 @@ void G_RunUserMissile( gentity_t *ent ) {
 		// Else if a player that entered the beam isn't blocking, burn them and/or push them.
 		}else if (traceEnt2->client && traceEnt2->takedamage && trace2.fraction != 1 && !(traceEnt2->client->ps.bitFlags & usingBlock)) {
 			//beamKnockBack = ent->powerLevelCurrent < (ent->powerLevelTotal / 3.0f) ? 0 : 100;
-			//G_UserWeaponDamage(traceEnt2,ent,missileOwner,forward,trace2.endpos,1+(ent->powerLevelCurrent / 4),0,ent->methodOfDeath,beamKnockBack);
+			//G_UserWeaponDamage(traceEnt2,ent,missileOwner,forward,trace2.endpos,1+(ent->powerLevelCurrent / 4),0,beamKnockBack);
 		// Else an attack entered our beam
 		// FIXME: This block won't work unless you comment out self->strugglingAllyAttack in the main struggle function.
 		// Even then, it still dosn't work right.
@@ -2192,7 +2163,7 @@ void G_RunRiftFrame( gentity_t *ent, int time ) {
 		if ( traceEnt->takedamage) {
 
 			G_UserWeaponDamage( traceEnt, &g_entities[ent->r.ownerNum], ent, upVec,
-								trace.endpos, ent->damage, 0, 1, 0 );
+								trace.endpos, ent->damage, 0,0 );
 		}
 	}
 }
@@ -2268,7 +2239,7 @@ void G_RunUserTorch( gentity_t *ent ) {
 			dmgFrac = 1;
 		}
 		
-		G_UserWeaponDamage( target, owner, ent, forward, muzzle, dmgFrac * ent->damage, 0,1, 0 );
+		G_UserWeaponDamage( target, owner, ent, forward, muzzle, dmgFrac * ent->damage,0,0);
 	}
 
 	// Round off stored vectors
