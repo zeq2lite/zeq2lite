@@ -13,7 +13,6 @@ cg_marks
 cg_players
 cg_playerstate
 cg_predict
-cg_scoreboard
 cg_servercmds
 cg_snapshot
 cg_view

@@ -44,8 +44,6 @@ if "%1"=="TA" goto TA
 @if errorlevel 1 goto quit
 %cc% ../cg_predict.c
 @if errorlevel 1 goto quit
-%cc% ../cg_scoreboard.c
-@if errorlevel 1 goto quit
 %cc% ../cg_servercmds.c
 @if errorlevel 1 goto quit
 %cc% ../cg_snapshot.c
@@ -126,8 +124,6 @@ call compile TA cg_marks.c
 call compile TA cg_playerstate.c
 @if errorlevel 1 goto quit
 call compile TA cg_predict.c
-@if errorlevel 1 goto quit
-call compile TA cg_scoreboard.c
 @if errorlevel 1 goto quit
 call compile TA cg_servercmds.c
 @if errorlevel 1 goto quit

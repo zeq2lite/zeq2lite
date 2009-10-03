@@ -2257,7 +2257,7 @@ static void CG_Draw2D( void ) {
 		CG_DrawRadar();
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if (!cg.showScores && !(cg.snap->ps.timers[tmTransform] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
+		if (!(cg.snap->ps.timers[tmTransform] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
 			CG_DrawStatusBar();
 			CG_DrawRadar();
 			CG_DrawAmmoWarning();  
