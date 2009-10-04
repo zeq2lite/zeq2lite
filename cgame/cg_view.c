@@ -778,7 +778,8 @@ static void CG_OffsetThirdPersonView( void ) {
 		cg_thirdPersonHeight.value = ci->cameraBackup[1];
 		cg_thirdPersonRange.value = ci->cameraBackup[2];
 	}
-	view[1] += cg_thirdPersonSlide.value;
+	//view[1] += cg_thirdPersonSlide.value;
+	VectorMA(view,cg_thirdPersonSlide.value,right,view);
 	view[2] += cg_thirdPersonHeight.value;
 	forwardScale = cos( cg_thirdPersonAngle.value / 180 * M_PI );	
 	sideScale = sin( cg_thirdPersonAngle.value / 180 * M_PI );
