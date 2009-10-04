@@ -154,11 +154,13 @@ typedef enum {
 	CAT_DETONATION,
 	CAT_MUZZLE,
 	CAT_TRAJECTORY,
-	CAT_REQUIREMENT
+	CAT_REQUIREMENT,
+	CAT_RESTRICT
 } g_weapPhysCategoryIndex_t;
 
 
-// Prototype these, so definition of G_weapPhysFields doesn't complain
+// Prototype these, so definition of G_weapPhysFields doesn'tAlr complain
+qboolean G_weapPhys_ParseMovement( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseType( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseRequire( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );
 qboolean G_weapPhys_ParseImpede( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field );

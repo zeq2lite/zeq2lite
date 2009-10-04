@@ -56,6 +56,18 @@ typedef struct {
 	int					homing_range;				// range within which the weapon scans for targets
 	int					homing_FOV;					// FOV of the weapon's range of vision when scanning for targets	
 
+	// Restrictions	
+	int					restrict_movement;
+	int					restrict_zanzoken;
+	int					restrict_dash;
+	int					restrict_walk;
+	int					restrict_jump;
+	int					restrict_boost;
+	int					restrict_alter;
+	int					restrict_soar;
+	int					restrict_attack;
+	int					restrict_block;
+
 	// Requirements
 	int					require_maximum;
 	int					require_minPowerLevel;

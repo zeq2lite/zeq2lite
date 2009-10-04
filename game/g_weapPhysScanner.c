@@ -5,7 +5,7 @@
 #include "g_weapPhysParser.h" // <-- cg_local.h included in this
 
 char *g_weapPhysCategories[] = {
-	"Physics", "Costs", "Detonation", "Muzzle", "Trajectory", "Requirement", ""
+	"Physics", "Costs", "Detonation", "Muzzle", "Trajectory", "Requirement", "Restrictions", ""
 };
 
 g_weapPhysField_t g_weapPhysFields[] = {
@@ -21,6 +21,7 @@ g_weapPhysField_t g_weapPhysFields[] = {
 	{ "deflect",			G_weapPhys_ParseSwat			},	// Physics
 	{ "drain",				G_weapPhys_ParseDrain			},	// Physics
 	{ "blind",				G_weapPhys_ParseBlind			},	// Physics
+	{ "movement",			G_weapPhys_ParseMovement		},	// Restriction
 	{ "minPowerLevel",		G_weapPhys_ParseMinPowerLevel	},	// Requirement
 	{ "maxPowerLevel",		G_weapPhys_ParseMinPowerLevel	},	// Requirement
 	{ "minFatigue",			G_weapPhys_ParseMinFatigue		},	// Requirement
