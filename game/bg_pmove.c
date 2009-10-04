@@ -2711,6 +2711,7 @@ void PM_Weapon(void){
 			chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
 			costPrimary *= (pm->ps->bitFlags & usingBoost) ? 3 : 1;
 			pm->ps->timers[tmAttack1] += pml.msec;
+			pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_RESTRICT_MOVEMENT];
 			if(pm->ps->timers[tmAttack1] >= weaponInfo[WPSTAT_CHRGTIME]){
 				pm->ps->timers[tmAttack1] -= weaponInfo[WPSTAT_CHRGTIME];
 				if(pm->ps->stats[stChargePercentPrimary] < 100){
@@ -2751,6 +2752,7 @@ void PM_Weapon(void){
 			chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
 			costPrimary *= (pm->ps->bitFlags & usingBoost) ? 3 : 1;
 			pm->ps->timers[tmAttack2] += pml.msec;
+			pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_ALT_RESTRICT_MOVEMENT];
 			if(pm->ps->timers[tmAttack2] >= weaponInfo[WPSTAT_ALT_CHRGTIME]){
 				pm->ps->timers[tmAttack2] -= weaponInfo[WPSTAT_ALT_CHRGTIME];
 				if(pm->ps->stats[stChargePercentSecondary] < 100){
