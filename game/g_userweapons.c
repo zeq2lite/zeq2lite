@@ -122,6 +122,7 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 	ps->currentSkill[WPSTAT_FATIGUECOST] = weaponSettings->costs_fatigue;
 	ps->currentSkill[WPSTAT_CHRGTIME] = weaponSettings->costs_chargeTime;
 	ps->currentSkill[WPSTAT_COOLTIME] = weaponSettings->costs_cooldownTime;
+	ps->currentSkill[WPSTAT_RESTRICT_MOVEMENT] = weaponSettings->restrict_movement;
 	ps->currentSkill[WPSTAT_BITFLAGS] = weaponSettings->general_bitflags;
 	ps->currentSkill[WPSTAT_RESTRICT_MOVEMENT] = weaponSettings->restrict_movement;	
 	// Set the ready state of a charged weapon
@@ -152,6 +153,7 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 		ps->currentSkill[WPSTAT_ALT_FATIGUECOST] = alt_weaponSettings->costs_fatigue;
 		ps->currentSkill[WPSTAT_ALT_CHRGTIME] = alt_weaponSettings->costs_chargeTime;
 		ps->currentSkill[WPSTAT_ALT_COOLTIME] = alt_weaponSettings->costs_cooldownTime;
+		ps->currentSkill[WPSTAT_ALT_RESTRICT_MOVEMENT] = alt_weaponSettings->restrict_movement;
 		ps->currentSkill[WPSTAT_ALT_BITFLAGS] = alt_weaponSettings->general_bitflags;
 		ps->currentSkill[WPSTAT_ALT_RESTRICT_MOVEMENT] = alt_weaponSettings->restrict_movement;
 		// Torch attacks are implicitly continuous and can't be charged.

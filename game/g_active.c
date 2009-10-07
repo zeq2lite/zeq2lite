@@ -211,22 +211,6 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd ) {
 		pm.tracemask = MASK_PLAYERSOLID & ~CONTENTS_BODY;	// spectators can fly through bodies
 		pm.trace = trap_Trace;
 		pm.pointcontents = trap_PointContents;
-
-#if MAPLENSFLARES	// JUHOX: set player tracemask & speed for lens flare editor
-		if (g_editmode.integer == EM_mlf) {
-			pm.tracemask = 0;
-			if (level.lfeFMM) {
-				client->ps.stats[stSpeed] = 30;
-				if (pm.cmd.buttons & BUTTON_WALKING) client->ps.stats[stSpeed] = 15;
-			}
-			if (pm.cmd.buttons & BUTTON_ATTACK) {
-				pm.cmd.forwardmove = 0;
-				pm.cmd.rightmove = 0;
-				pm.cmd.upmove = 0;
-			}
-		}
-#endif
-
 		// perform a pmove
 		Pmove (&pm);
 		// save results of pmove
