@@ -162,12 +162,15 @@ void PM_CheckKnockback(void){
 				pm->cmd.upmove = 127;
 			}
 			else if(pm->ps->knockBackDirection == 2){
-				VectorScale(pml.up,-1,direction);
+				direction[0] = pml.up[0];
+				direction[1] = pml.up[1];
+				direction[1] = -pml.up[2];
+				//VectorScale(pml.up,-1.0,direction);
 				vertical = qtrue;
 				pm->cmd.upmove = -127;
 			}
 			else if(pm->ps->knockBackDirection == 3){
-				VectorScale(pml.right,-1,direction);
+				VectorScale(pml.right,-1.0,direction);
 				pm->cmd.rightmove = -127;
 			}
 			else if(pm->ps->knockBackDirection == 4){
@@ -203,18 +206,17 @@ void PM_CheckKnockback(void){
 		VectorScale(pm->ps->velocity,speed,pm->ps->velocity);
 		PM_StepSlideMove(qfalse);
 		VectorNormalize2(pm->ps->velocity,post_vel);
+		Com_Printf("%f/%f/%f\n",direction[0],direction[1],direction[2]);
 		if(PM_CheckDirection(direction,qfalse)){PM_Crash(vertical);}
 	}
 }
 void PM_Crash(qboolean vertical){
-	/*
 	pm->ps->powerLevel[plDamageGeneric] = pm->ps->bitFlags & usingSoar ? VectorLength(pm->ps->velocity) * 0.03 : VectorLength(pm->ps->velocity) * 0.3;
 	pm->ps->timers[tmCrash] = vertical ? -2500 : 2500;
 	pm->ps->bitFlags |= isCrashed;
 	PM_AddEvent(EV_CRASH);
 	PM_StopSoar();
 	PM_StopKnockback();
-	*/
 }
 /*===================
 TALK
@@ -546,6 +548,10 @@ void PM_CheckPowerLevel(void){
 		pm->ps->bitFlags &= ~keyTierUp;
 		pm->ps->bitFlags |= usingAlter;
 		canAlter = qtrue;
+		if(pm->ps->bitFlags & usingJump){
+			pm->ps->bitFlags |= usingFlight;
+			PM_StopJump();
+		}
 		if(pm->ps->bitFlags & usingBoost || pm->ps->timers[tmTransform] < 0 || pm->ps->bitFlags & usingSoar ||
 		   pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING){
 			canAlter = qfalse;
@@ -892,12 +898,12 @@ void PM_CheckJump(void){
 	VectorNormalize2(pm->ps->velocity,post_vel);
 	if((pm->cmd.forwardmove != 0) || (pm->cmd.rightmove != 0)){
 		pm->ps->velocity[2] = jumpPower * 6;
-		pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.01;
+		pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.01;
 		PM_AddEvent(EV_HIGHJUMP);
 	} else{
 		pm->ps->gravity[2] = 6000;
 		pm->ps->velocity[2] = jumpPower * 8;
-		pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.06;
+		pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.06;
 		PM_AddEvent(EV_JUMP);
 	}
 	if(pm->cmd.forwardmove > 0){
@@ -924,10 +930,8 @@ void PM_CheckStruggling(void){
 		PM_StopMovement();
 		pm->ps->timers[tmFreeze] = 100;
 		if(pm->ps->bitFlags & usingBoost){
-			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.004;
 			pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.002;
 		}else{
-			pm->ps->powerLevel[plUseCurrent] += pm->ps->powerLevel[plMaximum] * 0.002;
 			pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.001;
 		}
 	}
@@ -1090,7 +1094,7 @@ void PM_FlyMove(void){
 				}
 			}
 			pm->ps->timers[tmSoar] -= 10;
-			pm->ps->powerLevel[plUseCurrent] +=	soarCost;
+			pm->ps->powerLevel[plUseFatigue] +=	soarCost;
 		}
 		pm->cmd.upmove = 0;
 		pm->cmd.rightmove = 0;
@@ -1687,7 +1691,7 @@ void PM_Footsteps(void){
 	if(!pm->cmd.forwardmove && !pm->cmd.rightmove){
 		if(pm->xyspeed < 5){
 			int	tempAnimIndex;
-			pm->ps->bobCycle = 0;	// start at beginning of cycle again
+			pm->ps->bobCycle = 0;
 			tempAnimIndex = pm->ps->torsoAnim & ~ANIM_TOGGLEBIT;
 			if((tempAnimIndex >= ANIM_KI_ATTACK1_PREPARE) && (tempAnimIndex <= ANIM_KI_ATTACK6_ALT_FIRE)) {
 				tempAnimIndex = tempAnimIndex - ANIM_KI_ATTACK1_PREPARE;
@@ -1850,6 +1854,7 @@ PM_TorsoAnimation
 ==============*/
 void PM_TorsoAnimation(void){
 	if(pm->ps->weaponstate != WEAPON_READY){return;}
+	if(pm->ps->timers[tmImpede]){PM_ContinueLegsAnim(ANIM_STUNNED);}
 	if(pm->ps->bitFlags & usingBlock && !(pm->ps->bitFlags & usingMelee)){
 		if(pm->ps->bitFlags & isStruggling){
 			PM_ContinueTorsoAnim(ANIM_PUSH);
@@ -2109,16 +2114,18 @@ void PM_SyncMelee(void){
 	pm->ps->bitFlags |= usingMelee;
 	pm->ps->bitFlags |= usingFlight;
 	pm->ps->timers[tmUpdateMelee] = 300;
-	pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
-	pm->ps->lockedPlayer->bitFlags |= usingMelee;
-	pm->ps->lockedPlayer->bitFlags |= usingFlight;
-	pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
-	if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
-		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
-		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK2_HELD;
-		pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
-		pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
-		pm->ps->lockedPlayer->lockedPlayer = 0;
+	if(pm->ps->lockedPlayer){
+		pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
+		pm->ps->lockedPlayer->bitFlags |= usingMelee;
+		pm->ps->lockedPlayer->bitFlags |= usingFlight;
+		pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
+		if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
+			pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
+			pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK2_HELD;
+			pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
+			pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
+			pm->ps->lockedPlayer->lockedPlayer = 0;
+		}
 	}
 }
 void PM_MeleeIdle(void){
@@ -2176,9 +2183,8 @@ void PM_Melee(void){
 		if(entity = PM_CheckDirection(pml.forward,qtrue)){
 			pm->ps->lockedTarget = entity;
 			pm->ps->clientLockedTarget = entity;
-			PM_SyncMelee();
 			pm->ps->lockedPlayer = 0;
-			pm->ps->timers[tmFreeze] = 50;
+			PM_SyncMelee();
 		}
 		return;
 	}
@@ -2577,11 +2583,6 @@ void PM_Weapon(void){
 		PM_WeaponRelease();
 		return;
 	}
-	if(pm->ps->bitFlags & isGuiding){
-		PM_StopMovement();
-		PM_StopDash();
-		return;
-	}
 	if(pm->ps->lockedTarget && pm->ps->lockedPlayer->timers[tmKnockback] && VectorLength(pm->ps->velocity)){return;}
 	if(pm->ps->pm_flags & PMF_ATTACK1_HELD){
 		if(!(pm->cmd.buttons & BUTTON_ATTACK)){pm->ps->pm_flags &= ~PMF_ATTACK1_HELD;}
@@ -2590,11 +2591,6 @@ void PM_Weapon(void){
 	if(pm->ps->pm_flags & PMF_ATTACK2_HELD){
 		if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)){pm->ps->pm_flags &= ~PMF_ATTACK2_HELD;}
 		else{return;}
-	}
-	if(pm->ps->bitFlags & isGuiding){
-		PM_StopMovement();
-		PM_StopDash();
-		return;
 	}
 	// Retrieve our weapon's settings
 	weaponInfo = pm->ps->currentSkill;
@@ -2607,20 +2603,7 @@ void PM_Weapon(void){
 			pm->cmd.buttons |= BUTTON_ATTACK;
 		}
 	}
-	/*
-	We're not allowed to do anything with the weapon until the
-	client has received the relevant changed data about the weapon's
-	configuration from the server. This will cause a bit of stuttering
-	clientside, as it 'disables' client's weapon prediction for the own
-	player temporarily.
-	Even then, it shouldn't happen unless you run into a bad
-	network transfer rate right when you immmediately fire a weapon
-	after switching. Most unlikely to occur, but a 'jump' in graphics
-	is still better than a possible glitch in graphics or game physics.
-	*/
-	if(weaponInfo[WPSTAT_NUMCHECK] != pm->ps->weapon){
-		return;
-	}
+	if(weaponInfo[WPSTAT_NUMCHECK] != pm->ps->weapon){return;}
 	costPrimary = weaponInfo[WPSTAT_POWERLEVELCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
 	costSecondary = alt_weaponInfo[WPSTAT_POWERLEVELCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);;
 	switch(pm->ps->weaponstate){
@@ -2628,194 +2611,174 @@ void PM_Weapon(void){
 	case WEAPON_DROPPING:
 	case WEAPON_RAISING:
 	case WEAPON_COOLING:
-		{
-			if(pm->ps->weaponTime > 0){
-				pm->ps->weaponTime -= pml.msec;
-			}
+		if(pm->ps->weaponTime > 0){
+			pm->ps->weaponTime -= pml.msec;
+		}
 
-			if(pm->ps->weaponTime > 0){
+		if(pm->ps->weaponTime > 0){
+			break;
+		} else{
+			pm->ps->weaponTime = 0;
+			pm->ps->weaponstate = WEAPON_READY;
+		}
+		PM_BeginWeaponChange(pm->cmd.weapon );
+		// Starting a primary attack
+		if(pm->cmd.buttons & BUTTON_ATTACK) {
+			if(weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE){
+				pm->ps->weaponstate = WEAPON_CHARGING;
+				PM_StartTorsoAnim(ANIM_KI_ATTACK1_PREPARE + (pm->ps->weapon - 1) * 2 );
 				break;
+			}
+			pm->ps->powerLevel[plUseFatigue] += costPrimary;
+			if(weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
+				PM_AddEvent(EV_FIRE_WEAPON );
+				pm->ps->weaponstate = WEAPON_FIRING;
 			} else{
-				pm->ps->weaponTime = 0;
-				pm->ps->weaponstate = WEAPON_READY;
+				PM_AddEvent(EV_FIRE_WEAPON);
+				pm->ps->weaponstate = WEAPON_COOLING;
+				pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 			}
-			PM_BeginWeaponChange(pm->cmd.weapon );
-			// Starting a primary attack
-			if(pm->cmd.buttons & BUTTON_ATTACK) {
-				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE){
-					pm->ps->weaponstate = WEAPON_CHARGING;
-					PM_StartTorsoAnim(ANIM_KI_ATTACK1_PREPARE + (pm->ps->weapon - 1) * 2 );
-					break;
-				}
-				pm->ps->powerLevel[plUseCurrent] += costPrimary;
-				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
-					PM_AddEvent(EV_FIRE_WEAPON );
-					pm->ps->weaponstate = WEAPON_FIRING;
-				} else{
-					PM_AddEvent(EV_FIRE_WEAPON);
-					pm->ps->weaponstate = WEAPON_COOLING;
-					pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
-				}
-				PM_StartTorsoAnim(ANIM_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
+			PM_StartTorsoAnim(ANIM_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
+			break;
+		}
+		if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
+			if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE){
+				pm->ps->weaponstate = WEAPON_ALTCHARGING;
+				PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_PREPARE + (pm->ps->weapon - 1) * 2 );
 				break;
 			}
-			if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
-				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE){
-					pm->ps->weaponstate = WEAPON_ALTCHARGING;
-					PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_PREPARE + (pm->ps->weapon - 1) * 2 );
-					break;
-				}
-				pm->ps->powerLevel[plUseCurrent] += costSecondary;
-				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
-					pm->ps->weaponstate = WEAPON_ALTFIRING;
-					PM_AddEvent(EV_ALTFIRE_WEAPON );
-				} else{
-					pm->ps->weaponstate = WEAPON_COOLING;
-					pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-					PM_AddEvent(EV_ALTFIRE_WEAPON );
-				}
-				PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
-				break;
+			pm->ps->powerLevel[plUseFatigue] += costSecondary;
+			if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
+				pm->ps->weaponstate = WEAPON_ALTFIRING;
+				PM_AddEvent(EV_ALTFIRE_WEAPON );
+			} else{
+				pm->ps->weaponstate = WEAPON_COOLING;
+				pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
+				PM_AddEvent(EV_ALTFIRE_WEAPON );
 			}
-
+			PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
+			break;
 		}
 		break;
 	case WEAPON_GUIDING:
-		{
-			if(pm->cmd.buttons & BUTTON_ATTACK){
-				PM_AddEvent(EV_DETONATE_WEAPON );
-				pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(ANIM_IDLE);
-			}
-			PM_StopMovement();
-			PM_StopDirections();
-			pm->ps->velocity[0] = 0.0f;
-			pm->ps->velocity[1] = 0.0f;
-			pm->ps->velocity[2] = 0.0f;
+		if(pm->cmd.buttons & BUTTON_ATTACK){
+			PM_AddEvent(EV_DETONATE_WEAPON);
+			pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
+			PM_StartTorsoAnim(ANIM_IDLE);
 		}
+		pm->ps->timers[tmImpede] = 100;
 		break;
 	case WEAPON_ALTGUIDING:
-		{
-			if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
-				PM_AddEvent(EV_DETONATE_WEAPON );
-				pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(ANIM_IDLE );
-			}
-			PM_StopMovement();
-			PM_StopDirections();
-			pm->ps->velocity[0] = 0.0f;
-			pm->ps->velocity[1] = 0.0f;
-			pm->ps->velocity[2] = 0.0f;
+		if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
+			PM_AddEvent(EV_DETONATE_WEAPON);
+			pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
+			PM_StartTorsoAnim(ANIM_IDLE);
 		}
+		pm->ps->timers[tmImpede] = 100;
 		break;
 	case WEAPON_CHARGING:
-		{
-			chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
-			costPrimary *= (pm->ps->bitFlags & usingBoost) ? 3 : 1;
-			pm->ps->timers[tmAttack1] += pml.msec;
-			pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_RESTRICT_MOVEMENT];
-			if(pm->ps->timers[tmAttack1] >= weaponInfo[WPSTAT_CHRGTIME]){
-				pm->ps->timers[tmAttack1] -= weaponInfo[WPSTAT_CHRGTIME];
-				if(pm->ps->stats[stChargePercentPrimary] < 100){
-					pm->ps->stats[stChargePercentPrimary] += chargeRate;
-					if(pm->ps->stats[stChargePercentPrimary] > 100){
-						pm->ps->stats[stChargePercentPrimary] = 100;
-					}
-					pm->ps->powerLevel[plUseCurrent] += costPrimary;
-					pm->ps->powerLevel[plUseFatigue] += weaponInfo[WPSTAT_FATIGUECOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
-					pm->ps->powerLevel[plUseHealth] += weaponInfo[WPSTAT_HEALTHCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
-					pm->ps->powerLevel[plUseMaximum] += weaponInfo[WPSTAT_MAXIMUMCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+		chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
+		pm->ps->timers[tmAttack1] += pml.msec;
+		pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_RESTRICT_MOVEMENT];
+		if(pm->ps->timers[tmAttack1] >= weaponInfo[WPSTAT_CHRGTIME]){
+			pm->ps->timers[tmAttack1] -= weaponInfo[WPSTAT_CHRGTIME];
+			if(pm->ps->stats[stChargePercentPrimary] < 100){
+				if(pm->ps->stats[stChargePercentPrimary] == 0 && pm->ps->bitFlags & usingBoost){
+					pm->ps->stats[stChargePercentPrimary] = 25;
+					costPrimary *= 25;
 				}
+				pm->ps->stats[stChargePercentPrimary] += chargeRate;
+				if(pm->ps->stats[stChargePercentPrimary] > 100){
+					pm->ps->stats[stChargePercentPrimary] = 100;
+				}
+				pm->ps->powerLevel[plUseFatigue] += costPrimary;
+				pm->ps->powerLevel[plUseHealth] += weaponInfo[WPSTAT_HEALTHCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+				pm->ps->powerLevel[plUseMaximum] += weaponInfo[WPSTAT_MAXIMUMCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
 			}
-			if(!(pm->cmd.buttons & BUTTON_ATTACK)) {
-				pm->ps->timers[tmAttack1] = 0;
-				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_READY){
-					weaponInfo[WPSTAT_BITFLAGS] &= ~WPF_READY;
-					if(weaponInfo[WPSTAT_BITFLAGS] & WPF_GUIDED){
-						pm->ps->weaponstate = WEAPON_GUIDING;
-						pm->ps->bitFlags |= isGuiding;
-					} else{
-						pm->ps->weaponstate = WEAPON_COOLING;
-						pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
-					}
-					PM_AddEvent(EV_FIRE_WEAPON);
-					PM_StartTorsoAnim(ANIM_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
+		}
+		if(!(pm->cmd.buttons & BUTTON_ATTACK)) {
+			pm->ps->timers[tmAttack1] = 0;
+			if(weaponInfo[WPSTAT_BITFLAGS] & WPF_READY){
+				weaponInfo[WPSTAT_BITFLAGS] &= ~WPF_READY;
+				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_GUIDED){
+					pm->ps->weaponstate = WEAPON_GUIDING;
+					pm->ps->bitFlags |= isGuiding;
 				} else{
-					pm->ps->weaponTime = 0;
-					pm->ps->weaponstate = WEAPON_READY;
-					pm->ps->stats[stChargePercentPrimary] = 0;
-					PM_StartTorsoAnim(ANIM_IDLE);
+					pm->ps->weaponstate = WEAPON_COOLING;
+					pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 				}
+				PM_AddEvent(EV_FIRE_WEAPON);
+				PM_StartTorsoAnim(ANIM_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
+			} else{
+				pm->ps->weaponTime = 0;
+				pm->ps->weaponstate = WEAPON_READY;
+				pm->ps->stats[stChargePercentPrimary] = 0;
+				PM_StartTorsoAnim(ANIM_IDLE);
 			}
 		}
 		break;
 	case WEAPON_ALTCHARGING:
-		{
-			chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
-			costPrimary *= (pm->ps->bitFlags & usingBoost) ? 3 : 1;
-			pm->ps->timers[tmAttack2] += pml.msec;
-			pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_ALT_RESTRICT_MOVEMENT];
-			if(pm->ps->timers[tmAttack2] >= weaponInfo[WPSTAT_ALT_CHRGTIME]){
-				pm->ps->timers[tmAttack2] -= weaponInfo[WPSTAT_ALT_CHRGTIME];
-				if(pm->ps->stats[stChargePercentSecondary] < 100){
-					pm->ps->stats[stChargePercentSecondary] += chargeRate;
-					if(pm->ps->stats[stChargePercentSecondary] > 100){
-						pm->ps->stats[stChargePercentSecondary] = 100;
-					}
-					pm->ps->powerLevel[plUseCurrent] += costPrimary;
-					pm->ps->powerLevel[plUseFatigue] += weaponInfo[WPSTAT_ALT_FATIGUECOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
-					pm->ps->powerLevel[plUseHealth] += weaponInfo[WPSTAT_ALT_HEALTHCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
-					pm->ps->powerLevel[plUseMaximum] += weaponInfo[WPSTAT_ALT_MAXIMUMCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+		chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
+		pm->ps->timers[tmAttack2] += pml.msec;
+		pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_ALT_RESTRICT_MOVEMENT];
+		if(pm->ps->timers[tmAttack2] >= weaponInfo[WPSTAT_ALT_CHRGTIME]){
+			pm->ps->timers[tmAttack2] -= weaponInfo[WPSTAT_ALT_CHRGTIME];
+			if(pm->ps->stats[stChargePercentSecondary] < 100){
+				if(pm->ps->stats[stChargePercentPrimary] == 0 && pm->ps->bitFlags & usingBoost){
+					pm->ps->stats[stChargePercentPrimary] = 25;
+					costPrimary *= 25;
 				}
+				pm->ps->stats[stChargePercentSecondary] += chargeRate;
+				if(pm->ps->stats[stChargePercentSecondary] > 100){
+					pm->ps->stats[stChargePercentSecondary] = 100;
+				}
+				pm->ps->powerLevel[plUseFatigue] += costPrimary;
+				pm->ps->powerLevel[plUseHealth] += weaponInfo[WPSTAT_ALT_HEALTHCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
+				pm->ps->powerLevel[plUseMaximum] += weaponInfo[WPSTAT_ALT_MAXIMUMCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
 			}
-			if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)) {
-				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_READY){
-					alt_weaponInfo[WPSTAT_BITFLAGS] &= ~WPF_READY;
-					if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_GUIDED){
-						pm->ps->weaponstate = WEAPON_ALTGUIDING;
-						pm->ps->bitFlags |= isGuiding;
-					} else{
-						pm->ps->weaponstate = WEAPON_COOLING;
-						pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-					}
-					PM_AddEvent(EV_ALTFIRE_WEAPON );
-					PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
+		}
+		if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)) {
+			if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_READY){
+				alt_weaponInfo[WPSTAT_BITFLAGS] &= ~WPF_READY;
+				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_GUIDED){
+					pm->ps->weaponstate = WEAPON_ALTGUIDING;
+					pm->ps->bitFlags |= isGuiding;
 				} else{
-					pm->ps->weaponTime = 0;
-					pm->ps->weaponstate = WEAPON_READY;
-					pm->ps->stats[stChargePercentSecondary] = 0;
-					PM_StartTorsoAnim(ANIM_IDLE );
+					pm->ps->weaponstate = WEAPON_COOLING;
+					pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
 				}
+				PM_AddEvent(EV_ALTFIRE_WEAPON );
+				PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
+			} else{
+				pm->ps->weaponTime = 0;
+				pm->ps->weaponstate = WEAPON_READY;
+				pm->ps->stats[stChargePercentSecondary] = 0;
+				PM_StartTorsoAnim(ANIM_IDLE );
 			}
 		}
 		break;
 	case WEAPON_FIRING:
-		{
-			if(!(pm->cmd.buttons & BUTTON_ATTACK)){
-				pm->ps->weaponstate = WEAPON_COOLING;
-				pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(ANIM_IDLE );
-				break;
-			}
-			pm->ps->weaponTime += pml.msec;
-			while(pm->ps->weaponTime > 100){
-				pm->ps->powerLevel[plUseCurrent] += costPrimary;
-			}
-
+		if(!(pm->cmd.buttons & BUTTON_ATTACK)){
+			pm->ps->weaponstate = WEAPON_COOLING;
+			pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
+			PM_StartTorsoAnim(ANIM_IDLE );
+			break;
+		}
+		pm->ps->weaponTime += pml.msec;
+		while(pm->ps->weaponTime > 100){
+			pm->ps->powerLevel[plUseFatigue] += costPrimary;
 		}
 		break;
 	case WEAPON_ALTFIRING:
-		{
-			if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)){
-				pm->ps->weaponstate = WEAPON_COOLING;
-				pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(ANIM_IDLE );
-				break;
-			}
-			pm->ps->weaponTime += pml.msec;
-			while(pm->ps->weaponTime > 100){
-				pm->ps->powerLevel[plUseCurrent] += costSecondary;
-			}
+		if(!(pm->cmd.buttons & BUTTON_ALT_ATTACK)){
+			pm->ps->weaponstate = WEAPON_COOLING;
+			pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
+			PM_StartTorsoAnim(ANIM_IDLE );
+			break;
+		}
+		pm->ps->weaponTime += pml.msec;
+		while(pm->ps->weaponTime > 100){
+			pm->ps->powerLevel[plUseFatigue] += costSecondary;
 		}
 		break;
 	default:
@@ -3107,7 +3070,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_Blind();
 	PM_GroundTrace();
 	PM_NearGroundTrace();
-	if(!pm->ps->timers[tmFreeze] || pm->ps->timers[tmTransform] > 100 || pm->ps->timers[tmTransform] < -100){
+	if(!pm->ps->timers[tmFreeze] && !pm->ps->timers[tmImpede] && pm->ps->timers[tmTransform] < 100 && pm->ps->timers[tmTransform] > -100){
 		if(!(pm->ps->bitFlags & usingAlter) && !(pm->ps->bitFlags & isStruggling) && !(pm->ps->bitFlags & usingMelee)){
 			PM_FlyMove();
 			PM_DashMove();

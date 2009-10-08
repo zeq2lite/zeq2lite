@@ -297,7 +297,7 @@ static void CG_CalcIdealThirdPersonViewTarget(void)
 	float vertOffset = cg_thirdPersonHeight.value;
 	float horzOffset = cg_thirdPersonSlide.value;
 
-	if(cg.snap->ps.bitFlags & usingMelee){vertOffset = horzOffset = 0;}
+	if(cg.snap->ps.clientLockedTarget > 0){vertOffset = horzOffset = 0;}
 
 	VectorCopy(cg.refdef.vieworg, cameraFocusLoc);
 
@@ -321,7 +321,7 @@ static void CG_CalcIdealThirdPersonViewLocation(void)
 {
 	float thirdPersonRange = cg_thirdPersonRange.value;
 
-	if(cg.snap->ps.bitFlags & usingMelee){thirdPersonRange = 70;}
+	if(cg.snap->ps.clientLockedTarget > 0){thirdPersonRange = 30;}
 
 	VectorMA(cameraIdealTarget, -(thirdPersonRange), camerafwd, cameraIdealLoc);
 }
@@ -393,8 +393,7 @@ static void CG_UpdateThirdPersonTargetDamp(void)
 
 		// Now we calculate how much of the difference we cover in the time allotted.
 		// The equation is (Damp)^(time)
-		if(cg.snap->ps.bitFlags & usingMelee)
-		{
+		if(cg.snap->ps.clientLockedTarget > 0){
 			dampfactor = 1.0-cg_thirdPersonMeleeTargetDamp.value;	// We must exponent the amount LEFT rather than the amount bled off
 		}
 		else
@@ -440,7 +439,7 @@ static void CG_UpdateThirdPersonCameraDamp(void)
 		float pitch;
 		float dFactor;
 
-		if(cg.snap->ps.bitFlags & usingMelee){
+		if(cg.snap->ps.clientLockedTarget > 0){
 			dFactor = cg_thirdPersonMeleeCameraDamp.value;
 		}else{
 			dFactor = cg_thirdPersonCameraDamp.value;
@@ -562,8 +561,8 @@ static void CG_OffsetThirdPersonView2( void )
 	VectorCopy( cg.refdefViewAngles, cameraFocusAngles );
 
 	// Add in the third Person Angle.
-	if(cg.snap->ps.bitFlags & usingMelee){
-		cameraFocusAngles[YAW] += 45;
+	if(cg.snap->ps.clientLockedTarget > 0){
+		cameraFocusAngles[YAW] += 320;
 	} else {
 		cameraFocusAngles[YAW] += cg_thirdPersonAngle.value;
 	}
@@ -739,16 +738,18 @@ static void CG_OffsetThirdPersonView( void ) {
 	cg.refdefViewAngles[PITCH] *= 0.5;
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 	// MELEE
-	if(ps->bitFlags & usingMelee){
+	if(cg.snap->ps.clientLockedTarget > 0){
 		if(!ci->transformStart){
 			ci->transformStart = qtrue;
 			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
 			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
 			ci->cameraBackup[2] = cg_thirdPersonRange.value;
+			ci->cameraBackup[3] = cg_thirdPersonSlide.value;
 		}
-		cg_thirdPersonAngle.value = -45;
-		cg_thirdPersonHeight.value = -10;
-		cg_thirdPersonRange.value = 64;
+		cg_thirdPersonAngle.value = 320;
+		cg_thirdPersonHeight.value = 0;
+		cg_thirdPersonRange.value = 30;
+		cg_thirdPersonSlide.value = 40;
 	} else
 	// TRANSFORMATIONS
 	if(ps->timers[tmTransform] > 1){
@@ -760,6 +761,7 @@ static void CG_OffsetThirdPersonView( void ) {
 			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
 			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
 			ci->cameraBackup[2] = cg_thirdPersonRange.value;
+			ci->cameraBackup[3] = cg_thirdPersonSlide.value;
 		}
 		transformPercent = 1.0 - ((float)ps->timers[tmTransform] / (float)ci->transformLength);
 		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
@@ -777,6 +779,7 @@ static void CG_OffsetThirdPersonView( void ) {
 		cg_thirdPersonAngle.value = ci->cameraBackup[0];
 		cg_thirdPersonHeight.value = ci->cameraBackup[1];
 		cg_thirdPersonRange.value = ci->cameraBackup[2];
+		cg_thirdPersonSlide.value = ci->cameraBackup[3];
 	}
 	//view[1] += cg_thirdPersonSlide.value;
 	VectorMA(view,cg_thirdPersonSlide.value,right,view);
@@ -1401,7 +1404,7 @@ static int CG_CalcViewValues( void ) {
 
 	if ( cg.renderingThirdPerson ) {
 		// back away from character
-		if(ps->bitFlags & usingMelee || cg_thirdPersonCamera.value >= 2){
+		if(cg.snap->ps.clientLockedTarget > 0 || cg_thirdPersonCamera.value >= 2){
 			CG_OffsetThirdPersonView2();
 		}else{
 			CG_OffsetThirdPersonView();

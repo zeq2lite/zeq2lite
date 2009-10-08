@@ -496,13 +496,9 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	}
 	if(self->s.eType != ET_BEAMHEAD){
 		if(self->powerLevelCurrent > self->enemy->powerLevelCurrent){
-			self->powerLevelCurrent += 5 + ((float)self->powerLevelTotal * 0.005);
-			self->enemy->powerLevelCurrent -= 5 + ((float)self->powerLevelTotal * 0.005);
 			self->speed += 5;
 			self->enemy->speed -= 5;
 		}else{
-			self->powerLevelCurrent -= 5 + ((float)self->powerLevelTotal * 0.005);
-			self->enemy->powerLevelCurrent += 5 + ((float)self->powerLevelTotal * 0.005);
 			self->speed -= 5;
 			self->enemy->speed += 5;
 		}
@@ -510,18 +506,13 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD && missileOwner->client->ps.powerLevel[plCurrent] > 1){
 		self->powerLevelCurrent += 5 + ((float)self->powerLevelTotal * 0.005);
 		self->speed += 5 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
-		missileOwner->client->ps.powerLevel[plUseCurrent] += ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
 	}
 	if(self->strugglingAllyAttack){
 		if(self->s.eType == ET_BEAMHEAD){
-			self->ally->powerLevelCurrent += 5 + ((float)self->powerLevelCurrent * 0.0003);
 			self->ally->speed += 5 + ((float)self->speed * 0.0003);
-			self->powerLevelCurrent -= 5 + ((float)self->powerLevelCurrent * 0.0003);
 			self->speed -= 5 + ((float)self->speed * 0.0003);
 		}else{
-			self->powerLevelCurrent -= 5;
 			self->speed -= 5;
-			self->ally->powerLevelCurrent += 5;
 			self->ally->speed += 5;
 		}
 	}
@@ -842,7 +833,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 	float powerScale;
 	vec3_t			muzzle, forward, right, up;
 	vec3_t			firingDir, firingStart; // <-- Contain the altered aiming and origin vectors.
-	powerScale = ((float)self->client->ps.powerLevel[plFatigue] * 0.0003f) * self->client->ps.stats[stEnergyAttack];
+	powerScale = ((float)self->client->ps.powerLevel[plCurrent] * 0.0003f) * self->client->ps.stats[stEnergyAttack];
 	// Get a hold of the weapon we're firing.
 	// If altfire is used and it exists, use altfire, else use regular fire
 	// Due to the nature of altfire presence detection, the regular fire must
@@ -1382,11 +1373,11 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 					continue;
 				} else if ( trigTarget->s.eType != ET_MISSILE ) {
 					continue;
-				} else if ( trigTarget->timesTriggered >= weaponInfo->firing_nrShots ) {
-					continue;
 				} else if ( !altfire && ( trigTarget->s.weapon != self->s.weapon + ALTWEAPON_OFFSET )) {
 					continue;
 				} else if ( altfire && ( trigTarget->s.weapon != self->s.weapon )) {
+					continue;
+				} else if (trigTarget->s.clientNum != self->s.number){
 					continue;
 				}
 
@@ -1404,7 +1395,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 				 
 				// Setup the new directional vector for the triggered weapon.
 				VectorSubtract( start, newBase, newDir );
-				traceDist = VectorLength( newDir ) + SOLID_ADD;
+				traceDist = VectorLength( newDir ) + 100000;
 	
 				VectorScale( dir, traceDist, traceEnd );
 				VectorAdd( traceEnd, start, traceEnd );
@@ -1606,29 +1597,23 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		self->bounceFrac = 1.0f;
 		G_PushUserMissile(self, self->enemy);
 		self->enemy->client->ps.bitFlags &= ~isStruggling;
-		//G_Printf("Missile Lost to %i!\n",self->enemy->s.clientNum);
 		if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
 			self->enemy->client->ps.lockedPosition = NULL;
 			self->enemy->client->ps.lockedTarget = 0;
 			self->enemy->client->ps.clientLockedTarget = 0;
 		}
-		// Turn the beam into a ball attack.
 		if(self->s.eType == ET_BEAMHEAD){
-			// Terminate guidance
 			if (self->guided){
 				g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;
 			}
 			self->s.eType = ET_MISSILE;
 		}
 		return;
-		//G_Printf("Missile Losing to %i!\n",self->enemy->s.clientNum);
 	}
-	// If the missile is beating the player
-	else if(self->enemy->client->ps.powerLevel[plCurrent] <= 1){
+	else if(self->enemy->client->ps.powerLevel[plFatigue] <= 1){
 		G_ExplodeUserWeapon ( self );
 		self->strugglingPlayer = qfalse;
 		self->enemy->client->ps.bitFlags &= ~isStruggling;
-		//G_Printf("Missile Won against %i!\n",self->enemy->s.clientNum);
 		if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
 			self->enemy->client->ps.lockedPosition = NULL;
 			self->enemy->client->ps.lockedTarget = 0;
@@ -1636,7 +1621,6 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		}
 		return;
 	}
-	//G_Printf("Missile Power Level %i. Player Power Level %i\n",self->powerLevelCurrent,self->enemy->client->ps.powerLevel[plCurrent]);
 	self->nextthink = level.time + FRAMETIME;
 }
 
@@ -1651,17 +1635,11 @@ void G_LocationImpact(vec3_t point, gentity_t* targ, gentity_t* attacker) {
 	int clientRotation;
 	int attackRotation;	// Degrees rotation around client.
 	int impactRotation;	// used to check back of head vs. face
-	
-	// Get a vector aiming from the client to the bullet hit 
 	VectorSubtract(targ->r.currentOrigin, point, attackPath); 
-	// Convert it into PITCH, ROLL, YAW
 	vectoangles(attackPath, attackAngle);
-
 	clientRotation = targ->client->ps.viewangles[YAW];
 	attackRotation = attackAngle[YAW];
-
 	impactRotation = abs(clientRotation-attackRotation);
-	
 	impactRotation += 45; // just to make it easier to work with
 	impactRotation = impactRotation % 360; // Keep it in the 0-359 range
 

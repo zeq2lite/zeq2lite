@@ -344,6 +344,12 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_MELEE_CHECK:
 			if(ps->lockedTarget>0){
+				if(!&g_entities[ps->lockedTarget-1].client || &g_entities[ps->lockedTarget-1].client->pers.connected == CON_DISCONNECTED){
+					ps->lockedPosition = 0;
+					ps->lockedPlayer = 0;
+					ps->lockedTarget = 0;
+					break;
+				}
 				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
 				ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
 			}

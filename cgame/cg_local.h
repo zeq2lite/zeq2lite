@@ -362,7 +362,7 @@ typedef struct {
 	int				transformLength;
 	int				tierCurrent;
 	int				tierMax;
-	int				cameraBackup[3];
+	int				cameraBackup[4];
 	tierConfig_cg	tierConfig[7];
 	auraConfig_t	*auraConfig[7];
 } clientInfo_t;
