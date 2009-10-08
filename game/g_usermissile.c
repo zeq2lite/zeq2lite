@@ -1187,10 +1187,11 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		VectorCopy( start, bolt->s.pos.trBase );
 		VectorCopy( start, bolt->r.currentOrigin );
 		VectorCopy( firingDir, bolt->movedir );
-
 		VectorCopy( self->client->ps.viewangles, self->s.angles );
 		VectorCopy( self->client->ps.viewangles, bolt->s.angles2 );
-
+		if(self->client->ps.lockedTarget > 0){
+			weaponInfo->homing_type = HOM_GUIDED;
+		}
 		// Set the correct think based on homing properties.
 		switch (weaponInfo->homing_type) {
 		case HOM_GUIDED:

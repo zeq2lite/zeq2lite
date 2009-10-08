@@ -297,8 +297,6 @@ static void CG_CalcIdealThirdPersonViewTarget(void)
 	float vertOffset = cg_thirdPersonHeight.value;
 	float horzOffset = cg_thirdPersonSlide.value;
 
-	if(cg.snap->ps.clientLockedTarget > 0){vertOffset = horzOffset = 0;}
-
 	VectorCopy(cg.refdef.vieworg, cameraFocusLoc);
 
 	// Add in the new viewheight
@@ -320,8 +318,6 @@ CG_CalcTargetThirdPersonViewLocation
 static void CG_CalcIdealThirdPersonViewLocation(void)
 {
 	float thirdPersonRange = cg_thirdPersonRange.value;
-
-	if(cg.snap->ps.clientLockedTarget > 0){thirdPersonRange = 30;}
 
 	VectorMA(cameraIdealTarget, -(thirdPersonRange), camerafwd, cameraIdealLoc);
 }
@@ -393,13 +389,7 @@ static void CG_UpdateThirdPersonTargetDamp(void)
 
 		// Now we calculate how much of the difference we cover in the time allotted.
 		// The equation is (Damp)^(time)
-		if(cg.snap->ps.clientLockedTarget > 0){
-			dampfactor = 1.0-cg_thirdPersonMeleeTargetDamp.value;	// We must exponent the amount LEFT rather than the amount bled off
-		}
-		else
-		{
-			dampfactor = 1.0-cg_thirdPersonTargetDamp.value;
-		}
+		dampfactor = 1.0-cg_thirdPersonTargetDamp.value;
 		dtime = (float)(cg.time-cameraLastFrame) * (1.0/(float)CAMERA_DAMP_INTERVAL);	// Our dampfactor is geared towards a time interval equal to "1".
 
 		// Note that since there are a finite number of "practical" delta millisecond values possible, 
@@ -438,12 +428,7 @@ static void CG_UpdateThirdPersonCameraDamp(void)
 	{
 		float pitch;
 		float dFactor;
-
-		if(cg.snap->ps.clientLockedTarget > 0){
-			dFactor = cg_thirdPersonMeleeCameraDamp.value;
-		}else{
-			dFactor = cg_thirdPersonCameraDamp.value;
-		}
+		dFactor = cg_thirdPersonCameraDamp.value;
 
 		// Note that the camera pitch has already been capped off to 89.
 		pitch = Q_fabs(cameraFocusAngles[PITCH]);
@@ -561,11 +546,7 @@ static void CG_OffsetThirdPersonView2( void )
 	VectorCopy( cg.refdefViewAngles, cameraFocusAngles );
 
 	// Add in the third Person Angle.
-	if(cg.snap->ps.clientLockedTarget > 0){
-		cameraFocusAngles[YAW] += 320;
-	} else {
-		cameraFocusAngles[YAW] += cg_thirdPersonAngle.value;
-	}
+	cameraFocusAngles[YAW] += cg_thirdPersonAngle.value;
 
 	if(cg_beamControl.value == 0){
 		if(((cg.snap->ps.weaponstate == WEAPON_GUIDING) || (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
@@ -737,7 +718,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	VectorCopy( cg.refdef.vieworg, view );	
 	cg.refdefViewAngles[PITCH] *= 0.5;
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
-	// MELEE
+	// LOCKED ON
 	if(cg.snap->ps.clientLockedTarget > 0){
 		if(!ci->transformStart){
 			ci->transformStart = qtrue;
@@ -1404,7 +1385,7 @@ static int CG_CalcViewValues( void ) {
 
 	if ( cg.renderingThirdPerson ) {
 		// back away from character
-		if(cg.snap->ps.clientLockedTarget > 0 || cg_thirdPersonCamera.value >= 2){
+		if(cg_thirdPersonCamera.value >= 2){
 			CG_OffsetThirdPersonView2();
 		}else{
 			CG_OffsetThirdPersonView();

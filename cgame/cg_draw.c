@@ -1416,7 +1416,7 @@ static void CG_DrawCrosshair(void) {
 
 	radar_t			cg_playerOrigins[MAX_CLIENTS];
 
-	if ( !cg_drawCrosshair.integer ) {
+	if ( !cg_drawCrosshair.integer || cg.snap->ps.lockedTarget > 0 ) {
 		return;
 	}
 

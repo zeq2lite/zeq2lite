@@ -162,10 +162,7 @@ void PM_CheckKnockback(void){
 				pm->cmd.upmove = 127;
 			}
 			else if(pm->ps->knockBackDirection == 2){
-				direction[0] = pml.up[0];
-				direction[1] = pml.up[1];
-				direction[1] = -pml.up[2];
-				//VectorScale(pml.up,-1.0,direction);
+				VectorScale(pml.up,-1.0,direction);
 				vertical = qtrue;
 				pm->cmd.upmove = -127;
 			}
@@ -177,8 +174,14 @@ void PM_CheckKnockback(void){
 				VectorCopy(pml.right,direction);
 				pm->cmd.rightmove = 127;
 			}
-			else if(pm->ps->knockBackDirection == 5){pm->cmd.forwardmove = -127;}
-			else if(pm->ps->knockBackDirection == 6){pm->cmd.forwardmove = 127;}
+			else if(pm->ps->knockBackDirection == 5){
+				VectorScale(pml.forward,-1.0,direction);
+				pm->cmd.forwardmove = -127;
+			}
+			else if(pm->ps->knockBackDirection == 6){
+				VectorCopy(pml.forward,direction);
+				pm->cmd.forwardmove = 127;
+			}
 		}
 		else{
 			pm->ps->timers[tmKnockback] = 0;
@@ -206,7 +209,6 @@ void PM_CheckKnockback(void){
 		VectorScale(pm->ps->velocity,speed,pm->ps->velocity);
 		PM_StepSlideMove(qfalse);
 		VectorNormalize2(pm->ps->velocity,post_vel);
-		Com_Printf("%f/%f/%f\n",direction[0],direction[1],direction[2]);
 		if(PM_CheckDirection(direction,qfalse)){PM_Crash(vertical);}
 	}
 }
@@ -447,6 +449,11 @@ void PM_CheckStatus(void){
 				pm->ps->bitFlags &= ~isUnconcious;
 				pm->ps->bitFlags &= ~isCrashed;
 				pm->ps->powerups[PW_STATE] = 0;
+			}
+			else if(pm->ps->bitFlags & isCrashed && !(pm->ps->bitFlags & atopGround)){
+				PM_ContinueTorsoAnim(ANIM_KNOCKBACK_HIT_WALL);
+				PM_ContinueLegsAnim(ANIM_KNOCKBACK_HIT_WALL);
+				return;
 			}
 			else{
 				PM_ContinueTorsoAnim(ANIM_FLOOR_RECOVER);
@@ -3007,6 +3014,7 @@ void PmoveSingle(pmove_t *pmove){
 	if(pml.msec < 1){pml.msec = 1;}
 	else if(pml.msec > 200){pml.msec = 200;}
 	if(abs(pm->cmd.forwardmove)> 64 || abs(pm->cmd.rightmove)> 64){pm->cmd.buttons &= ~BUTTON_WALKING;}
+	AngleVectors(pm->ps->viewangles,pml.forward,pml.right,pml.up);
 	pml.previous_waterlevel = pmove->waterlevel;
 	PM_Impede();
 	PM_CheckKnockback();
@@ -3041,7 +3049,6 @@ void PmoveSingle(pmove_t *pmove){
 	VectorCopy(pm->ps->velocity, pml.previous_velocity);
 	pml.frametime = pml.msec * 0.001;
 	PM_DropTimers();
-	AngleVectors(pm->ps->viewangles,pml.forward,pml.right,pml.up);
 	PM_SetView();
 	if(pm->ps->bitFlags & isUnconcious || pm->ps->bitFlags & isDead || pm->ps->bitFlags & isCrashed){
 		PM_StopMovementTypes();
