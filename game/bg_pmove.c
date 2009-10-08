@@ -94,8 +94,10 @@ void PM_Impede(void){
 	if(pm->ps->timers[tmImpede] > 0){
 		pm->ps->timers[tmImpede] -= pml.msec;
 		if(pm->ps->timers[tmImpede] <= 0){pm->ps->timers[tmImpede] = 0;}
+		if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags = usingFlight;}
 		VectorClear(pm->ps->velocity);
 		PM_StopDirections();
+		PM_StopZanzoken();
 	}
 }
 /*===================
