@@ -1001,7 +1001,7 @@ void PM_FlyMove(void){
 		!(pm->ps->bitFlags & usingZanzoken)) ||
 		(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & lockedYaw || pm->ps->bitFlags & lockedRoll)){
 		if(pm->ps->bitFlags & usingJump){return;}
-		if(PM_CheckDirection(pml.forward,qfalse)){PM_Crash(qtrue);}
+		//if(PM_CheckDirection(pml.forward,qfalse)){PM_Crash(qtrue);}
 		pm->ps->timers[tmSoar] += pml.msec;
 		pm->ps->eFlags |= EF_AURA;
 		if(pm->cmd.buttons & BUTTON_POWERLEVEL){pm->cmd.forwardmove = 0;}
@@ -1475,7 +1475,7 @@ The ground trace didn't hit a surface, so we are in freefall
 int PM_CheckDirection(vec3_t direction,qboolean player){
 	vec3_t	point;
 	trace_t	trace;
-	int flags = pm->tracemask;
+	int flags = pm->tracemask &~ CONTENTS_BODY;
 	VectorMA(pm->ps->origin,64,direction,point);
 	if(player){flags = CONTENTS_BODY;}
 	pm->trace(&trace,pm->ps->origin,pm->mins,pm->maxs,point,pm->ps->clientNum,flags);
@@ -2123,18 +2123,17 @@ void PM_SyncMelee(void){
 	pm->ps->bitFlags |= usingMelee;
 	pm->ps->bitFlags |= usingFlight;
 	pm->ps->timers[tmUpdateMelee] = 300;
-	if(pm->ps->lockedPlayer){
-		pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
-		pm->ps->lockedPlayer->bitFlags |= usingMelee;
-		pm->ps->lockedPlayer->bitFlags |= usingFlight;
-		pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
-		if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
-			pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
-			pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK2_HELD;
-			pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
-			pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
-			pm->ps->lockedPlayer->lockedPlayer = 0;
-		}
+	pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
+	pm->ps->lockedPlayer->bitFlags |= usingMelee;
+	pm->ps->lockedPlayer->bitFlags |= usingFlight;
+	pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
+	if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
+		Com_Printf("auto-syncing locked Player\n");
+		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
+		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK2_HELD;
+		pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
+		pm->ps->lockedPlayer->clientLockedTarget = pm->ps->clientNum + 1;
+		pm->ps->lockedPlayer->lockedPlayer = 0;
 	}
 }
 void PM_MeleeIdle(void){
@@ -2189,12 +2188,6 @@ void PM_Melee(void){
 	}
 	else{
 		PM_StopMelee();
-		if(entity = PM_CheckDirection(pml.forward,qtrue)){
-			pm->ps->lockedTarget = entity;
-			pm->ps->clientLockedTarget = entity;
-			pm->ps->lockedPlayer = 0;
-			PM_SyncMelee();
-		}
 		return;
 	}
 	damage = 0;
@@ -2303,7 +2296,7 @@ void PM_Melee(void){
 						pm->ps->lockedPlayer->timers[tmKnockback] = 5000;
 						PM_StopMelee();
 					}
-					if(!pm->ps->lockedPlayer->timers[tmMeleeCharge] > 50){pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;}
+					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;
 					state = stMeleeUsingPower;
 					meleeCharge = 0;
 				}
@@ -2356,7 +2349,7 @@ void PM_Melee(void){
 						pm->ps->lockedPlayer->timers[tmFreeze] = 4000;
 						enemyState = stMeleeIdle;
 					}
-					if(!pm->ps->lockedPlayer->timers[tmMeleeCharge] > 50){pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;}
+					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;
 					state = stMeleeUsingStun;
 					meleeCharge = 0;
 				}

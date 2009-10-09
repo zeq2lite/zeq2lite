@@ -191,6 +191,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_NULL:
 		break;
 	case EV_CRASH:
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.ogg" ) );
+		PSys_SpawnCachedSystem("AuraDebris",cent->lerpOrigin,NULL,cent,NULL,qtrue,qfalse);
 		break;
 	case EV_FOOTSTEP:
 		DEBUGNAME("EV_FOOTSTEP");
@@ -234,18 +236,15 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fallSoft.ogg" ) );
 		CG_PlayerDirtPush(cent,2,qtrue);
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
-			// smooth landing z changes
 			cg.landChange = -8;
 			cg.landTime = cg.time;
 		}
 		break;
 	case EV_FALL_MEDIUM:
 		DEBUGNAME("EV_FALL_MEDIUM");
-		// use normal pain sound
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fallHard3.ogg" ) );
 		CG_PlayerDirtPush(cent,4,qtrue);
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
-			// smooth landing z changes
 			cg.landChange = -16;
 			cg.landTime = cg.time;
 		}
@@ -254,9 +253,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_FALL_FAR");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.ogg" ) );
 		CG_PlayerDirtPush(cent,8,qtrue);
-		cent->pe.painTime = cg.time;	// don't play a pain sound right after this
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
-			// smooth landing z changes
 			cg.landChange = -24;
 			cg.landTime = cg.time;
 		}
