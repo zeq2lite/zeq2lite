@@ -451,6 +451,8 @@ void PM_CheckStatus(void){
 				pm->ps->powerups[PW_STATE] = 0;
 			}
 			else if(pm->ps->bitFlags & isCrashed && !(pm->ps->bitFlags & atopGround)){
+				PM_StopMovement();
+				pm->ps->bitFlags |= usingFlight;
 				PM_ContinueTorsoAnim(ANIM_KNOCKBACK_HIT_WALL);
 				PM_ContinueLegsAnim(ANIM_KNOCKBACK_HIT_WALL);
 				return;
