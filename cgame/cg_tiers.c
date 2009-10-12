@@ -5,6 +5,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 	char filename[MAX_QPATH * 2];
 	char tierPath[MAX_QPATH];
 	char tempPath[MAX_QPATH];
+	Com_Printf("RegisterClientModelnameWithTiers: before animation load ci->usingMD4 = %i\n", ci->usingMD4);
 	Com_sprintf(filename,sizeof(filename),"players/%s/animation.cfg",modelName);
 	if(!CG_ParseAnimationFile(filename,ci)){
 		Com_sprintf(filename,sizeof(filename),"players/characters/%s/animation.cfg",modelName);
@@ -12,6 +13,12 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 			Com_Printf("Failed to load animation file %s\n",filename);
 			return qfalse;
 		}
+	}
+	Com_Printf("RegisterClientModelnameWithTiers: after animation load ci->usingMD4 = %i\n", ci->usingMD4);
+	if(ci->usingMD4 == qtrue) // Alex Adding
+	{
+		Com_Printf("MD4 Part of RegisterClientModelnameWithTiers\n");
+		// TODO: MD4 Specific set up later on if needed...
 	}
 	for(i=0;i<8;++i){
 		// ===================================
@@ -39,9 +46,15 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		// ===================================
 		// Models
 		// ===================================
-//		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/body.md4", modelName, i+1);
-//		ci->legsModel[i] = trap_R_RegisterModel(filename);
+		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/body.md4", modelName, i+1);
+		if(ci->usingMD4)
+		{
+			ci->legsModel[i] = trap_R_RegisterModel(filename);
+			Com_Printf("Loading MD4 model, ci->usingMD4 = %i\n",ci->usingMD4);
+		}
 		if(!ci->legsModel[i]){
+			//ci->usingMD4 = qfalse;
+			Com_Printf("No legsModel, ci->usingMD4 = %i\n",ci->usingMD4);
 			if(i == 0){
 				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", modelName, i+1);
 				ci->legsModel[i] = trap_R_RegisterModel(filename);
@@ -122,6 +135,8 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				ci->headSkin[i] = ci->headSkin[i - 1];
 			}
 		}
+		
+			Com_Printf("End Iteration %i, ci->usingMD4 = %i\n",i,ci->usingMD4);
 	}
 
 	return qtrue;

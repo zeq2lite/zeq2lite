@@ -98,6 +98,7 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	char		text[32000];
 	fileHandle_t	f;
 	animation_t *animations;
+	qboolean doneMeshType;
 
 	animations = ci->animations;
 
@@ -124,6 +125,11 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	ci->fixedlegs = qfalse;
 	ci->fixedtorso = qfalse;
 	ci->overrideHead = qfalse;
+	
+	// Alex Adding For MD4 Handling
+	ci->usingMD4 = qfalse;
+	doneMeshType = qfalse;
+	//Alex End Adding 
 
 	// read optional parameters
 	while ( 1 ) {
@@ -132,6 +138,35 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 		if ( !*token ) {
 			break;
 		}
+		//Alex Adding For MD4 Handling...
+		if(!Q_stricmp( token, "mesh_type") && doneMeshType != qtrue)
+		{
+			token = COM_Parse( &text_p );
+			Com_Printf("Parsing MeshType: %s\n", token);
+			if( !Q_stricmp( token, "md4" ) || !Q_stricmp( token, "skeletalanimation"))
+			{
+				doneMeshType = qtrue;
+				ci->usingMD4 = qtrue;
+				Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
+				continue;
+			}
+			else if( !Q_stricmp( token, "md3") || !Q_stricmp( token, "vertexanimation"))
+			{
+				doneMeshType = qtrue;
+				ci->usingMD4 = qfalse;
+				Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
+				continue;
+			}
+			else
+			{
+				doneMeshType = qtrue;
+				ci->usingMD4 = qfalse;
+				Com_Printf( "Bad MESH_TYPE param in %s: %s\n", filename, token );
+				continue;
+			}
+			
+		}
+		//Alex end adding
 		if ( !Q_stricmp( token, "footsteps" ) ) {
 			token = COM_Parse( &text_p );
 			if ( !*token ) {
@@ -190,7 +225,7 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 		}
 		Com_Printf( "unknown token '%s' in %s\n", token, filename );
 	}
-
+	if(doneMeshType!=qtrue) ci->usingMD4 = qfalse;
 	// read information for each frame
 	for ( i = 0 ; i < MAX_ANIMATIONS ; i++ ) {
 
@@ -543,9 +578,11 @@ CG_RegisterClientModelname
 */
 static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelName, const char *skinName, const char *headModelName, const char *headSkinName, const char *teamName ) {
 
+	Com_Printf("RegisterClientModelname: before tier load ci->usingMD4 = %i\n", ci->usingMD4);
 	if (!CG_RegisterClientModelnameWithTiers( ci, modelName, skinName ) ) {
 		return qfalse;
 	}
+	Com_Printf("RegisterClientModelname: after tier load ci->usingMD4 = %i\n", ci->usingMD4);
 
 /*
 	char	filename[MAX_QPATH*2];
@@ -688,6 +725,8 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	teamname[0] = 0;
 
 	modelloaded = qtrue;
+	ci->usingMD4 = qfalse;
+	Com_Printf("LoadClientInfo pre CG_RegisterClientModelname\n");
 	if ( !CG_RegisterClientModelname( ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname ) ) {
 		if ( cg_buildScript.integer ) {
 			CG_Error( "CG_RegisterClientModelname( %s, %s, %s, %s %s ) failed", ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname );
@@ -711,6 +750,7 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 		}
 		modelloaded = qfalse;
 	}
+	Com_Printf("LoadClientInfo: ci->usingMD4 = %i \n",ci->usingMD4);
 	ci->newAnims = qfalse;
 	// sounds
 	dir = ci->modelName;
@@ -2233,81 +2273,91 @@ void CG_Player( centity_t *cent ) {
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
 	memcpy(&altLegs, &legs, sizeof(legs));
 	if (!legs.hModel){return;}
-	/*
-	memcpy(&altTorso, &torso, sizeof(torso));
-	oframes[0] = altLegs.oldframe;
-	oframes[1] = altTorso.oldframe;
-	oframes[2] = oframes[1];
-	nframes[0] = altLegs.frame;
-	nframes[1] = altTorso.frame;
-	nframes[2] = nframes[1];
-	lerps[0] = 1.0 - altLegs.backlerp;
-	lerps[1] = 1.0 - altTorso.backlerp;
-	lerps[2] = lerps[1];
-	angles[0][PITCH] = 0;
-	angles[0][YAW] = 0;
-	angles[0][ROLL] = 0;
-	angles[1][PITCH] = cent->pe.torso.pitchAngle - cent->pe.legs.pitchAngle;
-	angles[1][YAW] = cent->pe.torso.yawAngle - cent->pe.legs.yawAngle;
-	angles[1][ROLL] = 0;
-	angles[2][PITCH] = cent->lerpAngles[PITCH];
-	angles[2][YAW] = cent->lerpAngles[YAW] - cent->pe.legs.yawAngle;
-	angles[2][ROLL] = 0;
-	trap_R_SetBlendPose(&altLegs.skel,altLegs.hModel,oframes,nframes,lerps,angles);
-		altLegs.renderfx |= RF_SKEL;
+	//Com_Printf("c->usingMD4 == %i\n", ci->usingMD4);
+	if(ci->usingMD4==qtrue)
+	{
+		//Com_Printf("Using MD4\n");
+		memcpy(&altTorso, &torso, sizeof(torso));
+		oframes[0] = altLegs.oldframe;
+		oframes[1] = altTorso.oldframe;
+		oframes[2] = oframes[1];
+		nframes[0] = altLegs.frame;
+		nframes[1] = altTorso.frame;
+		nframes[2] = nframes[1];
+		lerps[0] = 1.0 - altLegs.backlerp;
+		lerps[1] = 1.0 - altTorso.backlerp;
+		lerps[2] = lerps[1];
+		angles[0][PITCH] = 0;
+		angles[0][YAW] = 0;
+		angles[0][ROLL] = 0;
+		angles[1][PITCH] = cent->pe.torso.pitchAngle - cent->pe.legs.pitchAngle;
+		angles[1][YAW] = cent->pe.torso.yawAngle - cent->pe.legs.yawAngle;
+		angles[1][ROLL] = 0;
+		angles[2][PITCH] = cent->lerpAngles[PITCH];
+		angles[2][YAW] = cent->lerpAngles[YAW] - cent->pe.legs.yawAngle;
+		angles[2][ROLL] = 0;
+		trap_R_SetBlendPose(&altLegs.skel,altLegs.hModel,oframes,nframes,lerps,angles);
+			altLegs.renderfx |= RF_SKEL;
 
-	CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-	CG_AddPlayerWeaponMD4(&altLegs,NULL,cent,ci->team);
-	CG_PlayerPowerups(cent,&torso);
-	*/
-	torso.hModel = ci->torsoModel[tier];
-	torso.customSkin = ci->torsoSkin[tier];
-	if(!torso.hModel){return;}
-	VectorCopy( cent->lerpOrigin, torso.lightingOrigin );
-	//CG_PositionRotatedEntityOnTag( &torso, &legs, ci->legsModel, "tag_torso");
-	CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel, "tag_torso");
-	torso.shadowPlane = shadowPlane;
-	torso.renderfx = renderfx;
-	head.hModel = ci->headModel[tier];
-	head.customSkin = ci->headSkin[tier];
-	if(!head.hModel){return;}
-	VectorCopy( cent->lerpOrigin, head.lightingOrigin );
-	CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
-	head.shadowPlane = shadowPlane;
-	head.renderfx = renderfx;
-//	/*
-	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-//	*/
-	CG_BreathPuffs(cent,&head);
-	memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
-	memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
-	memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
-	memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
-	if(onBodyQue){return;}
-//	/*
-	CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
-	CG_PlayerPowerups(cent,&torso);
-//	*/
-	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
-		CG_AuraStart(cent);
-		if(!xyzspeed){CG_PlayerDirtPush(cent,scale,qfalse);}
-		if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
-			CG_AddEarthquake(cent->lerpOrigin, 400, 1, 1, 1, 25);
-		}
+		CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+		CG_AddPlayerWeaponMD4(&altLegs,NULL,cent,ci->team);
+		CG_PlayerPowerups(cent,&legs);
 	}
-	else{CG_AuraEnd(cent);}
-	CG_AddAuraToScene(cent);
-	if(ps->timers[tmKnockback]){
-		if(ps->timers[tmKnockback] > 0){
-			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
-			trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
-		}
-		return;
+	else
+	{
+		
+		//Com_Printf("Using MD3\n");
+		torso.hModel = ci->torsoModel[tier];
+		torso.customSkin = ci->torsoSkin[tier];
+		if(!torso.hModel){return;}
+		VectorCopy( cent->lerpOrigin, torso.lightingOrigin );
+		//CG_PositionRotatedEntityOnTag( &torso, &legs, ci->legsModel, "tag_torso");
+		CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel, "tag_torso");
+		torso.shadowPlane = shadowPlane;
+		torso.renderfx = renderfx;
+		head.hModel = ci->headModel[tier];
+		head.customSkin = ci->headSkin[tier];
+		if(!head.hModel){return;}
+		VectorCopy( cent->lerpOrigin, head.lightingOrigin );
+		CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
+		head.shadowPlane = shadowPlane;
+		head.renderfx = renderfx;
+	//	/*
+		CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+		CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+		CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	//	*/
+		CG_BreathPuffs(cent,&head);
+		memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
+		memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
+		memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
+		memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
+	
+		if(onBodyQue){return;}
+	//	/*
+		CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
+		CG_PlayerPowerups(cent,&torso);
+	//	*/
 	}
-	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
-	if(ci->auraConfig[tier]->showLightning && ps->bitFlags & usingMelee){CG_BigLightningEffect(cent->lerpOrigin);}
+		if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
+			CG_AuraStart(cent);
+			if(!xyzspeed){CG_PlayerDirtPush(cent,scale,qfalse);}
+			if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
+				CG_AddEarthquake(cent->lerpOrigin, 400, 1, 1, 1, 25);
+			}
+		}
+		else{CG_AuraEnd(cent);}
+		CG_AddAuraToScene(cent);
+		if(ps->timers[tmKnockback]){
+			if(ps->timers[tmKnockback] > 0){
+				trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);
+				trap_S_AddLoopingSound(cent->currentState.number,cent->lerpOrigin,vec3_origin,cgs.media.knockbackLoopSound);
+			}
+			return;
+		}
+		if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
+		if(ci->auraConfig[tier]->showLightning && ps->bitFlags & usingMelee){CG_BigLightningEffect(cent->lerpOrigin);}
+	
 }
 qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *tagName, orientation_t *tagOrient ) {
 	int				i, clientNum;

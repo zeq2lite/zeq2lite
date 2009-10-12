@@ -363,8 +363,9 @@ typedef struct {
 	int				tierCurrent;
 	int				tierMax;
 	int				cameraBackup[4];
-	tierConfig_cg	tierConfig[7];
-	auraConfig_t	*auraConfig[7];
+	tierConfig_cg	tierConfig[8];
+	auraConfig_t	*auraConfig[8];
+	qboolean		usingMD4;
 } clientInfo_t;
 
 
