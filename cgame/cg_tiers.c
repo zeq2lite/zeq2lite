@@ -55,7 +55,8 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		if(!ci->legsModel[i]){
 			//ci->usingMD4 = qfalse;
 			Com_Printf("No legsModel, ci->usingMD4 = %i\n",ci->usingMD4);
-			if(i == 0){
+			// Tenken - tiers can change again
+			//if(i == 0){
 				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", modelName, i+1);
 				ci->legsModel[i] = trap_R_RegisterModel(filename);
 				if(!ci->legsModel[i]){
@@ -86,11 +87,11 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 						ci->headModel[i] = ci->headModel[i - 1];
 					}
 				}
-			}else {
-				ci->legsModel[i] = ci->legsModel[i - 1];
-				ci->torsoModel[i] = ci->torsoModel[i - 1];
-				ci->headModel[i] = ci->headModel[i - 1];
-			}
+			//}else {
+			//	ci->legsModel[i] = ci->legsModel[i - 1];
+			//	ci->torsoModel[i] = ci->torsoModel[i - 1];
+			//	ci->headModel[i] = ci->headModel[i - 1];
+			//}
 		}
 		// ===================================
 		// Skins
