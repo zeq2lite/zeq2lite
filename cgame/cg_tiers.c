@@ -88,6 +88,8 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				}
 			}else {
 				ci->legsModel[i] = ci->legsModel[i - 1];
+				ci->torsoModel[i] = ci->torsoModel[i - 1];
+				ci->headModel[i] = ci->headModel[i - 1];
 			}
 		}
 		// ===================================
