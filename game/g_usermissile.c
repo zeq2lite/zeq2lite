@@ -968,7 +968,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
 			radius = sqrt((radius * radius) / 3); // inverse of Pythagoras
 			bolt->radius = radius;
-			radius = 50;
+			radius = 1;
 			VectorSet( bolt->r.mins, -radius, -radius, -radius );
 			VectorSet( bolt->r.maxs, radius, radius, radius );
 			VectorCopy( bolt->r.mins, bolt->r.absmin );
