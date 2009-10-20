@@ -585,6 +585,8 @@ static void CG_DrawStatusBar( void ) {
 	if(cg_drawStatus.integer == 0){return;}
 	cent = &cg_entities[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
+
+
 	VectorClear( angles );
 	angles[YAW] = 180;
 	// -----------------------
@@ -645,6 +647,102 @@ static void CG_DrawStatusBar( void ) {
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
 	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
+}
+
+/*
+================
+CG_DrawStatusLockedBar
+
+================
+*/
+static void CG_DrawStatusLockedBar( void ) {
+	centity_t	*cent;
+	playerState_t	*ps;
+	vec3_t		angles;
+	const char	*powerLevelString;
+	int 		powerLevelOffset;
+	long	 	powerLevelDisplay;
+	float		multiplier;
+	float 		tierLast,tierNext,tier;
+	int 		base;
+	vec4_t		powerColor = {0.0f,0.588f,1.0f,1.0f};
+	vec4_t		dullColor = {0.188f,0.278f,0.345f,1.0f};
+	vec4_t		limitColor = {1.0f,0.1f,0.0f,1.0f};
+	vec4_t		beyondFatigueColor = {0.9f,0.5f,0.0f,1.0f};
+	vec4_t		beyondHealthColor = {0.8f,0.2f,0.2f,1.0f};
+	vec4_t		healthFatigueColor = {1.0f,0.4f,0.2f,1.0f};
+	vec4_t		plFatigueHealthColor = {0.5f,0.16f,0.16f,1.0f};
+	vec4_t		plFatigueColor = {0.4f,0.4f,0.5f,1.0f};
+	vec4_t		clearColor = {0.0f,0.0f,0.0f,0.0f};
+	clientInfo_t *ci;
+	cg_userWeapon_t	*weaponGraphics;
+	tierConfig_cg *activeTier;
+	ci = &cgs.clientinfo[cg.snap->ps.clientNum];
+	if(cg_drawStatus.integer == 0){return;}
+	cent = &cg_entities[cg.snap->ps.clientNum];
+	ps = &cg.snap->ps;
+
+
+	VectorClear( angles );
+	angles[YAW] = 180;
+	// -----------------------
+	// Draw That Hud!
+	// -----------------------
+	tier = (float)ps->powerLevel[plTierCurrent];
+	multiplier = ci->tierConfig[ci->tierCurrent].hudMultiplier;
+	if(multiplier <= 0){
+		multiplier = ((tier*tier*tier*tier)+1.0);
+	}
+	powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
+	powerLevelString = va("%i",powerLevelDisplay);
+	CG_DrawHorGauge(60,49,200,16,powerColor,dullColor,ps->powerLevel[plCurrent],ps->powerLevel[plMaximum],qfalse);	
+	CG_DrawRightGauge(60,49,200,16,plFatigueColor,plFatigueColor,ps->powerLevel[plFatigue],ps->powerLevel[plMaximum]);
+	CG_DrawRightGauge(60,49,200,16,limitColor,limitColor,ps->powerLevel[plHealth],ps->powerLevel[plMaximum]);
+	CG_DrawDiffGauge(60,49,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+	CG_DrawDiffGauge(60,49,200,16,plFatigueHealthColor,plFatigueHealthColor,ps->powerLevel[plFatigue],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
+	CG_DrawDiffGauge(60,49,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[plCurrent],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
+	if((ps->powerLevel[plCurrent] > ps->powerLevel[plFatigue]) && (ps->powerLevel[plFatigue] > ps->powerLevel[plHealth])){
+		CG_DrawDiffGauge(60,49,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+	}
+	CG_DrawPic(0,8,288,72,cgs.media.hudShader);
+	if(tier){
+		activeTier = &ci->tierConfig[ci->tierCurrent];
+		tierLast = 32767;
+		if(activeTier->sustainCurrent && activeTier->sustainCurrent < tierLast){tierLast = (float)activeTier->sustainCurrent;}
+		if(activeTier->sustainFatigue && activeTier->sustainFatigue < tierLast){tierLast = (float)activeTier->sustainFatigue;}
+		if(activeTier->sustainHealth && activeTier->sustainHealth < tierLast){tierLast = (float)activeTier->sustainHealth;}
+		if(activeTier->sustainMaximum && activeTier->sustainMaximum < tierLast){tierLast = (float)activeTier->sustainMaximum;}
+		if(tierLast < 32767){
+			tierLast = tierLast / (float)ps->powerLevel[plMaximum];
+			CG_DrawPic((187*tierLast)+60,28,13,38,cgs.media.markerDescendShader);
+		}
+	}
+	if(tier < ps->powerLevel[plTierTotal]){
+		activeTier = &ci->tierConfig[ci->tierCurrent+1];
+		tierNext = 0;
+		if(activeTier->requirementCurrent && activeTier->requirementCurrent > tierNext){tierNext = (float)activeTier->requirementCurrent;}
+		if(activeTier->requirementFatigue && activeTier->requirementFatigue > tierNext){tierNext = (float)activeTier->requirementFatigue;}
+		if(activeTier->requirementMaximum && activeTier->requirementMaximum > tierNext){tierNext = (float)activeTier->requirementMaximum;}
+		if(activeTier->requirementHealth && activeTier->requirementHealth > tierNext){tierNext = (float)activeTier->requirementHealth;}
+		if(tierNext){
+			tierNext = tierNext / (float)ps->powerLevel[plMaximum];
+			if(tierNext < 1.0){
+				CG_DrawPic((187*tierNext)+60,28,13,38,cgs.media.markerAscendShader);
+			}
+		}
+	}
+	if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
+		CG_DrawPic(243,33,40,44,cgs.media.breakLimitShader);
+	}
+	if(ps->powerLevel[plCurrent] == 9001){
+		powerLevelString = "Over ^3NINE-THOUSAND!!!";
+	}
+	if(powerLevelDisplay >= 1000000){	
+		powerLevelString = va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0);
+	}
+	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
+	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,52,powerLevelString,1.0F);
+	CG_DrawHead(6,30,50,50,cg.snap->ps.clientNum,angles);
 }
 
 /*
@@ -2258,11 +2356,28 @@ static void CG_Draw2D( void ) {
 	} else {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
 		if (!(cg.snap->ps.timers[tmTransform] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
-			CG_DrawStatusBar();
-			CG_DrawRadar();
-			CG_DrawAmmoWarning();  
-			CG_DrawCrosshair();
-			CG_DrawCrosshairNames();
+		
+
+			playerState_t	*ps;
+			clientInfo_t *ci;
+			ci = &cgs.clientinfo[cg.snap->ps.clientNum];
+			ps = &cg.snap->ps;
+			
+			if (ps->clientLockedTarget) 
+			{
+				//Com_Printf("lockedon\n");
+				CG_DrawStatusLockedBar();
+			}
+			else 
+			{
+				//Com_Printf("not lockedon\n");
+				CG_DrawStatusBar();
+				CG_DrawAmmoWarning();  
+				CG_DrawCrosshair();
+				CG_DrawCrosshairNames();
+			}
+		// make enabled by sensing
+		//CG_DrawRadar();
 			if(!(cg.snap->ps.bitFlags & usingMelee)){
 				CG_DrawWeaponSelect();
 			}
