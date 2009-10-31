@@ -317,7 +317,7 @@ CG_CalcTargetThirdPersonViewLocation
 */
 static void CG_CalcIdealThirdPersonViewLocation(void)
 {
-	float thirdPersonRange = cg_thirdPersonRange.value;
+	float thirdPersonRange = 80; //cg_thirdPersonRange.value;
 
 	VectorMA(cameraIdealTarget, -(thirdPersonRange), camerafwd, cameraIdealLoc);
 }
