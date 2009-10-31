@@ -795,7 +795,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
 	// ADDING FOR ZEQ2
 	if (cg_thirdPersonCamera.value == 0) {
-		if(cg.snap->ps.bitFlags & usingFlight){
+		//if(cg.snap->ps.bitFlags & usingFlight){
 			VectorCopy( overrideAngles, cg.refdefViewAngles );
 			// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
 			if ( cg_thirdPersonAngle.value != 0 ) {
@@ -814,7 +814,7 @@ static void CG_OffsetThirdPersonView( void ) {
 			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
 			VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
 			VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
-			VectorMA( overrideOrg, cg_thirdPersonHeight.value, up, cg.refdef.vieworg );
+			VectorMA( overrideOrg, cg_thirdPersonHeight.value, up, overrideOrg);
 			VectorMA( overrideOrg, cg_thirdPersonSlide.value, right, cg.refdef.vieworg );
 			VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
 			if (!cg_cameraMode.integer) {
@@ -840,7 +840,7 @@ static void CG_OffsetThirdPersonView( void ) {
 			AngleNormalize180(cg.refdefViewAngles[0]);
 			AngleNormalize180(cg.refdefViewAngles[1]);
 			AngleNormalize180(cg.refdefViewAngles[2]);
-		}	
+		//}	
 	}
 	// END ADDING
 }
