@@ -147,14 +147,14 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 			{
 				doneMeshType = qtrue;
 				ci->usingMD4 = qtrue;
-				Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
+				//Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
 				continue;
 			}
 			else if( !Q_stricmp( token, "md3") || !Q_stricmp( token, "vertexanimation"))
 			{
 				doneMeshType = qtrue;
 				ci->usingMD4 = qfalse;
-				Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
+				//Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
 				continue;
 			}
 			else
@@ -578,11 +578,11 @@ CG_RegisterClientModelname
 */
 static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelName, const char *skinName, const char *headModelName, const char *headSkinName, const char *teamName ) {
 
-	Com_Printf("RegisterClientModelname: before tier load ci->usingMD4 = %i\n", ci->usingMD4);
+	//Com_Printf("RegisterClientModelname: before tier load ci->usingMD4 = %i\n", ci->usingMD4);
 	if (!CG_RegisterClientModelnameWithTiers( ci, modelName, skinName ) ) {
 		return qfalse;
 	}
-	Com_Printf("RegisterClientModelname: after tier load ci->usingMD4 = %i\n", ci->usingMD4);
+	//Com_Printf("RegisterClientModelname: after tier load ci->usingMD4 = %i\n", ci->usingMD4);
 
 /*
 	char	filename[MAX_QPATH*2];
@@ -750,7 +750,7 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 		}
 		modelloaded = qfalse;
 	}
-	Com_Printf("LoadClientInfo: ci->usingMD4 = %i \n",ci->usingMD4);
+	//Com_Printf("LoadClientInfo: ci->usingMD4 = %i \n",ci->usingMD4);
 	ci->newAnims = qfalse;
 	// sounds
 	dir = ci->modelName;
