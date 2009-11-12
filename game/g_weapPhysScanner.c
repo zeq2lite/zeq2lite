@@ -9,13 +9,13 @@ char *g_weapPhysCategories[] = {
 };
 
 g_weapPhysField_t g_weapPhysFields[] = {
-	{ "type",				G_weapPhys_ParseType			},	// Physics, Damage, Trajectory
+	{ "type",				G_weapPhys_ParseType			},	// Physics, Detonation, Trajectory
 	{ "speed",				G_weapPhys_ParseSpeed			},	// Physics
 	{ "acceleration",		G_weapPhys_ParseAcceleration	},	// Physics
-	{ "radius",				G_weapPhys_ParseRadius			},	// Physics, Damage
-	{ "impede",				G_weapPhys_ParseImpede			},	// Damage
+	{ "radius",				G_weapPhys_ParseRadius			},	// Physics, Detonation
+	{ "impede",				G_weapPhys_ParseImpede			},	// Detonation
 	{ "range",				G_weapPhys_ParseRange			},	// Physics, Trajectory
-	{ "duration",			G_weapPhys_ParseDuration		},	// Physics, Duration
+	{ "duration",			G_weapPhys_ParseDuration		},	// Physics, Detonation
 	{ "lifetime",			G_weapPhys_ParseLifetime		},	// Physics
 	{ "swat",				G_weapPhys_ParseSwat			},	// Physics
 	{ "deflect",			G_weapPhys_ParseSwat			},	// Physics
@@ -42,8 +42,8 @@ g_weapPhysField_t g_weapPhysFields[] = {
 	{ "cooldownTime",		G_weapPhys_ParseCooldownTime	},	// Costs
 	{ "chargeTime",			G_weapPhys_ParseChargeTime		},	// Costs
 	{ "chargeReadyPct",		G_weapPhys_ParseChargeReadyPct	},	// Costs
-	{ "damage",				G_weapPhys_ParseDamage			},	// Damage
-	{ "knockback",			G_weapPhys_ParseKnockBack		},	// Damage
+	{ "damage",				G_weapPhys_ParseDamage			},	// Detonation
+	{ "knockback",			G_weapPhys_ParseKnockBack		},	// Detonation
 	{ "nrShots",			G_weapPhys_ParseNrShots			},	// Muzzle
 	{ "offsetWidth",		G_weapPhys_ParseOffsetWidth		},	// Muzzle
 	{ "offsetHeight",		G_weapPhys_ParseOffsetHeight	},	// Muzzle
