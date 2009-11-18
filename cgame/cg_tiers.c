@@ -46,7 +46,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		// ===================================
 		// Models
 		// ===================================
-		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/body.md4", modelName, i+1);
+		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/body.zMesh", modelName, i+1);
 		if(ci->usingMD4)
 		{
 			ci->legsModel[i] = trap_R_RegisterModel(filename);
