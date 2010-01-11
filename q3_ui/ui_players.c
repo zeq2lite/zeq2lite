@@ -835,6 +835,11 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	float			len;
 	float			xx;
 
+	if(pi->legsModel && !pi->torsoModel && !pi->headModel)
+	{
+		UI_DrawPlayer_zMesh(x,y,w,h,pi,time);
+		return;
+	}
 	if ( !pi->legsModel || !pi->torsoModel || !pi->headModel || !pi->animations[0].numFrames ) {
 		return;
 	}
@@ -1001,6 +1006,115 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 		}
 	}
 */
+	//
+	// add the chat icon
+	//
+	if ( pi->chat ) {
+		UI_PlayerFloatSprite( pi, origin, trap_R_RegisterShaderNoMip( "chatBubble" ) );
+	}
+
+	//
+	// add an accent light
+	//
+	origin[0] -= 0;//100;	// + = behind, - = in front
+	origin[1] += 100;	// + = left, - = right
+	origin[2] += 0;//100;	// + = above, - = below
+	trap_R_AddLightToScene( origin, 500, 1.0, 1.0, 1.0 );
+/*
+	origin[0] -= 100;
+	origin[1] -= 100;
+	origin[2] -= 100;
+	trap_R_AddLightToScene( origin, 500, 1.0, 0.0, 0.0 );
+*/
+	trap_R_RenderScene( &refdef );
+}
+void UI_DrawPlayer_zMesh( float x, float y, float w, float h, playerInfo_t *pi, int time ) {
+	refdef_t		refdef;
+	refEntity_t		legs;
+	refEntity_t		torso;
+	refEntity_t		head;
+	refEntity_t		gun;
+	refEntity_t		barrel;
+	refEntity_t		flash;
+	vec3_t			origin;
+	int				renderfx;
+	vec3_t			mins = {-16, -16, -24};
+	vec3_t			maxs = {16, 16, 32};
+	float			len;
+	float			xx;
+
+	if ( !pi->legsModel || !pi->animations[0].numFrames ) {
+		return;
+	}
+
+	dp_realtime = time;
+
+	if ( pi->pendingWeapon != -1 && dp_realtime > pi->weaponTimer ) {
+		pi->weapon = pi->pendingWeapon;
+		pi->lastWeapon = pi->pendingWeapon;
+		pi->pendingWeapon = -1;
+		pi->weaponTimer = 0;
+	}
+
+	UI_AdjustFrom640( &x, &y, &w, &h );
+
+	y -= jumpHeight;
+
+	memset( &refdef, 0, sizeof( refdef ) );
+	memset( &legs, 0, sizeof(legs) );
+
+	refdef.rdflags = RDF_NOWORLDMODEL;
+
+	AxisClear( refdef.viewaxis );
+
+	refdef.x = x;
+	refdef.y = y;
+	refdef.width = w;
+	refdef.height = h;
+
+	refdef.fov_x = (int)((float)refdef.width / 640.0f * 35.0f);
+	xx = refdef.width / tan( refdef.fov_x / 360 * M_PI );
+	refdef.fov_y = atan2( refdef.height, xx );
+	refdef.fov_y *= ( 360 / M_PI );
+
+	// calculate distance so the player nearly fills the box
+	len = 0.6 * ( maxs[2] - mins[2] );		
+	origin[0] = len / tan( DEG2RAD(refdef.fov_x) * 0.5 );
+	origin[1] = 0.5 * ( mins[1] + maxs[1] );
+	origin[2] = -0.5 * ( mins[2] + maxs[2] );
+
+	refdef.time = dp_realtime;
+
+	trap_R_ClearScene();
+
+	// get the rotation information
+	UI_PlayerAngles( pi, legs.axis, torso.axis, head.axis );
+	
+	// get the animation state (after rotation, to allow feet shuffle)
+	UI_PlayerAnimation( pi, &legs.oldframe, &legs.frame, &legs.backlerp,
+		 &torso.oldframe, &torso.frame, &torso.backlerp,
+		 &head.oldframe, &head.frame, &head.backlerp);
+
+	renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
+
+	//
+	// add the legs
+	//
+	legs.hModel = pi->legsModel;
+	legs.customSkin = pi->legsSkin;
+
+	VectorCopy( origin, legs.origin );
+
+	VectorCopy( origin, legs.lightingOrigin );
+	legs.renderfx = renderfx;
+	VectorCopy (legs.origin, legs.oldorigin);
+
+	trap_R_AddRefEntityToScene( &legs );
+
+	if (!legs.hModel) {
+		return;
+	}
+
 	//
 	// add the chat icon
 	//
@@ -1231,28 +1345,34 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName
 	}
 
 	// load cmodels before models so filecache works
-
-	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/lower.md3", modelName );
+	
+	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/body.zMesh", modelName );
 	pi->legsModel = trap_R_RegisterModel( filename );
 	if ( !pi->legsModel ) {
-		Com_Printf( "Failed to load model file %s\n", filename );
-		return qfalse;
-	}
+		Com_Printf( "Failed to load model file %s, trying players//%s/tier1/body.zMesh\n", filename, modelName );
+	
 
-	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/upper.md3", modelName );
-	pi->torsoModel = trap_R_RegisterModel( filename );
-	if ( !pi->torsoModel ) {
-		Com_Printf( "Failed to load model file %s\n", filename );
-		return qfalse;
-	}
+		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/lower.md3", modelName );
+		pi->legsModel = trap_R_RegisterModel( filename );
+		if ( !pi->legsModel ) {
+			Com_Printf( "Failed to load model file %s\n", filename );
+			return qfalse;
+		}
 
-	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/head.md3", modelName );
-	pi->headModel = trap_R_RegisterModel( filename );
-	if ( !pi->headModel ) {
-		Com_Printf( "Failed to load model file %s\n", filename );
-		return qfalse;
-	}
+		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/upper.md3", modelName );
+		pi->torsoModel = trap_R_RegisterModel( filename );
+		if ( !pi->torsoModel ) {
+			Com_Printf( "Failed to load model file %s\n", filename );
+			return qfalse;
+		}
 
+		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/head.md3", modelName );
+		pi->headModel = trap_R_RegisterModel( filename );
+		if ( !pi->headModel ) {
+			Com_Printf( "Failed to load model file %s\n", filename );
+			return qfalse;
+		}
+	}
 	// if any skins failed to load, fall back to default
 	if ( !UI_RegisterClientSkin( pi, modelName, skinName ) ) {
 		if ( !UI_RegisterClientSkin( pi, modelName, "default" ) ) {
