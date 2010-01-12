@@ -347,7 +347,11 @@ static void ArenaServers_UpdateMenu( void ) {
 		// servers found
 		if( g_arenaservers.refreshservers && ( g_arenaservers.currentping <= g_arenaservers.numqueriedservers ) ) {
 			// show progress
-			Com_sprintf( g_arenaservers.status.string, MAX_STATUSLENGTH, "%d of %d ZEQ2Lite Servers.", g_arenaservers.currentping, g_arenaservers.numqueriedservers);
+			if (g_arenaservers.currentping == g_arenaservers.numqueriedservers) {
+				Com_sprintf( g_arenaservers.status.string, MAX_STATUSLENGTH, "Finished searching, %d of %d found.", g_arenaservers.currentping, g_arenaservers.numqueriedservers);
+			} else {
+				Com_sprintf( g_arenaservers.status.string, MAX_STATUSLENGTH, "Searching for ZEQ2Lite servers, please wait ... %d of %d.", g_arenaservers.currentping, g_arenaservers.numqueriedservers);
+			}
 			g_arenaservers.statusbar.string  = "Press SPACE to stop";
 			qsort( g_arenaservers.serverlist, *g_arenaservers.numservers, sizeof( servernode_t ), ArenaServers_Compare);
 		}
@@ -441,9 +445,9 @@ static void ArenaServers_UpdateMenu( void ) {
 		if( !g_fullservers && ( servernodeptr->numclients == servernodeptr->maxclients ) ) {
 			continue;
 		}
-		//if( Q_strncmp( "ZEQ2", servernodeptr->gamename, 4) ) {
-		//	continue;
-		//}
+		if( Q_strncmp( "zeq2", servernodeptr->gamename, 4) ) {
+			continue;
+		}
 		switch( g_gametype ) {
 		case GAMES_ALL:
 			break;
@@ -931,7 +935,7 @@ static void ArenaServers_DoRefresh( void )
 
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "ping %s\n", adrstr )  );
 
-		//if( Q_strncmp( "ZEQ2", g_arenaservers.serverlist->gamename, 4) ) {
+		//if( Q_strncmp( "zeq2", g_arenaservers.serverlist->gamename, 4) ) {
 		//	break;
 		//}
 
