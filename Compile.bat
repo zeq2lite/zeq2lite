@@ -1,11 +1,14 @@
 @ECHO OFF
-cd cgame
+cd Game\CGame
+echo Compiling CGAME...
 call cgame.bat
 cd..
-cd game
+cd Game
+echo Compiling GAME...
 call game.bat
 cd..
-cd q3_ui
-call q3_ui.bat
+cd UI
+echo Compiling UI...
+call ui.bat
 cd..
 pause
