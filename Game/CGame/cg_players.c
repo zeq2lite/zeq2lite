@@ -119,9 +119,7 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	fileHandle_t	f;
 	animation_t *animations;
 	qboolean doneMeshType;
-
 	animations = ci->animations;
-
 	// load the file
 	len = trap_FS_FOpenFile( filename, &f, FS_READ );
 	if ( len <= 0 ) {
@@ -135,23 +133,19 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	trap_FS_Read( text, len, f );
 	text[len] = 0;
 	trap_FS_FCloseFile( f );
-
 	// parse the text
 	text_p = text;
-	skip = 0;	// quite the compiler warning
-
+	skip = 0;	// quiet the compiler warning
 	ci->footsteps = FOOTSTEP_NORMAL;
 	VectorClear( ci->headOffset );
 	ci->gender = GENDER_MALE;
 	ci->fixedlegs = qfalse;
 	ci->fixedtorso = qfalse;
 	ci->overrideHead = qfalse;
-	
 	// Alex Adding For MD4 Handling
 	ci->usingMD4 = qfalse;
 	doneMeshType = qfalse;
 	//Alex End Adding 
-
 	// read optional parameters
 	while ( 1 ) {
 		prev = text_p;	// so we can unget
@@ -160,12 +154,10 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 			break;
 		}
 		//Alex Adding For MD4 Handling...
-		if(!Q_stricmp( token, "mesh_type") && doneMeshType != qtrue)
-		{
+		if(!Q_stricmp( token, "mesh_type") && doneMeshType != qtrue){
 			token = COM_Parse( &text_p );
 			Com_Printf("Parsing MeshType: %s\n", token);
-			if( !Q_stricmp( token, "md4" ) || !Q_stricmp( token, "skeletalanimation"))
-			{
+			if( !Q_stricmp( token, "md4" ) || !Q_stricmp( token, "skeletalanimation")){
 				doneMeshType = qtrue;
 				ci->usingMD4 = qtrue;
 				//Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
@@ -178,14 +170,12 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 				//Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
 				continue;
 			}
-			else
-			{
+			else{
 				doneMeshType = qtrue;
 				ci->usingMD4 = qfalse;
 				Com_Printf( "Bad MESH_TYPE param in %s: %s\n", filename, token );
 				continue;
 			}
-			
 		}
 		//Alex end adding
 		if ( !Q_stricmp( token, "footsteps" ) ) {
@@ -249,51 +239,12 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	if(doneMeshType!=qtrue) ci->usingMD4 = qfalse;
 	// read information for each frame
 	for ( i = 0 ; i < MAX_ANIMATIONS ; i++ ) {
-
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
-
-// ADDING FOR ZEQ2
-	// until we include optional extra taunts, this block will remain turned off.
-/*			if( i >= ANIM_GETFLAG && i <= ANIM_NEGATIVE ) {
-				animations[i].firstFrame = animations[ANIM_GESTURE].firstFrame;
-				animations[i].frameLerp = animations[ANIM_GESTURE].frameLerp;
-				animations[i].initialLerp = animations[ANIM_GESTURE].initialLerp;
-				animations[i].loopFrames = animations[ANIM_GESTURE].loopFrames;
-				animations[i].numFrames = animations[ANIM_GESTURE].numFrames;
-				animations[i].reversed = qfalse;
-				animations[i].flipflop = qfalse;
-				continue;
-			}
-*/			
-// END ADDING
-
-			break;
-		}
+		if(!*token){break;}
 		animations[i].firstFrame = atoi( token );
-
-
-// ADDING FOR ZEQ2
-
-// Don't do this as it is a retarded fix for an error in the ORIGINAL animation.cfg files,
-// which ZEQ2 won't have in its animation.cfg files.
-
-/*		// leg only frames are adjusted to not count the upper body only frames
-		if ( i == ANIM_WALKCR ) {
-			skip = animations[ANIM_WALKCR].firstFrame - animations[ANIM_GESTURE].firstFrame;
-		}
-		if ( i >= ANIM_WALKCR && i<ANIM_GETFLAG) {
-			animations[i].firstFrame -= skip;
-		}
-*/
-// END ADDING
-
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
-			break;
-		}
+		if(!*token){break;}
 		animations[i].numFrames = atoi( token );
-
 		animations[i].reversed = qfalse;
 		animations[i].flipflop = qfalse;
 		// if numFrames is negative the animation is reversed
@@ -301,13 +252,11 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 			animations[i].numFrames = -animations[i].numFrames;
 			animations[i].reversed = qtrue;
 		}
-
 		token = COM_Parse( &text_p );
 		if ( !*token ) {
 			break;
 		}
 		animations[i].loopFrames = atoi( token );
-
 		token = COM_Parse( &text_p );
 		if ( !*token ) {
 			break;
@@ -318,49 +267,20 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 		}
 		animations[i].frameLerp = 1000 / fps;
 		animations[i].initialLerp = 1000 / fps;
-
 		// ADDING FOR ZEQ2
-
 		// Read the continuous flag for ki attack animations
-		if ( i >= ANIM_KI_ATTACK1_FIRE &&
+		if ( i >= ANIM_SKILL1_FIRE &&
 			 i < MAX_ANIMATIONS &&
-			 (i - ANIM_KI_ATTACK1_FIRE) % 2 == 0 ) {
+			 (i - ANIM_SKILL1_FIRE) % 2 == 0 ) {
 			token = COM_Parse( &text_p );
-			if ( !*token ) {
-				break;
-			}
-			animations[i].continuous = atoi( token );
+			if(!*token){break;}
+			animations[i].continuous = atoi(token);
 		}
-
-		// END ADDING
 	}
-
-	if ( i != MAX_ANIMATIONS ) {
-		CG_Printf( "Error parsing animation file: %s", filename );
-		return qfalse;
-	}
-
-	// walk backward animation
 	memcpy(&animations[ANIM_BACKWALK], &animations[ANIM_WALK], sizeof(animation_t));
 	animations[ANIM_BACKWALK].reversed = qtrue;
 	memcpy(&animations[ANIM_BACKRUN], &animations[ANIM_RUN], sizeof(animation_t));
 	animations[ANIM_BACKRUN].reversed = qtrue;
-
-	// ZEQ2 NOTE:
-	// The following animate a FLAG, NOT a player model, they should
-	// come last in the animation list.
-	// Perhaps they'll have a future use for a similar animated attachment
-	// to a player model?
-
-	// new anims changes
-	//
-//	animations[ANIM_GETFLAG].flipflop = qtrue;
-//	animations[ANIM_GUARDBASE].flipflop = qtrue;
-//	animations[ANIM_PATROL].flipflop = qtrue;
-//	animations[ANIM_AFFIRMATIVE].flipflop = qtrue;
-//	animations[ANIM_NEGATIVE].flipflop = qtrue;
-	//
-
 	return qtrue;
 }
 
@@ -770,7 +690,7 @@ static void CG_LoadClientInfo( int clientNum, clientInfo_t *ci ) {
 		}
 		modelloaded = qfalse;
 	}
-	Com_Printf("LoadClientInfo: ci->usingMD4 = %i \n",ci->usingMD4);
+	//Com_Printf("LoadClientInfo: ci->usingMD4 = %i \n",ci->usingMD4);
 	ci->newAnims = qfalse;
 	// sounds
 	dir = ci->modelName;
@@ -1461,8 +1381,8 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_TRANS_BACK, speedScale );
 		} else if ( ANIM_FLY_IDLE == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_IDLE, speedScale );
-		} else if ( ANIM_FLY_PREPARE == torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_PREPARE, speedScale );
+		} else if ( ANIM_FLY_START == torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_START, speedScale );
 		} else if ( ANIM_FLY_FORWARD == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_FLY_FORWARD, speedScale );
 		} else if ( ANIM_FLY_BACKWARD == torsoAnimNum ) {
@@ -1553,11 +1473,11 @@ static void CG_PlayerAnimation( centity_t *cent,
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KNOCKBACK_RECOVER_1, speedScale );
 		} else if ( ANIM_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KNOCKBACK_RECOVER_2, speedScale );
-		} else if ( ANIM_KI_ATTACK1_PREPARE <= torsoAnimNum && ANIM_KI_ATTACK6_ALT_FIRE >= torsoAnimNum ) {
-			CG_RunLerpFrame( ci, &cent->pe.head, torsoAnimNum - ANIM_KI_ATTACK1_PREPARE + ANIM_KI_ATTACK1_PREPARE, speedScale );
+		} else if ( ANIM_SKILL1_CHARGE <= torsoAnimNum && ANIM_SKILL32_ALT_FIRE >= torsoAnimNum ) {
+			CG_RunLerpFrame( ci, &cent->pe.head, torsoAnimNum - ANIM_SKILL1_CHARGE + ANIM_SKILL1_CHARGE, speedScale );
 		} else {
 			legsAnimNum = cent->currentState.legsAnim & ~ANIM_TOGGLEBIT;
-			if (cg.predictedPlayerState.clientLockedTarget >0) {
+			if (cg.predictedPlayerState.lockedTarget >0) {
 				CG_RunLerpFrame( ci, &cent->pe.head, ANIM_IDLE_LOCKED, speedScale );
 			} else {
 				CG_RunLerpFrame( ci, &cent->pe.head, ANIM_IDLE, speedScale );
@@ -1743,7 +1663,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
 	torsoAngles[PITCH] = cent->pe.torso.pitchAngle;
-	if ( ci->fixedtorso || cent->currentState.weaponstate == WEAPON_CHARGING || cent->currentState.weaponstate == WEAPON_ALTCHARGING || 
+	if ( ci->fixedtorso || cent->currentState.playerSkillState == skillCharging || cent->currentState.playerSkillState == skillAltCharging ||
 				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_DEATH_GROUND || 
 				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_DEATH_AIR || 
 				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_DEATH_AIR_LAND ||
@@ -1842,13 +1762,10 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 }
 
 
-/*
-===============
+/*===============
 CG_PlayerFloatSprite
-
 Float a sprite over the player's head
-===============
-*/
+===============*/
 static void CG_PlayerFloatSprite( centity_t *cent, qhandle_t shader ) {
 	int				rf;
 	refEntity_t		ent;
@@ -1884,8 +1801,7 @@ Float sprites over the player's head
 */
 static void CG_PlayerSprites( centity_t *cent ) {
 	int		team;
-
-	if ( cent->currentState.eFlags & EF_CONNECTION ) {
+	if(cent->currentState.eFlags & EF_CONNECTION){
 		CG_PlayerFloatSprite( cent, cgs.media.connectionShader );
 		return;
 	}
@@ -2094,8 +2010,6 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 /*
 ===============
 CG_PlayerDirtPush
-
-Draw a mark at the water surface
 ===============
 */
 void CG_PlayerDirtPush( centity_t *cent, int scale, qboolean once ) {
@@ -2193,7 +2107,7 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 			verts[i].modulate[2] = ambientLight[2];
 			verts[i].modulate[3] = 255;
 			continue;
-		} 
+		}
 		j = ( ambientLight[0] + incoming * directedLight[0] );
 		if ( j > 255 ) {
 			j = 255;
@@ -2297,10 +2211,7 @@ void CG_Player( centity_t *cent ) {
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
 	memcpy(&altLegs, &legs, sizeof(legs));
 	if (!legs.hModel){return;}
-	//Com_Printf("c->usingMD4 == %i\n", ci->usingMD4);
-	if(ci->usingMD4==qtrue)
-	{
-		//Com_Printf("Using MD4\n");
+	if(ci->usingMD4==qtrue){
 		memcpy(&altTorso, &torso, sizeof(torso));
 		oframes[0] = altLegs.oldframe;
 		oframes[1] = altTorso.oldframe;
@@ -2321,16 +2232,15 @@ void CG_Player( centity_t *cent ) {
 		angles[2][YAW] = cent->lerpAngles[YAW] - cent->pe.legs.yawAngle;
 		angles[2][ROLL] = 0;
 		trap_R_SetBlendPose(&altLegs.skel,altLegs.hModel,oframes,nframes,lerps,angles);
-			altLegs.renderfx |= RF_SKEL;
-
+		altLegs.renderfx |= RF_SKEL;
+		memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
+		memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
+		CG_BreathPuffs(cent,&legs);
 		CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 		CG_AddPlayerWeaponMD4(&altLegs,NULL,cent,ci->team);
 		CG_PlayerPowerups(cent,&legs);
 	}
-	else
-	{
-		
-		//Com_Printf("Using MD3\n");
+	else{
 		torso.hModel = ci->torsoModel[tier];
 		torso.customSkin = ci->torsoSkin[tier];
 		if(!torso.hModel){return;}
@@ -2346,26 +2256,21 @@ void CG_Player( centity_t *cent ) {
 		CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
 		head.shadowPlane = shadowPlane;
 		head.renderfx = renderfx;
-	//	/*
 		CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 		CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 		CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-	//	*/
 		CG_BreathPuffs(cent,&head);
 		memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
 		memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
 		memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
 		memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
-	
 		if(onBodyQue){return;}
-	//	/*
 		CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
 		CG_PlayerPowerups(cent,&torso);
-	//	*/
 	}
 		if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
 			CG_AuraStart(cent);
-			if(!xyzspeed){CG_PlayerDirtPush(cent,scale,qfalse);}
+			if(!xyzspeed){CG_PlayerDirtPush(cent,scale*2,qfalse);}
 			if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
 				CG_AddEarthquake(cent->lerpOrigin, 400, 1, 1, 1, 25);
 			}
@@ -2418,6 +2323,9 @@ qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *t
 	
 	// Prepare the destination orientation_t
 	AxisClear( tagOrient->axis );
+	if(cgs.clientinfo[clientNum].usingMD4) {
+		Com_Printf("Trying to get an zMesh Tag called %s!\n", tagName);
+	}
 
 	// Try to find the tag and return its coordinates
 	if ( trap_R_LerpTag( &lerped, pe->headRef.hModel, pe->head.oldFrame, pe->head.frame, 1.0 - pe->head.backlerp, tagName ) ) {
@@ -2425,13 +2333,14 @@ qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *t
 		for ( i = 0 ; i < 3 ; i++ ) {
 			VectorMA( tagOrient->origin, lerped.origin[i], pe->headRef.axis[i], tagOrient->origin );
 		}
-
+		Com_Printf("Found tag %s\n", tagName);
 		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
 		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
 
 		return qtrue;
-	}/* else if(pe->headRef.renderfx & RF_SKEL) {
-		for(i=0;i<pe->headRef.skel.numBones;i++)
+	} else if(pe->legsRef.renderfx & RF_SKEL) {
+		Com_Printf("Trying to get an zMesh Tag\n");
+		/*for(i=0;i<pe->legsRef.skel.numBones;i++)
 		{
 			if(!strcmp(pe->headRef.skel.bones[i].name,tagName))
 			{
@@ -2448,8 +2357,8 @@ qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *t
 
 		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
 		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
-		return qtrue;
-	}*/
+		return qtrue;*/
+	}
 
 	// If we didn't find the tag, return false
 	return qfalse;

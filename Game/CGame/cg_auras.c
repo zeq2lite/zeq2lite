@@ -83,58 +83,80 @@ CG_Aura_GetHullPoints
 =======================
   Reads and prepares the positions of the tags for a convex hull aura.
 */
-#define MAX_AURATAGNAME 10
+#define MAX_AURATAGNAME 12
 static void CG_Aura_GetHullPoints( centity_t *player, auraState_t *state, auraConfig_t *config){
 	char		tagName[MAX_AURATAGNAME];
 	int			i, j;
-	
+	clientInfo_t	*ci;
+	ci = &cgs.clientinfo[player->currentState.clientNum];
 	j = 0;
 	
-	for (i = 0;i < config->numTags[0];i++){
-		orientation_t tagOrient;
+	if(ci->usingMD4)
+	{
 		
-		// Lerp the tag's position
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
-		
-		if (!CG_GetTagOrientationFromPlayerEntityHeadModel( player, tagName, &tagOrient)) continue;
-		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
-
-		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
-			state->convexHull[j].is_tail = qfalse;
-			j++;
+			Com_Printf("Finding tags!\n");
+		for (i = 0;i < config->numTags[0]+config->numTags[1]+config->numTags[2];i++){
+			orientation_t tagOrient;
+			
+			// Lerp the tag's position
+			Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
+			
+			if (!CG_GetTagOrientationFromPlayerEntityLegsModel( player, tagName, &tagOrient)) continue;
+			VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
+			Com_Printf("Found aura tag bone - %s\n",tagName);
+			if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
+				state->convexHull[j].is_tail = qfalse;
+				j++;
+			}
 		}
 	}
+	else
+	{
+		for (i = 0;i < config->numTags[0];i++){
+			orientation_t tagOrient;
+			
+			// Lerp the tag's position
+			Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
+			
+			if (!CG_GetTagOrientationFromPlayerEntityHeadModel( player, tagName, &tagOrient)) continue;
+			VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
 
-	for (i = 0;i < config->numTags[1];i++){
-		orientation_t tagOrient;
-		
-		// Lerp the tag's position
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
-		
-		if(!CG_GetTagOrientationFromPlayerEntityTorsoModel( player, tagName, &tagOrient)) continue;
-		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
+			if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
+				state->convexHull[j].is_tail = qfalse;
+				j++;
+			}
+		}
 
-		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
-			state->convexHull[j].is_tail = qfalse;
-			j++;
+		for (i = 0;i < config->numTags[1];i++){
+			orientation_t tagOrient;
+			
+			// Lerp the tag's position
+			Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
+			
+			if(!CG_GetTagOrientationFromPlayerEntityTorsoModel( player, tagName, &tagOrient)) continue;
+			VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
+
+			if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
+				state->convexHull[j].is_tail = qfalse;
+				j++;
+			}
+		}
+
+		for (i = 0;i < config->numTags[2];i++){
+			orientation_t tagOrient;
+			
+			// Lerp the tag's position
+			Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
+			
+			if(!CG_GetTagOrientationFromPlayerEntityLegsModel( player, tagName, &tagOrient)) continue;
+			VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
+
+			if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
+				state->convexHull[j].is_tail = qfalse;
+				j++;
+			}
 		}
 	}
-
-	for (i = 0;i < config->numTags[2];i++){
-		orientation_t tagOrient;
-		
-		// Lerp the tag's position
-		Com_sprintf( tagName, sizeof(tagName), "tag_aura%i", i);
-		
-		if(!CG_GetTagOrientationFromPlayerEntityLegsModel( player, tagName, &tagOrient)) continue;
-		VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
-
-		if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
-			state->convexHull[j].is_tail = qfalse;
-			j++;
-		}
-	}
-
 	// Find the aura's tail point
 	CG_Aura_BuildTailPoint( player, state, config);
 

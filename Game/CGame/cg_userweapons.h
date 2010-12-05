@@ -14,98 +14,71 @@ typedef struct {
 //       then retrieve a pointer to work with in there.
 typedef struct {
 	//lerpFrame		chargeAnimation,flashAnimation,missileAnimation,explosionAnimation,shockwaveAnimation;
-//	lerpFrame_t		chargeAnimation,flashAnimation,missileAnimation,explosionAnimation,shockwaveAnimation;
-
 	// CHARGING
 	qhandle_t		chargeModel;			// charge model's .md3 file
 	qhandle_t		chargeSkin;				// charge model's .skin file
 	qhandle_t		chargeShader;			// charge model's shader (for sprites only!)
-
 	vec3_t			chargeSpin;				// spin the model during the charge?
-	
 	qboolean		chargeGrowth;			// does the charge grow over time?
-	int				chargeEndPct;			// percentage at which growth stops
-	int				chargeStartPct;			// percentage at which charge becomes visible
-											// and growth starts	
+	int				chargeTimeStart;	    // time at which growth becomes visible
+	int				chargeTimeEnd;			// time at which growth stops
 	float			chargeEndsize;			// ending size for growing attacks
 	float			chargeStartsize;		// starting size for growing attacks, just size
 											// for non-growing
-	
 	float			chargeDlightStartRadius;// radius of light and starting radius
 	float			chargeDlightEndRadius;	// ending radius of light
 	vec3_t			chargeDlightColor;		// color of light
-
 	char			chargeTag[MAX_CHARGES][MAX_TAGNAME];
 											// the names of the player model tags on which to
 											// place an instance of the charge
-	
 	chargeVoice_t	chargeVoice[MAX_CHARGE_VOICES];
 											// voice samples played back when charging
 	sfxHandle_t		chargeLoopSound;		// sound played while charging
-
 	char			chargeParticleSystem[MAX_QPATH];
-
 	// FLASH
 	qhandle_t		flashModel;				// flash model's .md3 file
 	qhandle_t		flashSkin;				// flash model's .skin file
 	qhandle_t		flashShader;			// flash model's shader (for sprites only!) 
-
 	float			flashSize;				// If the weapon was charged, multiply with chargeSize;
-	
 	float			flashDlightRadius;		// radius of light
 	vec3_t			flashDlightColor;		// color of light
-	
 	sfxHandle_t		flashSound[4];			// if more than one is specified, a random one	
 											// is chosen. (Breaks repetitiveness for
 											// fastfiring weapons)
 	sfxHandle_t		flashOnceSound;			// Played only at the start of a firing session, instead
 											// of with each projectile. Resets when attack button comes up.
 	sfxHandle_t		firingSound;			// When doing a sustained blast
-
 	char			flashParticleSystem[MAX_QPATH];
 	char			firingParticleSystem[MAX_QPATH];
-
 	// MISSILE
 	qhandle_t		missileModel;
 	qhandle_t		missileSkin;
 	qhandle_t		missileShader;
-
 	// MISSILE STRUGGLE
 	qhandle_t		missileStruggleModel;
 	qhandle_t		missileStruggleSkin;
 	qhandle_t		missileStruggleShader;
-
 	float			missileSize;			// If the weapon was charged, multiply with chargeSize;
-
 	vec3_t			missileSpin;			// Spin the missile during flight
-	
 	float			missileDlightRadius;
 	vec3_t			missileDlightColor;
-	
 	float			missileTrailRadius;
 	qhandle_t		missileTrailShader;
 	qhandle_t		missileTrailSpiralShader;
 	float			missileTrailSpiralRadius;
 	float			missileTrailSpiralOffset;
-
 	char			missileParticleSystem[MAX_QPATH];
-
 	sfxHandle_t		missileSound;
-	
 	// EXPLOSION / SHIELD
 	qhandle_t		explosionModel;
 	qhandle_t		explosionSkin;
 	qhandle_t		explosionShader;
 	int				explosionTime;
-
 	float			explosionSize;			// If the weapon was charged, multiply with chargeSize;
-
 	float			explosionDlightRadius;
 	vec3_t			explosionDlightColor;
-
 	qhandle_t		shockwaveModel;
 	qhandle_t		shockwaveSkin;
-
 	char			explosionParticleSystem[MAX_QPATH];
 	char			smokeParticleSystem[MAX_QPATH];
 	qhandle_t		markShader;
@@ -145,9 +118,9 @@ typedef struct {
 	vec3_t			chargeSpin;
 	
 	qboolean		chargeGrowth;			// does the charge grow over time?
-	int				chargeEndPct;			// percentage at which growth stops
-	int				chargeStartPct;			// percentage at which charge becomes visible
 											// and growth starts	
+	int				chargeTimeStart;
+	int				chargeTimeEnd;
 	float			chargeEndsize;			// ending size for growing attacks
 	float			chargeStartsize;		// starting size for growing attacks, just size
 											// for non-growing

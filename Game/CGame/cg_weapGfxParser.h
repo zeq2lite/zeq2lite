@@ -48,6 +48,7 @@
 #define TOKEN_CATEGORY			  21	// <category name>
 
 #define TOKEN_WEAPON			  22	// 'weapon'
+#define TOKEN_IGNORE			  23
 
 // --< Error IDs >--
 
@@ -158,9 +159,10 @@ typedef enum {
 
 // Prototype these so definition of cg_weapGfxFields doesn't complain
 qboolean CG_weapGfx_ParseModel( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
+qboolean CG_weapGfx_ParseChargeTime( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseSkin( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseShader( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
-qboolean CG_weapGfx_ParseAnimationRange( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
+qboolean CG_weapGfx_ParseTimeRange( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseSize( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseDlight( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseSpin( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );

@@ -725,32 +725,14 @@ static void CG_Missile( centity_t *cent ) {
 	missileIsStruggling = s1->dashDir[2];
 
 	// Obtain the scale the missile must have.
-	if (weaponGraphics->chargeGrowth) {
-		// below the start, we use the lowest form
-		if (weaponGraphics->chargeStartPct >= missileChargeLvl) {
-			missileScale = weaponGraphics->chargeStartsize;
-		} else {
-			// above the end, we use the highest form
-			if (weaponGraphics->chargeEndPct <= missileChargeLvl) {
-				missileScale = weaponGraphics->chargeEndsize;
-			} else {
-				float	PctRange;
-				float	PctVal;
-				float	SizeRange;
-				float	SizeVal;
-
-				// inbetween, we work out the value
-				PctRange = weaponGraphics->chargeEndPct - weaponGraphics->chargeStartPct;
-				PctVal = missileChargeLvl - weaponGraphics->chargeStartPct;
-
-				SizeRange = weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize;
-				SizeVal = (PctVal / PctRange) * SizeRange;
-				missileScale = SizeVal + weaponGraphics->chargeStartsize;
-			}
-		}
-	} else {
+	// below the start, we use the lowest form
+	if(weaponGraphics->chargeGrowth){
+		missileScale = ((weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize) * missileChargeLvl) + weaponGraphics->chargeStartsize;
+	}
+	else {
 		missileScale = 1;
 	}
+	
 	missileScale = missileScale * weaponGraphics->missileSize;
 
 	if(missilePowerLevelCurrent >= (missilePowerLevelTotal * 2)){

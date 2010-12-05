@@ -56,7 +56,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	STEP_TIME			200
 #define	DUCK_TIME			100
 #define	PAIN_TWITCH_TIME	200
-#define	WEAPON_SELECT_TIME	1400
+#define	SKILL_SELECT_TIME	1000
 #define	ITEM_SCALEUP_TIME	1000
 #define	ZOOM_TIME			150
 #define	ITEM_BLOB_TIME		200
@@ -209,11 +209,9 @@ typedef struct centity_s {
 	// exact interpolated position of entity on this frame
 	vec3_t			lerpOrigin;
 	vec3_t			lerpAngles;
-	
-	
-	// ADDING FOR ZEQ2
-	float			lerpPrim;
-	float			lerpSec;
+
+	int				lastChargeCheck;	
+	int				currentChargeTime;
 
 	int				lastTrailTime;		// last cg.time the trail for this cent was rendered
 	int				lastPVSTime;		// last cg.time the entity was in the PVS
@@ -389,7 +387,6 @@ typedef struct {
 } clientInfo_t;
 
 
-// each WP_* weapon enum has an associated weaponInfo_t
 // that contains media references necessary to present the
 // weapon and its effects
 typedef struct weaponInfo_s {
@@ -1039,7 +1036,7 @@ typedef struct {
 extern	cgs_t			cgs;
 extern	cg_t			cg;
 extern	centity_t		cg_entities[MAX_GENTITIES];
-extern	weaponInfo_t	cg_weapons[MAX_WEAPONS];
+extern	weaponInfo_t	cg_weapons[MAX_SKILLS];
 extern	itemInfo_t		cg_items[MAX_ITEMS];
 extern	markPoly_t		cg_markPolys[MAX_MARK_POLYS];
 
@@ -1098,6 +1095,7 @@ extern	vmCvar_t		cg_ignore;
 extern	vmCvar_t		cg_simpleItems;
 extern	vmCvar_t		cg_fov;
 extern	vmCvar_t		cg_zoomFov;
+extern	vmCvar_t		cg_advancedFlight;
 extern	vmCvar_t		cg_thirdPersonCameraDamp;
 extern	vmCvar_t		cg_thirdPersonTargetDamp;
 extern	vmCvar_t		cg_thirdPersonMeleeCameraDamp;
@@ -1106,6 +1104,10 @@ extern	vmCvar_t		cg_thirdPersonRange;
 extern	vmCvar_t		cg_thirdPersonAngle;
 extern	vmCvar_t		cg_thirdPersonHeight;
 extern	vmCvar_t		cg_thirdPersonSlide;
+extern	vmCvar_t		cg_lockedRange;
+extern	vmCvar_t		cg_lockedAngle;
+extern	vmCvar_t		cg_lockedHeight;
+extern	vmCvar_t		cg_lockedSlide;
 extern	vmCvar_t		cg_thirdPerson;
 extern	vmCvar_t		cg_synchronousClients;
 extern	vmCvar_t		cg_teamChatTime;
@@ -1807,8 +1809,8 @@ void CG_FrameHist_SetAura( int num );
 qboolean CG_FrameHist_HasAura( int num );
 qboolean CG_FrameHist_HadAura( int num );
 
-int CG_FrameHist_IsWeaponState( int num );
-int CG_FrameHist_WasWeaponState( int num );
+int CG_FrameHist_IsPlayerStatus( int num );
+int CG_FrameHist_WasPlayerStatus( int num );
 
 int CG_FrameHist_IsWeaponNr( int num );
 int CG_FrameHist_WasWeaponNr( int num );

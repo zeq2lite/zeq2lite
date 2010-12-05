@@ -569,7 +569,7 @@ static void CG_OffsetThirdPersonView2( void )
 	cameraFocusAngles[YAW] += cg_thirdPersonAngle.value;
 
 	if(cg_beamControl.value == 0){
-		if(((cg.snap->ps.weaponstate == WEAPON_GUIDING) || (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
+		if(cg.snap->ps.timers[tmImpede] && cg.guide_view){
 			float oldRoll;
 			VectorSubtract( cg.guide_target, cg.snap->ps.origin, forward );
 			VectorNormalize( forward );
@@ -713,7 +713,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
 	if(cg_beamControl.value == 0){
-		if(((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
+		if(ps->timers[tmImpede] && cg.guide_view){
 			float oldRoll;
 			VectorSubtract( cg.guide_target, ps->origin, forward );
 			VectorNormalize( forward );
@@ -730,16 +730,12 @@ static void CG_OffsetThirdPersonView( void ) {
 	// END ADDING
 	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 	VectorCopy( cg.refdefViewAngles, focusAngles );
-	if ( focusAngles[PITCH] > 45 ) {
-		focusAngles[PITCH] = 45;		// don't go too far overhead
-	}
 	AngleVectors( focusAngles, forward, NULL, NULL );
 	VectorMA( cg.refdef.vieworg, FOCUS_DISTANCE, forward, focusPoint );
 	VectorCopy( cg.refdef.vieworg, view );	
-	cg.refdefViewAngles[PITCH] *= 0.5;
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 	// LOCKED ON
-	if(cg.snap->ps.clientLockedTarget > 0){
+	if(cg.snap->ps.lockedTarget > 0){
 		if(!ci->transformStart){
 			ci->transformStart = qtrue;
 			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
@@ -747,10 +743,10 @@ static void CG_OffsetThirdPersonView( void ) {
 			ci->cameraBackup[2] = cg_thirdPersonRange.value;
 			ci->cameraBackup[3] = cg_thirdPersonSlide.value;
 		}
-		cg_thirdPersonAngle.value = 320;
-		cg_thirdPersonHeight.value = 0;
-		cg_thirdPersonRange.value = 30;
-		cg_thirdPersonSlide.value = 40;
+		cg_thirdPersonAngle.value = cg_lockedAngle.value;
+		cg_thirdPersonHeight.value = cg_lockedHeight.value;
+		cg_thirdPersonRange.value = cg_lockedRange.value;
+		cg_thirdPersonSlide.value = cg_lockedSlide.value;
 	} else
 	// TRANSFORMATIONS
 	if(ps->timers[tmTransform] > 1){
@@ -812,24 +808,13 @@ static void CG_OffsetThirdPersonView( void ) {
 	if(focusDist < 1){
 		focusDist = 1;	// should never happen
 	}
-	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
+	//cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
 	// ADDING FOR ZEQ2
 	if (cg_thirdPersonCamera.value == 0) {
 		//if(cg.snap->ps.bitFlags & usingFlight){
 			VectorCopy( overrideAngles, cg.refdefViewAngles );
 			// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
-			if ( cg_thirdPersonAngle.value != 0 ) {
-				rotationOffsetAngles[PITCH] = 0;
-				rotationOffsetAngles[YAW] = -cg_thirdPersonAngle.value;
-				rotationOffsetAngles[ROLL] = 0;
-				AnglesToQuat(cg.refdefViewAngles, quatOrient);
-				AnglesToQuat(rotationOffsetAngles, quatRot);
-				QuatMul(quatOrient, quatRot, quatResult);
-				QuatToAngles(quatResult, cg.refdefViewAngles);
-				AngleNormalize180(cg.refdefViewAngles[0]);
-				AngleNormalize180(cg.refdefViewAngles[1]);
-				AngleNormalize180(cg.refdefViewAngles[2]);
-			}
+
 
 			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
 			VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
@@ -2408,8 +2393,8 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	cg.renderingThirdPerson = cg_thirdPerson.integer ||
 							 (cg.snap->ps.powerLevel[plFatigue] <= 0) ||
 							 (cg.snap->ps.bitFlags & isCrashed) ||
-							 (cg.snap->ps.weaponstate == WEAPON_GUIDING) ||
-							 (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING);
+							 (cg.snap->ps.skillState == skillGuiding) ||
+							 (cg.snap->ps.skillState == skillAltGuiding);
 /*
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.powerLevel[current] <= 0);

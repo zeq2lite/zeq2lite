@@ -45,12 +45,9 @@ void Think_Torch( gentity_t *self ) {
 	g_userWeapon_t	*weaponInfo;
 
 	weaponInfo = G_FindUserWeaponData( self->r.ownerNum, self->s.weapon );
-
-	// Set the weapon state to WEAPON_COOLING
-	g_entities[self->r.ownerNum].client->ps.weaponstate = WEAPON_COOLING;
 	
 	// Set the cooldown time on the weapon
-	g_entities[self->r.ownerNum].client->ps.weaponTime = weaponInfo->costs_cooldownTime;
+	//g_entities[self->r.ownerNum].client->ps.weaponTime = weaponInfo->costs_cooldownTime;
 	
 	// Free the entity
 	G_FreeEntity( self );
@@ -617,7 +614,6 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 			tgClient->ps.powerLevel[plDamageFromEnergy] += damage;
 			if(inflictor->impede){tgClient->ps.timers[tmImpede] = inflictor->impede;}
 			if(knockback){
-				Com_Printf("%i\n",knockback);
 				tgClient->ps.timers[tmKnockback] = knockback;
 				tgClient->ps.powerups[PW_KNOCKBACK_SPEED] = knockback;
 				if(tgClient->lasthurt_location == LOCATION_BACK){tgClient->ps.knockBackDirection = 6;}
@@ -830,20 +826,24 @@ Fire_UserWeapon
 void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfire ) {
 	gentity_t		*bolt;
 	g_userWeapon_t	*weaponInfo;
+	int skillOffset;
+	int truePower;
 	float powerScale;
 	vec3_t			muzzle, forward, right, up;
 	vec3_t			firingDir, firingStart; // <-- Contain the altered aiming and origin vectors.
-	powerScale = ((float)self->client->ps.powerLevel[plCurrent] * 0.0003f) * self->client->ps.stats[stEnergyAttack];
+	skillOffset = self->client->ps.skillState == skillAltCharging ? skAttributeOffset : 0;
 	// Get a hold of the weapon we're firing.
 	// If altfire is used and it exists, use altfire, else use regular fire
 	// Due to the nature of altfire presence detection, the regular fire must
 	// always be loaded first. Since this is only one pointer dereference it is
 	// negligable.
 	weaponInfo = G_FindUserWeaponData( self->s.clientNum, self->s.weapon );
-	if ( ( weaponInfo->general_bitflags & WPF_ALTWEAPONPRESENT ) && altfire ) {
+	if ( ( weaponInfo->general_bitflags & skHasAlternate ) && altfire ) {
 		weaponInfo = G_FindUserAltWeaponData( self->s.clientNum, self->s.weapon );
 	}
-
+	powerScale = ((float)self->client->ps.powerLevel[plCurrent] * 0.0003f) * self->client->ps.stats[stEnergyAttack];
+	powerScale = (weaponInfo->powerBase + ((self->client->ps.skills[self->client->ps.weapon][skillOffset+skChargeTime]/10) * weaponInfo->powerChargeScale)) * powerScale;
+	self->client->ps.skills[self->client->ps.weapon][skillOffset+skChargeTime] = 0;
 	// Retrieve the muzzle that was set in g_weapons.c
 	G_GetMuzzleSettings(muzzle, forward, right, up);
 
@@ -918,7 +918,6 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 	/* MISSILES */
 
 	case WPT_MISSILE:
-
 		bolt = G_Spawn();
 		bolt->classname = "rocket";
 		bolt->s.eType = ET_MISSILE;
@@ -929,9 +928,8 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		if ( !altfire ) {
 			bolt->s.weapon = self->s.weapon;
 		} else {
-			bolt->s.weapon = self->s.weapon + ALTWEAPON_OFFSET;
+			bolt->s.weapon = self->s.weapon + skAltOffset;
 		}
-
 		bolt->r.ownerNum = self->s.number;
 		bolt->s.clientNum = self->s.number;	// <-- clientNum is free on all but ET_PLAYER so
 		bolt->parent = self;				//     use it to store the owner for clientside.
@@ -944,15 +942,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->isSwattable = weaponInfo->physics_swat;
 		bolt->isDrainable = weaponInfo->physics_drain;
 		bolt->isBlindable = weaponInfo->physics_blind;
-		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
-			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
-		} else {
-			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
-			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
-		}
-		bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-		bolt->powerLevelCurrent = bolt->powerLevelTotal = bolt->damage * (1.0f+(float)bolt->chargelvl / 100.0f) * powerScale;
+		bolt->powerLevelCurrent = bolt->powerLevelTotal = powerScale;
 		bolt->s.dashDir[0] = self->client->ps.attackPowerTotal = bolt->powerLevelTotal; // Use this free field to transfer total power level
 		
 		bolt->clipmask = MASK_SHOT;
@@ -965,7 +955,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->count = 0;
 		{
 			float radius;
-			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
+			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier;
 			radius = sqrt((radius * radius) / 3); // inverse of Pythagoras
 			bolt->radius = radius;
 			radius = 1;
@@ -1122,7 +1112,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		if ( !altfire ) {
 			bolt->s.weapon = self->s.weapon;
 		} else {
-			bolt->s.weapon = self->s.weapon + ALTWEAPON_OFFSET;
+			bolt->s.weapon = self->s.weapon + skAltOffset;
 		}
 
 		bolt->r.ownerNum = self->s.number;
@@ -1136,15 +1126,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->isSwattable = weaponInfo->physics_swat;
 		bolt->isDrainable = weaponInfo->physics_drain;
 		bolt->isBlindable = weaponInfo->physics_blind;
-		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
-			self->client->ps.stats[stChargePercentSecondary] = 0;
-		} else {
-			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
-			self->client->ps.stats[stChargePercentPrimary] = 0;
-		}
-		bolt->s.powerups = bolt->chargelvl;
-		bolt->powerLevelCurrent = bolt->powerLevelTotal = bolt->damage * (1.0f+(float)bolt->chargelvl / 100.0f) * powerScale;
+		bolt->powerLevelCurrent = bolt->powerLevelTotal = powerScale;
 		bolt->s.dashDir[0] = self->client->ps.attackPowerTotal = bolt->powerLevelTotal; // Use this free field to transfer total power level
 		// FIXME: Hack into the old mod style, since it's still needed for now
 		bolt->takedamage = qtrue;
@@ -1158,7 +1140,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->count = 0;
 		{
 			float radius;
-			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier * (bolt->chargelvl / 100.0f);
+			radius = weaponInfo->physics_radius + weaponInfo->physics_radiusMultiplier;
 			radius = sqrt((radius * radius) / 3); // inverse of Pythagoras
 			bolt->radius = radius;
 			radius = 1;
@@ -1235,12 +1217,11 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 	case WPT_HITSCAN:
 
-		if ( !altfire ) {
+		if(!altfire){
 			UserHitscan_Fire( self, weaponInfo, self->s.weapon, firingStart, firingDir );
-			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
-		} else {
-			UserHitscan_Fire( self, weaponInfo, self->s.weapon + ALTWEAPON_OFFSET, firingStart, firingDir );
-			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
+		}
+		else{
+			UserHitscan_Fire( self, weaponInfo, self->s.weapon + skAltOffset, firingStart, firingDir );
 		}
 		break;
 
@@ -1259,7 +1240,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		if ( !altfire ) {
 			bolt->s.weapon = self->s.weapon;
 		} else {
-			bolt->s.weapon = self->s.weapon + ALTWEAPON_OFFSET;
+			bolt->s.weapon = self->s.weapon + skAltOffset;
 		}
 
 		bolt->r.ownerNum = self->s.number;
@@ -1269,17 +1250,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->damage = weaponInfo->damage_damage;
 		bolt->splashRadius = weaponInfo->damage_radius;
 		bolt->splashDuration = weaponInfo->damage_radiusDuration;
-		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
-		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
-			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
-		} else {
-			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
-			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
-		}
-				
+		bolt->extraKnockback = weaponInfo->damage_extraKnockback;				
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
 
@@ -1327,7 +1298,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		if ( !altfire ) {
 			bolt->s.weapon = self->s.weapon;
 		} else {
-			bolt->s.weapon = self->s.weapon + ALTWEAPON_OFFSET;
+			bolt->s.weapon = self->s.weapon + skAltOffset;
 		}
 
 		// Make sure the entity is in the PVS if you should be able to spot part of the torch
@@ -1374,7 +1345,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 					continue;
 				} else if ( trigTarget->s.eType != ET_MISSILE ) {
 					continue;
-				} else if ( !altfire && ( trigTarget->s.weapon != self->s.weapon + ALTWEAPON_OFFSET )) {
+				} else if ( !altfire && ( trigTarget->s.weapon != self->s.weapon + skAltOffset )) {
 					continue;
 				} else if ( altfire && ( trigTarget->s.weapon != self->s.weapon )) {
 					continue;
@@ -1443,54 +1414,34 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		break;
 	}
 }
-
-
-
-/*
-   -----------------------------------------
-     E X P L O S I O N   F U N C T I O N S
-   -----------------------------------------
-*/
-
-void G_DieUserWeapon( gentity_t *self, gentity_t *inflictor,
-					  gentity_t *attacker, int damage, int mod ) {
+/*-----------------------------------------
+ E X P L O S I O N   F U N C T I O N S
+-----------------------------------------*/
+void G_DieUserWeapon(gentity_t *self, gentity_t *inflictor,gentity_t *attacker, int damage, int mod ) {
 	if (inflictor == self)
 		return;
 	self->takedamage = qfalse;
 	self->think = G_ExplodeUserWeapon;
 	self->nextthink = level.time;
 }
-
 void G_ExplodeUserWeapon( gentity_t *self ) {
 	// Handles actual detonation of the weapon in question.
-
-	vec3_t		dir = { 0, 0, 1};
-	vec3_t		origin;
-
+	vec3_t dir = { 0, 0, 1};
+	vec3_t origin;
 	self->takedamage = qfalse;
-
-	// Terminate guidance
-	if ( self->guided ) {
-		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
-	}
-	
 	// Calculate current position
-	BG_EvaluateTrajectory( &self->s, &self->s.pos, level.time, origin );
+	BG_EvaluateTrajectory(&self->s,&self->s.pos,level.time,origin);
 	SnapVector( origin ); // save net bandwith
 	SnapVectorTowards( origin, self->s.pos.trBase ); // save net bandwidth
 	G_SetOrigin( self, origin );
-
 	self->s.eType = ET_GENERAL;
 	G_AddEvent( self, EV_MISSILE_MISS_AIR, DirToByte( dir ) );
 	self->freeAfterEvent = qtrue;
-
 	if(self->s.eType == ET_BEAMHEAD && (self->strugglingPlayer || self->strugglingAttack)){
 		self->enemy->client->ps.bitFlags &= ~isStruggling;
 	}
-
 	trap_LinkEntity( self );
 }
-
 static void G_BounceUserMissile( gentity_t *self, trace_t *trace ) {
 	vec3_t	velocity;
 	float	dot;
@@ -1601,12 +1552,8 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
 			self->enemy->client->ps.lockedPosition = NULL;
 			self->enemy->client->ps.lockedTarget = 0;
-			self->enemy->client->ps.clientLockedTarget = 0;
 		}
 		if(self->s.eType == ET_BEAMHEAD){
-			if (self->guided){
-				g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;
-			}
 			self->s.eType = ET_MISSILE;
 		}
 		return;
@@ -1618,7 +1565,6 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		if(self->enemy->client->ps.lockedTarget >= MAX_CLIENTS){
 			self->enemy->client->ps.lockedPosition = NULL;
 			self->enemy->client->ps.lockedTarget = 0;
-			self->enemy->client->ps.clientLockedTarget = 0;
 		}
 		return;
 	}
@@ -1724,7 +1670,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			// If the player isn't already locked onto another player, lock onto the attack.
 			if(!other->client->ps.lockedTarget){
 				other->client->ps.lockedTarget = self->s.number;
-				other->client->ps.clientLockedTarget = self->s.number;
 				other->client->ps.lockedPosition = &self->r.currentOrigin;
 			}
 			//G_Printf("Missile Started Struggle with %i!\n",other->s.clientNum);
@@ -1754,7 +1699,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	}
 	if((self->powerLevelCurrent <= 0 || !(other->takedamage)) || (other->s.eType == ET_PLAYER)){
 		// Terminate guidance
-		if(self->guided){g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;}
 		if(other->takedamage && other->client){
 			G_AddEvent( self, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
 			self->s.otherEntityNum = other->s.number;
@@ -1781,10 +1725,6 @@ void G_RemoveUserWeapon (gentity_t *self) {
 	if(other->client->ps.lockedTarget >= MAX_CLIENTS){
 		other->client->ps.lockedPosition = NULL;
 		other->client->ps.lockedTarget = 0;
-		other->client->ps.clientLockedTarget = 0;
-	}
-	if (self->guided) {
-		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
 	}
 	if (self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0 && (!self->strugglingAllyAttack || !self->strugglingAttack || !self->strugglingPlayer)) {
 		G_ExplodeUserWeapon ( self );
@@ -2165,13 +2105,6 @@ void G_RunUserTorch( gentity_t *ent ) {
 	float		targetRange, torchRange, targetAngle;
 
 	owner = &g_entities[ent->r.ownerNum];
-
-	// If the owner no longer is firing the weapon
-	if ( owner->client->ps.weaponstate != WEAPON_FIRING ) {
-		G_FreeEntity( ent );
-		return;
-	}
-
 	// Calculate where we are now aiming.
 	AngleVectors( owner->client->ps.viewangles, forward, right, up );
 	CalcMuzzlePoint( owner, forward, right, up, muzzle );

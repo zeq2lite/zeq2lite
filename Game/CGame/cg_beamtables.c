@@ -134,7 +134,7 @@ void CG_BeamTableUpdate( centity_t *cent, float width, qhandle_t shader, char *t
 	}
 
 	// Do we work on the alternate fire tables, or the primary fire ones?
-	if ( cent->currentState.weapon > ALTWEAPON_OFFSET) {
+	if ( cent->currentState.weapon > skAltOffset) {
 		currentTable = &(beamTableAlternate[cent->currentState.clientNum]);
 	} else {
 		currentTable = &(beamTablePrimary[cent->currentState.clientNum]);

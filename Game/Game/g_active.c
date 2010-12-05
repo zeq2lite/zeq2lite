@@ -538,15 +538,13 @@ void ClientThink_real( gentity_t *ent ) {
 	else{
 		client->ps.pm_type = PM_NORMAL;
 	}
+	ent->s.playerStatus = client->ps.status;
 	ent->s.playerBitFlags = client->ps.bitFlags;
-	G_LinkUserWeaponData( &(client->ps) );
+	ent->s.playerMeleeState = client->ps.meleeState;
+	ent->s.playerSkillState = client->ps.skillState;
+	//ent->s.playerPowerLevel = client->ps.powerLevel;
 	G_CheckSkills(&(client->ps));
 	G_CheckSafety(ent->r.currentOrigin,&(client->ps));
-	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
-		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
-		Weapon_HookFree(client->hook);
-	}
-
 	// set up for pmove
 	oldEventSequence = client->ps.eventSequence;
 
@@ -622,14 +620,14 @@ void ClientThink( int clientNum ) {
 	// phone jack if they don't get any for a while
 	ent->client->lastCmdTime = level.time;
 
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.clientLockedTarget) {
+	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
 		ClientThink_real( ent );
 	}
 }
 
 
 void G_RunClient( gentity_t *ent ) {
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.clientLockedTarget) {
+	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
 		return;
 	}
 	ent->client->pers.cmd.serverTime = level.time;

@@ -935,32 +935,21 @@ typedef struct {
 
 // trace->entityNum can also be 0 to (MAX_GENTITIES-1)
 // or ENTITYNUM_NONE, ENTITYNUM_WORLD
-
-
 // markfragments are returned by CM_MarkFragments()
 typedef struct {
 	int		firstPoint;
 	int		numPoints;
 } markFragment_t;
-
-
-
 typedef struct {
 	vec3_t		origin;
 	vec3_t		axis[3];
 } orientation_t;
-
-//=====================================================================
-
-
 // in order from highest priority to lowest
 // if none of the catchers are active, bound key strings will be executed
 #define KEYCATCH_CONSOLE		0x0001
 #define	KEYCATCH_UI				0x0002
 #define	KEYCATCH_MESSAGE		0x0004
 #define	KEYCATCH_CGAME			0x0008
-
-
 // sound channels
 // channel 0 never willingly overrides
 // other channels will allways override a playing sound on that channel
@@ -973,54 +962,36 @@ typedef enum {
 	CHAN_BODY,
 	CHAN_LOCAL_SOUND,	// chat messages, etc
 	CHAN_ANNOUNCER		// announcer voices, etc
-} soundChannel_t;
-
-
-/*
-========================================================================
-
+}soundChannel_t;
+/*========================================================================
   ELEMENTS COMMUNICATED ACROSS THE NET
-
-========================================================================
-*/
-
+========================================================================*/
 #define	ANGLE2SHORT(x)	((int)((x)*65536/360) & 65535)
 #define	SHORT2ANGLE(x)	((x)*(360.0/65536))
-
 #define	SNAPFLAG_RATE_DELAYED	1
 #define	SNAPFLAG_NOT_ACTIVE		2	// snapshot used during connection and for zombies
 #define SNAPFLAG_SERVERCOUNT	4	// toggled every map_restart so transitions can be detected
-
 //
 // per-level limits
 //
 #define	MAX_CLIENTS			64		// absolute limit
 #define MAX_LOCATIONS		64
-
 #define	GENTITYNUM_BITS		10		// don't need to send any more
 #define	MAX_GENTITIES		(1<<GENTITYNUM_BITS)
-
 // entitynums are communicated with GENTITY_BITS, so any reserved
 // values that are going to be communicated over the net need to
 // also be in this range
 #define	ENTITYNUM_NONE		(MAX_GENTITIES-1)
 #define	ENTITYNUM_WORLD		(MAX_GENTITIES-2)
 #define	ENTITYNUM_MAX_NORMAL	(MAX_GENTITIES-2)
-
-
 #define	MAX_MODELS			256		// these are sent over the net as 8 bits
 #define	MAX_SOUNDS			256		// so they cannot be blindly increased
-
-
 #define	MAX_CONFIGSTRINGS	1024
-
 // these are the only configstrings that the system reserves, all the
 // other ones are strictly for servergame to clientgame communication
 #define	CS_SERVERINFO		0		// an info string with all the serverinfo cvars
 #define	CS_SYSTEMINFO		1		// an info string for server system to client system configuration (timescale, etc)
-
 #define	RESERVED_CONFIGSTRINGS	2	// game can't modify below this, only the system can
-
 #define	MAX_GAMESTATE_CHARS	16000
 typedef struct {
 	int			stringOffsets[MAX_CONFIGSTRINGS];
@@ -1031,25 +1002,23 @@ typedef struct {
 //=========================================================
 
 // bit field limits
-#define	MAX_STATS				16
-#define	MAX_BASESTATS			16
-#define	MAX_PERSISTANT			16
+#define	MAX_STATS				32
+#define	MAX_BASESTATS			32
+#define	MAX_PERSISTANT			32
 #define	MAX_POWERUPS			8
-#define	MAX_WEAPONS				32
-#define MAX_TIMERS				24
-#define MAX_POWERSTATS			20
+#define MAX_TIMERS				32
+#define MAX_POWERSTATS			32
+#define MAX_SKILLS				32
+#define MAX_SKILL_ATTRIBUTES	32
 
 #define	MAX_PS_EVENTS			2
-
 #define PS_PMOVEFRAMECOUNTBITS	6
 
 // playerState_t is the information needed by both the client and server
 // to predict player motion and actions
 // nothing outside of pmove should modify these, or some degree of prediction error
 // will occur
-
 // you can't add anything to this without modifying the code in msg.c
-
 // playerState_t is a full superset of entityState_t as it is used by players,
 // so if a playerState_t is transmitted, the entityState_t can be fully derived
 // from it.
@@ -1060,54 +1029,34 @@ typedef struct playerState_s {
 	int			bobCycle;		// for view bobbing and footstep generation
 	int			pm_flags;		// ducked, jump_held, etc
 	int			pm_time;
-
 	vec3_t		origin;
 	vec3_t		velocity;
-	int			weaponTime;
 	int			gravity[3];
 	int			delta_angles[3];	// add to command angles to get view direction
 									// changed by spawns, rotating objects, and teleporters
-
 	int			groundEntityNum;// ENTITYNUM_NONE = in air
-
 	int			legsTimer;		// don't change low priority animations until this runs out
 	int			legsAnim;		// mask off ANIM_TOGGLEBIT
-
 	int			torsoTimer;		// don't change low priority animations until this runs out
 	int			torsoAnim;		// mask off ANIM_TOGGLEBIT
-
 	int			lockTimer;		// timer for toggle lock on/off.
-
-	int			movementDir;	// a number 0 to 7 that represents the reletive angle
-								// of movement to the view angle (axial and diagonals)
-								// when at rest, the value will remain unchanged
-								// used to twist the legs during strafing
-
-	int			eFlags;			// copied to entityState_t->eFlags
-
-	int			eventSequence;	// pmove generated events
+	int			movementDir;
+	int			eFlags;
+	int			eventSequence;
 	int			events[MAX_PS_EVENTS];
 	int			eventParms[MAX_PS_EVENTS];
-
 	int			externalEvent;	// events set on player from another source
 	int			externalEventParm;
 	int			externalEventTime;
-
 	int			clientNum;		// ranges from 0 to MAX_CLIENTS-1
 	int			weapon;			// copied to entityState_t->weapon
-	int			weaponstate;
-
-	vec3_t		viewangles;		// for fixed views
+	vec3_t		viewangles;
 	int			viewheight;
-
-	// <-- RiO
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
-
 	int			rolling;
 	int			running;
 	int			lockedTarget;
-	int			clientLockedTarget;
 	playerState *lockedPlayer;
 	vec3_t		*lockedPosition;
 	vec3_t		soarLimit;
@@ -1116,87 +1065,56 @@ typedef struct playerState_s {
 	float		breakLimitRate;
 	int			attackPowerTotal;
 	int			attackPowerCurrent;
-	// RiO -->
-
-	// damage feedback
 	int			damageEvent;	// when it changes, latch the other parms
 	int			damageYaw;
 	int			damagePitch;
 	int			damageCount;
-
 	int			bitFlags;
-	int			states;
-
+	int			status;
+	int			meleeState;
+	int			skillState;
+	int			options;
 	int			stats[MAX_STATS];
 	float		baseStats[MAX_BASESTATS];
 	int			powerLevel[MAX_POWERSTATS];
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
 	int			timers[MAX_TIMERS];
-	int			currentSkill[MAX_WEAPONS];
-
+	int			skills[MAX_SKILLS][MAX_SKILL_ATTRIBUTES];
 	int			generic1;
 	int			loopSound;
 	int			jumppad_ent;	// jumppad entity hit this frame
-
 	// not communicated over the net at all
-	int			ping;			// server to game info for scoreboard
-	int			pmove_framecount;	// FIXME: don't transmit over the network
+	int			ping;
+	int			pmove_framecount;
 	int			jumppad_frame;
 	int			entityEventSequence;
 } playerState_t;
-
-
-//====================================================================
-
-
-//
 // usercmd_t->button bits, many of which are generated by the client system,
 // so they aren't game/cgame only definitions
-//
 #define	BUTTON_ATTACK		1
-#define	BUTTON_TALK			2			// displays talk balloon and disables actions
+#define	BUTTON_TALK			2
 #define	BUTTON_USE_HOLDABLE	4
 #define	BUTTON_GESTURE		8
-#define	BUTTON_WALKING		16			// walking can't just be infered from MOVE_RUN
-										// because a key pressed late in the frame will
-										// only generate a small move value for that frame
-										// walking will use different animations and
-										// won't generate footsteps
-#define BUTTON_AFFIRMATIVE	32
-#define	BUTTON_NEGATIVE		64
-
-#define BUTTON_GETFLAG		128
-#define BUTTON_GUARDBASE	256
-#define BUTTON_PATROL		512
-#define BUTTON_FOLLOWME		1024
-
-#define	BUTTON_ANY			2048		// any key whatsoever
-
-#define	MOVE_RUN			120			// if forwardmove or rightmove are >= MOVE_RUN,
-										// then BUTTON_WALKING should be set
-// ADDING FOR ZEQ2
-#define BUTTON_ROLL_LEFT	32			// Roll to the left when flying
-#define BUTTON_ROLL_RIGHT	64			// Roll to the right when flying
-#define BUTTON_BOOST		128			// Boost while held down
-#define BUTTON_LIGHTSPEED	512			// Activate lightspeed movement (Zanzoken)
-#define BUTTON_ALT_ATTACK	1024		// Alternate fire
+#define	BUTTON_WALKING		16
+#define BUTTON_ROLL_LEFT	32
+#define BUTTON_ROLL_RIGHT	64
+#define BUTTON_BOOST		128
+#define BUTTON_TELEPORT		512
+#define BUTTON_ALT_ATTACK	1024
+#define	BUTTON_ANY			2048
 #define BUTTON_POWERLEVEL	4096		
 #define BUTTON_BLOCK		8192		
-#define BUTTON_JUMP			16384		// jump, seperated from up move
-// END ADDING
-
+#define BUTTON_JUMP			16384
+#define	MOVE_RUN			120
 // usercmd_t is sent to the server each client frame
 typedef struct usercmd_s {
 	int				serverTime;
 	int				angles[3];
 	int 			buttons;
-	byte			weapon;           // weapon 
+	byte			weapon;
 	signed char	forwardmove, rightmove, upmove;
 } usercmd_t;
-
-//===================================================================
-
 // if entityState->solid == SOLID_BMODEL, modelindex is an inline model number
 #define	SOLID_BMODEL	0xffffff
 
@@ -1207,14 +1125,11 @@ typedef enum {
 	TR_LINEAR_STOP,
 	TR_SINE,					// value = base + sin( time / duration ) * delta
 	TR_GRAVITY,
-	// ADDING FOR ZEQ2
 	TR_ACCEL,
 	TR_ARCH,
 	TR_DRUNKEN,
 	TR_MAPGRAVITY
-	// END ADDING
 } trType_t;
-
 typedef struct {
 	trType_t	trType;
 	int		trTime;
@@ -1222,57 +1137,24 @@ typedef struct {
 	vec3_t	trBase;
 	vec3_t	trDelta;			// velocity, etc
 } trajectory_t;
-
-// <-- RiO: Need a charge_t structure to hold weapon charge information
-typedef struct {
-	int	chTime;		// start time of charge
-	int	chBase;		// base amount
-	int	chDelta;	// amount charged each second. 16bits!
-} charge_t;
-// -->
-
-// entityState_t is the information conveyed from the server
-// in an update message about entities that the client will
-// need to render in some way
-// Different eTypes may use the information in different ways
-// The messages are delta compressed, so it doesn't really matter if
-// the structure size is fairly large
-
 typedef struct entityState_s {
 	int		number;			// entity index
 	int		eType;			// entityType_t
 	int		eFlags;
-
 	trajectory_t	pos;	// for calculating position
 	trajectory_t	apos;	// for calculating angles
-
 	int		time;
 	int		time2;
-
 	vec3_t	origin;
 	vec3_t	origin2;
-
 	vec3_t	angles;
 	vec3_t	angles2;
-
-	// <-- RiO: Inserting charge_t into the structure at an appropriate location
-	//          Using two seperate charge levels for future support of dual arm attacks.
-	charge_t	charge1;
-	charge_t	charge2;
-	// -->
-
-	// <-- RiO: Needed so other clients display dashing animation at correct angles
 	vec3_t	dashDir;
-	// -->
-
 	int		otherEntityNum;	// shotgun sources, etc
 	int		otherEntityNum2;
-
 	int		groundEntityNum;	// -1 = in air
-
 	int		constantLight;	// r + (g<<8) + (b<<16) + (intensity<<24)
 	int		loopSound;		// constantly loop this sound
-
 	int		modelindex;
 	int		modelindex2;
 	int		clientNum;		// 0 to (MAX_CLIENTS - 1), for players and corpses
@@ -1286,9 +1168,11 @@ typedef struct entityState_s {
 	// for players
 	int		powerups;		// bit flags
 	int		playerBitFlags;
+	int		playerStatus;
+	int		playerPowerLevel[MAX_POWERSTATS];
+	int		playerMeleeState;
+	int		playerSkillState;
 	int		weapon;			// determines weapon and flash model, etc
-	// <-- RiO: Communicate weaponstate and tier as well (but 4bits only!)
-	int		weaponstate;
 	int		tier;
 	int		attackPowerTotal;
 	int		attackPowerCurrent;

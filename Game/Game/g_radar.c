@@ -43,9 +43,9 @@ void G_RadarUpdateCS(void) {
 				g_playerOrigins[i].clientNum = ps->clientNum;
 
 				g_playerOrigins[i].properties = 0;
-				if ( ( ps->stats[stChargePercentPrimary] >= 50 ) || ( ps->stats[stChargePercentSecondary] >= 50 ) ) {
+				/*if ( ( ps->stats[stisGuidingPrimary] >= 50 ) || ( ps->stats[stisGuidingSecondary] >= 50 ) ) {
 					g_playerOrigins[i].properties |= RADAR_WARN;
-				}
+				}*/
 				if ( ( ps->eFlags & EF_AURA ) || ps->powerups[PW_BOOST] ) {
 					g_playerOrigins[i].properties |= RADAR_BURST;
 				}

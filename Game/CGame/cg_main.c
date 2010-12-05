@@ -74,7 +74,7 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 cg_t				cg;
 cgs_t				cgs;
 centity_t			cg_entities[MAX_GENTITIES];
-weaponInfo_t		cg_weapons[MAX_WEAPONS];
+weaponInfo_t		cg_weapons[MAX_SKILLS];
 
 vmCvar_t	cg_railTrailTime;
 vmCvar_t	cg_centertime;
@@ -133,6 +133,11 @@ vmCvar_t	cg_thirdPersonRange;
 vmCvar_t	cg_thirdPersonAngle;
 vmCvar_t	cg_thirdPersonHeight;
 vmCvar_t	cg_thirdPersonSlide;
+vmCvar_t	cg_lockedRange;
+vmCvar_t	cg_lockedAngle;
+vmCvar_t	cg_lockedHeight;
+vmCvar_t	cg_lockedSlide;
+vmCvar_t	cg_advancedFlight;
 vmCvar_t	cg_thirdPersonCameraDamp;
 vmCvar_t	cg_thirdPersonTargetDamp;
 vmCvar_t	cg_thirdPersonMeleeCameraDamp;
@@ -218,6 +223,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_drawFPS, "cg_drawFPS", "0", CVAR_ARCHIVE  },
 	{ &cg_drawSnapshot, "cg_drawSnapshot", "0", CVAR_ARCHIVE  },
 	{ &cg_draw3dIcons, "cg_draw3dIcons", "1", CVAR_ARCHIVE  },
+	{ &cg_advancedFlight, "cg_advancedFlight", "0", CVAR_ARCHIVE  },
 	{ &cg_drawIcons, "cg_drawIcons", "1", CVAR_ARCHIVE  },
 	{ &cg_drawAmmoWarning, "cg_drawAmmoWarning", "1", CVAR_ARCHIVE  },
 	{ &cg_drawCrosshair, "cg_drawCrosshair", "4", CVAR_ARCHIVE },
@@ -254,6 +260,10 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_tracerChance, "cg_tracerchance", "0.4", CVAR_CHEAT },
 	{ &cg_tracerWidth, "cg_tracerwidth", "1", CVAR_CHEAT },
 	{ &cg_tracerLength, "cg_tracerlength", "100", CVAR_CHEAT },
+	{ &cg_lockedRange, "cg_lockedRange", "30", CVAR_ARCHIVE },
+	{ &cg_lockedAngle, "cg_lockedAngle", "320", 0 },
+	{ &cg_lockedHeight, "cg_lockedHeight", "0", CVAR_ARCHIVE },
+	{ &cg_lockedSlide, "cg_lockedSlide", "40", CVAR_ARCHIVE },
 	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "80", CVAR_ARCHIVE },
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", 0 },
 	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "0", CVAR_ARCHIVE },
@@ -1517,7 +1527,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	CG_InitConsoleCommands();
 
-	//cg.weaponSelect = WP_MACHINEGUN;
 	cg.weaponSelect = 1;
 
 	cgs.redflag = cgs.blueflag = -1; // For compatibily, default to unset for

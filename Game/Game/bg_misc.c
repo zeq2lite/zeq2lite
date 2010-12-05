@@ -390,7 +390,7 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 	s->pos.trTime = time;
 	s->pos.trDuration = 50;
 	s->apos.trType = TR_INTERPOLATE;
-	if(ps->weaponstate != WEAPON_GUIDING && ps->weaponstate != WEAPON_ALTGUIDING && !(ps->bitFlags & isDead) && !(ps->bitFlags & isUnconcious) && !(ps->bitFlags & isCrashed) && !(ps->bitFlags & usingAlter)){
+	if(!ps->timers[tmImpede] && !(ps->bitFlags & isDead) && !(ps->bitFlags & isUnconcious) && !(ps->bitFlags & isCrashed) && !(ps->bitFlags & usingAlter)){
 		VectorCopy(ps->viewangles,s->apos.trBase);
 		if(snap){SnapVector(s->apos.trBase);}
 	}
@@ -414,11 +414,13 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s,qboolean s
 		ps->entityEventSequence++;
 	}
 	s->weapon = ps->weapon;
-	s->weaponstate = ps->weaponstate;
+	s->playerStatus = ps->status;
+	s->playerBitFlags = ps->bitFlags;
+	s->playerMeleeState = ps->meleeState;
+	s->playerSkillState = ps->skillState;
+	//s->playerPowerLevel = ps->powerLevel;
 	s->attackPowerCurrent = ps->attackPowerCurrent;
 	s->attackPowerTotal = ps->attackPowerTotal;
-	s->charge1.chBase = ps->stats[stChargePercentPrimary];
-	s->charge2.chBase = ps->stats[stChargePercentSecondary];
 	s->groundEntityNum = ps->groundEntityNum;
 	s->tier = ps->powerLevel[plTierCurrent];
 	s->powerups = 0;

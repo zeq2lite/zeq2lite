@@ -371,7 +371,7 @@ void CG_PredictPlayerState( void ) {
 		cg.validPPS = qtrue;
 		cg.predictedPlayerState = cg.snap->ps;
 	}
-	if(cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) || cg.snap->ps.clientLockedTarget > 0) {
+	if(cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) || cg.snap->ps.lockedTarget > 0) {
 		CG_InterpolatePlayerState(qfalse);
 		return;
 	}
@@ -536,7 +536,7 @@ void CG_PredictPlayerState( void ) {
 			cg.eventSequence = cg.predictedPlayerState.eventSequence;
 		}
 	}
-	if(cg.snap->ps.clientLockedTarget > 0){
+	if(cg.snap->ps.lockedTarget > 0){
 		CG_InterpolatePlayerState(qfalse);
 		return;
 	}

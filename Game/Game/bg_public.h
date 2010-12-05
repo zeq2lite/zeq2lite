@@ -157,27 +157,9 @@ typedef enum {
 	PM_SPINTERMISSION	// no movement or status bar
 } pmtype_t;
 
-typedef enum {
-	WEAPON_READY,
-	WEAPON_FIRING, // ZEQ2: Will be used for continuous fire, regular firing goes immediately to WEAPON_COOLING.
-	WEAPON_GUIDING,
-	WEAPON_CHARGING,
-
-	WEAPON_ALTFIRING,
-	WEAPON_ALTGUIDING,
-	WEAPON_ALTCHARGING,
-
-	// NOTE: Must make these last to preserve enumeration in client entityState;
-	//       These are remapped onto WEAPON_READY for entityState.
-	WEAPON_COOLING,	
-	WEAPON_RAISING,
-	WEAPON_DROPPING
-} weaponstate_t;
-
-
 // pmove->pm_flags
-#define	PMF_ATTACK1_HELD			1
-#define	PMF_ATTACK2_HELD		2		// jump key held
+#define	PMF_ATTACK1_HELD	1
+#define	PMF_ATTACK2_HELD	2		// jump key held
 #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
 #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
 #define	PMF_FORWARDS_JUMP	32		// pm_time is time before rejump
@@ -196,33 +178,25 @@ typedef enum {
 typedef struct {
 	// state (in / out)
 	playerState_t	*ps;
-
 	// command (in)
 	usercmd_t	cmd;
 	int			tracemask;			// collide against these types of surfaces
 	int			debugLevel;			// if set, diagnostic output will be printed
 	qboolean	noFootsteps;		// if the game is setup for no footsteps by the server
 	qboolean	gauntletHit;		// true if a gauntlet attack would actually hit something
-
 	int			framecount;
 	vec3_t		target;
-
 	// results (out)
 	int			numtouch;
 	int			touchents[MAXTOUCH];
-
 	vec3_t		mins, maxs;			// bounding box size
-
 	int			watertype;
 	int			waterlevel;
-
 	float		xyspeed;
 	float		xyzspeed;
-
 	// for fixed msec Pmove
 	int			pmove_fixed;
 	int			pmove_msec;
-
 	// callbacks to test the world
 	// these will be different functions during game and cgame
 	void		(*trace)( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentMask );
@@ -247,11 +221,9 @@ typedef enum {
 	stEnergyAttack,
 	stEnergyDefense,
 	stEnergyCost,
-	stChargePercentPrimary,	// % of primary attack charged
-	stChargePercentSecondary,	// % of secondary attack charged
 	stMeleeState,
 	stAnimState,
-	stSkills,					// 16 bit bitmask
+	stSkills
 }statIndex_t;
 
 typedef enum{
@@ -273,7 +245,6 @@ typedef enum{
 	plDamageFromMelee,
 	plDamageGeneric
 }powerLevel_t;
-
 typedef enum{
 	tmUpdateTier,
 	tmUpdateMelee,
@@ -281,8 +252,7 @@ typedef enum{
 	tmKnockback,
 	tmZanzoken,
 	tmBoost,
-	tmAttack1,
-	tmAttack2,
+	tmAttackTick,
 	tmMeleeBreaker,
 	tmMeleeBreakerWait,
 	tmMeleeCharge,
@@ -299,7 +269,6 @@ typedef enum{
 	tmFall,
 	tmSafe
 }timers_t;
-
 typedef enum {
 	PW_NONE,
 	PW_BOOST,
@@ -331,23 +300,35 @@ typedef enum {
 #define isDead			0x00010000
 #define isBreakingLimit	0x00020000
 #define isCrashed		0x00040000
-#define isGuiding		0x00080000
-#define isCharging		0x00100000
-#define isTargeted		0x00200000
-#define isPreparing		0x00400000
-#define isSafe			0x00800000
-#define atopGround		0x01000000
-#define nearGround		0x02000000
-#define underWater		0x04000000	
-#define lockedPitch		0x08000000
-#define lockedYaw		0x10000000
-#define lockedRoll		0x20000000
-#define locked360		0x40000000
-#define lockedSpin		0x80000000
+#define isCharging		0x00080000
+#define isTargeted		0x00100000
+#define isPreparing		0x00200000
+#define isSafe			0x00400000
+#define atopGround		0x00800000
+#define nearGround		0x01000000
+#define underWater		0x02000000	
+#define lockedPitch		0x04000000
+#define lockedYaw		0x08000000
+#define lockedRoll		0x10000000
+#define locked360		0x20000000
+#define lockedSpin		0x40000000
 
 // States
-#define isHovering		0x00000001
-#define isDashing		0x00000002
+#define isHovering			0x00000001
+#define isDashing			0x00000002
+#define isImpeded			0x00000004
+#define isStunned			0x00000008
+
+#define skillIdle			0
+#define skillFiring			1
+#define skillCharging		2
+#define skillGuiding		3
+#define skillAltFiring		4
+#define skillAltCharging	5
+#define skillAltGuiding		6
+
+// Options
+#define advancedFlight	0x00000001
 
 // Melee
 typedef enum {
@@ -368,7 +349,7 @@ typedef enum {
 	stMeleeUsingChargeBreaker,
 	stMeleeUsingZanzoken,
 	stMeleeChargingPower,
-	stMeleeChargingStun,
+	stMeleeChargingStun
 } melee_t;
 
 
@@ -399,22 +380,6 @@ typedef enum {
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
 #define EF_GUIDED			0x00004000		// To distinguish a guided missile (Missiles can't vote anyway)
 #define EF_AURA				0x00000010		// used to make players display their aura
-
-typedef enum {
-	WP_NONE,
-	WP_GAUNTLET,
-	WP_MACHINEGUN,
-	WP_SHOTGUN,
-	WP_GRENADE_LAUNCHER,
-	WP_ROCKET_LAUNCHER,
-	WP_LIGHTNING,
-	WP_RAILGUN,
-	WP_PLASMAGUN,
-	WP_BFG,
-	WP_GRAPPLING_HOOK,
-	WP_NUM_WEAPONS
-} weapon_t;
-
 
 // entityState_t->event values
 // entity events are for effects that take place reletive
@@ -517,62 +482,62 @@ typedef enum {
 	// END ADDING
 } entity_event_t;
 typedef enum {
-// DEATH
+	// DEATH
 	ANIM_DEATH_GROUND,
 	ANIM_DEATH_AIR,
 	ANIM_DEATH_AIR_LAND,
-// STUN
+	// STUN
 	ANIM_STUN,
-// RECOVER
+	// RECOVER
 	ANIM_FLOOR_RECOVER,
-// IDLE
+	// IDLE
 	ANIM_IDLE,
 	ANIM_IDLE_LOCKED,
 	ANIM_TURN,
-// WALK
+	// WALK
 	ANIM_WALK,
-// RUN
+	// RUN
 	ANIM_RUN,
-// SWIM
+	// SWIM
 	ANIM_SWIM_IDLE,
 	ANIM_SWIM,
-// JUMP
+	// JUMP
 	ANIM_JUMP_UP,
 	ANIM_LAND_UP,
 	ANIM_JUMP_FORWARD,
 	ANIM_LAND_FORWARD,
 	ANIM_JUMP_BACK,
 	ANIM_LAND_BACK,
-// DASH
+	// DASH
 	ANIM_DASH_RIGHT,
 	ANIM_DASH_LEFT,
 	ANIM_DASH_FORWARD,
 	ANIM_DASH_BACKWARD,
-// FLY
+	// FLY
 	ANIM_FLY_IDLE,
-	ANIM_FLY_PREPARE,
+	ANIM_FLY_START,
 	ANIM_FLY_FORWARD,
 	ANIM_FLY_BACKWARD,
 	ANIM_FLY_UP,
 	ANIM_FLY_DOWN,
-// KI
+	// KI
 	ANIM_KI_CHARGE,
 	ANIM_PL_UP,
 	ANIM_PL_DOWN,
-// TRANSFORM
+	// TRANSFORM
 	ANIM_TRANS_UP,
 	ANIM_TRANS_BACK,
-// DEFENSE
+	// DEFENSE
 	ANIM_STUNNED,
 	ANIM_PUSH,
 	ANIM_DEFLECT,
 	ANIM_BLOCK,
-// SPEED MELEE ATTACKS
+	// SPEED MELEE ATTACKS
 	ANIM_SPEED_MELEE_ATTACK,
 	ANIM_SPEED_MELEE_DODGE,
 	ANIM_SPEED_MELEE_BLOCK,
 	ANIM_SPEED_MELEE_HIT,
-// BREAKER MELEE ATTACK
+	// BREAKER MELEE ATTACK
 	ANIM_BREAKER_MELEE_ATTACK1,
 	ANIM_BREAKER_MELEE_ATTACK2,
 	ANIM_BREAKER_MELEE_ATTACK3,
@@ -585,7 +550,7 @@ typedef enum {
 	ANIM_BREAKER_MELEE_HIT4,
 	ANIM_BREAKER_MELEE_HIT5,
 	ANIM_BREAKER_MELEE_HIT6,
-// POWER MELEE ATTACKS
+	// POWER MELEE ATTACKS
 	ANIM_POWER_MELEE_1_CHARGE,
 	ANIM_POWER_MELEE_2_CHARGE,
 	ANIM_POWER_MELEE_3_CHARGE,
@@ -598,38 +563,142 @@ typedef enum {
 	ANIM_POWER_MELEE_4_HIT,
 	ANIM_POWER_MELEE_5_HIT,
 	ANIM_POWER_MELEE_6_HIT,
-// STUN MELEE
+	// STUN MELEE
 	ANIM_STUNNED_MELEE,
-// KNOCKBACK
+	// KNOCKBACK
 	ANIM_KNOCKBACK,
 	ANIM_KNOCKBACK_RECOVER_1,
 	ANIM_KNOCKBACK_RECOVER_2,
 	ANIM_KNOCKBACK_HIT_WALL,
-// KI ATTACKS
-	ANIM_KI_ATTACK1_PREPARE,
-	ANIM_KI_ATTACK1_FIRE,
-	ANIM_KI_ATTACK2_PREPARE,
-	ANIM_KI_ATTACK2_FIRE,
-	ANIM_KI_ATTACK3_PREPARE,
-	ANIM_KI_ATTACK3_FIRE,
-	ANIM_KI_ATTACK4_PREPARE,
-	ANIM_KI_ATTACK4_FIRE,
-	ANIM_KI_ATTACK5_PREPARE,
-	ANIM_KI_ATTACK5_FIRE,
-	ANIM_KI_ATTACK6_PREPARE,
-	ANIM_KI_ATTACK6_FIRE,
-	ANIM_KI_ATTACK1_ALT_PREPARE,
-	ANIM_KI_ATTACK1_ALT_FIRE,
-	ANIM_KI_ATTACK2_ALT_PREPARE,
-	ANIM_KI_ATTACK2_ALT_FIRE,
-	ANIM_KI_ATTACK3_ALT_PREPARE,
-	ANIM_KI_ATTACK3_ALT_FIRE,
-	ANIM_KI_ATTACK4_ALT_PREPARE,
-	ANIM_KI_ATTACK4_ALT_FIRE,
-	ANIM_KI_ATTACK5_ALT_PREPARE,
-	ANIM_KI_ATTACK5_ALT_FIRE,
-	ANIM_KI_ATTACK6_ALT_PREPARE,
-	ANIM_KI_ATTACK6_ALT_FIRE,
+	// SKILLS
+	ANIM_SKILL1_CHARGE,
+	ANIM_SKILL1_FIRE,
+	ANIM_SKILL2_CHARGE,
+	ANIM_SKILL2_FIRE,
+	ANIM_SKILL3_CHARGE,
+	ANIM_SKILL3_FIRE,
+	ANIM_SKILL4_CHARGE,
+	ANIM_SKILL4_FIRE,
+	ANIM_SKILL5_CHARGE,
+	ANIM_SKILL5_FIRE,
+	ANIM_SKILL6_CHARGE,
+	ANIM_SKILL6_FIRE,
+	ANIM_SKILL7_CHARGE,
+	ANIM_SKILL7_FIRE,
+	ANIM_SKILL8_CHARGE,
+	ANIM_SKILL8_FIRE,
+	ANIM_SKILL9_CHARGE,
+	ANIM_SKILL9_FIRE,
+	ANIM_SKILL10_CHARGE,
+	ANIM_SKILL10_FIRE,
+	ANIM_SKILL11_CHARGE,
+	ANIM_SKILL11_FIRE,
+	ANIM_SKILL12_CHARGE,
+	ANIM_SKILL12_FIRE,
+	ANIM_SKILL13_CHARGE,
+	ANIM_SKILL13_FIRE,
+	ANIM_SKILL14_CHARGE,
+	ANIM_SKILL14_FIRE,
+	ANIM_SKILL15_CHARGE,
+	ANIM_SKILL15_FIRE,
+	ANIM_SKILL16_CHARGE,
+	ANIM_SKILL16_FIRE,
+	ANIM_SKILL17_CHARGE,
+	ANIM_SKILL17_FIRE,
+	ANIM_SKILL18_CHARGE,
+	ANIM_SKILL18_FIRE,
+	ANIM_SKILL19_CHARGE,
+	ANIM_SKILL19_FIRE,
+	ANIM_SKILL20_CHARGE,
+	ANIM_SKILL20_FIRE,
+	ANIM_SKILL21_CHARGE,
+	ANIM_SKILL21_FIRE,
+	ANIM_SKILL22_CHARGE,
+	ANIM_SKILL22_FIRE,
+	ANIM_SKILL23_CHARGE,
+	ANIM_SKILL23_FIRE,
+	ANIM_SKILL24_CHARGE,
+	ANIM_SKILL24_FIRE,
+	ANIM_SKILL25_CHARGE,
+	ANIM_SKILL25_FIRE,
+	ANIM_SKILL26_CHARGE,
+	ANIM_SKILL26_FIRE,
+	ANIM_SKILL27_CHARGE,
+	ANIM_SKILL27_FIRE,
+	ANIM_SKILL28_CHARGE,
+	ANIM_SKILL28_FIRE,
+	ANIM_SKILL29_CHARGE,
+	ANIM_SKILL29_FIRE,
+	ANIM_SKILL30_CHARGE,
+	ANIM_SKILL30_FIRE,
+	ANIM_SKILL31_CHARGE,
+	ANIM_SKILL31_FIRE,
+	ANIM_SKILL32_CHARGE,
+	ANIM_SKILL32_FIRE,
+	ANIM_SKILL1_ALT_CHARGE,
+	ANIM_SKILL1_ALT_FIRE,
+	ANIM_SKILL2_ALT_CHARGE,
+	ANIM_SKILL2_ALT_FIRE,
+	ANIM_SKILL3_ALT_CHARGE,
+	ANIM_SKILL3_ALT_FIRE,
+	ANIM_SKILL4_ALT_CHARGE,
+	ANIM_SKILL4_ALT_FIRE,
+	ANIM_SKILL5_ALT_CHARGE,
+	ANIM_SKILL5_ALT_FIRE,
+	ANIM_SKILL6_ALT_CHARGE,
+	ANIM_SKILL6_ALT_FIRE,
+	ANIM_SKILL7_ALT_CHARGE,
+	ANIM_SKILL7_ALT_FIRE,
+	ANIM_SKILL8_ALT_CHARGE,
+	ANIM_SKILL8_ALT_FIRE,
+	ANIM_SKILL9_ALT_CHARGE,
+	ANIM_SKILL9_ALT_FIRE,
+	ANIM_SKILL10_ALT_CHARGE,
+	ANIM_SKILL10_ALT_FIRE,
+	ANIM_SKILL11_ALT_CHARGE,
+	ANIM_SKILL11_ALT_FIRE,
+	ANIM_SKILL12_ALT_CHARGE,
+	ANIM_SKILL12_ALT_FIRE,
+	ANIM_SKILL13_ALT_CHARGE,
+	ANIM_SKILL13_ALT_FIRE,
+	ANIM_SKILL14_ALT_CHARGE,
+	ANIM_SKILL14_ALT_FIRE,
+	ANIM_SKILL15_ALT_CHARGE,
+	ANIM_SKILL15_ALT_FIRE,
+	ANIM_SKILL16_ALT_CHARGE,
+	ANIM_SKILL16_ALT_FIRE,
+	ANIM_SKILL17_ALT_CHARGE,
+	ANIM_SKILL17_ALT_FIRE,
+	ANIM_SKILL18_ALT_CHARGE,
+	ANIM_SKILL18_ALT_FIRE,
+	ANIM_SKILL19_ALT_CHARGE,
+	ANIM_SKILL19_ALT_FIRE,
+	ANIM_SKILL20_ALT_CHARGE,
+	ANIM_SKILL20_ALT_FIRE,
+	ANIM_SKILL21_ALT_CHARGE,
+	ANIM_SKILL21_ALT_FIRE,
+	ANIM_SKILL22_ALT_CHARGE,
+	ANIM_SKILL22_ALT_FIRE,
+	ANIM_SKILL23_ALT_CHARGE,
+	ANIM_SKILL23_ALT_FIRE,
+	ANIM_SKILL24_ALT_CHARGE,
+	ANIM_SKILL24_ALT_FIRE,
+	ANIM_SKILL25_ALT_CHARGE,
+	ANIM_SKILL25_ALT_FIRE,
+	ANIM_SKILL26_ALT_CHARGE,
+	ANIM_SKILL26_ALT_FIRE,
+	ANIM_SKILL27_ALT_CHARGE,
+	ANIM_SKILL27_ALT_FIRE,
+	ANIM_SKILL28_ALT_CHARGE,
+	ANIM_SKILL28_ALT_FIRE,
+	ANIM_SKILL29_ALT_CHARGE,
+	ANIM_SKILL29_ALT_FIRE,
+	ANIM_SKILL30_ALT_CHARGE,
+	ANIM_SKILL30_ALT_FIRE,
+	ANIM_SKILL31_ALT_CHARGE,
+	ANIM_SKILL31_ALT_FIRE,
+	ANIM_SKILL32_ALT_CHARGE,
+	ANIM_SKILL32_ALT_FIRE,
 	// END ADDING
 	MAX_ANIMATIONS,
 	ANIM_BACKWALK,
@@ -668,7 +737,6 @@ typedef enum {
 	TEAM_RED,
 	TEAM_BLUE,
 	TEAM_SPECTATOR,
-
 	TEAM_NUM_TEAMS
 } team_t;
 // Time between location updates
@@ -738,9 +806,6 @@ typedef enum {
 
 void	BG_EvaluateTrajectory( entityState_t *es, const trajectory_t *tr, int atTime, vec3_t result );
 void	BG_EvaluateTrajectoryDelta( entityState_t *es, const trajectory_t *tr, int atTime, vec3_t result );
-// <-- RiO
-float	BG_EvaluateWeaponChargeLevel( charge_t *ch, int atTime );
-// -->
 
 void	BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
 

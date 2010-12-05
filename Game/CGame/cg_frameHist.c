@@ -3,7 +3,7 @@
 typedef struct {
 	qboolean	inPVS;
 	qboolean	hasAura;
-	int			weaponState;
+	int			skillState;
 	int			weapNr;
 } cg_frameHist_t;
 
@@ -23,22 +23,14 @@ void CG_FrameHist_NextFrame( void ) {
 	for( i = 0 ; i < MAX_GENTITIES ; i++) {
 		frHist_lastFrame[i].inPVS = frHist_thisFrame[i].inPVS;
 		frHist_thisFrame[i].inPVS = qfalse;
-
 		frHist_lastFrame[i].hasAura = frHist_thisFrame[i].hasAura;
 		frHist_thisFrame[i].hasAura = qfalse;
-
-		
-		// NOTE: Thes last ones update automatically, so there is no 'Set' function
-		//       associated with them.
-
-		frHist_lastFrame[i].weaponState = frHist_thisFrame[i].weaponState;
+		frHist_lastFrame[i].skillState = frHist_thisFrame[i].skillState;
 		if ( i < MAX_CLIENTS ) {
-			frHist_thisFrame[i].weaponState = cg_entities[i].currentState.weaponstate;
+			frHist_thisFrame[i].skillState = cg_entities[i].currentState.playerSkillState;
 		} else {
-			frHist_thisFrame[i].weaponState = WEAPON_READY;
+			frHist_thisFrame[i].skillState = 0;
 		}
-
-
 		frHist_lastFrame[i].weapNr = frHist_thisFrame[i].weapNr;
 		frHist_thisFrame[i].weapNr = cg_entities[i].currentState.weapon;
 	}
@@ -74,12 +66,12 @@ qboolean CG_FrameHist_HadAura( int num ) {
 
 
 
-int CG_FrameHist_IsWeaponState( int num ) {
-	return frHist_thisFrame[num].weaponState;
+int CG_FrameHist_IsSkillState( int num ) {
+	return frHist_thisFrame[num].skillState;
 }
 
-int CG_FrameHist_WasWeaponState( int num ) {
-	return frHist_lastFrame[num].weaponState;
+int CG_FrameHist_WasSkillState( int num ) {
+	return frHist_lastFrame[num].skillState;
 }
 
 

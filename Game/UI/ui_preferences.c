@@ -254,13 +254,9 @@ static void Preferences_Event( void* ptr, int notification ) {
 		break;
 	}
 }
-
-
-/*
-=================
+/*=================
 Crosshair_Draw
-=================
-*/
+=================*/
 static void Crosshair_Draw( void *self ) {
 	menulist_s	*s;
 	float		*color;

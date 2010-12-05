@@ -89,8 +89,9 @@ typedef struct {
 	int					costs_maximum;
 	int					costs_health;
 	int					costs_fatigue;
-	int					costs_chargeTime;			// Time to charge 1% of the weapon
-	int					costs_chargeReady;			// Percentage at which the weapon can be fired
+	int					costs_fireTime;
+	int					costs_chargeTimeMinimum;
+	int					costs_chargeReady;
 	int					costs_cooldownTime;			// Time the weapon must rest after being fired, before it can be fired again.
 
 	// Damage
@@ -114,6 +115,9 @@ typedef struct {
 	int					damage_extraKnockback;		// Additional knockback to add to an attack's knockback caused directly by damage
 
 	// Physics
+	int					powerBase;
+	float				powerStruggleScale;
+	float				powerChargeScale;
 	float				physics_speed;				// Speed at which the missile initially travels.
 	float				physics_acceleration;		// Acceleration the missile has.
 	float				physics_gravity;			// Percentage of the map's gravity the attack is affected by.
@@ -151,5 +155,6 @@ g_userWeapon_t *G_FindUserWeaponData( int clientNum, int weaponNum );
 g_userWeapon_t *G_FindUserWeaponSpawnData( int clientNum, int weaponNum );
 g_userWeapon_t *G_FindUserAltWeaponData( int clientNum, int weaponNum );
 g_userWeapon_t *G_FindUserAltWeaponSpawnData( int clientNum, int weaponNum );
-void G_LinkUserWeaponData( playerState_t *ps );
+void G_SyncSkill(playerState_t *ps,int index,qboolean alternate);
+void G_SyncAllSkills(playerState_t *ps);
 int *G_FindUserWeaponMask( int clientNum );

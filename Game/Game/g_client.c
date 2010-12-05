@@ -636,8 +636,10 @@ void ClientUserinfoChanged( int clientNum ) {
 		client->pers.localClient = qtrue;
 	}
 
-	// check the item prediction
-	s = Info_ValueForKey( userinfo, "cg_predictItems" );
+	s = Info_ValueForKey(userinfo,"cg_advancedFlight");
+	client->ps.options &= ~advancedFlight;
+	if(!Q_stricmp(s,"1")){client->ps.options |= advancedFlight;}
+	s = Info_ValueForKey(userinfo,"cg_predictItems");
 
 	// set name
 	Q_strncpyz ( oldname, client->pers.netname, sizeof( oldname ) );
@@ -699,7 +701,7 @@ void ClientUserinfoChanged( int clientNum ) {
 		
 		Com_sprintf( filename, sizeof( filename ), "players/%s/%s.phys", modelName, skinName );
 		G_weapPhys_Parse( filename, clientNum );
-
+		G_SyncAllSkills(&client->ps);
 		// Set the weapon mask here, incase we changed models on the fly.
 		// FIXME: Can be removed eventually, when we will disallow on the fly
 		//        switching.
@@ -707,7 +709,7 @@ void ClientUserinfoChanged( int clientNum ) {
 
 		// force a new weapon up if the current one is unavailable now.
 		// Search downward
-		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
+		for ( i = skMaximumSkillPairs; i > 0; i-- ) {
 			// We found a valid weapon
 			if ( client->ps.stats[stSkills] & (1 << i) ) {
 				break;
@@ -1037,17 +1039,9 @@ void ClientSpawn(gentity_t *ent) {
 	VectorCopy (playerMaxs, ent->r.maxs);
 
 	client->ps.clientNum = index;
-
-	// ADDING FOR ZEQ2
 	client->ps.stats[stSkills] = *G_FindUserWeaponMask( index );
-	client->ps.stats[stChargePercentPrimary] = 0;
-	client->ps.stats[stChargePercentSecondary] = 0;
-	// END ADDING
-
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
-
-	// ADDING FOR ZEQ2
 	client->ps.powerLevel[plTierCurrent] = 0;
 	if(g_powerLevel.value > 32767){
 		g_powerLevel.value = 32767;
@@ -1072,7 +1066,7 @@ void ClientSpawn(gentity_t *ent) {
 		trap_LinkEntity (ent);
 
 		// force the best weapon up
-		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
+		for ( i = skMaximumSkillPairs; i > 0; i-- ) {
 			// We found a valid weapon
 			if ( client->ps.stats[stSkills] & (1 << i) ) {
 				break;
@@ -1080,9 +1074,7 @@ void ClientSpawn(gentity_t *ent) {
 		}
 
 		// Either we assign a valid weapon, or we assign 0, which means
-		// no weapon. (baseq3: WP_NONE)
 		client->ps.weapon = i;
-		client->ps.weaponstate = WEAPON_READY;
 	}
 
 	// don't allow full run speed for a bit

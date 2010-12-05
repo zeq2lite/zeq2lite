@@ -579,25 +579,55 @@ CG_DrawStatusBar
 
 ================
 */
+void CG_DrawHUD(playerState_t *ps,int clientNum,int x,int y,qboolean flipped){
+	const char	*powerLevelString;
+	int 		powerLevelOffset;
+	long	 	powerLevelDisplay;
+	float		multiplier;
+	vec4_t	powerColor = {0.0f,0.588f,1.0f,1.0f};
+	vec4_t	dullColor = {0.188f,0.278f,0.345f,1.0f};
+	vec4_t	limitColor = {1.0f,0.1f,0.0f,1.0f};
+	vec4_t	beyondFatigueColor = {0.9f,0.5f,0.0f,1.0f};
+	vec4_t	beyondHealthColor = {0.8f,0.2f,0.2f,1.0f};
+	vec4_t	healthFatigueColor = {1.0f,0.4f,0.2f,1.0f};
+	vec4_t	plFatigueHealthColor = {0.5f,0.16f,0.16f,1.0f};
+	vec4_t	plFatigueColor = {0.4f,0.4f,0.5f,1.0f};
+	vec4_t	clearColor = {0.0f,0.0f,0.0f,0.0f};
+	vec3_t	angles;
+	CG_DrawHorGauge(x+60,y+41,200,16,powerColor,dullColor,ps->powerLevel[plCurrent],ps->powerLevel[plMaximum],qfalse);	
+	CG_DrawRightGauge(x+60,y+41,200,16,plFatigueColor,plFatigueColor,ps->powerLevel[plFatigue],ps->powerLevel[plMaximum]);
+	CG_DrawRightGauge(x+60,y+41,200,16,limitColor,limitColor,ps->powerLevel[plHealth],ps->powerLevel[plMaximum]);
+	CG_DrawDiffGauge(x+60,y+41,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+	CG_DrawDiffGauge(x+60,y+41,200,16,plFatigueHealthColor,plFatigueHealthColor,ps->powerLevel[plFatigue],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
+	CG_DrawDiffGauge(x+60,y+41,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[plCurrent],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
+	if((ps->powerLevel[plCurrent] > ps->powerLevel[plFatigue]) && (ps->powerLevel[plFatigue] > ps->powerLevel[plHealth])){
+		CG_DrawDiffGauge(x+60,449,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+	}
+	CG_DrawPic(x,y,288,72,cgs.media.hudShader);
+	CG_DrawHead(x+6,y+22,50,50,clientNum,angles);
+	if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
+		CG_DrawPic(x+243,y+25,40,44,cgs.media.breakLimitShader);
+	}
+	if(ps->powerLevel[plCurrent] == 9001){
+		powerLevelString = "Over ^3NINE-THOUSAND!!!";
+	}
+	if(powerLevelDisplay >= 1000000){	
+		powerLevelString = va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0);
+	}
+	multiplier = (&cgs.clientinfo[clientNum])->tierConfig[ps->powerLevel[plTierCurrent]].hudMultiplier;
+	if(multiplier <= 0){
+		multiplier = 1.0;
+	}
+	powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
+	powerLevelString = va("%i",powerLevelDisplay);
+	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
+	CG_DrawSmallStringHalfHeight(x+239-powerLevelOffset,y+44,powerLevelString,1.0F);
+}
 static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
-	vec3_t		angles;
-	const char	*powerLevelString;
-	int 		powerLevelOffset;
-	long	 	powerLevelDisplay;
-	float		multiplier;
 	float 		tierLast,tierNext,tier;
 	int 		base;
-	vec4_t		powerColor = {0.0f,0.588f,1.0f,1.0f};
-	vec4_t		dullColor = {0.188f,0.278f,0.345f,1.0f};
-	vec4_t		limitColor = {1.0f,0.1f,0.0f,1.0f};
-	vec4_t		beyondFatigueColor = {0.9f,0.5f,0.0f,1.0f};
-	vec4_t		beyondHealthColor = {0.8f,0.2f,0.2f,1.0f};
-	vec4_t		healthFatigueColor = {1.0f,0.4f,0.2f,1.0f};
-	vec4_t		plFatigueHealthColor = {0.5f,0.16f,0.16f,1.0f};
-	vec4_t		plFatigueColor = {0.4f,0.4f,0.5f,1.0f};
-	vec4_t		clearColor = {0.0f,0.0f,0.0f,0.0f};
 	clientInfo_t *ci;
 	cg_userWeapon_t	*weaponGraphics;
 	tierConfig_cg *activeTier;
@@ -605,164 +635,40 @@ static void CG_DrawStatusBar( void ) {
 	if(cg_drawStatus.integer == 0){return;}
 	cent = &cg_entities[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
-
-
-	VectorClear( angles );
-	angles[YAW] = 180;
-	// -----------------------
-	// Draw That Hud!
-	// -----------------------
 	tier = (float)ps->powerLevel[plTierCurrent];
-	multiplier = ci->tierConfig[ci->tierCurrent].hudMultiplier;
-	if(multiplier <= 0){
-		multiplier = ((tier*tier*tier*tier)+1.0);
+	if(ps->lockedTarget){
+		CG_DrawHUD(ps,ps->clientNum,0,0,qfalse);
+		CG_DrawHUD(ps->lockedPlayer,ps->lockedPlayer->clientNum-1,320,0,qtrue);
 	}
-	powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
-	powerLevelString = va("%i",powerLevelDisplay);
-	CG_DrawHorGauge(60,449,200,16,powerColor,dullColor,ps->powerLevel[plCurrent],ps->powerLevel[plMaximum],qfalse);	
-	CG_DrawRightGauge(60,449,200,16,plFatigueColor,plFatigueColor,ps->powerLevel[plFatigue],ps->powerLevel[plMaximum]);
-	CG_DrawRightGauge(60,449,200,16,limitColor,limitColor,ps->powerLevel[plHealth],ps->powerLevel[plMaximum]);
-	CG_DrawDiffGauge(60,449,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
-	CG_DrawDiffGauge(60,449,200,16,plFatigueHealthColor,plFatigueHealthColor,ps->powerLevel[plFatigue],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
-	CG_DrawDiffGauge(60,449,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[plCurrent],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
-	if((ps->powerLevel[plCurrent] > ps->powerLevel[plFatigue]) && (ps->powerLevel[plFatigue] > ps->powerLevel[plHealth])){
-		CG_DrawDiffGauge(60,449,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
-	}
-	CG_DrawPic(0,408,288,72,cgs.media.hudShader);
-	if(tier){
-		activeTier = &ci->tierConfig[ci->tierCurrent];
-		tierLast = 32767;
-		if(activeTier->sustainCurrent && activeTier->sustainCurrent < tierLast){tierLast = (float)activeTier->sustainCurrent;}
-		if(activeTier->sustainFatigue && activeTier->sustainFatigue < tierLast){tierLast = (float)activeTier->sustainFatigue;}
-		if(activeTier->sustainHealth && activeTier->sustainHealth < tierLast){tierLast = (float)activeTier->sustainHealth;}
-		if(activeTier->sustainMaximum && activeTier->sustainMaximum < tierLast){tierLast = (float)activeTier->sustainMaximum;}
-		if(tierLast < 32767){
-			tierLast = tierLast / (float)ps->powerLevel[plMaximum];
-			CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
+	else{
+		CG_DrawHUD(ps,ps->clientNum,0,408,qfalse);
+		if(tier){
+			activeTier = &ci->tierConfig[ci->tierCurrent];
+			tierLast = 32767;
+			if(activeTier->sustainCurrent && activeTier->sustainCurrent < tierLast){tierLast = (float)activeTier->sustainCurrent;}
+			if(activeTier->sustainFatigue && activeTier->sustainFatigue < tierLast){tierLast = (float)activeTier->sustainFatigue;}
+			if(activeTier->sustainHealth && activeTier->sustainHealth < tierLast){tierLast = (float)activeTier->sustainHealth;}
+			if(activeTier->sustainMaximum && activeTier->sustainMaximum < tierLast){tierLast = (float)activeTier->sustainMaximum;}
+			if(tierLast < 32767){
+				tierLast = tierLast / (float)ps->powerLevel[plMaximum];
+				CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
+			}
 		}
-	}
-	if(tier < ps->powerLevel[plTierTotal]){
-		activeTier = &ci->tierConfig[ci->tierCurrent+1];
-		tierNext = 0;
-		if(activeTier->requirementCurrent && activeTier->requirementCurrent > tierNext){tierNext = (float)activeTier->requirementCurrent;}
-		if(activeTier->requirementFatigue && activeTier->requirementFatigue > tierNext){tierNext = (float)activeTier->requirementFatigue;}
-		if(activeTier->requirementMaximum && activeTier->requirementMaximum > tierNext){tierNext = (float)activeTier->requirementMaximum;}
-		if(activeTier->requirementHealth && activeTier->requirementHealth > tierNext){tierNext = (float)activeTier->requirementHealth;}
-		if(tierNext){
-			tierNext = tierNext / (float)ps->powerLevel[plMaximum];
-			if(tierNext < 1.0){
-				CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
+		if(tier < ps->powerLevel[plTierTotal]){
+			activeTier = &ci->tierConfig[ci->tierCurrent+1];
+			tierNext = 0;
+			if(activeTier->requirementCurrent && activeTier->requirementCurrent > tierNext){tierNext = (float)activeTier->requirementCurrent;}
+			if(activeTier->requirementFatigue && activeTier->requirementFatigue > tierNext){tierNext = (float)activeTier->requirementFatigue;}
+			if(activeTier->requirementMaximum && activeTier->requirementMaximum > tierNext){tierNext = (float)activeTier->requirementMaximum;}
+			if(activeTier->requirementHealth && activeTier->requirementHealth > tierNext){tierNext = (float)activeTier->requirementHealth;}
+			if(tierNext){
+				tierNext = tierNext / (float)ps->powerLevel[plMaximum];
+				if(tierNext < 1.0){
+					CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
+				}
 			}
 		}
 	}
-	if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
-		CG_DrawPic(243,433,40,44,cgs.media.breakLimitShader);
-	}
-	if(ps->powerLevel[plCurrent] == 9001){
-		powerLevelString = "Over ^3NINE-THOUSAND!!!";
-	}
-	if(powerLevelDisplay >= 1000000){	
-		powerLevelString = va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0);
-	}
-	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
-	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,452,powerLevelString,1.0F);
-	CG_DrawHead(6,430,50,50,cg.snap->ps.clientNum,angles);
-}
-
-/*
-================
-CG_DrawStatusLockedBar
-
-================
-*/
-static void CG_DrawStatusLockedBar( void ) {
-	centity_t	*cent;
-	playerState_t	*ps;
-	vec3_t		angles;
-	const char	*powerLevelString;
-	int 		powerLevelOffset;
-	long	 	powerLevelDisplay;
-	float		multiplier;
-	float 		tierLast,tierNext,tier;
-	int 		base;
-	vec4_t		powerColor = {0.0f,0.588f,1.0f,1.0f};
-	vec4_t		dullColor = {0.188f,0.278f,0.345f,1.0f};
-	vec4_t		limitColor = {1.0f,0.1f,0.0f,1.0f};
-	vec4_t		beyondFatigueColor = {0.9f,0.5f,0.0f,1.0f};
-	vec4_t		beyondHealthColor = {0.8f,0.2f,0.2f,1.0f};
-	vec4_t		healthFatigueColor = {1.0f,0.4f,0.2f,1.0f};
-	vec4_t		plFatigueHealthColor = {0.5f,0.16f,0.16f,1.0f};
-	vec4_t		plFatigueColor = {0.4f,0.4f,0.5f,1.0f};
-	vec4_t		clearColor = {0.0f,0.0f,0.0f,0.0f};
-	clientInfo_t *ci;
-	cg_userWeapon_t	*weaponGraphics;
-	tierConfig_cg *activeTier;
-	ci = &cgs.clientinfo[cg.snap->ps.clientNum];
-	if(cg_drawStatus.integer == 0){return;}
-	cent = &cg_entities[cg.snap->ps.clientNum];
-	ps = &cg.snap->ps;
-
-
-	VectorClear( angles );
-	angles[YAW] = 180;
-	// -----------------------
-	// Draw That Hud!
-	// -----------------------
-	tier = (float)ps->powerLevel[plTierCurrent];
-	multiplier = ci->tierConfig[ci->tierCurrent].hudMultiplier;
-	if(multiplier <= 0){
-		multiplier = ((tier*tier*tier*tier)+1.0);
-	}
-	powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
-	powerLevelString = va("%i",powerLevelDisplay);
-	CG_DrawHorGauge(60,49,200,16,powerColor,dullColor,ps->powerLevel[plCurrent],ps->powerLevel[plMaximum],qfalse);	
-	CG_DrawRightGauge(60,49,200,16,plFatigueColor,plFatigueColor,ps->powerLevel[plFatigue],ps->powerLevel[plMaximum]);
-	CG_DrawRightGauge(60,49,200,16,limitColor,limitColor,ps->powerLevel[plHealth],ps->powerLevel[plMaximum]);
-	CG_DrawDiffGauge(60,49,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
-	CG_DrawDiffGauge(60,49,200,16,plFatigueHealthColor,plFatigueHealthColor,ps->powerLevel[plFatigue],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
-	CG_DrawDiffGauge(60,49,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[plCurrent],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
-	if((ps->powerLevel[plCurrent] > ps->powerLevel[plFatigue]) && (ps->powerLevel[plFatigue] > ps->powerLevel[plHealth])){
-		CG_DrawDiffGauge(60,49,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
-	}
-	CG_DrawPic(0,8,288,72,cgs.media.hudShader);
-	if(tier){
-		activeTier = &ci->tierConfig[ci->tierCurrent];
-		tierLast = 32767;
-		if(activeTier->sustainCurrent && activeTier->sustainCurrent < tierLast){tierLast = (float)activeTier->sustainCurrent;}
-		if(activeTier->sustainFatigue && activeTier->sustainFatigue < tierLast){tierLast = (float)activeTier->sustainFatigue;}
-		if(activeTier->sustainHealth && activeTier->sustainHealth < tierLast){tierLast = (float)activeTier->sustainHealth;}
-		if(activeTier->sustainMaximum && activeTier->sustainMaximum < tierLast){tierLast = (float)activeTier->sustainMaximum;}
-		if(tierLast < 32767){
-			tierLast = tierLast / (float)ps->powerLevel[plMaximum];
-			CG_DrawPic((187*tierLast)+60,28,13,38,cgs.media.markerDescendShader);
-		}
-	}
-	if(tier < ps->powerLevel[plTierTotal]){
-		activeTier = &ci->tierConfig[ci->tierCurrent+1];
-		tierNext = 0;
-		if(activeTier->requirementCurrent && activeTier->requirementCurrent > tierNext){tierNext = (float)activeTier->requirementCurrent;}
-		if(activeTier->requirementFatigue && activeTier->requirementFatigue > tierNext){tierNext = (float)activeTier->requirementFatigue;}
-		if(activeTier->requirementMaximum && activeTier->requirementMaximum > tierNext){tierNext = (float)activeTier->requirementMaximum;}
-		if(activeTier->requirementHealth && activeTier->requirementHealth > tierNext){tierNext = (float)activeTier->requirementHealth;}
-		if(tierNext){
-			tierNext = tierNext / (float)ps->powerLevel[plMaximum];
-			if(tierNext < 1.0){
-				CG_DrawPic((187*tierNext)+60,28,13,38,cgs.media.markerAscendShader);
-			}
-		}
-	}
-	if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
-		CG_DrawPic(243,33,40,44,cgs.media.breakLimitShader);
-	}
-	if(ps->powerLevel[plCurrent] == 9001){
-		powerLevelString = "Over ^3NINE-THOUSAND!!!";
-	}
-	if(powerLevelDisplay >= 1000000){	
-		powerLevelString = va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0);
-	}
-	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
-	CG_DrawSmallStringHalfHeight(239-powerLevelOffset,52,powerLevelString,1.0F);
-	CG_DrawHead(6,30,50,50,cg.snap->ps.clientNum,angles);
 }
 
 /*
@@ -1526,6 +1432,8 @@ static void CG_DrawCrosshair(void) {
 	int				i;
 	trace_t			trace;
 	playerState_t	*ps;
+	int 			*skillData;
+	int				skillOffset;
 	vec3_t			muzzle, forward, up;
 	vec3_t			start, end;
 	vec4_t			lockOnEnemyColor	= {1.0f,0.0f,0.0f,1.0f};
@@ -1585,23 +1493,24 @@ static void CG_DrawCrosshair(void) {
 	}
 
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
-
-	if ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] & WPF_READY || cg.snap->ps.currentSkill[WPSTAT_ALT_BITFLAGS] & WPF_READY) {
+	skillData = cg.snap->ps.skills[cg.snap->ps.weapon];
+	skillOffset = cg.snap->ps.skillState == skillAltCharging ? skAttributeOffset : 0;;
+	if(skillData[skillOffset+skChargeTime] >= skillData[skillOffset+skChargeTimeMinimum]){
 		trap_R_SetColor( chargeColor );
-	} else if (cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS || ps->clientLockedTarget > 0) {
-		if ( cgs.clientinfo[cg.crosshairClientNum].team == cg.snap->ps.persistant[PERS_TEAM] && cgs.clientinfo[cg.crosshairClientNum].team != TEAM_FREE  ) {
+	}
+	else if (cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS || ps->lockedTarget > 0) {
+		if( cgs.clientinfo[cg.crosshairClientNum].team == cg.snap->ps.persistant[PERS_TEAM] && cgs.clientinfo[cg.crosshairClientNum].team != TEAM_FREE  ) {
 			trap_R_SetColor( lockOnAllyColor );
-		} else {
+		}
+		else{
 			trap_R_SetColor( lockOnEnemyColor );
 		}
-	} else {
+	}
+	else{
 		trap_R_SetColor( NULL );
 	}
-
 	CG_DrawPic( x - 0.5f * w, y - 0.5f * h, w, h, hShader );
-
 	trap_R_SetColor( NULL );
-
 	CG_DrawCrosshairChargeBars( x, y );	
 }
 
@@ -1692,80 +1601,7 @@ static void CG_DrawCrosshairNames( void ) {
 CG_DrawCrosshairChargeBars
 ==========================
 */
-static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {
-	float		w, h;
-	float		x_pri, x_sec, y;
-	float		w_bar;
-	float		h_bar;
-	const char	*valueString;
-
-	vec4_t	color_charging = {1.0f, 1.0f, 1.0f, 0.5f};
-	vec4_t	color_empty = {0.5f, 0.5f, 0.5f, 0.25f};
-	vec4_t	color_ready = {0.25f, 0.75f, 1.0f, 0.5f};
-	int		value;
-
-	// No bars possible at all if spectating, or have them turned off by cvar.
-	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR || !cg_crosshairBars.value) {
-		return;
-	}
-
-	w_bar = 32;
-	h_bar = 64;
-
-	h = 0.5f * h_bar;
-	w = 0.5f * (cg_crosshairSize.value * 8 + 8) + cg_crosshairMargin.value;
-	x_pri = x_cross - w - w_bar;
-	x_sec = x_cross + w;
-	y = y_cross - h; 
-
-	// If the primary weapon can be charged, and atleast 1% is charged, draw the bar.
-	if ( ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] && WPF_NEEDSCHARGE) && (cg.snap->ps.stats[stChargePercentPrimary] > 0 ) ) {
-
-		// draw bar
-		value = cg.snap->ps.stats[stChargePercentPrimary];
-
-		// If the primary weapon is charged far enough to be fire-able,
-		// display the ready glow.
-
-		if ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] & WPF_READY ) {
-			CG_DrawVertGauge( x_pri + 14, y + 15, 4, 34, color_ready, color_empty, value, 100, qfalse );	
-		}
-		else {
-			CG_DrawVertGauge( x_pri + 14, y + 15, 4, 34, color_charging, color_empty, value, 100, qfalse );
-		}
-
-		// Print the percentage of charge above the bar.
-		valueString = va("%i%%",value);
-		CG_DrawSmallStringHalfHeight( x_pri, y, valueString, 0.5F);
-	}
-
-	// If the secondary weapon exists, display the charge bar
-	// depending on whether it is chargeable or not.
-	if ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT ) {
-
-		// If the secondary weapon can be charged, and atleast 1% is charged, draw the bar.
-		if ( ( cg.snap->ps.currentSkill[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) && (cg.snap->ps.stats[stChargePercentSecondary] > 0 ) ) {
-
-			// draw bar
-			value = cg.snap->ps.stats[stChargePercentSecondary];
-
-			// If the secondary weapon is charged far enough to be fire-able,
-			// display the ready glow.
-
-			if ( cg.snap->ps.currentSkill[WPSTAT_ALT_BITFLAGS] & WPF_READY ) {
-				CG_DrawVertGauge( x_sec + 14, y + 15, 4, 34, color_ready, color_empty, value, 100, qfalse );
-			}
-			else {
-				CG_DrawVertGauge( x_sec + 14, y + 15, 4, 34, color_charging, color_empty, value, 100, qfalse );
-			}
-
-			// Print the percentage of charge above the bar.
-			valueString = va( "%i%%", value);
-			CG_DrawSmallStringHalfHeight( x_sec, y, valueString, 0.5F);
-		}
-	}
-}
-
+static void CG_DrawCrosshairChargeBars( float x_cross, float y_cross ) {}
 
 //==============================================================================
 
@@ -2381,22 +2217,11 @@ static void CG_Draw2D( void ) {
 			clientInfo_t *ci;
 			ci = &cgs.clientinfo[cg.snap->ps.clientNum];
 			ps = &cg.snap->ps;
-			
-			if (ps->clientLockedTarget) 
-			{
-				//Com_Printf("lockedon\n");
-				CG_DrawStatusLockedBar();
-			}
-			else 
-			{
-				//Com_Printf("not lockedon\n");
-				CG_DrawStatusBar();
-				CG_DrawAmmoWarning();  
-				CG_DrawCrosshair();
-				CG_DrawCrosshairNames();
-			}
-		// make enabled by sensing
-		//CG_DrawRadar();
+			CG_DrawStatusBar();
+			CG_DrawAmmoWarning();  
+			CG_DrawCrosshair();
+			CG_DrawCrosshairNames();
+			CG_DrawRadar();
 			if(!(cg.snap->ps.bitFlags & usingMelee)){
 				CG_DrawWeaponSelect();
 			}

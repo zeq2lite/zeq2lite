@@ -462,8 +462,8 @@ static qboolean PSys_UpdateOrientation( PSys_System_t *system, PSys_Orientation_
 			if ( CG_FrameHist_IsWeaponNr( orient->entity->currentState.number ) != orient->weaponNr ) {
 				return qfalse;
 			}
-			// If we switched weaponstate (aka stopped charging or stopped firing)
-			if ( CG_FrameHist_IsWeaponState( orient->entity->currentState.number ) != orient->weaponState ) {
+			// If we switched skillState (aka stopped charging or stopped firing)
+			if ( CG_FrameHist_IsSkillState( orient->entity->currentState.number ) != orient->skillState ) {
 				return qfalse;
 			}
 		}
@@ -1450,7 +1450,7 @@ void PSys_SpawnCachedSystem( char* systemName, vec3_t origin, vec3_t *axis,
 			if ( emitter->orientation.entity && weaponLink ) {
 				emitter->orientation.linkWeapon = qtrue;
 				emitter->orientation.weaponNr = cent->currentState.weapon;
-				emitter->orientation.weaponState = cent->currentState.weaponstate;
+				emitter->orientation.skillState = cent->currentState.playerSkillState;
 			}
 
 			break;

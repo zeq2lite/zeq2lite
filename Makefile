@@ -860,8 +860,14 @@ endif #SunOS
 
 TARGETS =
 
-ifndef FULLBINEXT
-  FULLBINEXT=.$(ARCH)$(BINEXT)
+ifeq ($(PLATFORM),mingw32)
+    ifndef FULLBINEXT
+		FULLBINEXT=$(BINEXT)
+	endif
+  else
+	ifndef FULLBINEXT
+		FULLBINEXT=.$(ARCH)$(BINEXT)
+	endif
 endif
 
 ifndef SHLIBNAME

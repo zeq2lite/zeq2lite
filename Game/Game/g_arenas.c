@@ -103,12 +103,6 @@ static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity
 	body->s.groundEntityNum = ENTITYNUM_WORLD;
 	body->s.legsAnim = ANIM_IDLE;
 	body->s.torsoAnim = ANIM_IDLE;
-//	if( body->s.weapon == WP_NONE ) {
-//		body->s.weapon = WP_MACHINEGUN;
-//	}
-//	if( body->s.weapon == WP_GAUNTLET) {
-//		body->s.torsoAnim = ANIM_IDLE2;
-//	}
 	body->s.event = 0;
 	body->r.svFlags = ent->r.svFlags;
 	VectorCopy (ent->r.mins, body->r.mins);
@@ -142,20 +136,14 @@ static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity
 
 static void CelebrateStop( gentity_t *player ) {
 	int		anim;
-
-//	if( player->s.weapon == WP_GAUNTLET) {
-//		anim = ANIM_IDLE2;
-//	}
-//	else {
-		anim = ANIM_IDLE;
-//	}
+	anim = ANIM_IDLE;
 	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
 }
 
 
 #define	TIMER_GESTURE	(34*66+50)
 static void CelebrateStart( gentity_t *player ) {
-	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) ;//| ANIM_GESTURE;
+	player->s.torsoAnim = ( ( player->s.torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) ;//| ANIM_IDLE_LOCKED;
 	player->nextthink = level.time + TIMER_GESTURE;
 	player->think = CelebrateStop;
 

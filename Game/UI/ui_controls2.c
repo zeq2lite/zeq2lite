@@ -560,54 +560,50 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 
 	case UI_ANIM_WEAPON1:
-		s_controls.playerLegs = ANIM_KI_ATTACK1_PREPARE;
-		s_controls.playerTorso = ANIM_KI_ATTACK1_PREPARE;
+		s_controls.playerLegs = ANIM_SKILL1_CHARGE;
+		s_controls.playerTorso = ANIM_SKILL1_CHARGE;
 		break;
 
 	case UI_ANIM_WEAPON2:
-		s_controls.playerLegs = ANIM_KI_ATTACK2_PREPARE;
-		s_controls.playerTorso = ANIM_KI_ATTACK2_PREPARE;
+		s_controls.playerLegs = ANIM_SKILL2_CHARGE;
+		s_controls.playerTorso = ANIM_SKILL2_CHARGE;
 		break;
 
 	case UI_ANIM_WEAPON3:
-		s_controls.playerLegs = ANIM_KI_ATTACK3_PREPARE;
-		s_controls.playerTorso = ANIM_KI_ATTACK3_PREPARE;
+		s_controls.playerLegs = ANIM_SKILL3_CHARGE;
+		s_controls.playerTorso = ANIM_SKILL3_CHARGE;
 		break;
 
 	case UI_ANIM_WEAPON4:
-		s_controls.playerLegs = ANIM_KI_ATTACK4_PREPARE;
-		s_controls.playerTorso = ANIM_KI_ATTACK4_PREPARE;
+		s_controls.playerLegs = ANIM_SKILL4_CHARGE;
+		s_controls.playerTorso = ANIM_SKILL4_CHARGE;
 		break;
 
 	case UI_ANIM_WEAPON5:
-		s_controls.playerLegs = ANIM_KI_ATTACK5_PREPARE;
-		s_controls.playerTorso = ANIM_KI_ATTACK5_PREPARE;
+		s_controls.playerLegs = ANIM_SKILL5_CHARGE;
+		s_controls.playerTorso = ANIM_SKILL5_CHARGE;
 		break;
 
 	case UI_ANIM_WEAPON6:
-		s_controls.playerLegs = ANIM_KI_ATTACK6_PREPARE;
-		s_controls.playerTorso = ANIM_KI_ATTACK6_PREPARE;
+		s_controls.playerLegs = ANIM_SKILL6_CHARGE;
+		s_controls.playerTorso = ANIM_SKILL6_CHARGE;
 		break;
 
 	case UI_ANIM_WEAPON7:
-//		s_controls.playerWeapon = WP_RAILGUN;
 		break;
 
 	case UI_ANIM_WEAPON8:
-//		s_controls.playerWeapon = WP_PLASMAGUN;
 		break;
 
 	case UI_ANIM_WEAPON9:
-//		s_controls.playerWeapon = WP_BFG;
 		break;
 
 	case UI_ANIM_WEAPON10:
-//		s_controls.playerWeapon = WP_GRAPPLING_HOOK;
 		break;
 
 	case UI_ANIM_ATTACK:
-		s_controls.playerLegs = ANIM_KI_ATTACK1_FIRE;
-		s_controls.playerTorso = ANIM_KI_ATTACK1_FIRE;
+		s_controls.playerLegs = ANIM_SKILL1_FIRE;
+		s_controls.playerTorso = ANIM_SKILL1_FIRE;
 		break;
 
 	case UI_ANIM_KI_CHARGE:
@@ -663,7 +659,6 @@ static void Controls_UpdateModel( int anim ) {
 	case UI_ANIM_DIE:
 		s_controls.playerLegs = ANIM_DEATH_GROUND;
 		s_controls.playerTorso = ANIM_DEATH_GROUND;
-		s_controls.playerWeapon = WP_NONE;
 		break;
 
 	case UI_ANIM_CHAT:
@@ -674,7 +669,7 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 	}
 
-	UI_PlayerInfo_SetInfo( &s_controls.playerinfo, s_controls.playerLegs, s_controls.playerTorso, s_controls.playerViewangles, s_controls.playerMoveangles, s_controls.playerWeapon, s_controls.playerChat );
+	UI_PlayerInfo_SetInfo( &s_controls.playerinfo, s_controls.playerLegs, s_controls.playerTorso, s_controls.playerViewangles, s_controls.playerMoveangles, s_controls.playerChat );
 }
 
 

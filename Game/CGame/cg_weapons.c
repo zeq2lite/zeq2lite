@@ -278,71 +278,37 @@ Used for both the primary and the alternate fire of weapons.
 Used case depends on input.
 =============
 */
-static void CG_AddPlayerWeaponCharge( refEntity_t *parent, cg_userWeapon_t *weaponGraphics,
-									  refEntity_t *charge, float chargeLvl ) {
-	float				chargeScale;
-	float				chargeDlightScale;
-	
-	// Obtain the scale the charge must have.
-	if (weaponGraphics->chargeGrowth) {
-		// above the end, we use the highest form
-		if (weaponGraphics->chargeEndPct <= chargeLvl) {
-			chargeScale = weaponGraphics->chargeEndsize;
-			chargeDlightScale = weaponGraphics->chargeDlightEndRadius;
-		} else {
-			// inbetween start and end, we work out the value
-			float	PctRange;
-			float	PctVal;
-			float	SizeRange;
-			float	SizeVal;
-					
-			PctRange = weaponGraphics->chargeEndPct - weaponGraphics->chargeStartPct;
-			PctVal = chargeLvl - weaponGraphics->chargeStartPct;
-
-			SizeRange = weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize;
-			SizeVal = (PctVal / PctRange) * SizeRange;
-			chargeScale = SizeVal + weaponGraphics->chargeStartsize;
-
-			SizeRange = weaponGraphics->chargeDlightEndRadius - weaponGraphics->chargeDlightStartRadius;
-			SizeVal = (PctVal / PctRange) * SizeRange;
-			chargeDlightScale = SizeVal + weaponGraphics->chargeDlightStartRadius;
-		}
-	} else {
+static void CG_AddPlayerWeaponCharge(refEntity_t *parent,cg_userWeapon_t *weaponGraphics,refEntity_t *charge,float chargeLvl){
+	float chargeScale;
+	float chargeDlightScale;
+	if(weaponGraphics->chargeGrowth){
+		chargeScale = ((weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize) * chargeLvl) + weaponGraphics->chargeStartsize;
+	}
+	else{
 		chargeScale = weaponGraphics->chargeStartsize;
 		chargeDlightScale = weaponGraphics->chargeDlightStartRadius;
 	}
-
-	// Add the charge model or sprite
-
-	VectorCopy( parent->lightingOrigin, charge->lightingOrigin );
+	VectorCopy(parent->lightingOrigin,charge->lightingOrigin);
 	charge->shadowPlane = parent->shadowPlane;
 	charge->renderfx = parent->renderfx;
-	if ( ! (weaponGraphics->chargeModel && weaponGraphics->chargeSkin) ) {
+	if(!(weaponGraphics->chargeModel && weaponGraphics->chargeSkin)){
 		charge->reType = RT_SPRITE;
 		charge->radius = 4 * chargeScale;
 		charge->rotation = 0;
 		charge->customShader = weaponGraphics->chargeShader;
-	} else {
+	}
+	else {
 		charge->reType = RT_MODEL;
 		charge->hModel = weaponGraphics->chargeModel;
 		charge->customSkin = weaponGraphics->chargeSkin;
-	
 		charge->nonNormalizedAxes = qtrue;
 		VectorScale(charge->axis[0], chargeScale, charge->axis[0]);
 		VectorScale(charge->axis[1], chargeScale, charge->axis[1]);
 		VectorScale(charge->axis[2], chargeScale, charge->axis[2]);
 	}
-
-	trap_R_AddRefEntityToScene( charge );
-
-
-	// add dynamic light
-	if ( chargeDlightScale ) {
-		trap_R_AddLightToScene( charge->origin,
-								100 * chargeDlightScale,
-								weaponGraphics->chargeDlightColor[0],
-								weaponGraphics->chargeDlightColor[1],
-								weaponGraphics->chargeDlightColor[2] );
+	trap_R_AddRefEntityToScene(charge);
+	if(chargeDlightScale){
+		trap_R_AddLightToScene(charge->origin,100 * chargeDlightScale,weaponGraphics->chargeDlightColor[0],weaponGraphics->chargeDlightColor[1],weaponGraphics->chargeDlightColor[2]);
 	}
 }
 
@@ -358,11 +324,10 @@ static void CG_AddPlayerWeaponChargeMD4( refExtEntity_t *parent, cg_userWeapon_t
 									  refEntity_t *charge, float chargeLvl ) {
 	float				chargeScale;
 	float				chargeDlightScale;
-	
 	// Obtain the scale the charge must have.
 	if (weaponGraphics->chargeGrowth) {
 		// above the end, we use the highest form
-		if (weaponGraphics->chargeEndPct <= chargeLvl) {
+		if (weaponGraphics->chargeTimeEnd <= chargeLvl) {
 			chargeScale = weaponGraphics->chargeEndsize;
 			chargeDlightScale = weaponGraphics->chargeDlightEndRadius;
 		} else {
@@ -372,8 +337,8 @@ static void CG_AddPlayerWeaponChargeMD4( refExtEntity_t *parent, cg_userWeapon_t
 			float	SizeRange;
 			float	SizeVal;
 					
-			PctRange = weaponGraphics->chargeEndPct - weaponGraphics->chargeStartPct;
-			PctVal = chargeLvl - weaponGraphics->chargeStartPct;
+			PctRange = weaponGraphics->chargeTimeEnd - weaponGraphics->chargeTimeStart;
+			PctVal = chargeLvl - weaponGraphics->chargeTimeStart;
 
 			SizeRange = weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize;
 			SizeVal = (PctVal / PctRange) * SizeRange;
@@ -564,302 +529,135 @@ static void CG_AddPlayerWeaponFlashMD4( refExtEntity_t *parent, cg_userWeapon_t 
 								weaponGraphics->flashDlightColor[2] );
 	}
 }
-
-/*
-====================
+/*====================
 CG_AddPlayerWeapon
-====================
-*/
-void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team ) {
+====================*/
+void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team ){
 	cg_userWeapon_t		*weaponGraphics;
 	orientation_t		orient;
 	refEntity_t			refEnt;
 	entityState_t		*ent;
-	float				lerp;
-	float				backLerp;
-	int					newLerp;
-	weaponstate_t		weaponState;
-
-	// Set some shorthands
+	int					skillState;
+	float 				percent;
 	ent = &cent->currentState;
-	weaponState = ent->weaponstate;
-	
-	// Any of the charging states
-	if ( weaponState == WEAPON_CHARGING || weaponState == WEAPON_ALTCHARGING ) {
-
-		// Set properties depending on primary or alternate fire
-		if ( weaponState == WEAPON_CHARGING ) {
-			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon);
-
-			newLerp = ent->charge1.chBase;
-			backLerp = cent->lerpPrim;
-			if ( newLerp < backLerp ) {
-				cent->lerpPrim = newLerp;
-			} else {
-				cent->lerpPrim = (cent->lerpPrim + newLerp ) / 2.0f;
+	skillState = ent->playerSkillState;
+	if(skillState == skillCharging || skillState == skillAltCharging){
+		int skill = skillState == skillCharging ? ent->weapon : ent->weapon +skAltOffset;
+		weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum,skill);
+		cent->currentChargeTime += cg.time-cent->lastChargeCheck;
+		if(cent->currentChargeTime > weaponGraphics->chargeTimeStart){
+			memset(&refEnt,0,sizeof(refEnt));
+			if(VectorLength(weaponGraphics->chargeSpin) != 0.0f){
+				vec3_t tempAngles;
+				vec3_t lerpAxis[3], tempAxis[3];
+				VectorCopy( orient.origin, refEnt.origin );
+				VectorSet( tempAngles, cg.time / 4.0f, cg.time / 4.0f, cg.time / 4.0f );
+				VectorPieceWiseMultiply( tempAngles, weaponGraphics->chargeSpin, tempAngles );
+				AnglesToAxis( tempAngles, lerpAxis );
+				AxisClear( refEnt.axis );
+				MatrixMultiply( refEnt.axis, lerpAxis, tempAxis );
+				MatrixMultiply( tempAxis, orient.axis, refEnt.axis );					
 			}
-
-			lerp = cent->lerpPrim;
-			cent->lerpSec = 0;
-		} else {
-			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon + ALTWEAPON_OFFSET );
-
-			newLerp = ent->charge2.chBase;
-			backLerp = cent->lerpSec;
-			if ( newLerp < backLerp ) {
-				cent->lerpSec = newLerp;
-			} else {
-				cent->lerpSec = (cent->lerpSec + newLerp ) / 2.0f;
+			else{
+				VectorCopy(orient.origin, refEnt.origin);
+				AxisCopy(orient.axis, refEnt.axis);
 			}
-
-			lerp = cent->lerpSec;
-			cent->lerpPrim = 0;
+			CG_PositionEntityOnTag(&refEnt, parent, parent->hModel, weaponGraphics->chargeTag[0]);
+			percent = (float)(cent->currentChargeTime - weaponGraphics->chargeTimeStart) / (float)(weaponGraphics->chargeTimeEnd - weaponGraphics->chargeTimeStart);
+			if(percent > 1.0){percent = 1.0;}
+			CG_AddPlayerWeaponCharge(parent, weaponGraphics, &refEnt,percent);
 		}
-
-		// Only bother with anything else if the charge in question is larger than the minimum used for display
-		if ( lerp > weaponGraphics->chargeStartPct ) {			
-
-			// Locate a tag wherever on the model's parts. Don't process further if the tag is not found
-			if (CG_GetTagOrientationFromPlayerEntity( cent, weaponGraphics->chargeTag[0], &orient )) {
-				memset( &refEnt, 0, sizeof(refEnt));
-
-				if ( VectorLength(weaponGraphics->chargeSpin) != 0.0f ) {
-					vec3_t	tempAngles;
-					vec3_t	lerpAxis[3], tempAxis[3];
-					
-					VectorCopy( orient.origin, refEnt.origin );
-					VectorSet( tempAngles, cg.time / 4.0f, cg.time / 4.0f, cg.time / 4.0f );
-					VectorPieceWiseMultiply( tempAngles, weaponGraphics->chargeSpin, tempAngles );
-					AnglesToAxis( tempAngles, lerpAxis );
-
-					AxisClear( refEnt.axis );
-					MatrixMultiply( refEnt.axis, lerpAxis, tempAxis );
-					MatrixMultiply( tempAxis, orient.axis, refEnt.axis );					
-
-				} else {
-
-					VectorCopy( orient.origin, refEnt.origin );
-					AxisCopy( orient.axis, refEnt.axis );
-				}
-
-				CG_AddPlayerWeaponCharge( parent, weaponGraphics, &refEnt, lerp );
-			}
-		}
-		
-		if ( weaponGraphics->chargeLoopSound ) {
+		if(weaponGraphics->chargeLoopSound){
 			trap_S_AddLoopingSound( ent->number, cent->lerpOrigin, vec3_origin, weaponGraphics->chargeLoopSound );
 		}
-
-		CG_AddPlayerWeaponChargeVoices( cent, weaponGraphics, lerp, backLerp );
-
-		// Set up any charging particle systems
-		if ( weaponGraphics->chargeParticleSystem[0] ) {
-			// If the entity wasn't previously in the PVS, if the weapon nr switched, or if the weaponstate switched
-			// we need to start a new system
-			if ( !CG_FrameHist_WasInPVS(ent->number) ||
+		CG_AddPlayerWeaponChargeVoices( cent, weaponGraphics,1.0,1.0);
+		if(weaponGraphics->chargeParticleSystem[0]){
+			if(!CG_FrameHist_WasInPVS(ent->number) ||
 				 CG_FrameHist_IsWeaponNr(ent->number) != CG_FrameHist_WasWeaponNr(ent->number) ||
-				 CG_FrameHist_IsWeaponState(ent->number) != CG_FrameHist_WasWeaponState(ent->number) ) {
+				 CG_FrameHist_IsSkillState(ent->number) != CG_FrameHist_WasSkillState(ent->number) ) {
 				PSys_SpawnCachedSystem( weaponGraphics->chargeParticleSystem, cent->lerpOrigin, NULL, cent, weaponGraphics->chargeTag[0], qfalse, qtrue );
 			}
 		}		
-
-	// Any of the firing or guiding states
-	} else if ( weaponState == WEAPON_GUIDING || weaponState == WEAPON_ALTGUIDING || weaponState == WEAPON_FIRING || weaponState == WEAPON_ALTFIRING ) { 
-
-		// Set properties depending on primary or alternate fire
-		if ( weaponState == WEAPON_GUIDING || weaponState == WEAPON_FIRING ) {
-			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon );
-		} else {
-			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon + ALTWEAPON_OFFSET );
-		}
-
-		// Locate a tag wherever on the model's parts. Don't process further if the tag is not found
-		if (CG_GetTagOrientationFromPlayerEntity( cent, weaponGraphics->chargeTag[0], &orient )) {
-			memset( &refEnt, 0, sizeof(refEnt));
-
-			VectorCopy( orient.origin, refEnt.origin );
-			AxisCopy( orient.axis, refEnt.axis );
-			
-			CG_AddPlayerWeaponFlash( parent, weaponGraphics, &refEnt, ent->attackPowerTotal, ent->attackPowerCurrent );
-		}
-
-		if ( weaponGraphics->firingSound ) {
-			trap_S_AddLoopingSound( ent->number, cent->lerpOrigin, vec3_origin, weaponGraphics->firingSound );
-		}
-
-		// Set up any firing particle systems
-		if ( weaponGraphics->firingParticleSystem[0] ) {
-			// If the entity wasn't previously in the PVS, if the weapon nr switched, or if the weaponstate switched
-			// we need to start a new system
-			if ( !CG_FrameHist_WasInPVS(ent->number) ||
-				 CG_FrameHist_IsWeaponNr(ent->number) != CG_FrameHist_WasWeaponNr(ent->number) ||
-				 CG_FrameHist_IsWeaponState(ent->number) != CG_FrameHist_WasWeaponState(ent->number) ) {
-				PSys_SpawnCachedSystem( weaponGraphics->firingParticleSystem, cent->lerpOrigin, NULL, cent, weaponGraphics->chargeTag[0], qfalse, qtrue );
-			}
-		}
 	}
+	else{
+		cent->currentChargeTime = 0;
+	}
+	cent->lastChargeCheck = cg.time;
 }
-
-/*
-====================
+/*====================
 CG_AddPlayerWeaponMD4
-====================
-*/
+====================*/
 void CG_AddPlayerWeaponMD4( refExtEntity_t *parent, playerState_t *ps, centity_t *cent, int team ) {
 	cg_userWeapon_t		*weaponGraphics;
 	orientation_t		orient;
 	refEntity_t			refEnt;
 	entityState_t		*ent;
-	float				lerp;
-	float				backLerp;
-	int					newLerp;
-	weaponstate_t		weaponState;
-
+	int					skillState;
 	// Set some shorthands
 	ent = &cent->currentState;
-	weaponState = ent->weaponstate;
-	
-	// Any of the charging states
-	if ( weaponState == WEAPON_CHARGING || weaponState == WEAPON_ALTCHARGING ) {
-
-		// Set properties depending on primary or alternate fire
-		if ( weaponState == WEAPON_CHARGING ) {
-			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon);
-
-			newLerp = ent->charge1.chBase;
-			backLerp = cent->lerpPrim;
-			if ( newLerp < backLerp ) {
-				cent->lerpPrim = newLerp;
-			} else {
-				cent->lerpPrim = (cent->lerpPrim + newLerp ) / 2.0f;
-			}
-
-			lerp = cent->lerpPrim;
-			cent->lerpSec = 0;
-		} else {
-			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon + ALTWEAPON_OFFSET );
-
-			newLerp = ent->charge2.chBase;
-			backLerp = cent->lerpSec;
-			if ( newLerp < backLerp ) {
-				cent->lerpSec = newLerp;
-			} else {
-				cent->lerpSec = (cent->lerpSec + newLerp ) / 2.0f;
-			}
-
-			lerp = cent->lerpSec;
-			cent->lerpPrim = 0;
-		}
-
-		// Only bother with anything else if the charge in question is larger than the minimum used for display
-		if ( lerp > weaponGraphics->chargeStartPct ) {			
-
-			memset( &refEnt, 0, sizeof(refEnt));
-			if ( VectorLength(weaponGraphics->chargeSpin) != 0.0f ) {
-				vec3_t	tempAngles;
-				vec3_t	lerpAxis[3], tempAxis[3];
-				
+	skillState = ent->playerSkillState;
+	// Any of the charging state
+	if(skillState == skillCharging || skillState == skillAltCharging){
+		int skill = skillState == skillCharging ? ent->weapon : ent->weapon +skAltOffset;
+		weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum,skill);
+		cent->currentChargeTime += cg.time-cent->lastChargeCheck;
+		cent->lastChargeCheck = cg.time;
+		if(cent->currentChargeTime > weaponGraphics->chargeTimeStart){
+			memset(&refEnt,0,sizeof(refEnt));
+			if(VectorLength(weaponGraphics->chargeSpin) != 0.0f){
+				vec3_t tempAngles;
+				vec3_t lerpAxis[3], tempAxis[3];
 				VectorCopy( orient.origin, refEnt.origin );
 				VectorSet( tempAngles, cg.time / 4.0f, cg.time / 4.0f, cg.time / 4.0f );
 				VectorPieceWiseMultiply( tempAngles, weaponGraphics->chargeSpin, tempAngles );
 				AnglesToAxis( tempAngles, lerpAxis );
-
 				AxisClear( refEnt.axis );
 				MatrixMultiply( refEnt.axis, lerpAxis, tempAxis );
 				MatrixMultiply( tempAxis, orient.axis, refEnt.axis );					
-
-			} else {
-
-				VectorCopy( orient.origin, refEnt.origin );
-				AxisCopy( orient.axis, refEnt.axis );
 			}
-
-			CG_PositionEntityOnTagMD4( &refEnt, parent, parent->hModel, weaponGraphics->chargeTag[0]);
-			CG_AddPlayerWeaponChargeMD4( parent, weaponGraphics, &refEnt, lerp );
-/*
-			// Locate a tag wherever on the model's parts. Don't process further if the tag is not found
-			if (CG_GetTagOrientationFromPlayerEntity( cent, weaponGraphics->chargeTag[0], &orient )) {
-				memset( &refEnt, 0, sizeof(refEnt));
-
-				if ( VectorLength(weaponGraphics->chargeSpin) != 0.0f ) {
-					vec3_t	tempAngles;
-					vec3_t	lerpAxis[3], tempAxis[3];
-					
-					VectorCopy( orient.origin, refEnt.origin );
-					VectorSet( tempAngles, cg.time / 4.0f, cg.time / 4.0f, cg.time / 4.0f );
-					VectorPieceWiseMultiply( tempAngles, weaponGraphics->chargeSpin, tempAngles );
-					AnglesToAxis( tempAngles, lerpAxis );
-
-					AxisClear( refEnt.axis );
-					MatrixMultiply( refEnt.axis, lerpAxis, tempAxis );
-					MatrixMultiply( tempAxis, orient.axis, refEnt.axis );					
-
-				} else {
-
-					VectorCopy( orient.origin, refEnt.origin );
-					AxisCopy( orient.axis, refEnt.axis );
-				}
-
-				CG_AddPlayerWeaponChargeMD4( parent, weaponGraphics, &refEnt, lerp );
+			else{
+				VectorCopy(orient.origin, refEnt.origin);
+				AxisCopy(orient.axis, refEnt.axis);
 			}
-*/
+			CG_PositionEntityOnTagMD4(&refEnt, parent, parent->hModel, weaponGraphics->chargeTag[0]);
+			CG_AddPlayerWeaponChargeMD4(parent, weaponGraphics, &refEnt,1.0);
 		}
-		
 		if ( weaponGraphics->chargeLoopSound ) {
 			trap_S_AddLoopingSound( ent->number, cent->lerpOrigin, vec3_origin, weaponGraphics->chargeLoopSound );
 		}
-
-		CG_AddPlayerWeaponChargeVoices( cent, weaponGraphics, lerp, backLerp );
-
-		// Set up any charging particle systems
+		CG_AddPlayerWeaponChargeVoices( cent, weaponGraphics,1.0,1.0);
 		if ( weaponGraphics->chargeParticleSystem[0] ) {
-			// If the entity wasn't previously in the PVS, if the weapon nr switched, or if the weaponstate switched
-			// we need to start a new system
 			if ( !CG_FrameHist_WasInPVS(ent->number) ||
 				 CG_FrameHist_IsWeaponNr(ent->number) != CG_FrameHist_WasWeaponNr(ent->number) ||
-				 CG_FrameHist_IsWeaponState(ent->number) != CG_FrameHist_WasWeaponState(ent->number) ) {
+				 CG_FrameHist_IsSkillState(ent->number) != CG_FrameHist_WasSkillState(ent->number) ) {
 				PSys_SpawnCachedSystem( weaponGraphics->chargeParticleSystem, cent->lerpOrigin, NULL, cent, weaponGraphics->chargeTag[0], qfalse, qtrue );
 			}
 		}		
 
 	// Any of the firing or guiding states
-	} else if ( weaponState == WEAPON_GUIDING || weaponState == WEAPON_ALTGUIDING || weaponState == WEAPON_FIRING || weaponState == WEAPON_ALTFIRING ) { 
-
+	}
+	else if ( skillState == skillGuiding || skillState == skillAltGuiding || skillState == skillFiring || skillState == skillAltFiring ) { 
 		// Set properties depending on primary or alternate fire
-		if ( weaponState == WEAPON_GUIDING || weaponState == WEAPON_FIRING ) {
+		if ( skillState == skillGuiding || skillState == skillFiring ) {
 			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon );
 		} else {
-			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon + ALTWEAPON_OFFSET );
+			weaponGraphics = CG_FindUserWeaponGraphics(ent->clientNum, ent->weapon + skAltOffset );
 		}
-
 		memset( &refEnt, 0, sizeof(refEnt));
 		VectorCopy( orient.origin, refEnt.origin );
 		AxisCopy( orient.axis, refEnt.axis );
 		CG_PositionEntityOnTagMD4( &refEnt, parent, parent->hModel, weaponGraphics->chargeTag[0]);
 		CG_AddPlayerWeaponFlashMD4( parent, weaponGraphics, &refEnt, ent->attackPowerTotal, ent->attackPowerCurrent );
-/*
-		// Locate a tag wherever on the model's parts. Don't process further if the tag is not found
-		if (CG_GetTagOrientationFromPlayerEntity( cent, weaponGraphics->chargeTag[0], &orient )) {
-			memset( &refEnt, 0, sizeof(refEnt));
-
-			VectorCopy( orient.origin, refEnt.origin );
-			AxisCopy( orient.axis, refEnt.axis );
-			
-			CG_AddPlayerWeaponFlash( parent, weaponGraphics, &refEnt, ent->attackPowerTotal, ent->attackPowerCurrent );
-		}
-*/
-
 		if ( weaponGraphics->firingSound ) {
 			trap_S_AddLoopingSound( ent->number, cent->lerpOrigin, vec3_origin, weaponGraphics->firingSound );
 		}
-
 		// Set up any firing particle systems
 		if ( weaponGraphics->firingParticleSystem[0] ) {
 			// If the entity wasn't previously in the PVS, if the weapon nr switched, or if the weaponstate switched
 			// we need to start a new system
 			if ( !CG_FrameHist_WasInPVS(ent->number) ||
 				 CG_FrameHist_IsWeaponNr(ent->number) != CG_FrameHist_WasWeaponNr(ent->number) ||
-				 CG_FrameHist_IsWeaponState(ent->number) != CG_FrameHist_WasWeaponState(ent->number) ) {
+				 CG_FrameHist_IsSkillState(ent->number) != CG_FrameHist_WasSkillState(ent->number) ) {
 				PSys_SpawnCachedSystem( weaponGraphics->firingParticleSystem, cent->lerpOrigin, NULL, cent, weaponGraphics->chargeTag[0], qfalse, qtrue );
 			}
 		}
@@ -873,95 +671,7 @@ CG_AddViewWeapon
 Add the weapon, and flash for the player's view
 ==============
 */
-void CG_AddViewWeapon( playerState_t *ps ) {
-
-	return;
-	
-/*
-	refEntity_t	hand;
-	centity_t	*cent;
-	clientInfo_t	*ci;
-	float		fovOffset;
-	vec3_t		angles;
-	weaponInfo_t	*weapon;
-
-
-
-	if ( ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
-		return;
-	}
-
-	if ( ps->pm_type == PM_INTERMISSION ) {
-		return;
-	}
-
-	// no gun if in third person view or a camera is active
-	//if ( cg.renderingThirdPerson || cg.cameraMode) {
-	if ( cg.renderingThirdPerson ) {
-		return;
-	}
-
-
-	// allow the gun to be completely removed
-	if ( !cg_drawGun.integer ) {
-		vec3_t		origin;
-
-		if ( cg.predictedPlayerState.eFlags & EF_FIRING ) {
-			// special hack for lightning gun...
-			VectorCopy( cg.refdef.vieworg, origin );
-			VectorMA( origin, -8, cg.refdef.viewaxis[2], origin );
-			CG_LightningBolt( &cg_entities[ps->clientNum], origin );
-		}
-		return;
-	}
-
-	// don't draw if testing a gun model
-	if ( cg.testGun ) {
-		return;
-	}
-
-	// drop gun lower at higher fov
-	if ( cg_fov.integer > 90 ) {
-		fovOffset = -0.2 * ( cg_fov.integer - 90 );
-	} else {
-		fovOffset = 0;
-	}
-
-	cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
-	CG_RegisterWeapon( ps->weapon );
-	weapon = &cg_weapons[ ps->weapon ];
-
-	memset (&hand, 0, sizeof(hand));
-
-	// set up gun position
-	CG_CalculateWeaponPosition( hand.origin, angles );
-
-	VectorMA( hand.origin, cg_gun_x.value, cg.refdef.viewaxis[0], hand.origin );
-	VectorMA( hand.origin, cg_gun_y.value, cg.refdef.viewaxis[1], hand.origin );
-	VectorMA( hand.origin, (cg_gun_z.value+fovOffset), cg.refdef.viewaxis[2], hand.origin );
-
-	AnglesToAxis( angles, hand.axis );
-
-	// map torso animations to weapon animations
-	if ( cg_gun_frame.integer ) {
-		// development tool
-		hand.frame = hand.oldframe = cg_gun_frame.integer;
-		hand.backlerp = 0;
-	} else {
-		// get clientinfo for animation map
-		ci = &cgs.clientinfo[ cent->currentState.clientNum ];
-		hand.frame = CG_MapTorsoToWeaponFrame( ci, cent->pe.torso.frame );
-		hand.oldframe = CG_MapTorsoToWeaponFrame( ci, cent->pe.torso.oldFrame );
-		hand.backlerp = cent->pe.torso.backlerp;
-	}
-
-	hand.hModel = weapon->handsModel;
-	hand.renderfx = RF_DEPTHHACK | RF_FIRST_PERSON | RF_MINLIGHT;
-
-	// add everything onto the hand
-	CG_AddPlayerWeapon( &hand, ps, &cg.predictedPlayerEntity, ps->persistant[PERS_TEAM] );
-*/
-}
+void CG_AddViewWeapon( playerState_t *ps ) {}
 
 /*
 ==============================================================================
@@ -987,7 +697,7 @@ static void CG_DrawWeaponSelectQuarterFan( void ) {
 	cg_userWeapon_t	*weaponInfo;
 	cg_userWeapon_t	*alt_weaponInfo;
 
-	color = CG_FadeColor( cg.weaponSelectTime, WEAPON_SELECT_TIME, 200 );
+	color = CG_FadeColor( cg.weaponSelectTime, SKILL_SELECT_TIME, 200 );
 	if ( !color ) {
 		return;
 	}
@@ -1034,7 +744,7 @@ static void CG_DrawWeaponSelectQuarterFan( void ) {
 	}
 
 	weaponInfo = CG_FindUserWeaponGraphics( cg.snap->ps.clientNum, cg.weaponSelect );
-	alt_weaponInfo = CG_FindUserWeaponGraphics ( cg.snap->ps.clientNum, ALTWEAPON_OFFSET + cg.weaponSelect);
+	alt_weaponInfo = CG_FindUserWeaponGraphics ( cg.snap->ps.clientNum, skAltOffset + cg.weaponSelect);
 
 	// draw the selected name
 	if ( weaponInfo->weaponName[0] != 0 ) {
@@ -1067,7 +777,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 	cg_userWeapon_t	*weaponInfo;
 	cg_userWeapon_t	*alt_weaponInfo;
 
-	color = CG_FadeColor( cg.weaponSelectTime, WEAPON_SELECT_TIME, 200 );
+	color = CG_FadeColor( cg.weaponSelectTime, SKILL_SELECT_TIME, 200 );
 	if ( !color ) {
 		return;
 	}
@@ -1119,7 +829,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 		
 		/*
 		// no ammo cross on top
-		if ( !cg.snap->ps.currentSkill[ i ] ) {
+		if ( !cg.snap->ps.skills[ps.weapon][ i ] ) {
 			CG_DrawPic( x, y, 32, 32, cgs.media.noammoShader );
 		}
 		*/
@@ -1129,7 +839,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 	}
 
 	weaponInfo = CG_FindUserWeaponGraphics( cg.snap->ps.clientNum, cg.weaponSelect );
-	alt_weaponInfo = CG_FindUserWeaponGraphics ( cg.snap->ps.clientNum, ALTWEAPON_OFFSET + cg.weaponSelect);
+	alt_weaponInfo = CG_FindUserWeaponGraphics ( cg.snap->ps.clientNum, skAltOffset + cg.weaponSelect);
 
 	// draw the selected name
 	if ( weaponInfo->weaponName ) {
@@ -1257,9 +967,6 @@ void CG_PrevWeapon_f( void ) {
 		if ( cg.weaponSelect == -1 ) {
 			cg.weaponSelect = 15;
 		}
-//		if ( cg.weaponSelect == WP_GAUNTLET ) {
-//			continue;		// never cycle to gauntlet
-//		}
 		if ( CG_WeaponSelectable( cg.weaponSelect ) ) {
 			break;
 		}
@@ -1833,14 +1540,12 @@ void CG_FireWeapon( centity_t *cent, qboolean altFire ) {
 	int					c, weapNr;
 
 	ent = &cent->currentState;
-
-	if ( ent->weapon == WP_NONE ) {
+	if ( ent->weapon == 0 ) {
 		return;
 	}
-
 	// Set the muzzle flash weapon Nr
 	if ( altFire ) {
-		weapNr = ent->weapon + ALTWEAPON_OFFSET;
+		weapNr = ent->weapon + skAltOffset;
 	} else {
 		weapNr = ent->weapon;
 	}

@@ -1079,6 +1079,7 @@ static void CG_AddExplosionLensFlare( vec3_t origin, vec3_t dir ) {
 	CG_AddLensFlare(&lfent, 1);
 }
 
+
 /*
 ======================
 CG_MakeUserExplosion
@@ -1095,33 +1096,13 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 
 	// The attacks's charge level was stored in this field. We hijacked it on the
 	// server to be able to transmit the missile's own charge level.
-	attackChargeLvl = powerups;
-
+	
 	// Obtain the scale the missile must have.
-	if (weaponGraphics->chargeGrowth) {
-		// below the start, we use the lowest form
-		if (weaponGraphics->chargeStartPct >= attackChargeLvl) {
-			explosionScale = weaponGraphics->chargeStartsize;
-		} else {
-			// above the end, we use the highest form
-			if (weaponGraphics->chargeEndPct <= attackChargeLvl) {
-				explosionScale = weaponGraphics->chargeEndsize;
-			} else {
-				float	PctRange;
-				float	PctVal;
-				float	SizeRange;
-				float	SizeVal;
-
-				// inbetween, we work out the value
-				PctRange = weaponGraphics->chargeEndPct - weaponGraphics->chargeStartPct;
-				PctVal = attackChargeLvl - weaponGraphics->chargeStartPct;
-
-				SizeRange = weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize;
-				SizeVal = (PctVal / PctRange) * SizeRange;
-				explosionScale = SizeVal + weaponGraphics->chargeStartsize;
-			}
-		}
-	} else {
+	attackChargeLvl = powerups;
+	if(weaponGraphics->chargeGrowth){
+		explosionScale = ((weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize) * attackChargeLvl) + weaponGraphics->chargeStartsize;
+	}
+	else{
 		explosionScale = 1;
 	}
 

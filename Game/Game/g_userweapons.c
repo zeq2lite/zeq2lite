@@ -1,7 +1,7 @@
 #include "g_local.h"
 
 static int					weaponPhysicsMasks[MAX_CLIENTS];
-static g_userWeapon_t		weaponPhysicsDatabase[MAX_CLIENTS][ALTSPAWN_OFFSET + MAX_PLAYERWEAPONS];
+static g_userWeapon_t		weaponPhysicsDatabase[MAX_CLIENTS][ALTSPAWN_OFFSET + skMaximumSkillPairs];
 							// NOTE: SPAWN_OFFSET is the upper bound because it is the first
 							//       element after the alternate fires!
 
@@ -38,7 +38,7 @@ G_FindUserAltWeaponData
 =========================
 */
 g_userWeapon_t *G_FindUserAltWeaponData( int clientNum, int weaponNum ) {
-	return &weaponPhysicsDatabase[clientNum][weaponNum - 1 + ALTWEAPON_OFFSET];
+	return &weaponPhysicsDatabase[clientNum][weaponNum - 1 + skAltOffset];
 }
 
 /*
@@ -92,87 +92,44 @@ void G_CheckSkills(playerState_t *ps){
 			if(weapon == 5){ps->powerups[PW_SKILLS] |= USABLE_SKILL5;}
 			if(weapon == 6){ps->powerups[PW_SKILLS] |= USABLE_SKILL6;}
 		}
+		else if(ps->weapon == weapon){
+			ps->weapon -= 1;
+		}
 		weapon += 1;
 	}
 }
 
-/*
-======================
-G_LinkUserWeaponData
-======================
-NOTE: This needs to be called on the server by the EV_CHANGE_WEAPON event.
-There is currently not a case statement included for it.
-*/
-void G_LinkUserWeaponData( playerState_t *ps ) {
-	g_userWeapon_t	*weaponSettings;
-	g_userWeapon_t	*alt_weaponSettings;
-	// Prevent reading below bound of array pointed to by weaponSettings.
-	if ( ps->weapon == WP_NONE ) {
-		memset(ps->currentSkill, 0, sizeof(ps->currentSkill) );
-		return;
+/*======================
+G_SyncSkills
+======================*/
+void G_SyncSkill(playerState_t *ps,int index,qboolean alternate){
+	g_userWeapon_t *weaponSettings;
+	int offset = alternate ? skAttributeOffset : 0;
+	weaponSettings = alternate ? G_FindUserAltWeaponData(ps->clientNum,index) : G_FindUserWeaponData(ps->clientNum,index);
+	ps->skills[index][offset+skCostCurrent] = weaponSettings->costs_powerLevel;
+	ps->skills[index][offset+skCostMaximum] = weaponSettings->costs_maximum;
+	ps->skills[index][offset+skCostHealth] = weaponSettings->costs_health;
+	ps->skills[index][offset+skCostFatigue] = weaponSettings->costs_fatigue;
+	ps->skills[index][offset+skFireTime] = weaponSettings->costs_fireTime;
+	ps->skills[index][offset+skChargeTimeMinimum] = weaponSettings->costs_chargeTimeMinimum;
+	ps->skills[index][offset+skCooldownLength] = weaponSettings->costs_cooldownTime;
+	ps->skills[index][offset+skRestrictChargeMovement] = weaponSettings->restrict_movement;
+	ps->skills[index][offset+skBitflags] = weaponSettings->general_bitflags;
+	if(weaponSettings->general_type == WPT_TORCH){
+		ps->skills[index][offset+skBitflags] |= skConstant;
+		ps->skills[index][offset+skBitflags] &= ~skNeedsCharge;
 	}
-
-	// NOTE: This function will NEVER be able to be called with a weapon that
-	//       was not defined, so the next statement is SAFE.
-	weaponSettings = G_FindUserWeaponData( ps->clientNum, ps->weapon );
-	ps->currentSkill[WPSTAT_NUMCHECK] = ps->weapon;
-	ps->currentSkill[WPSTAT_POWERLEVELCOST] = weaponSettings->costs_powerLevel;
-	ps->currentSkill[WPSTAT_MAXIMUMCOST] = weaponSettings->costs_maximum;
-	ps->currentSkill[WPSTAT_HEALTHCOST] = weaponSettings->costs_health;
-	ps->currentSkill[WPSTAT_FATIGUECOST] = weaponSettings->costs_fatigue;
-	ps->currentSkill[WPSTAT_CHRGTIME] = weaponSettings->costs_chargeTime;
-	ps->currentSkill[WPSTAT_COOLTIME] = weaponSettings->costs_cooldownTime;
-	ps->currentSkill[WPSTAT_RESTRICT_MOVEMENT] = weaponSettings->restrict_movement;
-	ps->currentSkill[WPSTAT_BITFLAGS] = weaponSettings->general_bitflags;
-	ps->currentSkill[WPSTAT_RESTRICT_MOVEMENT] = weaponSettings->restrict_movement;	
-	// Set the ready state of a charged weapon
-	if ( ( ps->stats[stChargePercentPrimary] >= weaponSettings->costs_chargeReady ) && ( ps->currentSkill[WPSTAT_BITFLAGS] & WPF_NEEDSCHARGE ) ) {
-		ps->currentSkill[WPSTAT_BITFLAGS] |= WPF_READY;
-	} else {
-		ps->currentSkill[WPSTAT_BITFLAGS] &= ~WPF_READY;
+	if(weaponSettings->homing_type == HOM_GUIDED || weaponSettings->general_type == WPT_BEAM){
+		ps->skills[index][offset+skBitflags] |= skGuided;
 	}
-
-	// Torch attacks are implicitly continuous and can't be charged.
-	if ( weaponSettings->general_type == WPT_TORCH ) {
-		ps->currentSkill[WPSTAT_BITFLAGS] |= WPF_CONTINUOUS;
-		ps->currentSkill[WPSTAT_BITFLAGS] &= ~WPF_NEEDSCHARGE;
+}
+void G_SyncAllSkills(playerState_t *ps){
+	int index = 0;
+	while(index < 6){
+		G_SyncSkill(ps,index,qfalse);
+		if(ps->skills[index][skBitflags] & skHasAlternate){
+			G_SyncSkill(ps,index,qtrue);
+		}		
+		index += 1;
 	}
-
-	// Guided trajectories and beams should use WEAPON_GUIDING state
-	if ( weaponSettings->homing_type == HOM_GUIDED || weaponSettings->general_type == WPT_BEAM ) {
-		ps->currentSkill[WPSTAT_BITFLAGS] |= WPF_GUIDED;
-	}
-
-	// Only attempt to link altfire weapon when it exists.
-	if (ps->currentSkill[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT) {
-		alt_weaponSettings = G_FindUserAltWeaponData( ps->clientNum, ps->weapon );
-	
-		ps->currentSkill[WPSTAT_ALT_POWERLEVELCOST] = alt_weaponSettings->costs_powerLevel;
-		ps->currentSkill[WPSTAT_ALT_MAXIMUMCOST] = alt_weaponSettings->costs_maximum;
-		ps->currentSkill[WPSTAT_ALT_HEALTHCOST] = alt_weaponSettings->costs_health;
-		ps->currentSkill[WPSTAT_ALT_FATIGUECOST] = alt_weaponSettings->costs_fatigue;
-		ps->currentSkill[WPSTAT_ALT_CHRGTIME] = alt_weaponSettings->costs_chargeTime;
-		ps->currentSkill[WPSTAT_ALT_COOLTIME] = alt_weaponSettings->costs_cooldownTime;
-		ps->currentSkill[WPSTAT_ALT_RESTRICT_MOVEMENT] = alt_weaponSettings->restrict_movement;
-		ps->currentSkill[WPSTAT_ALT_BITFLAGS] = alt_weaponSettings->general_bitflags;
-		ps->currentSkill[WPSTAT_ALT_RESTRICT_MOVEMENT] = alt_weaponSettings->restrict_movement;
-		// Torch attacks are implicitly continuous and can't be charged.
-		if ( alt_weaponSettings->general_type == WPT_TORCH ) {
-			ps->currentSkill[WPSTAT_ALT_BITFLAGS] |= WPF_CONTINUOUS;
-			ps->currentSkill[WPSTAT_ALT_BITFLAGS] &= ~WPF_NEEDSCHARGE;
-		}
-
-		// Guided trajectories and beams should use WEAPON_GUIDING state
-		if ( alt_weaponSettings->homing_type == HOM_GUIDED || alt_weaponSettings->general_type == WPT_BEAM ) {
-			ps->currentSkill[WPSTAT_ALT_BITFLAGS] |= WPF_GUIDED;
-		}
-
-		// Set the ready state of a charged altfire weapon
-		if ( ( ps->stats[stChargePercentSecondary] >= alt_weaponSettings->costs_chargeReady ) && ( ps->currentSkill[WPSTAT_ALT_BITFLAGS] & WPF_NEEDSCHARGE ) ) {
-			ps->currentSkill[WPSTAT_ALT_BITFLAGS] |= WPF_READY;
-		} else {
-			ps->currentSkill[WPSTAT_ALT_BITFLAGS] &= ~WPF_READY;
-		}
-	}
-
 }

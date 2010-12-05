@@ -111,7 +111,7 @@ typedef struct PSys_Orientation_s {
 	// Not visible to scripts.
 	qboolean		linkWeapon;
 	int				weaponNr;
-	int				weaponState;
+	int				skillState;
 
 	// Needed for force and emitter templates.
 	// FIXME: Not too efficient to store here.
