@@ -1,6 +1,6 @@
 #include "cg_local.h"
 
-#define RADAR_RANGE		16000
+#define RADAR_RANGE		8000
 #define RADAR_BLIPSIZE	  24
 #define RADAR_MIDSIZE	  16
 
@@ -23,7 +23,6 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 	vec3_t			up = { 0.0f, 0.0f, 1.0f };
 	vec4_t			draw_color;
 	vec4_t			drawfull_color;
-	vec4_t			drawteam_color;
 
 	float			center_x;
 	float			center_y;
@@ -32,15 +31,6 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 	float			blip_y;
 	float			blip_w;
 	float			blip_h;
-
-	float			powerLevel;
-	float			powerLevel2;
-	float			powerLevelAverage;
-	float			powerLevelMaximum;
-	float			powerLevelMaximum2;
-	float			powerLevelMaximumAverage;
-
-	float			difference, differenceCurrent, differenceMaximum;
 
 	ps = &cg.predictedPlayerState;
 	warning = qfalse;
@@ -73,36 +63,12 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 		blip_w = ( projection[2] / RADAR_RANGE) * 0.5f * RADAR_BLIPSIZE + RADAR_BLIPSIZE;
 		blip_h = blip_w;
 
-		powerLevel = cg.snap->ps.powerLevel[plCurrent];
-		powerLevel2 = cg_playerOrigins[i].pl;
-		powerLevelMaximum = cg.snap->ps.powerLevel[plMaximum];
-		powerLevelMaximum2 = cg_playerOrigins[i].plMax;
-
-		differenceCurrent = 1.0f - (powerLevel / powerLevel2);
-		differenceMaximum = 1.0f - (powerLevelMaximum / powerLevelMaximum2);
-
-		if(differenceCurrent > 1.0f){differenceCurrent = 1.0f;}
-		if(differenceCurrent < 0.0f){differenceCurrent = 0.0f;}
-		if(differenceMaximum > 1.0f){differenceMaximum = 1.0f;}
-		if(differenceMaximum < 0.0f){differenceMaximum = 0.0f;}
-
-		difference = differenceCurrent/* + differenceMaximum*/;
-
-		if(difference > 1.0f){difference = 1.0f;}
-		if(difference < 0.0f){difference = 0.0f;}
-
-		//CG_Printf("Difference: %f\n",difference);
-
-		// Set the blip color with respect to team.
-		// The brighter the color, the higher the power level is compared to your own.
-		// The blip fades down as the player's current power level gets lower then their maximum.
-		// Should plHealth also effect the fade?
+		// Set the blip color with respect to team. Fade it out based on PL;
 		if ( cg_playerOrigins[i].team == cg.snap->ps.persistant[PERS_TEAM] && cg_playerOrigins[i].team != TEAM_FREE ) {
-			MAKERGBA( draw_color, 0.0f, difference, 0.0f, powerLevel2 / powerLevelMaximum2 );
-			MAKERGBA( drawteam_color, 0.0f, 1.0f, 0.0f, powerLevel2 / powerLevelMaximum2 );
+			MAKERGBA( draw_color, 0.0f, 0.2f + (1.0f * cg_playerOrigins[i].pl / 125.0f ), 0.0f, 1.0f );
 			MAKERGBA( drawfull_color, 0.0f, 1.0f, 0.0f, 1.0f );
 		} else {
-			MAKERGBA( draw_color, difference, 0.0f, 0.0f, powerLevel2 / powerLevelMaximum2 );
+			MAKERGBA( draw_color, 0.2f + (1.0f * cg_playerOrigins[i].pl / 125.0f ), 0.0f, 0.0f, 1.0f );
 			MAKERGBA( drawfull_color, 1.0f, 0.0f, 0.0f, 1.0f );
 		}
 
@@ -120,12 +86,6 @@ static void CG_DrawRadarBlips( float x, float y, float w, float h ) {
 			// Atleast one warning was on the radar this screen.
 			// NOTE: Used to check if a warning sound needs to be issued.
 			warning = qtrue;
-		}
-
-		// Draw the team blip
-		if ( cg_playerOrigins[i].team == cg.snap->ps.persistant[PERS_TEAM] && cg_playerOrigins[i].team != TEAM_FREE ) {
-			trap_R_SetColor( drawteam_color );
-			CG_DrawPic( blip_x - 0.5f * blip_w, blip_y - 0.5f * blip_h, blip_w, blip_h, cgs.media.RadarBlipTeamShader );
 		}
 
 		trap_R_SetColor( NULL );

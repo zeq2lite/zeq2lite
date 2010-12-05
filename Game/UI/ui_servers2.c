@@ -93,11 +93,7 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define SORT_PING			4
 
 #define GAMES_ALL			0
-#define GAMES_FFA			1
-#define GAMES_TEAMPLAY		2
-#define GAMES_TOURNEY		3
-#define GAMES_CTF			4
-#define GAMES_STRUGGLE		5
+#define GAMES_STRUGGLE		1
 
 static const char *master_items[] = {
 	"Local",
@@ -111,6 +107,7 @@ static const char *master_items[] = {
 };
 
 static const char *servertype_items[] = {
+	"All",
 	"Struggle",
 	NULL
 };
@@ -125,12 +122,12 @@ static const char *sortkey_items[] = {
 };
 
 static char* gamenames[] = {
+/*	
 	"DM ",	// deathmatch
 	"1v1",	// tournament
 	"SP ",	// single player
 	"Team DM",	// team deathmatch
 	"CTF",	// capture the flag
-/*
 	"One Flag CTF",		// one flag ctf
 	"OverLoad",				// Overload
 	"Harvester",			// Harvester
@@ -138,8 +135,8 @@ static char* gamenames[] = {
 	"Q3F",						// Q3F
 	"Urban Terror",		// Urban Terror
 	"OSP",						// Orange Smoothie Productions
-	"ZEQ2Lite",	// ZEQ2Lite
 */
+	"ZEQ2-Lite",	// ZEQ2Lite
 	"???",			// unknown
 	NULL
 };
@@ -372,7 +369,7 @@ static void ArenaServers_UpdateMenu( void ) {
 		// servers found
 		if( g_arenaservers.refreshservers && ( g_arenaservers.currentping <= g_arenaservers.numqueriedservers ) ) {
 			// show progress
-			Com_sprintf( g_arenaservers.status.string, MAX_STATUSLENGTH, "%d of %d ZEQ2Lite Servers.", g_arenaservers.currentping, g_arenaservers.numqueriedservers);
+			Com_sprintf( g_arenaservers.status.string, MAX_STATUSLENGTH, "%d of %d ZEQ2-Lite Servers.", g_arenaservers.currentping, g_arenaservers.numqueriedservers);
 			g_arenaservers.statusbar.string  = "Press SPACE to stop";
 			qsort( g_arenaservers.serverlist, *g_arenaservers.numservers, sizeof( servernode_t ), ArenaServers_Compare);
 		}
@@ -466,38 +463,16 @@ static void ArenaServers_UpdateMenu( void ) {
 		if( !g_fullservers && ( servernodeptr->numclients == servernodeptr->maxclients ) ) {
 			continue;
 		}
+/*
 		if( Q_strncmp( "zeq2", servernodeptr->gamename, 4) ) {
 			continue;
 		}
+*/
 		switch( g_gametype ) {
 		case GAMES_ALL:
 			break;
 
-		case GAMES_FFA:
-			if( servernodeptr->gametype != GT_FFA ) {
-				continue;
-			}
-			break;
-		case GAMES_TEAMPLAY:
-			if( servernodeptr->gametype != GT_TEAM ) {
-				continue;
-			}
-			break;
-
-		case GAMES_TOURNEY:
-			if( servernodeptr->gametype != GT_TOURNAMENT ) {
-				continue;
-			}
-			break;
-
-		case GAMES_CTF:
-			if( servernodeptr->gametype != GT_CTF ) {
-				continue;
-			}
-			break;
-
 		case GAMES_STRUGGLE:
-			//if( strcmp(servernodeptr->gamename,"zeq2") != 0/* || strcmp(servernodeptr->gamename,"ZEQ2") != 0 */) {
 			if( servernodeptr->gametype != GT_STRUGGLE ) {
 				continue;
 			}
@@ -957,11 +932,11 @@ static void ArenaServers_DoRefresh( void )
 		g_arenaservers.pinglist[j].start = uis.realtime;
 
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "ping %s\n", adrstr )  );
-
-		//if( Q_strncmp( "zeq2", g_arenaservers.serverlist->gamename, 4) ) {
-		//	break;
-		//}
-
+/*
+		if	(Q_strncmp( "zeq2", g_arenaservers.serverlist->gamename, 4) ) {
+			break;
+		}
+*/
 		// advance to next server
 		g_arenaservers.currentping++;
 	}
@@ -1018,22 +993,6 @@ static void ArenaServers_StartRefresh( void )
 		default:
 		case GAMES_ALL:
 			myargs[0] = 0;
-			break;
-
-		case GAMES_FFA:
-			strcpy( myargs, " ffa" );
-			break;
-
-		case GAMES_TEAMPLAY:
-			strcpy( myargs, " team" );
-			break;
-
-		case GAMES_TOURNEY:
-			strcpy( myargs, " tourney" );
-			break;
-
-		case GAMES_CTF:
-			strcpy( myargs, " ctf" );
 			break;
 
 		case GAMES_STRUGGLE:
@@ -1310,7 +1269,7 @@ static void ArenaServers_MenuInit( void ) {
 	uis.menuamount = 0;
 	g_arenaservers.menu.fullscreen = qtrue;
 	g_arenaservers.menu.wrapAround = qtrue;
-    g_arenaservers.menu.draw       = ArenaServers_MenuDraw;
+	g_arenaservers.menu.draw       = ArenaServers_MenuDraw;
 	g_arenaservers.menu.key        = ArenaServers_MenuKey;
 
 	g_arenaservers.banner.generic.type  = MTYPE_BTEXT;
