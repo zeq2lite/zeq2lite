@@ -60,7 +60,7 @@ char *Sys_DefaultHomePath(void)
 			Q_strcat( homePath, sizeof( homePath ),
 					"/Library/Application Support/ZEQ2-lite" );
 #else
-			Q_strcat( homePath, sizeof( homePath ), "/.zeq2" );
+			Q_strcat( homePath, sizeof( homePath ), "/.ZEQ2" );
 #endif
 		}
 	}
