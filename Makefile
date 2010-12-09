@@ -145,7 +145,7 @@ USE_LOCAL_HEADERS=1
 endif
 
 ifndef DEBUG_CFLAGS
-DEBUG_CFLAGS=-g -O0
+DEBUG_CFLAGS=-g -O0 -ggdb3
 endif
 
 #############################################################################
