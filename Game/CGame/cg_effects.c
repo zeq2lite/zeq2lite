@@ -937,6 +937,7 @@ void CG_ScorePlum( int client, vec3_t org, int score ) {
 CG_MakeExplosion
 ====================
 */
+/*
 localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir, 
 								qhandle_t hModel, qhandle_t shader,
 								int msec, qboolean isSprite ) {
@@ -990,7 +991,7 @@ localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 
 	return ex;
 }
-
+*/
 
 /*=================
 CG_Bleed
@@ -1085,22 +1086,47 @@ static void CG_AddExplosionLensFlare( vec3_t origin, vec3_t dir ) {
 CG_MakeUserExplosion
 ======================
 */
-void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, int powerups, int number ) {
+void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, centity_t *cent ) {
 	float			angle, start, end;
 	localEntity_t	*expShell;
 	localEntity_t	*expShock;
 	int				offset;
 	vec3_t			tmpVec, newOrigin;
 	float			explosionScale;
-	int				attackChargeLvl;
+	float			attackChargeLvl;
 
 	// The attacks's charge level was stored in this field. We hijacked it on the
 	// server to be able to transmit the missile's own charge level.
 	
+	// BEGIN TEST code, delete when done testing.
+	CG_Printf("CG_MakeUserExplosion called\n");
+	/*
+	CG_Printf("BEGIN Variable list:\n");
+	CG_Printf();
+	CG_Printf("END of list\n\n");
+	*/
+	// END TEST code.
+	
 	// Obtain the scale the missile must have.
-	attackChargeLvl = powerups;
+	attackChargeLvl = (float)(cent->currentChargeTime - weaponGraphics->chargeTimeStart) / (float)(weaponGraphics->chargeTimeEnd - weaponGraphics->chargeTimeStart);
+	if(attackChargeLvl > 1.0) {attackChargeLvl = 1.0;}
+
 	if(weaponGraphics->chargeGrowth){
 		explosionScale = ((weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize) * attackChargeLvl) + weaponGraphics->chargeStartsize;
+		CG_Printf("\
+		attackChargeLvl(%f) = (cent->currentChargeTime(%i) - weaponGraphics->chargeTimeStart(%i)) / (weaponGraphics->chargeTimeEnd(%i) - weaponGraphics->chargeTimeStart(%i))\n\
+		explosionScale(%f) = ((weaponGraphics->chargeEndsize(%f) - weaponGraphics->chargeStartsize(%f)) * attackChargeLvl(%f)) + weaponGraphics->chargeStartsize(%f)\n\n",
+		attackChargeLvl,
+		cent->currentChargeTime,
+		weaponGraphics->chargeTimeStart,
+		weaponGraphics->chargeTimeEnd,
+		weaponGraphics->chargeTimeStart,
+		explosionScale,
+		weaponGraphics->chargeEndsize,
+		weaponGraphics->chargeStartsize,
+		attackChargeLvl,
+		weaponGraphics->chargeStartsize
+		);
 	}
 	else{
 		explosionScale = 1;

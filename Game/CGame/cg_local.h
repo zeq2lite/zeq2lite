@@ -1409,8 +1409,8 @@ void CG_OutOfAmmoChange( void );	// should this be in pmove?
 void CG_DrawLine (vec3_t start, vec3_t end, float width, qhandle_t shader, float RGBModulate);
 void CG_DrawLineRGBA (vec3_t start, vec3_t end, float width, qhandle_t shader, vec4_t RGBA);
 
-void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, int number, vec3_t origin, vec3_t dir, qboolean inAir );
-void CG_UserMissileHitPlayer( int weapon, int clientNum, int powerups, int number, vec3_t origin, vec3_t dir, int entityNum );
+void CG_UserMissileHitWall( int weapon, int clientNum, centity_t *cent, vec3_t origin, vec3_t dir, qboolean inAir );
+void CG_UserMissileHitPlayer( int weapon, int clientNum, centity_t *cent, vec3_t origin, vec3_t dir, int entityNum );
 void CG_UserRailTrail( int weapon, int clientNum, vec3_t start, vec3_t end);
 
 //
@@ -1484,7 +1484,7 @@ localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 								qhandle_t hModel, qhandle_t shader, int msec,
 								qboolean isSprite );
 
-void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, int powerups, int number);
+void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, centity_t *cent);
 void CG_CreateStraightBeamFade(vec3_t start, vec3_t end, cg_userWeapon_t *weaponGraphics);
 
 //

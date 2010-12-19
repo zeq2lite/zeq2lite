@@ -182,7 +182,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	const char		*s;
 	int				clientNum;
 	clientInfo_t	*ci;
-	int	r,size;
+	int				r,size;
 
 	r = random() * 10;
 
@@ -409,22 +409,22 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MISSILE_HIT:
 		DEBUGNAME("EV_MISSILE_HIT");
 		ByteToDir( es->eventParm, dir );
-		CG_UserMissileHitPlayer( es->weapon, es->clientNum, es->powerups, es->number, position, dir, es->otherEntityNum );
+		CG_UserMissileHitPlayer( es->weapon, es->clientNum, cent, position, dir, es->otherEntityNum );
 		break;
 	case EV_MISSILE_MISS:
 		DEBUGNAME("EV_MISSILE_MISS");
 		ByteToDir( es->eventParm, dir );
-		CG_UserMissileHitWall( es->weapon, es->clientNum, es->powerups, es->number, position, dir, qfalse );
+		CG_UserMissileHitWall( es->weapon, es->clientNum, cent, position, dir, qfalse );
 		break;
 	case EV_MISSILE_MISS_METAL:
 		DEBUGNAME("EV_MISSILE_MISS_METAL");
 		ByteToDir( es->eventParm, dir );
-		CG_UserMissileHitWall( es->weapon, es->clientNum, es->powerups, es->number, position, dir, qfalse );
+		CG_UserMissileHitWall( es->weapon, es->clientNum, cent, position, dir, qfalse );
 		break;
 	case EV_MISSILE_MISS_AIR:
 		DEBUGNAME("EV_MISSILE_MISS_AIR");
 		ByteToDir( es->eventParm, dir );
-		CG_UserMissileHitWall( es->weapon, es->clientNum, es->powerups, es->number, position, dir, qtrue );	
+		CG_UserMissileHitWall( es->weapon, es->clientNum, cent, position, dir, qtrue );	
 	case EV_BEAM_FADE:
 		DEBUGNAME("EV_BEAM_FADE");
 		break;

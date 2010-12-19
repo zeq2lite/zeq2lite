@@ -1633,7 +1633,7 @@ CG_UserMissileHitWall
 ======================
 Caused by an EV_MISSILE_MISS event
 */
-void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, int number, vec3_t origin, vec3_t dir, qboolean inAir ) {
+void CG_UserMissileHitWall( int weapon, int clientNum, centity_t *cent, vec3_t origin, vec3_t dir, qboolean inAir ) {
 	cg_userWeapon_t		*weaponGraphics;
 	vec3_t end;
 	trace_t tr;
@@ -1659,7 +1659,7 @@ void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, int number,
 	}
 
 	// Create Explosion
-	CG_MakeUserExplosion( origin, dir, weaponGraphics, powerups, number);
+	CG_MakeUserExplosion( origin, dir, weaponGraphics, cent);
 
 	if ( !inAir ) {
 		vec3_t tempAxis[3];
@@ -1775,9 +1775,9 @@ void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, int number,
 
 }
 
-void CG_UserMissileHitPlayer( int weapon, int clientNum, int powerups, int number, vec3_t origin, vec3_t dir, int entityNum ) {
+void CG_UserMissileHitPlayer( int weapon, int clientNum, centity_t *cent, vec3_t origin, vec3_t dir, int entityNum ) {
 	CG_Bleed( origin, entityNum );
-	CG_UserMissileHitWall( weapon, clientNum, powerups, number, origin, dir, qtrue );
+	CG_UserMissileHitWall( weapon, clientNum, cent, origin, dir, qtrue );
 }
 /*
 ===============
