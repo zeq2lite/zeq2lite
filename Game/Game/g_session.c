@@ -129,6 +129,7 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 		} else {
 			switch ( g_gametype.integer ) {
 			default:
+			case GT_STRUGGLE:
 			case GT_FFA:
 			case GT_SINGLE_PLAYER:
 				if ( g_maxGameClients.integer > 0 && 
@@ -146,7 +147,7 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 					sess->sessionTeam = TEAM_FREE;
 				}
 				break;
-			case GT_STRUGGLE:
+
 			}
 		}
 	}
