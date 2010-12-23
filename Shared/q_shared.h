@@ -25,12 +25,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
-
+#define STANDALONE 1
+#ifdef STANDALON
 #define PRODUCT_NAME			"ZEQ2-Lite"
 #define BASEGAME			"ZEQ2"
 #define CLIENT_WINDOW_TITLE     	"ZEQ2-Lite"
 #define CLIENT_WINDOW_MIN_TITLE 	"ZEQ2-Lite"
 #define GAMENAME_FOR_MASTER		"ZEQ2"
+#endif
 
 #ifdef _MSC_VER
   #define PRODUCT_VERSION "1.35"
