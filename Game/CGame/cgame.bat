@@ -83,4 +83,6 @@ if "%1"=="TA" goto TA
 
 
 ..\..\..\Tools\Compiler\q3asm -f ../cgame
-cd..
+del *.asm
+cd ..
+rd vm

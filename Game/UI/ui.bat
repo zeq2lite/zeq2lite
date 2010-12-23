@@ -69,6 +69,6 @@ set cc=call ..\..\..\Tools\Compiler\Perform.bat
 
 ..\..\..\Tools\Compiler\q3asm -f ../ui
 del *.asm
-:quit
 cd ..
 rd vm
+cd ..
