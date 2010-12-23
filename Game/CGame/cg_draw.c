@@ -2111,12 +2111,12 @@ static void CG_DrawWarmup( void ) {
 	} else {
 		if ( cgs.gametype == GT_FFA ) {
 			s = "Free For All";
-		} else if ( cgs.gametype == GT_STRUGGLE ) {
-			s = "Struggle";
 		} else if ( cgs.gametype == GT_TEAM ) {
 			s = "Team Deathmatch";
 		} else if ( cgs.gametype == GT_CTF ) {
 			s = "Capture the Flag";
+		} else if ( cgs.gametype == GT_STRUGGLE ) {
+			s = "Struggle Fight";
 		} else {
 			s = "";
 		}
