@@ -89,11 +89,15 @@ typedef struct {
 static startserver_t s_startserver;
 
 static const char *gametype_items[] = {
+	"Free For All",
+	"Team Deathmatch",
+	"Tournament",
+	"Capture the Flag",
 	"Struggle",
 	NULL
 };
 
-static int gametype_remap[] = {GT_FFA, GT_TEAM, GT_STRUGGLE,GT_TOURNAMENT, GT_CTF};
+static int gametype_remap[] = {GT_FFA, GT_TEAM, GT_TOURNAMENT, GT_CTF, GT_STRUGGLE};
 static int gametype_remap2[] = {0, 2, 0, 1, 3};
 
 
@@ -127,10 +131,7 @@ static int GametypeBits( char *string ) {
 			bits |= 1 << GT_TOURNAMENT;
 			continue;
 		}
-		if( Q_stricmp( token, "struggle" ) == 0 ) {
-			bits |= 1 << GT_STRUGGLE;
-			continue;
-		}
+		
 		if( Q_stricmp( token, "single" ) == 0 ) {
 			bits |= 1 << GT_SINGLE_PLAYER;
 			continue;
@@ -145,6 +146,13 @@ static int GametypeBits( char *string ) {
 			bits |= 1 << GT_CTF;
 			continue;
 		}
+
+		// re-added after ioquake3 reimport (noted especially here)
+		if( Q_stricmp( token, "struggle" ) == 0 ) {
+			bits |= 1 << GT_STRUGGLE;
+			continue;
+		}
+
 	}
 
 	return bits;
@@ -174,7 +182,7 @@ static void StartServer_Update( void ) {
 		Q_strncpyz( mapname, Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
 		Q_strupr( mapname );
 
-		Com_sprintf( picname[i], sizeof(picname[i]), "maps/%s", mapname );
+		Com_sprintf( picname[i], sizeof(picname[i]), "levelshots/%s", mapname );
 
 		s_startserver.mappics[i].generic.flags &= ~QMF_HIGHLIGHT;
 		s_startserver.mappics[i].generic.name   = picname[i];
@@ -567,7 +575,7 @@ void StartServer_Cache( void )
 			Q_strncpyz( mapname, Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
 			Q_strupr( mapname );
 	
-			Com_sprintf( picname, sizeof(picname), "maps/%s", mapname );
+			Com_sprintf( picname, sizeof(picname), "levelshots/%s", mapname );
 			trap_R_RegisterShaderNoMip(picname);
 		}
 	}
@@ -762,7 +770,7 @@ static void ServerOptions_Start( void ) {
 		trap_Cvar_SetValue( "ui_team_timelimit", timelimit );
 		trap_Cvar_SetValue( "ui_team_powerlevel", powerlevel );
 		trap_Cvar_SetValue( "ui_team_breakLimitRate", breakLimitRate );
-		trap_Cvar_SetValue( "ui_team_friendlt", friendlyfire );
+		trap_Cvar_SetValue( "ui_team_friendly", friendlyfire );
 		break;
 
 	case GT_CTF:
@@ -770,7 +778,7 @@ static void ServerOptions_Start( void ) {
 		trap_Cvar_SetValue( "ui_ctf_timelimit", timelimit );
 		trap_Cvar_SetValue( "ui_ctf_powerlevel", powerlevel );
 		trap_Cvar_SetValue( "ui_ctf_breakLimitRate", breakLimitRate );
-		trap_Cvar_SetValue( "ui_ctf_friendlt", friendlyfire );
+		trap_Cvar_SetValue( "ui_ctf_friendly", friendlyfire );
 		break;
 	}
 
