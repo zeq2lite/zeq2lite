@@ -1480,9 +1480,11 @@ void CG_BigExplode( vec3_t playerOrigin );
 
 void CG_Bleed( vec3_t origin, int entityNum );
 
+/* Not used
 localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 								qhandle_t hModel, qhandle_t shader, int msec,
 								qboolean isSprite );
+*/
 
 void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, centity_t *cent);
 void CG_CreateStraightBeamFade(vec3_t start, vec3_t end, cg_userWeapon_t *weaponGraphics);

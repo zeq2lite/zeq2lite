@@ -666,7 +666,7 @@ static void CG_Missile( centity_t *cent ) {
 	entityState_t		*s1;
 	cg_userWeapon_t		*weaponGraphics;
 	float				missileScale;
-	int					missileChargeLvl;
+	float				missileChargeLvl;
 	playerState_t		*ps;
 	int					missilePowerLevelCurrent;
 	int					missilePowerLevelTotal;
@@ -719,11 +719,15 @@ static void CG_Missile( centity_t *cent ) {
 */
 	// The missile's charge level was stored in this field. We hijacked it on the
 	// server to be able to transmit the missile's own charge level.
-	missileChargeLvl = s1->powerups;
 	missilePowerLevelTotal = s1->dashDir[0];
 	missilePowerLevelCurrent = s1->dashDir[1];
 	missileIsStruggling = s1->dashDir[2];
-
+	// Changed the following for attack effects fix.
+	cent->currentChargeTime = missilePowerLevelCurrent;
+	CG_Printf("CG_Missile:\nmissilePowerLevelCurrent: %i\nmissilePowerLevelTotal: %i\n", missilePowerLevelCurrent, missilePowerLevelTotal);
+	missileChargeLvl = (float)(cent->currentChargeTime - weaponGraphics->chargeTimeStart) / (float)(weaponGraphics->chargeTimeEnd - weaponGraphics->chargeTimeStart);
+	CG_Printf("missileChargeLvl: %f\n", missileChargeLvl);
+	// End of changes.
 	// Obtain the scale the missile must have.
 	// below the start, we use the lowest form
 	if(weaponGraphics->chargeGrowth){

@@ -68,6 +68,7 @@ set cc=call ..\..\..\Tools\Compiler\Perform.bat
 @if errorlevel 1 goto quit
 
 ..\..\..\Tools\Compiler\q3asm -f ../ui
+:quit
 del *.asm
 cd ..
 rd vm
