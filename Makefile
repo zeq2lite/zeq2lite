@@ -23,9 +23,6 @@ ifeq ($(COMPILE_PLATFORM),mingw32)
   endif
 endif
 
-ifndef BUILD_STANDALONE
-  BUILD_STANDALONE = 1
-endif
 ifndef BUILD_CLIENT
   BUILD_CLIENT     =
 endif
@@ -204,7 +201,7 @@ ifneq ($(BUILD_CLIENT),0)
 endif
 
 # version info
-VERSION=1.36
+VERSION=PB2
 
 USE_SVN=
 ifeq ($(wildcard .svn),.svn)
@@ -928,10 +925,6 @@ endif
 
 ifeq ($(USE_LOCAL_HEADERS),1)
   BASE_CFLAGS += -DUSE_LOCAL_HEADERS
-endif
-
-ifeq ($(BUILD_STANDALONE),1)
-  BASE_CFLAGS += -DSTANDALONE
 endif
 
 ifeq ($(GENERATE_DEPENDENCIES),1)

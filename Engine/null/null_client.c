@@ -90,5 +90,3 @@ void CL_Snd_Restart(void)
 }
 
 void CL_ShutdownAll(void) {}
-
-qboolean CL_CDKeyValidate( const char *key, const char *checksum ) { return qtrue; }

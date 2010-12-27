@@ -295,7 +295,6 @@ typedef struct {
 	int			maxPing;
 	int			ping;
 	qboolean	visible;
-	int			punkbuster;
 } serverInfo_t;
 
 typedef struct {
@@ -456,9 +455,6 @@ int CL_GetPingQueueCount( void );
 
 void CL_ShutdownRef( void );
 void CL_InitRef( void );
-#ifndef STANDALONE
-qboolean CL_CDKeyValidate( const char *key, const char *checksum );
-#endif
 int CL_ServerStatus( char *serverAddress, char *serverStatusString, int maxLen );
 
 qboolean CL_CheckPaused(void);
