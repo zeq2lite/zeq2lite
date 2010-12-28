@@ -789,7 +789,7 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 	{
 		dropcolor[0] = dropcolor[1] = dropcolor[2] = 0;
 		dropcolor[3] = drawcolor[3];
-		UI_DrawString2(x+2,y+2,str,dropcolor,charw,charh);
+		UI_DrawString2(x+1,y+1,str,dropcolor,charw,charh);
 	}
 
 	UI_DrawString2(x,y,str,drawcolor,charw,charh);

@@ -100,7 +100,6 @@ extern vmCvar_t	ui_server16;
 
 extern vmCvar_t	ui_cdkey;
 extern vmCvar_t	ui_cdkeychecked;
-extern vmCvar_t	ui_ioq3;
 extern vmCvar_t s_mastermusicvolume;
 
 // Speed scale for UI character animations.
@@ -402,19 +401,6 @@ extern void UI_CinematicsMenu_f( void );
 extern void UI_CinematicsMenu_Cache( void );
 
 //
-// ui_mods.c
-//
-extern void UI_ModsMenu( void );
-extern void UI_ModsMenu_Cache( void );
-
-//
-// ui_cdkey.c
-//
-extern void UI_CDKeyMenu( void );
-extern void UI_CDKeyMenu_Cache( void );
-extern void UI_CDKeyMenu_f( void );
-
-//
 // ui_playermodel.c
 //
 extern void UI_PlayerModelMenu( void );
@@ -552,9 +538,9 @@ typedef struct {
 
 void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int time );
 void UI_DrawPlayer_zMesh( float x, float y, float w, float h, playerInfo_t *pi, int time );
-// void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model );
+void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model );
 void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_t viewAngles, vec3_t moveAngles, qboolean chat );
-// qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName );
+qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName );
 
 //
 // ui_atoms.c

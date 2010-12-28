@@ -84,7 +84,18 @@ static void UI_SetLegsAnim( playerInfo_t *pi, int anim ) {
 UI_ForceTorsoAnim
 ===============
 */
-static void UI_ForceTorsoAnim( playerInfo_t *pi, int anim ) {}
+static void UI_ForceTorsoAnim( playerInfo_t *pi, int anim ) {
+	pi->torsoAnim = ( ( pi->torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+/*
+	if ( anim == ANIM_GESTURE ) {
+		pi->torsoAnimationTimer = UI_TIMER_GESTURE;
+	}
+
+	if ( anim == ANIM_ATTACK || anim == ANIM_ATTACK2 ) {
+		pi->torsoAnimationTimer = UI_TIMER_ATTACK;
+	}
+*/
+}
 
 
 /*
@@ -107,7 +118,45 @@ static void UI_SetTorsoAnim( playerInfo_t *pi, int anim ) {
 UI_TorsoSequencing
 ===============
 */
-static void UI_TorsoSequencing( playerInfo_t *pi ) {}
+static void UI_TorsoSequencing( playerInfo_t *pi ) {
+	int		currentAnim;
+
+	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
+/*
+	if ( pi->weapon != pi->currentWeapon ) {
+		if ( currentAnim != ANIM_DROP ) {
+			pi->torsoAnimationTimer = UI_TIMER_WEAPON_SWITCH;
+			UI_ForceTorsoAnim( pi, ANIM_DROP );
+		}
+	}
+*/
+	if ( pi->torsoAnimationTimer > 0 ) {
+		return;
+	}
+/*
+	if( currentAnim == ANIM_GESTURE ) {
+		UI_SetTorsoAnim( pi, ANIM_IDLE );
+		return;
+	}
+
+	if( currentAnim == ANIM_ATTACK || currentAnim == ANIM_ATTACK2 ) {
+		UI_SetTorsoAnim( pi, ANIM_IDLE );
+		return;
+	}
+
+	if ( currentAnim == ANIM_DROP ) {
+		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
+		pi->torsoAnimationTimer = UI_TIMER_WEAPON_SWITCH;
+		UI_ForceTorsoAnim( pi, ANIM_RAISE );
+		return;
+	}
+
+	if ( currentAnim == ANIM_RAISE ) {
+		UI_SetTorsoAnim( pi, ANIM_IDLE );
+		return;
+	}
+*/
+}
 
 
 /*
@@ -124,6 +173,18 @@ static void UI_LegsSequencing( playerInfo_t *pi ) {
 		if ( currentAnim == ANIM_JUMP_UP ) {
 			jumpHeight = JUMP_HEIGHT * sin( M_PI * ( UI_TIMER_JUMP - pi->legsAnimationTimer ) / UI_TIMER_JUMP );
 		}
+		return;
+	}
+
+	if ( currentAnim == ANIM_JUMP_UP ) {
+		UI_ForceLegsAnim( pi, ANIM_LAND_UP );
+		pi->legsAnimationTimer = UI_TIMER_LAND;
+		jumpHeight = 0;
+		return;
+	}
+
+	if ( currentAnim == ANIM_LAND_UP ) {
+		UI_SetLegsAnim( pi, ANIM_IDLE );
 		return;
 	}
 }
@@ -271,7 +332,196 @@ static void UI_RunLerpFrame( playerInfo_t *ci, lerpFrame_t *lf, int newAnimation
 UI_PlayerAnimation
 ===============
 */
-static void UI_PlayerAnimation( playerInfo_t *pi, int *legsOld, int *legs, float *legsBackLerp, int *torsoOld, int *torso, float *torsoBackLerp ) {}
+static void UI_PlayerAnimation( playerInfo_t *pi, 
+						int *legsOld, int *legs, float *legsBackLerp,
+						int *torsoOld, int *torso, float *torsoBackLerp,
+						int *headOld, int *head, float *headBackLerp) {
+
+	// legs animation
+	pi->legsAnimationTimer -= uis.frametime;
+	if ( pi->legsAnimationTimer < 0 ) {
+		pi->legsAnimationTimer = 0;
+	}
+
+	UI_LegsSequencing( pi );
+
+	if ( pi->legs.yawing && ( pi->legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_IDLE ) {
+		UI_RunLerpFrame( pi, &pi->legs, ANIM_TURN );
+	} else {
+		UI_RunLerpFrame( pi, &pi->legs, pi->legsAnim );
+	}
+	*legsOld = pi->legs.oldFrame;
+	*legs = pi->legs.frame;
+	*legsBackLerp = pi->legs.backlerp;
+
+	// torso animation
+	pi->torsoAnimationTimer -= uis.frametime;
+	if ( pi->torsoAnimationTimer < 0 ) {
+		pi->torsoAnimationTimer = 0;
+	}
+
+	UI_TorsoSequencing( pi );
+
+	UI_RunLerpFrame( pi, &pi->torso, pi->torsoAnim );
+	*torsoOld = pi->torso.oldFrame;
+	*torso = pi->torso.frame;
+	*torsoBackLerp = pi->torso.backlerp;
+
+	// ADDING FOR ZEQ2
+	{
+		int				torsoAnimNum;
+		int				legsAnimNum;
+
+		// NOTE: Torso animations take precedence over leg animations when deciding which
+		//       head animation to play.
+		torsoAnimNum = pi->torsoAnim & ~ANIM_TOGGLEBIT;
+		if ( ANIM_FLY_UP == torsoAnimNum && pi->overrideHead ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KI_CHARGE );
+		} else if ( ANIM_FLY_DOWN == torsoAnimNum && pi->overrideHead ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KI_CHARGE );
+		} else if ( ANIM_FLOOR_RECOVER == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLOOR_RECOVER );
+		} else if ( ANIM_WALK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_WALK );
+		} else if ( ANIM_RUN == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_RUN );
+		} else if ( ANIM_JUMP_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_JUMP_UP );
+		} else if ( ANIM_LAND_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_LAND_UP );
+		} else if ( ANIM_JUMP_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_JUMP_FORWARD );
+		} else if ( ANIM_LAND_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_LAND_FORWARD );
+		} else if ( ANIM_JUMP_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_JUMP_BACK );
+		} else if ( ANIM_LAND_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_LAND_BACK );
+		} else if ( ANIM_SWIM_IDLE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SWIM_IDLE );
+		} else if ( ANIM_SWIM == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SWIM );
+		} else if ( ANIM_DASH_RIGHT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DASH_RIGHT );
+		} else if ( ANIM_DASH_LEFT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DASH_LEFT );
+		} else if ( ANIM_DASH_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DASH_FORWARD );
+		} else if ( ANIM_DASH_BACKWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DASH_BACKWARD );
+		} else if ( ANIM_KI_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KI_CHARGE );
+		} else if ( ANIM_PL_DOWN == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_PL_DOWN );
+		} else if ( ANIM_PL_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_PL_UP );
+		} else if ( ANIM_TRANS_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_TRANS_UP );
+		} else if ( ANIM_TRANS_BACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_TRANS_BACK );
+		} else if ( ANIM_FLY_IDLE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_IDLE );
+		} else if ( ANIM_FLY_START == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_START );
+		} else if ( ANIM_FLY_FORWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_FORWARD );
+		} else if ( ANIM_FLY_BACKWARD == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_BACKWARD );
+		} else if ( ANIM_FLY_UP == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_UP );
+		} else if ( ANIM_FLY_DOWN == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_FLY_DOWN );
+		} else if ( ANIM_STUNNED == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_STUNNED );
+		} else if ( ANIM_PUSH == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_PUSH );
+		} else if ( ANIM_DEFLECT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_DEFLECT );
+		} else if ( ANIM_BLOCK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BLOCK );
+		} else if ( ANIM_SPEED_MELEE_ATTACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SPEED_MELEE_ATTACK );
+		} else if ( ANIM_SPEED_MELEE_DODGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SPEED_MELEE_DODGE );
+		} else if ( ANIM_SPEED_MELEE_BLOCK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SPEED_MELEE_BLOCK );
+		} else if ( ANIM_SPEED_MELEE_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_SPEED_MELEE_HIT );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK1 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK2 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK3 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK3 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK4 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK4 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK5 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK5 );
+		} else if ( ANIM_BREAKER_MELEE_ATTACK6 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_ATTACK6 );
+		} else if ( ANIM_BREAKER_MELEE_HIT1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT1 );
+		} else if ( ANIM_BREAKER_MELEE_HIT2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT2 );
+		} else if ( ANIM_BREAKER_MELEE_HIT3 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT3 );
+		} else if ( ANIM_BREAKER_MELEE_HIT4 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT4 );
+		} else if ( ANIM_BREAKER_MELEE_HIT5 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT5 );
+		} else if ( ANIM_BREAKER_MELEE_HIT6 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_BREAKER_MELEE_HIT6 );
+		} else if ( ANIM_POWER_MELEE_1_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_1_CHARGE );
+		} else if ( ANIM_POWER_MELEE_2_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_2_CHARGE );
+		} else if ( ANIM_POWER_MELEE_3_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_3_CHARGE );
+		} else if ( ANIM_POWER_MELEE_4_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_4_CHARGE );
+		} else if ( ANIM_POWER_MELEE_5_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_5_CHARGE );
+		} else if ( ANIM_POWER_MELEE_6_CHARGE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_6_CHARGE );
+		} else if ( ANIM_POWER_MELEE_1_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_1_HIT );
+		} else if ( ANIM_POWER_MELEE_2_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_2_HIT );
+		} else if ( ANIM_POWER_MELEE_3_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_3_HIT );
+		} else if ( ANIM_POWER_MELEE_4_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_4_HIT );
+		} else if ( ANIM_POWER_MELEE_5_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_5_HIT );
+		} else if ( ANIM_POWER_MELEE_6_HIT == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_POWER_MELEE_6_HIT );
+		} else if ( ANIM_STUNNED_MELEE == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_STUNNED_MELEE );
+		} else if ( ANIM_KNOCKBACK == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK );
+		} else if ( ANIM_KNOCKBACK_HIT_WALL == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK_HIT_WALL );
+		} else if ( ANIM_KNOCKBACK_RECOVER_1 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK_RECOVER_1 );
+		} else if ( ANIM_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK_RECOVER_2 );
+		} else if ( ANIM_SKILL1_CHARGE <= torsoAnimNum && ANIM_SKILL32_ALT_FIRE >= torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, torsoAnimNum - ANIM_SKILL1_CHARGE + ANIM_SKILL1_CHARGE );
+		} else {
+			legsAnimNum = pi->legsAnim & ~ANIM_TOGGLEBIT;
+			if ( 0 ) {
+			} else {
+				UI_RunLerpFrame( pi, &pi->head, ANIM_IDLE );
+			}
+		}
+	}
+
+	*headOld = pi->head.oldFrame;
+	*head = pi->head.frame;
+	*headBackLerp = pi->head.backlerp;
+
+	// END ADDING
+}
 
 
 /*
@@ -280,7 +530,60 @@ UI_SwingAngles
 ==================
 */
 static void UI_SwingAngles( float destination, float swingTolerance, float clampTolerance,
-					float speed, float *angle, qboolean *swinging ) {}
+					float speed, float *angle, qboolean *swinging ) {
+	float	swing;
+	float	move;
+	float	scale;
+
+	if ( !*swinging ) {
+		// see if a swing should be started
+		swing = AngleSubtract( *angle, destination );
+		if ( swing > swingTolerance || swing < -swingTolerance ) {
+			*swinging = qtrue;
+		}
+	}
+
+	if ( !*swinging ) {
+		return;
+	}
+	
+	// modify the speed depending on the delta
+	// so it doesn't seem so linear
+	swing = AngleSubtract( destination, *angle );
+	scale = fabs( swing );
+	if ( scale < swingTolerance * 0.5 ) {
+		scale = 0.5;
+	} else if ( scale < swingTolerance ) {
+		scale = 1.0;
+	} else {
+		scale = 2.0;
+	}
+
+	// swing towards the destination angle
+	if ( swing >= 0 ) {
+		move = uis.frametime * scale * speed;
+		if ( move >= swing ) {
+			move = swing;
+			*swinging = qfalse;
+		}
+		*angle = AngleMod( *angle + move );
+	} else if ( swing < 0 ) {
+		move = uis.frametime * scale * -speed;
+		if ( move <= swing ) {
+			move = swing;
+			*swinging = qfalse;
+		}
+		*angle = AngleMod( *angle + move );
+	}
+
+	// clamp to no more than tolerance
+	swing = AngleSubtract( destination, *angle );
+	if ( swing > clampTolerance ) {
+		*angle = AngleMod( destination - (clampTolerance - 1) );
+	} else if ( swing < -clampTolerance ) {
+		*angle = AngleMod( destination + (clampTolerance - 1) );
+	}
+}
 
 
 /*
@@ -344,6 +647,15 @@ static void UI_PlayerAngles( playerInfo_t *pi, vec3_t legs[3], vec3_t torso[3], 
 
 	// --------- yaw -------------
 
+	// allow yaw to drift a bit
+	if ( ( pi->legsAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE 
+		|| ( pi->torsoAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE  ) {
+		// if not standing still, always point all in the same direction
+		pi->torso.yawing = qtrue;	// always center
+		pi->torso.pitching = qtrue;	// always center
+		pi->legs.yawing = qtrue;	// always center
+	}
+
 	// adjust legs for movement dir
 	adjust = UI_MovedirAdjustment( pi );
 	legsAngles[YAW] = headAngles[YAW] + adjust;
@@ -368,6 +680,16 @@ static void UI_PlayerAngles( playerInfo_t *pi, vec3_t legs[3], vec3_t torso[3], 
 	UI_SwingAngles( dest, 15, 30, 0.1f, &pi->torso.pitchAngle, &pi->torso.pitching );
 	torsoAngles[PITCH] = pi->torso.pitchAngle;
 
+	// torso rotation locked?
+//	if ( pi->fixedtorso ) {
+		torsoAngles[PITCH] = 0.0f;
+//	}
+
+//	if ( pi->fixedlegs ) {
+		legsAngles[YAW] = torsoAngles[YAW];
+		legsAngles[PITCH] = 0.0f;
+		legsAngles[ROLL] = 0.0f;
+//	}
 	// pull the angles back out of the hierarchial chain
 	AnglesSubtract( headAngles, torsoAngles, headAngles );
 	AnglesSubtract( torsoAngles, legsAngles, torsoAngles );
@@ -424,12 +746,12 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	float			len;
 	float			xx;
 
-	if ( !pi->legsModel || !pi->torsoModel || !pi->headModel || !pi->animations[0].numFrames ) {
+	if(pi->legsModel && !pi->torsoModel && !pi->headModel)
+	{
+		UI_DrawPlayer_zMesh(x,y,w,h,pi,time);
 		return;
 	}
-
-	// this allows the ui to cache the player model on the main menu
-	if (w == 0 || h == 0) {
+	if ( !pi->legsModel || !pi->torsoModel || !pi->headModel || !pi->animations[0].numFrames ) {
 		return;
 	}
 
@@ -453,13 +775,13 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	refdef.width = w;
 	refdef.height = h;
 
-	refdef.fov_x = (int)((float)refdef.width / 640.0f * 90.0f);
+	refdef.fov_x = (int)((float)refdef.width / 640.0f * 35.0f);
 	xx = refdef.width / tan( refdef.fov_x / 360 * M_PI );
 	refdef.fov_y = atan2( refdef.height, xx );
-	refdef.fov_y *= ( 360 / (float)M_PI );
+	refdef.fov_y *= ( 360 / M_PI );
 
 	// calculate distance so the player nearly fills the box
-	len = 0.7 * ( maxs[2] - mins[2] );		
+	len = 0.6 * ( maxs[2] - mins[2] );		
 	origin[0] = len / tan( DEG2RAD(refdef.fov_x) * 0.5 );
 	origin[1] = 0.5 * ( mins[1] + maxs[1] );
 	origin[2] = -0.5 * ( mins[2] + maxs[2] );
@@ -473,7 +795,8 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	
 	// get the animation state (after rotation, to allow feet shuffle)
 	UI_PlayerAnimation( pi, &legs.oldframe, &legs.frame, &legs.backlerp,
-		 &torso.oldframe, &torso.frame, &torso.backlerp );
+		 &torso.oldframe, &torso.frame, &torso.backlerp,
+		 &head.oldframe, &head.frame, &head.backlerp);
 
 	renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
 
@@ -540,18 +863,117 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	//
 	// add an accent light
 	//
-	origin[0] -= 100;	// + = behind, - = in front
+	origin[0] -= 0;//100;	// + = behind, - = in front
 	origin[1] += 100;	// + = left, - = right
-	origin[2] += 100;	// + = above, - = below
+	origin[2] += 0;//100;	// + = above, - = below
 	trap_R_AddLightToScene( origin, 500, 1.0, 1.0, 1.0 );
-
+/*
 	origin[0] -= 100;
 	origin[1] -= 100;
 	origin[2] -= 100;
 	trap_R_AddLightToScene( origin, 500, 1.0, 0.0, 0.0 );
-
+*/
 	trap_R_RenderScene( &refdef );
 }
+void UI_DrawPlayer_zMesh( float x, float y, float w, float h, playerInfo_t *pi, int time ) {
+	refdef_t		refdef;
+	refEntity_t		legs;
+	refEntity_t		torso;
+	refEntity_t		head;
+	vec3_t			origin;
+	int				renderfx;
+	vec3_t			mins = {-16, -16, -24};
+	vec3_t			maxs = {16, 16, 32};
+	float			len;
+	float			xx;
+
+	if ( !pi->legsModel || !pi->animations[0].numFrames ) {
+		return;
+	}
+
+	dp_realtime = time;
+	UI_AdjustFrom640( &x, &y, &w, &h );
+
+	y -= jumpHeight;
+
+	memset( &refdef, 0, sizeof( refdef ) );
+	memset( &legs, 0, sizeof(legs) );
+
+	refdef.rdflags = RDF_NOWORLDMODEL;
+
+	AxisClear( refdef.viewaxis );
+
+	refdef.x = x;
+	refdef.y = y;
+	refdef.width = w;
+	refdef.height = h;
+
+	refdef.fov_x = (int)((float)refdef.width / 640.0f * 35.0f);
+	xx = refdef.width / tan( refdef.fov_x / 360 * M_PI );
+	refdef.fov_y = atan2( refdef.height, xx );
+	refdef.fov_y *= ( 360 / M_PI );
+
+	// calculate distance so the player nearly fills the box
+	len = 0.6 * ( maxs[2] - mins[2] );		
+	origin[0] = len / tan( DEG2RAD(refdef.fov_x) * 0.5 );
+	origin[1] = 0.5 * ( mins[1] + maxs[1] );
+	origin[2] = -0.5 * ( mins[2] + maxs[2] );
+
+	refdef.time = dp_realtime;
+
+	trap_R_ClearScene();
+
+	// get the rotation information
+	UI_PlayerAngles( pi, legs.axis, torso.axis, head.axis );
+	
+	// get the animation state (after rotation, to allow feet shuffle)
+	UI_PlayerAnimation( pi, &legs.oldframe, &legs.frame, &legs.backlerp,
+		 &torso.oldframe, &torso.frame, &torso.backlerp,
+		 &head.oldframe, &head.frame, &head.backlerp);
+
+	renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
+
+	//
+	// add the legs
+	//
+	legs.hModel = pi->legsModel;
+	legs.customSkin = pi->legsSkin;
+
+	VectorCopy( origin, legs.origin );
+
+	VectorCopy( origin, legs.lightingOrigin );
+	legs.renderfx = renderfx;
+	VectorCopy (legs.origin, legs.oldorigin);
+
+	trap_R_AddRefEntityToScene( &legs );
+
+	if (!legs.hModel) {
+		return;
+	}
+
+	//
+	// add the chat icon
+	//
+	if ( pi->chat ) {
+		UI_PlayerFloatSprite( pi, origin, trap_R_RegisterShaderNoMip( "chatBubble" ) );
+	}
+
+	//
+	// add an accent light
+	//
+	origin[0] -= 0;//100;	// + = behind, - = in front
+	origin[1] += 100;	// + = left, - = right
+	origin[2] += 0;//100;	// + = above, - = below
+	trap_R_AddLightToScene( origin, 500, 1.0, 1.0, 1.0 );
+/*
+	origin[0] -= 100;
+	origin[1] -= 100;
+	origin[2] -= 100;
+	trap_R_AddLightToScene( origin, 500, 1.0, 0.0, 0.0 );
+*/
+	trap_R_RenderScene( &refdef );
+}
+
 
 /*
 ==========================
@@ -625,42 +1047,17 @@ static qboolean	UI_FindClientHeadFile( char *filename, int length, const char *t
 UI_RegisterClientSkin
 ==========================
 */
-static qboolean	UI_RegisterClientSkin( playerInfo_t *pi, const char *modelName, const char *skinName, const char *headModelName, const char *headSkinName , const char *teamName) {
-	char		filename[MAX_QPATH*2];
+static qboolean UI_RegisterClientSkin( playerInfo_t *pi, const char *modelName, const char *skinName ) {
+	char		filename[MAX_QPATH];
 
-	if (teamName && *teamName) {
-		Com_sprintf( filename, sizeof( filename ), "players//%s/%s/lower_%s.skin", modelName, teamName, skinName );
-	} else {
-		Com_sprintf( filename, sizeof( filename ), "players//%s/lower_%s.skin", modelName, skinName );
-	}
+	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/lower_%s.skin", modelName, skinName );
 	pi->legsSkin = trap_R_RegisterSkin( filename );
-	if (!pi->legsSkin) {
-		if (teamName && *teamName) {
-			Com_sprintf( filename, sizeof( filename ), "players//characters/%s/%s/lower_%s.skin", modelName, teamName, skinName );
-		} else {
-			Com_sprintf( filename, sizeof( filename ), "players//characters/%s/lower_%s.skin", modelName, skinName );
-		}
-		pi->legsSkin = trap_R_RegisterSkin( filename );
-	}
 
-	if (teamName && *teamName) {
-		Com_sprintf( filename, sizeof( filename ), "players//%s/%s/upper_%s.skin", modelName, teamName, skinName );
-	} else {
-		Com_sprintf( filename, sizeof( filename ), "players//%s/upper_%s.skin", modelName, skinName );
-	}
+	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/upper_%s.skin", modelName, skinName );
 	pi->torsoSkin = trap_R_RegisterSkin( filename );
-	if (!pi->torsoSkin) {
-		if (teamName && *teamName) {
-			Com_sprintf( filename, sizeof( filename ), "players//characters/%s/%s/upper_%s.skin", modelName, teamName, skinName );
-		} else {
-			Com_sprintf( filename, sizeof( filename ), "players//characters/%s/upper_%s.skin", modelName, skinName );
-		}
-		pi->torsoSkin = trap_R_RegisterSkin( filename );
-	}
 
-	if ( UI_FindClientHeadFile( filename, sizeof(filename), teamName, headModelName, headSkinName, "head", "skin" ) ) {
-		pi->headSkin = trap_R_RegisterSkin( filename );
-	}
+	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/head_%s.skin", modelName, skinName );
+	pi->headSkin = trap_R_RegisterSkin( filename );
 
 	if ( !pi->legsSkin || !pi->torsoSkin || !pi->headSkin ) {
 		return qfalse;
@@ -675,7 +1072,7 @@ static qboolean	UI_RegisterClientSkin( playerInfo_t *pi, const char *modelName, 
 UI_ParseAnimationFile
 ======================
 */
-static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animations ) {
+static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animations, playerInfo_t *pi ) {
 	char		*text_p, *prev;
 	int			len;
 	int			i;
@@ -707,6 +1104,10 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 	text_p = text;
 	skip = 0;	// quite the compiler warning
 
+	pi->fixedlegs = qfalse;
+	pi->fixedtorso = qfalse;
+	pi->overrideHead = qfalse;
+
 	// read optional parameters
 	while ( 1 ) {
 		prev = text_p;	// so we can unget
@@ -734,6 +1135,15 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 				break;
 			}
 			continue;
+		} else if ( !Q_stricmp( token, "fixedlegs" ) ) {
+			pi->fixedlegs = qtrue;
+			continue;
+		} else if ( !Q_stricmp( token, "fixedtorso" ) ) {
+			pi->fixedtorso = qtrue;
+			continue;
+		} else if ( !Q_stricmp( token, "overrideHead" ) ) {
+			pi->overrideHead = qtrue;
+			continue;
 		}
 
 		// if it is a number, start parsing animations
@@ -753,8 +1163,15 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 			break;
 		}
 		animations[i].firstFrame = atoi( token );
+/*
 		// leg only frames are adjusted to not count the upper body only frames
-
+		if ( i == ANIM_WALKCR ) {
+			skip = animations[ANIM_WALKCR].firstFrame - animations[ANIM_GESTURE].firstFrame;
+		}
+		if ( i >= ANIM_WALKCR ) {
+			animations[i].firstFrame -= skip;
+		}
+*/
 		token = COM_Parse( &text_p );
 		if ( !token ) {
 			break;
@@ -777,6 +1194,21 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 		}
 		animations[i].frameLerp = 1000 / fps;
 		animations[i].initialLerp = 1000 / fps;
+
+		// ADDING FOR ZEQ2
+
+		// Read the continuous flag for ki attack animations
+		if ( i >= ANIM_SKILL1_FIRE &&
+			 i < MAX_ANIMATIONS &&
+			 (i - ANIM_SKILL1_FIRE) % 2 == 0 ) {
+			token = COM_Parse( &text_p );
+			if ( !*token ) {
+				break;
+			}
+			animations[i].continuous = atoi( token );
+		}
+
+		// END ADDING
 	}
 
 	if ( i != MAX_ANIMATIONS ) {
@@ -787,16 +1219,15 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 	return qtrue;
 }
 
+
 /*
 ==========================
 UI_RegisterClientModelname
 ==========================
 */
-qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName, const char *headModelSkinName, const char *teamName ) {
+qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName ) {
 	char		modelName[MAX_QPATH];
 	char		skinName[MAX_QPATH];
-	char		headModelName[MAX_QPATH];
-	char		headSkinName[MAX_QPATH];
 	char		filename[MAX_QPATH];
 	char		*slash;
 
@@ -815,63 +1246,42 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName
 		Q_strncpyz( skinName, "default", sizeof( skinName ) );
 	} else {
 		Q_strncpyz( skinName, slash + 1, sizeof( skinName ) );
-		*slash = '\0';
-	}
-
-	Q_strncpyz( headModelName, headModelSkinName, sizeof( headModelName ) );
-	slash = strchr( headModelName, '/' );
-	if ( !slash ) {
-		// modelName did not include a skin name
-		Q_strncpyz( headSkinName, "default", sizeof( skinName ) );
-	} else {
-		Q_strncpyz( headSkinName, slash + 1, sizeof( skinName ) );
-		*slash = '\0';
+		// truncate modelName
+		*slash = 0;
 	}
 
 	// load cmodels before models so filecache works
-
-	Com_sprintf( filename, sizeof( filename ), "players//%s/lower.md3", modelName );
+	
+	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/body.zMesh", modelName );
 	pi->legsModel = trap_R_RegisterModel( filename );
 	if ( !pi->legsModel ) {
-		Com_sprintf( filename, sizeof( filename ), "players//characters/%s/lower.md3", modelName );
+		Com_Printf( "Failed to load model file %s, trying players//%s/tier1/body.zMesh\n", filename, modelName );
+	
+
+		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/lower.md3", modelName );
 		pi->legsModel = trap_R_RegisterModel( filename );
 		if ( !pi->legsModel ) {
 			Com_Printf( "Failed to load model file %s\n", filename );
 			return qfalse;
 		}
-	}
 
-	Com_sprintf( filename, sizeof( filename ), "players//%s/upper.md3", modelName );
-	pi->torsoModel = trap_R_RegisterModel( filename );
-	if ( !pi->torsoModel ) {
-		Com_sprintf( filename, sizeof( filename ), "players//characters/%s/upper.md3", modelName );
+		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/upper.md3", modelName );
 		pi->torsoModel = trap_R_RegisterModel( filename );
 		if ( !pi->torsoModel ) {
 			Com_Printf( "Failed to load model file %s\n", filename );
 			return qfalse;
 		}
-	}
 
-	if (headModelName && headModelName[0] == '*' ) {
-		Com_sprintf( filename, sizeof( filename ), "players//heads/%s/%s.md3", &headModelName[1], &headModelName[1] );
-	}
-	else {
-		Com_sprintf( filename, sizeof( filename ), "players//%s/head.md3", headModelName );
-	}
-	pi->headModel = trap_R_RegisterModel( filename );
-	if ( !pi->headModel && headModelName[0] != '*') {
-		Com_sprintf( filename, sizeof( filename ), "players//heads/%s/%s.md3", headModelName, headModelName );
+		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/head.md3", modelName );
 		pi->headModel = trap_R_RegisterModel( filename );
+		if ( !pi->headModel ) {
+			Com_Printf( "Failed to load model file %s\n", filename );
+			return qfalse;
+		}
 	}
-
-	if (!pi->headModel) {
-		Com_Printf( "Failed to load model file %s\n", filename );
-		return qfalse;
-	}
-
 	// if any skins failed to load, fall back to default
-	if ( !UI_RegisterClientSkin( pi, modelName, skinName, headModelName, headSkinName, teamName) ) {
-		if ( !UI_RegisterClientSkin( pi, modelName, "default", headModelName, "default", teamName ) ) {
+	if ( !UI_RegisterClientSkin( pi, modelName, skinName ) ) {
+		if ( !UI_RegisterClientSkin( pi, modelName, "default" ) ) {
 			Com_Printf( "Failed to load skin file: %s : %s\n", modelName, skinName );
 			return qfalse;
 		}
@@ -879,23 +1289,117 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName
 
 	// load the animations
 	Com_sprintf( filename, sizeof( filename ), "players//%s/animation.cfg", modelName );
-	if ( !UI_ParseAnimationFile( filename, pi->animations ) ) {
-		Com_sprintf( filename, sizeof( filename ), "players//characters/%s/animation.cfg", modelName );
-		if ( !UI_ParseAnimationFile( filename, pi->animations ) ) {
-			Com_Printf( "Failed to load animation file %s\n", filename );
-			return qfalse;
-		}
+	if ( !UI_ParseAnimationFile( filename, pi->animations, pi ) ) {
+		Com_Printf( "Failed to load animation file %s\n", filename );
+		return qfalse;
 	}
 
 	return qtrue;
 }
 
-/*===============
-UI_PlayerInfo_SetModel
-===============*/
-void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model, const char *headmodel, char *teamName ) {}
 
-/*===============
+/*
+===============
+UI_PlayerInfo_SetModel
+===============
+*/
+void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model ) {
+	memset( pi, 0, sizeof(*pi) );
+	UI_RegisterClientModelname( pi, model );
+	pi->chat = qfalse;
+	pi->newModel = qtrue;
+}
+
+
+/*
+===============
 UI_PlayerInfo_SetInfo
-===============*/
-void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_t viewAngles, vec3_t moveAngles, qboolean chat ) {}
+===============
+*/
+void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_t viewAngles, vec3_t moveAngles, qboolean chat ) {
+	int			currentAnim;
+
+	pi->chat = chat;
+
+	// view angles
+	VectorCopy( viewAngles, pi->viewAngles );
+
+	// move angles
+	VectorCopy( moveAngles, pi->moveAngles );
+
+	if ( pi->newModel ) {
+		pi->newModel = qfalse;
+
+		jumpHeight = 0;
+		pi->pendingLegsAnim = 0;
+		UI_ForceLegsAnim( pi, legsAnim );
+		pi->legs.yawAngle = viewAngles[YAW];
+		pi->legs.yawing = qfalse;
+
+		pi->pendingTorsoAnim = 0;
+		UI_ForceTorsoAnim( pi, torsoAnim );
+		pi->torso.yawAngle = viewAngles[YAW];
+		pi->torso.yawing = qfalse;
+/*
+		pi->pendingHeadAnim = 0;
+		UI_ForceHeadAnim( pi, headAnim );
+		pi->head.yawAngle = viewAngles[YAW];
+		pi->head.yawing = qfalse;
+*/
+		return;
+	}
+
+  /*
+	// weapon
+	if ( weaponNumber == -1 ) {
+		pi->pendingWeapon = -1;
+		pi->weaponTimer = 0;
+	}
+	else if ( weaponNumber != WP_NONE ) {
+		pi->pendingWeapon = weaponNumber;
+		pi->weaponTimer = dp_realtime + UI_TIMER_WEAPON_DELAY;
+	}
+	weaponNum = pi->lastWeapon;
+	pi->weapon = weaponNum;
+ */
+
+	if ( torsoAnim == ANIM_DEATH_GROUND || legsAnim == ANIM_DEATH_GROUND ) {
+		torsoAnim = legsAnim = ANIM_DEATH_GROUND;
+		//pi->weapon = pi->currentWeapon = WP_NONE;
+		//UI_PlayerInfo_SetWeapon( pi, pi->weapon );
+
+		jumpHeight = 0;
+		pi->pendingLegsAnim = 0;
+		UI_ForceLegsAnim( pi, legsAnim );
+
+		pi->pendingTorsoAnim = 0;
+		UI_ForceTorsoAnim( pi, torsoAnim );
+
+		return;
+	}
+
+	// leg animation
+	currentAnim = pi->legsAnim & ~ANIM_TOGGLEBIT;
+	if ( legsAnim != ANIM_JUMP_UP && ( currentAnim == ANIM_JUMP_UP || currentAnim == ANIM_LAND_UP ) ) {
+		pi->pendingLegsAnim = legsAnim;
+	}
+	else if ( legsAnim != currentAnim ) {
+		jumpHeight = 0;
+		pi->pendingLegsAnim = 0;
+		UI_ForceLegsAnim( pi, legsAnim );
+	}
+
+	// torso animation
+	if ( torsoAnim == ANIM_IDLE || torsoAnim == ANIM_IDLE_LOCKED ) {
+		torsoAnim = ANIM_IDLE;
+	}
+
+
+	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
+	
+	if ( torsoAnim != currentAnim ) {
+		pi->pendingTorsoAnim = 0;
+		UI_ForceTorsoAnim( pi, torsoAnim );
+	}
+
+}

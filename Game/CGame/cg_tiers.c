@@ -54,7 +54,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		}
 		if(!ci->legsModel[i]){
 			//ci->usingMD4 = qfalse;
-			Com_Printf("No legsModel, ci->usingMD4 = %i\n",ci->usingMD4);
+			//Com_Printf("No legsModel, ci->usingMD4 = %i\n",ci->usingMD4);
 			// Tenken - tiers can change again
 			//if(i == 0){
 				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", modelName, i+1);
