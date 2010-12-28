@@ -11,3 +11,4 @@ cd UI
 echo Compiling UI...
 call ui.bat
 cd ..
+pause

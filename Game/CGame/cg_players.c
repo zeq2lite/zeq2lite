@@ -156,7 +156,7 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 		//Alex Adding For MD4 Handling...
 		if(!Q_stricmp( token, "mesh_type") && doneMeshType != qtrue){
 			token = COM_Parse( &text_p );
-			Com_Printf("Parsing MeshType: %s\n", token);
+			//Com_Printf("Parsing MeshType: %s\n", token);
 			if( !Q_stricmp( token, "md4" ) || !Q_stricmp( token, "skeletalanimation")){
 				doneMeshType = qtrue;
 				ci->usingMD4 = qtrue;
@@ -2324,9 +2324,11 @@ qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *t
 	
 	// Prepare the destination orientation_t
 	AxisClear( tagOrient->axis );
+	/*
 	if(cgs.clientinfo[clientNum].usingMD4) {
 		Com_Printf("Trying to get an zMesh Tag called %s!\n", tagName);
 	}
+	*/
 
 	// Try to find the tag and return its coordinates
 	if ( trap_R_LerpTag( &lerped, pe->headRef.hModel, pe->head.oldFrame, pe->head.frame, 1.0 - pe->head.backlerp, tagName ) ) {
@@ -2334,13 +2336,13 @@ qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *t
 		for ( i = 0 ; i < 3 ; i++ ) {
 			VectorMA( tagOrient->origin, lerped.origin[i], pe->headRef.axis[i], tagOrient->origin );
 		}
-		Com_Printf("Found tag %s\n", tagName);
+		//Com_Printf("Found tag %s\n", tagName);
 		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
 		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
 
 		return qtrue;
 	} else if(pe->legsRef.renderfx & RF_SKEL) {
-		Com_Printf("Trying to get an zMesh Tag\n");
+		//Com_Printf("Trying to get an zMesh Tag\n");
 		/*for(i=0;i<pe->legsRef.skel.numBones;i++)
 		{
 			if(!strcmp(pe->headRef.skel.bones[i].name,tagName))

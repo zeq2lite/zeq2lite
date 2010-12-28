@@ -94,7 +94,7 @@ static void CG_Aura_GetHullPoints( centity_t *player, auraState_t *state, auraCo
 	if(ci->usingMD4)
 	{
 		
-			Com_Printf("Finding tags!\n");
+			//Com_Printf("Finding tags!\n");
 		for (i = 0;i < config->numTags[0]+config->numTags[1]+config->numTags[2];i++){
 			orientation_t tagOrient;
 			
@@ -103,7 +103,7 @@ static void CG_Aura_GetHullPoints( centity_t *player, auraState_t *state, auraCo
 			
 			if (!CG_GetTagOrientationFromPlayerEntityLegsModel( player, tagName, &tagOrient)) continue;
 			VectorCopy( tagOrient.origin, state->convexHull[j].pos_world);
-			Com_Printf("Found aura tag bone - %s\n",tagName);
+			//Com_Printf("Found aura tag bone - %s\n",tagName);
 			if (CG_WorldCoordToScreenCoordVec( state->convexHull[j].pos_world, state->convexHull[j].pos_screen)){
 				state->convexHull[j].is_tail = qfalse;
 				j++;
