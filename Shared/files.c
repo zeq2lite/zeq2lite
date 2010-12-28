@@ -60,7 +60,7 @@ along with "home path" and "cd path" for game content.
 
 
 The "base game" is the directory under the paths where data comes from by default, and
-can be either "baseq3" or "demoq3".
+can be "base".
 
 The "current game" may be the same as the base game, or it may be the name of another
 directory under the paths that should be searched for files before looking in the base game.
@@ -1119,8 +1119,8 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 						}
 					}
 
-					if (!(pak->referenced & FS_QAGAME_REF) && strstr(filename, "qagame.qvm")) {
-						pak->referenced |= FS_QAGAME_REF;
+					if (!(pak->referenced & FS_GAME_REF) && strstr(filename, "game.qvm")) {
+						pak->referenced |= FS_GAME_REF;
 					}
 					if (!(pak->referenced & FS_CGAME_REF) && strstr(filename, "cgame.qvm")) {
 						pak->referenced |= FS_CGAME_REF;
@@ -2614,7 +2614,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring ) {
 		havepak = qfalse;
 
 		// never autodownload any of the zeq2lite paks
-		if ( FS_idPak(fs_serverReferencedPakNames[i], "BASEGAME") ) {
+		if ( FS_idPak(fs_serverReferencedPakNames[i], BASEGAME) ) {
 			continue;
 		}
 
@@ -2871,7 +2871,7 @@ static void FS_Startup( const char *gameName )
 =====================
 FS_GamePureChecksum
 
-Returns the checksum of the pk3 from which the server loaded the qagame.qvm
+Returns the checksum of the pk3 from which the server loaded the game.qvm
 =====================
 */
 const char *FS_GamePureChecksum( void ) {
@@ -2883,7 +2883,7 @@ const char *FS_GamePureChecksum( void ) {
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
 		// is the element a pak file?
 		if ( search->pack ) {
-			if (search->pack->referenced & FS_QAGAME_REF) {
+			if (search->pack->referenced & FS_GAME_REF) {
 				Com_sprintf(info, sizeof(info), "%d", search->pack->checksum);
 			}
 		}
@@ -3063,7 +3063,7 @@ const char *FS_ReferencedPakNames( void ) {
 	info[0] = 0;
 
 	// we want to return ALL pk3's from the fs_game path
-	// and referenced one's from baseq3
+	// and referenced one's from base
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
 		// is the element a pak file?
 		if ( search->pack ) {

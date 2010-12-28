@@ -89,6 +89,10 @@ ifndef COPYBINDIR
 COPYBINDIR=$(COPYDIR)
 endif
 
+ifndef INSTALLDIR
+INSTALLDIR="../Build"
+endif
+
 ifndef BUILD_DIR
 BUILD_DIR=Build
 endif
@@ -885,7 +889,7 @@ endif
 ifneq ($(BUILD_GAME_SO),0)
   TARGETS += \
     $(B)/Base/cgame$(SHLIBNAME) \
-    $(B)/Base/qagame$(SHLIBNAME) \
+    $(B)/Base/game$(SHLIBNAME) \
     $(B)/Base/ui$(SHLIBNAME)
 endif
 
@@ -893,7 +897,7 @@ ifneq ($(BUILD_GAME_QVM),0)
   ifneq ($(CROSS_COMPILING),1)
     TARGETS += \
       $(B)/Base/vm/cgame.qvm \
-      $(B)/Base/vm/qagame.qvm \
+      $(B)/Base/vm/game.qvm \
       $(B)/Base/vm/ui.qvm
   endif
 endif
@@ -976,7 +980,7 @@ endef
 
 define DO_GAME_CC
 $(echo_cmd) "GAME_CC $<"
-$(Q)$(CC) -DQAGAME $(SHLIBCFLAGS) $(CFLAGS) $(OPTIMIZEVM) -o $@ -c $<
+$(Q)$(CC) -DGAME $(SHLIBCFLAGS) $(CFLAGS) $(OPTIMIZEVM) -o $@ -c $<
 $(Q)$(DO_QVM_DEP)
 endef
 
@@ -1029,7 +1033,7 @@ release:
 # an informational message, then start building
 targets: makedirs
 	@echo ""
-	@echo "Building ZEQ2lite in $(B):"
+	@echo "Building ZEQ2-Lite in $(B):"
 	@echo "  PLATFORM: $(PLATFORM)"
 	@echo "  ARCH: $(ARCH)"
 	@echo "  VERSION: $(VERSION)"
@@ -1098,7 +1102,7 @@ makedirs:
 	@if [ ! -d $(B)/Base/Game ];then $(MKDIR) $(B)/Base/Game;fi
 	@if [ ! -d $(B)/Base/UI ];then $(MKDIR) $(B)/Base/UI;fi
 	@if [ ! -d $(B)/Base/Shared ];then $(MKDIR) $(B)/Base/Shared;fi
-	@if [ ! -d $(B)/Base/VM ];then $(MKDIR) $(B)/Base/vm;fi
+	@if [ ! -d $(B)/Base/vm ];then $(MKDIR) $(B)/Base/vm;fi
 	@if [ ! -d $(B)/tools ];then $(MKDIR) $(B)/tools;fi
 	@if [ ! -d $(B)/tools/asm ];then $(MKDIR) $(B)/tools/asm;fi
 	@if [ ! -d $(B)/tools/etc ];then $(MKDIR) $(B)/tools/etc;fi
@@ -1237,13 +1241,14 @@ endef
 
 define DO_GAME_Q3LCC
 $(echo_cmd) "GAME_Q3LCC $<"
-$(Q)$(Q3LCC) -DQAGAME -o $@ $<
+$(Q)$(Q3LCC) -DGAME -o $@ $<
 endef
 
 define DO_UI_Q3LCC
 $(echo_cmd) "UI_Q3LCC $<"
 $(Q)$(Q3LCC) -DUI -o $@ $<
 endef
+
 
 Q3ASMOBJ = \
   $(B)/tools/asm/q3asm.o \
@@ -1750,7 +1755,7 @@ $(B)/ZEQ2Dedicated$(FULLBINEXT): $(Q3DOBJ)
 ## ZEQ2-LITE CGAME
 #############################################################################
 
-Q3CGOBJ_ = \
+CGOBJ_ = \
   $(B)/Base/CGame/cg_main.o \
   $(B)/Base/CGame/bg_misc.o \
   $(B)/Base/CGame/bg_pmove.o \
@@ -1790,22 +1795,22 @@ Q3CGOBJ_ = \
   $(B)/Base/Shared/q_math.o \
   $(B)/Base/Shared/q_shared.o
 
-Q3CGOBJ = $(Q3CGOBJ_) $(B)/Base/CGame/cg_syscalls.o
-Q3CGVMOBJ = $(Q3CGOBJ_:%.o=%.asm)
+CGOBJ = $(CGOBJ_) $(B)/Base/CGame/cg_syscalls.o
+CGVMOBJ = $(CGOBJ_:%.o=%.asm)
 
-$(B)/Base/cgame$(SHLIBNAME): $(Q3CGOBJ)
+$(B)/Base/cgame$(SHLIBNAME): $(CGOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3CGOBJ)
+	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(CGOBJ)
 
-$(B)/Base/vm/cgame.qvm: $(Q3CGVMOBJ) $(CGDIR)/cg_syscalls.asm $(Q3ASM)
+$(B)/Base/vm/cgame.qvm: $(CGVMOBJ) $(CGDIR)/cg_syscalls.asm $(Q3ASM)
 	$(echo_cmd) "Q3ASM $@"
-	$(Q)$(Q3ASM) -o $@ $(Q3CGVMOBJ) $(CGDIR)/cg_syscalls.asm
+	$(Q)$(Q3ASM) -o $@ $(CGVMOBJ) $(CGDIR)/cg_syscalls.asm
 
 #############################################################################
 ## ZEQ2-LITE GAME
 #############################################################################
 
-Q3GOBJ_ = \
+GOBJ_ = \
   $(B)/Base/Game/g_main.o \
   $(B)/Base/Game/bg_misc.o \
   $(B)/Base/Game/bg_pmove.o \
@@ -1839,23 +1844,23 @@ Q3GOBJ_ = \
   $(B)/Base/Shared/q_math.o \
   $(B)/Base/Shared/q_shared.o
 
-Q3GOBJ = $(Q3GOBJ_) $(B)/Base/Game/g_syscalls.o
-Q3GVMOBJ = $(Q3GOBJ_:%.o=%.asm)
+GOBJ = $(GOBJ_) $(B)/Base/Game/g_syscalls.o
+GVMOBJ = $(GOBJ_:%.o=%.asm)
 
-$(B)/Base/qagame$(SHLIBNAME): $(Q3GOBJ)
+$(B)/Base/game$(SHLIBNAME): $(GOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3GOBJ)
+	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(GOBJ)
 
-$(B)/Base/vm/qagame.qvm: $(Q3GVMOBJ) $(GDIR)/g_syscalls.asm $(Q3ASM)
+$(B)/Base/vm/game.qvm: $(GVMOBJ) $(GDIR)/g_syscalls.asm $(Q3ASM)
 	$(echo_cmd) "Q3ASM $@"
-	$(Q)$(Q3ASM) -o $@ $(Q3GVMOBJ) $(GDIR)/g_syscalls.asm
+	$(Q)$(Q3ASM) -o $@ $(GVMOBJ) $(GDIR)/g_syscalls.asm
 
 
 #############################################################################
 ## ZEQ2-LITE UI
 #############################################################################
 
-Q3UIOBJ_ = \
+UIOBJ_ = \
   $(B)/Base/UI/ui_main.o \
   $(B)/Base/UI/bg_misc.o \
   $(B)/Base/UI/bg_lib.o \
@@ -1889,16 +1894,16 @@ Q3UIOBJ_ = \
   $(B)/Base/Shared/q_math.o \
   $(B)/Base/Shared/q_shared.o
 
-Q3UIOBJ = $(Q3UIOBJ_) $(B)/Base/UI/ui_syscalls.o
-Q3UIVMOBJ = $(Q3UIOBJ_:%.o=%.asm)
+UIOBJ = $(UIOBJ_) $(B)/Base/UI/ui_syscalls.o
+UIVMOBJ = $(UIOBJ_:%.o=%.asm)
 
-$(B)/Base/ui$(SHLIBNAME): $(Q3UIOBJ)
+$(B)/Base/ui$(SHLIBNAME): $(UIOBJ)
 	$(echo_cmd) "LD $@"
-	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(Q3UIOBJ)
+	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(UIOBJ)
 
-$(B)/Base/vm/ui.qvm: $(Q3UIVMOBJ) $(UIDIR)/ui_syscalls.asm $(Q3ASM)
+$(B)/Base/vm/ui.qvm: $(UIVMOBJ) $(UIDIR)/ui_syscalls.asm $(Q3ASM)
 	$(echo_cmd) "Q3ASM $@"
-	$(Q)$(Q3ASM) -o $@ $(Q3UIVMOBJ) $(UIDIR)/ui_syscalls.asm
+	$(Q)$(Q3ASM) -o $@ $(UIVMOBJ) $(UIDIR)/ui_syscalls.asm
 
 
 #############################################################################
@@ -2029,13 +2034,42 @@ $(B)/Base/Shared/%.asm: $(CMDIR)/%.c $(Q3LCC)
 #############################################################################
 
 OBJ = $(Q3OBJ) $(Q3POBJ) $(Q3POBJ_SMP) $(Q3DOBJ) \
-  $(MPGOBJ) $(Q3GOBJ) $(Q3CGOBJ) $(MPCGOBJ) $(Q3UIOBJ) $(MPUIOBJ) \
-  $(MPGVMOBJ) $(Q3GVMOBJ) $(Q3CGVMOBJ) $(MPCGVMOBJ) $(Q3UIVMOBJ) $(MPUIVMOBJ)
+  $(GOBJ) $(CGOBJ) $(UIOBJ) \
+  $(GVMOBJ) $(CGVMOBJ) $(UIVMOBJ)
 TOOLSOBJ = $(LBURGOBJ) $(Q3CPPOBJ) $(Q3RCCOBJ) $(Q3LCCOBJ) $(Q3ASMOBJ)
 
+install: release
 
+ifneq ($(BUILD_CLIENT),0)
+	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/ZEQ2$(FULLBINEXT) $(INSTALLDIR)/ZEQ2$(FULLBINEXT)
+endif
+
+ifneq ($(BUILD_SERVER),0)
+	@if [ -f $(BR)/ZEQ2Dedicated$(FULLBINEXT) ]; then \
+		$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/ZEQ2Dedicated$(FULLBINEXT) $(INSTALLDIR)/ZEQ2Dedicated$(FULLBINEXT); \
+	fi
+endif
+
+ifneq ($(BUILD_GAME_SO),0)
+	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/Base/cgame$(SHLIBNAME) \
+					$(INSTALLDIR)/ZEQ2/.
+	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/Base/game$(SHLIBNAME) \
+					$(INSTALLDIR)/ZEQ2/.
+	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/Base/ui$(SHLIBNAME) \
+					$(INSTALLDIR)/ZEQ2/.
+endif
+
+ifneq ($(BUILD_GAME_QVM),0)
+	$(INSTALL)  -m 0755 $(BR)/Base/vm/cgame.qvm \
+					$(INSTALLDIR)/ZEQ2/vm/
+	$(INSTALL)  -m 0755 $(BR)/Base/vm/game.qvm \
+					$(INSTALLDIR)/ZEQ2/vm/
+	$(INSTALL)  -m 0755 $(BR)/Base/vm/ui.qvm \
+					$(INSTALLDIR)/ZEQ2/vm/
+endif
+	
 copyfiles: release
-	@if [ ! -d $(COPYDIR)/ZEQ2 ]; then echo "You need to set COPYDIR to where your ZEQ2-lite data is!"; fi
+	@if [ ! -d $(COPYDIR)/ZEQ2 ]; then echo "You need to set COPYDIR to where your ZEQ2-Lite data is!"; fi
 	-$(MKDIR) -p -m 0755 $(COPYDIR)/ZEQ2
 
 ifneq ($(BUILD_CLIENT),0)
@@ -2054,11 +2088,11 @@ ifneq ($(BUILD_SERVER),0)
 endif
 
 ifneq ($(BUILD_GAME_SO),0)
-	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/ZEQ2/cgame$(SHLIBNAME) \
+	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/Base/cgame$(SHLIBNAME) \
 					$(COPYDIR)/ZEQ2/.
-	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/ZEQ2/qagame$(SHLIBNAME) \
+	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/Base/game$(SHLIBNAME) \
 					$(COPYDIR)/ZEQ2/.
-	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/ZEQ2/ui$(SHLIBNAME) \
+	$(INSTALL) $(STRIP_FLAG) -m 0755 $(BR)/Base/ui$(SHLIBNAME) \
 					$(COPYDIR)/ZEQ2/.
 endif
 
@@ -2121,7 +2155,7 @@ ifneq ($(B),)
   -include $(OBJ_D_FILES) $(TOOLSOBJ_D_FILES)
 endif
 
-.PHONY: all clean clean2 clean-debug clean-release copyfiles \
+.PHONY: all clean clean2 clean-debug clean-release install copyfiles \
 	debug default dist distclean installer makedirs \
 	release targets \
 	toolsclean toolsclean2 toolsclean-debug toolsclean-release \

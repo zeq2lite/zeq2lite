@@ -1,4 +1,4 @@
--o "..\..\..\..\Build\ZEQ2\vm\qagame.qvm"
+-o "..\..\..\..\Build\ZEQ2\vm\game.qvm"
 g_main
 bg_misc
 ..\g_syscalls
