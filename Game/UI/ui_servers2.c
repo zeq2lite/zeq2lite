@@ -107,7 +107,7 @@ static const char *master_items[] = {
 };
 
 static const char *servertype_items[] = {
-	"All",
+	//"All",
 	"Struggle",
 	NULL
 };

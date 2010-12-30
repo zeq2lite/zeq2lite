@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="Engine"
 	ProjectGUID="{81CB51C4-B434-4E12-B69B-BAEE102F2852}"
 	TargetFrameworkVersion="131072"
@@ -79,6 +79,7 @@
 				OutputFile="$(SolutionDir)\Debug\ZEQ2.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="C:\SDK\zeq\SVN\Source\Engine\libs\win32"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\zeq2lite.pdb"
