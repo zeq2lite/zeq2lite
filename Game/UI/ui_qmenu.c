@@ -1698,7 +1698,7 @@ Menu_Cache
 */
 void Menu_Cache( void )
 {
-	uis.charset			= trap_R_RegisterShaderNoMip( "interface/fonts/font0.png" );
+	uis.charset			= trap_R_RegisterShaderNoMip( "consoleFont" );
 	uis.charsetProp		= trap_R_RegisterShaderNoMip( "interface/fonts/font1.png" );
 	uis.charsetPropGlow	= trap_R_RegisterShaderNoMip( "interface/fonts/font1Glow.png" );
 	uis.charsetPropB	= trap_R_RegisterShaderNoMip( "interface/fonts/font2.png" );

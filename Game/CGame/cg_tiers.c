@@ -10,7 +10,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 	if(!CG_ParseAnimationFile(filename,ci)){
 		Com_sprintf(filename,sizeof(filename),"players/characters/%s/animation.cfg",modelName);
 		if(!CG_ParseAnimationFile(filename,ci)){
-			Com_Printf("Failed to load animation file %s\n",filename);
+			//Com_Printf("Failed to load animation file %s\n",filename);
 			return qfalse;
 		}
 	}
@@ -61,7 +61,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				ci->legsModel[i] = trap_R_RegisterModel(filename);
 				if(!ci->legsModel[i]){
 					if(i == 0){
-						Com_Printf("Failed to load model file %s\n", filename);
+						//Com_Printf("Failed to load model file %s\n", filename);
 						return qfalse;
 					}else {
 						ci->legsModel[i] = ci->legsModel[i - 1];
@@ -71,7 +71,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				ci->torsoModel[i] = trap_R_RegisterModel(filename);
 				if(!ci->torsoModel[i]){
 					if(i == 0){
-						Com_Printf("Failed to load model file %s\n", filename);
+						//Com_Printf("Failed to load model file %s\n", filename);
 						return qfalse;
 					}else {
 						ci->torsoModel[i] = ci->torsoModel[i - 1];
@@ -81,7 +81,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				ci->headModel[i] = trap_R_RegisterModel(filename);
 				if(!ci->headModel[i]){
 					if(i == 0){
-						Com_Printf("Failed to load model file %s\n", filename);
+						//Com_Printf("Failed to load model file %s\n", filename);
 						return qfalse;
 					}else {
 						ci->headModel[i] = ci->headModel[i - 1];
@@ -103,7 +103,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower_default.skin", modelName, i+1);
 				ci->legsSkin[i] = trap_R_RegisterSkin (filename);
 				if(!ci->legsSkin[i]){
-					Com_Printf("Failed to load skin file %s\n", filename);
+					//Com_Printf("Failed to load skin file %s\n", filename);
 					return qfalse;
 				}
 			}else{
@@ -117,7 +117,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/upper_default.skin", modelName, i+1);
 				ci->torsoSkin[i] = trap_R_RegisterSkin (filename);
 				if(!ci->torsoSkin[i]){
-					Com_Printf("Failed to load skin file %s\n", filename);
+					//Com_Printf("Failed to load skin file %s\n", filename);
 					return qfalse;
 				}
 			} else {
@@ -131,7 +131,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head_default.skin", modelName, i+1);
 				ci->headSkin[i] = trap_R_RegisterSkin (filename);
 				if(!ci->headSkin[i]){
-					Com_Printf("Failed to load skin file %s\n", filename);
+					//Com_Printf("Failed to load skin file %s\n", filename);
 					return qfalse;
 				}
 			} else {

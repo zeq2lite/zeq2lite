@@ -1255,34 +1255,34 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName
 	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/body.zMesh", modelName );
 	pi->legsModel = trap_R_RegisterModel( filename );
 	if ( !pi->legsModel ) {
-		Com_Printf( "Failed to load model file %s, trying players//%s/tier1/body.zMesh\n", filename, modelName );
+		//Com_Printf( "Failed to load model file %s, trying players//%s/tier1/body.zMesh\n", filename, modelName );
 	
 
 		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/lower.md3", modelName );
 		pi->legsModel = trap_R_RegisterModel( filename );
 		if ( !pi->legsModel ) {
-			Com_Printf( "Failed to load model file %s\n", filename );
+			//Com_Printf( "Failed to load model file %s\n", filename );
 			return qfalse;
 		}
 
 		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/upper.md3", modelName );
 		pi->torsoModel = trap_R_RegisterModel( filename );
 		if ( !pi->torsoModel ) {
-			Com_Printf( "Failed to load model file %s\n", filename );
+			//Com_Printf( "Failed to load model file %s\n", filename );
 			return qfalse;
 		}
 
 		Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/head.md3", modelName );
 		pi->headModel = trap_R_RegisterModel( filename );
 		if ( !pi->headModel ) {
-			Com_Printf( "Failed to load model file %s\n", filename );
+			//Com_Printf( "Failed to load model file %s\n", filename );
 			return qfalse;
 		}
 	}
 	// if any skins failed to load, fall back to default
 	if ( !UI_RegisterClientSkin( pi, modelName, skinName ) ) {
 		if ( !UI_RegisterClientSkin( pi, modelName, "default" ) ) {
-			Com_Printf( "Failed to load skin file: %s : %s\n", modelName, skinName );
+			//Com_Printf( "Failed to load skin file: %s : %s\n", modelName, skinName );
 			return qfalse;
 		}
 	}
@@ -1290,7 +1290,7 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName
 	// load the animations
 	Com_sprintf( filename, sizeof( filename ), "players//%s/animation.cfg", modelName );
 	if ( !UI_ParseAnimationFile( filename, pi->animations, pi ) ) {
-		Com_Printf( "Failed to load animation file %s\n", filename );
+		//Com_Printf( "Failed to load animation file %s\n", filename );
 		return qfalse;
 	}
 
