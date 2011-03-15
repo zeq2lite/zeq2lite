@@ -715,6 +715,8 @@ void UI_PlayerModelMenu(void)
 {
 	PlayerModel_MenuInit();
 	uis.menuamount = 0;
+	uis.showFrame = qfalse;
+	uis.hideEarth = qtrue;	
 	UI_PushMenu( &s_playermodel.menu );
 
 	Menu_SetCursorToItem( &s_playermodel.menu, &s_playermodel.pics[s_playermodel.selectedmodel % MAX_MODELSPERPAGE] );

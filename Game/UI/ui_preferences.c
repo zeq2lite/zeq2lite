@@ -44,11 +44,12 @@ GAME OPTIONS MENU
 #define ID_CROSSHAIRSIZE		132
 #define ID_PARTICLESOPTIMISE	133
 #define ID_PARTICLESQUALITY		134
-#define ID_BLOOMQUALITY			135
-#define ID_BLOOMINTENSITY		136
-#define ID_BLOOMDARKEN			137
-#define ID_BLOOMALPHA			138
-#define ID_OUTLINES				139
+#define ID_FLIGHT				135
+#define ID_BLOOMQUALITY			136
+#define ID_BLOOMINTENSITY		137
+#define ID_BLOOMDARKEN			138
+#define ID_BLOOMALPHA			139
+#define ID_OUTLINES				140
 #define	NUM_CROSSHAIRS			10
 typedef struct{
 	menuframework_s		menu;
@@ -62,13 +63,14 @@ typedef struct{
 	menulist_s			camerastyle;
 	menulist_s			beamdetail;
 	menulist_s			particlesOptimise;
-	menulist_s			particlesQuality;
+	menulist_s			particlesQuality;	
 	menulist_s			bloomQuality;
 	menuslider_s		bloomIntensity;
 	menulist_s			bloomDarken;
 	menuslider_s		bloomAlpha;
 	menulist_s			beamcontrol;
 	menuradiobutton_s	outlines;
+	menuradiobutton_s	flight;
 	menubitmap_s		back;
 	menubitmap_s		apply;
 	qhandle_t			crosshairShader[NUM_CROSSHAIRS];
@@ -94,6 +96,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.particlesOptimise.curvalue= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_particlesStop" ) );
 	s_preferences.beamcontrol.curvalue		= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_beamControl" ) );
 	s_preferences.outlines.curvalue			= trap_Cvar_VariableValue( "r_outlines" ) != 0;
+	s_preferences.flight.curvalue			= trap_Cvar_VariableValue( "cg_advancedFlight" ) != 0;
 	// Bloom Quality
 	switch ( ( int ) trap_Cvar_VariableValue( "r_bloom_sample_size" ) )
 	{
@@ -166,6 +169,9 @@ static void Preferences_Event( void* ptr, int notification ) {
 	case ID_OUTLINES:
 		trap_Cvar_SetValue( "r_outlines", s_preferences.outlines.curvalue );
 		break;
+	case ID_FLIGHT:
+		trap_Cvar_SetValue( "cg_advancedFlight", s_preferences.flight.curvalue );
+		break;		
 	case ID_BLOOMQUALITY:
 		switch ( s_preferences.bloomQuality.curvalue  )
 		{
@@ -433,6 +439,15 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.outlines.generic.y			= y;
 
 	y += BIGCHAR_HEIGHT+2;
+	s_preferences.flight.generic.type		= MTYPE_RADIOBUTTON;
+	s_preferences.flight.generic.name		= "Advanced Flight:";
+	s_preferences.flight.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.flight.generic.callback	= Preferences_Event;
+	s_preferences.flight.generic.id			= ID_FLIGHT;
+	s_preferences.flight.generic.x			= PREFERENCES_X_POS;
+	s_preferences.flight.generic.y			= y;	
+
+	y += BIGCHAR_HEIGHT+2;
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.bloomQuality.generic.type			= MTYPE_SPINCONTROL;
 	s_preferences.bloomQuality.generic.name			= "Bloom Quality:";
@@ -511,6 +526,7 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesQuality );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesOptimise );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.outlines );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.flight );		
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomQuality );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomIntensity );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomDarken );
