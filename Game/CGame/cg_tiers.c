@@ -105,7 +105,6 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 			strcpy(headPrefix,"");
 			strcpy(lowerPrefix,"");
 			strcpy(upperPrefix,"");
-			CG_Printf("Printing values of %s/%s/%s\n",headPrefix,upperPrefix,lowerPrefix);
 		}
 		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/%s%s.skin",legsPath,i+1,skinName,lowerPrefix);
 		ci->legsSkin[i] = trap_R_RegisterSkin(filename);

@@ -1166,14 +1166,23 @@ UI_RegisterClientSkin
 */
 static qboolean UI_RegisterClientSkin( playerInfo_t *pi, const char *modelName, const char *skinName ) {
 	char		filename[MAX_QPATH];
-
-	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/lower_%s.skin", modelName, skinName );
+	char headPrefix[8],upperPrefix[8],lowerPrefix[8];
+	strcpy(headPrefix,"head_");
+	strcpy(lowerPrefix,"lower_");
+	strcpy(upperPrefix,"upper_");
+	Com_sprintf(filename,sizeof(filename),"players//%s/tier1/%s.skin",modelName,skinName);
+	if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
+		strcpy(headPrefix,"");
+		strcpy(lowerPrefix,"");
+		strcpy(upperPrefix,"");
+	}
+	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/%s%s.skin", modelName, lowerPrefix,skinName );
 	pi->legsSkin = trap_R_RegisterSkin( filename );
 
-	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/upper_%s.skin", modelName, skinName );
+	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/%s%s.skin", modelName, upperPrefix,skinName );
 	pi->torsoSkin = trap_R_RegisterSkin( filename );
 
-	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/head_%s.skin", modelName, skinName );
+	Com_sprintf( filename, sizeof( filename ), "players//%s/tier1/%s%s.skin", modelName, headPrefix,skinName );
 	pi->headSkin = trap_R_RegisterSkin( filename );
 
 	if ( !pi->legsSkin || !pi->torsoSkin || !pi->headSkin ) {
