@@ -96,7 +96,7 @@ void InGame_Event( void *ptr, int notification ) {
 
 	switch( ((menucommon_s*)ptr)->id ) {
 	case ID_SETUP:
-		UI_SetupMenu();
+		UI_SystemSettingsMenu();
 		break;
 
 	case ID_CAMERA:
