@@ -33,30 +33,30 @@ GAME OPTIONS MENU
 #define ART_ACCEPT0				"interface/art/accept_0"
 #define ART_ACCEPT1				"interface/art/accept_1"
 #define PREFERENCES_X_POS		320
-#define ID_SYSTEM				100
-#define ID_CONTROLS				101
+#define ID_CONTROLS				100
+#define ID_SYSTEM				101
 #define ID_GENERAL				102
 #define ID_CROSSHAIR			127
 #define ID_CAMERASTYLE			128
 #define	ID_BEAMCONTROL			129
 #define	ID_BEAMDETAIL			130
-#define ID_BACK					131
-#define ID_CROSSHAIRSIZE		132
-#define ID_PARTICLESOPTIMISE	133
-#define ID_PARTICLESQUALITY		134
-#define ID_FLIGHT				135
-#define ID_BLOOMQUALITY			136
-#define ID_BLOOMINTENSITY		137
-#define ID_BLOOMDARKEN			138
-#define ID_BLOOMALPHA			139
-#define ID_OUTLINES				140
+#define ID_CROSSHAIRSIZE		131
+#define ID_PARTICLESOPTIMISE	132
+#define ID_PARTICLESQUALITY		133
+#define ID_FLIGHT				134
+#define ID_BLOOMQUALITY			135
+#define ID_BLOOMINTENSITY		136
+#define ID_BLOOMDARKEN			137
+#define ID_BLOOMALPHA			138
+#define ID_OUTLINES				139
+#define ID_BACK2				140
 #define	NUM_CROSSHAIRS			10
 typedef struct{
 	menuframework_s		menu;
 	menubitmap_s		framel;
 	menubitmap_s		framer;
-	menutext_s			system;
 	menutext_s			controls;
+	menutext_s			system;
 	menutext_s			general;	
 	menulist_s			crosshair;
 	menulist_s			crosshairSize;
@@ -71,8 +71,8 @@ typedef struct{
 	menulist_s			beamcontrol;
 	menuradiobutton_s	outlines;
 	menuradiobutton_s	flight;
-	menubitmap_s		back;
 	menubitmap_s		apply;
+	menutext_s			back;
 	qhandle_t			crosshairShader[NUM_CROSSHAIRS];
 } preferences_t;
 static int	initialBloomQuality;
@@ -217,16 +217,17 @@ static void Preferences_Event( void* ptr, int notification ) {
 	case ID_BLOOMALPHA:
 		trap_Cvar_SetValue( "r_bloom_alpha", s_preferences.bloomAlpha.curvalue);
 		break;
+	case ID_CONTROLS:
+		UI_PopMenu();
+		UI_ControlsMenu();
+		break;		
 	case ID_SYSTEM:
+		UI_PopMenu();
 		UI_SystemSettingsMenu();
 		break;
-	case ID_CONTROLS:
-		UI_ControlsMenu();
-		break;
 	case ID_GENERAL:
-		UI_PreferencesMenu();
 		break;		
-	case ID_BACK:
+	case ID_BACK2:
 		UI_PopMenu();
 		break;
 	}
@@ -324,8 +325,18 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.framer.width  	   = 256;
 	s_preferences.framer.height  	   = 334;
 
+	s_preferences.controls.generic.type			= MTYPE_PTEXT;
+	s_preferences.controls.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_preferences.controls.generic.id			= ID_CONTROLS;
+	s_preferences.controls.generic.callback		= Preferences_Event;
+	s_preferences.controls.generic.x			= x;
+	s_preferences.controls.generic.y			= y;
+	s_preferences.controls.string				= "CONTROLS";
+	s_preferences.controls.style				= style;
+	s_preferences.controls.color				= color_white;
+	y+=offset;
 	s_preferences.system.generic.type		= MTYPE_PTEXT;
-	s_preferences.system.generic.flags		= QMF_LEFT_JUSTIFY;
+	s_preferences.system.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_preferences.system.generic.id			= ID_SYSTEM;
 	s_preferences.system.generic.callback	= Preferences_Event;
 	s_preferences.system.generic.x			= x;
@@ -333,19 +344,9 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.system.string				= "SYSTEM";
 	s_preferences.system.style				= style;
 	s_preferences.system.color				= color_white;
-	y+=offset;
-	s_preferences.controls.generic.type			= MTYPE_PTEXT;
-	s_preferences.controls.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_preferences.controls.generic.id			= ID_CONTROLS;
-	s_preferences.controls.generic.callback		= Preferences_Event;
-	s_preferences.controls.generic.x				= x;
-	s_preferences.controls.generic.y				= y;
-	s_preferences.controls.string				= "CONTROLS";
-	s_preferences.controls.style					= style;
-	s_preferences.controls.color					= color_white;
 	y+=offset;		
 	s_preferences.general.generic.type		= MTYPE_PTEXT;
-	s_preferences.general.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_preferences.general.generic.flags		= QMF_RIGHT_JUSTIFY;
 	s_preferences.general.generic.id			= ID_GENERAL;
 	s_preferences.general.generic.callback	= Preferences_Event;
 	s_preferences.general.generic.x			= x;
@@ -353,6 +354,16 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.general.string				= "GENERAL";
 	s_preferences.general.style				= style;
 	s_preferences.general.color				= color_white;
+	y+=offset;	
+	s_preferences.back.generic.type			= MTYPE_PTEXT;
+	s_preferences.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_preferences.back.generic.id			= ID_BACK2;
+	s_preferences.back.generic.callback		= Preferences_Event;
+	s_preferences.back.generic.x			= x;
+	s_preferences.back.generic.y			= y;
+	s_preferences.back.string				= "BACK";
+	s_preferences.back.style				= style;
+	s_preferences.back.color				= color_white;
 	y+=offset;	
 	
 	y = 88;
@@ -448,7 +459,6 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.flight.generic.y			= y;	
 
 	y += BIGCHAR_HEIGHT+2;
-	y += BIGCHAR_HEIGHT+2;
 	s_preferences.bloomQuality.generic.type			= MTYPE_SPINCONTROL;
 	s_preferences.bloomQuality.generic.name			= "Bloom Quality:";
 	s_preferences.bloomQuality.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -490,18 +500,6 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.bloomAlpha.minvalue			= 0;
 	s_preferences.bloomAlpha.maxvalue			= 1;
 
-	y += BIGCHAR_HEIGHT+2;
-	s_preferences.back.generic.type	    = MTYPE_BITMAP;
-	s_preferences.back.generic.name     = ART_BACK0;
-	s_preferences.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_preferences.back.generic.callback = Preferences_Event;
-	s_preferences.back.generic.id	    = ID_BACK;
-	s_preferences.back.generic.x		= 0;
-	s_preferences.back.generic.y		= 480-64;
-	s_preferences.back.width  		    = 128;
-	s_preferences.back.height  		    = 64;
-	s_preferences.back.focuspic         = ART_BACK1;
-
 	s_preferences.apply.generic.type     = MTYPE_BITMAP;
 	s_preferences.apply.generic.name     = ART_ACCEPT0;
 	s_preferences.apply.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_HIDDEN|QMF_INACTIVE;
@@ -512,8 +510,8 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.apply.height  		 = 64;
 	s_preferences.apply.focuspic         = ART_ACCEPT1;
 
-	Menu_AddItem( &s_preferences.menu, ( void * ) &s_preferences.system );
 	Menu_AddItem( &s_preferences.menu, ( void * ) &s_preferences.controls );
+	Menu_AddItem( &s_preferences.menu, ( void * ) &s_preferences.system );
 	Menu_AddItem( &s_preferences.menu, ( void * ) &s_preferences.general );
 	
 	Menu_AddItem( &s_preferences.menu, &s_preferences.framel );
@@ -556,7 +554,7 @@ void Preferences_Cache(void){
 UI_PreferencesMenu
 ===============*/
 void UI_PreferencesMenu( void ) {
-	uis.menuamount = 3;
+	uis.menuamount = 4;
 	uis.hideEarth = qtrue;
 	uis.showFrame = qtrue;
 	Preferences_MenuInit();

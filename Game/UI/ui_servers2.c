@@ -69,10 +69,10 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define ID_SCROLL_UP		16
 #define ID_SCROLL_DOWN		17
 #define ID_BACK				18
-#define ID_REFRESH			19
-#define ID_SPECIFY			20
-#define ID_CREATE			21
-#define ID_CONNECT			22
+#define ID_CONNECT			19
+#define ID_CREATE			20
+#define ID_REFRESH			21
+#define ID_SPECIFY			22
 #define ID_REMOVE			23
 
 #define GR_LOGO				30
@@ -194,12 +194,12 @@ typedef struct {
 	menutext_s			status;
 	menutext_s			statusbar;
 
-	menubitmap_s		remove;
-	menubitmap_s		back;
-	menubitmap_s		refresh;
-	menubitmap_s		specify;
-	menubitmap_s		create;
-	menubitmap_s		go;
+	menutext_s			go;	
+	menutext_s			create;
+	menutext_s			refresh;
+	menutext_s			specify;
+	menutext_s			back;
+	menubitmap_s		remove;	
 
 	pinglist_t			pinglist[MAX_PINGREQUESTS];
 	table_t				table[MAX_LISTBOXITEMS];
@@ -1178,27 +1178,29 @@ static void ArenaServers_Event( void* ptr, int event ) {
 		ScrollList_Key( &g_arenaservers.list, K_DOWNARROW );
 		break;
 
-	case ID_BACK:
-		ArenaServers_StopRefresh();
-		ArenaServers_SaveChanges();
-		UI_PopMenu();
-		break;
+	
+	case ID_CONNECT:
+		ArenaServers_Go();
+		break;	
 
+	case ID_CREATE:
+		UI_StartServerMenu( qtrue );
+		break;	
+
+	case ID_SPECIFY:
+		UI_SpecifyServerMenu();
+		break;		
+		
 	case ID_REFRESH:
 		ArenaServers_StartRefresh();
 		break;
 
-	case ID_SPECIFY:
-		UI_SpecifyServerMenu();
-		break;
 
-	case ID_CREATE:
-		UI_StartServerMenu( qtrue );
-		break;
-
-	case ID_CONNECT:
-		ArenaServers_Go();
-		break;
+	case ID_BACK:
+		ArenaServers_StopRefresh();
+		ArenaServers_SaveChanges();
+		UI_PopMenu();
+		break;		
 
 	case ID_REMOVE:
 		ArenaServers_Remove();
@@ -1280,7 +1282,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.banner.style  	    = UI_CENTER|UI_DROPSHADOW;
 	g_arenaservers.banner.color  	    = color_white;
 
-	y = 80;
+	y = 140;
 	g_arenaservers.master.generic.type			= MTYPE_SPINCONTROL;
 	g_arenaservers.master.generic.name			= "Servers:";
 	g_arenaservers.master.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1289,16 +1291,6 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.master.generic.x				= 320;
 	g_arenaservers.master.generic.y				= y;
 	g_arenaservers.master.itemnames				= master_items;
-
-	y += SMALLCHAR_HEIGHT;
-	g_arenaservers.gametype.generic.type		= MTYPE_SPINCONTROL;
-	g_arenaservers.gametype.generic.name		= "Game Type:";
-	g_arenaservers.gametype.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	g_arenaservers.gametype.generic.callback	= ArenaServers_Event;
-	g_arenaservers.gametype.generic.id			= ID_GAMETYPE;
-	g_arenaservers.gametype.generic.x			= 320;
-	g_arenaservers.gametype.generic.y			= y;
-	g_arenaservers.gametype.itemnames			= servertype_items;
 
 	y += SMALLCHAR_HEIGHT;
 	g_arenaservers.sortkey.generic.type			= MTYPE_SPINCONTROL;
@@ -1310,23 +1302,6 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.sortkey.generic.y			= y;
 	g_arenaservers.sortkey.itemnames			= sortkey_items;
 
-	y += SMALLCHAR_HEIGHT;
-	g_arenaservers.showfull.generic.type		= MTYPE_RADIOBUTTON;
-	g_arenaservers.showfull.generic.name		= "Show Full:";
-	g_arenaservers.showfull.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	g_arenaservers.showfull.generic.callback	= ArenaServers_Event;
-	g_arenaservers.showfull.generic.id			= ID_SHOW_FULL;
-	g_arenaservers.showfull.generic.x			= 320;
-	g_arenaservers.showfull.generic.y			= y;
-
-	y += SMALLCHAR_HEIGHT;
-	g_arenaservers.showempty.generic.type		= MTYPE_RADIOBUTTON;
-	g_arenaservers.showempty.generic.name		= "Show Empty:";
-	g_arenaservers.showempty.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	g_arenaservers.showempty.generic.callback	= ArenaServers_Event;
-	g_arenaservers.showempty.generic.id			= ID_SHOW_EMPTY;
-	g_arenaservers.showempty.generic.x			= 320;
-	g_arenaservers.showempty.generic.y			= y;
 
 	y += 3 * SMALLCHAR_HEIGHT;
 	g_arenaservers.list.generic.type			= MTYPE_SCROLLLIST;
@@ -1395,6 +1370,58 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.statusbar.style	        = UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	g_arenaservers.statusbar.color	        = text_color_normal;
 
+	g_arenaservers.go.generic.type		= MTYPE_PTEXT;
+	g_arenaservers.go.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	g_arenaservers.go.generic.id		= ID_CONNECT;
+	g_arenaservers.go.generic.callback	= ArenaServers_Event;
+	g_arenaservers.go.generic.x			= 28;
+	g_arenaservers.go.generic.y			= 119;
+	g_arenaservers.go.string			= "FIGHT!";
+	g_arenaservers.go.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	g_arenaservers.go.color				= color_white;
+	y+=38;
+	g_arenaservers.create.generic.type		= MTYPE_PTEXT;
+	g_arenaservers.create.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	g_arenaservers.create.generic.id		= ID_CREATE;
+	g_arenaservers.create.generic.callback	= ArenaServers_Event;
+	g_arenaservers.create.generic.x			= 28;
+	g_arenaservers.create.generic.y			= 157;
+	g_arenaservers.create.string			= "CREATE";
+	g_arenaservers.create.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	g_arenaservers.create.color				= color_white;
+	y+=38;
+	g_arenaservers.refresh.generic.type		= MTYPE_PTEXT;
+	g_arenaservers.refresh.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	g_arenaservers.refresh.generic.id		= ID_REFRESH;
+	g_arenaservers.refresh.generic.callback	= ArenaServers_Event;
+	g_arenaservers.refresh.generic.x		= 28;
+	g_arenaservers.refresh.generic.y		= 195;
+	g_arenaservers.refresh.string			= "REFRESH";
+	g_arenaservers.refresh.style			= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	g_arenaservers.refresh.color			= color_white;
+	y+=38;
+	g_arenaservers.specify.generic.type		= MTYPE_PTEXT;
+	g_arenaservers.specify.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	g_arenaservers.specify.generic.id		= ID_SPECIFY;
+	g_arenaservers.specify.generic.callback	= ArenaServers_Event;
+	g_arenaservers.specify.generic.x		= 28;
+	g_arenaservers.specify.generic.y		= 233;
+	g_arenaservers.specify.string			= "SPECIFY";
+	g_arenaservers.specify.style			= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	g_arenaservers.specify.color			= color_white;
+	y+=38;
+
+	g_arenaservers.back.generic.type		= MTYPE_PTEXT;
+	g_arenaservers.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	g_arenaservers.back.generic.id			= ID_BACK;
+	g_arenaservers.back.generic.callback	= ArenaServers_Event;
+	g_arenaservers.back.generic.x			= 28;
+	g_arenaservers.back.generic.y			= 271;
+	g_arenaservers.back.string				= "BACK";
+	g_arenaservers.back.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	g_arenaservers.back.color				= color_white;
+	y+=38;	
+	
 	g_arenaservers.remove.generic.type		= MTYPE_BITMAP;
 	g_arenaservers.remove.generic.name		= ART_REMOVE0;
 	g_arenaservers.remove.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -1406,67 +1433,9 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.remove.height			= 48;
 	g_arenaservers.remove.focuspic			= ART_REMOVE1;
 
-	g_arenaservers.back.generic.type		= MTYPE_BITMAP;
-	g_arenaservers.back.generic.name		= ART_BACK0;
-	g_arenaservers.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	g_arenaservers.back.generic.callback	= ArenaServers_Event;
-	g_arenaservers.back.generic.id			= ID_BACK;
-	g_arenaservers.back.generic.x			= 0;
-	g_arenaservers.back.generic.y			= 480-64;
-	g_arenaservers.back.width				= 128;
-	g_arenaservers.back.height				= 64;
-	g_arenaservers.back.focuspic			= ART_BACK1;
-
-	g_arenaservers.specify.generic.type	    = MTYPE_BITMAP;
-	g_arenaservers.specify.generic.name		= ART_SPECIFY0;
-	g_arenaservers.specify.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	g_arenaservers.specify.generic.callback = ArenaServers_Event;
-	g_arenaservers.specify.generic.id	    = ID_SPECIFY;
-	g_arenaservers.specify.generic.x		= 128;
-	g_arenaservers.specify.generic.y		= 480-64;
-	g_arenaservers.specify.width  		    = 128;
-	g_arenaservers.specify.height  		    = 64;
-	g_arenaservers.specify.focuspic         = ART_SPECIFY1;
-
-	g_arenaservers.refresh.generic.type		= MTYPE_BITMAP;
-	g_arenaservers.refresh.generic.name		= ART_REFRESH0;
-	g_arenaservers.refresh.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	g_arenaservers.refresh.generic.callback	= ArenaServers_Event;
-	g_arenaservers.refresh.generic.id		= ID_REFRESH;
-	g_arenaservers.refresh.generic.x		= 256;
-	g_arenaservers.refresh.generic.y		= 480-64;
-	g_arenaservers.refresh.width			= 128;
-	g_arenaservers.refresh.height			= 64;
-	g_arenaservers.refresh.focuspic			= ART_REFRESH1;
-
-	g_arenaservers.create.generic.type		= MTYPE_BITMAP;
-	g_arenaservers.create.generic.name		= ART_CREATE0;
-	g_arenaservers.create.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	g_arenaservers.create.generic.callback	= ArenaServers_Event;
-	g_arenaservers.create.generic.id		= ID_CREATE;
-	g_arenaservers.create.generic.x			= 384;
-	g_arenaservers.create.generic.y			= 480-64;
-	g_arenaservers.create.width				= 128;
-	g_arenaservers.create.height			= 64;
-	g_arenaservers.create.focuspic			= ART_CREATE1;
-
-	g_arenaservers.go.generic.type			= MTYPE_BITMAP;
-	g_arenaservers.go.generic.name			= ART_CONNECT0;
-	g_arenaservers.go.generic.flags			= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	g_arenaservers.go.generic.callback		= ArenaServers_Event;
-	g_arenaservers.go.generic.id			= ID_CONNECT;
-	g_arenaservers.go.generic.x				= 640;
-	g_arenaservers.go.generic.y				= 480-64;
-	g_arenaservers.go.width					= 128;
-	g_arenaservers.go.height				= 64;
-	g_arenaservers.go.focuspic				= ART_CONNECT1;
-
 	
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.master );
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.gametype );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.sortkey );
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.showfull);
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.showempty );
 
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.mappic );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.list );
@@ -1476,13 +1445,13 @@ static void ArenaServers_MenuInit( void ) {
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.up );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.down );
 
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.back );
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.specify );
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.refresh );
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.create );
-	
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.go );
-
+	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.create );
+	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.refresh );	
+	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.specify );
+	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.back );
+	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.remove );	
+	
 	ArenaServers_LoadFavorites();
 
 	g_servertype = Com_Clamp( 0, 3, ui_browserMaster.integer );
@@ -1543,7 +1512,8 @@ void UI_ArenaServersMenu( void ) {
 	//trap_S_StopBackgroundTrack();
 	//trap_S_StartBackgroundTrack("music/yamamoto/menu02.ogg", "music/yamamoto/menu02.ogg");
 	ArenaServers_MenuInit();
-	//uis.menuamount = 5;
-	//uis.hideEarth = qtrue;
+	uis.menuamount = 5;
+	uis.hideEarth = qtrue;
+	uis.showFrame = qtrue;
 	UI_PushMenu( &g_arenaservers.menu );
 }						  

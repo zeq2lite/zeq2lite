@@ -72,8 +72,8 @@ typedef struct {
 	menubitmap_s	arrows;
 	menubitmap_s	prevpage;
 	menubitmap_s	nextpage;
-	menubitmap_s	back;
-	menubitmap_s	next;
+	menutext_s		back;
+	menutext_s		next;
 
 	menutext_s		mapname;
 	menubitmap_s	item_null;
@@ -485,27 +485,27 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.mapname.style         = UI_CENTER|UI_BIGFONT|UI_DROPSHADOW;
 	s_startserver.mapname.color         = text_color_normal;
 
-	s_startserver.back.generic.type	    = MTYPE_BITMAP;
-	s_startserver.back.generic.name     = GAMESERVER_BACK0;
-	s_startserver.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_startserver.back.generic.callback = StartServer_MenuEvent;
-	s_startserver.back.generic.id	    = ID_STARTSERVERBACK;
-	s_startserver.back.generic.x		= 0;
-	s_startserver.back.generic.y		= 480-64;
-	s_startserver.back.width  		    = 128;
-	s_startserver.back.height  		    = 64;
-	s_startserver.back.focuspic         = GAMESERVER_BACK1;
-
-	s_startserver.next.generic.type	    = MTYPE_BITMAP;
-	s_startserver.next.generic.name     = GAMESERVER_NEXT0;
-	s_startserver.next.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_startserver.next.generic.callback = StartServer_MenuEvent;
-	s_startserver.next.generic.id	    = ID_STARTSERVERNEXT;
-	s_startserver.next.generic.x		= 640;
-	s_startserver.next.generic.y		= 480-64;
-	s_startserver.next.width  		    = 128;
-	s_startserver.next.height  		    = 64;
-	s_startserver.next.focuspic         = GAMESERVER_NEXT1;
+	s_startserver.next.generic.type			= MTYPE_PTEXT;
+	s_startserver.next.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_startserver.next.generic.id			= ID_STARTSERVERNEXT;
+	s_startserver.next.generic.callback		= StartServer_MenuEvent;
+	s_startserver.next.generic.x			= 28;
+	s_startserver.next.generic.y			= 119;
+	s_startserver.next.string				= "NEXT";
+	s_startserver.next.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	s_startserver.next.color				= color_white;
+	y+=38;			
+	s_startserver.back.generic.type			= MTYPE_PTEXT;
+	s_startserver.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_startserver.back.generic.id			= ID_STARTSERVERBACK;
+	s_startserver.back.generic.callback		= StartServer_MenuEvent;
+	s_startserver.back.generic.x			= 28;
+	s_startserver.back.generic.y			= 157;
+	s_startserver.back.string				= "BACK";
+	s_startserver.back.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	s_startserver.back.color				= color_white;
+	y+=38;	
+		
 
 	s_startserver.item_null.generic.type	= MTYPE_BITMAP;
 	s_startserver.item_null.generic.flags	= QMF_LEFT_JUSTIFY|QMF_MOUSEONLY|QMF_SILENT;
@@ -524,8 +524,8 @@ static void StartServer_MenuInit( void ) {
 	Menu_AddItem( &s_startserver.menu, &s_startserver.arrows );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.prevpage );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.nextpage );
-	Menu_AddItem( &s_startserver.menu, &s_startserver.back );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.next );
+	Menu_AddItem( &s_startserver.menu, &s_startserver.back );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.mapname );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.item_null );
 
@@ -580,6 +580,9 @@ UI_StartServerMenu
 =================
 */
 void UI_StartServerMenu( qboolean multiplayer ) {
+	uis.menuamount = 2;
+	uis.hideEarth = qtrue;
+	uis.showFrame = qfalse;	
 	StartServer_MenuInit();
 	s_startserver.multiplayer = multiplayer;
 	UI_PushMenu( &s_startserver.menu );
@@ -629,9 +632,9 @@ typedef struct {
 	menutext_s			playerName[PLAYER_SLOTS];
 	menulist_s			playerTeam[PLAYER_SLOTS];
 
-	menubitmap_s		go;
-	menubitmap_s		next;
-	menubitmap_s		back;
+	menutext_s			go;
+	menutext_s			next;
+	menutext_s			back;
 
 	qboolean			multiplayer;
 	int					gametype;
@@ -1391,45 +1394,43 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		y += ( SMALLCHAR_HEIGHT + 4 );
 	}
 
-	s_serveroptions.back.generic.type	  = MTYPE_BITMAP;
-	s_serveroptions.back.generic.name     = GAMESERVER_BACK0;
-	s_serveroptions.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_serveroptions.back.generic.callback = ServerOptions_Event;
-	s_serveroptions.back.generic.id	      = ID_BACK;
-	s_serveroptions.back.generic.x		  = 0;
-	s_serveroptions.back.generic.y		  = 480-64;
-	s_serveroptions.back.width  		  = 128;
-	s_serveroptions.back.height  		  = 64;
-	s_serveroptions.back.focuspic         = GAMESERVER_BACK1;
+	s_serveroptions.go.generic.type			= MTYPE_PTEXT;
+	s_serveroptions.go.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_serveroptions.go.generic.id			= ID_GO;
+	s_serveroptions.go.generic.callback		= ServerOptions_Event;
+	s_serveroptions.go.generic.x			= 28;
+	s_serveroptions.go.generic.y			= 119;
+	s_serveroptions.go.string				= "FIGHT!";
+	s_serveroptions.go.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	s_serveroptions.go.color				= color_white;
+	y+=38;
 
-	s_serveroptions.next.generic.type	  = MTYPE_BITMAP;
-	s_serveroptions.next.generic.name     = GAMESERVER_NEXT0;
-	s_serveroptions.next.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_INACTIVE|QMF_GRAYED|QMF_HIDDEN;
-	s_serveroptions.next.generic.callback = ServerOptions_Event;
-	s_serveroptions.next.generic.id	      = ID_STARTSERVERNEXT;
-	s_serveroptions.next.generic.x		  = 640;
-	s_serveroptions.next.generic.y		  = 480-64-72;
-	s_serveroptions.next.generic.statusbar  = ServerOptions_StatusBar;
-	s_serveroptions.next.width  		  = 128;
-	s_serveroptions.next.height  		  = 64;
-	s_serveroptions.next.focuspic         = GAMESERVER_NEXT1;
-
-	s_serveroptions.go.generic.type	    = MTYPE_BITMAP;
-	s_serveroptions.go.generic.name     = GAMESERVER_FIGHT0;
-	s_serveroptions.go.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_serveroptions.go.generic.callback = ServerOptions_Event;
-	s_serveroptions.go.generic.id	    = ID_GO;
-	s_serveroptions.go.generic.x		= 640;
-	s_serveroptions.go.generic.y		= 480-64;
-	s_serveroptions.go.width  		    = 128;
-	s_serveroptions.go.height  		    = 64;
-	s_serveroptions.go.focuspic         = GAMESERVER_FIGHT1;
-
+	s_serveroptions.back.generic.type		= MTYPE_PTEXT;
+	s_serveroptions.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_serveroptions.back.generic.id			= ID_BACK;
+	s_serveroptions.back.generic.callback	= ServerOptions_Event;
+	s_serveroptions.back.generic.x			= 28;
+	s_serveroptions.back.generic.y			= 157;
+	s_serveroptions.back.string				= "BACK";
+	s_serveroptions.back.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	s_serveroptions.back.color				= color_white;
+	y+=38;
+	s_serveroptions.next.generic.type		= MTYPE_PTEXT;
+	s_serveroptions.next.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_serveroptions.next.generic.id			= ID_STARTSERVERNEXT;
+	s_serveroptions.next.generic.callback	= ServerOptions_Event;
+	s_serveroptions.next.generic.x			= 28;
+	s_serveroptions.next.generic.y			= 195;
+	s_serveroptions.next.string				= "NEXT";
+	s_serveroptions.next.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	s_serveroptions.next.color				= color_white;
+	y+=38;
 
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.mappic );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.picframe );
 
+/*	
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.player0 );
 	for( n = 0; n < PLAYER_SLOTS; n++ ) {
 		if( n != 0 ) {
@@ -1440,6 +1441,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 			Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.playerTeam[n] );
 		}
 	}
+*/
 
 	if( s_serveroptions.gametype != GT_CTF ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.fraglimit );
@@ -1462,9 +1464,10 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.hostname );
 	}
 
-	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.back );
-	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.next );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.go );
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.back );
+//	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.next );
+
 
 	ServerOptions_SetMenuItems();
 }
@@ -1492,6 +1495,9 @@ UI_ServerOptionsMenu
 static void UI_ServerOptionsMenu( qboolean multiplayer ) {
 	ServerOptions_MenuInit( multiplayer );
 	UI_PushMenu( &s_serveroptions.menu );
+	uis.menuamount = 2;
+	uis.hideEarth = qtrue;
+	uis.showFrame = qfalse;
 }
 
 
@@ -1960,7 +1966,6 @@ UI_BotSelectMenu
 =================
 */
 void UI_BotSelectMenu( char *bot ) {
-	uis.menuamount = 0;
 	UI_BotSelectMenu_Init( bot );
 	UI_PushMenu( &botSelectInfo.menu );
 }

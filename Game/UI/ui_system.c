@@ -40,19 +40,17 @@ SYSTEM SETTINGS MENU
 #define SYSTEMSETTINGS_ACCEPT1	"interface/art/accept_1"
 
 #define SYSTEM_X_POS		320
-#define ID_SYSTEM			100
-#define ID_CONTROLS			101
+#define ID_CONTROLS			100
+#define ID_SYSTEM			101
 #define ID_GENERAL			102
 #define ID_FULLSCREEN		103
 #define ID_LIST				104
 #define ID_MODE				105
-#define ID_EFFECTSVOLUME	106
-#define ID_MUSICVOLUME		107
-#define ID_QUALITY			108
-#define ID_BACK2			109
-
-
-
+#define ID_RATIO			106
+#define ID_EFFECTSVOLUME	107
+#define ID_MUSICVOLUME		108
+#define ID_QUALITY			109
+#define ID_BACK2			110
 
 typedef struct {
 	menuframework_s	menu;
@@ -60,11 +58,12 @@ typedef struct {
 	menubitmap_s	framel;
 	menubitmap_s	framer;
 
-	menutext_s		system;
 	menutext_s		controls;
+	menutext_s		system;
 	menutext_s		general;
 
 	menulist_s		list;
+	menulist_s		ratio;
 	menulist_s		mode;
 	menulist_s		driver;
 	menuslider_s	tq;
@@ -84,7 +83,7 @@ typedef struct {
 	menulist_s		quality;	
 	
 	menubitmap_s	apply;
-	menubitmap_s	back;
+	menutext_s	back;
 } systemsettings_t;
 
 typedef struct
@@ -109,19 +108,22 @@ static systemsettings_t		s_systemsettings;
 static InitialVideoOptions_s s_ivo_templates[] =
 {
 	{
-		4, qtrue, 2, 0, 2, 2, 1, 1, 0, 0, qtrue	// JDC: this was tq 3
+		6, qtrue, 3, 0, 2, 2, 2, 1, 0, qtrue
 	},
 	{
-		3, qtrue, 2, 0, 0, 0, 1, 0, 0, 0, qtrue
+		4, qtrue, 2, 0, 2, 2, 1, 1, 0, qtrue	// JDC: this was tq 3
 	},
 	{
-		2, qtrue, 1, 0, 1, 0, 0, 0, 0, 0, qtrue
+		3, qtrue, 2, 0, 0, 0, 1, 0, 0, qtrue
 	},
 	{
-		2, qtrue, 1, 1, 1, 0, 0, 0, 0, 0, qtrue
+		2, qtrue, 1, 0, 1, 0, 0, 0, 0, qtrue
 	},
 	{
-		3, qtrue, 1, 0, 0, 0, 1, 0, 0, 0, qtrue
+		2, qtrue, 1, 1, 1, 0, 0, 0, 0, qtrue
+	},
+	{
+		3, qtrue, 1, 0, 0, 0, 1, 0, 0, qtrue
 	}
 };
 
@@ -130,6 +132,151 @@ static const char *quality_items[] = {
 };
 
 #define NUM_IVO_TEMPLATES ( sizeof( s_ivo_templates ) / sizeof( s_ivo_templates[0] ) )
+
+static const char *builtinResolutions[ ] =
+{
+	"320x240",
+	"400x300",
+	"512x384",
+	"640x480",
+	"800x600",
+	"960x720",
+	"1024x768",
+	"1152x864",
+	"1280x1024",
+	"1600x1200",
+	"2048x1536",
+	"856x480",
+	NULL
+};
+
+static const char *knownRatios[ ][2] =
+{
+	{ "1.25:1", "5:4"   },
+	{ "1.33:1", "4:3"   },
+	{ "1.50:1", "3:2"   },
+	{ "1.56:1", "14:9"  },
+	{ "1.60:1", "16:10" },
+	{ "1.67:1", "5:3"   },
+	{ "1.78:1", "16:9"  },
+	{ NULL    , NULL    }
+};
+
+#define MAX_RESOLUTIONS	32
+
+static const char* ratios[ MAX_RESOLUTIONS ];
+static char ratioBuf[ MAX_RESOLUTIONS ][ 8 ];
+static int ratioToRes[ MAX_RESOLUTIONS ];
+static int resToRatio[ MAX_RESOLUTIONS ];
+
+static char resbuf[ MAX_STRING_CHARS ];
+static const char* detectedResolutions[ MAX_RESOLUTIONS ];
+
+static const char** resolutions = builtinResolutions;
+static qboolean resolutionsDetected = qfalse;
+
+/*
+=================
+SystemSettings_FindBuiltinResolution
+=================
+*/
+static int SystemSettings_FindBuiltinResolution( int mode )
+{
+	int i;
+
+	if( !resolutionsDetected )
+		return mode;
+
+	if( mode < 0 )
+		return -1;
+
+	for( i = 0; builtinResolutions[ i ]; i++ )
+	{
+		if( !Q_stricmp( builtinResolutions[ i ], detectedResolutions[ mode ] ) )
+			return i;
+	}
+
+	return -1;
+}
+
+/*
+=================
+SystemSettings_FindDetectedResolution
+=================
+*/
+static int SystemSettings_FindDetectedResolution( int mode )
+{
+	int i;
+
+	if( !resolutionsDetected )
+		return mode;
+
+	if( mode < 0 )
+		return -1;
+
+	for( i = 0; detectedResolutions[ i ]; i++ )
+	{
+		if( !Q_stricmp( builtinResolutions[ mode ], detectedResolutions[ i ] ) )
+			return i;
+	}
+
+	return -1;
+}
+
+/*
+=================
+SystemSettings_GetAspectRatios
+=================
+*/
+static void SystemSettings_GetAspectRatios( void )
+{
+	int i, r;
+	
+	// build ratio list from resolutions
+	for( r = 0; resolutions[r]; r++ )
+	{
+		int w, h;
+		char *x;
+		char str[ sizeof(ratioBuf[0]) ];
+		
+		// calculate resolution's aspect ratio
+		x = strchr( resolutions[r], 'x' ) + 1;
+		Q_strncpyz( str, resolutions[r], x-resolutions[r] );
+		w = atoi( str );
+		h = atoi( x );
+		Com_sprintf( str, sizeof(str), "%.2f:1", (float)w / (float)h );
+		
+		// add ratio to list if it is new
+		// establish res/ratio relationship
+		for( i = 0; ratioBuf[i][0]; i++ )
+		{
+			if( !Q_stricmp( str, ratioBuf[i] ) )
+				break;
+		}
+		if( !ratioBuf[i][0] )
+		{
+			Q_strncpyz( ratioBuf[i], str, sizeof(ratioBuf[i]) );
+			ratioToRes[i] = r;
+		}
+		resToRatio[r] = i;
+	}
+	
+	// prepare itemlist pointer array
+	// rename common ratios ("1.33:1" -> "4:3")
+	for( r = 0; ratioBuf[r][0]; r++ )
+	{
+		for( i = 0; knownRatios[i][0]; i++ )
+		{
+			if( !Q_stricmp( ratioBuf[r], knownRatios[i][0] ) )
+			{
+				Q_strncpyz( ratioBuf[r], knownRatios[i][1], sizeof(ratioBuf[r]) );
+				break;
+			}
+		}
+		ratios[r] = ratioBuf[r];
+	}
+	ratios[r] = NULL;
+}
 
 /*
 =================
@@ -154,6 +301,35 @@ static void SystemSettings_GetInitialVideo( void )
 
 /*
 =================
+SystemSettings_GetResolutions
+=================
+*/
+static void SystemSettings_GetResolutions( void )
+{
+	Q_strncpyz(resbuf, UI_Cvar_VariableString("r_availableModes"), sizeof(resbuf));
+	if(*resbuf)
+	{
+		char* s = resbuf;
+		unsigned int i = 0;
+		while( s && i < sizeof(detectedResolutions)/sizeof(detectedResolutions[0])-1)
+		{
+			detectedResolutions[i++] = s;
+			s = strchr(s, ' ');
+			if( s )
+				*s++ = '\0';
+		}
+		detectedResolutions[ i ] = NULL;
+
+		if( i > 0 )
+		{
+			resolutions = detectedResolutions;
+			resolutionsDetected = qtrue;
+		}
+	}
+}
+
+/*
+=================
 SystemSettings_CheckConfig
 =================
 */
@@ -161,13 +337,13 @@ static void SystemSettings_CheckConfig( void )
 {
 	int i;
 
-	for ( i = 0; i < NUM_IVO_TEMPLATES; i++ )
+	for ( i = 0; i < NUM_IVO_TEMPLATES-1; i++ )
 	{
 		if ( s_ivo_templates[i].colordepth != s_systemsettings.colordepth.curvalue )
 			continue;
 		if ( s_ivo_templates[i].driver != s_systemsettings.driver.curvalue )
 			continue;
-		if ( s_ivo_templates[i].mode != s_systemsettings.mode.curvalue )
+		if ( SystemSettings_FindDetectedResolution(s_ivo_templates[i].mode) != s_systemsettings.mode.curvalue )
 			continue;
 		if ( s_ivo_templates[i].fullscreen != s_systemsettings.fs.curvalue )
 			continue;
@@ -188,7 +364,9 @@ static void SystemSettings_CheckConfig( void )
 		s_systemsettings.list.curvalue = i;
 		return;
 	}
-	s_systemsettings.list.curvalue = 4;
+
+	// return 'Custom' ivo template
+	s_systemsettings.list.curvalue = NUM_IVO_TEMPLATES - 1;
 }
 
 /*
@@ -279,7 +457,7 @@ static void SystemSettings_UpdateMenuItems( void )
 	}
 
 	SystemSettings_CheckConfig();
-}	
+}
 
 /*
 =================
@@ -305,25 +483,36 @@ static void SystemSettings_ApplyChanges( void *unused, int notification )
 	}
 	trap_Cvar_SetValue( "r_picmip", 3 - s_systemsettings.tq.curvalue );
 	trap_Cvar_SetValue( "r_allowExtensions", s_systemsettings.allow_extensions.curvalue );
-	trap_Cvar_SetValue( "r_mode", s_systemsettings.mode.curvalue );
-	trap_Cvar_SetValue( "r_fullscreen", s_systemsettings.fs.curvalue );
-	switch ( s_systemsettings.colordepth.curvalue )
+
+	if( resolutionsDetected )
 	{
-	case 0:
-		trap_Cvar_SetValue( "r_colorbits", 0 );
-		trap_Cvar_SetValue( "r_depthbits", 0 );
-		trap_Cvar_SetValue( "r_stencilbits", 0 );
-		break;
-	case 1:
-		trap_Cvar_SetValue( "r_colorbits", 16 );
-		trap_Cvar_SetValue( "r_depthbits", 16 );
-		trap_Cvar_SetValue( "r_stencilbits", 0 );
-		break;
-	case 2:
-		trap_Cvar_SetValue( "r_colorbits", 32 );
-		trap_Cvar_SetValue( "r_depthbits", 24 );
-		break;
+		// search for builtin mode that matches the detected mode
+		int mode;
+		if ( s_systemsettings.mode.curvalue == -1
+			|| s_systemsettings.mode.curvalue >= sizeof(detectedResolutions)/sizeof(detectedResolutions[0]) )
+			s_systemsettings.mode.curvalue = 0;
+
+		mode = SystemSettings_FindBuiltinResolution( s_systemsettings.mode.curvalue );
+		if( mode == -1 )
+		{
+			char w[ 16 ], h[ 16 ];
+			Q_strncpyz( w, detectedResolutions[ s_systemsettings.mode.curvalue ], sizeof( w ) );
+			*strchr( w, 'x' ) = 0;
+			Q_strncpyz( h,
+					strchr( detectedResolutions[ s_systemsettings.mode.curvalue ], 'x' ) + 1, sizeof( h ) );
+			trap_Cvar_Set( "r_customwidth", w );
+			trap_Cvar_Set( "r_customheight", h );
+		}
+
+		trap_Cvar_SetValue( "r_mode", mode );
 	}
+	else
+		trap_Cvar_SetValue( "r_mode", s_systemsettings.mode.curvalue );
+
+	trap_Cvar_SetValue( "r_fullscreen", s_systemsettings.fs.curvalue );
+	trap_Cvar_SetValue( "r_colorbits", 0 );
+	trap_Cvar_SetValue( "r_depthbits", 0 );
+	trap_Cvar_SetValue( "r_stencilbits", 0 );
 	trap_Cvar_SetValue( "r_vertexLight", s_systemsettings.lighting.curvalue );
 
 	if ( s_systemsettings.geometry.curvalue == 2 )
@@ -414,6 +603,11 @@ static void SystemSettings_Event( void* ptr, int event ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
+	case ID_RATIO:
+		s_systemsettings.mode.curvalue =
+			ratioToRes[ s_systemsettings.ratio.curvalue ];
+		// fall through to apply mode constraints
+
 	case ID_MODE:
 		// clamp 3dfx video modes
 		if ( s_systemsettings.driver.curvalue == 1 )
@@ -423,12 +617,16 @@ static void SystemSettings_Event( void* ptr, int event ) {
 			else if ( s_systemsettings.mode.curvalue > 6 )
 				s_systemsettings.mode.curvalue = 6;
 		}
+		s_systemsettings.ratio.curvalue =
+			resToRatio[ s_systemsettings.mode.curvalue ];
 		break;
 
 	case ID_LIST:
 		ivo = &s_ivo_templates[s_systemsettings.list.curvalue];
 
-		s_systemsettings.mode.curvalue        = ivo->mode;
+		s_systemsettings.mode.curvalue        = SystemSettings_FindDetectedResolution(ivo->mode);
+		s_systemsettings.ratio.curvalue =
+			resToRatio[ s_systemsettings.mode.curvalue ];
 		s_systemsettings.tq.curvalue          = ivo->tq;
 		s_systemsettings.lighting.curvalue    = ivo->lighting;
 		s_systemsettings.colordepth.curvalue  = ivo->colordepth;
@@ -461,16 +659,17 @@ static void SystemSettings_Event( void* ptr, int event ) {
 		UI_ForceMenuOff();
 		trap_Cmd_ExecuteText( EXEC_APPEND, "snd_restart\n" );
 		break;
-		
-	case ID_SYSTEM:
-		UI_SystemSettingsMenu();
-		break;
 
 	case ID_CONTROLS:
+		UI_PopMenu();
 		UI_ControlsMenu();
 		break;
 		
+	case ID_SYSTEM:
+		break;
+		
 	case ID_GENERAL:
+		UI_PopMenu();
 		UI_PreferencesMenu();
 		break;
 
@@ -514,11 +713,38 @@ SystemSettings_SetMenuItems
 */
 static void SystemSettings_SetMenuItems( void )
 {
-	s_systemsettings.mode.curvalue = trap_Cvar_VariableValue( "r_mode" );
+	s_systemsettings.mode.curvalue =
+		SystemSettings_FindDetectedResolution( trap_Cvar_VariableValue( "r_mode" ) );
+
 	if ( s_systemsettings.mode.curvalue < 0 )
 	{
-		s_systemsettings.mode.curvalue = 3;
+		if( resolutionsDetected )
+		{
+			int i;
+			char buf[MAX_STRING_CHARS];
+			trap_Cvar_VariableStringBuffer("r_customwidth", buf, sizeof(buf)-2);
+			buf[strlen(buf)+1] = 0;
+			buf[strlen(buf)] = 'x';
+			trap_Cvar_VariableStringBuffer("r_customheight", buf+strlen(buf), sizeof(buf)-strlen(buf));
+
+			for(i = 0; detectedResolutions[i]; ++i)
+			{
+				if(!Q_stricmp(buf, detectedResolutions[i]))
+				{
+					s_systemsettings.mode.curvalue = i;
+					break;
+				}
+			}
+			if ( s_systemsettings.mode.curvalue < 0 )
+				s_systemsettings.mode.curvalue = 0;
+		}
+		else
+		{
+			s_systemsettings.mode.curvalue = 3;
+		}
 	}
+	s_systemsettings.ratio.curvalue =
+		resToRatio[ s_systemsettings.mode.curvalue ];
 	s_systemsettings.fs.curvalue = trap_Cvar_VariableValue("r_fullscreen");
 	s_systemsettings.allow_extensions.curvalue = trap_Cvar_VariableValue("r_allowExtensions");
 	s_systemsettings.tq.curvalue = 3-trap_Cvar_VariableValue( "r_picmip");
@@ -683,29 +909,6 @@ void SystemSettings_MenuInit( void )
 		NULL
 	};
 
-	static const char *resolutions[] = 
-	{
-		"320 x 240",
-		"400 x 300",
-		"512 x 384",
-		"640 x 480",
-		"800 x 600",
-		"960 x 720",
-		"1024 x 768",
-		"1152 x 864",
-		"1280 x 1024",
-		"1600 x 1200",
-		"2048 x 1536",
-		"856 x 480 16:9",
-		"1280 x 720 16:9",
-		"1365 x 768 16:9",
-		"1600 x 900 16:9",
-		"1920 x 1080 16:9",
-		"1440 x 900 16:10",
-		"1680 x 1050 16:10",
-		"1920 x 1200 16:10",
-		NULL
-	};
 	static const char *filter_names[] =
 	{
 		"Bilinear",
@@ -732,6 +935,13 @@ void SystemSettings_MenuInit( void )
 		"16x",
 		NULL
 	};
+
+	static const char *vertexshader_names[] =
+	{
+		"Disabled",
+		"Enabled",
+		NULL
+	};
 	static const char *quality_names[] =
 	{
 		"Low",
@@ -753,6 +963,9 @@ void SystemSettings_MenuInit( void )
 
 	// zero set all our globals
 	memset( &s_systemsettings, 0 ,sizeof(systemsettings_t) );
+
+	SystemSettings_GetResolutions();
+	SystemSettings_GetAspectRatios();
 	
 	SystemSettings_Cache();
 
@@ -760,16 +973,6 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.menu.fullscreen = qtrue;
 	s_systemsettings.menu.draw       = SystemSettings_MenuDraw;
 
-	s_systemsettings.system.generic.type		= MTYPE_PTEXT;
-	s_systemsettings.system.generic.flags		= QMF_LEFT_JUSTIFY;
-	s_systemsettings.system.generic.id			= ID_SYSTEM;
-	s_systemsettings.system.generic.callback	= SystemSettings_Event;
-	s_systemsettings.system.generic.x			= x;
-	s_systemsettings.system.generic.y			= y;
-	s_systemsettings.system.string				= "SYSTEM";
-	s_systemsettings.system.style				= style;
-	s_systemsettings.system.color				= color_white;
-	y+=offset;
 	s_systemsettings.controls.generic.type			= MTYPE_PTEXT;
 	s_systemsettings.controls.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_systemsettings.controls.generic.id			= ID_CONTROLS;
@@ -779,7 +982,17 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.controls.string				= "CONTROLS";
 	s_systemsettings.controls.style					= style;
 	s_systemsettings.controls.color					= color_white;
-	y+=offset;		
+	y+=offset;	
+	s_systemsettings.system.generic.type		= MTYPE_PTEXT;
+	s_systemsettings.system.generic.flags		= QMF_LEFT_JUSTIFY;
+	s_systemsettings.system.generic.id			= ID_SYSTEM;
+	s_systemsettings.system.generic.callback	= SystemSettings_Event;
+	s_systemsettings.system.generic.x			= x;
+	s_systemsettings.system.generic.y			= y;
+	s_systemsettings.system.string				= "SYSTEM";
+	s_systemsettings.system.style				= style;
+	s_systemsettings.system.color				= color_white;
+	y+=offset;	
 	s_systemsettings.general.generic.type		= MTYPE_PTEXT;
 	s_systemsettings.general.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_systemsettings.general.generic.id			= ID_GENERAL;
@@ -790,6 +1003,16 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.general.style				= style;
 	s_systemsettings.general.color				= color_white;
 	y+=offset;
+	s_systemsettings.back.generic.type		= MTYPE_PTEXT;
+	s_systemsettings.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_systemsettings.back.generic.id		= ID_BACK2;
+	s_systemsettings.back.generic.callback	= SystemSettings_Event;
+	s_systemsettings.back.generic.x			= x;
+	s_systemsettings.back.generic.y			= y;
+	s_systemsettings.back.string			= "BACK";
+	s_systemsettings.back.style				= style;
+	s_systemsettings.back.color				= color_white;
+	y+=offset;	
 
 	s_systemsettings.framel.generic.type  	= MTYPE_BITMAP;
 	s_systemsettings.framel.generic.name  	= SYSTEMSETTINGS_FRAMEL;
@@ -807,39 +1030,10 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.framer.width			= 256;
 	s_systemsettings.framer.height			= 334;
 
-/*
-	s_systemsettings.list.generic.type     = MTYPE_SPINCONTROL;
-	s_systemsettings.list.generic.name     = "Graphics Settings:";
-	s_systemsettings.list.generic.flags    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_systemsettings.list.generic.x        = SYSTEM_X_POS;
-	s_systemsettings.list.generic.y        = y;
-	s_systemsettings.list.generic.callback = SystemSettings_Event;
-	s_systemsettings.list.generic.id       = ID_LIST;
-	s_systemsettings.list.itemnames        = s_graphics_options_names;
-	y += 2 * ( BIGCHAR_HEIGHT + 2 );
-
-	s_systemsettings.driver.generic.type  = MTYPE_SPINCONTROL;
-	s_systemsettings.driver.generic.name  = "GL Driver:";
-	s_systemsettings.driver.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_systemsettings.driver.generic.x     = SYSTEM_X_POS;
-	s_systemsettings.driver.generic.y     = y;
-	s_systemsettings.driver.itemnames     = s_driver_names;
-	s_systemsettings.driver.curvalue      = (uis.glconfig.driverType == GLDRV_VOODOO);
-	y += BIGCHAR_HEIGHT+2;
-
-	// references/modifies "r_allowExtensions"
-	s_systemsettings.allow_extensions.generic.type     = MTYPE_SPINCONTROL;
-	s_systemsettings.allow_extensions.generic.name	    = "GL Extensions:";
-	s_systemsettings.allow_extensions.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_systemsettings.allow_extensions.generic.x	    = SYSTEM_X_POS;
-	s_systemsettings.allow_extensions.generic.y	    = y;
-	s_systemsettings.allow_extensions.itemnames        = enabled_names;
-	y += BIGCHAR_HEIGHT+2;
-*/
 	// references/modifies "r_mode"
 	y = 240 - 6 * (BIGCHAR_HEIGHT + 2);
 	s_systemsettings.mode.generic.type     = MTYPE_SPINCONTROL;
-	s_systemsettings.mode.generic.name     = "Video Mode:";
+	s_systemsettings.mode.generic.name     = "Resolution:";
 	s_systemsettings.mode.generic.flags    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_systemsettings.mode.generic.x        = SYSTEM_X_POS;
 	s_systemsettings.mode.generic.y        = y;
@@ -847,6 +1041,16 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.mode.generic.callback = SystemSettings_Event;
 	s_systemsettings.mode.generic.id       = ID_MODE;
 	y += BIGCHAR_HEIGHT+2;	
+	
+	s_systemsettings.ratio.generic.type     = MTYPE_SPINCONTROL;
+	s_systemsettings.ratio.generic.name     = "Aspect Ratio:";
+	s_systemsettings.ratio.generic.flags    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_systemsettings.ratio.generic.x        = SYSTEM_X_POS;
+	s_systemsettings.ratio.generic.y        = y;
+	s_systemsettings.ratio.itemnames        = ratios;
+	s_systemsettings.ratio.generic.callback = SystemSettings_Event;
+	s_systemsettings.ratio.generic.id       = ID_RATIO;
+	y += BIGCHAR_HEIGHT+2;
 
 	// references "r_colorbits"
 	s_systemsettings.colordepth.generic.type     = MTYPE_SPINCONTROL;
@@ -865,25 +1069,6 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.fs.generic.y	      = y;
 	s_systemsettings.fs.itemnames	      = enabled_names;
 	y += BIGCHAR_HEIGHT+2;
-
-/*	// references/modifies "r_vertexLight"
-	s_systemsettings.lighting.generic.type  = MTYPE_SPINCONTROL;
-	s_systemsettings.lighting.generic.name	 = "Lighting:";
-	s_systemsettings.lighting.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_systemsettings.lighting.generic.x	 = SYSTEM_X_POS;
-	s_systemsettings.lighting.generic.y	 = y;
-	s_systemsettings.lighting.itemnames     = lighting_names;
-	y += BIGCHAR_HEIGHT+2;
-
-	// references/modifies "r_lodBias" & "subdivisions"
-	s_systemsettings.geometry.generic.type  = MTYPE_SPINCONTROL;
-	s_systemsettings.geometry.generic.name	 = "Geometric Detail:";
-	s_systemsettings.geometry.generic.flags = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_systemsettings.geometry.generic.x	 = SYSTEM_X_POS;
-	s_systemsettings.geometry.generic.y	 = y;
-	s_systemsettings.geometry.itemnames     = quality_names;
-	y += BIGCHAR_HEIGHT+2;
-*/
 
 	// references/modifies "r_picmip"
 	s_systemsettings.tq.generic.type	= MTYPE_SLIDER;
@@ -964,17 +1149,6 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.quality.generic.y			= y;
 	s_systemsettings.quality.itemnames			= quality_items;	
 	y += BIGCHAR_HEIGHT+2;
-	
-	s_systemsettings.back.generic.type			= MTYPE_BITMAP;
-	s_systemsettings.back.generic.name			= SYSTEMSETTINGS_BACK0;
-	s_systemsettings.back.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_systemsettings.back.generic.callback		= SystemSettings_Event;
-	s_systemsettings.back.generic.id			= ID_BACK2;
-	s_systemsettings.back.generic.x				= 0;
-	s_systemsettings.back.generic.y				= 480-64;
-	s_systemsettings.back.width					= 128;
-	s_systemsettings.back.height				= 64;
-	s_systemsettings.back.focuspic				= SYSTEMSETTINGS_BACK1;
 
 	s_systemsettings.apply.generic.type     = MTYPE_BITMAP;
 	s_systemsettings.apply.generic.name     = SYSTEMSETTINGS_ACCEPT0;
@@ -989,18 +1163,14 @@ void SystemSettings_MenuInit( void )
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.framel );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.framer );
 	
-	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.system );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.controls );
+	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.system );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.general );
 
-//	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.list );
-//	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.driver );
-//	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.allow_extensions );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.mode );
+	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.ratio );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.colordepth );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.fs );
-//	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.lighting );
-//	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.geometry );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.tq );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.texturebits );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.filter );
@@ -1050,7 +1220,7 @@ UI_SystemSettingsMenu
 =================
 */
 void UI_SystemSettingsMenu( void ) {
-	uis.menuamount = 3;
+	uis.menuamount = 4;
 	uis.hideEarth = qtrue;
 	uis.showFrame = qtrue;
 	SystemSettings_MenuInit();

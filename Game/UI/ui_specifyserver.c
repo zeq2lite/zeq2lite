@@ -55,8 +55,8 @@ typedef struct
 	menubitmap_s	framer;
 	menufield_s		domain;
 	menufield_s		port;
-	menubitmap_s	go;
-	menubitmap_s	back;
+	menutext_s		go;
+	menutext_s		back;
 } specifyserver_t;
 
 static specifyserver_t	s_specifyserver;
@@ -102,6 +102,7 @@ SpecifyServer_MenuInit
 */
 void SpecifyServer_MenuInit( void )
 {
+	int y;
 	// zero set all our globals
 	memset( &s_specifyserver, 0 ,sizeof(specifyserver_t) );
 
@@ -149,28 +150,27 @@ void SpecifyServer_MenuInit( void )
 	s_specifyserver.port.field.widthInChars = 6;
 	s_specifyserver.port.field.maxchars     = 5;
 
-	s_specifyserver.go.generic.type	    = MTYPE_BITMAP;
-	s_specifyserver.go.generic.name     = SPECIFYSERVER_FIGHT0;
-	s_specifyserver.go.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_specifyserver.go.generic.callback = SpecifyServer_Event;
-	s_specifyserver.go.generic.id	    = ID_SPECIFYSERVERGO;
-	s_specifyserver.go.generic.x		= 640;
-	s_specifyserver.go.generic.y		= 480-64;
-	s_specifyserver.go.width  		    = 128;
-	s_specifyserver.go.height  		    = 64;
-	s_specifyserver.go.focuspic         = SPECIFYSERVER_FIGHT1;
+	s_specifyserver.go.generic.type			= MTYPE_PTEXT;
+	s_specifyserver.go.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_specifyserver.go.generic.id			= ID_SPECIFYSERVERGO;
+	s_specifyserver.go.generic.callback		= SpecifyServer_Event;
+	s_specifyserver.go.generic.x			= 28;
+	s_specifyserver.go.generic.y			= 119;
+	s_specifyserver.go.string				= "FIGHT!";
+	s_specifyserver.go.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	s_specifyserver.go.color				= color_white;
+	y+=38;
 
-	s_specifyserver.back.generic.type	  = MTYPE_BITMAP;
-	s_specifyserver.back.generic.name     = SPECIFYSERVER_BACK0;
-	s_specifyserver.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_specifyserver.back.generic.callback = SpecifyServer_Event;
-	s_specifyserver.back.generic.id	      = ID_SPECIFYSERVERBACK;
-	s_specifyserver.back.generic.x		  = 0;
-	s_specifyserver.back.generic.y		  = 480-64;
-	s_specifyserver.back.width  		  = 128;
-	s_specifyserver.back.height  		  = 64;
-	s_specifyserver.back.focuspic         = SPECIFYSERVER_BACK1;
-
+	s_specifyserver.back.generic.type		= MTYPE_PTEXT;
+	s_specifyserver.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_specifyserver.back.generic.id			= ID_SPECIFYSERVERBACK;
+	s_specifyserver.back.generic.callback	= SpecifyServer_Event;
+	s_specifyserver.back.generic.x			= 28;
+	s_specifyserver.back.generic.y			= 157;
+	s_specifyserver.back.string				= "BACK";
+	s_specifyserver.back.style				= UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
+	s_specifyserver.back.color				= color_white;
+	y+=38;	
 
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.domain );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.port );
@@ -205,7 +205,7 @@ UI_SpecifyServerMenu
 */
 void UI_SpecifyServerMenu( void )
 {
-	uis.menuamount = 0;
+	uis.menuamount = 2;
 	SpecifyServer_MenuInit();
 	UI_PushMenu( &s_specifyserver.menu );
 }
