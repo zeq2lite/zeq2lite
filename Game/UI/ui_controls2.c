@@ -1286,9 +1286,9 @@ static void Controls_MenuInit( void )
 
 	Menu_AddItem( &s_controls.menu, &s_controls.player );
 
-	Menu_AddItem( &s_controls.menu, ( void * ) &s_controls.menu );
-	Menu_AddItem( &s_controls.menu, ( void * ) &s_controls.menu );
-	Menu_AddItem( &s_controls.menu, ( void * ) &s_controls.menu );
+	Menu_AddItem( &s_controls.menu, ( void * ) &s_controls.system );
+	Menu_AddItem( &s_controls.menu, ( void * ) &s_controls.controls );
+	Menu_AddItem( &s_controls.menu, ( void * ) &s_controls.general );
 
 //	Menu_AddItem( &s_controls.menu, &s_controls.smoothmouse );
 //	Menu_AddItem( &s_controls.menu, &s_controls.invertmouse );
