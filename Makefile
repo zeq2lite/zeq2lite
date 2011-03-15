@@ -1869,26 +1869,22 @@ UIOBJ_ = \
   $(B)/Base/UI/ui_connect.o \
   $(B)/Base/UI/ui_controls2.o \
   $(B)/Base/UI/ui_credits.o \
-  $(B)/Base/UI/ui_display.o \
   $(B)/Base/UI/ui_gameinfo.o \
   $(B)/Base/UI/ui_ingame.o \
   $(B)/Base/UI/ui_menu.o \
   $(B)/Base/UI/ui_mfield.o \
-  $(B)/Base/UI/ui_network.o \
   $(B)/Base/UI/ui_options.o \
   $(B)/Base/UI/ui_playermodel.o \
   $(B)/Base/UI/ui_players.o \
-  $(B)/Base/UI/ui_playersettings.o \
   $(B)/Base/UI/ui_preferences.o \
   $(B)/Base/UI/ui_qmenu.o \
   $(B)/Base/UI/ui_serverinfo.o \
   $(B)/Base/UI/ui_servers2.o \
   $(B)/Base/UI/ui_setup.o \
-  $(B)/Base/UI/ui_sound.o \
   $(B)/Base/UI/ui_specifyserver.o \
   $(B)/Base/UI/ui_shared.o \
   $(B)/Base/UI/ui_startserver.o \
-  $(B)/Base/UI/ui_video.o \
+  $(B)/Base/UI/ui_system.o \
   $(B)/Base/UI/ui_camera.o \
   \
   $(B)/Base/Shared/q_math.o \
