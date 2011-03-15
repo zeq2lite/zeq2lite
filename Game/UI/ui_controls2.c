@@ -1048,6 +1048,7 @@ static void Controls_MenuInit( void )
 	s_controls.menu.wrapAround = qtrue;
 	s_controls.menu.fullscreen = qtrue;
 
+
 	s_controls.system.generic.type		= MTYPE_PTEXT;
 	s_controls.system.generic.flags		= QMF_LEFT_JUSTIFY;
 	s_controls.system.generic.id		= ID_SYSTEM;
@@ -1285,8 +1286,8 @@ static void Controls_MenuInit( void )
 
 	Menu_AddItem( &s_controls.menu, &s_controls.player );
 
-	Menu_AddItem( &s_controls.menu, &s_controls.system );
-	Menu_AddItem( &s_controls.menu, &s_controls.controls );
+//	Menu_AddItem( &s_controls.menu, &s_controls.system );
+//	Menu_AddItem( &s_controls.menu, &s_controls.controls );
 //	Menu_AddItem( &s_controls.menu, &s_controls.general );	
 
 //	Menu_AddItem( &s_controls.menu, &s_controls.smoothmouse );
@@ -1332,7 +1333,6 @@ static void Controls_MenuInit( void )
 
 	// intialize the weapons
 	Controls_InitWeapons ();
-
 
 	// update the ui
 	Controls_Update();

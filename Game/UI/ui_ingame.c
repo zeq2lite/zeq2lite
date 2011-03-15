@@ -34,16 +34,18 @@ INGAME MENU
 #define INGAME_MENU_VERTICAL_SPACING	28
 
 #define ID_SETUP				13
-#define ID_CAMERA				14
-#define ID_LEAVEARENA			15
-#define ID_RESTART				16
-#define ID_QUIT					17
-#define ID_RESUME				18
+#define ID_PLAYER				14
+#define ID_CAMERA				15
+#define ID_LEAVEARENA			16
+#define ID_RESTART				17
+#define ID_QUIT					18
+#define ID_RESUME				19
 
 typedef struct {
 	menuframework_s	menu;
 	menubitmap_s	frame;
 	menutext_s		setup;
+	menutext_s		player;
 	menutext_s		camera;
 	menutext_s		server;
 	menutext_s		leave;
@@ -98,6 +100,10 @@ void InGame_Event( void *ptr, int notification ) {
 	case ID_SETUP:
 		UI_SystemSettingsMenu();
 		break;
+	
+	case ID_PLAYER:
+		UI_PlayerModelMenu();
+		break;	
 
 	case ID_CAMERA:
 		UI_CameraMenu();
@@ -112,7 +118,7 @@ void InGame_Event( void *ptr, int notification ) {
 		break;
 
 	case ID_RESTART:
-		UI_ConfirmMenu( "RESTART ARENA?", 0, InGame_RestartAction );
+		UI_ConfirmMenu( "RESTART GAME?", 0, InGame_RestartAction );
 		break;
 
 	case ID_QUIT:
@@ -152,7 +158,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.frame.height				= 350;//256;
 
 	//y = 96;
-	y = 135;
+	y = 125;
 
 	y += INGAME_MENU_VERTICAL_SPACING;
 	s_ingame.resume.generic.type			= MTYPE_PTEXT;
@@ -164,7 +170,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.resume.string					= "RESUME";
 	s_ingame.resume.color					= color_white;
 	s_ingame.resume.style					= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
-
+	
 	y += INGAME_MENU_VERTICAL_SPACING;
 	s_ingame.setup.generic.type			= MTYPE_PTEXT;
 	s_ingame.setup.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -175,6 +181,17 @@ void InGame_MenuInit( void ) {
 	s_ingame.setup.string				= "OPTIONS";
 	s_ingame.setup.color				= color_white;
 	s_ingame.setup.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+
+	y += INGAME_MENU_VERTICAL_SPACING;
+	s_ingame.player.generic.type		= MTYPE_PTEXT;
+	s_ingame.player.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_ingame.player.generic.x			= 320;
+	s_ingame.player.generic.y			= y;
+	s_ingame.player.generic.id			= ID_PLAYER;
+	s_ingame.player.generic.callback	= InGame_Event; 
+	s_ingame.player.string				= "PLAYER";
+	s_ingame.player.color				= color_white;
+	s_ingame.player.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	
 	y += INGAME_MENU_VERTICAL_SPACING;
 	s_ingame.camera.generic.type		= MTYPE_PTEXT;
@@ -216,8 +233,9 @@ void InGame_MenuInit( void ) {
 	Menu_AddItem( &s_ingame.menu, &s_ingame.frame );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.resume );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.restart );
+	Menu_AddItem( &s_ingame.menu, &s_ingame.setup );	
+	Menu_AddItem( &s_ingame.menu, &s_ingame.player );	
 	Menu_AddItem( &s_ingame.menu, &s_ingame.camera );
-	Menu_AddItem( &s_ingame.menu, &s_ingame.setup );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.leave );
 }
 
