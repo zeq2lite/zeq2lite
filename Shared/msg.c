@@ -825,6 +825,14 @@ netField_t	entityStateFields[] =
 { NETF(apos.trBase[1]), 0 },
 { NETF(pos.trDelta[2]), 0 },
 { NETF(apos.trBase[0]), 0 },
+// <-- RiO: Need to communicate charge levels
+{ NETF(charge1.chTime), 32 },
+{ NETF(charge1.chBase), 32 },
+{ NETF(charge1.chDelta), 16 },
+{ NETF(charge2.chTime), 32 },
+{ NETF(charge2.chBase), 32 },
+{ NETF(charge2.chDelta), 16 },
+// -->
 // <-- RiO: and dash dir
 { NETF(dashDir[0]), 0 },
 { NETF(dashDir[1]), 0 },
@@ -841,6 +849,8 @@ netField_t	entityStateFields[] =
 { NETF(eFlags), 19 },
 { NETF(otherEntityNum), GENTITYNUM_BITS },
 { NETF(weapon), 8 },
+// <-- RiO: Need to communicate weaponstate and tier as well
+{ NETF(weaponstate), 4 },
 { NETF(tier), 4 },
 { NETF(attackPowerTotal), 16 },
 { NETF(attackPowerCurrent), 16 },
@@ -855,10 +865,6 @@ netField_t	entityStateFields[] =
 { NETF(solid), 24 },
 { NETF(powerups), MAX_POWERUPS },
 { NETF(playerBitFlags), 32 },
-{ NETF(playerStatus), 32 },
-//{ NETF(playerPowerLevel), 32 },
-{ NETF(playerMeleeState), 32 },
-{ NETF(playerSkillState), 32 },
 { NETF(modelindex), 8 },
 { NETF(otherEntityNum2), GENTITYNUM_BITS },
 { NETF(loopSound), 8 },
@@ -1155,6 +1161,7 @@ netField_t	playerStateFields[] =
 { PSF(velocity[1]), 0 },
 { PSF(viewangles[1]), 0 },
 { PSF(viewangles[0]), 0 },
+{ PSF(weaponTime), -16 },
 { PSF(origin[2]), 0 },
 { PSF(velocity[2]), 0 },
 { PSF(legsTimer), 8 },
@@ -1167,6 +1174,7 @@ netField_t	playerStateFields[] =
 { PSF(events[1]), 16 },
 { PSF(pm_flags), 16 },
 { PSF(groundEntityNum), GENTITYNUM_BITS },
+{ PSF(weaponstate), 4 },
 { PSF(eFlags), 16 },
 { PSF(externalEvent), 10 },
 { PSF(gravity[0]), 16 },
@@ -1210,10 +1218,7 @@ netField_t	playerStateFields[] =
 { PSF(knockBackDirection), 4 },
 { PSF(breakLimitRate), 0 },
 { PSF(bitFlags), 32 },
-{ PSF(status), 32 },
-{ PSF(meleeState), 32 },
-{ PSF(skillState), 32 },
-{ PSF(options), 32 },
+{ PSF(states), 32 },
 { PSF(attackPowerTotal), 16 },
 { PSF(attackPowerCurrent), 16 }
 };
@@ -1225,15 +1230,16 @@ MSG_WriteDeltaPlayerstate
 =============
 */
 void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct playerState_s *to ) {
-	int				i,p;
+	int				i;
 	playerState_t	dummy;
 	int				statsbits;
 	int				persistantbits;
-	int				skillbits[MAX_SKILLS];
+	int				skillbits;
 	int				powerupbits;
 	int				timerbits;
 	int				powerlevelbits;
 	int				basestatsbits;
+	int				lockedbits;
 	int				numFields;
 	int				c;
 	netField_t		*field;
@@ -1307,20 +1313,22 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 			statsbits |= 1<<i;
 		}
 	}
+	lockedbits = 0;
+	for (i=0 ; i<MAX_LOCKED_STATS ; i++) {
+		if (to->lockedPlayerData[i] != from->lockedPlayerData[i]) {
+			lockedbits |= 1<<i;
+		}
+	}
 	persistantbits = 0;
 	for (i=0 ; i<MAX_PERSISTANT ; i++) {
 		if (to->persistant[i] != from->persistant[i]) {
 			persistantbits |= 1<<i;
 		}
 	}
-	for (p=0 ; p<MAX_SKILLS ; p++) {
-		skillbits[p] = 0;
-		for (i=0 ; i<MAX_SKILL_ATTRIBUTES ; i++){
-			if (to->skills[p][i] != from->skills[p][i]) {
-				if (to->skills[p][i] != from->skills[p][i]) {
-					skillbits[p] |= 1<<i;
-				}
-			}
+	skillbits = 0;
+	for (i=0 ; i<MAX_WEAPONS ; i++) {
+		if (to->currentSkill[i] != from->currentSkill[i]) {
+			skillbits |= 1<<i;
 		}
 	}
 	powerupbits = 0;
@@ -1365,7 +1373,15 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
-
+	if ( lockedbits ) {
+		MSG_WriteBits( msg, 1, 1 );	// changed
+		MSG_WriteBits( msg, lockedbits, MAX_LOCKED_STATS );
+		for (i=0 ; i<MAX_LOCKED_STATS ; i++)
+			if (lockedbits & (1<<i) )
+				MSG_WriteShort (msg, to->lockedPlayerData[i]);
+	} else {
+		MSG_WriteBits( msg, 0, 1 );	// no change
+	}
 	if ( persistantbits ) {
 		MSG_WriteBits( msg, 1, 1 );	// changed
 		MSG_WriteBits( msg, persistantbits, MAX_PERSISTANT );
@@ -1377,17 +1393,12 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 	}
 
 	if ( skillbits ) {
-		MSG_WriteBits(msg,1,1);
-		for (p=0;p<MAX_SKILLS;p++){
-			MSG_WriteBits(msg,skillbits[p],MAX_SKILL_ATTRIBUTES);
-			for (i=0;i<MAX_SKILL_ATTRIBUTES;i++){
-				if(skillbits[p] & (1<<i)){
-					MSG_WriteShort(msg,to->skills[p][i]);
-				}
-			}
-		}
-	}
-	else {
+		MSG_WriteBits( msg, 1, 1 );	// changed
+		MSG_WriteBits( msg, skillbits, MAX_WEAPONS );
+		for (i=0 ; i<MAX_WEAPONS ; i++)
+			if (skillbits & (1<<i) )
+				MSG_WriteShort (msg, to->currentSkill[i]);
+	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
 
@@ -1439,7 +1450,7 @@ MSG_ReadDeltaPlayerstate
 ===================
 */
 void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *to ) {
-	int			i,p, lc;
+	int			i, lc;
 	int			bits;
 	netField_t	*field;
 	int			numFields;
@@ -1528,6 +1539,16 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 				}
 			}
 		}
+		// parse locked stats
+		if ( MSG_ReadBits( msg, 1 ) ) {
+			LOG("PS_LOCKED_STATS");
+			bits = MSG_ReadBits (msg, MAX_LOCKED_STATS);
+			for (i=0 ; i<MAX_LOCKED_STATS ; i++) {
+				if (bits & (1<<i) ) {
+					to->lockedPlayerData[i] = MSG_ReadShort(msg);
+				}
+			}
+		}
 
 		// parse persistant stats
 		if ( MSG_ReadBits( msg, 1 ) ) {
@@ -1543,15 +1564,14 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 		// parse ammo
 		if ( MSG_ReadBits( msg, 1 ) ) {
 			LOG("PS_SKILLS");
-			for (p=0;p<MAX_SKILLS;p++){
-				bits = MSG_ReadBits(msg,MAX_SKILL_ATTRIBUTES);
-				for (i=0 ;i<MAX_SKILL_ATTRIBUTES;i++) {
-					if (bits & (1<<i) ) {
-						to->skills[p][i] = MSG_ReadShort(msg);
-					}
+			bits = MSG_ReadBits (msg, MAX_WEAPONS);
+			for (i=0 ; i<MAX_WEAPONS ; i++) {
+				if (bits & (1<<i) ) {
+					to->currentSkill[i] = MSG_ReadShort(msg);
 				}
 			}
 		}
+
 		// parse powerups
 		if ( MSG_ReadBits( msg, 1 ) ) {
 			LOG("PS_POWERUPS");

@@ -45,7 +45,7 @@ static void CG_DrawLoadingIcons( void ) {
 	for( n = 0; n < loadingPlayerIconCount; n++ ) {
 		x = 16 + n * 78;
 		y = 324-40;
-		CG_DrawPic( x, y, 64, 64, loadingPlayerIcons[n] );
+		CG_DrawPic(qfalse, x, y, 64, 64, loadingPlayerIcons[n] );
 	}
 
 	for( n = 0; n < loadingItemIconCount; n++ ) {
@@ -54,7 +54,7 @@ static void CG_DrawLoadingIcons( void ) {
 			y += 40;
 		}
 		x = 16 + n % 13 * 48;
-		CG_DrawPic( x, y, 32, 32, loadingItemIcons[n] );
+		CG_DrawPic(qfalse, x, y, 32, 32, loadingItemIcons[n] );
 	}
 }
 
@@ -150,7 +150,7 @@ void CG_DrawInformation( void ) {
 	s = Info_ValueForKey( info, "mapname" );
 	levelshot = trap_R_RegisterShaderNoMip( va( "maps/%s.jpg", s ) );
 	trap_R_SetColor( NULL );
-	CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, levelshot );
+	CG_DrawPic(qfalse, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, levelshot );
 
 	// draw the icons of things as they are loaded
 	CG_DrawLoadingIcons();

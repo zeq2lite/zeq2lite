@@ -666,7 +666,7 @@ static void CG_Missile( centity_t *cent ) {
 	entityState_t		*s1;
 	cg_userWeapon_t		*weaponGraphics;
 	float				missileScale;
-	float				missileChargeLvl;
+	int					missileChargeLvl;
 	playerState_t		*ps;
 	int					missilePowerLevelCurrent;
 	int					missilePowerLevelTotal;
@@ -681,24 +681,76 @@ static void CG_Missile( centity_t *cent ) {
 	ps = &cg.predictedPlayerState;
 	s1 = &cent->currentState;
 	weaponGraphics = CG_FindUserWeaponGraphics(s1->clientNum, s1->weapon);
+/*
+	// Water bubble/splash setup
+
+	BG_EvaluateTrajectory( s1, &s1->pos, cg.time, origin );
+	contents = CG_PointContents( origin, -1 );
+
+	BG_EvaluateTrajectory( s1, &s1->pos, cent->trailTime, lastPos );
+	lastContents = CG_PointContents( lastPos, -1 );
+
+	VectorCopy( cent->lerpOrigin, end );
+	end[2] -= 64;
+
+	VectorCopy( cent->lerpOrigin, start );
+	start[2] += 64;
+
+	// trace down to find the surface
+	trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) );
+
+	splash = qtrue;
+
+	contents = trap_CM_PointContents( end, 0 );
+	if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) ) {
+		splash = qfalse;
+	}
+
+	contents = trap_CM_PointContents( start, 0 );
+	if ( contents & ( CONTENTS_SOLID | CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
+		splash = qfalse;
+	}
+
+	if ( trace.fraction == 1.0 ) {
+		splash = qfalse;
+	}
+
+	cent->trailTime = cg.time;
+*/
 	// The missile's charge level was stored in this field. We hijacked it on the
 	// server to be able to transmit the missile's own charge level.
+	missileChargeLvl = s1->powerups;
 	missilePowerLevelTotal = s1->dashDir[0];
 	missilePowerLevelCurrent = s1->dashDir[1];
 	missileIsStruggling = s1->dashDir[2];
-	// Changed the following for attack effects fix.
-	cent->currentChargeTime = missilePowerLevelCurrent;
-	missileChargeLvl = (float)(cent->currentChargeTime - weaponGraphics->chargeTimeStart) / (float)(weaponGraphics->chargeTimeEnd - weaponGraphics->chargeTimeStart);
-	// End of changes.
+
 	// Obtain the scale the missile must have.
-	// below the start, we use the lowest form
-	if(weaponGraphics->chargeGrowth){
-		missileScale = ((weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize) * missileChargeLvl) + weaponGraphics->chargeStartsize;
-	}
-	else {
+	if (weaponGraphics->chargeGrowth) {
+		// below the start, we use the lowest form
+		if (weaponGraphics->chargeStartPct >= missileChargeLvl) {
+			missileScale = weaponGraphics->chargeStartsize;
+		} else {
+			// above the end, we use the highest form
+			if (weaponGraphics->chargeEndPct <= missileChargeLvl) {
+				missileScale = weaponGraphics->chargeEndsize;
+			} else {
+				float	PctRange;
+				float	PctVal;
+				float	SizeRange;
+				float	SizeVal;
+
+				// inbetween, we work out the value
+				PctRange = weaponGraphics->chargeEndPct - weaponGraphics->chargeStartPct;
+				PctVal = missileChargeLvl - weaponGraphics->chargeStartPct;
+
+				SizeRange = weaponGraphics->chargeEndsize - weaponGraphics->chargeStartsize;
+				SizeVal = (PctVal / PctRange) * SizeRange;
+				missileScale = SizeVal + weaponGraphics->chargeStartsize;
+			}
+		}
+	} else {
 		missileScale = 1;
 	}
-	
 	missileScale = missileScale * weaponGraphics->missileSize;
 
 	if(missilePowerLevelCurrent >= (missilePowerLevelTotal * 2)){

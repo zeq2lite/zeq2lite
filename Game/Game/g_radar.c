@@ -1,6 +1,6 @@
 #include "g_local.h"
 
-#define RADAR_UPDATE_TIME	5000 // update the radar once every 5 seconds
+#define RADAR_UPDATE_TIME	5000 // update the radar once every X milliseconds
 
 
 radar_t g_playerOrigins[MAX_CLIENTS]; //global storage for player positions
@@ -40,12 +40,13 @@ void G_RadarUpdateCS(void) {
 
 				g_playerOrigins[i].pl = ps->powerLevel[plCurrent];
 				g_playerOrigins[i].plMax = ps->powerLevel[plMaximum];
+				g_playerOrigins[i].health = ps->powerLevel[plHealth];
 				g_playerOrigins[i].clientNum = ps->clientNum;
 
 				g_playerOrigins[i].properties = 0;
-				/*if ( ( ps->stats[stisGuidingPrimary] >= 50 ) || ( ps->stats[stisGuidingSecondary] >= 50 ) ) {
+				if ( ( ps->stats[stChargePercentPrimary] >= 50 ) || ( ps->stats[stChargePercentSecondary] >= 50 ) ) {
 					g_playerOrigins[i].properties |= RADAR_WARN;
-				}*/
+				}
 				if ( ( ps->eFlags & EF_AURA ) || ps->powerups[PW_BOOST] ) {
 					g_playerOrigins[i].properties |= RADAR_BURST;
 				}
@@ -73,6 +74,7 @@ void G_RadarUpdateCS(void) {
 				strcat(cmd, va(" %i,", g_playerOrigins[i].clientNum));
 				strcat(cmd, va("%i,",  g_playerOrigins[i].pl));
 				strcat(cmd, va("%i,",  g_playerOrigins[i].plMax));
+				strcat(cmd, va("%i,",  g_playerOrigins[i].health));
 				strcat(cmd, va("%i,",  g_playerOrigins[i].team));
 				strcat(cmd, va("%i,",  g_playerOrigins[i].properties));
 				strcat(cmd, va("%i,",  (int)ceil(g_playerOrigins[i].pos[0])));

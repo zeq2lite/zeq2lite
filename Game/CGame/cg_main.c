@@ -74,7 +74,7 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 cg_t				cg;
 cgs_t				cgs;
 centity_t			cg_entities[MAX_GENTITIES];
-weaponInfo_t		cg_weapons[MAX_SKILLS];
+weaponInfo_t		cg_weapons[MAX_WEAPONS];
 
 vmCvar_t	cg_railTrailTime;
 vmCvar_t	cg_centertime;
@@ -223,7 +223,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_drawFPS, "cg_drawFPS", "0", CVAR_ARCHIVE  },
 	{ &cg_drawSnapshot, "cg_drawSnapshot", "0", CVAR_ARCHIVE  },
 	{ &cg_draw3dIcons, "cg_draw3dIcons", "1", CVAR_ARCHIVE  },
-	{ &cg_advancedFlight, "cg_advancedFlight", "0", CVAR_ARCHIVE  },
+	{ &cg_advancedFlight, "cg_advancedFlight", "0", CVAR_USERINFO |CVAR_ARCHIVE  },
 	{ &cg_drawIcons, "cg_drawIcons", "1", CVAR_ARCHIVE  },
 	{ &cg_drawAmmoWarning, "cg_drawAmmoWarning", "1", CVAR_ARCHIVE  },
 	{ &cg_drawCrosshair, "cg_drawCrosshair", "4", CVAR_ARCHIVE },
@@ -355,6 +355,7 @@ void CG_RegisterCvars( void ) {
 	forceModelModificationCount = cg_forceModel.modificationCount;
 
 	trap_Cvar_Register(NULL, "model", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
+	trap_Cvar_Register(NULL, "legsmodel", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	trap_Cvar_Register(NULL, "headmodel", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	trap_Cvar_Register(NULL, "team_model", DEFAULT_TEAM_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	trap_Cvar_Register(NULL, "team_headmodel", DEFAULT_TEAM_HEAD, CVAR_USERINFO | CVAR_ARCHIVE );
@@ -404,12 +405,6 @@ void CG_UpdateCvars( void ) {
 		} else {
 			trap_Cvar_Set( "teamoverlay", "0" );
 		}
-	}
-
-	// if force model changed
-	if ( forceModelModificationCount != cg_forceModel.modificationCount ) {
-		forceModelModificationCount = cg_forceModel.modificationCount;
-		CG_ForceModelChange();
 	}
 }
 
@@ -533,6 +528,7 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.powerStunSound2 = trap_S_RegisterSound( "effects/melee/powerStun2.ogg", qfalse );
 	cgs.media.powerMeleeSound = trap_S_RegisterSound( "effects/melee/powerHit1.ogg", qfalse );
 	cgs.media.powerMissSound = trap_S_RegisterSound( "effects/melee/powerMiss1.ogg", qfalse );
+	cgs.media.lockonStart = trap_S_RegisterSound( "effects/powerSense.ogg", qfalse );
 	cgs.media.airBrake1 = trap_S_RegisterSound( "effects/airBrake1.ogg", qfalse );
 	cgs.media.airBrake2 = trap_S_RegisterSound( "effects/airBrake2.ogg", qfalse );
 	cgs.media.hover = trap_S_RegisterSound( "effects/hover.ogg", qfalse );
@@ -1354,6 +1350,8 @@ static void CG_RegisterGraphics( void ) {
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
 		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("crosshair%c", 'a'+i) );
 	}
+	cgs.media.speedLineShader = trap_R_RegisterShaderNoMip("speedLines");
+	cgs.media.speedLineSpinShader = trap_R_RegisterShaderNoMip("speedLinesSpin");
 	cgs.media.globalCelLighting = trap_R_RegisterShader("GlobalCelLighting");
 	cgs.media.waterSplashSkin = trap_R_RegisterSkin( "effects/water/waterSplash.skin" );
 	cgs.media.waterSplashModel = trap_R_RegisterModel( "effects/water/waterSplash.md3" );
@@ -1383,6 +1381,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.dirtPushModel = trap_R_RegisterModel( "effects/shockwave/dirtPush.md3" );
 
 	cgs.media.hudShader = trap_R_RegisterShaderNoMip( "interface/hud/main.png" );
+	cgs.media.chatBackgroundShader = trap_R_RegisterShaderNoMip("chatBox");
 	cgs.media.markerAscendShader = trap_R_RegisterShaderNoMip( "interface/hud/markerAscend.png" );
 	cgs.media.markerDescendShader = trap_R_RegisterShaderNoMip( "interface/hud/markerDescend.png" );
 	cgs.media.breakLimitShader = trap_R_RegisterShaderNoMip( "breakLimit" );
@@ -1588,8 +1587,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	// Make sure we have update values (scores)
 	CG_SetConfigValues();
-
-	CG_StartMusic();
 
 	CG_LoadingString( "" );
 	CG_ShaderStateChanged();

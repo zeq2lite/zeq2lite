@@ -176,17 +176,18 @@ also called by CG_CheckPlayerstateEvents
 */
 #define	DEBUGNAME(x) if(cg_debugEvents.integer){CG_Printf(x"\n");}
 void CG_EntityEvent( centity_t *cent, vec3_t position ) {
-	entityState_t	*es;
+	entityState_t	*es,*nextState;
 	int				event;
 	vec3_t			dir;
 	const char		*s;
 	int				clientNum;
 	clientInfo_t	*ci;
-	int				r,size;
+	int	r,size;
 
 	r = random() * 10;
 
 	es = &cent->currentState;
+	nextState = &cent->nextState;
 	event = es->event & ~EV_EVENT_BITS;
 
 	if ( cg_debugEvents.integer ) {
@@ -211,7 +212,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_NULL:
 		break;
 	case EV_CRASH:
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.ogg" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "fall" ) );
 		PSys_SpawnCachedSystem("AuraDebris",cent->lerpOrigin,NULL,cent,NULL,qtrue,qfalse);
 		break;
 	case EV_FOOTSTEP:
@@ -253,8 +254,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 	case EV_FALL_SHORT:
 		DEBUGNAME("EV_FALL_SHORT");
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fallSoft.ogg" ) );
-		CG_PlayerDirtPush(cent,4,qtrue);
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "fallSoft" ) );
+		CG_PlayerDirtPush(cent,2,qtrue);
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			cg.landChange = -8;
 			cg.landTime = cg.time;
@@ -262,8 +263,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_FALL_MEDIUM:
 		DEBUGNAME("EV_FALL_MEDIUM");
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fallHard3.ogg" ) );
-		CG_PlayerDirtPush(cent,8,qtrue);
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "fallHard" ) );
+		CG_PlayerDirtPush(cent,4,qtrue);
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			cg.landChange = -16;
 			cg.landTime = cg.time;
@@ -271,8 +272,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_FALL_FAR:
 		DEBUGNAME("EV_FALL_FAR");
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.ogg" ) );
-		CG_PlayerDirtPush(cent,16,qtrue);
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "fall" ) );
+		CG_PlayerDirtPush(cent,8,qtrue);
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			cg.landChange = -24;
 			cg.landTime = cg.time;
@@ -320,18 +321,20 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_HIGHJUMP:
 		DEBUGNAME("EV_HIGHJUMP");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*highjump1.ogg" ) );
-		CG_PlayerDirtPush(cent,20,qtrue);
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "highjump" ) );
+		CG_PlayerDirtPush(cent,10,qtrue);
 		break;
 	case EV_JUMP:
 		DEBUGNAME("EV_JUMP");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
-		CG_PlayerDirtPush(cent,10,qtrue);
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "jump" ) );
+		CG_PlayerDirtPush(cent,5,qtrue);
 		break;
 	case EV_LOCKON_START:
 		DEBUGNAME("EV_LOCKON_START");
 		if(!cg.snap->ps.lockedTarget){
-			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.ogg" ));
+			ci->lockStartTimer = cg.time + 800;
+			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.lockonStart);
+			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "taunt" ));
 		}
 		break;
 	case EV_LOCKON_END:
@@ -339,19 +342,19 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_STUNNED:
 		DEBUGNAME("EV_STUNNED");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "pain" ) );
 		break;
 	case EV_BLOCK:
 		DEBUGNAME("EV_BLOCK");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "pain" ) );
 		break;
 	case EV_PUSH:
 		DEBUGNAME("EV_PUSH");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "pain" ) );
 		break;
 	case EV_SWAT:
 		DEBUGNAME("EV_SWAT");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.ogg" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "pain" ) );
 		break;
 	case EV_WATER_TOUCH:
 		DEBUGNAME("EV_WATER_TOUCH");
@@ -367,7 +370,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_WATER_CLEAR:
 		DEBUGNAME("EV_WATER_CLEAR");
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.ogg" ) );
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "gasp" ) );
 		break;
 	case EV_WATER_SPLASH:
 		DEBUGNAME("EV_WATER_SPLASH");
@@ -409,22 +412,22 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MISSILE_HIT:
 		DEBUGNAME("EV_MISSILE_HIT");
 		ByteToDir( es->eventParm, dir );
-		CG_UserMissileHitPlayer( es->weapon, es->clientNum, cent, position, dir, es->otherEntityNum );
+		CG_UserMissileHitPlayer( es->weapon, es->clientNum, es->powerups, es->number, position, dir, es->otherEntityNum );
 		break;
 	case EV_MISSILE_MISS:
 		DEBUGNAME("EV_MISSILE_MISS");
 		ByteToDir( es->eventParm, dir );
-		CG_UserMissileHitWall( es->weapon, es->clientNum, cent, position, dir, qfalse );
+		CG_UserMissileHitWall( es->weapon, es->clientNum, es->powerups, es->number, position, dir, qfalse );
 		break;
 	case EV_MISSILE_MISS_METAL:
 		DEBUGNAME("EV_MISSILE_MISS_METAL");
 		ByteToDir( es->eventParm, dir );
-		CG_UserMissileHitWall( es->weapon, es->clientNum, cent, position, dir, qfalse );
+		CG_UserMissileHitWall( es->weapon, es->clientNum, es->powerups, es->number, position, dir, qfalse );
 		break;
 	case EV_MISSILE_MISS_AIR:
 		DEBUGNAME("EV_MISSILE_MISS_AIR");
 		ByteToDir( es->eventParm, dir );
-		CG_UserMissileHitWall( es->weapon, es->clientNum, cent, position, dir, qtrue );	
+		CG_UserMissileHitWall( es->weapon, es->clientNum, es->powerups, es->number, position, dir, qtrue );	
 	case EV_BEAM_FADE:
 		DEBUGNAME("EV_BEAM_FADE");
 		break;
@@ -478,31 +481,31 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_PAIN1:
 		DEBUGNAME("EV_PAIN1");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain1.ogg"));
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
 		break;
 	case EV_PAIN2:
 		DEBUGNAME("EV_PAIN2");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain2.ogg"));
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
 		break;
 	case EV_PAIN3:
 		DEBUGNAME("EV_PAIN3");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain3.ogg"));
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
 		break;
 	case EV_PAIN4:
 		DEBUGNAME("EV_PAIN4");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain4.ogg"));
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
 		break;
 	case EV_PAIN5:
 		DEBUGNAME("EV_PAIN5");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*pain5.ogg"));
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
 		break;
 	case EV_DEATH:
 		DEBUGNAME("EV_DEATH");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*death1.ogg"));
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"death"));
 		break;
 	case EV_UNCONCIOUS:
 		DEBUGNAME("EV_UNCONCIOUS");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"*death3.ogg"));
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"death"));
 		break;
 	case EV_OBITUARY:
 		DEBUGNAME("EV_OBITUARY");
@@ -516,6 +519,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_DEBUG_LINE:
 		DEBUGNAME("EV_DEBUG_LINE");
 		CG_Beam( cent );
+		break;
+	case EV_BALLFLIP:
+		DEBUGNAME("EV_BALLFLIP");
+		trap_S_AddRealLoopingSound(es->number,cent->lerpOrigin,vec3_origin,CG_CustomSound(es->number,"ballFlip"));
 		break;
 	case EV_MELEE_SPEED:
 		DEBUGNAME("EV_MELEE_SPEED");
@@ -550,15 +557,33 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_TIERUP_FIRST:
 		DEBUGNAME("EV_TIERUP_FIRST");
-		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformFirst);
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent].soundTransformFirst);
 		break;
 	case EV_TIERUP:
 		DEBUGNAME("EV_TIERUP");
-		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformUp);
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent].soundTransformUp);
 		break;
 	case EV_TIERDOWN:
 		DEBUGNAME("EV_TIERDOWN");
-		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[cg.snap->ps.powerLevel[plTierCurrent]].soundTransformDown);
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent].soundTransformDown);
+		break;
+	case EV_SYNCTIER:
+		DEBUGNAME("EV_SYNCTIER");
+		break;
+	case EV_ALTERUP_START:
+		DEBUGNAME("EV_ALTERUP_START");
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->auraConfig[ci->tierCurrent]->boostStartSound);
+		break;
+	case EV_ALTERDOWN_START:
+		DEBUGNAME("EV_ALTERDOWN_START");
+		break;
+	case EV_POWERINGUP_START:
+		DEBUGNAME("EV_POWERINGUP_START");
+		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,ci->tierConfig[ci->tierCurrent].soundPoweringUp);
+		break;
+	case EV_BOOST_START:
+		DEBUGNAME("EV_BOOST_START");
+		trap_S_StartSound(cent->lerpOrigin, es->number,CHAN_BODY,ci->auraConfig[ci->tierCurrent]->boostStartSound);
 		break;
 	case EV_POWER_STRUGGLE_START:
 		DEBUGNAME("EV_POWER_STRUGGLE_START");

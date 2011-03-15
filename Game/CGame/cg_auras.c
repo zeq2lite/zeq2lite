@@ -858,7 +858,6 @@ void CG_AuraStart( centity_t *player){
 
 	// We don't want smoke jets if this is a boost aura instead of a charge aura.
 	if(!(player->currentState.powerups &(1 << PW_BOOST))){
-		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->chargeStartSound);
 		// Check if we're on, or near ground level
 		VectorCopy( player->lerpOrigin, groundPoint);
 		groundPoint[2] -= 48;
@@ -877,9 +876,6 @@ void CG_AuraStart( centity_t *player){
 			MakeNormalVectors( tempAxis[0], tempAxis[1], tempAxis[2]);
 			PSys_SpawnCachedSystem( "AuraSmokeBurst", groundPoint, tempAxis, NULL, NULL, qfalse, qfalse);
 		}
-	}
-	else{
-		trap_S_StartSound( player->lerpOrigin, ENTITYNUM_NONE, CHAN_BODY, config->boostStartSound);
 	}
 }
 

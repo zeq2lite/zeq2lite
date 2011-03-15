@@ -363,11 +363,20 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_DETONATE_WEAPON:
 			missile = client->guidetarget;
-			G_RemoveUserWeapon(missile);
+			G_DetachUserWeapon(missile);
+			break;
+		case EV_BALLFLIP:
 			break;
 		case EV_MELEE_CHECK:
 			if(ps->lockedTarget>0){
 				if(!&g_entities[ps->lockedTarget-1].client || &g_entities[ps->lockedTarget-1].client->pers.connected == CON_DISCONNECTED){
+					ps->lockedPosition = 0;
+					ps->lockedPlayer = 0;
+					ps->lockedTarget = 0;
+					break;
+				}
+				if(ps->lockedPlayer->bitFlags & isStruggling || ps->lockedPlayer->bitFlags & isDead || ps->lockedPlayer->bitFlags & isUnconcious ||
+				   ps->lockedPlayer->bitFlags & isTransforming || ps->lockedPlayer->bitFlags & isCrashed){
 					ps->lockedPosition = 0;
 					ps->lockedPlayer = 0;
 					ps->lockedTarget = 0;
@@ -395,7 +404,17 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_TIERUP_FIRST:
 		case EV_TIERUP:
 		case EV_TIERDOWN:
+			break;
+		case EV_SYNCTIER:
 			syncTier(client);
+			break;
+		case EV_ALTERUP_START:
+			break;
+		case EV_ALTERDOWN_START:
+			break;
+		case EV_POWERINGUP_START:
+			break;
+		case EV_BOOST_START:
 			break;
 		case EV_LOCKON_START:
 			break;
@@ -454,7 +473,7 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 }
 
 void G_CheckSafety(vec3_t origin,playerState_t *ps){
-	int radius,distance;
+	/*int radius,distance;
 	int	entityList[MAX_GENTITIES];
 	int areaEntities;
 	int i,e;
@@ -485,10 +504,7 @@ void G_CheckSafety(vec3_t origin,playerState_t *ps){
 			ps->timers[tmSafe] = level.time;
 			return;
 		}
-	}
-	if(level.time - ps->timers[tmSafe] > 5000){
-		ps->bitFlags |= isSafe;
-	}
+	}*/
 }
 /*
 ==============
@@ -538,13 +554,17 @@ void ClientThink_real( gentity_t *ent ) {
 	else{
 		client->ps.pm_type = PM_NORMAL;
 	}
-	ent->s.playerStatus = client->ps.status;
 	ent->s.playerBitFlags = client->ps.bitFlags;
-	ent->s.playerMeleeState = client->ps.meleeState;
-	ent->s.playerSkillState = client->ps.skillState;
-	//ent->s.playerPowerLevel = client->ps.powerLevel;
+	ent->s.attackPowerCurrent = client->ps.powerLevel[plHealth];
+	ent->s.attackPowerTotal = client->ps.powerLevel[plMaximum];
+	G_LinkUserWeaponData( &(client->ps) );
 	G_CheckSkills(&(client->ps));
 	G_CheckSafety(ent->r.currentOrigin,&(client->ps));
+	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
+		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
+		Weapon_HookFree(client->hook);
+	}
+
 	// set up for pmove
 	oldEventSequence = client->ps.eventSequence;
 

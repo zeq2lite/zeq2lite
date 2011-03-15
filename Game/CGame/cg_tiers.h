@@ -1,6 +1,9 @@
 typedef struct{
 	char *name;
 	qhandle_t icon;
+	qboolean damageFeatures;
+	qboolean damageModelsRevertHealed;
+	qboolean damageTexturesRevertHealed;
 	float hudMultiplier;
 	int sustainCurrent;
 	int sustainFatigue;
@@ -17,4 +20,5 @@ typedef struct{
 	sfxHandle_t soundTransformFirst;
 	sfxHandle_t soundTransformUp;
 	sfxHandle_t soundTransformDown;
+	sfxHandle_t soundPoweringUp;
 }tierConfig_cg;

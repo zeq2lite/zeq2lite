@@ -28,12 +28,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // repatched the file for a fix
 #define PRODUCT_NAME              "zeq2lite"
 #define BASEGAME			"ZEQ2"
-#define CLIENT_WINDOW_TITLE       "ZEQ2-Lite " PRODUCT_VERSION
+#define CLIENT_WINDOW_TITLE       "ZEQ2-Lite "
 #define CLIENT_WINDOW_MIN_TITLE   "ZEQ2-Lite"
 #define GAMENAME_FOR_MASTER		"ZEQ2Lite"
 
 #ifdef _MSC_VER
-  #define PRODUCT_VERSION "PB2"
+  #define PRODUCT_VERSION ""
 #endif
 
 #define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
@@ -998,10 +998,10 @@ typedef struct {
 #define	MAX_BASESTATS			32
 #define	MAX_PERSISTANT			32
 #define	MAX_POWERUPS			8
+#define	MAX_WEAPONS				32
 #define MAX_TIMERS				32
 #define MAX_POWERSTATS			32
-#define MAX_SKILLS				32
-#define MAX_SKILL_ATTRIBUTES	32
+#define MAX_LOCKED_STATS		3
 
 #define	MAX_PS_EVENTS			2
 #define PS_PMOVEFRAMECOUNTBITS	6
@@ -1023,6 +1023,7 @@ typedef struct playerState_s {
 	int			pm_time;
 	vec3_t		origin;
 	vec3_t		velocity;
+	int			weaponTime;
 	int			gravity[3];
 	int			delta_angles[3];	// add to command angles to get view direction
 									// changed by spawns, rotating objects, and teleporters
@@ -1042,13 +1043,16 @@ typedef struct playerState_s {
 	int			externalEventTime;
 	int			clientNum;		// ranges from 0 to MAX_CLIENTS-1
 	int			weapon;			// copied to entityState_t->weapon
-	vec3_t		viewangles;
+	int			weaponstate;
+
+	vec3_t		viewangles;		// for fixed views
 	int			viewheight;
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
 	vec3_t		dashDir;	// Direction in which the player is dashing
 	int			rolling;
 	int			running;
 	int			lockedTarget;
+	int			lockedPlayerData[MAX_LOCKED_STATS];
 	playerState *lockedPlayer;
 	vec3_t		*lockedPosition;
 	vec3_t		soarLimit;
@@ -1062,9 +1066,7 @@ typedef struct playerState_s {
 	int			damagePitch;
 	int			damageCount;
 	int			bitFlags;
-	int			status;
-	int			meleeState;
-	int			skillState;
+	int			states;
 	int			options;
 	int			stats[MAX_STATS];
 	float		baseStats[MAX_BASESTATS];
@@ -1072,7 +1074,8 @@ typedef struct playerState_s {
 	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
 	int			timers[MAX_TIMERS];
-	int			skills[MAX_SKILLS][MAX_SKILL_ATTRIBUTES];
+	int			currentSkill[MAX_WEAPONS];
+
 	int			generic1;
 	int			loopSound;
 	int			jumppad_ent;	// jumppad entity hit this frame
@@ -1129,6 +1132,13 @@ typedef struct {
 	vec3_t	trBase;
 	vec3_t	trDelta;			// velocity, etc
 } trajectory_t;
+
+typedef struct {
+	int	chTime;		// start time of charge
+	int	chBase;		// base amount
+	int	chDelta;	// amount charged each second. 16bits!
+} charge_t;
+
 typedef struct entityState_s {
 	int		number;			// entity index
 	int		eType;			// entityType_t
@@ -1141,6 +1151,10 @@ typedef struct entityState_s {
 	vec3_t	origin2;
 	vec3_t	angles;
 	vec3_t	angles2;
+
+	charge_t	charge1;
+	charge_t	charge2;
+
 	vec3_t	dashDir;
 	int		otherEntityNum;	// shotgun sources, etc
 	int		otherEntityNum2;
@@ -1160,11 +1174,8 @@ typedef struct entityState_s {
 	// for players
 	int		powerups;		// bit flags
 	int		playerBitFlags;
-	int		playerStatus;
-	int		playerPowerLevel[MAX_POWERSTATS];
-	int		playerMeleeState;
-	int		playerSkillState;
 	int		weapon;			// determines weapon and flash model, etc
+	int		weaponstate;
 	int		tier;
 	int		attackPowerTotal;
 	int		attackPowerCurrent;

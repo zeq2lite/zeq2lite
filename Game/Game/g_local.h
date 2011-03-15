@@ -134,6 +134,7 @@ struct gentity_s {
 
 	float		speed;
 	// ADDING FOR ZEQ2
+	char		modelName[256];
 	float		accel;
 	float		gravity;
 	float		bounceFrac;
@@ -199,6 +200,7 @@ struct gentity_s {
 	int			sectionSpawnTime; // Servertime at which the last drop of a waypoint for a beam took place.
 	int			newSectionTime;  // Time to pass before a new waypoint drop;
 
+	int			chargelvl;			// [0..100]; Percentage of charge up used by attack
 	qboolean	explodeOnMaxLifetime; // does the attack explode when max lifetime is reached, or just disappear?
 	qboolean	continuousExplosion; // Should the explosion be continuous?
 	qboolean	guided;				// is the attack guided?
@@ -686,9 +688,9 @@ void G_RunUserMissile( gentity_t *ent );
 void G_RunUserSkimmer( gentity_t *ent );
 void G_RunUserTorch( gentity_t *ent );
 void G_RunRiftWeaponClass( gentity_t *ent );
-
 void G_ExplodeUserWeapon (gentity_t *self);
 void G_RemoveUserWeapon (gentity_t *self);
+void G_DetachUserWeapon (gentity_t *self);
 void G_DieUserWeapon( gentity_t *self, gentity_t *inflictor,
 					  gentity_t *attacker, int damage, int mod );
 
@@ -772,8 +774,23 @@ extern	vmCvar_t	g_singlePlayer;
 extern	vmCvar_t	g_proxMineTimeout;
 // ADDING FOR ZEQ2
 extern	vmCvar_t	g_verboseParse;
-extern	vmCvar_t	g_powerLevel;
+extern	vmCvar_t	g_powerlevel;
+extern	vmCvar_t	g_powerlevelMaximum;
 extern	vmCvar_t	g_breakLimitRate;
+extern	vmCvar_t	g_allowTiers;
+extern	vmCvar_t	g_allowScoreboard;
+extern	vmCvar_t	g_allowSoar;
+extern	vmCvar_t	g_allowBoost;
+extern	vmCvar_t	g_allowFly;
+extern	vmCvar_t	g_allowZanzoken;
+extern	vmCvar_t	g_allowJump;
+extern	vmCvar_t	g_allowBallFlip;
+extern	vmCvar_t	g_allowOverheal;
+extern	vmCvar_t	g_allowBreakLimit;
+extern	vmCvar_t	g_allowMelee;
+extern	vmCvar_t	g_allowLockon;
+extern	vmCvar_t	g_allowBlock;
+extern	vmCvar_t	g_allowAdvancedMelee;
 extern	vmCvar_t	g_rolling;
 extern	vmCvar_t	g_running;
 // END ADDING

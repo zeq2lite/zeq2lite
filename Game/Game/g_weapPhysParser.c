@@ -30,26 +30,26 @@ void G_weapPhys_StoreBuffer(int clientNum, int weaponNum) {
 	// copy the memory.
 	memcpy( dest, src, sizeof(g_userWeapon_t));
 
-	// Indicate the weapon as charged if there is a chargeReady
-	// or ChargeTimeMinimum set to something other than 0.
-	if ( src->costs_chargeReady || src->costs_chargeTimeMinimum ) {
-		dest->general_bitflags |= skNeedsCharge;
+	// Indicate the weapon as charged if there is a chargeReadyPct
+	// or chargeTime set to something other than 0.
+	if ( src->costs_chargeReady || src->costs_chargeTime ) {
+		dest->general_bitflags |= WPF_NEEDSCHARGE;
 	}
 
 	// If nrShots is set to < 1, internally it must be represented by 1 instead.
 	if ( dest->firing_nrShots < 1 ) dest->firing_nrShots = 1;
 
 	// Handle the presence of alternate fire weapons through the
-	// piggybacked skHasAlternate flag.
+	// piggybacked WPF_ALTWEAPONPRESENT flag.
 	
-	// NOTE: The skHasAlternate flag will only be enabled in src if src is the
+	// NOTE: The WPF_ALTWEAPONPRESENT flag will only be enabled in src if src is the
 	//       buffer for a secondary fire configuration. In this case it is implicitly
-	//       safe to subtract skAltOffset to obtain the primary fire index
+	//       safe to subtract ALTWEAPON_OFFSET to obtain the primary fire index
 	//       of the weapon!
-	if ( src->general_bitflags & skHasAlternate ) {
-		src->general_bitflags &= ~skHasAlternate;
-		dest = G_FindUserWeaponData( clientNum, weaponNum - skAltOffset + 1);
-		dest->general_bitflags |= skHasAlternate;
+	if ( src->general_bitflags & WPF_ALTWEAPONPRESENT ) {
+		src->general_bitflags &= ~WPF_ALTWEAPONPRESENT;
+		dest = G_FindUserWeaponData( clientNum, weaponNum - ALTWEAPON_OFFSET + 1);
+		dest->general_bitflags |= WPF_ALTWEAPONPRESENT;
 	}
 }
 
@@ -603,57 +603,6 @@ qboolean G_weapPhys_ParseBlind( g_weapPhysParser_t *parser, g_weapPhysCategoryIn
 	return qtrue;
 }
 /*====================
-G_weapPhys_ParsePowerBase
-====================*/
-qboolean G_weapPhys_ParsePowerBase(g_weapPhysParser_t *parser,g_weapPhysCategoryIndex_t category,int field){
-	g_weapPhysToken_t *token = &parser->token;
-	g_weapPhysScanner_t	*scanner = &parser->scanner;
-	if(token->tokenSym!=TOKEN_INTEGER){
-		G_weapPhys_ErrorHandle(ERROR_INTEGER_EXPECTED,scanner,token->stringval,NULL);
-		return qfalse;
-	}
-	g_weapPhysBuffer.powerBase = token->intval;
-	if(!G_weapPhys_NextSym(scanner,token)){
-		if(token->tokenSym == TOKEN_EOF){G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );}
-		return qfalse;
-	}
-	return qtrue;
-}
-/*====================
-G_weapPhys_ParseChargeScale
-====================*/
-qboolean G_weapPhys_ParseChargeScale(g_weapPhysParser_t *parser,g_weapPhysCategoryIndex_t category,int field){
-	g_weapPhysToken_t *token = &parser->token;
-	g_weapPhysScanner_t	*scanner = &parser->scanner;
-	if(token->tokenSym!=TOKEN_FLOAT){
-		G_weapPhys_ErrorHandle(ERROR_FLOAT_EXPECTED,scanner,token->stringval,NULL);
-		return qfalse;
-	}
-	g_weapPhysBuffer.powerChargeScale = token->floatval;
-	if(!G_weapPhys_NextSym(scanner,token)){
-		if(token->tokenSym == TOKEN_EOF){G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );}
-		return qfalse;
-	}
-	return qtrue;
-}
-/*====================
-G_weapPhys_ParseStruggleScale
-====================*/
-qboolean G_weapPhys_ParseStruggleScale(g_weapPhysParser_t *parser,g_weapPhysCategoryIndex_t category,int field){
-	g_weapPhysToken_t *token = &parser->token;
-	g_weapPhysScanner_t	*scanner = &parser->scanner;
-	if(token->tokenSym!=TOKEN_FLOAT){
-		G_weapPhys_ErrorHandle(ERROR_FLOAT_EXPECTED,scanner,token->stringval,NULL);
-		return qfalse;
-	}
-	g_weapPhysBuffer.powerStruggleScale = token->floatval;
-	if(!G_weapPhys_NextSym(scanner,token)){
-		if(token->tokenSym == TOKEN_EOF){G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );}
-		return qfalse;
-	}
-	return qtrue;
-}
-/*====================
 G_weapPhys_ParseMinPowerLevel
 ====================*/
 qboolean G_weapPhys_ParseMinPowerLevel(g_weapPhysParser_t *parser,g_weapPhysCategoryIndex_t category,int field){
@@ -1016,13 +965,13 @@ qboolean G_weapPhys_ParseCooldownTime( g_weapPhysParser_t *parser, g_weapPhysCat
 
 /*
 ============================
-G_weapPhys_ParseChargeTimeMinimum
+G_weapPhys_ParseChargeTime
 ============================
-Parses 'ChargeTimeMinimum' field.
+Parses 'chargeTime' field.
 Syntax:
-'ChargeTimeMinimum' '=' <int>
+'chargeTime' '=' <int>
 */
-qboolean G_weapPhys_ParseChargeTimeMinimum( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+qboolean G_weapPhys_ParseChargeTime( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
 	g_weapPhysToken_t	*token = &parser->token;
 	g_weapPhysScanner_t	*scanner = &parser->scanner;
 
@@ -1036,7 +985,7 @@ qboolean G_weapPhys_ParseChargeTimeMinimum( g_weapPhysParser_t *parser, g_weapPh
 		return qfalse;
 	}
 
-	g_weapPhysBuffer.costs_chargeTimeMinimum = token->intval;
+	g_weapPhysBuffer.costs_chargeTime = token->intval;
 
 	if ( !G_weapPhys_NextSym( scanner, token ) ) {
 		if ( token->tokenSym == TOKEN_EOF ) {
@@ -1048,45 +997,16 @@ qboolean G_weapPhys_ParseChargeTimeMinimum( g_weapPhysParser_t *parser, g_weapPh
 	return qtrue;
 }
 
-/*
-============================
-G_weapPhys_ParseFireTime
-============================
-Parses 'FireTime' field.
-Syntax:
-'FireTime' '=' <int>
-*/
-qboolean G_weapPhys_ParseFireTime( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
-	g_weapPhysToken_t	*token = &parser->token;
-	g_weapPhysScanner_t	*scanner = &parser->scanner;
-	if ( category != CAT_COSTS) {
-		G_weapPhys_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, g_weapPhysFields[field].fieldname, g_weapPhysCategories[category] );
-		return qfalse;
-	}
-	if ( token->tokenSym != TOKEN_INTEGER ) {
-		G_weapPhys_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
-		return qfalse;
-	}
-	g_weapPhysBuffer.costs_fireTime = token->intval;
-	if ( !G_weapPhys_NextSym( scanner, token ) ) {
-		if ( token->tokenSym == TOKEN_EOF ) {
-			G_weapPhys_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
-		}
-		return qfalse;
-	}
-	return qtrue;
-}
-
 
 /*
 ================================
-G_weapPhys_ParseChargeReady
+G_weapPhys_ParseChargeReadyPct
 ================================
-Parses 'chargeReady' field.
+Parses 'chargeReadyPct' field.
 Syntax:
-'chargeReady' '=' <int>
+'chargeReadyPct' '=' <int>
 */
-qboolean G_weapPhys_ParseChargeReady( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
+qboolean G_weapPhys_ParseChargeReadyPct( g_weapPhysParser_t *parser, g_weapPhysCategoryIndex_t category, int field ) {
 	g_weapPhysToken_t	*token = &parser->token;
 	g_weapPhysScanner_t	*scanner = &parser->scanner;
 
@@ -2490,10 +2410,10 @@ qboolean G_weapPhys_Parse( char *filename, int clientNum ) {
 
 			// Piggyback the alternate fire present flag in the buffer of the alternate fire
 			// to let G_weapPhys_StoreBuffer enable this flag on the primary fire.
-			g_weapPhysBuffer.general_bitflags |= skHasAlternate;
+			g_weapPhysBuffer.general_bitflags |= WPF_ALTWEAPONPRESENT;
 		}
 
-		G_weapPhys_StoreBuffer( clientNum, i + skAltOffset );
+		G_weapPhys_StoreBuffer( clientNum, i + ALTWEAPON_OFFSET );
 
 
 

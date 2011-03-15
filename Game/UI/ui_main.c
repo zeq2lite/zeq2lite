@@ -102,6 +102,7 @@ typedef struct {
 vmCvar_t	ui_ffa_fraglimit;
 vmCvar_t	ui_ffa_timelimit;
 vmCvar_t	ui_ffa_powerlevel;
+vmCvar_t	ui_ffa_powerlevelMaximum;
 vmCvar_t	ui_ffa_breakLimitRate;
 
 vmCvar_t	ui_tourney_fraglimit;
@@ -170,6 +171,7 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_ffa_fraglimit, "ui_ffa_fraglimit", "20", CVAR_ARCHIVE },
 	{ &ui_ffa_timelimit, "ui_ffa_timelimit", "0", CVAR_ARCHIVE },
 	{ &ui_ffa_powerlevel, "ui_ffa_powerlevel", "1000", CVAR_ARCHIVE },
+	{ &ui_ffa_powerlevelMaximum, "ui_ffa_powerlevelMaximum", "32767", CVAR_ARCHIVE },
 	{ &ui_ffa_breakLimitRate, "ui_ffa_breakLimitRate", "1", CVAR_ARCHIVE },
 
 	{ &ui_tourney_fraglimit, "ui_tourney_fraglimit", "0", CVAR_ARCHIVE },

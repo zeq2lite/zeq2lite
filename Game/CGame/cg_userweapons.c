@@ -8,7 +8,7 @@
 #include "cg_local.h"
 
 
-static cg_userWeapon_t		weaponGraphicsDatabase[MAX_CLIENTS][ALTSPAWN_OFFSET + skMaximumSkillPairs];
+static cg_userWeapon_t		weaponGraphicsDatabase[MAX_CLIENTS][ALTSPAWN_OFFSET + MAX_PLAYERWEAPONS];
 							// * 2 because we also have alternate fires possible for each
 							// weapon!
 
@@ -17,7 +17,7 @@ cg_userWeapon_t *CG_FindUserWeaponGraphics( int clientNum, int index ) {
 }
 
 void CG_CopyUserWeaponGraphics( int from, int to ) {
-	memcpy(&weaponGraphicsDatabase[to], &weaponGraphicsDatabase[from], sizeof(cg_userWeapon_t)*(ALTSPAWN_OFFSET+skMaximumSkillPairs));
+	memcpy(&weaponGraphicsDatabase[to], &weaponGraphicsDatabase[from], sizeof(cg_userWeapon_t)*(ALTSPAWN_OFFSET+MAX_PLAYERWEAPONS));
 }
 
 

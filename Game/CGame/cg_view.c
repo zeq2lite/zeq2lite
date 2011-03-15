@@ -569,7 +569,7 @@ static void CG_OffsetThirdPersonView2( void )
 	cameraFocusAngles[YAW] += cg_thirdPersonAngle.value;
 
 	if(cg_beamControl.value == 0){
-		if(cg.snap->ps.timers[tmImpede] && cg.guide_view){
+		if(((cg.snap->ps.weaponstate == WEAPON_GUIDING) || (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
 			float oldRoll;
 			VectorSubtract( cg.guide_target, cg.snap->ps.origin, forward );
 			VectorNormalize( forward );
@@ -587,9 +587,6 @@ static void CG_OffsetThirdPersonView2( void )
 			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;
 			ci->transformLength = cg.snap->ps.timers[tmTransform];
-			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
-			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
-			ci->cameraBackup[2] = cg_thirdPersonRange.value;
 		}
 		transformPercent = 1.0 - ((float)cg.snap->ps.timers[tmTransform] / (float)ci->transformLength);
 		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
@@ -607,6 +604,7 @@ static void CG_OffsetThirdPersonView2( void )
 		cg_thirdPersonAngle.value = ci->cameraBackup[0];
 		cg_thirdPersonHeight.value = ci->cameraBackup[1];
 		cg_thirdPersonRange.value = ci->cameraBackup[2];
+		cg_thirdPersonSlide.value = ci->cameraBackup[3];
 	}
 
 	// The next thing to do is to see if we need to calculate a new camera target location.
@@ -713,7 +711,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
 	if(cg_beamControl.value == 0){
-		if(ps->timers[tmImpede] && cg.guide_view){
+		if(((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
 			float oldRoll;
 			VectorSubtract( cg.guide_target, ps->origin, forward );
 			VectorNormalize( forward );
@@ -735,19 +733,20 @@ static void CG_OffsetThirdPersonView( void ) {
 	VectorCopy( cg.refdef.vieworg, view );	
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 	// LOCKED ON
-	if(cg.snap->ps.lockedTarget > 0){
-		if(!ci->transformStart){
-			ci->transformStart = qtrue;
-			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
-			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
-			ci->cameraBackup[2] = cg_thirdPersonRange.value;
-			ci->cameraBackup[3] = cg_thirdPersonSlide.value;
-		}
+	if(ps->lockedTarget > 0){
+		if(!cg.lockonStart){cg.lockonStart = qtrue;}
 		cg_thirdPersonAngle.value = cg_lockedAngle.value;
 		cg_thirdPersonHeight.value = cg_lockedHeight.value;
 		cg_thirdPersonRange.value = cg_lockedRange.value;
 		cg_thirdPersonSlide.value = cg_lockedSlide.value;
-	} else
+	}
+	else if(cg.lockonStart && ci->cameraBackup[2]){
+		cg.lockonStart = qfalse;
+		cg_thirdPersonAngle.value = ci->cameraBackup[0];
+		cg_thirdPersonHeight.value = ci->cameraBackup[1];
+		cg_thirdPersonRange.value = ci->cameraBackup[2];
+		cg_thirdPersonSlide.value = ci->cameraBackup[3];
+	}
 	// TRANSFORMATIONS
 	if(ps->timers[tmTransform] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
@@ -755,10 +754,6 @@ static void CG_OffsetThirdPersonView( void ) {
 			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;
 			ci->transformLength = ps->timers[tmTransform];
-			ci->cameraBackup[0] = cg_thirdPersonAngle.value;
-			ci->cameraBackup[1] = cg_thirdPersonHeight.value;
-			ci->cameraBackup[2] = cg_thirdPersonRange.value;
-			ci->cameraBackup[3] = cg_thirdPersonSlide.value;
 		}
 		transformPercent = 1.0 - ((float)ps->timers[tmTransform] / (float)ci->transformLength);
 		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
@@ -2393,8 +2388,8 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	cg.renderingThirdPerson = cg_thirdPerson.integer ||
 							 (cg.snap->ps.powerLevel[plFatigue] <= 0) ||
 							 (cg.snap->ps.bitFlags & isCrashed) ||
-							 (cg.snap->ps.skillState == skillGuiding) ||
-							 (cg.snap->ps.skillState == skillAltGuiding);
+							 (cg.snap->ps.weaponstate == WEAPON_GUIDING) ||
+							 (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING);
 /*
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.powerLevel[current] <= 0);

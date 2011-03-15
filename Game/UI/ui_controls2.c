@@ -61,17 +61,14 @@ typedef struct
 #define SAVE_CANCEL		3
 
 // control sections
-#define C_MOVEMENT		0
-#define C_LOOKING		1
-#define C_WEAPONS		2
-#define C_MISC			3
-#define C_MAX			4
+#define C_MAIN			0
+#define C_MAX			1
 
-#define ID_MOVEMENT		100
-#define ID_LOOKING		101
-#define ID_WEAPONS		102
-#define ID_MISC			103
-#define ID_DEFAULTS		104
+#define ID_MAIN			100
+#define ID_DEFAULTS		101
+#define ID_SYSTEM		102
+#define ID_CONTROLS		103
+#define ID_GENERAL		104
 #define ID_BACK			105
 #define ID_SAVEANDEXIT	106
 #define ID_EXIT			107
@@ -179,15 +176,15 @@ typedef struct
 {
 	menuframework_s		menu;
 
-	menutext_s			banner;
 	menubitmap_s		framel;
 	menubitmap_s		framer;
 	menubitmap_s		player;
 
-	menutext_s			movement;
-	menutext_s			looking;
-	menutext_s			weapons;
-	menutext_s			misc;
+	menutext_s			system;
+	menutext_s			controls;
+	menutext_s			general;	
+	
+	menutext_s			main;
 
 	menuaction_s		walkforward;
 	menuaction_s		backpedal;
@@ -322,7 +319,7 @@ static configcvar_t g_configcvars[] =
 	{NULL,				0,					0}
 };
 
-static menucommon_s *g_movement_controls[] =
+static menucommon_s *g_main_controls[] =
 {
 	(menucommon_s *)&s_controls.alwaysrun,     
 	(menucommon_s *)&s_controls.run,            
@@ -334,66 +331,30 @@ static menucommon_s *g_movement_controls[] =
 	(menucommon_s *)&s_controls.movedown,      
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,     
-	(menucommon_s *)&s_controls.sidestep,
 	(menucommon_s *)&s_controls.jump,
 	(menucommon_s *)&s_controls.zanzoken,
 	(menucommon_s *)&s_controls.rollleft,
 	(menucommon_s *)&s_controls.rollright,
 	(menucommon_s *)&s_controls.boost,
-	NULL
-};
-
-static menucommon_s *g_weapons_controls[] = {
 	(menucommon_s *)&s_controls.attack,
 	(menucommon_s *)&s_controls.attack2,
 	(menucommon_s *)&s_controls.nextweapon,
 	(menucommon_s *)&s_controls.prevweapon,
-	(menucommon_s *)&s_controls.autoswitch,
 	(menucommon_s *)&s_controls.chainsaw,
 	(menucommon_s *)&s_controls.machinegun,
 	(menucommon_s *)&s_controls.shotgun,
 	(menucommon_s *)&s_controls.grenadelauncher,
 	(menucommon_s *)&s_controls.rocketlauncher,
 	(menucommon_s *)&s_controls.lightning,
-//	(menucommon_s *)&s_controls.railgun,
-//	(menucommon_s *)&s_controls.plasma,
-//	(menucommon_s *)&s_controls.bfg,
-	NULL,
-};
-
-static menucommon_s *g_looking_controls[] = {
-	(menucommon_s *)&s_controls.sensitivity,
-	(menucommon_s *)&s_controls.gesture,
-	(menucommon_s *)&s_controls.smoothmouse,
-	(menucommon_s *)&s_controls.invertmouse,
-	(menucommon_s *)&s_controls.lookup,
-	(menucommon_s *)&s_controls.lookdown,
-	(menucommon_s *)&s_controls.mouselook,
-	(menucommon_s *)&s_controls.freelook,
-	(menucommon_s *)&s_controls.centerview,
-	(menucommon_s *)&s_controls.zoomview,
-	(menucommon_s *)&s_controls.joyenable,
-	(menucommon_s *)&s_controls.joythreshold,
-	NULL,
-};
-
-static menucommon_s *g_misc_controls[] = {
-	(menucommon_s *)&s_controls.showscores, 
 	(menucommon_s *)&s_controls.chargepl,
 	(menucommon_s *)&s_controls.block,
 	(menucommon_s *)&s_controls.useitem,
 	(menucommon_s *)&s_controls.chat,
-	(menucommon_s *)&s_controls.chat2,
-	(menucommon_s *)&s_controls.chat3,
-	(menucommon_s *)&s_controls.chat4,
 	NULL,
 };
 
 static menucommon_s **g_controls[] = {
-	g_movement_controls,
-	g_looking_controls,
-	g_weapons_controls,
-	g_misc_controls,
+	g_main_controls,
 };
 
 /*
@@ -560,50 +521,54 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 
 	case UI_ANIM_WEAPON1:
-		s_controls.playerLegs = ANIM_SKILL1_CHARGE;
-		s_controls.playerTorso = ANIM_SKILL1_CHARGE;
+		s_controls.playerLegs = ANIM_KI_ATTACK1_PREPARE;
+		s_controls.playerTorso = ANIM_KI_ATTACK1_PREPARE;
 		break;
 
 	case UI_ANIM_WEAPON2:
-		s_controls.playerLegs = ANIM_SKILL2_CHARGE;
-		s_controls.playerTorso = ANIM_SKILL2_CHARGE;
+		s_controls.playerLegs = ANIM_KI_ATTACK2_PREPARE;
+		s_controls.playerTorso = ANIM_KI_ATTACK2_PREPARE;
 		break;
 
 	case UI_ANIM_WEAPON3:
-		s_controls.playerLegs = ANIM_SKILL3_CHARGE;
-		s_controls.playerTorso = ANIM_SKILL3_CHARGE;
+		s_controls.playerLegs = ANIM_KI_ATTACK3_PREPARE;
+		s_controls.playerTorso = ANIM_KI_ATTACK3_PREPARE;
 		break;
 
 	case UI_ANIM_WEAPON4:
-		s_controls.playerLegs = ANIM_SKILL4_CHARGE;
-		s_controls.playerTorso = ANIM_SKILL4_CHARGE;
+		s_controls.playerLegs = ANIM_KI_ATTACK4_PREPARE;
+		s_controls.playerTorso = ANIM_KI_ATTACK4_PREPARE;
 		break;
 
 	case UI_ANIM_WEAPON5:
-		s_controls.playerLegs = ANIM_SKILL5_CHARGE;
-		s_controls.playerTorso = ANIM_SKILL5_CHARGE;
+		s_controls.playerLegs = ANIM_KI_ATTACK5_PREPARE;
+		s_controls.playerTorso = ANIM_KI_ATTACK5_PREPARE;
 		break;
 
 	case UI_ANIM_WEAPON6:
-		s_controls.playerLegs = ANIM_SKILL6_CHARGE;
-		s_controls.playerTorso = ANIM_SKILL6_CHARGE;
+		s_controls.playerLegs = ANIM_KI_ATTACK6_PREPARE;
+		s_controls.playerTorso = ANIM_KI_ATTACK6_PREPARE;
 		break;
 
 	case UI_ANIM_WEAPON7:
+//		s_controls.playerWeapon = WP_RAILGUN;
 		break;
 
 	case UI_ANIM_WEAPON8:
+//		s_controls.playerWeapon = WP_PLASMAGUN;
 		break;
 
 	case UI_ANIM_WEAPON9:
+//		s_controls.playerWeapon = WP_BFG;
 		break;
 
 	case UI_ANIM_WEAPON10:
+//		s_controls.playerWeapon = WP_GRAPPLING_HOOK;
 		break;
 
 	case UI_ANIM_ATTACK:
-		s_controls.playerLegs = ANIM_SKILL1_FIRE;
-		s_controls.playerTorso = ANIM_SKILL1_FIRE;
+		s_controls.playerLegs = ANIM_KI_ATTACK1_FIRE;
+		s_controls.playerTorso = ANIM_KI_ATTACK1_FIRE;
 		break;
 
 	case UI_ANIM_KI_CHARGE:
@@ -659,6 +624,7 @@ static void Controls_UpdateModel( int anim ) {
 	case UI_ANIM_DIE:
 		s_controls.playerLegs = ANIM_DEATH_GROUND;
 		s_controls.playerTorso = ANIM_DEATH_GROUND;
+		s_controls.playerWeapon = WP_NONE;
 		break;
 
 	case UI_ANIM_CHAT:
@@ -669,7 +635,7 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 	}
 
-	UI_PlayerInfo_SetInfo( &s_controls.playerinfo, s_controls.playerLegs, s_controls.playerTorso, s_controls.playerViewangles, s_controls.playerMoveangles, s_controls.playerChat );
+	UI_PlayerInfo_SetInfo( &s_controls.playerinfo, s_controls.playerLegs, s_controls.playerTorso, s_controls.playerViewangles, s_controls.playerMoveangles, s_controls.playerWeapon, s_controls.playerChat );
 }
 
 
@@ -732,36 +698,15 @@ static void Controls_Update( void ) {
 	}
 
 	// makes sure flags are right on the group selection controls
-	s_controls.looking.generic.flags  &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-	s_controls.movement.generic.flags &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-	s_controls.weapons.generic.flags  &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-	s_controls.misc.generic.flags     &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+	s_controls.main.generic.flags  &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 
-	s_controls.looking.generic.flags  |= QMF_PULSEIFFOCUS;
-	s_controls.movement.generic.flags |= QMF_PULSEIFFOCUS;
-	s_controls.weapons.generic.flags  |= QMF_PULSEIFFOCUS;
-	s_controls.misc.generic.flags     |= QMF_PULSEIFFOCUS;
+	s_controls.main.generic.flags  |= QMF_PULSEIFFOCUS;
 
 	// set buttons
 	switch( s_controls.section ) {
-	case C_MOVEMENT:
-		s_controls.movement.generic.flags &= ~QMF_PULSEIFFOCUS;
-		s_controls.movement.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-		break;
-	
-	case C_LOOKING:
-		s_controls.looking.generic.flags &= ~QMF_PULSEIFFOCUS;
-		s_controls.looking.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-		break;
-	
-	case C_WEAPONS:
-		s_controls.weapons.generic.flags &= ~QMF_PULSEIFFOCUS;
-		s_controls.weapons.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-		break;		
-
-	case C_MISC:
-		s_controls.misc.generic.flags &= ~QMF_PULSEIFFOCUS;
-		s_controls.misc.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+	case C_MAIN:
+		s_controls.main.generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_controls.main.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 		break;
 	}
 }
@@ -819,13 +764,13 @@ static void Controls_DrawKeyBinding( void *self )
 		if (s_controls.waitingforkey)
 		{
 			UI_DrawChar( x, y, '=', UI_CENTER|UI_BLINK|UI_TINYFONT|UI_DROPSHADOW, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Waiting for new key ... ESCAPE to cancel", UI_TINYFONT|UI_CENTER|UI_PULSE|UI_DROPSHADOW, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.80, SCREEN_HEIGHT * 0.82, "Waiting for new key ... ESCAPE to cancel", UI_TINYFONT|UI_CENTER|UI_PULSE|UI_DROPSHADOW, colorWhite );
 		}
 		else
 		{
 			UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_TINYFONT|UI_DROPSHADOW, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.78, "Press ENTER or CLICK to change", UI_TINYFONT|UI_CENTER|UI_DROPSHADOW, colorWhite );
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "Press BACKSPACE to clear", UI_TINYFONT|UI_CENTER|UI_DROPSHADOW, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.82, "Press ENTER or CLICK to change", UI_TINYFONT|UI_CENTER|UI_DROPSHADOW, colorWhite );
+			UI_DrawString(SCREEN_WIDTH * 0.86, SCREEN_HEIGHT * 0.86, "Press BACKSPACE to clear", UI_TINYFONT|UI_CENTER|UI_DROPSHADOW, colorWhite );
 		}
 	}
 	else
@@ -850,7 +795,8 @@ Controls_StatusBar
 */
 static void Controls_StatusBar( void *self )
 {
-	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Use Arrow Keys or CLICK to change", UI_TINYFONT|UI_CENTER|UI_DROPSHADOW, colorWhite );
+	UI_DrawString(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.82, "Use Arrow Keys or CLICK", UI_TINYFONT|UI_CENTER|UI_DROPSHADOW, colorWhite );
+	UI_DrawString(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.86, "to change it", UI_TINYFONT|UI_CENTER|UI_DROPSHADOW, colorWhite );
 }
 
 
@@ -1173,44 +1119,32 @@ static void Controls_MenuEvent( void* ptr, int event )
 {
 	switch (((menucommon_s*)ptr)->id)
 	{
-		case ID_MOVEMENT:
+		case ID_MAIN:
 			if (event == QM_ACTIVATED)
 			{
-				s_controls.section = C_MOVEMENT; 
+				s_controls.section = C_MAIN; 
 				Controls_Update();
 			}
 			break;
-
-		case ID_LOOKING:
-			if (event == QM_ACTIVATED)
-			{
-				s_controls.section = C_LOOKING; 
-				Controls_Update();
-			}
+			
+		case ID_SYSTEM:
+			UI_SystemSettingsMenu();
 			break;
-
-		case ID_WEAPONS:
-			if (event == QM_ACTIVATED)
-			{
-				s_controls.section = C_WEAPONS; 
-				Controls_Update();
-			}
+			
+		case ID_CONTROLS:
+			UI_ControlsMenu();
 			break;
-
-		case ID_MISC:
-			if (event == QM_ACTIVATED)
-			{
-				s_controls.section = C_MISC; 
-				Controls_Update();
-			}
-			break;
+			
+		case ID_GENERAL:
+			UI_PreferencesMenu();
+			break;	
 
 		case ID_DEFAULTS:
 			if (event == QM_ACTIVATED)
 			{
 				UI_ConfirmMenu( "SET TO DEFAULTS?", Controls_ResetDefaults_Draw, Controls_ResetDefaults_Action );
 			}
-			break;
+			break;			
 
 		case ID_BACK:
 			if (event == QM_ACTIVATED)
@@ -1306,21 +1240,48 @@ static void Controls_MenuInit( void )
 	static char playername[32];
 
 	// zero set all our globals
+	int x = 28;
+	int	y = 119;
+	int	offset = 38;
+	int	style = UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;	
 	memset( &s_controls, 0 ,sizeof(controls_t) );
 
 	Controls_Cache();
-
+	
 	s_controls.menu.key        = Controls_MenuKey;
 	s_controls.menu.wrapAround = qtrue;
 	s_controls.menu.fullscreen = qtrue;
 
-	s_controls.banner.generic.type	= MTYPE_BTEXT;
-	s_controls.banner.generic.flags	= QMF_CENTER_JUSTIFY;
-	s_controls.banner.generic.x		= 320;
-	s_controls.banner.generic.y		= 16;
-	s_controls.banner.string		= "CONTROLS";
-	s_controls.banner.color			= color_white;
-	s_controls.banner.style			= UI_CENTER|UI_DROPSHADOW;
+	s_controls.system.generic.type		= MTYPE_PTEXT;
+	s_controls.system.generic.flags		= QMF_LEFT_JUSTIFY;
+	s_controls.system.generic.id			= ID_SYSTEM;
+	s_controls.system.generic.callback	= Controls_MenuEvent;
+	s_controls.system.generic.x			= x;
+	s_controls.system.generic.y			= y;
+	s_controls.system.string				= "SYSTEM";
+	s_controls.system.style				= style;
+	s_controls.system.color				= color_white;
+	y+=offset;
+	s_controls.controls.generic.type			= MTYPE_PTEXT;
+	s_controls.controls.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_controls.controls.generic.id			= ID_CONTROLS;
+	s_controls.controls.generic.callback		= Controls_MenuEvent;
+	s_controls.controls.generic.x				= x;
+	s_controls.controls.generic.y				= y;
+	s_controls.controls.string				= "CONTROLS";
+	s_controls.controls.style					= style;
+	s_controls.controls.color					= color_white;
+	y+=offset;		
+	s_controls.general.generic.type		= MTYPE_PTEXT;
+	s_controls.general.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_controls.general.generic.id			= ID_GENERAL;
+	s_controls.general.generic.callback	= Controls_MenuEvent;
+	s_controls.general.generic.x			= x;
+	s_controls.general.generic.y			= y;
+	s_controls.general.string				= "GENERAL";
+	s_controls.general.style				= style;
+	s_controls.general.color				= color_white;
+	y+=offset;		
 
 	s_controls.framel.generic.type  = MTYPE_BITMAP;
 	s_controls.framel.generic.name  = ART_FRAMEL;
@@ -1338,45 +1299,6 @@ static void Controls_MenuInit( void )
 	s_controls.framer.width  	    = 256;
 	s_controls.framer.height  	    = 334;
 
-	s_controls.looking.generic.type     = MTYPE_PTEXT;
-	s_controls.looking.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_controls.looking.generic.id	    = ID_LOOKING;
-	s_controls.looking.generic.callback	= Controls_MenuEvent;
-	s_controls.looking.generic.x	    = 152;
-	s_controls.looking.generic.y	    = 240 - 2 * PROP_HEIGHT;
-	s_controls.looking.string			= "LOOK";
-	s_controls.looking.style			= UI_RIGHT|UI_DROPSHADOW;
-	s_controls.looking.color			= color_white;
-
-	s_controls.movement.generic.type     = MTYPE_PTEXT;
-	s_controls.movement.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_controls.movement.generic.id	     = ID_MOVEMENT;
-	s_controls.movement.generic.callback = Controls_MenuEvent;
-	s_controls.movement.generic.x	     = 152;
-	s_controls.movement.generic.y	     = 240 - PROP_HEIGHT;
-	s_controls.movement.string			= "MOVE";
-	s_controls.movement.style			= UI_RIGHT|UI_DROPSHADOW;
-	s_controls.movement.color			= color_white;
-
-	s_controls.weapons.generic.type	    = MTYPE_PTEXT;
-	s_controls.weapons.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_controls.weapons.generic.id	    = ID_WEAPONS;
-	s_controls.weapons.generic.callback	= Controls_MenuEvent;
-	s_controls.weapons.generic.x	    = 152;
-	s_controls.weapons.generic.y	    = 240;
-	s_controls.weapons.string			= "ATTACK";
-	s_controls.weapons.style			= UI_RIGHT|UI_DROPSHADOW;
-	s_controls.weapons.color			= color_white;
-
-	s_controls.misc.generic.type	 = MTYPE_PTEXT;
-	s_controls.misc.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_controls.misc.generic.id	     = ID_MISC;
-	s_controls.misc.generic.callback = Controls_MenuEvent;
-	s_controls.misc.generic.x		 = 152;
-	s_controls.misc.generic.y		 = 240 + PROP_HEIGHT;
-	s_controls.misc.string			= "MISC";
-	s_controls.misc.style			= UI_RIGHT|UI_DROPSHADOW;
-	s_controls.misc.color			= color_white;
 
 	s_controls.back.generic.type	 = MTYPE_BITMAP;
 	s_controls.back.generic.name     = ART_BACK0;
@@ -1727,13 +1649,13 @@ static void Controls_MenuInit( void )
 
 	Menu_AddItem( &s_controls.menu, &s_controls.player );
 
-	Menu_AddItem( &s_controls.menu, &s_controls.looking );
-	Menu_AddItem( &s_controls.menu, &s_controls.movement );
-	Menu_AddItem( &s_controls.menu, &s_controls.weapons );
-	Menu_AddItem( &s_controls.menu, &s_controls.misc );
+	//Menu_AddItem( &s_controls.menu, &s_controls.system );
+	//Menu_AddItem( &s_controls.menu, &s_controls.controls );
+	//Menu_AddItem( &s_controls.menu, &s_controls.general );	
 
-	Menu_AddItem( &s_controls.menu, &s_controls.sensitivity );
-	Menu_AddItem( &s_controls.menu, &s_controls.smoothmouse );
+//	Menu_AddItem( &s_controls.menu, &s_controls.main );
+
+/*	Menu_AddItem( &s_controls.menu, &s_controls.smoothmouse );
 	Menu_AddItem( &s_controls.menu, &s_controls.invertmouse );
 	Menu_AddItem( &s_controls.menu, &s_controls.lookup );
 	Menu_AddItem( &s_controls.menu, &s_controls.lookdown );
@@ -1743,9 +1665,10 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.zoomview );
 	Menu_AddItem( &s_controls.menu, &s_controls.joyenable );
 	Menu_AddItem( &s_controls.menu, &s_controls.joythreshold );
+*/
 
-	Menu_AddItem( &s_controls.menu, &s_controls.alwaysrun );
-	Menu_AddItem( &s_controls.menu, &s_controls.run );
+//	Menu_AddItem( &s_controls.menu, &s_controls.alwaysrun );
+//	Menu_AddItem( &s_controls.menu, &s_controls.run );
 	Menu_AddItem( &s_controls.menu, &s_controls.boost );
 	Menu_AddItem( &s_controls.menu, &s_controls.zanzoken );
 	Menu_AddItem( &s_controls.menu, &s_controls.walkforward );
@@ -1759,13 +1682,13 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.turnright );
 	Menu_AddItem( &s_controls.menu, &s_controls.rollleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.rollright );
-	Menu_AddItem( &s_controls.menu, &s_controls.sidestep );
+//	Menu_AddItem( &s_controls.menu, &s_controls.sidestep );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.attack );
 	Menu_AddItem( &s_controls.menu, &s_controls.attack2 );
 	Menu_AddItem( &s_controls.menu, &s_controls.nextweapon );
 	Menu_AddItem( &s_controls.menu, &s_controls.prevweapon );
-	Menu_AddItem( &s_controls.menu, &s_controls.autoswitch );
+//	Menu_AddItem( &s_controls.menu, &s_controls.autoswitch );
 	Menu_AddItem( &s_controls.menu, &s_controls.chainsaw );
 	Menu_AddItem( &s_controls.menu, &s_controls.machinegun );
 	Menu_AddItem( &s_controls.menu, &s_controls.shotgun );
@@ -1775,16 +1698,17 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.railgun );
 	Menu_AddItem( &s_controls.menu, &s_controls.plasma );
 	Menu_AddItem( &s_controls.menu, &s_controls.bfg );
-
-	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
-	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
 	Menu_AddItem( &s_controls.menu, &s_controls.chargepl );
 	Menu_AddItem( &s_controls.menu, &s_controls.block );
 	Menu_AddItem( &s_controls.menu, &s_controls.gesture );
-	Menu_AddItem( &s_controls.menu, &s_controls.chat );
-	Menu_AddItem( &s_controls.menu, &s_controls.chat2 );
-	Menu_AddItem( &s_controls.menu, &s_controls.chat3 );
-	Menu_AddItem( &s_controls.menu, &s_controls.chat4 );
+	Menu_AddItem( &s_controls.menu, &s_controls.sensitivity );
+	Menu_AddItem( &s_controls.menu, &s_controls.chat );	
+
+//	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
+//	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
+//	Menu_AddItem( &s_controls.menu, &s_controls.chat2 );
+//	Menu_AddItem( &s_controls.menu, &s_controls.chat3 );
+//	Menu_AddItem( &s_controls.menu, &s_controls.chat4 );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.back );
 
@@ -1804,7 +1728,7 @@ static void Controls_MenuInit( void )
 	Controls_InitWeapons ();
 
 	// initial default section
-	s_controls.section = C_LOOKING;
+	s_controls.section = C_MAIN;
 
 	// update the ui
 	Controls_Update();
@@ -1830,7 +1754,9 @@ UI_ControlsMenu
 =================
 */
 void UI_ControlsMenu( void ) {
+	uis.menuamount = 3;
+	uis.hideEarth = qtrue;
 	Controls_MenuInit();
-	uis.menuamount = 0;
 	UI_PushMenu( &s_controls.menu );
+	Menu_SetCursorToItem(&s_controls.menu,&s_controls.controls);	
 }

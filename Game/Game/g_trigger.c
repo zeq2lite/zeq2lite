@@ -322,23 +322,13 @@ void SP_trigger_teleport( gentity_t *self ) {
 /*
 ==============================================================================
 
-trigger_hurt
-
+trigger_ringout
+trigger replaced and will be renamed later..
+(c) FrantiK henares.sebastien@gmail.com
+released under GPL V2 (not v3) for the ZEQ2-Lite Project.
 ==============================================================================
 */
 
-/*QUAKED trigger_hurt (.5 .5 .5) ? START_OFF - SILENT NO_PROTECTION SLOW
-Any entity that touches this will be hurt.
-It does dmg points of damage each server frame
-Targeting the trigger will toggle its on / off state.
-
-SILENT			supresses playing the sound
-SLOW			changes the damage rate to once per second
-NO_PROTECTION	*nothing* stops the damage
-
-"dmg"			default 5 (whole numbers only)
-
-*/
 void hurt_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {
 	if ( self->r.linked ) {
 		trap_UnlinkEntity( self );
@@ -347,10 +337,25 @@ void hurt_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {
 	}
 }
 
-void hurt_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {}
+void hurt_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {
+	// is the activator a client ?
+	if(other->client){
+		other->client->ps.powerLevel[plDamageGeneric] += 8000000;
+		trap_SendServerCommand(-1, va("cp \"%s^7 Was Put Knock Out\n\"", other->client->pers.netname));
+		trap_SendConsoleCommand( EXEC_APPEND,"map_restart 5\n");
+		if(other->pain){other->pain(other,other,8000000);}
+	}
 
-void SP_trigger_hurt( gentity_t *self ) {}
+	// link in to the world if starting active
+	if ( ! (self->spawnflags & 1) ) {
+		trap_LinkEntity (self);
+	}
+}
 
+void SP_trigger_hurt( gentity_t *self ) {
+	InitTrigger (self);
+	self->touch = hurt_touch;
+}
 
 /*
 ==============================================================================

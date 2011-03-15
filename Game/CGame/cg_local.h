@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 //
-#include "../../Shared/q_shared.h"
+#include "../../Shared/q_shared.h" 
 #include "../../Engine/renderer/tr_types.h"
 #include "../Game/bg_public.h"
 // ADDING FOR ZEQ2
@@ -56,7 +56,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	STEP_TIME			200
 #define	DUCK_TIME			100
 #define	PAIN_TWITCH_TIME	200
-#define	SKILL_SELECT_TIME	1000
+#define	WEAPON_SELECT_TIME	1400
 #define	ITEM_SCALEUP_TIME	1000
 #define	ZOOM_TIME			150
 #define	ITEM_BLOB_TIME		200
@@ -209,9 +209,11 @@ typedef struct centity_s {
 	// exact interpolated position of entity on this frame
 	vec3_t			lerpOrigin;
 	vec3_t			lerpAngles;
-
-	int				lastChargeCheck;	
-	int				currentChargeTime;
+	
+	
+	// ADDING FOR ZEQ2
+	float			lerpPrim;
+	float			lerpSec;
 
 	int				lastTrailTime;		// last cg.time the trail for this cent was rendered
 	int				lastPVSTime;		// last cg.time the entity was in the PVS
@@ -329,7 +331,7 @@ typedef struct {
 // client model and other color coded effects
 // this is regenerated each time a client's configstring changes,
 // usually as a result of a userinfo (name, model, etc) change
-#define	MAX_CUSTOM_SOUNDS	32
+#define	MAX_CUSTOM_SOUNDS	512
 
 typedef struct {
 	qboolean		infoValid;
@@ -356,8 +358,12 @@ typedef struct {
 	char			skinName[MAX_QPATH];
 	char			headModelName[MAX_QPATH];
 	char			headSkinName[MAX_QPATH];
+	char			legsModelName[MAX_QPATH];
+	char			legsSkinName[MAX_QPATH];
 	char			redTeam[MAX_TEAMNAME];
 	char			blueTeam[MAX_TEAMNAME];
+	qhandle_t		skinDamageState[8][3][10];
+	qhandle_t		modelDamageState[8][3][10];
 	qboolean		deferred;
 	qboolean		newAnims;		// true if using the new mission pack animations
 	qboolean		fixedlegs;		// true if legs yaw is always the same as torso yaw
@@ -374,10 +380,13 @@ typedef struct {
 	qhandle_t		headSkin[8];
 	qhandle_t		modelIcon;
 	animation_t		animations[MAX_TOTALANIMATIONS];
-	sfxHandle_t		sounds[MAX_CUSTOM_SOUNDS];
+	sfxHandle_t		sounds[9][MAX_CUSTOM_SOUNDS];
 	//ADDING FOR ZEQ2
+	int				damageModelState;
+	int				damageTextureState;
 	qboolean		transformStart;
 	int				transformLength;
+	int				lockStartTimer;
 	int				tierCurrent;
 	int				tierMax;
 	int				cameraBackup[4];
@@ -387,6 +396,7 @@ typedef struct {
 } clientInfo_t;
 
 
+// each WP_* weapon enum has an associated weaponInfo_t
 // that contains media references necessary to present the
 // weapon and its effects
 typedef struct weaponInfo_s {
@@ -582,6 +592,7 @@ typedef struct {
 	int			clientFrame;		// incremented each frame
 
 	int			clientNum;
+	qboolean	resetValues;
 	qboolean	demoPlayback;
 	qboolean	levelShot;			// taking a level menu screenshot
 	int			deferredPlayerLoading;
@@ -596,6 +607,7 @@ typedef struct {
 	float		frameInterpolation;	// (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)
 	qboolean	thisFrameTeleport;
 	qboolean	nextFrameTeleport;
+	qboolean	lockonStart;
 	int			frametime;		// cg.time - cg.oldTime
 	int			time;			// this is the time value that the client
 								// is rendering at.
@@ -779,7 +791,6 @@ typedef struct {
 
 	//qboolean cameraMode;		// if rendering from a loaded camera
 
-
 	// development tool
 	refEntity_t	testModelEntity;
 	char		testModelName[MAX_QPATH];
@@ -815,7 +826,10 @@ typedef struct {
 	qhandle_t	RadarBurstShader;
 	qhandle_t	RadarWarningShader;
 	qhandle_t	RadarMidpointShader;
+	qhandle_t	speedLineShader;
+	qhandle_t	speedLineSpinShader;
 	qhandle_t	friendShader;
+	qhandle_t	chatBackgroundShader;
 	qhandle_t	chatBubble;
 	qhandle_t	connectionShader;
 	qhandle_t	selectShader;
@@ -853,6 +867,7 @@ typedef struct {
 	qhandle_t	auraLightningSparks1;
 	qhandle_t	auraLightningSparks2;
 	qhandle_t	invulnerabilityPowerupModel;
+	sfxHandle_t	lockonStart;
 	sfxHandle_t	selectSound;
 	sfxHandle_t	useNothingSound;
 	sfxHandle_t	wearOffSound;
@@ -1025,6 +1040,10 @@ typedef struct {
 	const lensFlareEffect_t* lensFlareEffectExplosion4;
 	const lensFlareEffect_t* lensFlareEffectEnergyGlowDarkBackground;
 
+	char	messages[3][256];
+	int		messageTimer[3];
+	int		messageClient[3];
+	int		chatTimer;
 	// media
 	cgMedia_t	media;
 	musicSystem music;
@@ -1036,7 +1055,7 @@ typedef struct {
 extern	cgs_t			cgs;
 extern	cg_t			cg;
 extern	centity_t		cg_entities[MAX_GENTITIES];
-extern	weaponInfo_t	cg_weapons[MAX_SKILLS];
+extern	weaponInfo_t	cg_weapons[MAX_WEAPONS];
 extern	itemInfo_t		cg_items[MAX_ITEMS];
 extern	markPoly_t		cg_markPolys[MAX_MARK_POLYS];
 
@@ -1243,15 +1262,15 @@ void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality);	// JUHOX
 //
 // cg_drawtools.c
 //
-void CG_AdjustFrom640( float *x, float *y, float *w, float *h );
+void CG_AdjustFrom640( float *x, float *y, float *w, float *h,qboolean stretch);
 void CG_FillRect( float x, float y, float width, float height, const float *color );
-void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader );
+void CG_DrawPic(qboolean stretch, float x, float y, float width, float height, qhandle_t hShader );
 void CG_DrawString( float x, float y, const char *string, 
 				   float charWidth, float charHeight, const float *modulate );
 
 
-void CG_DrawStringExt( int x, int y, const char *string, const float *setColor, 
-		qboolean forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars );
+void CG_DrawStringExt(int spacing, int x, int y, const char *string, const float *setColor, 
+		qboolean forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars);
 void CG_DrawBigString( int x, int y, const char *s, float alpha );
 void CG_DrawBigStringColor( int x, int y, const char *s, vec4_t color );
 void CG_DrawSmallString( int x, int y, const char *s, float alpha );
@@ -1409,8 +1428,8 @@ void CG_OutOfAmmoChange( void );	// should this be in pmove?
 void CG_DrawLine (vec3_t start, vec3_t end, float width, qhandle_t shader, float RGBModulate);
 void CG_DrawLineRGBA (vec3_t start, vec3_t end, float width, qhandle_t shader, vec4_t RGBA);
 
-void CG_UserMissileHitWall( int weapon, int clientNum, centity_t *cent, vec3_t origin, vec3_t dir, qboolean inAir );
-void CG_UserMissileHitPlayer( int weapon, int clientNum, centity_t *cent, vec3_t origin, vec3_t dir, int entityNum );
+void CG_UserMissileHitWall( int weapon, int clientNum, int powerups, int number, vec3_t origin, vec3_t dir, qboolean inAir );
+void CG_UserMissileHitPlayer( int weapon, int clientNum, int powerups, int number, vec3_t origin, vec3_t dir, int entityNum );
 void CG_UserRailTrail( int weapon, int clientNum, vec3_t start, vec3_t end);
 
 //
@@ -1480,13 +1499,11 @@ void CG_BigExplode( vec3_t playerOrigin );
 
 void CG_Bleed( vec3_t origin, int entityNum );
 
-/* Not used
 localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 								qhandle_t hModel, qhandle_t shader, int msec,
 								qboolean isSprite );
-*/
 
-void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, centity_t *cent);
+void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGraphics, int powerups, int number);
 void CG_CreateStraightBeamFade(vec3_t start, vec3_t end, cg_userWeapon_t *weaponGraphics);
 
 //
@@ -1811,8 +1828,8 @@ void CG_FrameHist_SetAura( int num );
 qboolean CG_FrameHist_HasAura( int num );
 qboolean CG_FrameHist_HadAura( int num );
 
-int CG_FrameHist_IsPlayerStatus( int num );
-int CG_FrameHist_WasPlayerStatus( int num );
+int CG_FrameHist_IsWeaponState( int num );
+int CG_FrameHist_WasWeaponState( int num );
 
 int CG_FrameHist_IsWeaponNr( int num );
 int CG_FrameHist_WasWeaponNr( int num );

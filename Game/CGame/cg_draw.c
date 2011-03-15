@@ -42,6 +42,8 @@ char systemChat[256];
 char teamChat1[256];
 char teamChat2[256];
 
+playerState_t lockedTargetPS;
+
 #ifdef MISSIONPACK
 
 int CG_Text_Width(const char *text, float scale, int limit) {
@@ -124,7 +126,7 @@ void CG_Text_PaintChar(float x, float y, float width, float height, float scale,
   float w, h;
   w = width * scale;
   h = height * scale;
-  CG_AdjustFrom640( &x, &y, &w, &h );
+  CG_AdjustFrom640( &x, &y, &w, &h,qtrue);
   trap_R_DrawStretchPic( x, y, w, h, s, t, s2, t2, hShader );
 }
 
@@ -188,7 +190,7 @@ void CG_Text_Paint(float x, float y, float scale, vec4_t color, const char *text
 													glyph->s2,
 													glyph->t2,
 													glyph->glyph);
-				// CG_DrawPic(x, y - yadj, scale * cgDC.Assets.textFont.glyphs[text[i]].imageWidth, scale * cgDC.Assets.textFont.glyphs[text[i]].imageHeight, cgDC.Assets.textFont.glyphs[text[i]].glyph);
+				// CG_DrawPic(qfalse,x, y - yadj, scale * cgDC.Assets.textFont.glyphs[text[i]].imageWidth, scale * cgDC.Assets.textFont.glyphs[text[i]].imageHeight, cgDC.Assets.textFont.glyphs[text[i]].glyph);
 				x += (glyph->xSkip * useScale) + adjust;
 				s++;
 				count++;
@@ -256,7 +258,7 @@ static void CG_DrawField (int x, int y, int width, int value) {
 		else
 			frame = *ptr -'0';
 
-		CG_DrawPic( x,y, CHAR_WIDTH, CHAR_HEIGHT, cgs.media.numberShaders[frame] );
+		CG_DrawPic(qfalse, x,y, CHAR_WIDTH, CHAR_HEIGHT, cgs.media.numberShaders[frame] );
 		x += CHAR_WIDTH;
 		ptr++;
 		l--;
@@ -281,9 +283,9 @@ void CG_DrawHorGauge( float x, float y, float w, float h, vec4_t color_bar, vec4
 	if (color_empty[3]) {
 		trap_R_SetColor( color_empty );
 		if (!reversed) {
-			CG_DrawPic( x + bar_w, y, w - bar_w, h, cgs.media.whiteShader );
+			CG_DrawPic(qfalse, x + bar_w, y, w - bar_w, h, cgs.media.whiteShader );
 		} else {
-			CG_DrawPic( x - bar_w, y, w + bar_w, h, cgs.media.whiteShader );
+			CG_DrawPic(qfalse, x - bar_w, y, w + bar_w, h, cgs.media.whiteShader );
 		}
 	}
 	trap_R_SetColor( color_bar );
@@ -298,9 +300,9 @@ void CG_DrawHorGauge( float x, float y, float w, float h, vec4_t color_bar, vec4
 	}
 
 	if (!reversed) {
-		CG_DrawPic( x, y, bar_w, h, cgs.media.whiteShader );
+		CG_DrawPic(qfalse, x, y, bar_w, h, cgs.media.whiteShader );
 	} else {
-		CG_DrawPic( x + w - bar_w, y, bar_w, h, cgs.media.whiteShader );
+		CG_DrawPic(qfalse, x + w - bar_w, y, bar_w, h, cgs.media.whiteShader );
 	}
 
 	trap_R_SetColor( NULL );
@@ -352,9 +354,9 @@ void CG_DrawVertGauge( float x, float y, float w, float h, vec4_t color_bar, vec
 	if (color_empty[3]) {
 		trap_R_SetColor( color_empty );
 		if (reversed) {
-			CG_DrawPic( x, y + bar_h, w, h - bar_h, cgs.media.whiteShader );
+			CG_DrawPic(qfalse, x, y + bar_h, w, h - bar_h, cgs.media.whiteShader );
 		} else {
-			CG_DrawPic( x, y, w, h - bar_h, cgs.media.whiteShader );
+			CG_DrawPic(qfalse, x, y, w, h - bar_h, cgs.media.whiteShader );
 		}
 	}
 	trap_R_SetColor( color_bar );
@@ -369,9 +371,9 @@ void CG_DrawVertGauge( float x, float y, float w, float h, vec4_t color_bar, vec
 	}
 
 	if (reversed) {
-		CG_DrawPic( x, y, w, bar_h, cgs.media.whiteShader );
+		CG_DrawPic(qfalse, x, y, w, bar_h, cgs.media.whiteShader );
 	} else {
-		CG_DrawPic( x, y + h - bar_h, w, bar_h, cgs.media.whiteShader );
+		CG_DrawPic(qfalse, x, y + h - bar_h, w, bar_h, cgs.media.whiteShader );
 	}
 
 	trap_R_SetColor( NULL );
@@ -393,7 +395,7 @@ void CG_Draw3DModel( float x, float y, float w, float h, qhandle_t model, qhandl
 		return;
 	}
 
-	CG_AdjustFrom640( &x, &y, &w, &h );
+	CG_AdjustFrom640( &x, &y, &w, &h,qtrue);
 
 	memset( &refdef, 0, sizeof( refdef ) );
 
@@ -437,7 +439,7 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	vec3_t			origin;
 	vec3_t			mins, maxs;
 	ci = &cgs.clientinfo[ clientNum ];
-	CG_DrawPic( x, y, w, h, ci->tierConfig[ci->tierCurrent].icon);
+	CG_DrawPic(qfalse, x, y, w, h, ci->tierConfig[ci->tierCurrent].icon);
 /*
 	if ( cg_draw3dIcons.integer ) {
 		cm = ci->headModel[ci->tierCurrent];
@@ -460,7 +462,7 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 
 		CG_Draw3DModel( x, y, w, h, ci->headModel[ci->tierCurrent], ci->headSkin[ci->tierCurrent], origin, headAngles );
 	} else if ( cg_drawIcons.integer ) {
-		CG_DrawPic( x, y, w, h, ci->modelIcon );
+		CG_DrawPic(qfalse, x, y, w, h, ci->modelIcon );
 	}
 */
 }
@@ -573,12 +575,72 @@ void CG_DrawTeamBackground( int x, int y, int w, int h, float alpha, int team )
 }
 
 
-/*
-================
-CG_DrawStatusBar
-
-================
-*/
+/*================
+CG_DRAWCHAT
+================*/
+void strrep(char *str, char old, char new)  {
+    char *pos;
+    while (1)  {
+        pos = strchr(str, old);
+        if (pos == NULL)  {
+            break;
+        }
+        *pos = new;
+    }
+}
+void CG_CheckChat(void){
+	int index,offset;
+	vec3_t angles;
+	int yStart = cg.predictedPlayerState.lockedTarget ? 330 : 0;
+	int yOffset = cg.predictedPlayerState.lockedTarget ? -40 : 40;
+	if(cg.time < cgs.chatTimer){
+		for(index=0;index<3;++index){
+			if(cgs.messageClient[index] >= 0){
+				CG_DrawPic(qfalse,-15,-15+yStart+(yOffset*index),369,75,cgs.media.chatBackgroundShader);
+				CG_DrawHead(7,7+yStart+(yOffset*index),32,32,cgs.messageClient[index],angles);
+				CG_DrawSmallStringCustom(45,16+yStart+(yOffset*index),8,8,cgs.messages[index],1.0,4);
+			}
+		}
+	}
+	else{
+		for(index=0;index<3;++index){
+			cgs.messageClient[index] = -1;
+			strcpy(cgs.messages[index],"");
+		}
+	}
+}
+void CG_DrawChat(char *text){
+	int clientNum,index,safeIndex;
+	char cleaned[256];
+	char *name,*safe;
+	char find[] = ":";
+	char find2[] = "^7";
+	char replace[] = " ";
+	safe = text;
+	strrep(safe,*find,*replace);
+	strcpy(cleaned,text);
+	strrep(safe,*find2,*replace);
+	cgs.chatTimer = cg.time + 3500;
+	strcpy(name,COM_Parse(&safe));
+	for(safeIndex=0; safeIndex<3; ++safeIndex){if(!strcmp(cgs.messages[safeIndex],"")){break;}}
+	if(safeIndex>=2 && cgs.messageClient[2]>= 0){
+		safeIndex = 2;
+		cgs.messageClient[0] = cgs.messageClient[1];
+		cgs.messageClient[1] = cgs.messageClient[2];
+		strcpy(cgs.messages[0],cgs.messages[1]);
+		strcpy(cgs.messages[1],cgs.messages[2]);
+	}
+	for(clientNum=0;clientNum<MAX_CLIENTS;++clientNum){
+		if(!strcmp(name,cgs.clientinfo[clientNum].name)){
+			cgs.messageClient[safeIndex] = clientNum;
+			break;
+		}
+	}
+	strcpy(cgs.messages[safeIndex],cleaned);
+}
+/*================
+CG_HUD
+================*/
 void CG_DrawHUD(playerState_t *ps,int clientNum,int x,int y,qboolean flipped){
 	const char	*powerLevelString;
 	int 		powerLevelOffset;
@@ -601,44 +663,61 @@ void CG_DrawHUD(playerState_t *ps,int clientNum,int x,int y,qboolean flipped){
 	CG_DrawDiffGauge(x+60,y+41,200,16,plFatigueHealthColor,plFatigueHealthColor,ps->powerLevel[plFatigue],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
 	CG_DrawDiffGauge(x+60,y+41,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[plCurrent],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
 	if((ps->powerLevel[plCurrent] > ps->powerLevel[plFatigue]) && (ps->powerLevel[plFatigue] > ps->powerLevel[plHealth])){
-		CG_DrawDiffGauge(x+60,449,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+		CG_DrawDiffGauge(x+60,y+41,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
 	}
-	CG_DrawPic(x,y,288,72,cgs.media.hudShader);
+	CG_DrawPic(qfalse,x,y,288,72,cgs.media.hudShader);
 	CG_DrawHead(x+6,y+22,50,50,clientNum,angles);
 	if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
-		CG_DrawPic(x+243,y+25,40,44,cgs.media.breakLimitShader);
+		CG_DrawPic(qfalse,x+243,y+25,40,44,cgs.media.breakLimitShader);
 	}
 	if(ps->powerLevel[plCurrent] == 9001){
 		powerLevelString = "Over ^3NINE-THOUSAND!!!";
 	}
-	if(powerLevelDisplay >= 1000000){	
-		powerLevelString = va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0);
-	}
-	multiplier = (&cgs.clientinfo[clientNum])->tierConfig[ps->powerLevel[plTierCurrent]].hudMultiplier;
+	multiplier = cgs.clientinfo[clientNum].tierConfig[cgs.clientinfo[clientNum].tierCurrent].hudMultiplier;
 	if(multiplier <= 0){
 		multiplier = 1.0;
 	}
 	powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
-	powerLevelString = va("%i",powerLevelDisplay);
+	powerLevelString = powerLevelDisplay >= 1000000 ? va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0) : va("%i",powerLevelDisplay);
 	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	CG_DrawSmallStringHalfHeight(x+239-powerLevelOffset,y+44,powerLevelString,1.0F);
 }
 static void CG_DrawStatusBar( void ) {
-	centity_t	*cent;
+	centity_t		*cent;
 	playerState_t	*ps;
-	float 		tierLast,tierNext,tier;
-	int 		base;
-	clientInfo_t *ci;
+	float			tierLast,tierNext,tier;
+	int				base;
+	clientInfo_t	*ci;
 	cg_userWeapon_t	*weaponGraphics;
-	tierConfig_cg *activeTier;
+	tierConfig_cg	*activeTier;
+	int				i;
+
 	ci = &cgs.clientinfo[cg.snap->ps.clientNum];
+	ps = &cg.snap->ps;
+	if((ci->lockStartTimer > cg.time) /*(&& cg.time > ci->lockStartTimer - 500)*/){
+		CG_DrawPic(qfalse,0,0,640,480,cgs.media.speedLineSpinShader);
+	}
+	if(ps->bitFlags & usingBoost){
+		CG_DrawPic(qfalse,0,0,640,480,cgs.media.speedLineShader);
+	}
 	if(cg_drawStatus.integer == 0){return;}
 	cent = &cg_entities[cg.snap->ps.clientNum];
-	ps = &cg.snap->ps;
 	tier = (float)ps->powerLevel[plTierCurrent];
-	if(ps->lockedTarget){
+	CG_CheckChat();
+	if(ps->lockedTarget > 0 && &cgs.clientinfo[ps->lockedTarget-1].infoValid){
+		for(i=0; i<MAX_CLIENTS; i++) {
+			if(cg_playerOrigins[i].clientNum == ps->lockedTarget-1) {
+				lockedTargetPS.clientNum = cg_playerOrigins[i].clientNum;
+				lockedTargetPS.powerLevel[plCurrent] = ps->lockedPlayerData[lkPowerCurrent];
+				lockedTargetPS.powerLevel[plHealth] = ps->lockedPlayerData[lkPowerHealth];
+				lockedTargetPS.powerLevel[plMaximum] = ps->lockedPlayerData[lkPowerMaximum];
+				lockedTargetPS.powerLevel[plFatigue] = lockedTargetPS.powerLevel[plMaximum];
+				lockedTargetPS.powerLevel[plTierCurrent] = cgs.clientinfo[lockedTargetPS.clientNum].tierCurrent;
+				CG_DrawHUD(&lockedTargetPS,lockedTargetPS.clientNum,320,0,qtrue);
+				break;
+			}
+		}
 		CG_DrawHUD(ps,ps->clientNum,0,0,qfalse);
-		CG_DrawHUD(ps->lockedPlayer,ps->lockedPlayer->clientNum-1,320,0,qtrue);
 	}
 	else{
 		CG_DrawHUD(ps,ps->clientNum,0,408,qfalse);
@@ -651,7 +730,7 @@ static void CG_DrawStatusBar( void ) {
 			if(activeTier->sustainMaximum && activeTier->sustainMaximum < tierLast){tierLast = (float)activeTier->sustainMaximum;}
 			if(tierLast < 32767){
 				tierLast = tierLast / (float)ps->powerLevel[plMaximum];
-				CG_DrawPic((187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
+				CG_DrawPic(qfalse,(187*tierLast)+60,428,13,38,cgs.media.markerDescendShader);
 			}
 		}
 		if(tier < ps->powerLevel[plTierTotal]){
@@ -664,7 +743,7 @@ static void CG_DrawStatusBar( void ) {
 			if(tierNext){
 				tierNext = tierNext / (float)ps->powerLevel[plMaximum];
 				if(tierNext < 1.0){
-					CG_DrawPic((187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
+					CG_DrawPic(qfalse,(187*tierNext)+60,428,13,38,cgs.media.markerAscendShader);
 				}
 			}
 		}
@@ -869,7 +948,7 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 
 			xx = x + TINYCHAR_WIDTH;
 
-			CG_DrawStringExt( xx, y,
+			CG_DrawStringExt(-1, xx, y,
 				ci->name, hcolor, qfalse, qfalse,
 				TINYCHAR_WIDTH, TINYCHAR_HEIGHT, TEAM_OVERLAY_MAXNAME_WIDTH);
 
@@ -884,7 +963,7 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 //				xx = x + TINYCHAR_WIDTH * 2 + TINYCHAR_WIDTH * pwidth + 
 //					((lwidth/2 - len/2) * TINYCHAR_WIDTH);
 				xx = x + TINYCHAR_WIDTH * 2 + TINYCHAR_WIDTH * pwidth;
-				CG_DrawStringExt( xx, y,
+				CG_DrawStringExt(-1, xx, y,
 					p, hcolor, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT,
 					TEAM_OVERLAY_MAXLOCATION_WIDTH);
 			}
@@ -896,7 +975,7 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 			xx = x + TINYCHAR_WIDTH * 3 + 
 				TINYCHAR_WIDTH * pwidth + TINYCHAR_WIDTH * lwidth;
 
-			CG_DrawStringExt( xx, y,
+			CG_DrawStringExt(-1, xx, y,
 				st, hcolor, qfalse, qfalse,
 				TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
 
@@ -904,10 +983,10 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 			xx += TINYCHAR_WIDTH * 3;
 
 //			if ( cg_weapons[ci->curWeapon].weaponIcon ) {
-//				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
+//				CG_DrawPic(qfalse, xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
 //					cg_weapons[ci->curWeapon].weaponIcon );
 //			} else {
-//				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
+//				CG_DrawPic(qfalse, xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
 //					cgs.media.deferShader );
 //			}
 
@@ -1005,7 +1084,7 @@ static float CG_DrawScores( float y ) {
 		x -= w;
 		CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
 		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE ) {
-			CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+			CG_DrawPic(qfalse, x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 		}
 		CG_DrawBigString( x + 4, y, s, 1.0F);
 		color[0] = 1.0f;
@@ -1017,7 +1096,7 @@ static float CG_DrawScores( float y ) {
 		x -= w;
 		CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
 		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED ) {
-			CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+			CG_DrawPic(qfalse, x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 		}
 		CG_DrawBigString( x + 4, y, s, 1.0F);
 		if ( cgs.gametype >= GT_CTF ) {
@@ -1053,7 +1132,7 @@ static float CG_DrawScores( float y ) {
 				color[2] = 0.0f;
 				color[3] = 0.33f;
 				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
-				CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+				CG_DrawPic(qfalse, x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 			} else {
 				color[0] = 0.5f;
 				color[1] = 0.5f;
@@ -1075,7 +1154,7 @@ static float CG_DrawScores( float y ) {
 				color[2] = 1.0f;
 				color[3] = 0.33f;
 				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
-				CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+				CG_DrawPic(qfalse, x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 			} else {
 				color[0] = 0.5f;
 				color[1] = 0.5f;
@@ -1256,7 +1335,7 @@ static void CG_DrawTeamInfo( void ) {
 		hcolor[3] = 1.0f;
 
 		for (i = cgs.teamChatPos - 1; i >= cgs.teamLastChatPos; i--) {
-			CG_DrawStringExt(CHATLOC_X + TINYCHAR_WIDTH, 
+			CG_DrawStringExt(-1,CHATLOC_X + TINYCHAR_WIDTH, 
 				CHATLOC_Y - (cgs.teamChatPos - i)*TINYCHAR_HEIGHT, 
 				cgs.teamChatMsgs[i % chatHeight], hcolor, qfalse, qfalse,
 				TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0 );
@@ -1297,7 +1376,7 @@ static void CG_DrawDisconnect( void ) {
 	x = 640 - 48;
 	y = 480 - 48;
 
-	CG_DrawPic( x, y, 48, 48, trap_R_RegisterShader("gfx/2d/net.tga" ) );
+	CG_DrawPic(qfalse, x, y, 48, 48, trap_R_RegisterShader("gfx/2d/net.tga" ) );
 }
 
 /*
@@ -1388,7 +1467,7 @@ static void CG_DrawCenterString( void ) {
 
 		x = ( SCREEN_WIDTH - w ) / 2;
 
-		CG_DrawStringExt( x, y, linebuffer, color, qfalse, qtrue,
+		CG_DrawStringExt(-1, x, y, linebuffer, color, qfalse, qtrue,
 			cg.centerPrintCharWidth, (int)(cg.centerPrintCharWidth * 1.5), 0 );
 
 		y += cg.centerPrintCharWidth * 1.5;
@@ -1432,8 +1511,6 @@ static void CG_DrawCrosshair(void) {
 	int				i;
 	trace_t			trace;
 	playerState_t	*ps;
-	int 			*skillData;
-	int				skillOffset;
 	vec3_t			muzzle, forward, up;
 	vec3_t			start, end;
 	vec4_t			lockOnEnemyColor	= {1.0f,0.0f,0.0f,1.0f};
@@ -1493,9 +1570,8 @@ static void CG_DrawCrosshair(void) {
 	}
 
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
-	skillData = cg.snap->ps.skills[cg.snap->ps.weapon];
-	skillOffset = cg.snap->ps.skillState == skillAltCharging ? skAttributeOffset : 0;;
-	if(skillData[skillOffset+skChargeTime] >= skillData[skillOffset+skChargeTimeMinimum]){
+
+	if ( cg.snap->ps.currentSkill[WPSTAT_BITFLAGS] & WPF_READY || cg.snap->ps.currentSkill[WPSTAT_ALT_BITFLAGS] & WPF_READY) {
 		trap_R_SetColor( chargeColor );
 	}
 	else if (cg.crosshairClientNum > 0 && cg.crosshairClientNum <= MAX_CLIENTS || ps->lockedTarget > 0) {
@@ -1509,7 +1585,7 @@ static void CG_DrawCrosshair(void) {
 	else{
 		trap_R_SetColor( NULL );
 	}
-	CG_DrawPic( x - 0.5f * w, y - 0.5f * h, w, h, hShader );
+	CG_DrawPic(qfalse, x - 0.5f * w, y - 0.5f * h, w, h, hShader );
 	trap_R_SetColor( NULL );
 	CG_DrawCrosshairChargeBars( x, y );	
 }
@@ -1632,7 +1708,7 @@ static void CG_DrawLensFlareEffectList(void) {
 			lfeff = &cgs.lensFlareEffects[effectNum];
 			width = CG_DrawStrlen(lfeff->name) * TINYCHAR_WIDTH;
 			color = i == 5? colorWhite : colorMdGrey;
-			CG_DrawStringExt(640 - width, y, lfeff->name, color, qtrue, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,640 - width, y, lfeff->name, color, qtrue, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 		y += TINYCHAR_HEIGHT;
 	}
@@ -1657,27 +1733,27 @@ static void CG_DrawCopyOptions(void) {
 
 	y -= TINYCHAR_HEIGHT;
 	Com_sprintf(buf, sizeof(buf), "[6] paste entity angle = %s", cg.lfEditor.copyOptions & LFECO_SPOT_ANGLE? "on" : "off");
-	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+	CG_DrawStringExt(-1,0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 
 	y -= TINYCHAR_HEIGHT;
 	Com_sprintf(buf, sizeof(buf), "[5] paste direction    = %s", cg.lfEditor.copyOptions & LFECO_SPOT_DIR? "on" : "off");
-	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+	CG_DrawStringExt(-1,0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 
 	y -= TINYCHAR_HEIGHT;
 	Com_sprintf(buf, sizeof(buf), "[4] paste light radius = %s", cg.lfEditor.copyOptions & LFECO_LIGHTRADIUS? "on" : "off");
-	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+	CG_DrawStringExt(-1,0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 
 	y -= TINYCHAR_HEIGHT;
 	Com_sprintf(buf, sizeof(buf), "[3] paste vis radius   = %s", cg.lfEditor.copyOptions & LFECO_VISRADIUS? "on" : "off");
-	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+	CG_DrawStringExt(-1,0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 
 	y -= TINYCHAR_HEIGHT;
 	Com_sprintf(buf, sizeof(buf), "[2] paste effect       = %s", cg.lfEditor.copyOptions & LFECO_EFFECT? "on" : "off");
-	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+	CG_DrawStringExt(-1,0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 
 	y -= TINYCHAR_HEIGHT;
 	Com_sprintf(buf, sizeof(buf), "[1] done");
-	CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+	CG_DrawStringExt(-1,0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 }
 #endif
 
@@ -1713,7 +1789,7 @@ static void CG_DrawSpectator(void) {
 
 		// crosshair
 		if (!cg.lfEditor.selectedLFEnt || cg.lfEditor.editMode != LFEEM_pos) {
-			CG_DrawPic(320 - 12, 240 - 12, 24, 24, cgs.media.crosshairShader[0]);
+			CG_DrawPic(qfalse,320 - 12, 240 - 12, 24, 24, cgs.media.crosshairShader[0]);
 		}
 
 		CG_FillRect(0, 480 - 12 * TINYCHAR_HEIGHT, 640, 12 * TINYCHAR_HEIGHT, backFillColor);
@@ -1730,17 +1806,17 @@ static void CG_DrawSpectator(void) {
 		y -= TINYCHAR_HEIGHT;
 		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
 			Com_sprintf(buf, sizeof(buf), "[9] cursor size = %s", cursorSize[cg.lfEditor.cursorSize]);
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 		else {
 			Com_sprintf(buf, sizeof(buf), "[9] draw mode = %s", drawModes[cg.lfEditor.drawMode]);
-			CG_DrawStringExt(0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 
 		y -= TINYCHAR_HEIGHT;
 		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
 			Com_sprintf(buf, sizeof(buf), "[8] copy entity data");
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 		else {
 			const char* name;
@@ -1750,95 +1826,95 @@ static void CG_DrawSpectator(void) {
 				name = cg.lfEditor.selectedLFEnt->lfeff->name;
 			}
 			Com_sprintf(buf, sizeof(buf), "[8] note effect %s", name);
-			CG_DrawStringExt(0, y, buf, name[0]? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, name[0]? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 
 		y -= TINYCHAR_HEIGHT;
 		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
 			Com_sprintf(buf, sizeof(buf), "[7] paste entity data");
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 		else {
 			Com_sprintf(buf, sizeof(buf), "[7] assign effect %s", cgs.lensFlareEffects[cg.lfEditor.selectedEffect].name);
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 
 		y -= TINYCHAR_HEIGHT;
 		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
 			Com_sprintf(buf, sizeof(buf), "[6] paste options");
-			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 		else {
 			Com_sprintf(buf, sizeof(buf), "[6] %sedit light size f+b / vis radius l+r", cg.lfEditor.editMode == LFEEM_radius? "^3" : "");
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 
 		y -= TINYCHAR_HEIGHT;
 		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
 			Com_sprintf(buf, sizeof(buf), "[5] find entity using %s", cgs.lensFlareEffects[cg.lfEditor.selectedEffect].name);
-			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 		else {
 			Com_sprintf(buf, sizeof(buf), "[5] %sedit spotlight target", cg.lfEditor.editMode == LFEEM_target? "^3" : "");
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 
 		y -= TINYCHAR_HEIGHT;
 		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
 			if (cg.lfEditor.selectedLFEnt) {
 				if (cg.lfEditor.selectedLFEnt->lock) {
-					CG_DrawStringExt(0, y, "[4] unlock from mover", colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+					CG_DrawStringExt(-1,0, y, "[4] unlock from mover", colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 				}
 				else {
-					CG_DrawStringExt(0, y, "[4] lock to selected mover", cg.lfEditor.selectedMover? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+					CG_DrawStringExt(-1,0, y, "[4] lock to selected mover", cg.lfEditor.selectedMover? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 				}
 			}
 			else {
-				CG_DrawStringExt(0, y, "[4] lock to selected mover", colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+				CG_DrawStringExt(-1,0, y, "[4] lock to selected mover", colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 			}
 		}
 		else {
 			Com_sprintf(buf, sizeof(buf), "[4] %sedit position & vis radius", cg.lfEditor.editMode == LFEEM_pos? "^3" : "");
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 
 		y -= TINYCHAR_HEIGHT;
 		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
 			Com_sprintf(buf, sizeof(buf), "[3] find mover %s", cg.lfEditor.moversStopped? "" : "(need to be stopped)");
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.moversStopped? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.moversStopped? colorLtGreen : colorDkGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 		else {
 			Com_sprintf(buf, sizeof(buf), "[3] %sdelete flare entity", cg.lfEditor.delAck? "^1really^7 " : "");
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 
 		y -= TINYCHAR_HEIGHT;
 		if (cg.lfEditor.oldButtons & BUTTON_WALKING) {
 			Com_sprintf(buf, sizeof(buf), "[2] %s movers", cg.lfEditor.moversStopped? "release" : "stop");
-			CG_DrawStringExt(0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, colorLtGreen, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 		else {
 			Com_sprintf(buf, sizeof(buf), "[2] %s flare entity", cg.lfEditor.selectedLFEnt? "duplicate" : "create");
-			CG_DrawStringExt(0, y, buf, cg.lfEditor.editMode == LFEEM_none? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.editMode == LFEEM_none? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 
 		y -= TINYCHAR_HEIGHT;
 		Com_sprintf(buf, sizeof(buf), "[1] cancel");
-		CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt? NULL : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt? NULL : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 
 		y -= TINYCHAR_HEIGHT;
 		Com_sprintf(buf, sizeof(buf), "[TAB] move mode = %s", moveModes[cg.lfEditor.moveMode]);
-		CG_DrawStringExt(0, y, buf, cg.lfEditor.selectedLFEnt && cg.lfEditor.editMode > LFEEM_none? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		CG_DrawStringExt(-1,0, y, buf, cg.lfEditor.selectedLFEnt && cg.lfEditor.editMode > LFEEM_none? colorWhite : colorMdGrey, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 
 		y -= TINYCHAR_HEIGHT;
 		Com_sprintf(buf, sizeof(buf), "[WALK] alternate command set");
-		CG_DrawStringExt(0, y, buf, (cg.lfEditor.oldButtons & BUTTON_WALKING)? colorLtGreen : colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+		CG_DrawStringExt(-1,0, y, buf, (cg.lfEditor.oldButtons & BUTTON_WALKING)? colorLtGreen : colorWhite, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 
 		y -= TINYCHAR_HEIGHT;
 		if (!cg.lfEditor.selectedLFEnt) {
 			if (cg.lfEditor.markedLFEnt >= 0) {
 				Com_sprintf(buf, sizeof(buf), "[ATTACK] select flare entity");
-				CG_DrawStringExt(0, y, buf, NULL, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+				CG_DrawStringExt(-1,0, y, buf, NULL, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 			}
 		}
 		else {
@@ -1872,7 +1948,7 @@ static void CG_DrawSpectator(void) {
 				buf[0] = 0;
 				break;
 			}
-			CG_DrawStringExt(0, y, buf, NULL, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
+			CG_DrawStringExt(-1,0, y, buf, NULL, qfalse, qfalse, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 0);
 		}
 	}
 	else
@@ -1982,7 +2058,7 @@ static qboolean CG_DrawFollow( void ) {
 
 	x = 0.5 * ( 640 - GIANT_WIDTH * CG_DrawStrlen( name ) );
 
-	CG_DrawStringExt( x, 40, name, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
+	CG_DrawStringExt(-1, x, 40, name, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
 
 	return qtrue;
 }
@@ -2105,7 +2181,7 @@ static void CG_DrawWarmup( void ) {
 			} else {
 				cw = GIANT_WIDTH;
 			}
-			CG_DrawStringExt( 320 - w * cw/2, 20,s, colorWhite, 
+			CG_DrawStringExt(-1, 320 - w * cw/2, 20,s, colorWhite, 
 					qfalse, qtrue, cw, (int)(cw * 1.5f), 0 );
 		}
 	} else {
@@ -2126,7 +2202,7 @@ static void CG_DrawWarmup( void ) {
 		} else {
 			cw = GIANT_WIDTH;
 		}
-		CG_DrawStringExt( 320 - w * cw/2, 25,s, colorWhite, 
+		CG_DrawStringExt(-1, 320 - w * cw/2, 25,s, colorWhite, 
 				qfalse, qtrue, cw, (int)(cw * 1.1f), 0 );
 	}
 
@@ -2164,7 +2240,7 @@ static void CG_DrawWarmup( void ) {
 		CG_Text_Paint(320 - w / 2, 125, scale, colorWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE);
 #else
 	w = CG_DrawStrlen( s );
-	CG_DrawStringExt( 320 - w * cw/2, 70, s, colorWhite, 
+	CG_DrawStringExt(-1, 320 - w * cw/2, 70, s, colorWhite, 
 			qfalse, qtrue, cw, (int)(cw * 1.5), 0 );
 #endif
 }

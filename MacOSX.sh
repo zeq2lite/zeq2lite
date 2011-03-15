@@ -6,31 +6,22 @@ PKGINFO=ZEQ2LITE
 ICNS=Tools/Installer/zeq2.icns
 DESTDIR=build/release-darwin-ub
 BASEDIR=base
-MPACKDIR=missionpack
 
 BIN_OBJ="
-	build/release-darwin-ppc/zeq2-smp.ppc
-	build/release-darwin-i386/zeq2-smp.i386
+	build/release-darwin-ppc/ZEQ2-smp.ppc
+	build/release-darwin-i386/ZEQ2-smp.i386
 "
 BIN_DEDOBJ="
-	build/release-darwin-ppc/zeq2ded.ppc
-	build/release-darwin-i386/zeq2ded.i386
+	build/release-darwin-ppc/ZEQ2Dedicated.ppc
+	build/release-darwin-i386/ZEQ2Dedicated.i386
 "
 BASE_OBJ="
 	build/release-darwin-ppc/$BASEDIR/cgameppc.dylib
 	build/release-darwin-i386/$BASEDIR/cgamei386.dylib
 	build/release-darwin-ppc/$BASEDIR/uippc.dylib
 	build/release-darwin-i386/$BASEDIR/uii386.dylib
-	build/release-darwin-ppc/$BASEDIR/qagameppc.dylib
-	build/release-darwin-i386/$BASEDIR/qagamei386.dylib
-"
-MPACK_OBJ="
-	build/release-darwin-ppc/$MPACKDIR/cgameppc.dylib
-	build/release-darwin-i386/$MPACKDIR/cgamei386.dylib
-	build/release-darwin-ppc/$MPACKDIR/uippc.dylib
-	build/release-darwin-i386/$MPACKDIR/uii386.dylib
-	build/release-darwin-ppc/$MPACKDIR/qagameppc.dylib
-	build/release-darwin-i386/$MPACKDIR/qagamei386.dylib
+	build/release-darwin-ppc/$BASEDIR/gameppc.dylib
+	build/release-darwin-i386/$BASEDIR/gamei386.dylib
 "
 
 cd `dirname $0`
@@ -43,7 +34,7 @@ ZEQ2_VERSION=`grep '^VERSION=' Makefile | sed -e 's/.*=\(.*\)/\1/'`
 
 # We only care if we're >= 10.4, not if we're specifically Tiger.
 # "8" is the Darwin major kernel version.
-TIGERHOST=`uname -r |perl -w -p -e 's/\A(\d+)\..*\Z/$1/; $_ = (($_ >= 8) ? "1" : "0");'`
+TIGERHOST=`uname -r |perl -w -p -e 's/\A(\d+)\..*\Z/$1/; $_ = (($_ >= 9) ? "1" : "0");'`
 
 # we want to use the oldest available SDK for max compatiblity
 unset PPC_SDK
@@ -52,6 +43,19 @@ unset PPC_LDFLAGS
 unset X86_SDK
 unset X86_CFLAGS
 unset X86_LDFLAGS
+
+if [ -d /Developer/SDKs/MacOSX10.6.sdk ]; then
+	PPC_SDK=/Developer/SDKs/MacOSX10.6.sdk
+	PPC_CFLAGS="-arch ppc -isysroot /Developer/SDKs/MacOSX10.6.sdk \
+			-DMAC_OS_X_VERSION_MIN_REQUIRED=1060"
+	PPC_LDFLAGS=" -mmacosx-version-min=10.6"
+
+	X86_SDK=/Developer/SDKs/MacOSX10.6.sdk
+	X86_CFLAGS="-arch i386 -isysroot /Developer/SDKs/MacOSX10.6.sdk \
+			-DMAC_OS_X_VERSION_MIN_REQUIRED=1060"
+	X86_LDFLAGS=" -mmacosx-version-min=10.6"
+fi
+
 if [ -d /Developer/SDKs/MacOSX10.5.sdk ]; then
 	PPC_SDK=/Developer/SDKs/MacOSX10.5.sdk
 	PPC_CFLAGS="-arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk \
@@ -64,17 +68,17 @@ if [ -d /Developer/SDKs/MacOSX10.5.sdk ]; then
 	X86_LDFLAGS=" -mmacosx-version-min=10.5"
 fi
 
-if [ -d /Developer/SDKs/MacOSX10.4u.sdk ]; then
-	PPC_SDK=/Developer/SDKs/MacOSX10.4u.sdk
-	PPC_CFLAGS="-arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
-			-DMAC_OS_X_VERSION_MIN_REQUIRED=1040"
-	PPC_LDFLAGS=" -mmacosx-version-min=10.4"
-
-	X86_SDK=/Developer/SDKs/MacOSX10.4u.sdk
-	X86_CFLAGS="-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
-			-DMAC_OS_X_VERSION_MIN_REQUIRED=1040"
-	X86_LDFLAGS=" -mmacosx-version-min=10.4"
-fi
+#if [ -d /Developer/SDKs/MacOSX10.4u.sdk ]; then
+#	PPC_SDK=/Developer/SDKs/MacOSX10.4u.sdk
+#	PPC_CFLAGS="-arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
+#			-DMAC_OS_X_VERSION_MIN_REQUIRED=1040"
+#	PPC_LDFLAGS=" -mmacosx-version-min=10.4"
+#
+#	X86_SDK=/Developer/SDKs/MacOSX10.4u.sdk
+#	X86_CFLAGS="-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
+#			-DMAC_OS_X_VERSION_MIN_REQUIRED=1040"
+#	X86_LDFLAGS=" -mmacosx-version-min=10.4"
+#fi
 
 if [ -d /Developer/SDKs/MacOSX10.3.9.sdk ] && [ $TIGERHOST ]; then
 	PPC_SDK=/Developer/SDKs/MacOSX10.3.9.sdk
@@ -175,6 +179,5 @@ echo "
 lipo -create -o $DESTDIR/$APPBUNDLE/Contents/MacOS/$BINARY $BIN_OBJ
 lipo -create -o $DESTDIR/$APPBUNDLE/Contents/MacOS/$DEDBIN $BIN_DEDOBJ
 cp $BASE_OBJ $DESTDIR/$APPBUNDLE/Contents/MacOS/$BASEDIR/
-cp $MPACK_OBJ $DESTDIR/$APPBUNDLE/Contents/MacOS/$MPACKDIR/
-cp code/libs/macosx/*.dylib $DESTDIR/$APPBUNDLE/Contents/MacOS/
+cp Engine/libs/macosx/*.dylib $DESTDIR/$APPBUNDLE/Contents/MacOS/
 

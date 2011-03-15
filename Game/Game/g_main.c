@@ -82,23 +82,25 @@ vmCvar_t	pmove_fixed;
 vmCvar_t	pmove_msec;
 vmCvar_t	g_rankings;
 vmCvar_t	g_listEntity;
-#ifdef MISSIONPACK
-vmCvar_t	g_obeliskHealth;
-vmCvar_t	g_obeliskRegenPeriod;
-vmCvar_t	g_obeliskRegenAmount;
-vmCvar_t	g_obeliskRespawnDelay;
-vmCvar_t	g_cubeTimeout;
-vmCvar_t	g_redteam;
-vmCvar_t	g_blueteam;
-vmCvar_t	g_singlePlayer;
-vmCvar_t	g_enableDust;
-vmCvar_t	g_enableBreath;
-vmCvar_t	g_proxMineTimeout;
-#endif
 // ADDING FOR ZEQ2
 vmCvar_t	g_verboseParse;
-vmCvar_t	g_powerLevel;
+vmCvar_t	g_powerlevel;
+vmCvar_t	g_powerlevelMaximum;
 vmCvar_t	g_breakLimitRate;
+vmCvar_t	g_allowTiers;
+vmCvar_t	g_allowScoreboard;
+vmCvar_t	g_allowSoar;
+vmCvar_t	g_allowBoost;
+vmCvar_t	g_allowFly;
+vmCvar_t	g_allowZanzoken;
+vmCvar_t	g_allowJump;
+vmCvar_t	g_allowBallFlip;
+vmCvar_t	g_allowOverheal;
+vmCvar_t	g_allowBreakLimit;
+vmCvar_t	g_allowMelee;
+vmCvar_t	g_allowLockon;
+vmCvar_t	g_allowBlock;
+vmCvar_t	g_allowAdvancedMelee;
 vmCvar_t	g_rolling;
 vmCvar_t	g_running;
 
@@ -161,22 +163,6 @@ static cvarTable_t		gameCvarTable[] = {
 
 	{ &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
 	{ &g_listEntity, "g_listEntity", "0", 0, 0, qfalse },
-
-#ifdef MISSIONPACK
-	{ &g_obeliskHealth, "g_obeliskHealth", "2500", 0, 0, qfalse },
-	{ &g_obeliskRegenPeriod, "g_obeliskRegenPeriod", "1", 0, 0, qfalse },
-	{ &g_obeliskRegenAmount, "g_obeliskRegenAmount", "15", 0, 0, qfalse },
-	{ &g_obeliskRespawnDelay, "g_obeliskRespawnDelay", "10", CVAR_SERVERINFO, 0, qfalse },
-
-	{ &g_cubeTimeout, "g_cubeTimeout", "30", 0, 0, qfalse },
-	{ &g_redteam, "g_redteam", "Stroggs", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO , 0, qtrue, qtrue },
-	{ &g_blueteam, "g_blueteam", "Pagans", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_USERINFO , 0, qtrue, qtrue  },
-	{ &g_singlePlayer, "ui_singlePlayerActive", "", 0, 0, qfalse, qfalse  },
-
-	{ &g_enableDust, "g_enableDust", "0", CVAR_SERVERINFO, 0, qtrue, qfalse },
-	{ &g_enableBreath, "g_enableBreath", "0", CVAR_SERVERINFO, 0, qtrue, qfalse },
-	{ &g_proxMineTimeout, "g_proxMineTimeout", "20000", 0, 0, qfalse },
-#endif
 	{ &g_smoothClients, "g_smoothClients", "1", 0, 0, qfalse },
 	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, qfalse },
 	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, qfalse },
@@ -184,10 +170,25 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse },
 	// ADDING FOR ZEQ2
 	{ &g_verboseParse, "g_verboseParse", "0", CVAR_ARCHIVE, 0, qfalse },
-	{ &g_powerLevel, "g_powerLevel", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
-	{ &g_breakLimitRate, "g_breakLimitRate", "1.0", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
+	{ &g_powerlevel, "g_powerlevel", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
+	{ &g_powerlevelMaximum, "g_powerlevelMaximum", "32767", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
 	{ &g_rolling, "g_rolling", "1", CVAR_ARCHIVE, 0, qtrue },
-	{ &g_running, "g_running", "0", CVAR_ARCHIVE, 0, qtrue }
+	{ &g_running, "g_running", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_allowTiers, "g_allowTiers", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	//{ &g_allowScoreboard, "g_allowScoreboard", "0", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowSoar, "g_allowSoar", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowBoost, "g_allowBoost", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowFly, "g_allowFly", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowZanzoken, "g_allowZanzoken", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowJump, "g_allowJump", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowBallFlip, "g_allowBallFlip", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowOverheal, "g_allowOverheal", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowBreakLimit, "g_allowBreakLimit", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowMelee, "g_allowMelee", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowLockon, "g_allowLockon", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowBlock, "g_allowBlock", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowAdvancedMelee, "g_allowAllowAdvancedMelee", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_breakLimitRate, "g_breakLimitRate", "1.0", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
 	// END ADDING
 
 };
@@ -378,8 +379,7 @@ void G_UpdateCvars( void ) {
 				cv->modificationCount = cv->vmCvar->modificationCount;
 
 				if ( cv->trackChange ) {
-					trap_SendServerCommand( -1, va("print \"Server: %s changed to %s\n\"", 
-						cv->cvarName, cv->vmCvar->string ) );
+					//trap_SendServerCommand( -1, va("print \"Server: %s changed to %s\n\"",cv->cvarName, cv->vmCvar->string ) );
 				}
 
 				if (cv->teamShader) {

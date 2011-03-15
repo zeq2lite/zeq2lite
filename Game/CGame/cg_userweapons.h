@@ -20,8 +20,9 @@ typedef struct {
 	qhandle_t		chargeShader;			// charge model's shader (for sprites only!)
 	vec3_t			chargeSpin;				// spin the model during the charge?
 	qboolean		chargeGrowth;			// does the charge grow over time?
-	int				chargeTimeStart;	    // time at which growth becomes visible
-	int				chargeTimeEnd;			// time at which growth stops
+	int				chargeEndPct;			// percentage at which growth stops
+	int				chargeStartPct;			// percentage at which charge becomes visible
+											// and growth starts	
 	float			chargeEndsize;			// ending size for growing attacks
 	float			chargeStartsize;		// starting size for growing attacks, just size
 											// for non-growing
@@ -118,9 +119,9 @@ typedef struct {
 	vec3_t			chargeSpin;
 	
 	qboolean		chargeGrowth;			// does the charge grow over time?
+	int				chargeEndPct;			// percentage at which growth stops
+	int				chargeStartPct;			// percentage at which charge becomes visible
 											// and growth starts	
-	int				chargeTimeStart;
-	int				chargeTimeEnd;
 	float			chargeEndsize;			// ending size for growing attacks
 	float			chargeStartsize;		// starting size for growing attacks, just size
 											// for non-growing

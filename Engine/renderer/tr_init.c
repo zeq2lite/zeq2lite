@@ -126,6 +126,7 @@ cvar_t	*r_showtris;
 cvar_t	*r_showsky;
 cvar_t	*r_shownormals;
 cvar_t	*r_showbboxes;
+cvar_t	*r_meshLerp;
 //cvar_t	*r_showbones;
 cvar_t	*r_finish;
 cvar_t	*r_clear;
@@ -1025,6 +1026,7 @@ void R_Register( void )
 	r_lockpvs = ri.Cvar_Get ("r_lockpvs", "0", CVAR_CHEAT);
 	r_noportals = ri.Cvar_Get ("r_noportals", "0", CVAR_CHEAT);
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
+	r_meshLerp = ri.Cvar_Get( "r_meshLerp", "0", CVAR_ARCHIVE );
 	r_outlines = ri.Cvar_Get( "r_outlines", "1", CVAR_ARCHIVE );
 	r_outlinesAlpha = ri.Cvar_Get( "r_outlinesAlpha", "0.5", CVAR_ARCHIVE );
 

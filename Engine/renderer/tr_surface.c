@@ -752,7 +752,10 @@ static void LerpMeshVertexes_scalar(md3Surface_t *surf, float backlerp)
 
 	outXyz = tess.xyz[tess.numVertexes];
 	outNormal = tess.normal[tess.numVertexes];
-
+	
+	if(r_meshLerp->value){
+		backlerp = r_meshLerp->value;
+	}
 	newXyz = (short *)((byte *)surf + surf->ofsXyzNormals)
 		+ (backEnd.currentEntity->e.frame * surf->numVerts * 4);
 	newNormals = newXyz + 3;

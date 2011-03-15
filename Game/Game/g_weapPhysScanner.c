@@ -21,9 +21,6 @@ g_weapPhysField_t g_weapPhysFields[] = {
 	{ "deflect",			G_weapPhys_ParseSwat			},	// Physics
 	{ "drain",				G_weapPhys_ParseDrain			},	// Physics
 	{ "blind",				G_weapPhys_ParseBlind			},	// Physics
-	{ "powerBase",			G_weapPhys_ParsePowerBase		},	// Physics
-	{ "powerChargeScale",	G_weapPhys_ParseChargeScale		},	// Physics
-	{ "powerStruggleScale",	G_weapPhys_ParseStruggleScale	},	// Physics
 	{ "movement",			G_weapPhys_ParseMovement		},	// Restriction
 	{ "minPowerLevel",		G_weapPhys_ParseMinPowerLevel	},	// Requirement
 	{ "maxPowerLevel",		G_weapPhys_ParseMinPowerLevel	},	// Requirement
@@ -42,10 +39,9 @@ g_weapPhysField_t g_weapPhysFields[] = {
 	{ "maximum",			G_weapPhys_ParseMaximum			},	// Costs
 	{ "health",				G_weapPhys_ParseHealth			},	// Costs
 	{ "fatigue",			G_weapPhys_ParseFatigue			},	// Costs
-	{ "fireTime",			G_weapPhys_ParseFireTime		},	// Costs
 	{ "cooldownTime",		G_weapPhys_ParseCooldownTime	},	// Costs
-	{ "chargeTimeMinimum",	G_weapPhys_ParseChargeTimeMinimum},	// Costs
-	//{ "chargeTimeMaximum",	G_weapPhys_ParseChargeTimeMaximum},	// Costs
+	{ "chargeTime",			G_weapPhys_ParseChargeTime		},	// Costs
+	{ "chargeReadyPct",		G_weapPhys_ParseChargeReadyPct	},	// Costs
 	{ "damage",				G_weapPhys_ParseDamage			},	// Detonation
 	{ "knockback",			G_weapPhys_ParseKnockBack		},	// Detonation
 	{ "nrShots",			G_weapPhys_ParseNrShots			},	// Muzzle

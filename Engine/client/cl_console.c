@@ -94,7 +94,7 @@ void Con_MessageMode_f (void) {
 	chat_playerNum = -1;
 	chat_team = qfalse;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 30;
+	chatField.widthInChars = 40;
 
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
 }
@@ -108,7 +108,7 @@ void Con_MessageMode2_f (void) {
 	chat_playerNum = -1;
 	chat_team = qtrue;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 25;
+	chatField.widthInChars = 40;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
 }
 
@@ -125,7 +125,7 @@ void Con_MessageMode3_f (void) {
 	}
 	chat_team = qfalse;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 30;
+	chatField.widthInChars = 40;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
 }
 
@@ -142,7 +142,7 @@ void Con_MessageMode4_f (void) {
 	}
 	chat_team = qfalse;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 30;
+	chatField.widthInChars = 40;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
 }
 
@@ -521,12 +521,17 @@ void Con_DrawNotify (void)
 	short	*text;
 	int		i;
 	int		time;
-	int		skip;
 	int		currentColor;
-
+	int 	textSize;
+	vec4_t	background;
+	textSize = 8;
 	currentColor = 7;
 	re.SetColor( g_color_table[currentColor] );
 
+	background[0] = 0.0;
+	background[1] = 0.0;
+	background[2] = 0.0;
+	background[3] = 0.5;
 	v = 0;
 	for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
 	{
@@ -552,10 +557,11 @@ void Con_DrawNotify (void)
 				currentColor = (text[x]>>8)&7;
 				re.SetColor( g_color_table[currentColor] );
 			}
-			SCR_DrawSmallChar( cl_conXOffset->integer + con.xadjust + (x+1)*SMALLCHAR_WIDTH, v, text[x] & 0xff );
+			//SCR_FillRect(0, y, SIntCREEN_WIDTH,2,color );
+			//SCR_DrawSmallChar( cl_conXOffset->integer + con.xadjust + (x+1)*textSize, v, text[x] & 0xff );
 		}
 
-		v += SMALLCHAR_HEIGHT;
+		v += 60;
 	}
 
 	re.SetColor( NULL );
@@ -567,21 +573,9 @@ void Con_DrawNotify (void)
 	// draw the chat line
 	if ( Key_GetCatcher( ) & KEYCATCH_MESSAGE )
 	{
-		if (chat_team)
-		{
-			SCR_DrawBigString (8, v, "say_team:", 1.0f, qfalse );
-			skip = 10;
-		}
-		else
-		{
-			SCR_DrawBigString (8, v, "say:", 1.0f, qfalse );
-			skip = 5;
-		}
-
-		Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, v,
-			SCREEN_WIDTH - ( skip + 1 ) * BIGCHAR_WIDTH, qtrue, qtrue );
-
-		v += BIGCHAR_HEIGHT;
+		SCR_DrawPic(0,365,320,66,cls.chatInputShader);
+		SCR_DrawCustomString(8,22,392,"^3say: ");
+		Field_CustomDraw(6,&chatField,57,392,SCREEN_WIDTH);
 	}
 
 }

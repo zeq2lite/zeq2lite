@@ -115,7 +115,7 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 		UI_ControlsMenu();
 		break;
 	case ID_SYSTEMCONFIG:
-		UI_GraphicsOptionsMenu();
+		UI_SystemSettingsMenu();
 		break;
 	case ID_GAME:
 		UI_PreferencesMenu();

@@ -13,9 +13,6 @@ ui_ingame
 ui_confirm
 ui_setup
 ui_options
-ui_display
-ui_sound
-ui_network
 ui_playermodel
 ui_players
 ui_playersettings
@@ -26,7 +23,7 @@ ui_servers2
 ui_specifyserver
 ui_startserver
 ui_camera
-ui_video
+ui_system
 bg_misc
 bg_lib
 q_math

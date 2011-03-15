@@ -33,32 +33,30 @@ GAME OPTIONS MENU
 #define ART_ACCEPT0				"interface/art/accept_0"
 #define ART_ACCEPT1				"interface/art/accept_1"
 #define PREFERENCES_X_POS		320
+#define ID_SYSTEM				100
+#define ID_CONTROLS				101
+#define ID_GENERAL				102
 #define ID_CROSSHAIR			127
 #define ID_CAMERASTYLE			128
 #define	ID_BEAMCONTROL			129
 #define	ID_BEAMDETAIL			130
-#define ID_WALLMARKS			131
-#define ID_DYNAMICLIGHTS		132
-#define ID_IDENTIFYTARGET		133
-#define ID_SYNCEVERYFRAME		134
-#define	ID_MOTIONBLUR			135
-#define ID_USERUNANIMATION		136
-#define ID_ALLOWDOWNLOAD		137
-#define ID_BACK					138
-#define ID_CROSSHAIRSIZE		139
-#define ID_PARTICLESOPTIMISE	140
-#define ID_PARTICLESQUALITY		141
-#define ID_BLOOMQUALITY			142
-#define ID_BLOOMINTENSITY		143
-#define ID_BLOOMDARKEN			144
-#define ID_BLOOMALPHA			145
-#define ID_OUTLINES				146
+#define ID_BACK					131
+#define ID_CROSSHAIRSIZE		132
+#define ID_PARTICLESOPTIMISE	133
+#define ID_PARTICLESQUALITY		134
+#define ID_BLOOMQUALITY			135
+#define ID_BLOOMINTENSITY		136
+#define ID_BLOOMDARKEN			137
+#define ID_BLOOMALPHA			138
+#define ID_OUTLINES				139
 #define	NUM_CROSSHAIRS			10
 typedef struct{
 	menuframework_s		menu;
-	menutext_s			banner;
 	menubitmap_s		framel;
 	menubitmap_s		framer;
+	menutext_s			system;
+	menutext_s			controls;
+	menutext_s			general;	
 	menulist_s			crosshair;
 	menulist_s			crosshairSize;
 	menulist_s			camerastyle;
@@ -69,14 +67,7 @@ typedef struct{
 	menuslider_s		bloomIntensity;
 	menulist_s			bloomDarken;
 	menuslider_s		bloomAlpha;
-	menuradiobutton_s	wallmarks;
-	menuradiobutton_s	dynamiclights;
-	menuradiobutton_s	identifytarget;
 	menulist_s			beamcontrol;
-	menuradiobutton_s	synceveryframe;
-	menuradiobutton_s	motionblur;
-	menuradiobutton_s	useRunAnimation;
-	menuradiobutton_s	allowdownload;
 	menuradiobutton_s	outlines;
 	menubitmap_s		back;
 	menubitmap_s		apply;
@@ -101,14 +92,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.beamdetail.curvalue		= Com_Clamp( 0, 4, trap_Cvar_VariableValue( "r_beamDetail" ) );
 	s_preferences.particlesQuality.curvalue	= Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_particlesQuality" ) );
 	s_preferences.particlesOptimise.curvalue= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_particlesStop" ) );
-	s_preferences.wallmarks.curvalue		= trap_Cvar_VariableValue( "cg_marks" ) != 0;
-	s_preferences.identifytarget.curvalue	= trap_Cvar_VariableValue( "cg_drawCrosshairNames" ) != 0;
-	s_preferences.dynamiclights.curvalue	= trap_Cvar_VariableValue( "r_dynamiclight" ) != 0;
 	s_preferences.beamcontrol.curvalue		= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_beamControl" ) );
-	s_preferences.synceveryframe.curvalue	= trap_Cvar_VariableValue( "r_finish" ) != 0;
-	s_preferences.motionblur.curvalue		= trap_Cvar_VariableValue( "r_motionBlur" ) != 0;
-	s_preferences.useRunAnimation.curvalue	= trap_Cvar_VariableValue( "g_running" ) != 0;
-	s_preferences.allowdownload.curvalue	= trap_Cvar_VariableValue( "cl_allowDownload" ) != 0;
 	s_preferences.outlines.curvalue			= trap_Cvar_VariableValue( "r_outlines" ) != 0;
 	// Bloom Quality
 	switch ( ( int ) trap_Cvar_VariableValue( "r_bloom_sample_size" ) )
@@ -179,28 +163,6 @@ static void Preferences_Event( void* ptr, int notification ) {
 	case ID_PARTICLESOPTIMISE:
 		trap_Cvar_SetValue( "cg_particlesStop", s_preferences.particlesOptimise.curvalue );
 		break;
-	case ID_WALLMARKS:
-		trap_Cvar_SetValue( "cg_marks", s_preferences.wallmarks.curvalue );
-		break;
-	case ID_DYNAMICLIGHTS:
-		trap_Cvar_SetValue( "r_dynamiclight", s_preferences.dynamiclights.curvalue );
-		break;		
-	case ID_IDENTIFYTARGET:
-		trap_Cvar_SetValue( "cg_drawCrosshairNames", s_preferences.identifytarget.curvalue );
-		break;
-	case ID_SYNCEVERYFRAME:
-		trap_Cvar_SetValue( "r_finish", s_preferences.synceveryframe.curvalue );
-		break;
-	case ID_MOTIONBLUR:
-		trap_Cvar_SetValue( "r_motionBlur", s_preferences.motionblur.curvalue );
-		break;
-	case ID_USERUNANIMATION:
-		trap_Cvar_SetValue( "g_running", s_preferences.useRunAnimation.curvalue );
-		break;
-	case ID_ALLOWDOWNLOAD:
-		trap_Cvar_SetValue( "cl_allowDownload", s_preferences.allowdownload.curvalue );
-		trap_Cvar_SetValue( "sv_allowDownload", s_preferences.allowdownload.curvalue );
-		break;
 	case ID_OUTLINES:
 		trap_Cvar_SetValue( "r_outlines", s_preferences.outlines.curvalue );
 		break;
@@ -249,6 +211,15 @@ static void Preferences_Event( void* ptr, int notification ) {
 	case ID_BLOOMALPHA:
 		trap_Cvar_SetValue( "r_bloom_alpha", s_preferences.bloomAlpha.curvalue);
 		break;
+	case ID_SYSTEM:
+		UI_SystemSettingsMenu();
+		break;
+	case ID_CONTROLS:
+		UI_ControlsMenu();
+		break;
+	case ID_GENERAL:
+		UI_PreferencesMenu();
+		break;		
 	case ID_BACK:
 		UI_PopMenu();
 		break;
@@ -323,18 +294,15 @@ void Preferences_MenuDraw (void)
 }
 
 static void Preferences_MenuInit( void ) {
-	int	y;
+	int x = 28;
+	int	y = 119;
+	int	offset = 38;
+	int	style = UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
 	memset( &s_preferences, 0 ,sizeof(preferences_t) );
 	Preferences_Cache();
 	s_preferences.menu.wrapAround = qtrue;
 	s_preferences.menu.fullscreen = qtrue;
 	s_preferences.menu.draw = Preferences_MenuDraw;
-	s_preferences.banner.generic.type  = MTYPE_BTEXT;
-	s_preferences.banner.generic.x	   = 320;
-	s_preferences.banner.generic.y	   = 16;
-	s_preferences.banner.string		   = "GAME OPTIONS";
-	s_preferences.banner.color         = color_white;
-	s_preferences.banner.style         = UI_CENTER|UI_DROPSHADOW;
 	s_preferences.framel.generic.type  = MTYPE_BITMAP;
 	s_preferences.framel.generic.name  = ART_FRAMEL;
 	s_preferences.framel.generic.flags = QMF_INACTIVE;
@@ -350,6 +318,37 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.framer.width  	   = 256;
 	s_preferences.framer.height  	   = 334;
 
+	s_preferences.system.generic.type		= MTYPE_PTEXT;
+	s_preferences.system.generic.flags		= QMF_LEFT_JUSTIFY;
+	s_preferences.system.generic.id			= ID_SYSTEM;
+	s_preferences.system.generic.callback	= Preferences_Event;
+	s_preferences.system.generic.x			= x;
+	s_preferences.system.generic.y			= y;
+	s_preferences.system.string				= "SYSTEM";
+	s_preferences.system.style				= style;
+	s_preferences.system.color				= color_white;
+	y+=offset;
+	s_preferences.controls.generic.type			= MTYPE_PTEXT;
+	s_preferences.controls.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_preferences.controls.generic.id			= ID_CONTROLS;
+	s_preferences.controls.generic.callback		= Preferences_Event;
+	s_preferences.controls.generic.x				= x;
+	s_preferences.controls.generic.y				= y;
+	s_preferences.controls.string				= "CONTROLS";
+	s_preferences.controls.style					= style;
+	s_preferences.controls.color					= color_white;
+	y+=offset;		
+	s_preferences.general.generic.type		= MTYPE_PTEXT;
+	s_preferences.general.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_preferences.general.generic.id			= ID_GENERAL;
+	s_preferences.general.generic.callback	= Preferences_Event;
+	s_preferences.general.generic.x			= x;
+	s_preferences.general.generic.y			= y;
+	s_preferences.general.string				= "GENERAL";
+	s_preferences.general.style				= style;
+	s_preferences.general.color				= color_white;
+	y+=offset;	
+	
 	y = 88;
 	s_preferences.crosshair.generic.type		= MTYPE_TEXT;
 	s_preferences.crosshair.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT|QMF_NODEFAULTINIT|QMF_OWNERDRAW;
@@ -423,70 +422,6 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.particlesOptimise.generic.x			= PREFERENCES_X_POS;
 	s_preferences.particlesOptimise.generic.y			= y;
 	s_preferences.particlesOptimise.itemnames			= particlesOptimise_names;
-/*
-	y += BIGCHAR_HEIGHT+2;
-	s_preferences.motionblur.generic.type     = MTYPE_RADIOBUTTON;
-	s_preferences.motionblur.generic.name	  = "Motion Blur Effect:";
-	s_preferences.motionblur.generic.flags	  = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.motionblur.generic.callback = Preferences_Event;
-	s_preferences.motionblur.generic.id       = ID_MOTIONBLUR;
-	s_preferences.motionblur.generic.x	      = PREFERENCES_X_POS;
-	s_preferences.motionblur.generic.y	      = y;
-
-	y += BIGCHAR_HEIGHT+2;
-	s_preferences.useRunAnimation.generic.type		= MTYPE_RADIOBUTTON;
-	s_preferences.useRunAnimation.generic.name		= "Use Run Animations:";
-	s_preferences.useRunAnimation.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.useRunAnimation.generic.callback	= Preferences_Event;
-	s_preferences.useRunAnimation.generic.id		= ID_USERUNANIMATION;
-	s_preferences.useRunAnimation.generic.x			= PREFERENCES_X_POS;
-	s_preferences.useRunAnimation.generic.y			= y;
-*/
-	y += BIGCHAR_HEIGHT+2;
-	y += BIGCHAR_HEIGHT+2;
-	s_preferences.dynamiclights.generic.type      = MTYPE_RADIOBUTTON;
-	s_preferences.dynamiclights.generic.name	  = "Dynamic Lights:";
-	s_preferences.dynamiclights.generic.flags     = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.dynamiclights.generic.callback  = Preferences_Event;
-	s_preferences.dynamiclights.generic.id        = ID_DYNAMICLIGHTS;
-	s_preferences.dynamiclights.generic.x	      = PREFERENCES_X_POS;
-	s_preferences.dynamiclights.generic.y	      = y;
-
-	y += BIGCHAR_HEIGHT;
-	s_preferences.wallmarks.generic.type          = MTYPE_RADIOBUTTON;
-	s_preferences.wallmarks.generic.name	      = "Marks on Walls:";
-	s_preferences.wallmarks.generic.flags	      = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.wallmarks.generic.callback      = Preferences_Event;
-	s_preferences.wallmarks.generic.id            = ID_WALLMARKS;
-	s_preferences.wallmarks.generic.x	          = PREFERENCES_X_POS;
-	s_preferences.wallmarks.generic.y	          = y;
-
-	y += BIGCHAR_HEIGHT+2;
-	s_preferences.identifytarget.generic.type     = MTYPE_RADIOBUTTON;
-	s_preferences.identifytarget.generic.name	  = "Identify Target:";
-	s_preferences.identifytarget.generic.flags    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.identifytarget.generic.callback = Preferences_Event;
-	s_preferences.identifytarget.generic.id       = ID_IDENTIFYTARGET;
-	s_preferences.identifytarget.generic.x	      = PREFERENCES_X_POS;
-	s_preferences.identifytarget.generic.y	      = y;
-
-	y += BIGCHAR_HEIGHT+2;
-	s_preferences.synceveryframe.generic.type     = MTYPE_RADIOBUTTON;
-	s_preferences.synceveryframe.generic.name	  = "Sync Every Frame:";
-	s_preferences.synceveryframe.generic.flags	  = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.synceveryframe.generic.callback = Preferences_Event;
-	s_preferences.synceveryframe.generic.id       = ID_SYNCEVERYFRAME;
-	s_preferences.synceveryframe.generic.x	      = PREFERENCES_X_POS;
-	s_preferences.synceveryframe.generic.y	      = y;
-
-	y += BIGCHAR_HEIGHT+2;
-	s_preferences.allowdownload.generic.type     = MTYPE_RADIOBUTTON;
-	s_preferences.allowdownload.generic.name	   = "Automatic Downloading:";
-	s_preferences.allowdownload.generic.flags	   = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.allowdownload.generic.callback = Preferences_Event;
-	s_preferences.allowdownload.generic.id       = ID_ALLOWDOWNLOAD;
-	s_preferences.allowdownload.generic.x	       = PREFERENCES_X_POS;
-	s_preferences.allowdownload.generic.y	       = y;
 
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.outlines.generic.type			= MTYPE_RADIOBUTTON;
@@ -562,7 +497,10 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.apply.height  		 = 64;
 	s_preferences.apply.focuspic         = ART_ACCEPT1;
 
-	Menu_AddItem( &s_preferences.menu, &s_preferences.banner );
+	Menu_AddItem( &s_preferences.menu, ( void * ) &s_preferences.system );
+	Menu_AddItem( &s_preferences.menu, ( void * ) &s_preferences.controls );
+	Menu_AddItem( &s_preferences.menu, ( void * ) &s_preferences.general );
+	
 	Menu_AddItem( &s_preferences.menu, &s_preferences.framel );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.framer );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshair );
@@ -572,13 +510,6 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.beamdetail );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesQuality );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesOptimise );
-//	Menu_AddItem( &s_preferences.menu, &s_preferences.motionblur );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.wallmarks );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.dynamiclights );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.identifytarget );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.synceveryframe );
-//	Menu_AddItem( &s_preferences.menu, &s_preferences.useRunAnimation );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.allowdownload );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.outlines );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomQuality );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomIntensity );
@@ -609,6 +540,10 @@ void Preferences_Cache(void){
 UI_PreferencesMenu
 ===============*/
 void UI_PreferencesMenu( void ) {
+	uis.menuamount = 3;
+	uis.hideEarth = qtrue;
+	uis.showFrame = qtrue;
 	Preferences_MenuInit();
 	UI_PushMenu( &s_preferences.menu );
+	Menu_SetCursorToItem(&s_preferences.menu,&s_preferences.general);	
 }

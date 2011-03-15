@@ -40,12 +40,6 @@ set cc=call ..\..\..\Tools\Compiler\Perform.bat
 @if errorlevel 1 goto quit
 %cc% ../ui_options.c
 @if errorlevel 1 goto quit
-%cc% ../ui_display.c
-@if errorlevel 1 goto quit
-%cc% ../ui_sound.c
-@if errorlevel 1 goto quit
-%cc% ../ui_network.c
-@if errorlevel 1 goto quit
 %cc% ../ui_playermodel.c
 @if errorlevel 1 goto quit
 %cc% ../ui_players.c
@@ -64,7 +58,7 @@ set cc=call ..\..\..\Tools\Compiler\Perform.bat
 @if errorlevel 1 goto quit
 %cc% ../ui_camera.c
 @if errorlevel 1 goto quit
-%cc% ../ui_video.c
+%cc% ../ui_system.c
 @if errorlevel 1 goto quit
 
 ..\..\..\Tools\Compiler\q3asm -f ../ui

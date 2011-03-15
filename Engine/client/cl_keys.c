@@ -382,6 +382,51 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 	}
 }
 
+void Field_CustomDraw(int spacing,field_t *edit, int x, int y, int width){
+	int		len;
+	int		drawLen;
+	int		prestep;
+	int		cursorChar;
+	char	str[MAX_STRING_CHARS];
+	int		i;
+	int size = 16;
+	qboolean noColorEscape = qtrue;
+	drawLen = edit->widthInChars - 1; // - 1 so there is always a space for the cursor
+	len = strlen( edit->buffer );
+	if ( len <= drawLen ) {
+		prestep = 0;
+	} else {
+		if ( edit->scroll + drawLen > len ) {
+			edit->scroll = len - drawLen;
+			if ( edit->scroll < 0 ) {
+				edit->scroll = 0;
+			}
+		}
+		prestep = edit->scroll;
+	}
+	if ( prestep + drawLen > len ) {
+		drawLen = len - prestep;
+	}
+	if ( drawLen >= MAX_STRING_CHARS ) {
+		Com_Error( ERR_DROP, "drawLen >= MAX_STRING_CHARS" );
+	}
+	Com_Memcpy( str, edit->buffer + prestep, drawLen );
+	str[ drawLen ] = 0;
+	SCR_DrawCustomString(spacing,x,y,str);
+	if ( (int)( cls.realtime >> 8 ) & 1 ) {
+		return;		// off blink
+	}
+	if ( key_overstrikeMode ) {
+		cursorChar = 11;
+	} else {
+		cursorChar = 10;
+	}
+	i = drawLen - strlen( str );
+	str[0] = cursorChar;
+	str[1] = 0;
+	SCR_DrawBigString( x + ( edit->cursor - prestep - i ) * spacing, y, str, 1.0, qfalse );
+}
+
 void Field_Draw( field_t *edit, int x, int y, int width, qboolean showCursor, qboolean noColorEscape ) 
 {
 	Field_VariableSizeDraw( edit, x, y, width, SMALLCHAR_WIDTH, showCursor, noColorEscape );

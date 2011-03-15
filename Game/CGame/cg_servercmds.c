@@ -992,15 +992,6 @@ static void CG_ServerCommand( void ) {
 
 	if ( !strcmp( cmd, "print" ) ) {
 		CG_Printf( "%s", CG_Argv(1) );
-#ifdef MISSIONPACK
-		cmd = CG_Argv(1);			// yes, this is obviously a hack, but so is the way we hear about
-									// votes passing or failing
-		if ( !Q_stricmpn( cmd, "vote failed", 11 ) || !Q_stricmpn( cmd, "team vote failed", 16 )) {
-			trap_S_StartLocalSound( cgs.media.voteFailed, CHAN_ANNOUNCER );
-		} else if ( !Q_stricmpn( cmd, "vote passed", 11 ) || !Q_stricmpn( cmd, "team vote passed", 16 ) ) {
-			trap_S_StartLocalSound( cgs.media.votePassed, CHAN_ANNOUNCER );
-		}
-#endif
 		return;
 	}
 
@@ -1010,10 +1001,10 @@ static void CG_ServerCommand( void ) {
 			Q_strncpyz( text, CG_Argv(1), MAX_SAY_TEXT );
 			CG_RemoveChatEscapeChar( text );
 			CG_Printf( "%s\n", text );
+			CG_DrawChat(text);
 		}
 		return;
 	}
-
 	if ( !strcmp( cmd, "tchat" ) ) {
 		trap_S_StartLocalSound( cgs.media.talkSound, CHAN_LOCAL_SOUND );
 		Q_strncpyz( text, CG_Argv(1), MAX_SAY_TEXT );
@@ -1127,7 +1118,16 @@ static void CG_ServerCommand( void ) {
 			//skip over the comma
 			ptr++;
 
-			//read in the PL
+			//read in the health
+			cg_playerOrigins[i].health = atof(ptr);
+
+			//move the ptr on until we come to a comma
+			ptr = strchr(ptr, ',');
+
+			//skip over the comma
+			ptr++;
+
+			//read in the team
 			cg_playerOrigins[i].team = atof(ptr);
 
 			//move the ptr on until we come to a comma
@@ -1136,7 +1136,7 @@ static void CG_ServerCommand( void ) {
 			//skip over the comma
 			ptr++;
 
-			//read in the PL
+			//read in the properties
 			cg_playerOrigins[i].properties = atof(ptr);
 
 			//move the ptr on until we come to a comma

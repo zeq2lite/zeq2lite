@@ -614,6 +614,7 @@ typedef struct {
 
 	menulist_s			dedicated;
 	menufield_s			powerlevel;
+	menufield_s			powerlevelMaximum;
 	menufield_s			breakLimitRate;
 	menufield_s			timelimit;
 	menufield_s			fraglimit;
@@ -708,6 +709,7 @@ static void ServerOptions_Start( void ) {
 	int		timelimit;
 	int		fraglimit;
 	int		powerlevel;
+	int 	powerlevelMaximum;
 	int		breakLimitRate;
 	int		maxclients;
 	int		dedicated;
@@ -722,6 +724,7 @@ static void ServerOptions_Start( void ) {
 	timelimit	 = atoi( s_serveroptions.timelimit.field.buffer );
 	fraglimit	 = atoi( s_serveroptions.fraglimit.field.buffer );
 	powerlevel	 = atoi( s_serveroptions.powerlevel.field.buffer );
+	powerlevelMaximum = atoi( s_serveroptions.powerlevelMaximum.field.buffer );
 	breakLimitRate	 = atoi( s_serveroptions.breakLimitRate.field.buffer );
 	flaglimit	 = atoi( s_serveroptions.flaglimit.field.buffer );
 	dedicated	 = s_serveroptions.dedicated.curvalue;
@@ -747,30 +750,8 @@ static void ServerOptions_Start( void ) {
 		trap_Cvar_SetValue( "ui_ffa_fraglimit", fraglimit );
 		trap_Cvar_SetValue( "ui_ffa_timelimit", timelimit );
 		trap_Cvar_SetValue( "ui_ffa_powerlevel", powerlevel );
+		trap_Cvar_SetValue( "ui_ffa_powerlevelMaximum", powerlevelMaximum );
 		trap_Cvar_SetValue( "ui_ffa_breakLimitRate", breakLimitRate );
-		break;
-
-	case GT_TOURNAMENT:
-		trap_Cvar_SetValue( "ui_tourney_fraglimit", fraglimit );
-		trap_Cvar_SetValue( "ui_tourney_timelimit", timelimit );
-		trap_Cvar_SetValue( "ui_tourney_powerlevel", powerlevel );
-		trap_Cvar_SetValue( "ui_tourney_breakLimitRate", breakLimitRate );
-		break;
-
-	case GT_TEAM:
-		trap_Cvar_SetValue( "ui_team_fraglimit", fraglimit );
-		trap_Cvar_SetValue( "ui_team_timelimit", timelimit );
-		trap_Cvar_SetValue( "ui_team_powerlevel", powerlevel );
-		trap_Cvar_SetValue( "ui_team_breakLimitRate", breakLimitRate );
-		trap_Cvar_SetValue( "ui_team_friendlt", friendlyfire );
-		break;
-
-	case GT_CTF:
-		trap_Cvar_SetValue( "ui_ctf_fraglimit", fraglimit );
-		trap_Cvar_SetValue( "ui_ctf_timelimit", timelimit );
-		trap_Cvar_SetValue( "ui_ctf_powerlevel", powerlevel );
-		trap_Cvar_SetValue( "ui_ctf_breakLimitRate", breakLimitRate );
-		trap_Cvar_SetValue( "ui_ctf_friendlt", friendlyfire );
 		break;
 	}
 
@@ -782,6 +763,7 @@ static void ServerOptions_Start( void ) {
 	trap_Cvar_SetValue ("timelimit", Com_Clamp( 0, timelimit, timelimit ) );
 	trap_Cvar_SetValue ("fraglimit", Com_Clamp( 0, fraglimit, fraglimit ) );
 	trap_Cvar_SetValue ("g_powerlevel", Com_Clamp( 1, 32767, powerlevel ) );
+	trap_Cvar_SetValue ("g_powerlevelMaximum", Com_Clamp( 1, 32767, powerlevelMaximum ) );
 	trap_Cvar_SetValue ("g_breakLimitRate", Com_Clamp( 1, 100, breakLimitRate ) );
 	trap_Cvar_SetValue ("capturelimit", Com_Clamp( 0, flaglimit, flaglimit ) );
 	trap_Cvar_SetValue( "g_friendlyfire", friendlyfire );
@@ -1140,30 +1122,8 @@ static void ServerOptions_SetMenuItems( void ) {
 		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ffa_fraglimit" ) ) );
 		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ffa_timelimit" ) ) );
 		Com_sprintf( s_serveroptions.powerlevel.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_ffa_powerlevel" ) ) );
+		Com_sprintf( s_serveroptions.powerlevelMaximum.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_ffa_powerlevelMaximum" ) ) );
 		Com_sprintf( s_serveroptions.breakLimitRate.field.buffer, 4, "%i", (int)Com_Clamp( 1, 100, trap_Cvar_VariableValue( "ui_ffa_breakLimitRate" ) ) );
-		break;
-
-	case GT_TOURNAMENT:
-		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_tourney_fraglimit" ) ) );
-		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_tourney_timelimit" ) ) );
-		Com_sprintf( s_serveroptions.powerlevel.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_tourney_powerlevel" ) ) );
-		Com_sprintf( s_serveroptions.breakLimitRate.field.buffer, 4, "%i", (int)Com_Clamp( 1, 100, trap_Cvar_VariableValue( "ui_tourney_breakLimitRate" ) ) );
-		break;
-
-	case GT_TEAM:
-		Com_sprintf( s_serveroptions.fraglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_team_fraglimit" ) ) );
-		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_team_timelimit" ) ) );
-		Com_sprintf( s_serveroptions.powerlevel.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_team_powerlevel" ) ) );
-		Com_sprintf( s_serveroptions.breakLimitRate.field.buffer, 4, "%i", (int)Com_Clamp( 1, 100, trap_Cvar_VariableValue( "ui_team_breakLimitRate" ) ) );
-		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_team_friendly" ) );
-		break;
-
-	case GT_CTF:
-		Com_sprintf( s_serveroptions.flaglimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 100, trap_Cvar_VariableValue( "ui_ctf_capturelimit" ) ) );
-		Com_sprintf( s_serveroptions.timelimit.field.buffer, 4, "%i", (int)Com_Clamp( 0, 999, trap_Cvar_VariableValue( "ui_ctf_timelimit" ) ) );
-		Com_sprintf( s_serveroptions.powerlevel.field.buffer, 6, "%i", (int)Com_Clamp( 1, 32767, trap_Cvar_VariableValue( "ui_ctf_powerlevel" ) ) );
-		Com_sprintf( s_serveroptions.breakLimitRate.field.buffer, 4, "%i", (int)Com_Clamp( 1, 100, trap_Cvar_VariableValue( "ui_ctf_breakLimitRate" ) ) );
-		s_serveroptions.friendlyfire.curvalue = (int)Com_Clamp( 0, 1, trap_Cvar_VariableValue( "ui_ctf_friendly" ) );
 		break;
 	}
 
@@ -1334,6 +1294,16 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.powerlevel.field.maxchars     = 5;
 
 	y += BIGCHAR_HEIGHT+2;
+	s_serveroptions.powerlevelMaximum.generic.type       = MTYPE_FIELD;
+	s_serveroptions.powerlevelMaximum.generic.name       = "    Maximum  :";
+	s_serveroptions.powerlevelMaximum.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_serveroptions.powerlevelMaximum.generic.x	         = OPTIONS_X;
+	s_serveroptions.powerlevelMaximum.generic.y	         = y;
+	s_serveroptions.powerlevelMaximum.generic.statusbar  = ServerOptions_StatusBar;
+	s_serveroptions.powerlevelMaximum.field.widthInChars = 5;
+	s_serveroptions.powerlevelMaximum.field.maxchars     = 5;
+
+	y += BIGCHAR_HEIGHT+2;
 	s_serveroptions.breakLimitRate.generic.type       = MTYPE_FIELD;
 	s_serveroptions.breakLimitRate.generic.name       = "Charge Speed :";
 	s_serveroptions.breakLimitRate.generic.flags      = QMF_NUMBERSONLY|QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1479,6 +1449,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	}
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.timelimit );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.powerlevel );
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.powerlevelMaximum );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.breakLimitRate );
 	if( s_serveroptions.gametype >= GT_TEAM ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.friendlyfire );

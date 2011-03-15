@@ -608,10 +608,11 @@ if desired.
 */
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
-	int		teamTask, teamLeader, team, handicap;
+	int		teamTask, teamLeader, team, handicap,shouldRespawn;
 	char	*s;
 	char	model[MAX_QPATH];
 	char	headModel[MAX_QPATH];
+	char	legsModel[MAX_QPATH];
 	char	oldname[MAX_STRING_CHARS];
 	gclient_t	*client;
 	char	c1[MAX_INFO_STRING];
@@ -620,11 +621,10 @@ void ClientUserinfoChanged( int clientNum ) {
 	char	blueTeam[MAX_INFO_STRING];
 	char	userinfo[MAX_INFO_STRING];
 	char    guid[MAX_INFO_STRING];
-
+	shouldRespawn = 0;
 	ent = g_entities + clientNum;
 	client = ent->client;
 	trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
-	
 	// check for malformed or illegal info strings
 	if ( !Info_Validate(userinfo) ) {
 		strcpy (userinfo, "\\name\\badinfo");
@@ -637,8 +637,8 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 
 	s = Info_ValueForKey(userinfo,"cg_advancedFlight");
-	client->ps.options &= ~advancedFlight;
-	if(!Q_stricmp(s,"1")){client->ps.options |= advancedFlight;}
+	client->ps.states &= ~advancedFlight;
+	if(!Q_stricmp(s,"1")){client->ps.states |= advancedFlight;}
 	s = Info_ValueForKey(userinfo,"cg_predictItems");
 
 	// set name
@@ -657,25 +657,22 @@ void ClientUserinfoChanged( int clientNum ) {
 				client->pers.netname) );
 		}
 	}
-
 	// set model
-	if( g_gametype.integer >= GT_TEAM ) {
-		Q_strncpyz( model, Info_ValueForKey (userinfo, "team_model"), sizeof( model ) );
-		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "team_headmodel"), sizeof( headModel ) );
-	} else {
-		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
-		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "headmodel"), sizeof( headModel ) );
+	Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
+	Q_strncpyz( headModel, Info_ValueForKey (userinfo, "headmodel"), sizeof( headModel ) );
+	Q_strncpyz( legsModel, Info_ValueForKey (userinfo, "legsmodel"), sizeof( legsModel ) );
+	if(strcmp(model,ent->modelName)){
+		if(client->ps.powerLevel[plHealth]>0){shouldRespawn = 1;}
+		if(((float)client->ps.powerLevel[plHealth]/(float)client->ps.powerLevel[plMaximum])<0.75){shouldRespawn = 2;}
 	}
-
+	Q_strncpyz(ent->modelName,model,sizeof(ent->modelName));
 	// set max powerLevel
 	handicap = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	client->playerEntity = ent;
 
 	// setup tier information
-	client->ps.bitFlags |= isSafe;
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
-
 	// ADDING FOR ZEQ2
 	// REFPOINT: Loading the serverside weaponscripts here.
 	{
@@ -701,7 +698,7 @@ void ClientUserinfoChanged( int clientNum ) {
 		
 		Com_sprintf( filename, sizeof( filename ), "players/%s/%s.phys", modelName, skinName );
 		G_weapPhys_Parse( filename, clientNum );
-		G_SyncAllSkills(&client->ps);
+
 		// Set the weapon mask here, incase we changed models on the fly.
 		// FIXME: Can be removed eventually, when we will disallow on the fly
 		//        switching.
@@ -709,7 +706,7 @@ void ClientUserinfoChanged( int clientNum ) {
 
 		// force a new weapon up if the current one is unavailable now.
 		// Search downward
-		for ( i = skMaximumSkillPairs; i > 0; i-- ) {
+		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
 			// We found a valid weapon
 			if ( client->ps.stats[stSkills] & (1 << i) ) {
 				break;
@@ -735,16 +732,6 @@ void ClientUserinfoChanged( int clientNum ) {
 		team = client->sess.sessionTeam;
 	}
 
-	/*
-	s = Info_ValueForKey( userinfo, "cg_pmove_fixed" );
-	if ( !*s || atoi( s ) == 0 ) {
-		client->pers.pmoveFixed = qfalse;
-	}
-	else {
-		client->pers.pmoveFixed = qtrue;
-	}
-	*/
-
 	// team task (0 = none, 1 = offence, 2 = defence)
 	teamTask = atoi(Info_ValueForKey(userinfo, "teamtask"));
 	// team Leader (1 = leader, 0 is normal player)
@@ -762,20 +749,21 @@ void ClientUserinfoChanged( int clientNum ) {
 	// print scoreboards, display models, and play custom sounds
 	if (ent->r.svFlags & SVF_BOT)
 	{
-		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s\\tt\\%d\\tl\\%d",
-			client->pers.netname, team, model, headModel, c1, c2, 
+		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\lmodel\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s\\tt\\%d\\tl\\%d",
+			client->pers.netname, team, model, headModel,legsModel, c1, c2, 
 			client->pers.maxHealth, client->sess.wins, client->sess.losses,
 			Info_ValueForKey( userinfo, "skill" ), teamTask, teamLeader );
 	}
 	else
 	{
-		s = va("n\\%s\\guid\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
-			client->pers.netname, guid, client->sess.sessionTeam, model, headModel, redTeam, blueTeam, c1, c2, 
+		s = va("n\\%s\\guid\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\lmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
+			client->pers.netname, guid, client->sess.sessionTeam, model, headModel, legsModel,redTeam, blueTeam, c1, c2, 
 			client->pers.maxHealth, client->sess.wins, client->sess.losses, teamTask, teamLeader);
 	}
 	client->ps.powerLevel[plTierCurrent] = 0;
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
-
+	if(shouldRespawn==1){respawn(ent);}
+	if(shouldRespawn==2){client->ps.powerLevel[plUseHealth] = 32767;}
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
 }
 
@@ -913,8 +901,9 @@ void ClientBegin( int clientNum ) {
 	// ADDING FOR ZEQ2
 	// Set the starting cap
 	ClientUserinfoChanged(clientNum);
-	client->ps.powerLevel[plMaximum] = g_powerLevel.value;
-	client->ps.bitFlags |= isSafe;
+	client->ps.powerLevel[plMaximum] = g_powerlevel.value;
+	client->ps.powerLevel[plLimit] = g_powerlevelMaximum.value;
+	client->ps.bitFlags |= isUnsafe;
 	// END ADDING
 
 	// locate ent at a spawn point
@@ -1040,17 +1029,24 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->ps.clientNum = index;
 	client->ps.stats[stSkills] = *G_FindUserWeaponMask( index );
+	client->ps.stats[stChargePercentPrimary] = 0;
+	client->ps.stats[stChargePercentSecondary] = 0;
+
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
 	client->ps.powerLevel[plTierCurrent] = 0;
-	if(g_powerLevel.value > 32767){
-		g_powerLevel.value = 32767;
+	if(g_powerlevel.value > 32767){
+		g_powerlevel.value = 32767;
+	}
+	if(g_powerlevelMaximum.value > 32767){
+		g_powerlevelMaximum.value = 32767;
 	}
 	// make sure all bitFlags are OFF, and explicitly turn off the aura
 	client->ps.bitFlags = 0;
 	client->ps.eFlags &= ~EF_AURA;
 	// END ADDING
-	client->ps.powerLevel[plMaximum] = client->ps.powerLevel[plMaximum] > g_powerLevel.value ? client->ps.powerLevel[plMaximum] * 0.75 : g_powerLevel.value;
+	client->ps.powerLevel[plMaximum] = client->ps.powerLevel[plMaximum] > g_powerlevel.value ? client->ps.powerLevel[plMaximum] * 0.75 : g_powerlevel.value;
+	client->ps.powerLevel[plLimit] = g_powerlevelMaximum.value;
 	client->ps.powerLevel[plCurrent] = client->ps.powerLevel[plHealth] = client->ps.powerLevel[plFatigue] = client->ps.powerLevel[plMaximum];
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
@@ -1066,7 +1062,7 @@ void ClientSpawn(gentity_t *ent) {
 		trap_LinkEntity (ent);
 
 		// force the best weapon up
-		for ( i = skMaximumSkillPairs; i > 0; i-- ) {
+		for ( i = MAX_PLAYERWEAPONS; i > 0; i-- ) {
 			// We found a valid weapon
 			if ( client->ps.stats[stSkills] & (1 << i) ) {
 				break;
@@ -1075,6 +1071,7 @@ void ClientSpawn(gentity_t *ent) {
 
 		// Either we assign a valid weapon, or we assign 0, which means
 		client->ps.weapon = i;
+		client->ps.weaponstate = WEAPON_READY;
 	}
 
 	// don't allow full run speed for a bit

@@ -6,16 +6,40 @@ void syncTier(gclient_t *client){
 	ps = &client->ps;
 	tier = &client->tiers[ps->powerLevel[plTierCurrent]];
 	ps->breakLimitRate = (float)tier->breakLimitRate * g_breakLimitRate.value;
+	ps->states &= ~canBoost;
+	ps->states &= ~canFly;
+	ps->states &= ~canZanzoken;
+	ps->states &= ~canJump;
+	ps->states &= ~canBallFlip;
+	if(tier->capableBoost){ps->states |= canBoost;}
+	if(tier->capableFly){ps->states |= canFly;}
+	if(tier->capableZanzoken){ps->states |= canZanzoken;}
+	if(tier->capableJump){ps->states |= canJump;}
+	if(tier->capableBallFlip){ps->states |= canBallFlip;}
 	ps->stats[stSpeed] = tier->speed * 450.0;
+	ps->stats[stTransformFirstDuration] = tier->transformFirstDuration;
+	ps->stats[stTransformFirstEffectMaximum] = tier->transformFirstEffectMaximum;
+	ps->stats[stTransformFirstHealth] = tier->transformFirstHealth;
+	ps->stats[stTransformFirstFatigue] = tier->transformFirstFatigue;
+	ps->stats[stTransformDuration] = tier->transformDuration;
+	ps->stats[stTransformFatigue] = tier->transformFatigue;
+	ps->stats[stTransformHealth] = tier->transformHealth;
+	ps->stats[stTransformEffectMaximum] = tier->transformEffectMaximum;
 	ps->stats[stZanzokenDistance] = tier->zanzokenDistance * 500.0;
 	ps->stats[stZanzokenSpeed] = tier->zanzokenSpeed * 4000.0;
-	ps->stats[stZanzokenCost] = tier->zanzokenCost;
+	ps->baseStats[stZanzokenCost] = tier->zanzokenCost;
+	ps->baseStats[stBoostCost] = tier->boostCost;
+	ps->baseStats[stFatigueRecovery] = tier->fatigueRecovery;
+	ps->baseStats[stTransformSubsequentDuration] = tier->transformSubsequentDuration;
+	ps->baseStats[stTransformSubsequentFatigueScale] = tier->transformSubsequentFatigueScale;
+	ps->baseStats[stTransformSubsequentHealthScale] = tier->transformSubsequentHealthScale;
+	ps->baseStats[stTransformSubsequentMaximumScale] = tier->transformSubsequentMaximumScale;
 	ps->stats[stAirBrakeCost] = tier->airBrakeCost;
 	ps->stats[stMeleeDefense] = tier->meleeDefense;
 	ps->stats[stMeleeAttack] = tier->meleeAttack;
 	ps->stats[stEnergyDefense] = tier->energyDefense;
 	ps->stats[stEnergyAttack] = tier->energyAttackDamage;
-	ps->stats[stEnergyCost] = tier->energyAttackCost;
+	ps->baseStats[stEnergyAttackCost] = tier->energyAttackCost;
 	ps->powerLevel[plDrainCurrent] = tier->effectCurrent;
 	ps->powerLevel[plDrainFatigue] = tier->effectFatigue;
 	ps->powerLevel[plDrainHealth] = tier->effectHealth;
@@ -53,19 +77,22 @@ void checkTier(gclient_t *client){
 				if(tier + 1 > ps->powerLevel[plTierTotal]){
 					ps->powerLevel[plTierTotal] = ps->powerLevel[plTierCurrent];
 					ps->timers[tmTransform] = client->tiers[tier+1].transformTime;
+					ps->stats[stTransformState] = 2;
 				}
+				else{ps->stats[stTransformState] = 1;}
 				continue;
 			}
 		}
 		if(tier > 0){
 			baseTier = &client->tiers[tier];
-			if(((baseTier->requirementButton && (ps->bitFlags & keyTierDown)) || !baseTier->requirementButton) ||
+			if(!baseTier->permanent && ((baseTier->requirementButton && (ps->bitFlags & keyTierDown)) || !baseTier->requirementButton) ||
 			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrent) ||
 			   (ps->powerLevel[plHealth] < baseTier->sustainHealth) ||
 			   (ps->powerLevel[plFatigue] < baseTier->sustainFatigue) ||
 			   (ps->powerLevel[plMaximum] < baseTier->sustainMaximum)){
 				ps->timers[tmTransform] = -1;
 				--ps->powerLevel[plTierCurrent];
+				ps->stats[stTransformState] = -1;
 				break;
 			}
 		}
@@ -105,7 +132,7 @@ void parseTier(char *path,tierConfig_g *tier){
 		while(1){
 			token = COM_Parse(&parse);
 			if(!token[0]){break;}
-			else if(!Q_stricmp(token,"tierSpeed")){
+			else if(!Q_stricmp(token,"speed")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->speed = atof(token);
@@ -135,27 +162,37 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->energyAttackCost = atof(token);
 			}
-			else if(!Q_stricmp(token,"tierKnockBackPower")){
+			else if(!Q_stricmp(token,"knockBackPower")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->knockBackPower = atof(token);
 			}
-			else if(!Q_stricmp(token,"tierAirBrakeCost")){
+			else if(!Q_stricmp(token,"airBrakeCost")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->airBrakeCost = atof(token);
 			}
-			else if(!Q_stricmp(token,"tierZanzokenCost")){
+			else if(!Q_stricmp(token,"fatigueRecovery")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->fatigueRecovery = atof(token);
+			}
+			else if(!Q_stricmp(token,"boostCost")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->boostCost = atof(token);
+			}
+			else if(!Q_stricmp(token,"zanzokenCost")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->zanzokenCost = atof(token);
 			}
-			else if(!Q_stricmp(token,"tierZanzokenSpeed")){
+			else if(!Q_stricmp(token,"zanzokenSpeed")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->zanzokenSpeed = atof(token);
 			}
-			else if(!Q_stricmp(token,"tierZanzokenDistance")){
+			else if(!Q_stricmp(token,"zanzokenDistance")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->zanzokenDistance = atof(token);
@@ -225,6 +262,66 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->sustainMaximum = atoi(token);
 			}
+			else if(!Q_stricmp(token,"transformFirstDuration")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformFirstDuration = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformFirstHealth")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformFirstHealth = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformFirstFatigue")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformFirstFatigue = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformFirstEffectMaximum")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformFirstEffectMaximum = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformDuration")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformDuration = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformHealth")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformHealth = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformFatigue")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformFatigue = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformEffectMaximum")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformEffectMaximum = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformSubsequentDuration")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformSubsequentDuration = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformEffectSubsequentHealthScale")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformSubsequentHealthScale = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformEffectSubsequentFatigueScale")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformSubsequentFatigueScale = atof(token);
+			}
+			else if(!Q_stricmp(token,"transformEffectSubsequentMaximumScale")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->transformSubsequentMaximumScale = atof(token);
+			}
 			else if(!Q_stricmp(token,"transformTime")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
@@ -249,6 +346,31 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->customWeapons = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"canBoost")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->capableBoost = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"canFly")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->capableFly = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"canJump")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->capableJump = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"canZanzoken")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->capableZanzoken = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"canBallFlip")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->capableBallFlip = strlen(token) == 4 ? qtrue : qfalse;
 			}
 		}
 	}

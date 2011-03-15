@@ -1,10 +1,22 @@
 #include "cg_local.h"
 void parseTier(char *path,tierConfig_cg *tier);
 qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *modelName, const char *skinName){
-	int	i;
+	int	i,partIndex,damageIndex,lastSkinIndex,lastModelIndex;
 	char filename[MAX_QPATH * 2];
 	char tierPath[MAX_QPATH];
 	char tempPath[MAX_QPATH];
+	char legsPath[MAX_QPATH];
+	char headPath[MAX_QPATH];
+	char headPrefix[8],upperPrefix[8],lowerPrefix[8];
+	strcpy(headPrefix,"head_");
+	strcpy(lowerPrefix,"lower_");
+	strcpy(upperPrefix,"upper_");
+	Com_sprintf(legsPath,sizeof(legsPath),"%s",modelName);
+	Com_sprintf(headPath,sizeof(headPath),"%s",modelName);
+	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animation.cfg",ci->legsModelName);
+	if(ci->legsModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(legsPath,sizeof(legsPath),"%s",ci->legsModelName);}
+	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animation.cfg",ci->headModelName);
+	if(ci->headModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(headPath,sizeof(headPath),"%s",ci->headModelName);}
 	//Com_Printf("RegisterClientModelnameWithTiers: before animation load ci->usingMD4 = %i\n", ci->usingMD4);
 	Com_sprintf(filename,sizeof(filename),"players/%s/animation.cfg",modelName);
 	if(!CG_ParseAnimationFile(filename,ci)){
@@ -27,17 +39,25 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		memset(&ci->tierConfig[i],0,sizeof(tierConfig_cg));
 		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 		ci->tierConfig[i].icon = trap_R_RegisterShaderNoMip(strcat(tierPath,"icon.png"));
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 		if(trap_FS_FOpenFile(strcat(tierPath,"transformFirst.ogg"),0,FS_READ)>0){
 			Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 			ci->tierConfig[i].soundTransformFirst = trap_S_RegisterSound(strcat(tierPath,"transformFirst.ogg"),qfalse);
 		}
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 		if(trap_FS_FOpenFile(strcat(tierPath,"transformUp.ogg"),0,FS_READ)>0){
 			Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 			ci->tierConfig[i].soundTransformUp = trap_S_RegisterSound(strcat(tierPath,"transformUp.ogg"),qfalse);
 		}
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 		if(trap_FS_FOpenFile(strcat(tierPath,"transformDown.ogg"),0,FS_READ)>0){
 			Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 			ci->tierConfig[i].soundTransformDown = trap_S_RegisterSound(strcat(tierPath,"transformDown.ogg"),qfalse);
+		}
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+		if(trap_FS_FOpenFile(strcat(tierPath,"poweringUp.ogg"),0,FS_READ)>0){
+			Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
+			ci->tierConfig[i].soundPoweringUp = trap_S_RegisterSound(strcat(tierPath,"poweringUp.ogg"),qfalse);
 		}
 		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",modelName,i+1);
 		parseTier(filename,&ci->tierConfig[i]);
@@ -47,60 +67,51 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		// Models
 		// ===================================
 		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/body.zMesh", modelName, i+1);
-		if(ci->usingMD4)
-		{
+		if(ci->usingMD4){
 			ci->legsModel[i] = trap_R_RegisterModel(filename);
-			//Com_Printf("Loading MD4 model, ci->usingMD4 = %i\n",ci->usingMD4);
 		}
 		if(!ci->legsModel[i]){
-			//ci->usingMD4 = qfalse;
-			//Com_Printf("No legsModel, ci->usingMD4 = %i\n",ci->usingMD4);
-			// Tenken - tiers can change again
-			//if(i == 0){
-				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", modelName, i+1);
-				ci->legsModel[i] = trap_R_RegisterModel(filename);
-				if(!ci->legsModel[i]){
-					if(i == 0){
-						//Com_Printf("Failed to load model file %s\n", filename);
-						return qfalse;
-					}else {
-						ci->legsModel[i] = ci->legsModel[i - 1];
-					}
+			Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", legsPath, i+1);
+			ci->legsModel[i] = trap_R_RegisterModel(filename);
+			if(!ci->legsModel[i]){
+				if(i == 0){
+					return qfalse;
+				}else {
+					ci->legsModel[i] = ci->legsModel[i - 1];
 				}
-				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/upper.md3", modelName, i+1);
-				ci->torsoModel[i] = trap_R_RegisterModel(filename);
-				if(!ci->torsoModel[i]){
-					if(i == 0){
-						//Com_Printf("Failed to load model file %s\n", filename);
-						return qfalse;
-					}else {
-						ci->torsoModel[i] = ci->torsoModel[i - 1];
-					}
+			}
+			Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/upper.md3", modelName, i+1);
+			ci->torsoModel[i] = trap_R_RegisterModel(filename);
+			if(!ci->torsoModel[i]){
+				if(i == 0){return qfalse;}
+				else{ci->torsoModel[i] = ci->torsoModel[i - 1];}
+			}
+			Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head.md3", headPath, i+1);
+			ci->headModel[i] = trap_R_RegisterModel(filename);
+			if(!ci->headModel[i]){
+				if(i == 0){
+					return qfalse;
 				}
-				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head.md3", modelName, i+1);
-				ci->headModel[i] = trap_R_RegisterModel(filename);
-				if(!ci->headModel[i]){
-					if(i == 0){
-						//Com_Printf("Failed to load model file %s\n", filename);
-						return qfalse;
-					}else {
-						ci->headModel[i] = ci->headModel[i - 1];
-					}
+				else{
+					ci->headModel[i] = ci->headModel[i - 1];
 				}
-			//}else {
-			//	ci->legsModel[i] = ci->legsModel[i - 1];
-			//	ci->torsoModel[i] = ci->torsoModel[i - 1];
-			//	ci->headModel[i] = ci->headModel[i - 1];
-			//}
+			}
 		}
 		// ===================================
 		// Skins
 		// ===================================
-		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/lower_%s.skin",modelName,i+1,skinName);
+		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/%s.skin",legsPath,i+1,skinName);
+		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
+			strcpy(headPrefix,"");
+			strcpy(lowerPrefix,"");
+			strcpy(upperPrefix,"");
+			CG_Printf("Printing values of %s/%s/%s\n",headPrefix,upperPrefix,lowerPrefix);
+		}
+		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/%s%s.skin",legsPath,i+1,skinName,lowerPrefix);
 		ci->legsSkin[i] = trap_R_RegisterSkin(filename);
 		if(!ci->legsSkin[i]){
 			if(i == 0){
-				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower_default.skin", modelName, i+1);
+				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%sdefault.skin",legsPath,i+1,lowerPrefix);
 				ci->legsSkin[i] = trap_R_RegisterSkin (filename);
 				if(!ci->legsSkin[i]){
 					//Com_Printf("Failed to load skin file %s\n", filename);
@@ -110,11 +121,11 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				ci->legsSkin[i] = ci->legsSkin[i - 1];
 			}
 		}
-		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/upper_%s.skin",modelName,i+1,skinName);
+		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/%s%s.skin",modelName,i+1,skinName,upperPrefix);
 		ci->torsoSkin[i] = trap_R_RegisterSkin(filename);
 		if(!ci->torsoSkin[i]){
 			if(i == 0){
-				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/upper_default.skin", modelName, i+1);
+				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%sdefault.skin", modelName, i+1,upperPrefix);
 				ci->torsoSkin[i] = trap_R_RegisterSkin (filename);
 				if(!ci->torsoSkin[i]){
 					//Com_Printf("Failed to load skin file %s\n", filename);
@@ -124,11 +135,11 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				ci->torsoSkin[i] = ci->torsoSkin[i - 1];
 			}
 		}
-		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head_%s.skin", modelName, i+1, skinName);
+		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s%s.skin", headPath, i+1,skinName,headPrefix);
 		ci->headSkin[i] = trap_R_RegisterSkin(filename);
 		if(!ci->headSkin[i]){
 			if(i == 0){
-				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head_default.skin", modelName, i+1);
+				Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%sdefault.skin",headPath,i+1,headPrefix);
 				ci->headSkin[i] = trap_R_RegisterSkin (filename);
 				if(!ci->headSkin[i]){
 					//Com_Printf("Failed to load skin file %s\n", filename);
@@ -138,10 +149,58 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 				ci->headSkin[i] = ci->headSkin[i - 1];
 			}
 		}
-		
-			//Com_Printf("End Iteration %i, ci->usingMD4 = %i\n",i,ci->usingMD4);
+		// ===================================
+		// Damage States
+		// ===================================
+		for(partIndex=0;partIndex<3;++partIndex){
+			lastSkinIndex = -1;
+			lastModelIndex = -1;
+			for(damageIndex=9;damageIndex>=0;--damageIndex){
+				if(partIndex==0){
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s_percent%i.md3",headPath,i+1,headPrefix,(damageIndex+1)*10);
+					ci->modelDamageState[i][partIndex][damageIndex] = trap_R_RegisterModel(filename);
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s%s_percent%i.skin",headPath,i+1,headPrefix,skinName,(damageIndex+1)*10);
+					ci->skinDamageState[i][partIndex][damageIndex] = trap_R_RegisterSkin(filename);
+					if(!ci->skinDamageState[i][partIndex][damageIndex]){
+						ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1 ? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->headSkin[i];
+					}
+					else{lastSkinIndex = damageIndex;}
+					if(!ci->modelDamageState[i][partIndex][damageIndex]){
+						ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->headModel[i];
+					}
+					else{lastModelIndex = damageIndex;}
+				}
+				else if(partIndex==1){
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s_percent%i.md3",modelName,i+1,(damageIndex+1)*10);
+					ci->modelDamageState[i][partIndex][damageIndex] = trap_R_RegisterModel(filename);
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s%s_percent%i.skin",modelName,i+1,upperPrefix,skinName,(damageIndex+1)*10);
+					ci->skinDamageState[i][partIndex][damageIndex] = trap_R_RegisterSkin(filename);
+					if(!ci->skinDamageState[i][partIndex][damageIndex]){
+						ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1 ? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->torsoSkin[i];
+					}
+					else{lastSkinIndex = damageIndex;}
+					if(!ci->modelDamageState[i][partIndex][damageIndex]){
+						ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1 ? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->torsoModel[i];
+					}
+					else{lastModelIndex = damageIndex;}
+				}
+				else if(partIndex==2){
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s_percent%i.md3",legsPath,i+1,lowerPrefix,(damageIndex+1)*10);
+					ci->modelDamageState[i][partIndex][damageIndex] = trap_R_RegisterModel(filename);
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s%s_percent%i.skin",legsPath,i+1,lowerPrefix,skinName,(damageIndex+1)*10);
+					ci->skinDamageState[i][partIndex][damageIndex] = trap_R_RegisterSkin(filename);
+					if(!ci->skinDamageState[i][partIndex][damageIndex]){
+						ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->legsSkin[i];
+					}
+					else{lastSkinIndex = damageIndex;}
+					if(!ci->modelDamageState[i][partIndex][damageIndex]){
+						ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->legsModel[i];
+					}
+					else{lastModelIndex = damageIndex;}
+				}
+			}
+		}
 	}
-
 	return qtrue;
 }
 void parseTier(char *path,tierConfig_cg *tier){
@@ -256,6 +315,26 @@ void parseTier(char *path,tierConfig_cg *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->soundTransformDown = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"poweringUpSound")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->soundPoweringUp = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"damageFeatures")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->damageFeatures = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"damageModelsRevertHealed")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->damageModelsRevertHealed = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"damageTexturesRevertHealed")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->damageTexturesRevertHealed = strlen(token) == 4 ? qtrue : qfalse;
 			}
 		}
 	}

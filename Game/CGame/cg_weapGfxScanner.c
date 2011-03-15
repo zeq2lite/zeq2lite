@@ -12,7 +12,7 @@ cg_weapGfxField_t cg_weapGfxFields[] = {
 	{ "model",				CG_weapGfx_ParseModel				},	// Charge, Explosion, Struggle, Missile, Flash
 	{ "skin",				CG_weapGfx_ParseSkin				},	// Charge, Explosion, Struggle, Missile, Flash
 	{ "shader",				CG_weapGfx_ParseShader				},	// Charge, Explosion, Struggle, Missile, Flash
-	{ "timeRange",		CG_weapGfx_ParseTimeRange		},	// Charge
+	{ "animationRange",		CG_weapGfx_ParseAnimationRange		},	// Charge
 	{ "size",				CG_weapGfx_ParseSize				},	// Charge, Explosion, Missile, Flash, Trail
 	{ "light",				CG_weapGfx_ParseDlight				},	// Charge, Explosion, Missile, Flash
 	{ "spin",				CG_weapGfx_ParseSpin				},	// Charge, Missile
@@ -495,7 +495,6 @@ qboolean CG_weapGfx_NextSym( cg_weapGfxScanner_t *scanner, cg_weapGfxToken_t *to
 	// Return an error, because the scanned symbol is invalid
 	CG_weapGfx_ErrorHandle( ERROR_UNKNOWN_SYMBOL, scanner, token->stringval, NULL );
 	return qfalse;
-
 }
 
 

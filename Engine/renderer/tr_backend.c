@@ -62,28 +62,22 @@ void GL_Bind( image_t *image ) {
 /*
 ** GL_SelectTexture
 */
-void GL_SelectTexture( int unit )
-{
-	if ( glState.currenttmu == unit )
-	{
+void GL_SelectTexture(int unit) {
+	if (glState.currenttmu == unit)
 		return;
-	}
 
-	if ( unit == 0 )
-	{
-		qglActiveTextureARB( GL_TEXTURE0_ARB );
-		GLimp_LogComment( "glActiveTextureARB( GL_TEXTURE0_ARB )\n" );
-		qglClientActiveTextureARB( GL_TEXTURE0_ARB );
-		GLimp_LogComment( "glClientActiveTextureARB( GL_TEXTURE0_ARB )\n" );
-	}
-	else if ( unit == 1 )
-	{
-		qglActiveTextureARB( GL_TEXTURE1_ARB );
-		GLimp_LogComment( "glActiveTextureARB( GL_TEXTURE1_ARB )\n" );
-		qglClientActiveTextureARB( GL_TEXTURE1_ARB );
-		GLimp_LogComment( "glClientActiveTextureARB( GL_TEXTURE1_ARB )\n" );
+	if (unit < glConfig.numTextureUnits) {
+		qglActiveTextureARB(GL_TEXTURE0_ARB + unit);
+
+		if (r_logFile->integer)
+			GLimp_LogComment(va("glActiveTextureARB( GL_TEXTURE%i_ARB )\n", unit));
+
+		qglClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
+
+		if (r_logFile->integer)
+			GLimp_LogComment(va("glClientActiveTextureARB( GL_TEXTURE%i_ARB )\n", unit));
 	} else {
-		ri.Error( ERR_DROP, "GL_SelectTexture: unit = %i", unit );
+		ri.Error(ERR_DROP, "GL_SelectTexture: unit = %i", unit);
 	}
 
 	glState.currenttmu = unit;
@@ -567,7 +561,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		// a "entityMergable" shader is a shader that can have surfaces from seperate
 		// entities merged into a single batch, like smoke and blood puff sprites
 		if ((backEnd.currentEntity->e.skel.numBones > 0 || shader != oldShader) || fogNum != oldFogNum || dlighted != oldDlighted 
-			|| ( entityNum != oldEntityNum && !shader->entityMergable ) ) {
+			|| ( entityNum != oldEntityNum && !shader->entityMergable )) {
 			if (oldShader != NULL) {
 				RB_EndSurface();
 			}

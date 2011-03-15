@@ -30,20 +30,21 @@ CG_AdjustFrom640
 Adjusted for resolution and screen aspect ratio
 ================
 */
-void CG_AdjustFrom640( float *x, float *y, float *w, float *h ) {
-#if 0
-	// adjust for wide screens
-	if ( cgs.glconfig.vidWidth * 480 > cgs.glconfig.vidHeight * 640 ) {
-		*x += 0.5 * ( cgs.glconfig.vidWidth - ( cgs.glconfig.vidHeight * 640 / 480 ) );
+void CG_AdjustFrom640( float *x, float *y, float *w, float *h,qboolean stretch) {
+	float ratio = ((float)cgs.screenXScale / (float)cgs.screenYScale);
+	if(0 && !stretch){
+		*x *= ratio;
+		*y *= ratio;
+		*w *= ratio;
+		*h *= ratio;
 	}
-#endif
-	// scale for screen sizes
-	*x *= cgs.screenXScale;
-	*y *= cgs.screenYScale;
-	*w *= cgs.screenXScale;
-	*h *= cgs.screenYScale;
+	else{
+		*x *= cgs.screenXScale;
+		*y *= cgs.screenYScale;
+		*w *= cgs.screenXScale;
+		*h *= cgs.screenYScale;
+	}
 }
-
 /*
 ================
 CG_FillRect
@@ -54,7 +55,7 @@ Coordinates are 640*480 virtual values
 void CG_FillRect( float x, float y, float width, float height, const float *color ) {
 	trap_R_SetColor( color );
 
-	CG_AdjustFrom640( &x, &y, &width, &height );
+	CG_AdjustFrom640( &x, &y, &width, &height,qtrue);
 	trap_R_DrawStretchPic( x, y, width, height, 0, 0, 0, 0, cgs.media.whiteShader );
 
 	trap_R_SetColor( NULL );
@@ -68,14 +69,14 @@ Coords are virtual 640x480
 ================
 */
 void CG_DrawSides(float x, float y, float w, float h, float size) {
-	CG_AdjustFrom640( &x, &y, &w, &h );
+	CG_AdjustFrom640( &x, &y, &w, &h,qtrue);
 	size *= cgs.screenXScale;
 	trap_R_DrawStretchPic( x, y, size, h, 0, 0, 0, 0, cgs.media.whiteShader );
 	trap_R_DrawStretchPic( x + w - size, y, size, h, 0, 0, 0, 0, cgs.media.whiteShader );
 }
 
 void CG_DrawTopBottom(float x, float y, float w, float h, float size) {
-	CG_AdjustFrom640( &x, &y, &w, &h );
+	CG_AdjustFrom640( &x, &y, &w, &h,qtrue);
 	size *= cgs.screenYScale;
 	trap_R_DrawStretchPic( x, y, w, size, 0, 0, 0, 0, cgs.media.whiteShader );
 	trap_R_DrawStretchPic( x, y + h - size, w, size, 0, 0, 0, 0, cgs.media.whiteShader );
@@ -105,8 +106,8 @@ CG_DrawPic
 Coordinates are 640*480 virtual values
 =================
 */
-void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader ) {
-	CG_AdjustFrom640( &x, &y, &width, &height );
+void CG_DrawPic( qboolean stretch, float x, float y, float width, float height, qhandle_t hShader ) {
+	CG_AdjustFrom640( &x, &y, &width, &height,stretch);
 	trap_R_DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader );
 }
 
@@ -135,7 +136,7 @@ void CG_DrawChar( int x, int y, int width, int height, int ch ) {
 	ay = y;
 	aw = width;
 	ah = height;
-	CG_AdjustFrom640( &ax, &ay, &aw, &ah );
+	CG_AdjustFrom640( &ax, &ay, &aw, &ah, qtrue);
 
 	row = ch>>4;
 	col = ch&15;
@@ -161,7 +162,7 @@ to a fixed color.
 Coordinates are at 640 by 480 virtual resolution
 ==================
 */
-void CG_DrawStringExt( int x, int y, const char *string, const float *setColor, 
+void CG_DrawStringExt(int spacing, int x, int y, const char *string, const float *setColor, 
 		qboolean forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars ) {
 	vec4_t		color;
 	const char	*s;
@@ -171,10 +172,11 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 	if (maxChars <= 0)
 		maxChars = 32767; // do them all!
 
+	spacing = spacing == -1 ? charWidth : spacing;
 	// draw the drop shadow
 	if (shadow) {
 		color[0] = color[1] = color[2] = 0;
-		color[3] = setColor[3];
+		color[3] = 0.5;
 		trap_R_SetColor( color );
 		s = string;
 		xx = x;
@@ -186,7 +188,7 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 			}
 			CG_DrawChar( xx + 1, y + 1, charWidth, charHeight, *s );
 			cnt++;
-			xx += charWidth;
+			xx += spacing;
 			s++;
 		}
 	}
@@ -207,7 +209,7 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 			continue;
 		}
 		CG_DrawChar( xx, y, charWidth, charHeight, *s );
-		xx += charWidth;
+		xx += spacing;
 		cnt++;
 		s++;
 	}
@@ -219,11 +221,11 @@ void CG_DrawBigString( int x, int y, const char *s, float alpha ) {
 
 	color[0] = color[1] = color[2] = 1.0;
 	color[3] = alpha;
-	CG_DrawStringExt( x, y, s, color, qfalse, qtrue, BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0 );
+	CG_DrawStringExt(-1, x, y, s, color, qfalse, qtrue, BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0 );
 }
 
 void CG_DrawBigStringColor( int x, int y, const char *s, vec4_t color ) {
-	CG_DrawStringExt( x, y, s, color, qtrue, qtrue, BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0 );
+	CG_DrawStringExt(-1, x, y, s, color, qtrue, qtrue, BIGCHAR_WIDTH, BIGCHAR_HEIGHT, 0 );
 }
 
 void CG_DrawSmallString( int x, int y, const char *s, float alpha ) {
@@ -231,7 +233,15 @@ void CG_DrawSmallString( int x, int y, const char *s, float alpha ) {
 
 	color[0] = color[1] = color[2] = 1.0;
 	color[3] = alpha;
-	CG_DrawStringExt( x, y, s, color, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+	CG_DrawStringExt(-1, x, y, s, color, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+}
+
+void CG_DrawSmallStringCustom( int x, int y, int w, int h, const char *s, float alpha,int spacing) {
+	float	color[4];
+
+	color[0] = color[1] = color[2] = 1.0;
+	color[3] = alpha;
+	CG_DrawStringExt(spacing, x, y, s, color, qfalse, qtrue, w, h, 0 );
 }
 
 void CG_DrawSmallStringHalfHeight( int x, int y, const char *s, float alpha ) {
@@ -239,15 +249,15 @@ void CG_DrawSmallStringHalfHeight( int x, int y, const char *s, float alpha ) {
 
 	color[0] = color[1] = color[2] = 1.0;
 	color[3] = alpha;
-	CG_DrawStringExt( x, y, s, color, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT / 2, 0 );
+	CG_DrawStringExt(-1, x, y, s, color, qfalse, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT / 2, 0 );
 }
 
 void CG_DrawSmallStringColor( int x, int y, const char *s, vec4_t color ) {
-	CG_DrawStringExt( x, y, s, color, qtrue, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
+	CG_DrawStringExt(-1, x, y, s, color, qtrue, qtrue, SMALLCHAR_WIDTH, SMALLCHAR_HEIGHT, 0 );
 }
 
 void CG_DrawMediumStringColor( int x, int y, const char *s, vec4_t color ) {
-	CG_DrawStringExt( x, y, s, color, qtrue, qtrue, MEDIUMCHAR_WIDTH, MEDIUMCHAR_HEIGHT, 0 );
+	CG_DrawStringExt(-1, x, y, s, color, qtrue, qtrue, MEDIUMCHAR_WIDTH, MEDIUMCHAR_HEIGHT, 0 );
 }
 
 /*

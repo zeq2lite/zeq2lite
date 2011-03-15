@@ -28,8 +28,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define UI_TIMER_GESTURE		2300
 #define UI_TIMER_JUMP			1000
 #define UI_TIMER_LAND			130
+#define UI_TIMER_WEAPON_SWITCH	300
 #define UI_TIMER_ATTACK			500
 #define	UI_TIMER_MUZZLE_FLASH	20
+#define	UI_TIMER_WEAPON_DELAY	250
 
 #define JUMP_HEIGHT				56
 
@@ -48,7 +50,84 @@ static float		jumpHeight;
 UI_PlayerInfo_SetWeapon
 ===============
 */
-static void UI_PlayerInfo_SetWeapon( playerInfo_t *pi) {}
+static void UI_PlayerInfo_SetWeapon( playerInfo_t *pi, weapon_t weaponNum ) {
+	char		path[MAX_QPATH];
+
+	pi->currentWeapon = weaponNum;
+tryagain:
+	pi->realWeapon = weaponNum;
+	pi->weaponModel = 0;
+	pi->barrelModel = 0;
+	pi->flashModel = 0;
+
+	if ( weaponNum == WP_NONE ) {
+		return;
+	}
+	if( pi->weaponModel == 0 ) {
+		if( weaponNum == WP_MACHINEGUN ) {
+			weaponNum = WP_NONE;
+			goto tryagain;
+		}
+		weaponNum = WP_MACHINEGUN;
+		goto tryagain;
+	}
+
+	if ( weaponNum == WP_MACHINEGUN || weaponNum == WP_GAUNTLET || weaponNum == WP_BFG ) {
+		COM_StripExtension( path, path, sizeof(path) );
+		strcat( path, "_barrel.md3" );
+		pi->barrelModel = trap_R_RegisterModel( path );
+	}
+
+	COM_StripExtension( path, path, sizeof(path) );
+	strcat( path, "_flash.md3" );
+	pi->flashModel = trap_R_RegisterModel( path );
+
+	switch( weaponNum ) {
+	case WP_GAUNTLET:
+		MAKERGB( pi->flashDlightColor, 0.6f, 0.6f, 1 );
+		break;
+
+	case WP_MACHINEGUN:
+		MAKERGB( pi->flashDlightColor, 1, 1, 0 );
+		break;
+
+	case WP_SHOTGUN:
+		MAKERGB( pi->flashDlightColor, 1, 1, 0 );
+		break;
+
+	case WP_GRENADE_LAUNCHER:
+		MAKERGB( pi->flashDlightColor, 1, 0.7f, 0.5f );
+		break;
+
+	case WP_ROCKET_LAUNCHER:
+		MAKERGB( pi->flashDlightColor, 1, 0.75f, 0 );
+		break;
+
+	case WP_LIGHTNING:
+		MAKERGB( pi->flashDlightColor, 0.6f, 0.6f, 1 );
+		break;
+
+	case WP_RAILGUN:
+		MAKERGB( pi->flashDlightColor, 1, 0.5f, 0 );
+		break;
+
+	case WP_PLASMAGUN:
+		MAKERGB( pi->flashDlightColor, 0.6f, 0.6f, 1 );
+		break;
+
+	case WP_BFG:
+		MAKERGB( pi->flashDlightColor, 1, 0.7f, 1 );
+		break;
+
+	case WP_GRAPPLING_HOOK:
+		MAKERGB( pi->flashDlightColor, 0.6f, 0.6f, 1 );
+		break;
+
+	default:
+		MAKERGB( pi->flashDlightColor, 1, 1, 1 );
+		break;
+	}
+}
 
 
 /*
@@ -505,8 +584,8 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK_RECOVER_1 );
 		} else if ( ANIM_KNOCKBACK_RECOVER_2 == torsoAnimNum ) {
 			UI_RunLerpFrame( pi, &pi->head, ANIM_KNOCKBACK_RECOVER_2 );
-		} else if ( ANIM_SKILL1_CHARGE <= torsoAnimNum && ANIM_SKILL32_ALT_FIRE >= torsoAnimNum ) {
-			UI_RunLerpFrame( pi, &pi->head, torsoAnimNum - ANIM_SKILL1_CHARGE + ANIM_SKILL1_CHARGE );
+		} else if ( ANIM_KI_ATTACK1_PREPARE <= torsoAnimNum && ANIM_KI_ATTACK6_ALT_FIRE >= torsoAnimNum ) {
+			UI_RunLerpFrame( pi, &pi->head, torsoAnimNum - ANIM_KI_ATTACK1_PREPARE + ANIM_KI_ATTACK1_PREPARE );
 		} else {
 			legsAnimNum = pi->legsAnim & ~ANIM_TOGGLEBIT;
 			if ( 0 ) {
@@ -723,7 +802,37 @@ static void UI_PlayerFloatSprite( playerInfo_t *pi, vec3_t origin, qhandle_t sha
 UI_MachinegunSpinAngle
 ======================
 */
-float	UI_MachinegunSpinAngle( playerInfo_t *pi ) {return 0.0;}
+float	UI_MachinegunSpinAngle( playerInfo_t *pi ) {
+	int		delta;
+	float	angle;
+	float	speed;
+	int		torsoAnim;
+/*
+	delta = dp_realtime - pi->barrelTime;
+	if ( pi->barrelSpinning ) {
+		angle = pi->barrelAngle + delta * SPIN_SPEED;
+	} else {
+		if ( delta > COAST_TIME ) {
+			delta = COAST_TIME;
+		}
+
+		speed = 0.5 * ( SPIN_SPEED + (float)( COAST_TIME - delta ) / COAST_TIME );
+		angle = pi->barrelAngle + delta * speed;
+	}
+
+	torsoAnim = pi->torsoAnim  & ~ANIM_TOGGLEBIT;
+
+	if( torsoAnim == ANIM_ATTACK2 ) {
+		torsoAnim = ANIM_ATTACK;
+	}
+	if ( pi->barrelSpinning == !(torsoAnim == ANIM_ATTACK) ) {
+		pi->barrelTime = dp_realtime;
+		pi->barrelAngle = AngleMod( angle );
+		pi->barrelSpinning = !!(torsoAnim == ANIM_ATTACK);
+	}
+*/
+	return angle;
+}
 
 
 /*
@@ -756,6 +865,13 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	}
 
 	dp_realtime = time;
+
+	if ( pi->pendingWeapon != -1 && dp_realtime > pi->weaponTimer ) {
+		pi->weapon = pi->pendingWeapon;
+		pi->lastWeapon = pi->pendingWeapon;
+		pi->pendingWeapon = -1;
+		pi->weaponTimer = 0;
+	}
 
 	UI_AdjustFrom640( &x, &y, &w, &h );
 
@@ -852,7 +968,64 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	head.renderfx = renderfx;
 
 	trap_R_AddRefEntityToScene( &head );
+/*
+	//
+	// add the gun
+	//
+	if ( pi->currentWeapon != WP_NONE ) {
+		memset( &gun, 0, sizeof(gun) );
+		gun.hModel = pi->weaponModel;
+		VectorCopy( origin, gun.lightingOrigin );
+		UI_PositionEntityOnTag( &gun, &torso, pi->torsoModel, "tag_weapon");
+		gun.renderfx = renderfx;
+		trap_R_AddRefEntityToScene( &gun );
+	}
 
+	//
+	// add the spinning barrel
+	//
+	if ( pi->realWeapon == WP_MACHINEGUN || pi->realWeapon == WP_GAUNTLET || pi->realWeapon == WP_BFG ) {
+		vec3_t	angles;
+
+		memset( &barrel, 0, sizeof(barrel) );
+		VectorCopy( origin, barrel.lightingOrigin );
+		barrel.renderfx = renderfx;
+
+		barrel.hModel = pi->barrelModel;
+		angles[YAW] = 0;
+		angles[PITCH] = 0;
+		angles[ROLL] = UI_MachinegunSpinAngle( pi );
+		if( pi->realWeapon == WP_GAUNTLET || pi->realWeapon == WP_BFG ) {
+			angles[PITCH] = angles[ROLL];
+			angles[ROLL] = 0;
+		}
+		AnglesToAxis( angles, barrel.axis );
+
+		UI_PositionRotatedEntityOnTag( &barrel, &gun, pi->weaponModel, "tag_barrel");
+
+		trap_R_AddRefEntityToScene( &barrel );
+	}
+
+	//
+	// add muzzle flash
+	//
+	if ( dp_realtime <= pi->muzzleFlashTime ) {
+		if ( pi->flashModel ) {
+			memset( &flash, 0, sizeof(flash) );
+			flash.hModel = pi->flashModel;
+			VectorCopy( origin, flash.lightingOrigin );
+			UI_PositionEntityOnTag( &flash, &gun, pi->weaponModel, "tag_flash");
+			flash.renderfx = renderfx;
+			trap_R_AddRefEntityToScene( &flash );
+		}
+
+		// make a dlight for the flash
+		if ( pi->flashDlightColor[0] || pi->flashDlightColor[1] || pi->flashDlightColor[2] ) {
+			trap_R_AddLightToScene( flash.origin, 200 + (rand()&31), pi->flashDlightColor[0],
+				pi->flashDlightColor[1], pi->flashDlightColor[2] );
+		}
+	}
+*/
 	//
 	// add the chat icon
 	//
@@ -880,6 +1053,9 @@ void UI_DrawPlayer_zMesh( float x, float y, float w, float h, playerInfo_t *pi, 
 	refEntity_t		legs;
 	refEntity_t		torso;
 	refEntity_t		head;
+	refEntity_t		gun;
+	refEntity_t		barrel;
+	refEntity_t		flash;
 	vec3_t			origin;
 	int				renderfx;
 	vec3_t			mins = {-16, -16, -24};
@@ -892,6 +1068,14 @@ void UI_DrawPlayer_zMesh( float x, float y, float w, float h, playerInfo_t *pi, 
 	}
 
 	dp_realtime = time;
+
+	if ( pi->pendingWeapon != -1 && dp_realtime > pi->weaponTimer ) {
+		pi->weapon = pi->pendingWeapon;
+		pi->lastWeapon = pi->pendingWeapon;
+		pi->pendingWeapon = -1;
+		pi->weaponTimer = 0;
+	}
+
 	UI_AdjustFrom640( &x, &y, &w, &h );
 
 	y -= jumpHeight;
@@ -977,73 +1161,6 @@ void UI_DrawPlayer_zMesh( float x, float y, float w, float h, playerInfo_t *pi, 
 
 /*
 ==========================
-UI_FileExists
-==========================
-*/
-static qboolean	UI_FileExists(const char *filename) {
-	int len;
-
-	len = trap_FS_FOpenFile( filename, 0, FS_READ );
-	if (len>0) {
-		return qtrue;
-	}
-	return qfalse;
-}
-
-/*
-==========================
-UI_FindClientHeadFile
-==========================
-*/
-static qboolean	UI_FindClientHeadFile( char *filename, int length, const char *teamName, const char *headModelName, const char *headSkinName, const char *base, const char *ext ) {
-	char *team, *headsFolder;
-	int i;
-
-	team = "default";
-
-	if ( headModelName[0] == '*' ) {
-		headsFolder = "heads/";
-		headModelName++;
-	}
-	else {
-		headsFolder = "";
-	}
-	while(1) {
-		for ( i = 0; i < 2; i++ ) {
-			if ( i == 0 && teamName && *teamName ) {
-				Com_sprintf( filename, length, "players//%s%s/%s/%s%s_%s.%s", headsFolder, headModelName, headSkinName, teamName, base, team, ext );
-			}
-			else {
-				Com_sprintf( filename, length, "players//%s%s/%s/%s_%s.%s", headsFolder, headModelName, headSkinName, base, team, ext );
-			}
-			if ( UI_FileExists( filename ) ) {
-				return qtrue;
-			}
-			if ( i == 0 && teamName && *teamName ) {
-				Com_sprintf( filename, length, "players//%s%s/%s%s_%s.%s", headsFolder, headModelName, teamName, base, headSkinName, ext );
-			}
-			else {
-				Com_sprintf( filename, length, "players//%s%s/%s_%s.%s", headsFolder, headModelName, base, headSkinName, ext );
-			}
-			if ( UI_FileExists( filename ) ) {
-				return qtrue;
-			}
-			if ( !teamName || !*teamName ) {
-				break;
-			}
-		}
-		// if tried the heads folder first
-		if ( headsFolder[0] ) {
-			break;
-		}
-		headsFolder = "heads/";
-	}
-
-	return qfalse;
-}
-
-/*
-==========================
 UI_RegisterClientSkin
 ==========================
 */
@@ -1097,8 +1214,6 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 	trap_FS_Read( text, len, f );
 	text[len] = 0;
 	trap_FS_FCloseFile( f );
-
-	COM_Compress(text);
 
 	// parse the text
 	text_p = text;
@@ -1198,9 +1313,9 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 		// ADDING FOR ZEQ2
 
 		// Read the continuous flag for ki attack animations
-		if ( i >= ANIM_SKILL1_FIRE &&
+		if ( i >= ANIM_KI_ATTACK1_FIRE &&
 			 i < MAX_ANIMATIONS &&
-			 (i - ANIM_SKILL1_FIRE) % 2 == 0 ) {
+			 (i - ANIM_KI_ATTACK1_FIRE) % 2 == 0 ) {
 			token = COM_Parse( &text_p );
 			if ( !*token ) {
 				break;
@@ -1306,8 +1421,14 @@ UI_PlayerInfo_SetModel
 void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model ) {
 	memset( pi, 0, sizeof(*pi) );
 	UI_RegisterClientModelname( pi, model );
+	pi->weapon = WP_MACHINEGUN;
+	pi->currentWeapon = pi->weapon;
+	pi->lastWeapon = pi->weapon;
+	pi->pendingWeapon = -1;
+	pi->weaponTimer = 0;
 	pi->chat = qfalse;
 	pi->newModel = qtrue;
+	UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 }
 
 
@@ -1316,8 +1437,9 @@ void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model ) {
 UI_PlayerInfo_SetInfo
 ===============
 */
-void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_t viewAngles, vec3_t moveAngles, qboolean chat ) {
+void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_t viewAngles, vec3_t moveAngles, weapon_t weaponNumber, qboolean chat ) {
 	int			currentAnim;
+	weapon_t	weaponNum;
 
 	pi->chat = chat;
 
@@ -1346,10 +1468,18 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 		pi->head.yawAngle = viewAngles[YAW];
 		pi->head.yawing = qfalse;
 */
+		if ( weaponNumber != -1 ) {
+			pi->weapon = weaponNumber;
+			pi->currentWeapon = weaponNumber;
+			pi->lastWeapon = weaponNumber;
+			pi->pendingWeapon = -1;
+			pi->weaponTimer = 0;
+			UI_PlayerInfo_SetWeapon( pi, pi->weapon );
+		}
+
 		return;
 	}
 
-  /*
 	// weapon
 	if ( weaponNumber == -1 ) {
 		pi->pendingWeapon = -1;
@@ -1361,12 +1491,11 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	}
 	weaponNum = pi->lastWeapon;
 	pi->weapon = weaponNum;
- */
 
 	if ( torsoAnim == ANIM_DEATH_GROUND || legsAnim == ANIM_DEATH_GROUND ) {
 		torsoAnim = legsAnim = ANIM_DEATH_GROUND;
-		//pi->weapon = pi->currentWeapon = WP_NONE;
-		//UI_PlayerInfo_SetWeapon( pi, pi->weapon );
+		pi->weapon = pi->currentWeapon = WP_NONE;
+		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 
 		jumpHeight = 0;
 		pi->pendingLegsAnim = 0;
@@ -1391,13 +1520,34 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 
 	// torso animation
 	if ( torsoAnim == ANIM_IDLE || torsoAnim == ANIM_IDLE_LOCKED ) {
-		torsoAnim = ANIM_IDLE;
+		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
+			torsoAnim = ANIM_IDLE;
+		}
+		else {
+			torsoAnim = ANIM_IDLE;
+		}
 	}
-
-
+/*
+	if ( torsoAnim == ANIM_ATTACK || torsoAnim == ANIM_ATTACK2 ) {
+		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
+			torsoAnim = ANIM_ATTACK2;
+		}
+		else {
+			torsoAnim = ANIM_ATTACK;
+		}
+		pi->muzzleFlashTime = dp_realtime + UI_TIMER_MUZZLE_FLASH;
+		//FIXME play firing sound here
+	}
+*/
 	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
-	
-	if ( torsoAnim != currentAnim ) {
+/*
+	if ( weaponNum != pi->currentWeapon || currentAnim == ANIM_RAISE || currentAnim == ANIM_DROP ) {
+		pi->pendingTorsoAnim = torsoAnim;
+	}
+	else if ( ( currentAnim == ANIM_GESTURE || currentAnim == ANIM_ATTACK ) && ( torsoAnim != currentAnim ) ) {
+		pi->pendingTorsoAnim = torsoAnim;
+	}
+	else */if ( torsoAnim != currentAnim ) {
 		pi->pendingTorsoAnim = 0;
 		UI_ForceTorsoAnim( pi, torsoAnim );
 	}

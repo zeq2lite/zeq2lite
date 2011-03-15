@@ -71,22 +71,6 @@ static void Options_Event( void* ptr, int event ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_GRAPHICS:
-		UI_GraphicsOptionsMenu();
-		break;
-
-	case ID_DISPLAY:
-		UI_DisplayOptionsMenu();
-		break;
-
-	case ID_SOUND:
-		UI_SoundOptionsMenu();
-		break;
-
-	case ID_NETWORK:
-		UI_NetworkOptionsMenu();
-		break;
-
 	case ID_BACK:
 		UI_PopMenu();
 		break;

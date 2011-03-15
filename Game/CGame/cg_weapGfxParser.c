@@ -45,9 +45,9 @@ void CG_weapGfx_StoreBuffer(int clientNum, int weaponNum) {
 	
 	Q_strncpyz( dest->chargeTag[0], src->chargeTag[0], sizeof( dest->chargeTag[0] ));
 
-	dest->chargeGrowth = ( src->chargeTimeStart != src->chargeTimeEnd ); // <-- May become redundant...
-	dest->chargeTimeStart = src->chargeTimeStart;
-	dest->chargeTimeEnd = src->chargeTimeEnd;
+	dest->chargeGrowth = ( src->chargeStartPct != src->chargeEndPct ); // <-- May become redundant...
+	dest->chargeStartPct = src->chargeStartPct;
+	dest->chargeEndPct = src->chargeEndPct;
 	dest->chargeStartsize = src->chargeStartsize;
 	dest->chargeEndsize = src->chargeEndsize;
 	dest->chargeDlightStartRadius = src->chargeDlightStartRadius;
@@ -430,13 +430,13 @@ qboolean CG_weapGfx_ParseShader( cg_weapGfxParser_t *parser, cg_weapGfxCategoryI
 
 /*
 ================================
-CG_weapGfx_ParseTimeRange
+CG_weapGfx_ParseAnimationRange
 ================================
-Parses 'timeRange' field.
+Parses 'animationRange' field.
 Syntax:
-'timeRange' '=' ( '[' <int> <int> ']' | <int> )
+'animationRange' '=' ( '[' <int> <int> ']' | <int> )
 */
-qboolean CG_weapGfx_ParseTimeRange( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field ) {
+qboolean CG_weapGfx_ParseAnimationRange( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field ) {
 	cg_weapGfxToken_t	*token;
 	cg_weapGfxScanner_t	*scanner;
 
@@ -447,8 +447,16 @@ qboolean CG_weapGfx_ParseTimeRange( cg_weapGfxParser_t *parser, cg_weapGfxCatego
 	case CAT_CHARGE:
 		switch ( token->tokenSym ) {
 		case TOKEN_INTEGER:
-			cg_weapGfxBuffer.chargeTimeStart = token->intval;
-			cg_weapGfxBuffer.chargeTimeEnd = token->intval;
+			if ( token->intval > 100 ) {
+				CG_weapGfx_ErrorHandle( ERROR_OVER_MAXBOUND, scanner, token->stringval, "100" );
+				return qfalse;
+			}
+			if ( token->intval < 0 ) {
+				CG_weapGfx_ErrorHandle( ERROR_UNDER_MINBOUND, scanner, token->stringval, "0" );
+				return qfalse;
+			}
+			cg_weapGfxBuffer.chargeStartPct = token->intval;
+			cg_weapGfxBuffer.chargeEndPct = token->intval;
 			break;		
 
 		case TOKEN_OPENRANGE:
@@ -463,7 +471,15 @@ qboolean CG_weapGfx_ParseTimeRange( cg_weapGfxParser_t *parser, cg_weapGfxCatego
 				CG_weapGfx_ErrorHandle( ERROR_INTEGER_EXPECTED, scanner, token->stringval, NULL );
 				return qfalse;
 			} else {
-				cg_weapGfxBuffer.chargeTimeStart = token->intval;
+				if ( token->intval > 100 ) {
+					CG_weapGfx_ErrorHandle( ERROR_OVER_MAXBOUND, scanner, token->stringval, "100" );
+					return qfalse;
+				}
+				if ( token->intval < 0 ) {
+					CG_weapGfx_ErrorHandle( ERROR_UNDER_MINBOUND, scanner, token->stringval, "0" );
+					return qfalse;
+				}
+				cg_weapGfxBuffer.chargeStartPct = token->intval;
 			}
 
 			if ( !CG_weapGfx_NextSym( scanner, token ) ) {
@@ -480,11 +496,19 @@ qboolean CG_weapGfx_ParseTimeRange( cg_weapGfxParser_t *parser, cg_weapGfxCatego
 				
 				// Make sure this range is not inverted!
 				// NOTE: This is the only range that must NOT be inverted.
-				if ( token->intval < cg_weapGfxBuffer.chargeTimeStart ) {
-					CG_weapGfx_ErrorHandle( ERROR_INVERTED_RANGE, scanner, token->stringval, va("%s", cg_weapGfxBuffer.chargeTimeStart) );
+				if ( token->intval < cg_weapGfxBuffer.chargeStartPct ) {
+					CG_weapGfx_ErrorHandle( ERROR_INVERTED_RANGE, scanner, token->stringval, va("%s", cg_weapGfxBuffer.chargeStartPct) );
 					return qfalse;
 				} else {
-					cg_weapGfxBuffer.chargeTimeEnd = token->intval;
+					if ( token->intval > 100 ) {
+						CG_weapGfx_ErrorHandle( ERROR_OVER_MAXBOUND, scanner, token->stringval, "100" );
+						return qfalse;
+					}
+					if ( token->intval < 0 ) {
+						CG_weapGfx_ErrorHandle( ERROR_UNDER_MINBOUND, scanner, token->stringval, "0" );
+						return qfalse;
+					}
+					cg_weapGfxBuffer.chargeEndPct = token->intval;
 				}
 			}			
 
@@ -529,9 +553,9 @@ qboolean CG_weapGfx_ParseTimeRange( cg_weapGfxParser_t *parser, cg_weapGfxCatego
 
 /*
 ======================
-CG_weapGfx_TimeRange
+CG_weapGfx_ParseSize
 ======================
-Parses 'timeRange' field.
+Parses 'animationRange' field.
 Syntax:
 'size' '=' ( <int> | <float> )  |  ( '[' ( <int> | float ) ( <int> | <float> ']' )
 */
@@ -2676,7 +2700,7 @@ qboolean CG_weapGfx_Parse( char *filename, int clientNum ) {
 			}
 		}
 
-		CG_weapGfx_StoreBuffer( clientNum, i + skAltOffset );
+		CG_weapGfx_StoreBuffer( clientNum, i + ALTWEAPON_OFFSET );
 
 	}
 

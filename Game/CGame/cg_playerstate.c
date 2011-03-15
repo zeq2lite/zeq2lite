@@ -136,7 +136,7 @@ A respawn happened this snapshot
 void CG_Respawn( void ) {
 	// no error decay on player movement
 	cg.thisFrameTeleport = qtrue;
-
+	cg.resetValues = qtrue;
 	// display weapons available
 	cg.weaponSelectTime = cg.time;
 

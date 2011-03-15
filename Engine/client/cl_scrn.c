@@ -196,6 +196,46 @@ to a fixed color.
 Coordinates are at 640 by 480 virtual resolution
 ==================
 */
+
+void SCR_DrawCustomString(int spacing,int x, int y, const char *string) {
+	vec4_t		color,shadow;
+	const char	*s;
+	int			xx;
+	int size = 10;
+	shadow[0] = shadow[1] = shadow[2] = 0;
+	shadow[3] = 0.7;
+	color[0] = color[1] = color[2] = color[3] = 1.0;
+	re.SetColor(shadow);
+	s = string;
+	xx = x;
+	while ( *s ) {
+		if (Q_IsColorString( s ) ) {
+			s += 2;
+			continue;
+		}
+		SCR_DrawChar( xx+1, y+1, size, *s );
+		xx += spacing;
+		s++;
+	}
+	// draw the colored text
+	s = string;
+	xx = x;
+	re.SetColor(color );
+	while ( *s ) {
+		if (Q_IsColorString( s ) ) {
+			Com_Memcpy(shadow, g_color_table[ColorIndex(*(s+1))], sizeof( shadow ) );
+			shadow[3] = 0.7;
+			re.SetColor(shadow);
+			s += 2;
+			continue;
+		}
+		SCR_DrawChar( xx, y, size, *s );
+		xx += spacing;
+		s++;
+	}
+	re.SetColor(NULL);
+}
+
 void SCR_DrawStringExt( int x, int y, float size, const char *string, float *setColor, qboolean forceColor,
 		qboolean noColorEscape ) {
 	vec4_t		color;
@@ -204,7 +244,7 @@ void SCR_DrawStringExt( int x, int y, float size, const char *string, float *set
 
 	// draw the drop shadow
 	color[0] = color[1] = color[2] = 0;
-	color[3] = setColor[3];
+	color[3] = 0.7;
 	re.SetColor( color );
 	s = string;
 	xx = x;
@@ -290,7 +330,6 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, 
 	}
 	re.SetColor( NULL );
 }
-
 
 
 /*

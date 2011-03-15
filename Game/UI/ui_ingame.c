@@ -34,7 +34,7 @@ INGAME MENU
 #define INGAME_MENU_VERTICAL_SPACING	28
 
 #define ID_SETUP				13
-#define ID_SERVERINFO			14
+#define ID_CAMERA				14
 #define ID_LEAVEARENA			15
 #define ID_RESTART				16
 #define ID_QUIT					17
@@ -44,6 +44,7 @@ typedef struct {
 	menuframework_s	menu;
 	menubitmap_s	frame;
 	menutext_s		setup;
+	menutext_s		camera;
 	menutext_s		server;
 	menutext_s		leave;
 	menutext_s		restart;
@@ -98,6 +99,10 @@ void InGame_Event( void *ptr, int notification ) {
 		UI_SetupMenu();
 		break;
 
+	case ID_CAMERA:
+		UI_CameraMenu();
+		break;		
+
 	case ID_LEAVEARENA:
 		// JUHOX: reset edit mode
 #if MAPLENSFLARES
@@ -112,10 +117,6 @@ void InGame_Event( void *ptr, int notification ) {
 
 	case ID_QUIT:
 		UI_ConfirmMenu( "EXIT GAME?",  0, InGame_QuitAction );
-		break;
-
-	case ID_SERVERINFO:
-		UI_ServerInfoMenu();
 		break;
 
 	case ID_RESUME:
@@ -174,7 +175,18 @@ void InGame_MenuInit( void ) {
 	s_ingame.setup.string				= "OPTIONS";
 	s_ingame.setup.color				= color_white;
 	s_ingame.setup.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
-
+	
+	y += INGAME_MENU_VERTICAL_SPACING;
+	s_ingame.camera.generic.type		= MTYPE_PTEXT;
+	s_ingame.camera.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_ingame.camera.generic.x			= 320;
+	s_ingame.camera.generic.y			= y;
+	s_ingame.camera.generic.id			= ID_CAMERA;
+	s_ingame.camera.generic.callback	= InGame_Event; 
+	s_ingame.camera.string				= "CAMERA";
+	s_ingame.camera.color				= color_white;
+	s_ingame.camera.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	
 	y += INGAME_MENU_VERTICAL_SPACING;
 	s_ingame.restart.generic.type		= MTYPE_PTEXT;
 	s_ingame.restart.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -204,6 +216,7 @@ void InGame_MenuInit( void ) {
 	Menu_AddItem( &s_ingame.menu, &s_ingame.frame );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.resume );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.restart );
+	Menu_AddItem( &s_ingame.menu, &s_ingame.camera );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.setup );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.leave );
 }
