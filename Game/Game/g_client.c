@@ -1174,7 +1174,9 @@ void ClientDisconnect( int clientNum ) {
 	}
 
 	trap_UnlinkEntity (ent);
+	ent->client->ps.powerLevel[plHealth] = 0;
 	ent->s.modelindex = 0;
+	ent->r.contents &= ~CONTENTS_BODY;
 	ent->inuse = qfalse;
 	ent->classname = "disconnected";
 	ent->client->pers.connected = CON_DISCONNECTED;

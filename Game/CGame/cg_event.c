@@ -322,12 +322,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_HIGHJUMP:
 		DEBUGNAME("EV_HIGHJUMP");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "highjump" ) );
-		CG_PlayerDirtPush(cent,10,qtrue);
+		CG_PlayerDirtPush(cent,20,qtrue);
 		break;
 	case EV_JUMP:
 		DEBUGNAME("EV_JUMP");
 		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "jump" ) );
-		CG_PlayerDirtPush(cent,5,qtrue);
+		CG_PlayerDirtPush(cent,10,qtrue);
 		break;
 	case EV_LOCKON_START:
 		DEBUGNAME("EV_LOCKON_START");

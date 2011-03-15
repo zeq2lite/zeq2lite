@@ -422,6 +422,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_DEATH:
 			ps->powerLevel[plTierCurrent] = 0;
+			ent->r.contents &= ~CONTENTS_BODY;
 			syncTier(client);
 			client->respawnTime = level.time + 10000;
 			break;

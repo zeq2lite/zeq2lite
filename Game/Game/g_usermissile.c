@@ -1542,7 +1542,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	G_LocationImpact(trace->endpos,other,GetMissileOwnerEntity(self));
 	// Initiate Player Interaction
 	if(other->s.eType == ET_PLAYER){
-		G_Printf("I hit a player!\n");
 		if((other->client->ps.bitFlags & usingBlock) && other->client->lasthurt_location == LOCATION_FRONT){
 			if(self->isSwattable){
 				self->bounceFrac = 1.0f;
@@ -1567,7 +1566,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 				//Do Explosion Below
 			}
 			else{
-				G_Printf("Burn Time!\n");
 				self->enemy = other;
 				self->enemy->client->ps.timers[tmBurning] = 0;
 				self->think = Think_NormalMissileBurnPlayer;
@@ -1576,7 +1574,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			}
 		}
 		else if(self->s.eType == ET_BEAMHEAD){
-			G_Printf("Ride Time!\n");
 			self->enemy = other;
 			self->think = Think_NormalMissileRidePlayer;
 			self->nextthink = level.time;

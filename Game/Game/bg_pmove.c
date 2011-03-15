@@ -2677,6 +2677,7 @@ void PM_Weapon(void){
 					PM_StartTorsoAnim(ANIM_KI_ATTACK1_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
+				pm->ps->stats[stChargePercentPrimary] = 100;
 				pm->ps->powerLevel[plUseFatigue] += costPrimary * pm->ps->baseStats[stEnergyAttackCost];
 				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
 					PM_AddEvent(EV_FIRE_WEAPON );
@@ -2695,6 +2696,7 @@ void PM_Weapon(void){
 					PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_PREPARE + (pm->ps->weapon - 1) * 2 );
 					break;
 				}
+				pm->ps->stats[stChargePercentSecondary] = 100;
 				pm->ps->powerLevel[plUseFatigue] += costSecondary * pm->ps->baseStats[stEnergyAttackCost];
 				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
 					pm->ps->weaponstate = WEAPON_ALTFIRING;
