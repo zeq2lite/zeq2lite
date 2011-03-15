@@ -40,7 +40,6 @@ void G_RadarUpdateCS(void) {
 
 				g_playerOrigins[i].pl = ps->powerLevel[plCurrent];
 				g_playerOrigins[i].plMax = ps->powerLevel[plMaximum];
-				g_playerOrigins[i].health = ps->powerLevel[plHealth];
 				g_playerOrigins[i].clientNum = ps->clientNum;
 
 				g_playerOrigins[i].properties = 0;
@@ -74,7 +73,6 @@ void G_RadarUpdateCS(void) {
 				strcat(cmd, va(" %i,", g_playerOrigins[i].clientNum));
 				strcat(cmd, va("%i,",  g_playerOrigins[i].pl));
 				strcat(cmd, va("%i,",  g_playerOrigins[i].plMax));
-				strcat(cmd, va("%i,",  g_playerOrigins[i].health));
 				strcat(cmd, va("%i,",  g_playerOrigins[i].team));
 				strcat(cmd, va("%i,",  g_playerOrigins[i].properties));
 				strcat(cmd, va("%i,",  (int)ceil(g_playerOrigins[i].pos[0])));

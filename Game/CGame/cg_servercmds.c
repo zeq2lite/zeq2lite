@@ -1118,15 +1118,6 @@ static void CG_ServerCommand( void ) {
 			//skip over the comma
 			ptr++;
 
-			//read in the health
-			cg_playerOrigins[i].health = atof(ptr);
-
-			//move the ptr on until we come to a comma
-			ptr = strchr(ptr, ',');
-
-			//skip over the comma
-			ptr++;
-
 			//read in the team
 			cg_playerOrigins[i].team = atof(ptr);
 

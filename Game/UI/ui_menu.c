@@ -330,7 +330,7 @@ void UI_MainMenu( void ) {
 	s_main.player.generic.id				= ID_MODEL;
 	s_main.player.generic.callback			= Main_MenuEvent;
 	s_main.player.generic.x					= 380;
-	s_main.player.generic.y					= -118;
+	s_main.player.generic.y					= -170;
 	s_main.player.width						= 320;
 	s_main.player.height					= 810;
 

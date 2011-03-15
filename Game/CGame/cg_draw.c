@@ -690,7 +690,6 @@ static void CG_DrawStatusBar( void ) {
 	clientInfo_t	*ci;
 	cg_userWeapon_t	*weaponGraphics;
 	tierConfig_cg	*activeTier;
-	int				i;
 
 	ci = &cgs.clientinfo[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
@@ -704,20 +703,15 @@ static void CG_DrawStatusBar( void ) {
 	cent = &cg_entities[cg.snap->ps.clientNum];
 	tier = (float)ps->powerLevel[plTierCurrent];
 	CG_CheckChat();
-	if(ps->lockedTarget > 0 && &cgs.clientinfo[ps->lockedTarget-1].infoValid){
-		for(i=0; i<MAX_CLIENTS; i++) {
-			if(cg_playerOrigins[i].clientNum == ps->lockedTarget-1) {
-				lockedTargetPS.clientNum = cg_playerOrigins[i].clientNum;
-				lockedTargetPS.powerLevel[plCurrent] = ps->lockedPlayerData[lkPowerCurrent];
-				lockedTargetPS.powerLevel[plHealth] = ps->lockedPlayerData[lkPowerHealth];
-				lockedTargetPS.powerLevel[plMaximum] = ps->lockedPlayerData[lkPowerMaximum];
-				lockedTargetPS.powerLevel[plFatigue] = lockedTargetPS.powerLevel[plMaximum];
-				lockedTargetPS.powerLevel[plTierCurrent] = cgs.clientinfo[lockedTargetPS.clientNum].tierCurrent;
-				CG_DrawHUD(&lockedTargetPS,lockedTargetPS.clientNum,320,0,qtrue);
-				break;
-			}
-		}
+	if(ps->lockedTarget > 0 && cgs.clientinfo[ps->lockedTarget-1].infoValid){
+		lockedTargetPS.clientNum = ps->lockedTarget-1;
+		lockedTargetPS.powerLevel[plCurrent] = ps->lockedPlayerData[lkPowerCurrent];
+		lockedTargetPS.powerLevel[plHealth] = ps->lockedPlayerData[lkPowerHealth];
+		lockedTargetPS.powerLevel[plMaximum] = ps->lockedPlayerData[lkPowerMaximum];
+		lockedTargetPS.powerLevel[plFatigue] = lockedTargetPS.powerLevel[plMaximum];
+		lockedTargetPS.powerLevel[plTierCurrent] = cgs.clientinfo[lockedTargetPS.clientNum].tierCurrent;
 		CG_DrawHUD(ps,ps->clientNum,0,0,qfalse);
+		CG_DrawHUD(&lockedTargetPS,lockedTargetPS.clientNum,320,0,qtrue);
 	}
 	else{
 		CG_DrawHUD(ps,ps->clientNum,0,408,qfalse);
