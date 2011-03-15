@@ -978,7 +978,6 @@ void UI_Cache_f( void ) {
 	InGame_Cache();
 	ConfirmMenu_Cache();
 	PlayerModel_Cache();
-	PlayerSettings_Cache();
 	Controls_Cache();
 	Preferences_Cache();
 	ServerInfo_Cache();
@@ -987,7 +986,6 @@ void UI_Cache_f( void ) {
 	StartServer_Cache();
 	ServerOptions_Cache();
 	SystemSettings_Cache();
-	UI_SetupMenu_Cache();
 }
 
 /*

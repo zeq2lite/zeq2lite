@@ -14,8 +14,6 @@ set cc=call ..\..\..\Tools\Compiler\Perform.bat
 @if errorlevel 1 goto quit
 %cc% ../ui_confirm.c
 @if errorlevel 1 goto quit
-%cc% ../ui_setup.c
-@if errorlevel 1 goto quit
 %cc% ../../game/bg_misc.c
 @if errorlevel 1 goto quit
 %cc% ../../game/bg_lib.c
@@ -43,8 +41,6 @@ set cc=call ..\..\..\Tools\Compiler\Perform.bat
 %cc% ../ui_playermodel.c
 @if errorlevel 1 goto quit
 %cc% ../ui_players.c
-@if errorlevel 1 goto quit
-%cc% ../ui_playersettings.c
 @if errorlevel 1 goto quit
 %cc% ../ui_preferences.c
 @if errorlevel 1 goto quit

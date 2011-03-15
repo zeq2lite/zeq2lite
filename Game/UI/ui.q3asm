@@ -11,11 +11,9 @@ ui_credits
 ui_menu
 ui_ingame
 ui_confirm
-ui_setup
 ui_options
 ui_playermodel
 ui_players
-ui_playersettings
 ui_preferences
 ui_qmenu
 ui_serverinfo
