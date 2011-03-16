@@ -867,6 +867,7 @@ typedef struct {
 	qhandle_t	auraLightningSparks1;
 	qhandle_t	auraLightningSparks2;
 	qhandle_t	invulnerabilityPowerupModel;
+	sfxHandle_t	nullSound;
 	sfxHandle_t	lockonStart;
 	sfxHandle_t	selectSound;
 	sfxHandle_t	useNothingSound;

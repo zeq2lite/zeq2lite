@@ -507,6 +507,11 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
 	for (tier = 0 ; tier < 9 ; tier++ ){
 		for(i = 0 ; i < MAX_CUSTOM_SOUNDS ; i++){
+			ci->sounds[tier][i] = cgs.media.nullSound;
+		}
+	}
+	for (tier = 0 ; tier < 9 ; tier++ ){
+		for(i = 0 ; i < MAX_CUSTOM_SOUNDS ; i++){
 			if(!cg_customSoundNames[i]){continue;}
 			loopIndex = 0;
 			currentIndex = 1;

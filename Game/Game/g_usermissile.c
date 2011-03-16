@@ -758,6 +758,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 	gentity_t		*bolt;
 	g_userWeapon_t	*weaponInfo;
 	float powerScale;
+	int homingType;
 	vec3_t			muzzle, forward, right, up;
 	vec3_t			firingDir, firingStart; // <-- Contain the altered aiming and origin vectors.
 	powerScale = ((float)self->client->ps.powerLevel[plCurrent] / 1000.0) * self->client->ps.stats[stEnergyAttack];
@@ -1034,7 +1035,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 	/* BEAMS */
 
 	case WPT_BEAM:
-
+		homingType = weaponInfo->homing_type;
 		bolt = G_Spawn();
 		bolt->classname = "user_beam";
 		bolt->s.eType = ET_BEAMHEAD;
@@ -1108,9 +1109,9 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		VectorCopy( firingDir, bolt->movedir );
 		VectorCopy( self->client->ps.viewangles, self->s.angles );
 		VectorCopy( self->client->ps.viewangles, bolt->s.angles2 );
-		if(self->client->ps.lockedTarget > 0){weaponInfo->homing_type = HOM_GUIDED;}
+		if(self->client->ps.lockedTarget > 0){homingType = HOM_GUIDED;}
 		// Set the correct think based on homing properties.
-		switch (weaponInfo->homing_type) {
+		switch (homingType) {
 		case HOM_GUIDED:
 			bolt->think = Think_Guided;
 			bolt->nextthink = level.time + FRAMETIME;
@@ -1559,6 +1560,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	int radius;
 	other = &g_entities[trace->entityNum];
 	G_LocationImpact(trace->endpos,other,GetMissileOwnerEntity(self));
+	//G_Printf("Attack's power level is : %i\n",self->powerLevelCurrent);
 	// Initiate Player Interaction
 	if(other->s.eType == ET_PLAYER){
 		SnapVectorTowards( trace->endpos, self->s.pos.trBase );
@@ -1686,11 +1688,11 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		else{G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );}
 		SnapVectorTowards( trace->endpos, self->s.pos.trBase );
 		G_SetOrigin( self, trace->endpos );
-		//G_Printf("It's explosion time!\n");
 		self->powerLevelCurrent *= 0.5;
+		//G_Printf("It's explosion time!\n");
 		self->s.eType = ET_EXPLOSION;
 		self->splashEnd = level.time + self->splashDuration;
-		self->splashTimer = level.time;
+		self->splashTimer = level.time + 100;
 		trap_LinkEntity(self);
 	}
 }
@@ -1754,11 +1756,12 @@ void Missile_Smooth (gentity_t *ent, vec3_t origin, trace_t *tr) {
 void G_RunUserExplosion(gentity_t *ent) {
 	int radius,power;
 	float step;
-	if(level.time + 250 > ent->splashTimer && ent->powerLevelCurrent > 0){
-		ent->splashTimer = level.time;
+	if(level.time > ent->splashTimer && ent->powerLevelCurrent > 0){
+		ent->splashTimer = level.time + 100;
 		step = (1.0 - ((float)ent->splashEnd - (float)level.time) / (float)ent->splashDuration);
 		radius = step * ent->splashRadius;
-		power = (ent->powerLevelCurrent * (250.0/(float)ent->splashDuration));
+		power = (ent->powerLevelCurrent * (100.0/(float)ent->splashDuration));
+		//G_Printf("Explosion power : %i\n",power);
 		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,power,radius,ent->extraKnockback);
 	}
 	if(level.time >= ent->splashEnd || ent->powerLevelCurrent <= 0){
