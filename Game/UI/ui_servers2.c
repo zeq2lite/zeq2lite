@@ -148,7 +148,7 @@ static char* netnames[] = {
 	NULL
 };
 
-static char quake3worldMessage[] = "Visit www.zeq2.com/lite - News, Community, Events, Files";
+static char quake3worldMessage[] = "";
 
 typedef struct {
 	char	adrstr[MAX_ADDRESSLENGTH];
@@ -1282,7 +1282,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.banner.style  	    = UI_CENTER|UI_DROPSHADOW;
 	g_arenaservers.banner.color  	    = color_white;
 
-	y = 140;
+	y = 30;
 	g_arenaservers.master.generic.type			= MTYPE_SPINCONTROL;
 	g_arenaservers.master.generic.name			= "Servers:";
 	g_arenaservers.master.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1308,8 +1308,8 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.list.generic.flags			= QMF_HIGHLIGHT_IF_FOCUS;
 	g_arenaservers.list.generic.id				= ID_LIST;
 	g_arenaservers.list.generic.callback		= ArenaServers_Event;
-	g_arenaservers.list.generic.x				= 72;
-	g_arenaservers.list.generic.y				= y;
+	g_arenaservers.list.generic.x				= 140;
+	g_arenaservers.list.generic.y				= 170;
 	g_arenaservers.list.width					= MAX_LISTBOXWIDTH;
 	g_arenaservers.list.height					= 11;
 	g_arenaservers.list.itemnames				= (const char **)g_arenaservers.items;
@@ -1319,10 +1319,10 @@ static void ArenaServers_MenuInit( void ) {
 
 	g_arenaservers.mappic.generic.type			= MTYPE_BITMAP;
 	g_arenaservers.mappic.generic.flags			= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	g_arenaservers.mappic.generic.x				= 72;
-	g_arenaservers.mappic.generic.y				= 80;
-	g_arenaservers.mappic.width					= 128;
-	g_arenaservers.mappic.height				= 96;
+	g_arenaservers.mappic.generic.x				= 450;
+	g_arenaservers.mappic.generic.y				= 10;
+	g_arenaservers.mappic.width					= 160;
+	g_arenaservers.mappic.height				= 120;
 	g_arenaservers.mappic.errorpic				= ART_UNKNOWNMAP;
 
 	g_arenaservers.arrows.generic.type			= MTYPE_BITMAP;
@@ -1330,7 +1330,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.arrows.generic.flags			= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
 	g_arenaservers.arrows.generic.callback		= ArenaServers_Event;
 	g_arenaservers.arrows.generic.x				= 512+48;
-	g_arenaservers.arrows.generic.y				= 240-64+16;
+	g_arenaservers.arrows.generic.y				= 210-64+16;
 	g_arenaservers.arrows.width					= 64;
 	g_arenaservers.arrows.height				= 128;
 
@@ -1339,7 +1339,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.up.generic.callback			= ArenaServers_Event;
 	g_arenaservers.up.generic.id				= ID_SCROLL_UP;
 	g_arenaservers.up.generic.x					= 512+48;
-	g_arenaservers.up.generic.y					= 240-64+16;
+	g_arenaservers.up.generic.y					= 210-64+16;
 	g_arenaservers.up.width						= 64;
 	g_arenaservers.up.height					= 64;
 	g_arenaservers.up.focuspic					= ART_ARROWS_UP;
@@ -1349,12 +1349,12 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.down.generic.callback		= ArenaServers_Event;
 	g_arenaservers.down.generic.id				= ID_SCROLL_DOWN;
 	g_arenaservers.down.generic.x				= 512+48;
-	g_arenaservers.down.generic.y				= 240+16;
+	g_arenaservers.down.generic.y				= 210+16;
 	g_arenaservers.down.width					= 64;
 	g_arenaservers.down.height					= 64;
 	g_arenaservers.down.focuspic				= ART_ARROWS_DOWN;
 
-	y = 376;
+	y = 440;
 	g_arenaservers.status.generic.type		= MTYPE_TEXT;
 	g_arenaservers.status.generic.x			= 320;
 	g_arenaservers.status.generic.y			= y;
@@ -1514,6 +1514,6 @@ void UI_ArenaServersMenu( void ) {
 	ArenaServers_MenuInit();
 	uis.menuamount = 5;
 	uis.hideEarth = qtrue;
-	uis.showFrame = qtrue;
+	uis.showFrame = qfalse;
 	UI_PushMenu( &g_arenaservers.menu );
 }						  

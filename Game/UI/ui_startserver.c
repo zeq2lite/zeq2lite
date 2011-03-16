@@ -1006,10 +1006,10 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 
 	x += b->width / 2;
 	y += 4;
-	UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	y += SMALLCHAR_HEIGHT;
-	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 */
 }
 
@@ -1358,7 +1358,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.player0.generic.flags			= QMF_SMALLFONT;
 	s_serveroptions.player0.generic.x				= 32 + SMALLCHAR_WIDTH;
 	s_serveroptions.player0.generic.y				= y;
-	s_serveroptions.player0.color					= color_lightBlue;
+	s_serveroptions.player0.color					= color_white;
 	s_serveroptions.player0.style					= UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 
 	for( n = 0; n < PLAYER_SLOTS; n++ ) {
@@ -1377,7 +1377,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.playerName[n].generic.callback	= ServerOptions_PlayerNameEvent;
 		s_serveroptions.playerName[n].generic.id		= n;
 		s_serveroptions.playerName[n].generic.ownerdraw	= PlayerName_Draw;
-		s_serveroptions.playerName[n].color				= color_lightBlue;
+		s_serveroptions.playerName[n].color				= color_white;
 		s_serveroptions.playerName[n].style				= UI_SMALLFONT|UI_DROPSHADOW;
 		s_serveroptions.playerName[n].string			= s_serveroptions.playerNameBuffers[n];
 		s_serveroptions.playerName[n].generic.top		= s_serveroptions.playerName[n].generic.y;
@@ -1650,7 +1650,7 @@ static void UI_BotSelectMenu_UpdateGrid( void ) {
 				botSelectInfo.picnames[i].color = color_red;
 			}
 			else {
-				botSelectInfo.picnames[i].color = color_lightBlue;
+				botSelectInfo.picnames[i].color = color_white;
 			}
 			botSelectInfo.picbuttons[i].generic.flags &= ~QMF_INACTIVE;
 		}
@@ -1888,7 +1888,7 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 			botSelectInfo.picnames[k].generic.x				= x + 32;
 			botSelectInfo.picnames[k].generic.y				= y + 64;
 			botSelectInfo.picnames[k].string				= botSelectInfo.botnames[k];
-			botSelectInfo.picnames[k].color					= color_lightBlue;
+			botSelectInfo.picnames[k].color					= color_white;
 			botSelectInfo.picnames[k].style					= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 
 			x += (64 + 6);

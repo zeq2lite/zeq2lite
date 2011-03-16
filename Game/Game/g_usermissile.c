@@ -1641,6 +1641,9 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	}
 	else if(self->s.eType == ET_BEAMHEAD){
 		if(other->s.eType == ET_BEAMHEAD){
+			if(!(self->client->ps.bitFlags & isStruggling)){
+				G_AddEvent(self,EV_POWER_STRUGGLE_START, DirToByte( trace->plane.normal));
+			}
 			other->enemy = self;
 			other->client->ps.bitFlags |= isStruggling;
 			self->strugglingAttack = qtrue;
@@ -1655,7 +1658,6 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			self->enemy->nextthink = level.time;
 			if(self->s.eFlags & EF_GUIDED){self->s.eFlags &= ~EF_GUIDED;}
 			if(other->s.eFlags & EF_GUIDED){other->s.eFlags &= ~EF_GUIDED;}
-			G_AddEvent(self,EV_POWER_STRUGGLE_START, DirToByte( trace->plane.normal));
 			return;
 		}
 		else if(other->s.eType == ET_MISSILE){return;}

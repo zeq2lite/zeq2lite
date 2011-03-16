@@ -437,7 +437,7 @@ void UI_DrawBannerString( int x, int y, const char* str, int style, vec4_t color
 
 	if ( style & UI_DROPSHADOW ) {
 		drawcolor[0] = drawcolor[1] = drawcolor[2] = 0;
-		drawcolor[3] = color[3];
+		drawcolor[3] = 0.7;
 		UI_DrawBannerString2( x+1, y+1, str, drawcolor );
 	}
 
@@ -578,7 +578,7 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 
 	if ( style & UI_DROPSHADOW ) {
 		drawcolor[0] = drawcolor[1] = drawcolor[2] = 0;
-		drawcolor[3] = color[3];
+		drawcolor[3] = 0.7;
 		UI_DrawProportionalString2( x+1, y+1, str, drawcolor, sizeScale, uis.charsetProp );
 	}
 
@@ -586,7 +586,7 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 		drawcolor[0] = color[0] * 0.7;
 		drawcolor[1] = color[1] * 0.7;
 		drawcolor[2] = color[2] * 0.7;
-		drawcolor[3] = color[3];
+		drawcolor[3] = 0.7;
 		UI_DrawProportionalString2( x, y, str, drawcolor, sizeScale, uis.charsetProp );
 		return;
 	}
@@ -595,13 +595,13 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 		drawcolor[0] = color[0] * 0.7;
 		drawcolor[1] = color[1] * 0.7;
 		drawcolor[2] = color[2] * 0.7;
-		drawcolor[3] = color[3];
+		drawcolor[3] = 0.7;
 		UI_DrawProportionalString2( x, y, str, color, sizeScale, uis.charsetProp );
 
 		drawcolor[0] = color[0];
 		drawcolor[1] = color[1];
 		drawcolor[2] = color[2];
-		drawcolor[3] = 1.0;
+		drawcolor[3] = 0.7;
 		UI_DrawProportionalString2( x, y, str, drawcolor, sizeScale, uis.charsetPropGlow );
 		return;
 	}
@@ -633,7 +633,6 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 
 	// draw the colored text
 	trap_R_SetColor( color );
-	
 	// JUHOX: apply the new scaling
 #if 0	
 	ax = x * uis.scale + uis.bias;
@@ -655,7 +654,7 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 			if ( !forceColor )
 			{
 				memcpy( tempcolor, g_color_table[ColorIndex(s[1])], sizeof( tempcolor ) );
-				tempcolor[3] = color[3];
+				tempcolor[3] = 0.7;
 				trap_R_SetColor( tempcolor );
 			}
 			s += 2;
@@ -670,7 +669,7 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol + 0.0625, frow + 0.0625, uis.charset );
 		}
 
-		ax += aw;
+		ax += (charw*0.7) * uis.scaleX;
 		s++;
 	}
 
@@ -788,7 +787,7 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 	if ( style & UI_DROPSHADOW )
 	{
 		dropcolor[0] = dropcolor[1] = dropcolor[2] = 0;
-		dropcolor[3] = drawcolor[3];
+		dropcolor[3] = 0.7;
 		UI_DrawString2(x+1,y+1,str,dropcolor,charw,charh);
 	}
 

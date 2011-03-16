@@ -145,8 +145,8 @@ ConfirmMenu_Draw
 static void ConfirmMenu_Draw( void ) {
 	uis.menuamount = 0;
 	UI_DrawNamedPic( 142, 118, 359, 256, ART_CONFIRM_FRAME );
-	UI_DrawProportionalString( 320, 204, s_confirm.question, UI_CENTER|UI_INVERSE|UI_DROPSHADOW, color_lightBlue );
-	UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE|UI_DROPSHADOW, color_lightBlue );
+	UI_DrawProportionalString( 320, 204, s_confirm.question, UI_CENTER|UI_INVERSE|UI_DROPSHADOW, color_white );
+	UI_DrawProportionalString( s_confirm.slashX, 265, "/", UI_LEFT|UI_INVERSE|UI_DROPSHADOW, color_white );
 
 	Menu_Draw( &s_confirm.menu );
 
