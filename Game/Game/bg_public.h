@@ -294,6 +294,7 @@ typedef enum{
 	tmKnockback,
 	tmZanzoken,
 	tmBoost,
+	tmAttackLife,
 	tmAttack1,
 	tmAttack2,
 	tmMeleeBreaker,

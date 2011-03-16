@@ -1470,8 +1470,13 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	self->bounceFrac = 0.0f;
 	self->enemy->client->ps.timers[tmStruggleBlock] += 100;
 	if(self->enemy->client->ps.timers[tmStruggleBlock] >= 3000){
-		if(self->s.eType == ET_MISSILE){self->think = Think_NormalMissileBurnPlayer;}
-		if(self->s.eType == ET_BEAMHEAD){self->think = Think_NormalMissileRidePlayer;}
+		self->powerLevelCurrent *= 0.5;
+		self->s.eType = ET_EXPLOSION;
+		self->splashEnd = level.time + self->splashDuration;
+		self->splashTimer = level.time;
+		trap_LinkEntity(self);
+		//if(self->s.eType == ET_MISSILE){self->think = Think_NormalMissileBurnPlayer;}
+		//if(self->s.eType == ET_BEAMHEAD){self->think = Think_NormalMissileRidePlayer;}
 	}
 	self->powerLevelCurrent -= (self->enemy->client->ps.powerLevel[plFatigue] * 0.2) * 0.1;
 	if(self->enemy->client->ps.powerLevel[plFatigue] >= (self->powerLevelCurrent * 0.5)){
@@ -1586,19 +1591,19 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 				//Do Explosion Below
 			}
 			else{
-				self->enemy = other;
+				/*self->enemy = other;
 				self->enemy->client->ps.timers[tmBurning] = 0;
 				self->think = Think_NormalMissileBurnPlayer;
 				self->nextthink = level.time;
-				return;
+				return;*/
 			}
 		}
 		else if(self->s.eType == ET_BEAMHEAD && !(other->client->ps.states & isRiding)){
-			self->enemy = other;
+			/*self->enemy = other;
 			self->enemy->client->ps.timers[tmRiding] = 0;
 			self->think = Think_NormalMissileRidePlayer;
 			self->nextthink = level.time;
-			return;
+			return;*/
 		}
 	}
 	// Initiate Attack Interaction

@@ -128,7 +128,7 @@ void PM_Ride(void){
 	if(pm->ps->states & isRiding){
 		if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags = usingFlight;}
 		VectorClear(pm->ps->velocity);
-		PM_StopDirections();
+		//PM_StopDirections();
 		PM_StopZanzoken();
 		pm->cmd.forwardmove = -1;
 	}
@@ -2684,6 +2684,7 @@ void PM_Weapon(void){
 	case WEAPON_DROPPING:
 	case WEAPON_RAISING:
 	case WEAPON_COOLING:
+		pm->ps->timers[tmAttackLife] = 0;
 		if(pm->ps->weaponTime > 0){
 			pm->ps->weaponTime -= pml.msec;
 		}
@@ -2739,19 +2740,21 @@ void PM_Weapon(void){
 		}
 		break;
 	case WEAPON_GUIDING:
-		if(pm->cmd.buttons & BUTTON_ATTACK){
+		if(pm->cmd.buttons & BUTTON_ATTACK && !(pm->ps->bitFlags & isStruggling) &&	pm->ps->timers[tmAttackLife] > 2000){
 			PM_AddEvent(EV_DETONATE_WEAPON);
 			pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
 			PM_StartTorsoAnim(ANIM_IDLE);
 		}
+		pm->ps->timers[tmAttackLife] += pml.msec;
 		pm->ps->timers[tmImpede] = 100;
 		break;
 	case WEAPON_ALTGUIDING:
-		if(pm->cmd.buttons & BUTTON_ALT_ATTACK){
+		if(pm->cmd.buttons & BUTTON_ALT_ATTACK && !(pm->ps->bitFlags & isStruggling) &&	pm->ps->timers[tmAttackLife] > 2000){
 			PM_AddEvent(EV_DETONATE_WEAPON);
 			pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
 			PM_StartTorsoAnim(ANIM_IDLE);
 		}
+		pm->ps->timers[tmAttackLife] += pml.msec;
 		pm->ps->timers[tmImpede] = 100;
 		break;
 	case WEAPON_CHARGING:
