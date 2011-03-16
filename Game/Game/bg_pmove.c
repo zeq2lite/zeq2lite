@@ -121,6 +121,29 @@ void PM_Impede(void){
 		PM_StopZanzoken();
 	}
 }
+/*================
+RIDE
+================*/
+void PM_Ride(void){
+	if(pm->ps->states & isRiding){
+		if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags = usingFlight;}
+		VectorClear(pm->ps->velocity);
+		PM_StopDirections();
+		PM_StopZanzoken();
+		pm->cmd.forwardmove = -1;
+	}
+}
+/*================
+Burn
+================*/
+void PM_Burn(void){
+	if(pm->ps->states & isBurning){
+		if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags = usingFlight;}
+		VectorClear(pm->ps->velocity);
+		PM_StopDirections();
+		PM_StopZanzoken();
+	}
+}
 /*===================
 BLIND
 ===================*/
@@ -1940,7 +1963,8 @@ PM_TorsoAnimation
 ==============*/
 void PM_TorsoAnimation(void){
 	if(pm->ps->weaponstate != WEAPON_READY){return;}
-	if(pm->ps->timers[tmImpede]){PM_ContinueLegsAnim(ANIM_STUNNED);}
+	if(pm->ps->timers[tmImpede] || pm->ps->states & isBurning){PM_ContinueLegsAnim(ANIM_STUNNED);}
+	if(pm->ps->states & isRiding){PM_ContinueLegsAnim(ANIM_KNOCKBACK);}
 	if(pm->ps->bitFlags & usingBlock && !(pm->ps->bitFlags & usingMelee)){
 		if(pm->ps->bitFlags & isStruggling){
 			PM_ContinueTorsoAnim(ANIM_PUSH);
@@ -3059,6 +3083,8 @@ void PmoveSingle(pmove_t *pmove){
 	AngleVectors(pm->ps->viewangles,pml.forward,pml.right,pml.up);
 	pml.previous_waterlevel = pmove->waterlevel;
 	PM_Impede();
+	PM_Burn();
+	PM_Ride();
 	PM_CheckKnockback();
 	PM_CheckHover();
 	if(PM_CheckTransform()){return;}

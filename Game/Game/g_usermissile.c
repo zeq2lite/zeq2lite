@@ -1495,11 +1495,26 @@ static void Think_NormalMissileBurnPlayer( gentity_t *self ) {
 	G_UserWeaponDamage(self->enemy,self,missileOwner,fwd,self->s.origin,self->powerLevelCurrent / 15.0,0,self->extraKnockback);
 	if(self->enemy->client->ps.timers[tmBurning] >= 1500){
 		self->freeAfterEvent = qtrue;
+		self->enemy->client->ps.states &= ~isBurning;
 	}
 	self->nextthink = level.time + FRAMETIME;
 }
-static void Think_NormalMissileRidePlayer( gentity_t *self ) {
-
+static void Think_NormalMissileRidePlayer( gentity_t *self ){
+	vec3_t fwd;
+	gentity_t	*missileOwner = GetMissileOwnerEntity( self );
+	AngleVectors(self->enemy->r.currentAngles, fwd, NULL, NULL);
+	VectorNormalize(fwd);
+	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent;
+	self->bounceFrac = 0.0f;
+	self->enemy->client->ps.states |= isRiding;
+	self->enemy->client->ps.timers[tmRiding] += 100;
+	G_UserWeaponDamage(self->enemy,self,missileOwner,fwd,self->s.origin,self->powerLevelCurrent / 25.0,0,self->extraKnockback);
+	if(self->enemy->client->ps.timers[tmRiding] >= 2500){
+		self->freeAfterEvent = qtrue;
+		self->enemy->client->ps.states &= ~isRiding;
+		//self->enemy->client->ps.states |= canRideEscape;
+	}
+	self->nextthink = level.time + FRAMETIME;
 }
 /* 
 ============
@@ -1519,7 +1534,6 @@ void G_LocationImpact(vec3_t point, gentity_t* targ, gentity_t* attacker) {
 	impactRotation = abs(clientRotation-attackRotation);
 	impactRotation += 45; // just to make it easier to work with
 	impactRotation = impactRotation % 360; // Keep it in the 0-359 range
-
 	if (impactRotation < 90)
 		targ->client->lasthurt_location = LOCATION_BACK;
 	else if (impactRotation < 180)
@@ -1542,6 +1556,8 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	G_LocationImpact(trace->endpos,other,GetMissileOwnerEntity(self));
 	// Initiate Player Interaction
 	if(other->s.eType == ET_PLAYER){
+		SnapVectorTowards( trace->endpos, self->s.pos.trBase );
+		G_SetOrigin( self, trace->endpos );
 		if((other->client->ps.bitFlags & usingBlock) && other->client->lasthurt_location == LOCATION_FRONT){
 			if(self->isSwattable){
 				self->bounceFrac = 1.0f;
@@ -1563,6 +1579,10 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		}
 		else if(self->s.eType == ET_MISSILE){
 			if(self->isSwattable){
+				if(((self->powerLevelCurrent * 10) < other->client->ps.powerLevel[plFatigue]) && other->client->ps.bitFlags & usingAlter){
+					self->freeAfterEvent = qtrue;
+					return;
+				}
 				//Do Explosion Below
 			}
 			else{
@@ -1573,8 +1593,9 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 				return;
 			}
 		}
-		else if(self->s.eType == ET_BEAMHEAD){
+		else if(self->s.eType == ET_BEAMHEAD && !(other->client->ps.states & isRiding)){
 			self->enemy = other;
+			self->enemy->client->ps.timers[tmRiding] = 0;
 			self->think = Think_NormalMissileRidePlayer;
 			self->nextthink = level.time;
 			return;
@@ -1582,9 +1603,9 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 	}
 	// Initiate Attack Interaction
 	else if(self->s.eType == ET_MISSILE){
-		G_Printf("I am definitely a missile!\n");
+		//G_Printf("I am definitely a missile!\n");
 		if(other->s.eType == ET_BEAMHEAD){
-			G_Printf("Their Beam absorbed our missile!\n");
+			//G_Printf("Their Beam absorbed our missile!\n");
 			other->powerLevelCurrent += self->powerLevelCurrent;
 			self->freeAfterEvent = qtrue;
 			return;
@@ -1592,18 +1613,18 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		else if(other->s.eType == ET_MISSILE){
 			if(other->isSwattable){
 				if(!self->isSwattable){
-					G_Printf("Our missile absorbed their swattable!\n");
+					//G_Printf("Our missile absorbed their swattable!\n");
 					self->powerLevelCurrent += other->powerLevelCurrent;
 					other->freeAfterEvent = qtrue;
 					return;
 				}
 				else{
-					G_Printf("Swattables collide explosion!\n");
+					//G_Printf("Swattables collide explosion!\n");
 				}
 			}
 			else{
 				if(other->powerLevelCurrent >= self->powerLevelCurrent){
-					G_Printf("Our missile absorbed their weaker missile!\n");
+					//G_Printf("Our missile absorbed their weaker missile!\n");
 					other->powerLevelCurrent += self->powerLevelCurrent;
 					self->freeAfterEvent = qtrue;
 				}
@@ -1660,7 +1681,8 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		else{G_AddEvent( self, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );}
 		SnapVectorTowards( trace->endpos, self->s.pos.trBase );
 		G_SetOrigin( self, trace->endpos );
-		G_Printf("It's explosion time!\n");
+		//G_Printf("It's explosion time!\n");
+		self->powerLevelCurrent *= 0.5;
 		self->s.eType = ET_EXPLOSION;
 		self->splashEnd = level.time + self->splashDuration;
 		self->splashTimer = level.time;
@@ -1731,7 +1753,7 @@ void G_RunUserExplosion(gentity_t *ent) {
 		ent->splashTimer = level.time;
 		step = (1.0 - ((float)ent->splashEnd - (float)level.time) / (float)ent->splashDuration);
 		radius = step * ent->splashRadius;
-		power = ent->powerLevelCurrent * (250.0/(float)ent->splashDuration);
+		power = (ent->powerLevelCurrent * (250.0/(float)ent->splashDuration));
 		G_UserRadiusDamage(ent->r.currentOrigin,GetMissileOwnerEntity(ent),ent,power,radius,ent->extraKnockback);
 	}
 	if(level.time >= ent->splashEnd || ent->powerLevelCurrent <= 0){
