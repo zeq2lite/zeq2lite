@@ -612,15 +612,15 @@ void CG_CheckChat(void){
 void CG_DrawChat(char *text){
 	int clientNum,index,safeIndex;
 	char cleaned[256];
-	char *name,*safe;
-	char find[] = ":";
+	char name[14];
+	char *safe;
+	char find = ':';
 	char find2[] = "^7";
-	char replace[] = " ";
+	char replace = ' ';
 	safe = text;
-	name = "             ";
-	strrep(safe,*find,*replace);
-	strcpy(cleaned,text);
-	strrep(safe,*find2,*replace);
+	strrep(safe, find, replace);
+	strcpy(cleaned, text);
+	strrep(safe, *find2, replace);
 	cgs.chatTimer = cg.time + 3500;
 	strcpy(name,COM_Parse(&safe));
 	for(safeIndex=0; safeIndex<3; ++safeIndex){if(!strcmp(cgs.messages[safeIndex],"")){break;}}
