@@ -765,7 +765,7 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 #else
 			len = UI_DrawStrlen(str);
 #endif
-			x   = x - len*charw/2;
+			x   = x - len*(charw*0.7)/2;
 			break;
 
 		case UI_RIGHT:
@@ -776,7 +776,7 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 #else
 			len = UI_DrawStrlen(str);
 #endif
-			x   = x - len*charw;
+			x   = x - len*(charw*0.7);
 			break;
 
 		default:
