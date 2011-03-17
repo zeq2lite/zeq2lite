@@ -49,7 +49,8 @@ GAME OPTIONS MENU
 #define ID_BLOOMDARKEN			137
 #define ID_BLOOMALPHA			138
 #define ID_OUTLINES				139
-#define ID_BACK2				140
+#define ID_CROSSHAIRNAMES		140
+#define ID_BACK2				141
 #define	NUM_CROSSHAIRS			10
 typedef struct{
 	menuframework_s		menu;
@@ -71,6 +72,7 @@ typedef struct{
 	menulist_s			beamcontrol;
 	menuradiobutton_s	outlines;
 	menuradiobutton_s	flight;
+	menuradiobutton_s	crosshairNames;
 	menubitmap_s		apply;
 	menutext_s			back;
 	qhandle_t			crosshairShader[NUM_CROSSHAIRS];
@@ -97,6 +99,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.beamcontrol.curvalue		= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_beamControl" ) );
 	s_preferences.outlines.curvalue			= trap_Cvar_VariableValue( "r_outlines" ) != 0;
 	s_preferences.flight.curvalue			= trap_Cvar_VariableValue( "cg_advancedFlight" ) != 0;
+	s_preferences.crosshairNames.curvalue	= trap_Cvar_VariableValue( "cg_drawCrosshairNames" ) != 0;
 	// Bloom Quality
 	switch ( ( int ) trap_Cvar_VariableValue( "r_bloom_sample_size" ) )
 	{
@@ -150,6 +153,9 @@ static void Preferences_Event( void* ptr, int notification ) {
 		break;
 	case ID_CROSSHAIRSIZE:
 		trap_Cvar_SetValue( "cg_crosshairSize", s_preferences.crosshairSize.curvalue);
+		break;
+	case ID_CROSSHAIRNAMES:
+		trap_Cvar_SetValue( "cg_drawCrosshairNames", s_preferences.crosshairNames.curvalue);
 		break;
 	case ID_CAMERASTYLE:
 		trap_Cvar_SetValue( "cg_thirdPersonCamera", s_preferences.camerastyle.curvalue );
@@ -391,6 +397,15 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.crosshairSize.itemnames			= crosshairSize_names;
 
 	y += BIGCHAR_HEIGHT+2;
+	s_preferences.crosshairNames.generic.type		= MTYPE_RADIOBUTTON;
+	s_preferences.crosshairNames.generic.name		= "Player Names:";
+	s_preferences.crosshairNames.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.crosshairNames.generic.callback	= Preferences_Event;
+	s_preferences.crosshairNames.generic.id			= ID_CROSSHAIRNAMES;
+	s_preferences.crosshairNames.generic.x			= PREFERENCES_X_POS;
+	s_preferences.crosshairNames.generic.y			= y;
+	
+	y += BIGCHAR_HEIGHT+2;
 	s_preferences.camerastyle.generic.type        = MTYPE_SPINCONTROL;
 	s_preferences.camerastyle.generic.name	      = "Camera style:";
 	s_preferences.camerastyle.generic.flags	      = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -518,6 +533,7 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.framer );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshair );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshairSize );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshairNames );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.camerastyle );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.beamcontrol );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.beamdetail );
