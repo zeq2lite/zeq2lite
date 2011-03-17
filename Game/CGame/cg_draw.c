@@ -617,6 +617,7 @@ void CG_DrawChat(char *text){
 	char find2[] = "^7";
 	char replace[] = " ";
 	safe = text;
+	name = "             ";
 	strrep(safe,*find,*replace);
 	strcpy(cleaned,text);
 	strrep(safe,*find2,*replace);
