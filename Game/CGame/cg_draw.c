@@ -621,7 +621,7 @@ void CG_DrawChat(char *text){
 	strrep(safe, find, replace);
 	strcpy(cleaned, text);
 	strrep(safe, *find2, replace);
-	cgs.chatTimer = cg.time + 3500;
+	cgs.chatTimer = cg.time + cg_chatTime.integer;
 	strcpy(name,COM_Parse(&safe));
 	for(safeIndex=0; safeIndex<3; ++safeIndex){if(!strcmp(cgs.messages[safeIndex],"")){break;}}
 	if(safeIndex>=2 && cgs.messageClient[2]>= 0){
