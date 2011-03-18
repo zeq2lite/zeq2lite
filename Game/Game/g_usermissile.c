@@ -1475,6 +1475,7 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		self->splashEnd = level.time + self->splashDuration;
 		self->splashTimer = level.time;
 		trap_LinkEntity(self);
+		self->nextthink = level.time + FRAMETIME;
 		return;
 		//if(self->s.eType == ET_MISSILE){self->think = Think_NormalMissileBurnPlayer;}
 		//if(self->s.eType == ET_BEAMHEAD){self->think = Think_NormalMissileRidePlayer;}

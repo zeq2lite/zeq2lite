@@ -166,6 +166,7 @@ qboolean CG_weapGfx_ParseDlight( cg_weapGfxParser_t *parser, cg_weapGfxCategoryI
 qboolean CG_weapGfx_ParseSpin( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseTagTo( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseSoundFx( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
+qboolean CG_weapGfx_ParseVoiceFx( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseLoopFx( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseTimedFx( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );
 qboolean CG_weapGfx_ParseOnceFx( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field );

@@ -46,6 +46,7 @@ typedef struct {
 	sfxHandle_t		flashSound[4];			// if more than one is specified, a random one	
 											// is chosen. (Breaks repetitiveness for
 											// fastfiring weapons)
+	sfxHandle_t		voiceSound[4];
 	sfxHandle_t		flashOnceSound;			// Played only at the start of a firing session, instead
 											// of with each projectile. Resets when attack button comes up.
 	sfxHandle_t		firingSound;			// When doing a sustained blast
@@ -153,6 +154,7 @@ typedef struct {
 	char			flashSound[4][MAX_QPATH];	// if more than one is specified, a random one	
 												// is chosen. (Breaks repetitiveness for
 												// fastfiring weapons)
+	char			voiceSound[4][MAX_QPATH];
 	char			flashOnceSound[MAX_QPATH];	// Played only at the start of a firing session, instead
 												// of with each projectile. Resets when attack button comes up.
 	char			firingSound[MAX_QPATH];		// When doing a sustained blast

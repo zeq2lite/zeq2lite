@@ -69,6 +69,12 @@ void CG_weapGfx_StoreBuffer(int clientNum, int weaponNum) {
 		}
 	}
 
+	for ( i = 0; i < 4; i++ ) {
+		if ( *(src->voiceSound[i]) ) {
+			dest->voiceSound[i] = trap_S_RegisterSound( src->voiceSound[i], qfalse );
+		}
+	}
+
 	VectorCopy( src->flashDlightColor, dest->flashDlightColor );
 
 	dest->flashDlightRadius = src->flashDlightRadius;
@@ -1158,6 +1164,82 @@ qboolean CG_weapGfx_ParseSoundFx( cg_weapGfxParser_t *parser, cg_weapGfxCategory
 		return qfalse;
 	}
 
+	return qtrue;
+}
+
+/*
+=========================
+CG_weapGfx_ParseVoiceFx
+=========================
+Parses 'voiceFx' field.
+Syntax:
+'voiceFx' '=' ( 'null' | "filename" | '(' "filename"* ')' )
+*/
+qboolean CG_weapGfx_ParseVoiceFx( cg_weapGfxParser_t *parser, cg_weapGfxCategoryIndex_t category, int field ) {
+	cg_weapGfxToken_t	*token;
+	cg_weapGfxScanner_t	*scanner;
+	int i;
+	scanner = &parser->scanner;
+	token = &parser->token;
+	switch ( category ) {
+	case CAT_FLASH:
+		i = 0;
+		if ( token->tokenSym == TOKEN_NULL ) {
+			memset(cg_weapGfxBuffer.voiceSound, 0, sizeof(char)*4*MAX_QPATH );
+		} else if ( token->tokenSym == TOKEN_STRING ) {
+			memset(cg_weapGfxBuffer.voiceSound, 0, sizeof(char)*4*MAX_QPATH );
+			Q_strncpyz( cg_weapGfxBuffer.voiceSound[0], token->stringval, sizeof(cg_weapGfxBuffer.voiceSound[0]) );
+
+		} else if ( token->tokenSym == TOKEN_OPENVECTOR ) {
+			// Intialize everything blank
+			memset( cg_weapGfxBuffer.voiceSound, 0, sizeof(char)*4*MAX_QPATH );
+
+			if ( !CG_weapGfx_NextSym( scanner, token ) ) {
+				if ( token->tokenSym == TOKEN_EOF ) {
+					CG_weapGfx_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+				}
+				return qfalse;
+			}
+
+			while ( token->tokenSym == TOKEN_STRING ) {
+				if ( i >= 4 ) {
+					CG_weapGfx_ErrorHandle( ERROR_OVER_MAXVECTORELEMS, scanner, token->stringval, "4" );
+					return qfalse;
+				}
+
+				Q_strncpyz( cg_weapGfxBuffer.voiceSound[i], token->stringval, sizeof(cg_weapGfxBuffer.voiceSound[i]) );
+
+				i++;
+
+				if ( !CG_weapGfx_NextSym( scanner, token ) ) {
+					if ( token->tokenSym == TOKEN_EOF ) {
+						CG_weapGfx_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+					}
+					return qfalse;
+				}
+			}
+
+			if ( token->tokenSym != TOKEN_CLOSEVECTOR ) {
+				CG_weapGfx_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, ")" );
+				return qfalse;
+			}
+		} else {
+			CG_weapGfx_ErrorHandle( ERROR_UNEXPECTED_SYMBOL, scanner, token->stringval, NULL );
+			return qfalse;
+		}
+		break;
+
+	default:
+		CG_weapGfx_ErrorHandle( ERROR_FIELD_NOT_IN_CATEGORY, scanner, cg_weapGfxFields[field].fieldname, cg_weapGfxCategories[category] );
+		return qfalse;
+		break;
+	}
+	if ( !CG_weapGfx_NextSym( scanner, token ) ) {
+		if ( token->tokenSym == TOKEN_EOF ) {
+			CG_weapGfx_ErrorHandle( ERROR_PREMATURE_EOF, scanner, NULL, NULL );
+		}
+		return qfalse;
+	}
 	return qtrue;
 }
 

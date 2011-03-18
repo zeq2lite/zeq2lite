@@ -48,16 +48,9 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 //       WTF is up with this stupid bug anyway?! Same thing happened when adding
 //       certain fields to centity_t...
 static playerEntity_t	playerInfoDuplicate[MAX_GENTITIES];
-
-
-
-
-/*
-================
+/*================
 CG_CustomSound
-
-================
-*/
+================*/
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName ) {
 	clientInfo_t *ci;
 	int	i;
@@ -65,35 +58,27 @@ sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName ) {
 	nextIndex = (fabs(crandom()) * 8)+1;
 	if(nextIndex > 9){nextIndex = 9;}
 	if(nextIndex < 1){nextIndex = 1;}
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {clientNum = 0;}
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){clientNum = 0;}
 	ci = &cgs.clientinfo[clientNum];
-	for ( i = 0 ; i < MAX_CUSTOM_SOUNDS; i++ ) {
+	if(!ci->infoValid){return cgs.media.nullSound;}
+	for(i = 0 ; i < MAX_CUSTOM_SOUNDS; i++){
 		if(!strcmp(soundName,cg_customSoundNames[i]) && ci->sounds[ci->tierCurrent][(i*9)+nextIndex]){
 			return ci->sounds[ci->tierCurrent][(i*9)+nextIndex];
 		}
 	}
-	CG_Error( "Unknown custom sound: %s", soundName );
-	return 0;
+	CG_Printf("Client %i [%s] could not find sound : %s%i\n",clientNum,ci->name,soundName,nextIndex);
+	return cgs.media.nullSound;
 }
-
-
-
-/*
-=============================================================================
-
+/*=============================================================================
 CLIENT INFO
+=============================================================================*/
 
-=============================================================================
-*/
-
-/*
-======================
+/*======================
 CG_ParseAnimationFile
 
 Read a configuration file containing animation counts and rates
 players//visor/animation.cfg, etc
-======================
-*/
+======================*/
 // static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 // FIXME: Needs to lose static to use it in cg_tiers.c
 qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
@@ -500,7 +485,6 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 		}
 		modelloaded = qfalse;
 	}
-	//Com_Printf("LoadClientInfo: ci->usingMD4 = %i \n",ci->usingMD4);
 	ci->newAnims = qfalse;
 	// sounds
 	dir = ci->modelName;

@@ -1847,6 +1847,10 @@ void CG_FireWeapon( centity_t *cent, qboolean altFire ) {
 	// append the flash to the weapon model.
 	cent->muzzleFlashTime = cg.time;
 
+	if ( weaponGraphics->flashParticleSystem[0] ) {
+		PSys_SpawnCachedSystem( weaponGraphics->flashParticleSystem, cent->lerpOrigin, NULL, cent, weaponGraphics->chargeTag[0], qfalse, qfalse );
+	}
+
 	// play a sound
 	for ( c = 0 ; c < 4 ; c++ ) {
 		if ( weaponGraphics->flashSound[c] == 0 ) {
@@ -1862,9 +1866,22 @@ void CG_FireWeapon( centity_t *cent, qboolean altFire ) {
 		}
 	}
 
-	if ( weaponGraphics->flashParticleSystem[0] ) {
-		PSys_SpawnCachedSystem( weaponGraphics->flashParticleSystem, cent->lerpOrigin, NULL, cent, weaponGraphics->chargeTag[0], qfalse, qfalse );
+	for ( c = 0 ; c < 4 ; c++ ) {
+		if ( weaponGraphics->voiceSound[c] == 0 ) {
+			break;
+		}
 	}
+	
+	if ( c > 0 ) {
+		c = rand() % c;
+		if ( weaponGraphics->voiceSound[c] )
+		{
+			trap_S_StartSound( NULL , ent->number, CHAN_WEAPON, weaponGraphics->voiceSound[c] );
+		}
+	}
+
+
+
 }
 
 /*

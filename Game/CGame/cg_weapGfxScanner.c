@@ -18,6 +18,7 @@ cg_weapGfxField_t cg_weapGfxFields[] = {
 	{ "spin",				CG_weapGfx_ParseSpin				},	// Charge, Missile
 	{ "tagTo",				CG_weapGfx_ParseTagTo				},	// Charge, Flash
 	{ "soundFx",			CG_weapGfx_ParseSoundFx				},	// Explosion, Flash
+	{ "voiceFx",			CG_weapGfx_ParseVoiceFx				},	// Flash
 	{ "loopFx",				CG_weapGfx_ParseLoopFx				},	// Charge, Missile, Flash
 	{ "timedFx",			CG_weapGfx_ParseTimedFx				},	// Charge, Flash
 	{ "onceFx",				CG_weapGfx_ParseOnceFx				},	// Flash
