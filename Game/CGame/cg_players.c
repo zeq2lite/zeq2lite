@@ -1401,14 +1401,32 @@ static void CG_BubblesTrail( centity_t *cent, refEntity_t *head) {
 			origin[0] -= r4;
 			origin[1] -= r5;
 			origin[2] -= r6;
-			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
-			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
-			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
-			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
-			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
-			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
-			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
-			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleLargeShader );
+			if (cent->currentState.eFlags & EF_AURA) {
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleLargeShader );
+				CG_WaterBubble( origin, up, 1, 1, 1, 1, 1.0f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleLargeShader );
+			} else {
+				CG_WaterBubble( origin, up, 2, 1, 1, 1, 1.0f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 2, 1, 1, 1, 1.0f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 2, 1, 1, 1, 1.0f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 2, 1, 1, 1, 1.0f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+				CG_WaterBubble( origin, up, 2, 1, 1, 1, 1.0f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+				CG_WaterBubble( origin, up, 2, 1, 1, 1, 1.0f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+				CG_WaterBubble( origin, up, 2, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
+				CG_WaterBubble( origin, up, 2, 1, 1, 1, 1.0f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleLargeShader );
+			}
 		}
 	}
 }
@@ -1431,14 +1449,14 @@ static void CG_BreathPuffs( centity_t *cent, refEntity_t *head) {
 		VectorSet( up, 0, 0, 8 );
 		VectorMA(head->origin, 6, head->axis[0], origin);
 		VectorMA(origin, -2, head->axis[2], origin);
-		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 1000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
-		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 1000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
-		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 1000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
-		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 1000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
-		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2000, cg.time, cg.time + 1500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
-		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2000, cg.time, cg.time + 1500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
-		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2500, cg.time, cg.time + 2000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
-		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 3000, cg.time, cg.time + 2500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleLargeShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 3000, cg.time, cg.time + 2500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 3000, cg.time, cg.time + 2500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 3000, cg.time, cg.time + 2500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 3000, cg.time, cg.time + 2500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2500, cg.time, cg.time + 2000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2500, cg.time, cg.time + 2000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2000, cg.time, cg.time + 1500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleLargeShader );
 		ci->breathPuffTime = cg.time + 2500;
 	}
 }
