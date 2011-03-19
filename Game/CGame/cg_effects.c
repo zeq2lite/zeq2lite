@@ -70,7 +70,7 @@ void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing ) {
 		re->reType = RT_SPRITE;
 		re->rotation = 0;
 		re->radius = 3;
-		re->customShader = cgs.media.waterBubbleShader;
+		re->customShader = cgs.media.waterBubbleMediumShader;
 		re->shaderRGBA[0] = 0xff;
 		re->shaderRGBA[1] = 0xff;
 		re->shaderRGBA[2] = 0xff;
@@ -175,6 +175,10 @@ localEntity_t *CG_WaterBubble( const vec3_t p, const vec3_t vel,
 	refEntity_t		*re;
 	int contents;
 
+	if (cgs.clientPaused){
+		return;
+	}
+	
 	le = CG_AllocLocalEntity();
 	le->leFlags = leFlags;
 	le->radius = radius;
@@ -203,7 +207,10 @@ localEntity_t *CG_WaterBubble( const vec3_t p, const vec3_t vel,
 	le->pos.trTime = startTime;
 	VectorCopy( vel, le->pos.trDelta );
 	VectorCopy( p, le->pos.trBase );
-
+	le->pos.trDelta[0] = crandom()*5;
+	le->pos.trDelta[1] = crandom()*5;
+	le->pos.trDelta[2] = crandom()*5 + 6;
+	
 	VectorCopy( p, re->origin );
 	re->customShader = hShader;
 

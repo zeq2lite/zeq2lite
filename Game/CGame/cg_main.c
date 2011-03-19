@@ -1346,7 +1346,10 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.numberShaders[i] = trap_R_RegisterShader( sb_nums[i] );
 	}
 
-	cgs.media.waterBubbleShader = trap_R_RegisterShader( "waterBubble" );
+	cgs.media.waterBubbleLargeShader = trap_R_RegisterShader( "waterBubbleLarge" );
+	cgs.media.waterBubbleMediumShader = trap_R_RegisterShader( "waterBubbleMedium" );
+	cgs.media.waterBubbleSmallShader = trap_R_RegisterShader( "waterBubbleSmall" );
+	cgs.media.waterBubbleTinyShader = trap_R_RegisterShader( "waterBubbleTiny" );
 	cgs.media.selectShader = trap_R_RegisterShader( "interface/hud/select.png" );
 	cgs.media.chatBubble = trap_R_RegisterShader( "chatBubble");
 

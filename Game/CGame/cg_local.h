@@ -349,6 +349,7 @@ typedef struct {
 	int				invulnerabilityStartTime;
 	int				invulnerabilityStopTime;
 	int				breathPuffTime;
+	int				bubbleTrailTime;
 	char			modelName[MAX_QPATH];
 	char			skinName[MAX_QPATH];
 	char			headModelName[MAX_QPATH];
@@ -843,7 +844,10 @@ typedef struct {
 	qhandle_t	dirtPushSkin;
 	qhandle_t	dirtPushModel;
 	qhandle_t	dirtPushShader;
-	qhandle_t	waterBubbleShader;
+	qhandle_t	waterBubbleLargeShader;
+	qhandle_t	waterBubbleMediumShader;
+	qhandle_t	waterBubbleSmallShader;
+	qhandle_t	waterBubbleTinyShader;
 	qhandle_t	bloodTrailShader;
 	qhandle_t	bfgLFGlare;	// JUHOX
 	qhandle_t	bfgLFDisc;	// JUHOX
@@ -1789,7 +1793,7 @@ void CG_AddTrailsToScene ( void );
 // cg_radar.c
 //
 void CG_InitRadarBlips( void );
-void CG_DrawRadar();
+void CG_DrawRadar( void );
 void CG_UpdateRadarBlips( char *cmd );
 
 

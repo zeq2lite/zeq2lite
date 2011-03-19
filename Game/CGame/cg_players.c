@@ -1366,17 +1366,82 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 /*
 ===============
-CG_HasteTrail
+CG_BubblesTrail
 ===============
 */
-static void CG_HasteTrail( centity_t *cent ) {}
+static void CG_BubblesTrail( centity_t *cent, refEntity_t *head) {
+	clientInfo_t *ci;
+	vec3_t up, origin;
+	int contents;
+	entityState_t	*s1;
+	float			xyzspeed;
+	int r1,r2,r3,r4,r5,r6;
+	if ( cent->currentState.eFlags & EF_DEAD ) {return;}
+	s1 = &cent->currentState;
+	// Measure the objects velocity
+	xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
+					cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] + 
+					cent->currentState.pos.trDelta[2] * cent->currentState.pos.trDelta[2]);
+	ci = &cgs.clientinfo[ cent->currentState.number ];
+	contents = trap_CM_PointContents( head->origin, 0 );
+	if ( (cent->currentState.eFlags & EF_AURA) || xyzspeed ){
+		if ( contents & ( CONTENTS_WATER ) ) {
+			r1 = random() * 32;
+			r2 = random() * 32;
+			r3 = random() * 32;
+			r4 = random() * 32;
+			r5 = random() * 32;
+			r6 = random() * 48;
+			VectorSet( up, 0, 0, 8 );
+			VectorMA(head->origin, 0, head->axis[0], origin);
+			VectorMA(origin, -8, head->axis[2], origin);
+			origin[0] += r1;
+			origin[1] += r2;
+			origin[2] += r3;
+			origin[0] -= r4;
+			origin[1] -= r5;
+			origin[2] -= r6;
+			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 750, cg.time, cg.time + 375, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
+			CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1000, cg.time, cg.time + 500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleLargeShader );
+		}
+	}
+}
 
 /*
 ===============
 CG_BreathPuffs
+Used only for player breathing bubbles under water
 ===============
 */
-static void CG_BreathPuffs( centity_t *cent, refEntity_t *head) {}
+static void CG_BreathPuffs( centity_t *cent, refEntity_t *head) {
+	clientInfo_t *ci;
+	vec3_t up, origin;
+	int contents;
+	ci = &cgs.clientinfo[ cent->currentState.number ];
+	contents = trap_CM_PointContents( head->origin, 0 );
+	if ( cent->currentState.eFlags & EF_DEAD ) {return;}
+	if ( ci->breathPuffTime > cg.time ) {return;}
+	if ( contents & ( CONTENTS_WATER ) ) {
+		VectorSet( up, 0, 0, 8 );
+		VectorMA(head->origin, 6, head->axis[0], origin);
+		VectorMA(origin, -2, head->axis[2], origin);
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 1000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 1000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 1000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 1500, cg.time, cg.time + 1000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleTinyShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2000, cg.time, cg.time + 1500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2000, cg.time, cg.time + 1500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleSmallShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 2500, cg.time, cg.time + 2000, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleMediumShader );
+		CG_WaterBubble( origin, up, 3, 1, 1, 1, 0.66f, 3000, cg.time, cg.time + 2500, LEF_PUFF_DONT_SCALE, cgs.media.waterBubbleLargeShader );
+		ci->breathPuffTime = cg.time + 2500;
+	}
+}
 
 /*
 ===============
@@ -1937,6 +2002,7 @@ void CG_Player( centity_t *cent ) {
 		memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
 		memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
 		CG_BreathPuffs(cent,&legs);
+		CG_BubblesTrail(cent,&legs);
 		CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 		CG_AddPlayerWeaponMD4(&altLegs,NULL,cent,ci->team);
 		CG_PlayerPowerups(cent,&legs);
@@ -1961,6 +2027,7 @@ void CG_Player( centity_t *cent ) {
 		CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 		CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 		CG_BreathPuffs(cent,&head);
+		CG_BubblesTrail(cent,&head);
 		memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
 		memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
 		memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));

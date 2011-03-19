@@ -1365,9 +1365,9 @@ int CG_NewParticleArea (int num)
 	for (i=0; i<numparticles; i++)
 	{
 		if (type >= 4)
-			CG_ParticleBubble (cgs.media.waterBubbleShader, origin, origin2, turb, range, snum);
+			CG_ParticleBubble (cgs.media.waterBubbleMediumShader, origin, origin2, turb, range, snum);
 		else
-			CG_ParticleSnow (cgs.media.waterBubbleShader, origin, origin2, turb, range, snum);
+			CG_ParticleSnow (cgs.media.waterBubbleMediumShader, origin, origin2, turb, range, snum);
 	}
 
 	return (1);
