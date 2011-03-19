@@ -164,9 +164,6 @@ void Think_Guided (gentity_t *self) {
 		}
 	} // END OF BEAM SECTIONS
 	// If the weapon has existed too long, make the next think detonate it.
-	if((self->missileSpawnTime + self->maxMissileTime) <= level.time){
-	  self->think = G_RemoveUserWeapon;
-	}
 	self->nextthink = level.time + FRAMETIME;
 }
 
@@ -477,8 +474,6 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		VectorCopy(dir,self->r.currentAngles);
 		self->s.pos.trType = TR_LINEAR;
 		self->s.pos.trTime = level.time;
-		self->enemy->client->ps.bitFlags |= isStruggling;
-		missileOwner->client->ps.bitFlags |= isStruggling;
 		self->enemy = NULL;
 		self->strugglingAttack = qfalse;
 		self->strugglingAllyAttack = qfalse;
@@ -1633,21 +1628,21 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		if(other->s.eType == ET_BEAMHEAD){
 			if(!(self->client->ps.bitFlags & isStruggling)){
 				G_AddEvent(self,EV_POWER_STRUGGLE_START, DirToByte( trace->plane.normal));
+				other->enemy = self;
+				other->client->ps.bitFlags |= isStruggling;
+				self->strugglingAttack = qtrue;
+				self->s.dashDir[2] = 1.0f;
+				self->think = Think_NormalMissileStruggle;
+				self->nextthink = level.time;
+				self->client->ps.bitFlags |= isStruggling;
+				self->enemy = other;
+				self->enemy->strugglingAttack = qtrue;
+				self->enemy->s.dashDir[2] = 1.0f;
+				self->enemy->think = Think_NormalMissileStruggle;
+				self->enemy->nextthink = level.time;
+				if(self->s.eFlags & EF_GUIDED){self->s.eFlags &= ~EF_GUIDED;}
+				if(other->s.eFlags & EF_GUIDED){other->s.eFlags &= ~EF_GUIDED;}
 			}
-			other->enemy = self;
-			other->client->ps.bitFlags |= isStruggling;
-			self->strugglingAttack = qtrue;
-			self->s.dashDir[2] = 1.0f;
-			self->think = Think_NormalMissileStruggle;
-			self->nextthink = level.time;
-			self->client->ps.bitFlags |= isStruggling;
-			self->enemy = other;
-			self->enemy->strugglingAttack = qtrue;
-			self->enemy->s.dashDir[2] = 1.0f;
-			self->enemy->think = Think_NormalMissileStruggle;
-			self->enemy->nextthink = level.time;
-			if(self->s.eFlags & EF_GUIDED){self->s.eFlags &= ~EF_GUIDED;}
-			if(other->s.eFlags & EF_GUIDED){other->s.eFlags &= ~EF_GUIDED;}
 			return;
 		}
 		else if(other->s.eType == ET_MISSILE){return;}
@@ -1693,7 +1688,7 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 void G_DetachUserWeapon (gentity_t *self) {
 	gentity_t *other;
 	other = self->enemy;
-	if(self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0 && !(self->client->ps.bitFlags & isStruggling)){
+	if(self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0){
 		g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;
 		self->s.eType = ET_MISSILE;
 		self->think = Think_NormalMissile;
@@ -1702,6 +1697,8 @@ void G_DetachUserWeapon (gentity_t *self) {
 void G_RemoveUserWeapon (gentity_t *self) {
 	gentity_t *other;
 	other = self->enemy;
+	other->client->ps.bitFlags &= ~isStruggling;
+	self->client->ps.bitFlags &= ~isStruggling;
 	if(other->client->ps.lockedTarget >= MAX_CLIENTS){
 		other->client->ps.lockedPosition = NULL;
 		other->client->ps.lockedTarget = 0;
@@ -1713,8 +1710,6 @@ void G_RemoveUserWeapon (gentity_t *self) {
 		G_ExplodeUserWeapon ( self );
 		return;
 	}
-	other->client->ps.bitFlags &= ~isStruggling;
-	self->client->ps.bitFlags &= ~isStruggling;
 	G_FreeEntity( self );
 }
 

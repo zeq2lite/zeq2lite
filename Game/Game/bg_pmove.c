@@ -2630,7 +2630,8 @@ PM_Weapon
 Generates weapon events and modifes the weapon counter
 ==============*/
 void PM_WeaponRelease(void){
-	if(pm->ps->bitFlags & isGuiding || pm->ps->bitFlags & isStruggling){
+	if(pm->ps->bitFlags & isStruggling){return;}
+	if(pm->ps->bitFlags & isGuiding){
 		PM_AddEvent(EV_DETONATE_WEAPON);
 		pm->ps->bitFlags &= ~isGuiding;
 	}
