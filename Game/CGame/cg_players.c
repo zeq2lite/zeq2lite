@@ -462,33 +462,23 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	modelloaded = qtrue;
 	ci->usingMD4 = qfalse;
 	//Com_Printf("LoadClientInfo pre CG_RegisterClientModelname\n");
-	if ( !CG_RegisterClientModelname( ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname ) ) {
+	if (!CG_RegisterClientModelname(ci,ci->modelName,ci->skinName, ci->headModelName,ci->headSkinName,teamname)){
+		strcpy(ci->modelName,DEFAULT_MODEL);
+		strcpy(ci->headModelName,DEFAULT_MODEL);
+		strcpy(ci->skinName,"default");
+		strcpy(ci->headSkinName,"default");
 		if ( cg_buildScript.integer ) {
-			CG_Error( "CG_RegisterClientModelname( %s, %s, %s, %s %s ) failed", ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname );
+			CG_Error( "CG_RegisterClientModelname( %s, %s, %s, %s %s ) failed", ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName,teamname);
 		}
-
-		// fall back to default team name
-		if( cgs.gametype >= GT_TEAM) {
-			// keep skin name
-			if( ci->team == TEAM_BLUE ) {
-				Q_strncpyz(teamname, DEFAULT_BLUETEAM_NAME, sizeof(teamname) );
-			} else {
-				Q_strncpyz(teamname, DEFAULT_REDTEAM_NAME, sizeof(teamname) );
-			}
-			if ( !CG_RegisterClientModelname( ci, DEFAULT_TEAM_MODEL, ci->skinName, DEFAULT_TEAM_HEAD, ci->skinName, teamname ) ) {
-				CG_Error( "DEFAULT_TEAM_MODEL / skin (%s/%s) failed to register", DEFAULT_TEAM_MODEL, ci->skinName );
-			}
-		} else {
-			if ( !CG_RegisterClientModelname( ci, DEFAULT_MODEL, "default", DEFAULT_MODEL, "default", teamname ) ) {
-				CG_Error( "DEFAULT_MODEL (%s) failed to register", DEFAULT_MODEL );
-			}
+		if (!CG_RegisterClientModelname(ci,DEFAULT_MODEL,"default",DEFAULT_MODEL,"default",teamname) ) {
+			CG_Error("DEFAULT_MODEL (%s) failed to register",DEFAULT_MODEL);
 		}
 		modelloaded = qfalse;
 	}
 	ci->newAnims = qfalse;
 	// sounds
 	dir = ci->modelName;
-	fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
+	fallback = DEFAULT_MODEL;
 	for (tier = 0 ; tier < 9 ; tier++ ){
 		for(i = 0 ; i < MAX_CUSTOM_SOUNDS ; i++){
 			ci->sounds[tier][i] = cgs.media.nullSound;

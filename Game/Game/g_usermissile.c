@@ -477,12 +477,8 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 		VectorCopy(dir,self->r.currentAngles);
 		self->s.pos.trType = TR_LINEAR;
 		self->s.pos.trTime = level.time;
-		if(self->enemy->s.eType == ET_BEAMHEAD){
-			self->enemy->client->ps.bitFlags |= isStruggling;
-		}
-		if(self->s.eType == ET_BEAMHEAD){
-			missileOwner->client->ps.bitFlags |= isStruggling;
-		}
+		self->enemy->client->ps.bitFlags |= isStruggling;
+		missileOwner->client->ps.bitFlags |= isStruggling;
 		self->enemy = NULL;
 		self->strugglingAttack = qfalse;
 		self->strugglingAllyAttack = qfalse;
@@ -1372,9 +1368,6 @@ void G_ExplodeUserWeapon( gentity_t *self ) {
 	self->splashEnd = level.time + self->splashDuration;
 	self->splashTimer = level.time;
 	G_AddEvent( self, EV_MISSILE_MISS_AIR, DirToByte( dir ) );
-	if(self->s.eType == ET_BEAMHEAD && (self->strugglingPlayer || self->strugglingAttack)){
-		self->enemy->client->ps.bitFlags &= ~isStruggling;
-	}
 	trap_LinkEntity( self );
 }
 static void G_BounceUserMissile( gentity_t *self, trace_t *trace ) {
@@ -1471,11 +1464,7 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	self->bounceFrac = 0.0f;
 	self->enemy->client->ps.timers[tmStruggleBlock] += 100;
 	if(self->enemy->client->ps.timers[tmStruggleBlock] >= 3000){
-		self->s.eType = ET_EXPLOSION;
-		self->splashEnd = level.time + self->splashDuration;
-		self->splashTimer = level.time;
-		trap_LinkEntity(self);
-		self->nextthink = level.time + FRAMETIME;
+		G_ExplodeUserWeapon(self);
 		return;
 		//if(self->s.eType == ET_MISSILE){self->think = Think_NormalMissileBurnPlayer;}
 		//if(self->s.eType == ET_BEAMHEAD){self->think = Think_NormalMissileRidePlayer;}
@@ -1704,27 +1693,15 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 void G_DetachUserWeapon (gentity_t *self) {
 	gentity_t *other;
 	other = self->enemy;
-	other->client->ps.bitFlags &= ~isStruggling;
-	self->client->ps.bitFlags &= ~isStruggling;
-	if(other->client->ps.lockedTarget >= MAX_CLIENTS){
-		other->client->ps.lockedPosition = NULL;
-		other->client->ps.lockedTarget = 0;
-	}
-	if (self->guided) {
-		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
-	}
-	if (self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0) {
+	if(self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0 && !(self->client->ps.bitFlags & isStruggling)){
+		g_entities[self->s.clientNum].client->ps.weaponstate = WEAPON_READY;
 		self->s.eType = ET_MISSILE;
 		self->think = Think_NormalMissile;
-		return;
 	}
-	G_FreeEntity( self );
 }
 void G_RemoveUserWeapon (gentity_t *self) {
 	gentity_t *other;
 	other = self->enemy;
-	other->client->ps.bitFlags &= ~isStruggling;
-	self->client->ps.bitFlags &= ~isStruggling;
 	if(other->client->ps.lockedTarget >= MAX_CLIENTS){
 		other->client->ps.lockedPosition = NULL;
 		other->client->ps.lockedTarget = 0;
@@ -1736,6 +1713,8 @@ void G_RemoveUserWeapon (gentity_t *self) {
 		G_ExplodeUserWeapon ( self );
 		return;
 	}
+	other->client->ps.bitFlags &= ~isStruggling;
+	self->client->ps.bitFlags &= ~isStruggling;
 	G_FreeEntity( self );
 }
 

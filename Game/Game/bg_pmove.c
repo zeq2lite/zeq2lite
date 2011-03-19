@@ -2741,22 +2741,18 @@ void PM_Weapon(void){
 		break;
 	case WEAPON_GUIDING:
 		if(pm->cmd.buttons & BUTTON_ATTACK && !(pm->ps->bitFlags & isStruggling) &&	pm->ps->timers[tmAttackLife] > 2000){
-			if(!(pm->ps->lockedTarget > 0 && (pm->ps->lockedPlayer->bitFlags & isStruggling))){
-				PM_AddEvent(EV_DETONATE_WEAPON);
-				pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(ANIM_IDLE);
-			}
+			PM_AddEvent(EV_DETONATE_WEAPON);
+			pm->ps->weaponTime += weaponInfo[WPSTAT_COOLTIME];
+			PM_StartTorsoAnim(ANIM_IDLE);
 		}
 		pm->ps->timers[tmAttackLife] += pml.msec;
 		pm->ps->timers[tmImpede] = 100;
 		break;
 	case WEAPON_ALTGUIDING:
 		if(pm->cmd.buttons & BUTTON_ALT_ATTACK && !(pm->ps->bitFlags & isStruggling) &&	pm->ps->timers[tmAttackLife] > 2000){
-			if(!(pm->ps->lockedTarget > 0 && (pm->ps->lockedPlayer->bitFlags & isStruggling))){
-				PM_AddEvent(EV_DETONATE_WEAPON);
-				pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-				PM_StartTorsoAnim(ANIM_IDLE);
-			}
+			PM_AddEvent(EV_DETONATE_WEAPON);
+			pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
+			PM_StartTorsoAnim(ANIM_IDLE);
 		}
 		pm->ps->timers[tmAttackLife] += pml.msec;
 		pm->ps->timers[tmImpede] = 100;

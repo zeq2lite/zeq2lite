@@ -92,13 +92,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH	16
 
 #define	DEFAULT_MODEL			"goku"
-#ifdef MISSIONPACK
-#define	DEFAULT_TEAM_MODEL		"james"
-#define	DEFAULT_TEAM_HEAD		"*james"
-#else
 #define	DEFAULT_TEAM_MODEL		"goku"
 #define	DEFAULT_TEAM_HEAD		"goku"
-#endif
 
 #define DEFAULT_REDTEAM_NAME		"Evil"
 #define DEFAULT_BLUETEAM_NAME		"Good"

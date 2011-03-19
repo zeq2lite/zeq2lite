@@ -697,6 +697,9 @@ void ClientUserinfoChanged( int clientNum ) {
 		setupTiers(client);
 		
 		Com_sprintf( filename, sizeof( filename ), "players/%s/%s.phys", modelName, skinName );
+		if(trap_FS_FOpenFile(filename,0,FS_READ)<=0){
+			Com_sprintf( filename, sizeof( filename ), "players/%s/%s.phys", "goku", "default" );
+		}
 		G_weapPhys_Parse( filename, clientNum );
 
 		// Set the weapon mask here, incase we changed models on the fly.
