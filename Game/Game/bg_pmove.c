@@ -289,6 +289,10 @@ void PM_CheckZanzoken(void){
 	vec3_t pre_vel, post_vel,minSize,maxSize,forward,up,end;
 	int speed,cost;
 	trace_t trace;
+	if(pm->ps->powerLevel[plFatigue] <= 1){
+		PM_StopZanzoken();
+		return;
+	}
 	if(!(pm->ps->states & canZanzoken)){return;}
 	if(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing || pm->ps->bitFlags & usingMelee){return;}
 	if(!(pm->cmd.buttons & BUTTON_TELEPORT)){
@@ -379,7 +383,7 @@ void PM_UsePowerLevel(){
 void PM_BurnPowerLevel(){
 	float percent;
 	int defense;
-	int burn;
+	int burn,initial;
 	int newValue;
 	int burnType;
 	int limit;
@@ -406,17 +410,22 @@ void PM_BurnPowerLevel(){
 		defense = pm->ps->bitFlags & usingBallFlip ? defense * 1.5 : defense;
 		defense = pm->ps->bitFlags & atopGround ? defense * 1.1 : defense;
 		defense = (pm->cmd.buttons & BUTTON_WALKING) && pm->ps->bitFlags & atopGround ? defense * 1.5 : defense;
+		initial = burn;
 		percent = 1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]);
 		burn -= (int)(((float)pm->ps->powerLevel[plFatigue] * 0.01) * defense);
-		pm->ps->powerLevel[plHealthPool] += burn / 3;
-		pm->ps->powerLevel[plMaximumPool] += burn / 2;
+		if(burnType != 2){
+			pm->ps->powerLevel[plHealthPool] += burn * 0.5;
+			pm->ps->powerLevel[plMaximumPool] += burn * 0.7;
+		}
 		if(pm->ps->powerLevel[plHealthPool] > limit){pm->ps->powerLevel[plHealthPool] = limit;}
 		if(pm->ps->powerLevel[plMaximumPool] > limit){pm->ps->powerLevel[plMaximumPool] = limit;}
 		newValue = pm->ps->powerLevel[plHealth] - burn;
 		if(burn > 0){
 			newValue = newValue > limit ? limit : newValue;
 			pm->ps->powerLevel[plHealth] = newValue < 0 ? 0 : newValue;
-			newValue = pm->ps->powerLevel[plMaximum] + ((float)burn * percent) * 1.5;
+			if(burnType != 2){
+				newValue = pm->ps->powerLevel[plMaximum] + ((initial*0.7) * percent);
+			}
 			newValue = newValue < 0 ? 0 : newValue;
 			if(burnType != 2){pm->ps->powerLevel[plMaximum] = newValue > limit ? limit : newValue;}
 		}
@@ -2348,6 +2357,8 @@ void PM_Melee(void){
 					PM_AddEvent(EV_MELEE_BREAKER);
 					enemyState = stMeleeIdle;
 					pm->ps->timers[tmFreeze] = 100;
+					pm->ps->powerLevel[plHealthPool] += damage * 0.5;
+					pm->ps->powerLevel[plMaximumPool] += damage * 0.3;
 					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] = damage;
 					pm->ps->lockedPlayer->timers[tmFreeze] = 500;
 					pm->ps->lockedPlayer->timers[tmMeleeCharge] = 0;
@@ -2373,6 +2384,8 @@ void PM_Melee(void){
 					PM_EndDrift();
 					PM_AddEvent(EV_MELEE_BREAKER);
 					enemyState = stMeleeIdle;
+					pm->ps->powerLevel[plHealthPool] += damage * 0.5;
+					pm->ps->powerLevel[plMaximumPool] += damage * 0.3;
 					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] = damage;
 					pm->ps->timers[tmFreeze] = 100;
 					pm->ps->lockedPlayer->timers[tmFreeze] = 500;
@@ -2414,6 +2427,8 @@ void PM_Melee(void){
 						pm->ps->lockedPlayer->timers[tmKnockback] = 5000;
 						PM_StopMelee();
 					}
+					pm->ps->powerLevel[plHealthPool] += damage;
+					pm->ps->powerLevel[plMaximumPool] += damage * 0.8;
 					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;
 					state = stMeleeUsingPower;
 					meleeCharge = 0;
@@ -2527,6 +2542,8 @@ void PM_Melee(void){
 							damage = 0;
 						}
 						if(pm->ps->lockedPlayer->powerLevel[plHealth] > damage){
+							pm->ps->powerLevel[plHealthPool] += damage * 0.7;
+							pm->ps->powerLevel[plMaximumPool] += damage * 0.5;
 							pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] += damage;
 						}
 						else{

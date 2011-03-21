@@ -546,6 +546,8 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 			attacker->client->ps.states |= causedDamage;
 			G_LocationImpact(inflictor->r.currentOrigin,target,inflictor);
 			if(target == attacker){damage *= 0.2f;}
+			attacker->client->ps.powerLevel[plHealthPool] += damage * 0.7;
+			attacker->client->ps.powerLevel[plMaximumPool] += damage * 0.3;
 			tgClient->ps.powerLevel[plDamageFromEnergy] += damage;
 			if(inflictor->impede){tgClient->ps.timers[tmImpede] = inflictor->impede;}
 			if(knockback){
