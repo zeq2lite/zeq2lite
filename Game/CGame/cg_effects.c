@@ -175,8 +175,8 @@ localEntity_t *CG_WaterBubble( const vec3_t p, const vec3_t vel,
 	refEntity_t		*re;
 	int contents;
 
-	if (cgs.clientPaused){
-		return;
+	if(cgs.clientPaused){
+		return le;
 	}
 	
 	le = CG_AllocLocalEntity();

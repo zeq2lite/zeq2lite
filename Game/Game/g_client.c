@@ -905,6 +905,7 @@ void ClientBegin( int clientNum ) {
 	// Set the starting cap
 	ClientUserinfoChanged(clientNum);
 	client->ps.powerLevel[plMaximum] = g_powerlevel.value;
+	client->ps.powerLevel[plHealthPool] = client->ps.powerLevel[plMaximumPool] = client->ps.powerLevel[plMaximum] / 3;
 	client->ps.powerLevel[plLimit] = g_powerlevelMaximum.value;
 	client->ps.bitFlags |= isUnsafe;
 	// END ADDING
@@ -1049,6 +1050,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.eFlags &= ~EF_AURA;
 	// END ADDING
 	client->ps.powerLevel[plMaximum] = client->ps.powerLevel[plMaximum] > g_powerlevel.value ? client->ps.powerLevel[plMaximum] * 0.75 : g_powerlevel.value;
+	client->ps.powerLevel[plHealthPool] = client->ps.powerLevel[plMaximumPool] = client->ps.powerLevel[plMaximum] / 4;
 	client->ps.powerLevel[plLimit] = g_powerlevelMaximum.value;
 	client->ps.powerLevel[plCurrent] = client->ps.powerLevel[plHealth] = client->ps.powerLevel[plFatigue] = client->ps.powerLevel[plMaximum];
 	G_SetOrigin( ent, spawn_origin );

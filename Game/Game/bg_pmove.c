@@ -352,7 +352,11 @@ void PM_UsePowerLevel(){
 		if(useType == 1){
 			pm->ps->powerLevel[plFatigue] = newValue;
 			if(pm->ps->powerLevel[plFatigue] < 0){
-				pm->ps->powerLevel[plUseHealth] += (pm->ps->powerLevel[plFatigue]*-1)*0.75;
+				amount = (pm->ps->powerLevel[plFatigue]*-1)*0.75;
+				if(pm->ps->powerLevel[plHealth] - amount <= 0){
+					amount = pm->ps->powerLevel[plHealth] - 1;
+				}
+				pm->ps->powerLevel[plUseHealth] += amount;
 				pm->ps->powerLevel[plFatigue] = 0;
 			}
 			pm->ps->powerLevel[plUseFatigue] = 0;
@@ -404,6 +408,10 @@ void PM_BurnPowerLevel(){
 		defense = (pm->cmd.buttons & BUTTON_WALKING) && pm->ps->bitFlags & atopGround ? defense * 1.5 : defense;
 		percent = 1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]);
 		burn -= (int)(((float)pm->ps->powerLevel[plFatigue] * 0.01) * defense);
+		pm->ps->powerLevel[plHealthPool] += burn / 3;
+		pm->ps->powerLevel[plMaximumPool] += burn / 2;
+		if(pm->ps->powerLevel[plHealthPool] > limit){pm->ps->powerLevel[plHealthPool] = limit;}
+		if(pm->ps->powerLevel[plMaximumPool] > limit){pm->ps->powerLevel[plMaximumPool] = limit;}
 		newValue = pm->ps->powerLevel[plHealth] - burn;
 		if(burn > 0){
 			newValue = newValue > limit ? limit : newValue;
@@ -587,40 +595,40 @@ void PM_CheckPowerLevel(void){
 	timers = pm->ps->timers;
 	powerLevel = pm->ps->powerLevel;
 	timers[tmPowerAuto] += pml.msec;
-	limit = pm->ps->powerLevel[plLimit];
-	/*if(pm->ps->powerLevel[plFatigue] <= 0 && pm->ps->powerLevel[plCurrent] > 0){
-		pm->ps->powerLevel[plCurrent] = 1;
+	limit = powerLevel[plLimit];
+	/*if(powerLevel[plFatigue] <= 0 && powerLevel[plCurrent] > 0){
+		powerLevel[plCurrent] = 1;
 	}*/
 	while(timers[tmPowerAuto] >= 100){
 		timers[tmPowerAuto] -= 100;
 		idleScale = (!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove) ? 2.8 : 1;
-		statScale = 1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]);
+		statScale = 1.0 - ((float)powerLevel[plCurrent] / (float)powerLevel[plMaximum]);
 		if(statScale > 0.75){statScale = 0.75;}
 		if(statScale < 0.25){statScale = 0.25;}
-		fatigueScale = (float)pm->ps->powerLevel[plFatigue] / (float)pm->ps->powerLevel[plMaximum];
-		recovery = (float)pm->ps->powerLevel[plMaximum] * 0.01 * idleScale;
+		fatigueScale = (float)powerLevel[plFatigue] / (float)powerLevel[plMaximum];
+		recovery = (float)powerLevel[plMaximum] * 0.01 * idleScale;
 		recovery *=  statScale;
 		recovery *=  fatigueScale < 0.15 ? 0.15 : fatigueScale;
 		recovery *= pm->ps->baseStats[stFatigueRecovery];
 		if(pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar
 		|| pm->ps->bitFlags & isBreakingLimit || pm->ps->weaponstate >= WEAPON_GUIDING){recovery = 0;}
 		/*if(powerLevel[plCurrent] > powerLevel[plFatigue]){
-			newValue = powerLevel[plCurrent] - (pm->ps->powerLevel[plMaximum] * 0.005);
+			newValue = powerLevel[plCurrent] - (powerLevel[plMaximum] * 0.005);
 			powerLevel[plCurrent] = (powerLevel[plCurrent] - newValue >= 0) ? newValue : 0;
 		}*/
-		newValue = powerLevel[plCurrent] + pm->ps->powerLevel[plDrainCurrent];
+		newValue = powerLevel[plCurrent] + powerLevel[plDrainCurrent];
 		if(newValue < powerLevel[plMaximum] && newValue > 0){powerLevel[plCurrent] = newValue;}
-		newValue = powerLevel[plFatigue] + pm->ps->powerLevel[plDrainFatigue];
-		if(newValue < pm->ps->powerLevel[plMaximum]){powerLevel[plFatigue] = newValue;}
-		newValue = pm->ps->powerLevel[plHealth] + pm->ps->powerLevel[plDrainHealth];
-		if(newValue < pm->ps->powerLevel[plMaximum]){pm->ps->powerLevel[plHealth] = newValue;}
-		newValue = pm->ps->powerLevel[plMaximum] + pm->ps->powerLevel[plDrainMaximum];
-		if(newValue < limit &&  newValue > 0){pm->ps->powerLevel[plMaximum] = newValue;}
-		if(powerLevel[plFatigue] + recovery < pm->ps->powerLevel[plMaximum]){
+		newValue = powerLevel[plFatigue] + powerLevel[plDrainFatigue];
+		if(newValue < powerLevel[plMaximum]){powerLevel[plFatigue] = newValue;}
+		newValue = powerLevel[plHealth] + powerLevel[plDrainHealth];
+		if(newValue < powerLevel[plMaximum]){powerLevel[plHealth] = newValue;}
+		newValue = powerLevel[plMaximum] + powerLevel[plDrainMaximum];
+		if(newValue < limit &&  newValue > 0){powerLevel[plMaximum] = newValue;}
+		if(powerLevel[plFatigue] + recovery < powerLevel[plMaximum]){
 			powerLevel[plFatigue] += recovery;
 		}
 		else{
-			powerLevel[plFatigue] = pm->ps->powerLevel[plMaximum];
+			powerLevel[plFatigue] = powerLevel[plMaximum];
 		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
@@ -664,24 +672,35 @@ void PM_CheckPowerLevel(void){
 				if(raise < 1){raise = 1;}
 				if(powerLevel[plCurrent] > powerLevel[plFatigue]){raise *= 0.6;}
 				newValue = powerLevel[plCurrent] + raise;
-				if(newValue > pm->ps->powerLevel[plMaximum]){newValue = pm->ps->powerLevel[plMaximum];}
+				if(newValue > powerLevel[plMaximum]){newValue = powerLevel[plMaximum];}
 				if(newValue > limit){newValue = limit;}
 				powerLevel[plCurrent] = newValue;
-				if(powerLevel[plCurrent] == pm->ps->powerLevel[plMaximum]){
+				if(powerLevel[plCurrent] == powerLevel[plMaximum]){
 					if(!(pm->ps->bitFlags & isBreakingLimit)){PM_AddEvent(EV_POWERINGUP_START);}
 					pm->ps->bitFlags |= isBreakingLimit;
 					pushLimit = powerLevel[plCurrent] + pm->ps->breakLimitRate;
-					if(powerLevel[plHealth] + raise * 0.3 < pushLimit){
-						powerLevel[plHealth] += raise * 0.3;
-						pm->ps->powerLevel[plUseFatigue] += raise * 0.25;
+					if(powerLevel[plHealthPool] > 0){
+						if(powerLevel[plHealth] + raise * 0.3 < pushLimit){
+							powerLevel[plHealth] += raise * 0.3;
+							powerLevel[plUseFatigue] += raise * 0.25;
+						}
 					}
+					powerLevel[plHealthPool] -= raise * 0.3;
+					if(powerLevel[plHealthPool] < 0){powerLevel[plHealthPool] = 0;}
 					if(powerLevel[plHealth] > limit){powerLevel[plHealth] = limit;}
-					if(pushLimit < limit){
-						powerLevel[plCurrent] = powerLevel[plMaximum] = pushLimit;
+					if(powerLevel[plMaximumPool] > 0){
+						if(pushLimit < limit){
+							powerLevel[plCurrent] = powerLevel[plMaximum] = pushLimit;
+						}
 					}
+					else{
+						powerLevel[plUseFatigue] += raise;
+					}
+					powerLevel[plMaximumPool] -= raise * 0.3;
+					if(powerLevel[plMaximumPool] < 0){powerLevel[plMaximumPool] = 0;}
 				}
 				if(pm->ps->bitFlags & isBreakingLimit){
-					if(powerLevel[plCurrent] < ((float)pm->ps->powerLevel[plMaximum] * 0.95)){
+					if(powerLevel[plCurrent] < ((float)powerLevel[plMaximum] * 0.95)){
 						pm->ps->bitFlags &= ~isBreakingLimit;
 					}
 				}
@@ -2644,6 +2663,7 @@ void PM_Weapon(void){
 	int	*alt_weaponInfo;
 	int chargeRate;
 	int costPrimary,costSecondary;
+	float energyScale;
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	if(pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar
@@ -2678,8 +2698,9 @@ void PM_Weapon(void){
 		}
 	}
 	if(weaponInfo[WPSTAT_NUMCHECK] != pm->ps->weapon){return;}
-	costPrimary = weaponInfo[WPSTAT_POWERLEVELCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
-	costSecondary = alt_weaponInfo[WPSTAT_POWERLEVELCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);;
+	costPrimary = weaponInfo[WPSTAT_POWERLEVELCOST];
+	costSecondary = alt_weaponInfo[WPSTAT_POWERLEVELCOST];
+	energyScale = (float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum];
 	switch(pm->ps->weaponstate){
 	case WEAPON_READY:
 	case WEAPON_DROPPING:
@@ -2704,7 +2725,7 @@ void PM_Weapon(void){
 					break;
 				}
 				pm->ps->stats[stChargePercentPrimary] = 100;
-				pm->ps->powerLevel[plUseFatigue] += costPrimary * pm->ps->baseStats[stEnergyAttackCost];
+				pm->ps->powerLevel[plUseFatigue] += costPrimary * pm->ps->baseStats[stEnergyAttackCost] * energyScale;
 				if(weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
 					PM_AddEvent(EV_FIRE_WEAPON );
 					pm->ps->weaponstate = WEAPON_FIRING;
@@ -2723,7 +2744,7 @@ void PM_Weapon(void){
 					break;
 				}
 				pm->ps->stats[stChargePercentSecondary] = 100;
-				pm->ps->powerLevel[plUseFatigue] += costSecondary * pm->ps->baseStats[stEnergyAttackCost];
+				pm->ps->powerLevel[plUseFatigue] += costSecondary * pm->ps->baseStats[stEnergyAttackCost] * energyScale;
 				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
 					pm->ps->weaponstate = WEAPON_ALTFIRING;
 					PM_AddEvent(EV_ALTFIRE_WEAPON );
@@ -2773,7 +2794,7 @@ void PM_Weapon(void){
 				if(pm->ps->stats[stChargePercentPrimary] > 100){
 					pm->ps->stats[stChargePercentPrimary] = 100;
 				}
-				pm->ps->powerLevel[plUseFatigue] += costPrimary * pm->ps->baseStats[stEnergyAttackCost];
+				pm->ps->powerLevel[plUseFatigue] += costPrimary * pm->ps->baseStats[stEnergyAttackCost] * energyScale;
 				pm->ps->powerLevel[plUseHealth] += weaponInfo[WPSTAT_HEALTHCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001) * pm->ps->baseStats[stEnergyAttackCost];
 				pm->ps->powerLevel[plUseMaximum] += weaponInfo[WPSTAT_MAXIMUMCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001) * pm->ps->baseStats[stEnergyAttackCost];
 			}
@@ -2814,7 +2835,7 @@ void PM_Weapon(void){
 				if(pm->ps->stats[stChargePercentSecondary] > 100){
 					pm->ps->stats[stChargePercentSecondary] = 100;
 				}
-				pm->ps->powerLevel[plUseFatigue] += costSecondary * pm->ps->baseStats[stEnergyAttackCost];
+				pm->ps->powerLevel[plUseFatigue] += costSecondary * pm->ps->baseStats[stEnergyAttackCost] * energyScale;
 				pm->ps->powerLevel[plUseHealth] += weaponInfo[WPSTAT_ALT_HEALTHCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
 				pm->ps->powerLevel[plUseMaximum] += weaponInfo[WPSTAT_ALT_MAXIMUMCOST] * ((float)pm->ps->powerLevel[plMaximum] * 0.0001);
 			}
@@ -2848,7 +2869,7 @@ void PM_Weapon(void){
 		}
 		pm->ps->weaponTime += pml.msec;
 		while(pm->ps->weaponTime > 100){
-			pm->ps->powerLevel[plUseFatigue] += costPrimary * pm->ps->baseStats[stEnergyAttackCost];
+			pm->ps->powerLevel[plUseFatigue] += costPrimary * pm->ps->baseStats[stEnergyAttackCost] * energyScale;
 		}
 		break;
 	case WEAPON_ALTFIRING:
@@ -2860,7 +2881,7 @@ void PM_Weapon(void){
 		}
 		pm->ps->weaponTime += pml.msec;
 		while(pm->ps->weaponTime > 100){
-			pm->ps->powerLevel[plUseFatigue] += costSecondary * pm->ps->baseStats[stEnergyAttackCost];
+			pm->ps->powerLevel[plUseFatigue] += costSecondary * pm->ps->baseStats[stEnergyAttackCost] * energyScale;
 		}
 		break;
 	default:

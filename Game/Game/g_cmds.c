@@ -56,10 +56,6 @@ qboolean	CheatsOk( gentity_t *ent ) {
 		trap_SendServerCommand( ent-g_entities, va("print \"Cheats are not enabled on this server.\n\""));
 		return qfalse;
 	}
-	if ( ent->powerLevelTotal <= 0 ) {
-		trap_SendServerCommand( ent-g_entities, va("print \"You must be alive to use this command.\n\""));
-		return qfalse;
-	}
 	return qtrue;
 }
 
@@ -282,9 +278,6 @@ Cmd_Kill_f
 */
 void Cmd_Kill_f( gentity_t *ent ) {
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
-		return;
-	}
-	if (ent->powerLevelTotal <= 0) {
 		return;
 	}
 	ent->flags &= ~FL_GODMODE;
