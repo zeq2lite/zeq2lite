@@ -412,7 +412,7 @@ void PM_BurnPowerLevel(){
 		defense = (pm->cmd.buttons & BUTTON_WALKING) && pm->ps->bitFlags & atopGround ? defense * 1.5 : defense;
 		initial = burn;
 		percent = 1.0 - ((float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum]);
-		burn -= (int)(((float)pm->ps->powerLevel[plFatigue] * 0.01) * defense);
+		burn -= (int)(((float)pm->ps->powerLevel[plFatigue] * 0.1) * defense);
 		if(burnType != 2){
 			pm->ps->powerLevel[plHealthPool] += burn * 0.5;
 			pm->ps->powerLevel[plMaximumPool] += burn * 0.7;
