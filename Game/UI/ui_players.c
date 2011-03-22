@@ -1205,7 +1205,7 @@ static qboolean UI_ParseAnimationFile( const char *filename, animation_t *animat
 	char		*token;
 	float		fps;
 	int			skip;
-	char		text[20000];
+	char		text[32000];
 	fileHandle_t	f;
 
 	memset( animations, 0, sizeof( animation_t ) * MAX_ANIMATIONS );
@@ -1526,7 +1526,7 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 		pi->pendingLegsAnim = 0;
 		UI_ForceLegsAnim( pi, legsAnim );
 	}
-
+/*
 	// torso animation
 	if ( torsoAnim == ANIM_IDLE || torsoAnim == ANIM_IDLE_LOCKED ) {
 		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
@@ -1536,7 +1536,7 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 			torsoAnim = ANIM_IDLE;
 		}
 	}
-/*
+
 	if ( torsoAnim == ANIM_ATTACK || torsoAnim == ANIM_ATTACK2 ) {
 		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
 			torsoAnim = ANIM_ATTACK2;

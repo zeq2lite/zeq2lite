@@ -1366,11 +1366,47 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 /*
 ===============
+CG_InnerAuraSpikes
+===============
+*/
+static void CG_InnerAuraSpikes( centity_t *cent, refEntity_t *head) {
+	vec3_t up, origin;
+	int r1,r2,r3,r4,r5,r6;
+	if ( cent->currentState.eFlags & EF_AURA ){
+			r1 = random() * 24;
+			r2 = random() * 24;
+			r3 = random() * 32;
+			r4 = random() * 24;
+			r5 = random() * 24;
+			r6 = random() * 48;
+			VectorSet( up, 0, 0, 32 ); // <-- Type 1
+			//VectorMA(head->origin, 0, head->axis[0], up); // <-- Type 2
+			//VectorMA(up, 32, head->axis[2], up); // <-- Type 2
+			VectorMA(head->origin, 0, head->axis[0], origin);
+			VectorMA(origin, -8, head->axis[2], origin);
+			origin[0] += r1;
+			origin[1] += r2;
+			origin[2] += r3;
+			origin[0] -= r4;
+			origin[1] -= r5;
+			origin[2] -= r6;
+			//up[0] += r1; // <-- Type 2
+			//up[1] += r2; // <-- Type 2
+			//up[2] += r3; // <-- Type 2
+			//up[0] -= r4; // <-- Type 2
+			//up[1] -= r5; // <-- Type 2
+			//up[2] -= r6; // <-- Type 2
+		CG_AuraSpike( origin, up, 10, 250, cg.time, cg.time + 125, LEF_PUFF_DONT_SCALE, cent); // <-- Type 1
+		//CG_Aura_DrawInnerSpike (origin, up, 25.0f, cent); // <-- Type 2
+	}
+}
+
+/*
+===============
 CG_BubblesTrail
 ===============
 */
 static void CG_BubblesTrail( centity_t *cent, refEntity_t *head) {
-	clientInfo_t *ci;
 	vec3_t up, origin;
 	int contents;
 	entityState_t	*s1;
@@ -1382,7 +1418,6 @@ static void CG_BubblesTrail( centity_t *cent, refEntity_t *head) {
 	xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
 					cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] + 
 					cent->currentState.pos.trDelta[2] * cent->currentState.pos.trDelta[2]);
-	ci = &cgs.clientinfo[ cent->currentState.number ];
 	contents = trap_CM_PointContents( head->origin, 0 );
 	if ( (cent->currentState.eFlags & EF_AURA) || xyzspeed ){
 		if ( contents & ( CONTENTS_WATER ) ) {
@@ -2021,6 +2056,7 @@ void CG_Player( centity_t *cent ) {
 		memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
 		CG_BreathPuffs(cent,&legs);
 		CG_BubblesTrail(cent,&legs);
+		CG_InnerAuraSpikes(cent,&legs);
 		CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 		CG_AddPlayerWeaponMD4(&altLegs,NULL,cent,ci->team);
 		CG_PlayerPowerups(cent,&legs);
@@ -2046,6 +2082,7 @@ void CG_Player( centity_t *cent ) {
 		CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
 		CG_BreathPuffs(cent,&head);
 		CG_BubblesTrail(cent,&head);
+		CG_InnerAuraSpikes(cent,&head);
 		memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
 		memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
 		memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));

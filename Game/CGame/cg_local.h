@@ -1465,6 +1465,14 @@ localEntity_t *CG_SmokePuff( const vec3_t p,
 				   int fadeInTime,
 				   int leFlags,
 				   qhandle_t hShader );
+void CG_Aura_DrawInnerSpike (vec3_t start, vec3_t end, float width, centity_t *player);
+localEntity_t *CG_AuraSpike( const vec3_t p, const vec3_t vel, 
+				   float radius,
+				   float duration,
+				   int startTime,
+				   int fadeInTime,
+				   int leFlags,
+				   centity_t *player);
 localEntity_t *CG_WaterBubble( const vec3_t p, 
 				   const vec3_t vel, 
 				   float radius,

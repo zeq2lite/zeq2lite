@@ -1073,3 +1073,131 @@ void CG_CopyClientAura( int from, int to){
 	memcpy(&auraStates[to], &auraStates[from], sizeof(auraState_t));
 }
 
+/*
+===================
+CG_Aura_DrawSpike
+===================
+  Draws the polygons for one aura spike
+*/
+void CG_Aura_DrawInnerSpike (vec3_t start, vec3_t end, float width, centity_t *player){
+	vec3_t line, offset, viewLine;
+	polyVert_t verts[4];
+	float len;
+	int i, j;
+	int				clientNum, tier;
+	auraState_t		*state;
+	auraConfig_t	*config;
+
+	// Get the aura system corresponding to the player
+	clientNum = player->currentState.clientNum;
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){
+		CG_Error( "Bad clientNum on player entity");
+		return;
+	}
+	state = &auraStates[ clientNum ];
+	tier = cgs.clientinfo[clientNum].tierCurrent;
+	config = &(state->configurations[tier]);
+
+	VectorSubtract (end, start, line);
+	VectorSubtract (start, cg.refdef.vieworg, viewLine);
+	CrossProduct (viewLine, line, offset);
+	len = VectorNormalize (offset);
+	
+	if (!len){
+		return;
+	}
+	
+	VectorMA (end, -width, offset, verts[0].xyz);
+	verts[0].st[0] = 1;
+	verts[0].st[1] = 0;
+	VectorMA (end, width, offset, verts[1].xyz);
+	verts[1].st[0] = 0;
+	verts[1].st[1] = 0;
+	VectorMA (start, width, offset, verts[2].xyz);
+	verts[2].st[0] = 0;
+	verts[2].st[1] = 1;
+	VectorMA (start, -width, offset, verts[3].xyz);
+	verts[3].st[0] = 1;
+	verts[3].st[1] = 1;
+	
+	for (i = 0;i < 4;i++){
+		for (j = 0;j < 4;j++){
+			verts[i].modulate[j] = 255 * config->auraColor[j];
+		}
+	}
+
+	trap_R_AddPolyToScene( config->auraShader, 4, verts);
+}
+
+/*
+==================
+CG_AuraSpikes
+
+For inner aura
+==================
+*/
+localEntity_t *CG_AuraSpike( const vec3_t p, const vec3_t vel, 
+				   float radius,
+				   float duration,
+				   int startTime,
+				   int fadeInTime,
+				   int leFlags,
+				   centity_t *player){
+	int				clientNum, tier;
+	localEntity_t	*le;
+	refEntity_t		*re;
+	auraState_t		*state;
+	auraConfig_t	*config;
+
+	// Get the aura system corresponding to the player
+	clientNum = player->currentState.clientNum;
+	if(clientNum < 0 || clientNum >= MAX_CLIENTS){
+		CG_Error( "Bad clientNum on player entity");
+		return le;
+	}
+	state = &auraStates[ clientNum ];
+	tier = cgs.clientinfo[clientNum].tierCurrent;
+	config = &(state->configurations[tier]);
+
+	le = CG_AllocLocalEntity();
+	le->leFlags = leFlags;
+	le->radius = radius;
+
+	re = &le->refEntity;
+	re->radius = radius;
+	re->shaderTime = startTime / 1000.0f;
+
+	le->leType = LE_MOVE_SCALE_FADE;
+	le->startTime = startTime;
+	le->fadeInTime = fadeInTime;
+	le->endTime = startTime + duration;
+	if ( fadeInTime > startTime ) {
+		le->lifeRate = 1.0 / ( le->endTime - le->fadeInTime );
+	}
+	else {
+		le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+	}
+	le->color[0] = config->auraColor[0];
+	le->color[1] = config->auraColor[1]; 
+	le->color[2] = config->auraColor[2];
+	le->color[3] = 1.0f;
+
+	le->pos.trType = TR_LINEAR;
+	le->pos.trTime = startTime;
+	VectorCopy( vel, le->pos.trDelta );
+	VectorCopy( p, le->pos.trBase );
+
+	VectorCopy( p, re->origin );
+	re->customShader = config->auraShader;
+
+	// rage pro can't alpha fade, so use a different shader
+	re->shaderRGBA[0] = le->color[0] * 0xff;
+	re->shaderRGBA[1] = le->color[1] * 0xff;
+	re->shaderRGBA[2] = le->color[2] * 0xff;
+	re->shaderRGBA[3] = 0xff;
+
+	re->reType = RT_SPRITE;
+	re->radius = le->radius;
+
+	return le;
+}
