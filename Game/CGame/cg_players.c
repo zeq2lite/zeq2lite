@@ -1371,19 +1371,26 @@ CG_InnerAuraSpikes
 */
 static void CG_InnerAuraSpikes( centity_t *cent, refEntity_t *head) {
 	vec3_t up, origin;
+	float xyzspeed;
 	int r1,r2,r3,r4,r5,r6;
-	if ( cent->currentState.eFlags & EF_AURA ){
-			r1 = random() * 24;
-			r2 = random() * 24;
+	clientInfo_t *ci;
+	ci = &cgs.clientinfo[ cent->currentState.number ];
+	if ( ci->bubbleTrailTime > cg.time ) {return;}
+	xyzspeed = sqrt( cent->currentState.pos.trDelta[0] * cent->currentState.pos.trDelta[0] +
+					cent->currentState.pos.trDelta[1] * cent->currentState.pos.trDelta[1] + 
+					cent->currentState.pos.trDelta[2] * cent->currentState.pos.trDelta[2]);
+	if ( cent->currentState.eFlags & EF_AURA && !xyzspeed){
+			r1 = random() * 32;
+			r2 = random() * 32;
 			r3 = random() * 32;
-			r4 = random() * 24;
-			r5 = random() * 24;
-			r6 = random() * 48;
-			VectorSet( up, 0, 0, 32 ); // <-- Type 1
+			r4 = random() * 32;
+			r5 = random() * 32;
+			r6 = random() * 2;
+			VectorSet( up, 0, 0, 64 ); // <-- Type 1
 			//VectorMA(head->origin, 0, head->axis[0], up); // <-- Type 2
-			//VectorMA(up, 32, head->axis[2], up); // <-- Type 2
+			//VectorMA(up, 64, head->axis[2], up); // <-- Type 2
 			VectorMA(head->origin, 0, head->axis[0], origin);
-			VectorMA(origin, -8, head->axis[2], origin);
+			VectorMA(origin, -40, head->axis[2], origin);
 			origin[0] += r1;
 			origin[1] += r2;
 			origin[2] += r3;
@@ -1396,8 +1403,9 @@ static void CG_InnerAuraSpikes( centity_t *cent, refEntity_t *head) {
 			//up[0] -= r4; // <-- Type 2
 			//up[1] -= r5; // <-- Type 2
 			//up[2] -= r6; // <-- Type 2
-		CG_AuraSpike( origin, up, 10, 250, cg.time, cg.time + 125, LEF_PUFF_DONT_SCALE, cent); // <-- Type 1
+		CG_AuraSpike( origin, up, 10, 500, cg.time, cg.time + 250, LEF_PUFF_DONT_SCALE, cent); // <-- Type 1
 		//CG_Aura_DrawInnerSpike (origin, up, 25.0f, cent); // <-- Type 2
+		ci->bubbleTrailTime = cg.time + 50;
 	}
 }
 
