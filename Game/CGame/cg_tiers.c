@@ -61,6 +61,11 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 			Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 			ci->tierConfig[i].soundPoweringUp = trap_S_RegisterSound(strcat(tierPath,"poweringUp.ogg"),qfalse);
 		}
+		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/transformScript.cfg",modelName,i+1);
+		if(trap_FS_FOpenFile(tierPath,0,FS_READ)>0){
+			ci->tierConfig[i].transformScriptExists = qtrue;
+		}
+		
 		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",modelName,i+1);
 		parseTier(filename,&ci->tierConfig[i]);
 		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",modelName,i+1);
@@ -185,7 +190,7 @@ void parseTier(char *path,tierConfig_cg *tier){
 			else if(!Q_stricmp(token,"tierName")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->name = token;
+				Q_strncpyz(tier->name, token, TIERNAMELENGTH);
 			}
 			else if(!Q_stricmp(token,"tierIcon")){
 				token = COM_Parse(&parse);

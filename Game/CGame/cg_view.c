@@ -707,6 +707,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	entityState_t *ent;
 	clientInfo_t *ci;
 	tierConfig_cg *tier;
+
 	ps = &cg.predictedPlayerState;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
@@ -751,20 +752,27 @@ static void CG_OffsetThirdPersonView( void ) {
 	if(ps->timers[tmTransform] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
-			tier = &ci->tierConfig[ci->tierCurrent+1];
+			tier = &ci->tierConfig[ps->powerLevel[plTierCurrent]];
 			ci->transformStart = qtrue;
 			ci->transformLength = ps->timers[tmTransform];
+			if(tier->transformScriptExists){
+				trap_SendConsoleCommand(va("exec players/%s/tier%i/transformScript.cfg\n", ci->modelName, ps->powerLevel[plTierCurrent]+1));
+			}
 		}
-		transformPercent = 1.0 - ((float)ps->timers[tmTransform] / (float)ci->transformLength);
-		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
-		pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
-		zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
-		newAngle = (orbit*transformPercent) - abs(tier->transformCameraOrbit[0]);
-		newHeight = (pan*transformPercent) - abs(tier->transformCameraPan[0]);
-		newRange = (zoom*transformPercent) - abs(tier->transformCameraZoom[0]);
-		cg_thirdPersonAngle.value = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
-		cg_thirdPersonHeight.value = pan > 0 ? newHeight : tier->transformCameraDefault[1];
-		cg_thirdPersonRange.value = zoom > 0 ? newRange : tier->transformCameraDefault[2];
+		if(!tier->transformScriptExists){
+			transformPercent = 1.0 - ((float)ps->timers[tmTransform] / (float)ci->transformLength);
+			orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
+			pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
+			zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
+			newAngle = (orbit*transformPercent) - abs(tier->transformCameraOrbit[0]);
+			newHeight = (pan*transformPercent) - abs(tier->transformCameraPan[0]);
+			newRange = (zoom*transformPercent) - abs(tier->transformCameraZoom[0]);
+			cg_thirdPersonAngle.value = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
+			cg_thirdPersonHeight.value = pan > 0 ? newHeight : tier->transformCameraDefault[1];
+			cg_thirdPersonRange.value = zoom > 0 ? newRange : tier->transformCameraDefault[2];
+			CG_Printf("ci->tierCurrent: %i\n", ci->tierCurrent);
+		}
+
 	}
 	else if(ci->transformStart){
 		ci->transformStart = qfalse;

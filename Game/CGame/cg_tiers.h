@@ -1,9 +1,12 @@
+#define TIERNAMELENGTH 15
+
 typedef struct{
-	char *name;
+	char name[TIERNAMELENGTH];
 	qhandle_t icon;
 	qboolean damageFeatures;
 	qboolean damageModelsRevertHealed;
 	qboolean damageTexturesRevertHealed;
+	qboolean transformScriptExists;
 	float hudMultiplier;
 	int sustainCurrent;
 	int sustainFatigue;
