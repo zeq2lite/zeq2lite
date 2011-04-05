@@ -770,16 +770,24 @@ static void CG_OffsetThirdPersonView( void ) {
 			cg_thirdPersonAngle.value = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
 			cg_thirdPersonHeight.value = pan > 0 ? newHeight : tier->transformCameraDefault[1];
 			cg_thirdPersonRange.value = zoom > 0 ? newRange : tier->transformCameraDefault[2];
-			CG_Printf("ci->tierCurrent: %i\n", ci->tierCurrent);
 		}
 
 	}
 	else if(ci->transformStart){
+		char var[MAX_CVAR_VALUE_STRING];
 		ci->transformStart = qfalse;
 		cg_thirdPersonAngle.value = ci->cameraBackup[0];
 		cg_thirdPersonHeight.value = ci->cameraBackup[1];
 		cg_thirdPersonRange.value = ci->cameraBackup[2];
 		cg_thirdPersonSlide.value = ci->cameraBackup[3];
+		Com_sprintf(var, sizeof(var), "%i", ci->cameraBackup[0]);
+		trap_Cvar_Set("cg_thirdPersonAngle", var);
+		Com_sprintf(var, sizeof(var), "%i", ci->cameraBackup[1]);
+		trap_Cvar_Set("cg_thirdPersonHeight", var);
+		Com_sprintf(var, sizeof(var), "%i", ci->cameraBackup[2]);
+		trap_Cvar_Set("cg_thirdPersonRange", var);
+		Com_sprintf(var, sizeof(var), "%i", ci->cameraBackup[3]);
+		trap_Cvar_Set("cg_thirdPersonSlide", var);
 	}
 	//view[1] += cg_thirdPersonSlide.value;
 	VectorMA(view,cg_thirdPersonSlide.value,right,view);
