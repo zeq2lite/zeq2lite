@@ -2,6 +2,7 @@
 
 typedef struct{
 	char name[TIERNAMELENGTH];
+	char transformMusic[MAX_QPATH];
 	qhandle_t icon;
 	qboolean damageFeatures;
 	qboolean damageModelsRevertHealed;
@@ -20,6 +21,7 @@ typedef struct{
 	int transformCameraOrbit[2];
 	int transformCameraZoom[2];
 	int transformCameraPan[2];
+	int transformMusicLength;
 	sfxHandle_t soundTransformFirst;
 	sfxHandle_t soundTransformUp;
 	sfxHandle_t soundTransformDown;

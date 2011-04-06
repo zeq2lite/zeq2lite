@@ -1,14 +1,30 @@
 #include "cg_local.h"
 void CG_CheckMusic(void){
 	playerState_t *ps;
+	clientInfo_t *ci;
+	tierConfig_cg *tier;
 	ps = &cg.predictedPlayerState;
+	ci = &cgs.clientinfo[ps->clientNum];
+	tier = &ci->tierConfig[ci->tierCurrent];
 	if(!cgs.music.started){
 		CG_StartMusic();
 	}
 	if(ps->bitFlags & isTransforming){
 		if(cgs.music.currentType != 9){
 			cgs.music.currentType = 9;
-			CG_NextTrack();
+			if(tier->transformMusic[0]){
+				char *path;
+				int duration;
+				path = va("music/%s",tier->transformMusic);
+				duration = tier->transformMusicLength;
+				if(duration > 300000){duration = 300000;}
+				cgs.music.endTime = cg.time + duration - cgs.music.fadeAmount;
+				trap_S_StartBackgroundTrack(path,path);
+				trap_Cvar_Set("s_musicvolume",va("%f",cg_music.value));
+			}
+			else{
+				CG_NextTrack();
+			}
 		}
 	}
 	else if(ps->bitFlags & isStruggling){
@@ -71,21 +87,14 @@ int CG_GetMilliseconds(char *time){
 	int index,compareIndex;
 	int amount;
 	char current[8];
-	//int i = 0;
+	int i;
 	index = 0;
 	compareIndex = 0;
 	amount = 0;
-	//CG_Printf("Q_PrintStrlen(time): %i, current[7]: %i\n", Q_PrintStrlen(time), current[7]);
 	while(1){
 		if(index > Q_PrintStrlen(time)){break;}
 		current[compareIndex] = time[index];
-		if(compareIndex > 7)
-		{
-			CG_Printf("compareIndex: %i, index: %i\n", compareIndex, index);
-		}
-		CG_Printf("current[%i]: %c(%i)\n", index, current[index], (int)current[index]);
 		if(strcmp(&current[index],":") == 0){
-			CG_Printf("amount add inner: %i\n", (atoi(current) * 60 * 1000));
 			amount += atoi(current) * 60 * 1000;
 			compareIndex = -1;
 			memset(current,0,8);
@@ -93,9 +102,7 @@ int CG_GetMilliseconds(char *time){
 		++index;
 		++compareIndex;
 	}
-	CG_Printf("amount add outer: %i\n", (atoi(current) * 1000));
 	amount += atoi(current) * 1000;
-	CG_Printf("amount: %i\n", amount);
 	return amount;
 }
 void CG_ParsePlaylist(void){

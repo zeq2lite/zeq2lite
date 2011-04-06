@@ -190,7 +190,7 @@ void parseTier(char *path,tierConfig_cg *tier){
 			else if(!Q_stricmp(token,"tierName")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				Q_strncpyz(tier->name, token, TIERNAMELENGTH);
+				Q_strncpyz(tier->name, token, sizeof(tier->name));
 			}
 			else if(!Q_stricmp(token,"tierIcon")){
 				token = COM_Parse(&parse);
@@ -284,6 +284,17 @@ void parseTier(char *path,tierConfig_cg *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->soundTransformDown = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"transformMusic")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(trap_FS_FOpenFile(va("music/%s.ogg", token),0,FS_READ)>0){
+					Q_strncpyz(tier->transformMusic, token, sizeof(tier->transformMusic));
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					tier->transformMusicLength = CG_GetMilliseconds(token);
+				}
+
 			}
 			else if(!Q_stricmp(token,"poweringUpSound")){
 				token = COM_Parse(&parse);
