@@ -419,15 +419,20 @@ void PM_BurnPowerLevel(){
 		}
 		if(pm->ps->powerLevel[plHealthPool] > limit){pm->ps->powerLevel[plHealthPool] = limit;}
 		if(pm->ps->powerLevel[plMaximumPool] > limit){pm->ps->powerLevel[plMaximumPool] = limit;}
-		newValue = pm->ps->powerLevel[plHealth] - burn;
 		if(burn > 0){
-			newValue = newValue > limit ? limit : newValue;
-			pm->ps->powerLevel[plHealth] = newValue < 0 ? 0 : newValue;
+			newValue = pm->ps->powerLevel[plHealth] - burn;
+			if(newValue > limit){newValue = limit;}
+			else if(newValue < 0){newValue = 0;}
+			pm->ps->powerLevel[plHealth] = newValue;
 			if(burnType != 2){
-				newValue = pm->ps->powerLevel[plMaximum] + ((initial*0.7) * percent);
+				newValue = pm->ps->powerLevel[plMaximum] + (initial * 0.7f * percent);
+				if(newValue > pm->ps->powerLevel[plMaximum] * 1.25f){
+					newValue = pm->ps->powerLevel[plMaximum] * 1.25f;
+				}
+				if(newValue > limit){newValue = limit;}
+				else if(newValue < 0){newValue = 0;}
+				pm->ps->powerLevel[plMaximum] = newValue;
 			}
-			newValue = newValue < 0 ? 0 : newValue;
-			if(burnType != 2){pm->ps->powerLevel[plMaximum] = newValue > limit ? limit : newValue;}
 		}
 		if(burnType == 0){pm->ps->powerLevel[plDamageFromEnergy] = 0;}
 		else if(burnType == 1){pm->ps->powerLevel[plDamageFromMelee] = 0;}

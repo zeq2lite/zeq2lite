@@ -190,6 +190,7 @@ vmCvar_t	cg_soundAttenuation;
 vmCvar_t	cg_thirdPersonCamera;
 vmCvar_t	cg_beamControl;
 vmCvar_t	cg_music;
+vmCvar_t	cg_playTransformTrackToEnd;
 vmCvar_t	cg_particlesQuality;
 vmCvar_t	cg_particlesStop;
 vmCvar_t	cg_particlesMaximum;
@@ -326,6 +327,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "0", CVAR_ARCHIVE},
 	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE},
 	{ &cg_music, "cg_music", "0.6", CVAR_ARCHIVE},
+	{ &cg_playTransformTrackToEnd, "cg_playTransformTrackToEnd", "0", CVAR_ARCHIVE},
 	{ &cg_particlesQuality, "cg_particlesQuality", "1", CVAR_ARCHIVE},
 	{ &cg_particlesStop, "cg_particlesStop", "0", CVAR_ARCHIVE},
 	{ &cg_particlesMaximum, "cg_particlesMaximum", "1024", CVAR_ARCHIVE}

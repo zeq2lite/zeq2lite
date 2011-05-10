@@ -68,6 +68,32 @@ typedef struct {
 
 static errorMessage_t s_errorMessage;
 
+int aspectRatioCorrectedY(int ycoord){
+	char heightCvar[8];
+	char widthCvar[8];
+	char modeCvar[8];
+	float height;
+	float width;
+	float ratio;
+	float percentage;
+	int ret = ycoord;
+	trap_Cvar_VariableStringBuffer("r_customheight", heightCvar, sizeof(heightCvar));
+	trap_Cvar_VariableStringBuffer("r_customwidth", widthCvar, sizeof(widthCvar));
+	trap_Cvar_VariableStringBuffer("r_mode", modeCvar, sizeof(modeCvar));
+	height = atof(heightCvar);
+	width = atof(widthCvar);
+	if(height > 0 && width > 0 && atoi(modeCvar) == -1){
+		ratio = height / width;
+		if(ratio < 3.0f / 4.0f){
+			ratio *= 0.95f;
+			percentage = 3.0f / (4.0f * ratio);
+			ret = percentage * ycoord;
+		}
+	}
+
+	return ret;
+}
+
 /*
 =================
 MainMenu_DrawPlayer
@@ -330,10 +356,9 @@ void UI_MainMenu( void ) {
 	s_main.player.generic.id				= ID_MODEL;
 	s_main.player.generic.callback			= Main_MenuEvent;
 	s_main.player.generic.x					= 380;
-	s_main.player.generic.y					= -170;
+	s_main.player.generic.y					= aspectRatioCorrectedY(-118);
 	s_main.player.width						= 320;
 	s_main.player.height					= 810;
-
 
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.setup );

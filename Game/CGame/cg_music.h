@@ -6,6 +6,7 @@ typedef struct{
 	qboolean random;
 	qboolean started;
 	qboolean fading;
+	qboolean playToEnd;
 	int typeSize[MUSICTYPES];
 	int lastTrack[MUSICTYPES];
 	int currentType;
@@ -32,3 +33,4 @@ void CG_ParsePlaylist(void);
 void CG_StartMusic(void);
 void CG_FadeNext(void);
 void CG_NextTrack(void);
+void CG_PlayTransformTrack();
