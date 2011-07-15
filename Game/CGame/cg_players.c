@@ -1953,18 +1953,6 @@ void CG_Player( centity_t *cent ) {
 		ci->damageTextureState = 0;
 		cg.resetValues = qfalse;
 	}
-	if(!ci->cameraBackup[2]){
-		ci->cameraBackup[0] = cg_thirdPersonAngle.value;
-		ci->cameraBackup[1] = cg_thirdPersonHeight.value;
-		ci->cameraBackup[2] = cg_thirdPersonRange.value;
-		ci->cameraBackup[3] = cg_thirdPersonSlide.value;
-	}
-	if(ps->bitFlags & isDead){
-		cg_thirdPersonAngle.value = ci->cameraBackup[0];
-		cg_thirdPersonHeight.value = ci->cameraBackup[1];
-		cg_thirdPersonRange.value = ci->cameraBackup[2];
-		cg_thirdPersonSlide.value = ci->cameraBackup[3];
-	}
 	onBodyQue = (cent->currentState.number != cent->currentState.clientNum);
 	if(onBodyQue){tier = 0;}
 	else{

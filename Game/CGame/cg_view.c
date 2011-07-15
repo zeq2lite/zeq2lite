@@ -556,7 +556,10 @@ static void CG_OffsetThirdPersonView2( void )
 	entityState_t *ent;
 	clientInfo_t *ci;
 	tierConfig_cg *tier;
-
+	int cameraAngle = cg_thirdPersonAngle.value;
+	int cameraRange = cg_thirdPersonRange.value;
+	int cameraSlide = cg_thirdPersonSlide.value;
+	int cameraHeight = cg_thirdPersonHeight.value;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
 
@@ -566,7 +569,7 @@ static void CG_OffsetThirdPersonView2( void )
 	VectorCopy( cg.refdefViewAngles, cameraFocusAngles );
 
 	// Add in the third Person Angle.
-	cameraFocusAngles[YAW] += cg_thirdPersonAngle.value;
+	cameraFocusAngles[YAW] += cameraAngle;
 
 	if(cg_beamControl.value == 0){
 		if(((cg.snap->ps.weaponstate == WEAPON_GUIDING) || (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
@@ -595,29 +598,24 @@ static void CG_OffsetThirdPersonView2( void )
 		newAngle = (orbit*transformPercent) - abs(tier->transformCameraOrbit[0]);
 		newHeight = (pan*transformPercent) - abs(tier->transformCameraPan[0]);
 		newRange = (zoom*transformPercent) - abs(tier->transformCameraZoom[0]);
-		cg_thirdPersonAngle.value = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
-		cg_thirdPersonHeight.value = pan > 0 ? newHeight : tier->transformCameraDefault[1];
-		cg_thirdPersonRange.value = zoom > 0 ? newRange : tier->transformCameraDefault[2];
+		cameraAngle = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
+		cameraHeight = pan > 0 ? newHeight : tier->transformCameraDefault[1];
+		cameraRange = zoom > 0 ? newRange : tier->transformCameraDefault[2];
 	}
 	else if(ci->transformStart){
 		ci->transformStart = qfalse;
-		cg_thirdPersonAngle.value = ci->cameraBackup[0];
-		cg_thirdPersonHeight.value = ci->cameraBackup[1];
-		cg_thirdPersonRange.value = ci->cameraBackup[2];
-		cg_thirdPersonSlide.value = ci->cameraBackup[3];
 	}
-
+	if(cg.snap->ps.lockedTarget > 0){
+		cameraAngle = cg_lockedAngle.value;
+		cameraSlide = cg_lockedSlide.value;
+		cameraRange = cg_lockedRange.value;
+		cameraHeight = cg_lockedHeight.value;
+	}
 	// The next thing to do is to see if we need to calculate a new camera target location.
-
 	// If we went back in time for some reason, or if we just started, reset the sample.
-	if (cameraLastFrame == 0 || cameraLastFrame > cg.time)
-	{
-		CG_ResetThirdPersonViewDamp();
-	}
-	else
-	{
+	if(cameraLastFrame == 0 || cameraLastFrame > cg.time){CG_ResetThirdPersonViewDamp();}
+	else{
 		// Cap the pitch within reasonable limits
-
 		if (cameraFocusAngles[PITCH] > 80.0)
 		{
 			cameraFocusAngles[PITCH] = 80.0;
@@ -626,9 +624,7 @@ static void CG_OffsetThirdPersonView2( void )
 		{
 			cameraFocusAngles[PITCH] = -80.0;
 		}
-
 		AngleVectors(cameraFocusAngles, camerafwd, NULL, cameraup);
-
 		deltayaw = fabs(cameraFocusAngles[YAW] - cameraLastYaw);
 		if (deltayaw > 180.0f)
 		{ // Normalize this angle so that it is between 0 and 180.
@@ -653,7 +649,6 @@ static void CG_OffsetThirdPersonView2( void )
 		CG_UpdateThirdPersonTargetDamp();
 		CG_UpdateThirdPersonCameraDamp();
 	}
-
 	// We must now take the angle taken from the camera target and location.
 	VectorSubtract(cameraCurTarget, cameraCurLoc, diff);
 	{
@@ -664,12 +659,9 @@ static void CG_OffsetThirdPersonView2( void )
 			VectorCopy( camerafwd, diff );
 		}
 	}
-
 	vectoangles(diff, cg.refdefViewAngles);
-
 	// ...and of course we should copy the new view location to the proper spot too.
 	VectorCopy(cameraCurLoc, cg.refdef.vieworg);
-
 	cameraLastFrame=cg.time;
 }
 
@@ -702,12 +694,15 @@ static void CG_OffsetThirdPersonView( void ) {
 	vec4_t		quatResult;
 	float		transformPercent;
 	float		orbit,pan,zoom;
-	int 		clientNum;
+	int 		clientNum,cameraRange,cameraAngle,cameraSlide,cameraHeight;
 	float		newAngle,newRange,newHeight;
 	entityState_t *ent;
 	clientInfo_t *ci;
 	tierConfig_cg *tier;
-
+	cameraAngle = cg_thirdPersonAngle.value;
+	cameraRange = cg_thirdPersonRange.value;
+	cameraSlide = cg_thirdPersonSlide.value;
+	cameraHeight = cg_thirdPersonHeight.value;
 	ps = &cg.predictedPlayerState;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
@@ -733,70 +728,41 @@ static void CG_OffsetThirdPersonView( void ) {
 	VectorMA( cg.refdef.vieworg, FOCUS_DISTANCE, forward, focusPoint );
 	VectorCopy( cg.refdef.vieworg, view );	
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
-	// LOCKED ON
-	if(ps->lockedTarget > 0){
-		if(!cg.lockonStart){cg.lockonStart = qtrue;}
-		cg_thirdPersonAngle.value = cg_lockedAngle.value;
-		cg_thirdPersonHeight.value = cg_lockedHeight.value;
-		cg_thirdPersonRange.value = cg_lockedRange.value;
-		cg_thirdPersonSlide.value = cg_lockedSlide.value;
-	}
-	else if(cg.lockonStart && ci->cameraBackup[2]){
-		cg.lockonStart = qfalse;
-		cg_thirdPersonAngle.value = ci->cameraBackup[0];
-		cg_thirdPersonHeight.value = ci->cameraBackup[1];
-		cg_thirdPersonRange.value = ci->cameraBackup[2];
-		cg_thirdPersonSlide.value = ci->cameraBackup[3];
-	}
 	// TRANSFORMATIONS
 	if(ps->timers[tmTransform] > 1){
 		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
-			tier = &ci->tierConfig[ps->powerLevel[plTierCurrent]];
+			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;
 			ci->transformLength = ps->timers[tmTransform];
-			if(tier->transformScriptExists){
-				trap_SendConsoleCommand(va("exec players/%s/tier%i/transformScript.cfg\n", ci->modelName, ps->powerLevel[plTierCurrent]+1));
-			}
 		}
-		if(!tier->transformScriptExists){
-			transformPercent = 1.0 - ((float)ps->timers[tmTransform] / (float)ci->transformLength);
-			orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
-			pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
-			zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
-			newAngle = (orbit*transformPercent) - abs(tier->transformCameraOrbit[0]);
-			newHeight = (pan*transformPercent) - abs(tier->transformCameraPan[0]);
-			newRange = (zoom*transformPercent) - abs(tier->transformCameraZoom[0]);
-			cg_thirdPersonAngle.value = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
-			cg_thirdPersonHeight.value = pan > 0 ? newHeight : tier->transformCameraDefault[1];
-			cg_thirdPersonRange.value = zoom > 0 ? newRange : tier->transformCameraDefault[2];
-		}
-
+		transformPercent = 1.0 - ((float)ps->timers[tmTransform] / (float)ci->transformLength);
+		orbit = (float)abs(tier->transformCameraOrbit[1] - tier->transformCameraOrbit[0]);
+		pan = (float)abs(tier->transformCameraPan[1] - tier->transformCameraPan[0]);
+		zoom = (float)abs(tier->transformCameraZoom[1] - tier->transformCameraZoom[0]);
+		newAngle = (orbit*transformPercent) - abs(tier->transformCameraOrbit[0]);
+		newHeight = (pan*transformPercent) - abs(tier->transformCameraPan[0]);
+		newRange = (zoom*transformPercent) - abs(tier->transformCameraZoom[0]);
+		cameraAngle = orbit > 0 ? newAngle : tier->transformCameraDefault[0];
+		cameraHeight = pan > 0 ? newHeight : tier->transformCameraDefault[1];
+		cameraRange = zoom > 0 ? newRange : tier->transformCameraDefault[2];
 	}
 	else if(ci->transformStart){
-		char var[MAX_CVAR_VALUE_STRING];
 		ci->transformStart = qfalse;
-		cg_thirdPersonAngle.value = ci->cameraBackup[0];
-		cg_thirdPersonHeight.value = ci->cameraBackup[1];
-		cg_thirdPersonRange.value = ci->cameraBackup[2];
-		cg_thirdPersonSlide.value = ci->cameraBackup[3];
-		Com_sprintf(var, sizeof(var), "%i", ci->cameraBackup[0]);
-		trap_Cvar_Set("cg_thirdPersonAngle", var);
-		Com_sprintf(var, sizeof(var), "%i", ci->cameraBackup[1]);
-		trap_Cvar_Set("cg_thirdPersonHeight", var);
-		Com_sprintf(var, sizeof(var), "%i", ci->cameraBackup[2]);
-		trap_Cvar_Set("cg_thirdPersonRange", var);
-		Com_sprintf(var, sizeof(var), "%i", ci->cameraBackup[3]);
-		trap_Cvar_Set("cg_thirdPersonSlide", var);
 	}
-	//view[1] += cg_thirdPersonSlide.value;
-	VectorMA(view,cg_thirdPersonSlide.value,right,view);
-	view[2] += cg_thirdPersonHeight.value;
-	forwardScale = cos( cg_thirdPersonAngle.value / 180 * M_PI );	
-	sideScale = sin( cg_thirdPersonAngle.value / 180 * M_PI );
-	VectorMA( view, -cg_thirdPersonRange.value * forwardScale, forward, view );
-	VectorMA( view, -cg_thirdPersonRange.value * sideScale, right, view );
-	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
+	if(ps->lockedTarget > 0){
+		cameraAngle = cg_lockedAngle.value;
+		cameraSlide = cg_lockedSlide.value;
+		cameraRange = cg_lockedRange.value;
+		cameraHeight = cg_lockedHeight.value;
+	}
+	VectorMA(view,cameraSlide,right,view);
+	view[2] += cameraHeight;
+	forwardScale = cos(cameraAngle / 180 * M_PI);	
+	sideScale = sin(cameraAngle / 180 * M_PI );
+	VectorMA( view, -cameraRange * forwardScale, forward, view );
+	VectorMA( view, -cameraRange * sideScale, right, view );
+	cg.refdefViewAngles[YAW] -= cameraAngle;
 	// trace a ray from the origin to the viewpoint to make sure the view isn't
 	// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
 	if (!cg_cameraMode.integer) {
@@ -830,9 +796,9 @@ static void CG_OffsetThirdPersonView( void ) {
 			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
 			VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
 			VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
-			VectorMA( overrideOrg, cg_thirdPersonHeight.value, up, overrideOrg);
-			VectorMA( overrideOrg, cg_thirdPersonSlide.value, right, cg.refdef.vieworg );
-			VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
+			VectorMA( overrideOrg, cameraHeight, up, overrideOrg);
+			VectorMA( overrideOrg, cameraSlide, right, cg.refdef.vieworg );
+			VectorMA( cg.refdef.vieworg, -cameraRange, forward, cg.refdef.vieworg );
 			if (!cg_cameraMode.integer) {
 				CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, clientNum, MASK_SOLID );
 				if ( trace.fraction != 1.0f ) {
@@ -1337,59 +1303,30 @@ Sets cg.refdef view values
 */
 static int CG_CalcViewValues( void ) {
 	playerState_t	*ps;
-
 	memset( &cg.refdef, 0, sizeof( cg.refdef ) );
-
-	// strings for in game rendering
-	// Q_strncpyz( cg.refdef.text[0], "Park Ranger", sizeof(cg.refdef.text[0]) );
-	// Q_strncpyz( cg.refdef.text[1], "19", sizeof(cg.refdef.text[1]) );
-
-	// calculate size of 3D view
 	CG_CalcVrect();
-
 	ps = &cg.predictedPlayerState;
-/*
-	if (cg.cameraMode) {
-		vec3_t origin, angles;
-		if (trap_getCameraInfo(cg.time, &origin, &angles)) {
-			VectorCopy(origin, cg.refdef.vieworg);
-			angles[ROLL] = 0;
-			VectorCopy(angles, cg.refdefViewAngles);
-			AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
-			return CG_CalcFov();
-		} else {
-			cg.cameraMode = qfalse;
-		}
-	}
-*/
-	// intermission view
 	if ( ps->pm_type == PM_INTERMISSION ) {
 		VectorCopy( ps->origin, cg.refdef.vieworg );
 		VectorCopy( ps->viewangles, cg.refdefViewAngles );		
 		AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
 		return CG_CalcFov();
 	}
-
 	cg.bobcycle = ( ps->bobCycle & 128 ) >> 7;
 	cg.bobfracsin = fabs( sin( ( ps->bobCycle & 127 ) / 127.0 * M_PI ) );
 	cg.xyspeed = sqrt( ps->velocity[0] * ps->velocity[0] +
 		ps->velocity[1] * ps->velocity[1] );
-
-
 	VectorCopy( ps->origin, cg.refdef.vieworg );
 	VectorCopy( ps->viewangles, cg.refdefViewAngles );
-	
-	if (cg_cameraOrbit.integer) {
+	if(cg_cameraOrbit.integer){
 		if (cg.time > cg.nextOrbitTime) {
 			cg.nextOrbitTime = cg.time + cg_cameraOrbitDelay.integer;
 			cg_thirdPersonAngle.value += cg_cameraOrbit.value;
 		}
 	}
-	// add error decay
-	if ( cg_errorDecay.value > 0 ) {
+	if(cg_errorDecay.value > 0){
 		int		t;
 		float	f;
-
 		t = cg.time - cg.predictedErrorTime;
 		f = ( cg_errorDecay.value - t ) / cg_errorDecay.value;
 		if ( f > 0 && f < 1 ) {
@@ -1398,12 +1335,11 @@ static int CG_CalcViewValues( void ) {
 			cg.predictedErrorTime = 0;
 		}
 	}
-
-	if ( cg.renderingThirdPerson ) {
-		// back away from character
+	if(cg.renderingThirdPerson){
 		if(cg_thirdPersonCamera.value >= 2){
 			CG_OffsetThirdPersonView2();
-		}else{
+		}
+		else{
 			CG_OffsetThirdPersonView();
 		}
 	} else {
@@ -1432,16 +1368,6 @@ static int CG_CalcViewValues( void ) {
 
 	// JUHOX: offset vieworg for lens flare editor fine move mode
 #if MAPLENSFLARES
-	/*
-	if (
-		cgs.editMode == EM_mlf &&
-		cg.lfEditor.selectedLFEnt &&
-		cg.lfEditor.editMode > LFEEM_none &&
-		cg.lfEditor.selectedLFEnt->lock
-	) {
-		VectorAdd(cg.lfEditor.selectedLFEnt->lock->lerpOrigin, cg.lfEditorMoverOffset, cg.refdef.vieworg);
-	}
-	*/
 	if (
 		cgs.editMode == EM_mlf &&
 		cg.lfEditor.selectedLFEnt &&

@@ -427,19 +427,11 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	gentity_t	*missileOwner = GetMissileOwnerEntity( self );
 	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent;
 	if(self->powerLevelCurrent < 1){
-		self->strugglingAttack = qfalse;
-		G_RemoveUserWeapon ( self );
+		G_RemoveUserWeapon(self);
 		return;
 	}
-	if(self->s.eType != ET_BEAMHEAD){
-		if(self->powerLevelCurrent > self->enemy->powerLevelCurrent){
-			self->speed += 5;
-			self->enemy->speed -= 5;
-		}else{
-			self->speed -= 5;
-			self->enemy->speed += 5;
-		}
-	}
+	self->enemy->client->ps.bitFlags |= isStruggling;
+	missileOwner->client->ps.bitFlags |= isStruggling;
 	if((missileOwner->client->ps.bitFlags & usingBoost) && self->s.eType == ET_BEAMHEAD && missileOwner->client->ps.powerLevel[plCurrent] > 1){
 		self->powerLevelCurrent += 5 + ((float)self->powerLevelTotal * 0.005);
 		self->speed += 5 + ((float)missileOwner->client->ps.powerLevel[plMaximum] * 0.0003);
@@ -460,54 +452,19 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	speedDifference = speed1-speed2;
 	powerDifference = power1-power2;
 	result = /*speedDifference +*/ powerDifference;
-	if(!self->enemy->strugglingAttack || !self->ally->strugglingAttack){
-		VectorCopy(self->r.currentOrigin,start);
-		VectorCopy(self->s.pos.trDelta,dir);
-		VectorCopy(self->r.currentAngles,dir2);
-		VectorNormalize(dir);
-		VectorScale(dir,0.2,dir);
-		VectorAdd(dir,dir2,dir);
-		VectorNormalize(dir);
-		VectorCopy(start,self->s.pos.trBase);
-		VectorScale(dir,self->speed,self->s.pos.trDelta);
-		VectorCopy(start,self->r.currentOrigin);
-		VectorCopy(dir,self->r.currentAngles);
-		self->s.pos.trType = TR_LINEAR;
-		self->s.pos.trTime = level.time;
-		self->enemy = NULL;
-		self->strugglingAttack = qfalse;
-		self->strugglingAllyAttack = qfalse;
-		self->s.dashDir[2] = 0.0f;
-		self->think = Think_NormalMissile;
-		self->nextthink = level.time;
-		if ( self->s.eType != ET_BEAMHEAD && VectorLength( self->s.pos.trDelta ) < 40 ) {
-			G_ExplodeUserWeapon ( self );
-			return;
-		}
-		return;
-	}
-	if(self->strugglingAllyAttack){
-		VectorCopy(self->ally->s.pos.trBase,self->s.pos.trBase);
-		VectorCopy(self->ally->s.pos.trDelta,self->s.pos.trDelta);
-		VectorCopy(self->ally->r.currentOrigin,self->r.currentOrigin);
-		VectorCopy(self->ally->r.currentAngles,self->r.currentAngles);
-		self->s.pos.trType = TR_LINEAR;
-		self->s.pos.trTime = level.time;
-	}else{
-		VectorCopy(self->r.currentOrigin,start);
-		VectorCopy(self->s.pos.trDelta,dir);
-		VectorCopy(self->r.currentAngles,dir2);
-		VectorNormalize(dir);
-		VectorScale(dir,0.2,dir);
-		VectorAdd(dir,dir2,dir);
-		VectorNormalize(dir);
-		VectorCopy(start,self->s.pos.trBase);
-		VectorScale(dir,result,self->s.pos.trDelta);
-		VectorCopy(start,self->r.currentOrigin);
-		VectorCopy(dir,self->r.currentAngles);
-		self->s.pos.trType = TR_LINEAR;
-		self->s.pos.trTime = level.time;
-	}
+	VectorCopy(self->r.currentOrigin,start);
+	VectorCopy(self->s.pos.trDelta,dir);
+	VectorCopy(self->r.currentAngles,dir2);
+	VectorNormalize(dir);
+	VectorScale(dir,0.2,dir);
+	VectorAdd(dir,dir2,dir);
+	VectorNormalize(dir);
+	VectorCopy(start,self->s.pos.trBase);
+	VectorScale(dir,result,self->s.pos.trDelta);
+	VectorCopy(start,self->r.currentOrigin);
+	VectorCopy(dir,self->r.currentAngles);
+	self->s.pos.trType = TR_LINEAR;
+	self->s.pos.trTime = level.time;
 	self->nextthink = level.time + FRAMETIME;
 }
 
@@ -1466,6 +1423,8 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 		//if(self->s.eType == ET_MISSILE){self->think = Think_NormalMissileBurnPlayer;}
 		//if(self->s.eType == ET_BEAMHEAD){self->think = Think_NormalMissileRidePlayer;}
 	}
+	self->enemy->client->ps.bitFlags |= isStruggling;
+	missileOwner->client->ps.bitFlags |= isStruggling;
 	self->powerLevelCurrent -= (self->enemy->client->ps.powerLevel[plFatigue] * 0.2) * 0.1;
 	if(self->enemy->client->ps.powerLevel[plFatigue] * 0.5 >= (self->powerLevelCurrent)){
 		self->s.eType = ET_MISSILE;
@@ -1631,14 +1590,10 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 			if(!(self->client->ps.bitFlags & isStruggling)){
 				G_AddEvent(self,EV_POWER_STRUGGLE_START, DirToByte( trace->plane.normal));
 				other->enemy = self;
-				other->client->ps.bitFlags |= isStruggling;
-				self->strugglingAttack = qtrue;
 				self->s.dashDir[2] = 1.0f;
 				self->think = Think_NormalMissileStruggle;
 				self->nextthink = level.time;
-				self->client->ps.bitFlags |= isStruggling;
 				self->enemy = other;
-				self->enemy->strugglingAttack = qtrue;
 				self->enemy->s.dashDir[2] = 1.0f;
 				self->enemy->think = Think_NormalMissileStruggle;
 				self->enemy->nextthink = level.time;
@@ -1708,7 +1663,7 @@ void G_RemoveUserWeapon (gentity_t *self) {
 	if (self->guided) {
 		g_entities[ self->s.clientNum ].client->ps.weaponstate = WEAPON_READY;
 	}
-	if (self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0 && (!self->strugglingAllyAttack || !self->strugglingAttack || !self->strugglingPlayer)) {
+	if (self->s.eType == ET_BEAMHEAD && self->powerLevelCurrent > 0) {
 		G_ExplodeUserWeapon ( self );
 		return;
 	}
@@ -1758,18 +1713,11 @@ void G_RunUserMissile( gentity_t *ent ) {
 	trace_t		trace2;
 	gentity_t	*traceEnt2;
 	gentity_t	*missileOwner = GetMissileOwnerEntity(ent);
-
-	// get current position
 	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
-
-	// attacks that left the owner bbox will hit anything, even the owner
 	if (ent->count) {
-		pass_ent = ent->s.number;//ENTITYNUM_NONE;
-	// if the attack is in any type of struggle, ignore interaction with the attacker but hit the owner.
-	} else if (ent->strugglingPlayer || ent->strugglingAttack || ent->strugglingAllyAttack){
 		pass_ent = ent->s.number;
-	// ignore interactions with the missile owner
-	} else {
+	}
+	else{
 		pass_ent = ent->r.ownerNum;
 	}
 	// trace a line from the previous position to the current position
