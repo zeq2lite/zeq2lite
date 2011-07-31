@@ -56,6 +56,8 @@ set cc=call ..\..\..\Tools\Compiler\Perform.bat
 @if errorlevel 1 goto quit
 %cc% ../ui_system.c
 @if errorlevel 1 goto quit
+%cc% ../ui_team.c
+@if errorlevel 1 goto quit
 
 ..\..\..\Tools\Compiler\q3asm -f ../ui
 :quit
