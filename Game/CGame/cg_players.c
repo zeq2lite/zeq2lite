@@ -992,7 +992,7 @@ static void CG_PlayerAnimation( centity_t *cent,
 		torsoAnimNum = cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT;
 
 		if(cg.predictedPlayerState.bitFlags & usingBoost){
-			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_TRANS_UP, speedScale );
+			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KI_CHARGE, speedScale );
 		} else if ( cent->currentState.eFlags & EF_AURA && ci->overrideHead) {
 			CG_RunLerpFrame( ci, &cent->pe.head, ANIM_KI_CHARGE, speedScale );
 		} else if ( ci->auraConfig[tier]->auraAlways && ci->overrideHead) {
