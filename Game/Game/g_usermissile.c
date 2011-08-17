@@ -1418,6 +1418,8 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	self->bounceFrac = 0.0f;
 	self->enemy->client->ps.timers[tmStruggleBlock] += 100;
 	if(self->enemy->client->ps.timers[tmStruggleBlock] >= 3000){
+		self->enemy->client->ps.bitFlags &= ~isStruggling;
+		missileOwner->client->ps.bitFlags &= ~isStruggling;
 		G_ExplodeUserWeapon(self);
 		return;
 		//if(self->s.eType == ET_MISSILE){self->think = Think_NormalMissileBurnPlayer;}
@@ -1427,6 +1429,8 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	missileOwner->client->ps.bitFlags |= isStruggling;
 	self->powerLevelCurrent -= (self->enemy->client->ps.powerLevel[plFatigue] * 0.2) * 0.1;
 	if(self->enemy->client->ps.powerLevel[plFatigue] * 0.5 >= (self->powerLevelCurrent)){
+		self->enemy->client->ps.bitFlags &= ~isStruggling;
+		missileOwner->client->ps.bitFlags &= ~isStruggling;
 		self->s.eType = ET_MISSILE;
 		self->think = Think_NormalMissile;
 		self->bounceFrac = 0.75;
