@@ -235,6 +235,11 @@ void parseTier(char *path,tierConfig_cg *tier){
 				if(!token[0]){break;}
 				tier->sustainCurrent = atoi(token);
 			}
+			else if(!Q_stricmp(token,"sustainCurrentPct")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainCurrentPct = atoi(token);
+			}
 			else if(!Q_stricmp(token,"sustainMaximum")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
@@ -254,6 +259,11 @@ void parseTier(char *path,tierConfig_cg *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->requirementCurrent = atoi(token);
+			}
+			else if(!Q_stricmp(token,"requirementCurrentPct")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementCurrentPct = atoi(token);
 			}
 			else if(!Q_stricmp(token,"requirementFatigue")){
 				token = COM_Parse(&parse);

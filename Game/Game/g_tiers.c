@@ -65,11 +65,13 @@ void checkTier(gclient_t *client){
 			nextTier = &client->tiers[tier+1];
 			if(((nextTier->requirementButtonUp && (ps->bitFlags & keyTierUp) || !nextTier->requirementButtonUp) &&
 			   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrent) &&
+			   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrentPct / 100.f * ps->powerLevel[plMaximum]) &&
 			   (ps->powerLevel[plFatigue] >= nextTier->requirementFatigue) &&
 			   (ps->powerLevel[plHealth]  >= nextTier->requirementHealth) &&
 			   ((float)ps->powerLevel[plHealth]  <= nextTier->requirementHealthMaximum / 100.0f * ps->powerLevel[plMaximum]) &&
 			   (ps->powerLevel[plMaximum] >= nextTier->requirementMaximum) &&
 			   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrent) &&
+			   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrentPct / 100.f * ps->powerLevel[plMaximum]) &&
 			   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
 			   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
 			   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum))){
@@ -88,6 +90,7 @@ void checkTier(gclient_t *client){
 			baseTier = &client->tiers[tier];
 			if(!baseTier->permanent && ((baseTier->requirementButtonDown && (ps->bitFlags & keyTierDown) || !baseTier->requirementButtonDown)) ||
 			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrent) ||
+			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrentPct / 100.f * ps->powerLevel[plMaximum]) ||
 			   (ps->powerLevel[plHealth] < baseTier->sustainHealth) ||
 			   (ps->powerLevel[plFatigue] < baseTier->sustainFatigue) ||
 			   (ps->powerLevel[plMaximum] < baseTier->sustainMaximum)){
@@ -228,6 +231,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->requirementCurrent = atoi(token);
 			}
+			else if(!Q_stricmp(token,"requirementCurrentPct")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementCurrentPct = atoi(token);
+			}
 			else if(!Q_stricmp(token,"requirementMaximum")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
@@ -255,6 +263,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->sustainCurrent = atoi(token);
+			}
+			else if(!Q_stricmp(token,"sustainCurrentPct")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->sustainCurrentPct = atoi(token);
 			}
 			else if(!Q_stricmp(token,"sustainHealth")){
 				token = COM_Parse(&parse);
