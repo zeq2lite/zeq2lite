@@ -2,7 +2,8 @@ typedef struct{
 	qboolean exists;
 	qboolean customWeapons;
 	qboolean permanent;
-	qboolean requirementButton;
+	qboolean requirementButtonUp;
+	qboolean requirementButtonDown;
 	qboolean capableBoost;
 	qboolean capableFly;
 	qboolean capableJump;
@@ -13,6 +14,7 @@ typedef struct{
 	int requirementMaximum;
 	int requirementFatigue;
 	int requirementHealth;
+	int requirementHealthMaximum;
 	int sustainCurrent;
 	int sustainMaximum;
 	int sustainHealth;

@@ -63,15 +63,16 @@ void checkTier(gclient_t *client){
 		tier = ps->powerLevel[plTierCurrent];
 		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
 			nextTier = &client->tiers[tier+1];
-			if(((nextTier->requirementButton && (ps->bitFlags & keyTierUp)) || !nextTier->requirementButton) &&
+			if(((nextTier->requirementButtonUp && (ps->bitFlags & keyTierUp) || !nextTier->requirementButtonUp) &&
 			   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrent) &&
 			   (ps->powerLevel[plFatigue] >= nextTier->requirementFatigue) &&
 			   (ps->powerLevel[plHealth]  >= nextTier->requirementHealth) &&
+			   ((float)ps->powerLevel[plHealth]  <= nextTier->requirementHealthMaximum / 100.0f * ps->powerLevel[plMaximum]) &&
 			   (ps->powerLevel[plMaximum] >= nextTier->requirementMaximum) &&
 			   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrent) &&
 			   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
 			   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
-			   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum)){
+			   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum))){
 				ps->timers[tmTransform] = 1;
 				++ps->powerLevel[plTierCurrent];
 				if(tier + 1 > ps->powerLevel[plTierTotal]){
@@ -85,7 +86,7 @@ void checkTier(gclient_t *client){
 		}
 		if(tier > 0){
 			baseTier = &client->tiers[tier];
-			if(!baseTier->permanent && ((baseTier->requirementButton && (ps->bitFlags & keyTierDown)) || !baseTier->requirementButton) ||
+			if(!baseTier->permanent && ((baseTier->requirementButtonDown && (ps->bitFlags & keyTierDown) || !baseTier->requirementButtonDown)) ||
 			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrent) ||
 			   (ps->powerLevel[plHealth] < baseTier->sustainHealth) ||
 			   (ps->powerLevel[plFatigue] < baseTier->sustainFatigue) ||
@@ -237,6 +238,14 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->requirementHealth = atoi(token);
 			}
+			//Begin Add
+			else if(!Q_stricmp(token,"requirementHealthMaximum")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementHealthMaximum = atoi(token);
+				if(tier->requirementHealthMaximum == 0){tier->requirementHealthMaximum = 32767;}
+			}
+			//End Add
 			else if(!Q_stricmp(token,"requirementFatigue")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
@@ -332,10 +341,16 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->requirementUseSkill = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementButton")){
+			else if(!Q_stricmp(token,"requirementButtonUp")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementButton = strlen(token) == 4 ? qtrue : qfalse;
+				tier->requirementButtonUp = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"requirementButtonDown")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->requirementButtonDown = strlen(token) == 4 ? qtrue : qfalse;
+				if(tier->requirementButtonDown == 0);
 			}
 			else if(!Q_stricmp(token,"tierPermanent")){
 				token = COM_Parse(&parse);
