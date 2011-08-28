@@ -812,6 +812,7 @@ typedef struct {
 	qhandle_t	charsetPropGlow;
 	qhandle_t	charsetPropB;
 	qhandle_t	whiteShader;
+	qhandle_t	clearShader;
 	qhandle_t	deferShader;
 	qhandle_t	hudShader;
 	qhandle_t	markerAscendShader;

@@ -1,13 +1,14 @@
 #include "cg_local.h"
 void parseTier(char *path,tierConfig_cg *tier);
 qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *modelName, const char *skinName){
-	int	i,partIndex,damageIndex,lastSkinIndex,lastModelIndex;
+	int	i,index,partIndex,damageIndex,lastSkinIndex,lastModelIndex;
 	char filename[MAX_QPATH * 2];
 	char tierPath[MAX_QPATH];
 	char tempPath[MAX_QPATH];
 	char legsPath[MAX_QPATH];
 	char headPath[MAX_QPATH];
 	char headPrefix[8],upperPrefix[8],lowerPrefix[8];
+	qhandle_t tempShader;
 	strcpy(headPrefix,"head_");
 	strcpy(lowerPrefix,"lower_");
 	strcpy(upperPrefix,"upper_");
@@ -17,19 +18,12 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 	if(ci->legsModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(legsPath,sizeof(legsPath),"%s",ci->legsModelName);}
 	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animation.cfg",ci->headModelName);
 	if(ci->headModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(headPath,sizeof(headPath),"%s",ci->headModelName);}
-	//Com_Printf("RegisterClientModelnameWithTiers: before animation load ci->usingMD4 = %i\n", ci->usingMD4);
 	Com_sprintf(filename,sizeof(filename),"players/%s/animation.cfg",modelName);
 	if(!CG_ParseAnimationFile(filename,ci)){
 		Com_sprintf(filename,sizeof(filename),"players/characters/%s/animation.cfg",modelName);
-		if(!CG_ParseAnimationFile(filename,ci)){
-			//Com_Printf("Failed to load animation file %s\n",filename);
-			return qfalse;
-		}
+		if(!CG_ParseAnimationFile(filename,ci)){return qfalse;}
 	}
-	//Com_Printf("RegisterClientModelnameWithTiers: after animation load ci->usingMD4 = %i\n", ci->usingMD4);
-	if(ci->usingMD4 == qtrue) // Alex Adding
-	{
-		//Com_Printf("MD4 Part of RegisterClientModelnameWithTiers\n");
+	if(ci->usingMD4 == qtrue){
 		// TODO: MD4 Specific set up later on if needed...
 	}
 	for(i=0;i<8;++i){
@@ -40,7 +34,11 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		if(trap_FS_FOpenFile(tierPath,0,FS_READ)<=0){continue;}
 		memset(&ci->tierConfig[i],0,sizeof(tierConfig_cg));
 		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
-		ci->tierConfig[i].icon = trap_R_RegisterShaderNoMip(strcat(tierPath,"icon.png"));
+		tempShader = trap_R_RegisterShaderNoMip(strcat(tierPath,"icon.png"));
+		for(index=0;index<10;++index){
+			ci->tierConfig[i].icon2D[index] = tempShader; 
+			ci->tierConfig[i].screenEffect[index] = cgs.media.clearShader;
+		}
 		Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
 		if(trap_FS_FOpenFile(strcat(tierPath,"transformFirst.ogg"),0,FS_READ)>0){
 			Com_sprintf(tierPath,sizeof(tierPath),"players/%s/tier%i/",modelName,i+1);
@@ -65,7 +63,6 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		if(trap_FS_FOpenFile(tierPath,0,FS_READ)>0){
 			ci->tierConfig[i].transformScriptExists = qtrue;
 		}
-		
 		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",modelName,i+1);
 		parseTier(filename,&ci->tierConfig[i]);
 		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",modelName,i+1);
@@ -177,6 +174,8 @@ void parseTier(char *path,tierConfig_cg *tier){
 	int i;
 	char *token,*parse;
 	int fileLength;
+	int tokenInt;
+	float tokenFloat;
 	char fileContents[32000];
 	if(trap_FS_FOpenFile(path,0,FS_READ)>0){
 		fileLength = trap_FS_FOpenFile(path,&tierCFG,FS_READ);
@@ -191,11 +190,6 @@ void parseTier(char *path,tierConfig_cg *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				Q_strncpyz(tier->name, token, sizeof(tier->name));
-			}
-			else if(!Q_stricmp(token,"tierIcon")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->icon = trap_R_RegisterShaderNoMip(token);
 			}
 			else if(!Q_stricmp(token,"powerLevelHudMultiplier")){
 				token = COM_Parse(&parse);
@@ -332,6 +326,115 @@ void parseTier(char *path,tierConfig_cg *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->damageTexturesRevertHealed = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"icon2DShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tokenInt = atoi(token);
+				token = COM_Parse(&parse);
+				if(Q_stricmp(token,"default")){
+					int countdown = tokenInt/10-1;
+					while(countdown > 0){
+						tier->icon2D[countdown] = trap_R_RegisterShaderNoMip(token);
+						countdown -= 1;
+					}
+				}
+			}
+			else if(!Q_stricmp(token,"icon2DPoweringShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(Q_stricmp(token,"default")){
+					tier->icon2DPowering = trap_R_RegisterShaderNoMip(token);
+				}
+			}
+			else if(!Q_stricmp(token,"icon2DTransformingShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(Q_stricmp(token,"default")){
+					tier->icon2DTransforming = trap_R_RegisterShaderNoMip(token);
+				}
+			}
+			else if(!Q_stricmp(token,"icon3DOffset")){
+				tier->icon3DOffset[0] = atoi(COM_Parse(&parse));
+				tier->icon3DOffset[1] = atoi(COM_Parse(&parse));
+			}
+			else if(!Q_stricmp(token,"icon3DRotation")){
+				tier->icon3DRotation[0] = atoi(COM_Parse(&parse));
+				tier->icon3DRotation[1] = atoi(COM_Parse(&parse));
+				tier->icon3DRotation[2] = atoi(COM_Parse(&parse));
+			}
+			else if(!Q_stricmp(token,"icon3DSize")){
+				tier->icon3DSize[0] = atoi(COM_Parse(&parse));
+				tier->icon3DSize[1] = atoi(COM_Parse(&parse));
+			}
+			else if(!Q_stricmp(token,"icon3DZoom")){
+				tier->icon3DZoom = atof(COM_Parse(&parse));
+			}
+			else if(!Q_stricmp(token,"screenShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tokenInt = atoi(token);
+				token = COM_Parse(&parse);
+				if(Q_stricmp(token,"default")){
+					int countdown = tokenInt/10-1;
+					while(countdown > 0){
+						tier->screenEffect[countdown] = trap_R_RegisterShaderNoMip(token);
+						countdown -= 1;
+					}
+				}
+			}
+			else if(!Q_stricmp(token,"screenPoweringShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(Q_stricmp(token,"default")){
+					tier->screenEffectPowering = trap_R_RegisterShaderNoMip(token);
+				}
+			}
+			else if(!Q_stricmp(token,"screenTransformingShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(Q_stricmp(token,"default")){
+					tier->screenEffectTransforming = trap_R_RegisterShaderNoMip(token);
+				}
+			}
+			else if(!Q_stricmp(token,"crosshairShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(Q_stricmp(token,"default")){
+					tier->crosshair = trap_R_RegisterShaderNoMip(token);
+				}
+			}
+			else if(!Q_stricmp(token,"crosshairPoweringShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(Q_stricmp(token,"default")){
+					tier->crosshairPowering = trap_R_RegisterShaderNoMip(token);
+				}
+			}
+			else if(!Q_stricmp(token,"meshScale")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->meshScale = atof(token);
+			}
+			else if(!Q_stricmp(token,"meshOffset")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->meshOffset = atoi(token);
+			}
+			else if(!Q_stricmp(token,"cameraOffsetSlide")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->cameraOffset[0] = atoi(token);
+			}
+			else if(!Q_stricmp(token,"cameraOffsetHeight")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->cameraOffset[1] = atoi(token);
+			}
+			else if(!Q_stricmp(token,"cameraOffsetRange")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->cameraOffset[2] = atoi(token);
 			}
 		}
 	}

@@ -2058,12 +2058,23 @@ void CG_Player( centity_t *cent ) {
 		CG_PlayerPowerups(cent,&legs);
 	}
 	else{
+		float meshScale = ci->tierConfig[tier].meshScale;
 		torso.hModel = ci->modelDamageState[tier][1][damageModelState];
 		torso.customSkin = ci->skinDamageState[tier][1][damageTextureState];
 		if(!torso.hModel){return;}
-		VectorCopy( cent->lerpOrigin, torso.lightingOrigin );
-		//CG_PositionRotatedEntityOnTag( &torso, &legs, ci->legsModel, "tag_torso");
+		VectorCopy(cent->lerpOrigin,torso.lightingOrigin);
+		legs.origin[2] += ci->tierConfig[tier].meshOffset;
+		VectorScale(torso.axis[0],meshScale,torso.axis[0]);
+		VectorScale(torso.axis[1],meshScale,torso.axis[1]);
+		VectorScale(torso.axis[2],meshScale,torso.axis[2]);
+		VectorScale(legs.axis[0],meshScale,legs.axis[0]);
+		VectorScale(legs.axis[1],meshScale,legs.axis[1]);
+		VectorScale(legs.axis[2],meshScale,legs.axis[2]);
 		CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel, "tag_torso");
+		VectorScale(torso.axis[0],1/meshScale,torso.axis[0]);
+		VectorScale(torso.axis[1],1/meshScale,torso.axis[1]);
+		VectorScale(torso.axis[2],1/meshScale,torso.axis[2]);
+		//VectorScale(cent->mins,2.0,cent->mins);
 		torso.shadowPlane = shadowPlane;
 		torso.renderfx = renderfx;
 		head.hModel = ci->modelDamageState[tier][0][damageModelState];

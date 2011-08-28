@@ -538,12 +538,9 @@ static void CG_UpdateThirdPersonCameraDamp(void)
 	}
 }
 
-/*
-===============
-CG_OffsetThirdPersonView2
-
-===============
-*/
+/*===============
+Gradual Camera
+===============*/
 static void CG_OffsetThirdPersonView2( void ) 
 {
 	vec3_t diff;
@@ -555,11 +552,11 @@ static void CG_OffsetThirdPersonView2( void )
 	float		newAngle,newRange,newHeight;
 	entityState_t *ent;
 	clientInfo_t *ci;
-	tierConfig_cg *tier;
+	tierConfig_cg *tier = &ci->tierConfig[ci->tierCurrent];
 	int cameraAngle = cg_thirdPersonAngle.value;
-	int cameraRange = cg_thirdPersonRange.value;
-	int cameraSlide = cg_thirdPersonSlide.value;
-	int cameraHeight = cg_thirdPersonHeight.value;
+	int cameraSlide = cg_thirdPersonSlide.value + ci->tierConfig[ci->tierCurrent].cameraOffset[0];
+	int cameraHeight = cg_thirdPersonHeight.value + ci->tierConfig[ci->tierCurrent].cameraOffset[1];
+	int cameraRange = cg_thirdPersonRange.value + ci->tierConfig[ci->tierCurrent].cameraOffset[2];
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
 
@@ -585,7 +582,6 @@ static void CG_OffsetThirdPersonView2( void )
 	}
 	// TRANSFORMATIONS
 	if(cg.snap->ps.timers[tmTransform] > 1){
-		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
 			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;
@@ -665,12 +661,9 @@ static void CG_OffsetThirdPersonView2( void )
 	cameraLastFrame=cg.time;
 }
 
-/*
-===============
-CG_OffsetThirdPersonView
-
-===============
-*/
+/*===============
+CG_OffsetThirdPersonView (Normal?)
+===============*/
 #define	FOCUS_DISTANCE	512
 static void CG_OffsetThirdPersonView( void ) {
 	vec3_t		forward, right, up;
@@ -698,14 +691,14 @@ static void CG_OffsetThirdPersonView( void ) {
 	float		newAngle,newRange,newHeight;
 	entityState_t *ent;
 	clientInfo_t *ci;
-	tierConfig_cg *tier;
-	cameraAngle = cg_thirdPersonAngle.value;
-	cameraRange = cg_thirdPersonRange.value;
-	cameraSlide = cg_thirdPersonSlide.value;
-	cameraHeight = cg_thirdPersonHeight.value;
+	tierConfig_cg *tier = &ci->tierConfig[ci->tierCurrent];
 	ps = &cg.predictedPlayerState;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
+	cameraAngle = cg_thirdPersonAngle.value;
+	cameraSlide = cg_thirdPersonSlide.value + ci->tierConfig[ci->tierCurrent].cameraOffset[0];
+	cameraHeight = cg_thirdPersonHeight.value + ci->tierConfig[ci->tierCurrent].cameraOffset[1];
+	cameraRange = cg_thirdPersonRange.value + ci->tierConfig[ci->tierCurrent].cameraOffset[2];
 	if(cg_beamControl.value == 0){
 		if(((ps->weaponstate == WEAPON_GUIDING) || (ps->weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
 			float oldRoll;
@@ -730,7 +723,6 @@ static void CG_OffsetThirdPersonView( void ) {
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 	// TRANSFORMATIONS
 	if(ps->timers[tmTransform] > 1){
-		tier = &ci->tierConfig[ci->tierCurrent];
 		if(!ci->transformStart){
 			tier = &ci->tierConfig[ci->tierCurrent+1];
 			ci->transformStart = qtrue;

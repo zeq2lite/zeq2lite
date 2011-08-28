@@ -115,7 +115,6 @@ void PM_Impede(void){
 	if(pm->ps->timers[tmImpede] > 0){
 		pm->ps->timers[tmImpede] -= pml.msec;
 		if(pm->ps->timers[tmImpede] <= 0){pm->ps->timers[tmImpede] = 0;}
-		if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags = usingFlight;}
 		VectorClear(pm->ps->velocity);
 		PM_StopDirections();
 		PM_StopZanzoken();
@@ -126,7 +125,6 @@ RIDE
 ================*/
 void PM_Ride(void){
 	if(pm->ps->states & isRiding){
-		if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags = usingFlight;}
 		VectorClear(pm->ps->velocity);
 		//PM_StopDirections();
 		PM_StopZanzoken();
@@ -138,7 +136,6 @@ Burn
 ================*/
 void PM_Burn(void){
 	if(pm->ps->states & isBurning){
-		if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags = usingFlight;}
 		VectorClear(pm->ps->velocity);
 		PM_StopDirections();
 		PM_StopZanzoken();
@@ -257,6 +254,7 @@ void PM_CheckKnockback(void){
 	}
 }
 void PM_Crash(qboolean vertical){
+	if(pm->ps->bitFlags & isCrashed){return;}
 	pm->ps->powerLevel[plDamageGeneric] = pm->ps->bitFlags & usingSoar ? VectorLength(pm->ps->velocity) * 0.03 : VectorLength(pm->ps->velocity) * 0.3;
 	pm->ps->timers[tmCrash] = vertical ? -2500 : 2500;
 	pm->ps->bitFlags |= isCrashed;
@@ -3137,6 +3135,7 @@ void PmoveSingle(pmove_t *pmove){
 	if(PM_CheckTransform()){return;}
 	PM_CheckLoopingSound();
 	PM_SetWaterLevel();
+	if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags |= usingFlight;}
 	if(pm->cmd.buttons != 0 && pm->cmd.buttons != 2048){
 		//Com_Printf("%i\n",pm->cmd.buttons);
 	}
