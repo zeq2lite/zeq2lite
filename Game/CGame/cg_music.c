@@ -196,7 +196,7 @@ void CG_NextTrack(void){
 	trap_S_StartBackgroundTrack(path,path);
 	trap_Cvar_Set("s_musicvolume",va("%f",cg_music.value));
 }
-void CG_PlayTransformTrack(){
+void CG_PlayTransformTrack(void){
 	playerState_t	*ps;
 	clientInfo_t	*ci;
 	tierConfig_cg	*tier;

@@ -33,4 +33,4 @@ void CG_ParsePlaylist(void);
 void CG_StartMusic(void);
 void CG_FadeNext(void);
 void CG_NextTrack(void);
-void CG_PlayTransformTrack();
+void CG_PlayTransformTrack(void);

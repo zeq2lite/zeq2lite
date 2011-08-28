@@ -281,11 +281,10 @@ void parseTier(char *path,tierConfig_cg *tier){
 				tier->requirementHealth = atoi(token);
 			}
 			//Begin Add
-			else if(!Q_stricmp(token,"requirementHealthMaximum")){
+			else if(!Q_stricmp(token,"requirementHealthMaximumPct")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementHealthMaximum = atoi(token);
-				if(tier->requirementHealthMaximum == 0) tier->requirementHealthMaximum = 32767;
+				tier->requirementHealthMaximumPct = atoi(token);
 			}
 			//End Add
 			else if(!Q_stricmp(token,"transformSoundFirst")){

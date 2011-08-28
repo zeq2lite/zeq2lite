@@ -18,7 +18,7 @@ typedef struct{
 	int requirementCurrentPct;
 	int requirementFatigue;
 	int requirementHealth;
-	int requirementHealthMaximum;
+	int requirementHealthMaximumPct;
 	int requirementMaximum;
 	int transformCameraDefault[3];
 	int transformCameraOrbit[2];

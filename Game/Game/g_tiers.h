@@ -15,7 +15,7 @@ typedef struct{
 	int requirementMaximum;
 	int requirementFatigue;
 	int requirementHealth;
-	int requirementHealthMaximum;
+	int requirementHealthMaximumPct;
 	int sustainCurrent;
 	int sustainCurrentPct;
 	int sustainMaximum;
