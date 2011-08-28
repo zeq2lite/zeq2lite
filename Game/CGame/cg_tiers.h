@@ -24,12 +24,15 @@ typedef struct{
 	int cameraOffset[3];
 	int meshOffset;
 	int sustainCurrent;
+	int sustainCurrentPct;
 	int sustainFatigue;
 	int sustainHealth;
 	int sustainMaximum;
 	int requirementCurrent;
+	int requirementCurrentPct;
 	int requirementFatigue;
 	int requirementHealth;
+	int requirementHealthMaximumPct;
 	int requirementMaximum;
 	int transformCameraDefault[3];
 	int transformCameraOrbit[2];
