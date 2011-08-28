@@ -11,13 +11,13 @@ typedef struct{
 	qboolean capableBallFlip;
 	int requirementUseSkill;
 	int requirementCurrent;
-	int requirementCurrentPct;
+	int requirementCurrentPercent;
 	int requirementMaximum;
 	int requirementFatigue;
 	int requirementHealth;
-	int requirementHealthMaximumPct;
+	int requirementHealthMaximum;
 	int sustainCurrent;
-	int sustainCurrentPct;
+	int sustainCurrentPercent;
 	int sustainMaximum;
 	int sustainHealth;
 	int sustainFatigue;

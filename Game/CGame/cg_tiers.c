@@ -229,10 +229,10 @@ void parseTier(char *path,tierConfig_cg *tier){
 				if(!token[0]){break;}
 				tier->sustainCurrent = atoi(token);
 			}
-			else if(!Q_stricmp(token,"sustainCurrentPct")){
+			else if(!Q_stricmp(token,"sustainCurrentPercent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->sustainCurrentPct = atoi(token);
+				tier->sustainCurrentPercent = atoi(token);
 			}
 			else if(!Q_stricmp(token,"sustainMaximum")){
 				token = COM_Parse(&parse);
@@ -254,10 +254,10 @@ void parseTier(char *path,tierConfig_cg *tier){
 				if(!token[0]){break;}
 				tier->requirementCurrent = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementCurrentPct")){
+			else if(!Q_stricmp(token,"requirementCurrentPercent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementCurrentPct = atoi(token);
+				tier->requirementCurrentPercent = atoi(token);
 			}
 			else if(!Q_stricmp(token,"requirementFatigue")){
 				token = COM_Parse(&parse);
@@ -275,10 +275,10 @@ void parseTier(char *path,tierConfig_cg *tier){
 				tier->requirementHealth = atoi(token);
 			}
 			//Begin Add
-			else if(!Q_stricmp(token,"requirementHealthMaximumPct")){
+			else if(!Q_stricmp(token,"requirementHealthMaximum")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementHealthMaximumPct = atoi(token);
+				tier->requirementHealthMaximum = atoi(token);
 			}
 			//End Add
 			else if(!Q_stricmp(token,"transformSoundFirst")){

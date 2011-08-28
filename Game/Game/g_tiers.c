@@ -65,13 +65,13 @@ void checkTier(gclient_t *client){
 			nextTier = &client->tiers[tier+1];
 			if(((nextTier->requirementButtonUp && (ps->bitFlags & keyTierUp)) || !nextTier->requirementButtonUp) &&
 			   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrent) &&
-			   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrentPct / 100.0f * ps->powerLevel[plMaximum]) &&
+			   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
 			   (ps->powerLevel[plFatigue] >= nextTier->requirementFatigue) &&
 			   (ps->powerLevel[plHealth]  >= nextTier->requirementHealth) &&
-			   (ps->powerLevel[plHealth]  <= nextTier->requirementHealthMaximumPct / 100.0f * ps->powerLevel[plMaximum]) &&
+			   (ps->powerLevel[plHealth]  <= nextTier->requirementHealthMaximum / 100.0f * ps->powerLevel[plMaximum]) &&
 			   (ps->powerLevel[plMaximum] >= nextTier->requirementMaximum) &&
 			   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrent) &&
-			   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrentPct / 100.0f * ps->powerLevel[plMaximum]) &&
+			   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
 			   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
 			   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
 			   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum)){
@@ -90,7 +90,7 @@ void checkTier(gclient_t *client){
 			baseTier = &client->tiers[tier];
 			if(!baseTier->permanent && ((baseTier->requirementButtonDown && (ps->bitFlags & keyTierDown)) || !baseTier->requirementButtonDown) ||
 			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrent) ||
-			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrentPct / 100.0f * ps->powerLevel[plMaximum]) ||
+			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) ||
 			   (ps->powerLevel[plHealth] < baseTier->sustainHealth) ||
 			   (ps->powerLevel[plFatigue] < baseTier->sustainFatigue) ||
 			   (ps->powerLevel[plMaximum] < baseTier->sustainMaximum)){
@@ -231,10 +231,10 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->requirementCurrent = atoi(token);
 			}
-			else if(!Q_stricmp(token,"requirementCurrentPct")){
+			else if(!Q_stricmp(token,"requirementCurrentPercent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementCurrentPct = atoi(token);
+				tier->requirementCurrentPercent = atoi(token);
 			}
 			else if(!Q_stricmp(token,"requirementMaximum")){
 				token = COM_Parse(&parse);
@@ -247,10 +247,10 @@ void parseTier(char *path,tierConfig_g *tier){
 				tier->requirementHealth = atoi(token);
 			}
 			//Begin Add
-			else if(!Q_stricmp(token,"requirementHealthMaximumPct")){
+			else if(!Q_stricmp(token,"requirementHealthMaximum")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->requirementHealthMaximumPct = atoi(token);
+				tier->requirementHealthMaximum = atoi(token);
 			}
 			//End Add
 			else if(!Q_stricmp(token,"requirementFatigue")){
@@ -263,10 +263,10 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->sustainCurrent = atoi(token);
 			}
-			else if(!Q_stricmp(token,"sustainCurrentPct")){
+			else if(!Q_stricmp(token,"sustainCurrentPercent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->sustainCurrentPct = atoi(token);
+				tier->sustainCurrentPercent = atoi(token);
 			}
 			else if(!Q_stricmp(token,"sustainHealth")){
 				token = COM_Parse(&parse);
