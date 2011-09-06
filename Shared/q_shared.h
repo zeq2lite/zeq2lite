@@ -1025,8 +1025,7 @@ typedef struct playerState_s {
 	vec3_t		velocity;
 	int			weaponTime;
 	int			gravity[3];
-	int			delta_angles[3];	// add to command angles to get view direction
-									// changed by spawns, rotating objects, and teleporters
+	int			delta_angles[3];
 	int			groundEntityNum;// ENTITYNUM_NONE = in air
 	int			legsTimer;		// don't change low priority animations until this runs out
 	int			legsAnim;		// mask off ANIM_TOGGLEBIT
@@ -1044,7 +1043,6 @@ typedef struct playerState_s {
 	int			clientNum;		// ranges from 0 to MAX_CLIENTS-1
 	int			weapon;			// copied to entityState_t->weapon
 	int			weaponstate;
-
 	vec3_t		viewangles;		// for fixed views
 	int			viewheight;
 	vec4_t		viewQuat;	// Provide a quaternion for viewing direction as well
@@ -1075,7 +1073,6 @@ typedef struct playerState_s {
 	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
 	int			timers[MAX_TIMERS];
 	int			currentSkill[MAX_WEAPONS];
-
 	int			generic1;
 	int			loopSound;
 	int			jumppad_ent;	// jumppad entity hit this frame

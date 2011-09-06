@@ -228,15 +228,6 @@ void Pmove (pmove_t *pmove);
 //===================================================================================
 
 typedef enum {
-	stSpeed,
-	stZanzokenSpeed,
-	stZanzokenDistance,
-	stKnockbackPower,
-	stAirBrakeCost,
-	stMeleeAttack,
-	stMeleeDefense,
-	stEnergyAttack,
-	stEnergyDefense,
 	stChargePercentPrimary,
 	stChargePercentSecondary,
 	stTransformState,
@@ -252,11 +243,24 @@ typedef enum {
 	stTransformHealth,
 	stTransformEffectMaximum
 }statIndex_t;
-typedef enum {
+typedef enum{
+	stSpeed,
+	stAirBrakeCost,
+	stMeleeAttack,
+	stEnergyAttack,
+	stKnockbackPower,
+	stKnockbackIntensity,
+	stZanzokenSpeed,
+	stZanzokenDistance,
 	stZanzokenCost,
 	stEnergyAttackCost,
 	stBoostCost,
 	stFatigueRecovery,
+	stDefenseEnergy,
+	stDefenseMelee,
+	stDefenseCapacity,
+	stDefenseRecovery,
+	stDefenseRecoveryDelay,
 	stTransformSubsequentDuration,
 	stTransformSubsequentFatigueScale,
 	stTransformSubsequentHealthScale,
@@ -368,23 +372,30 @@ typedef enum {
 #define isHovering		0x00000001
 #define isDashing		0x00000002
 #define isTargetable	0x00000004
-#define canBoost		0x00000008
-#define canFly			0x00000010
-#define canZanzoken		0x00000020
-#define canJump			0x00000040
-#define canBallFlip		0x00000080
-#define canOverheal		0x00000100
-#define canBreakLimit	0x00000200
-#define canMelee		0x00000400
-#define canLockon		0x00000800
-#define canBlock		0x00001000
-#define canTransform	0x00002000
-#define canSoar			0x00004000
-#define advancedMelee	0x00008000
-#define advancedFlight	0x00010000
-#define causedDamage	0x00020000
-#define isRiding		0x00040000
-#define isBurning		0x00080000
+#define canBlock		0x00000008
+#define canMelee		0x00000010
+#define canLockon		0x00000020
+#define canHandspring	0x00000040
+#define canGrab			0x00000080
+#define canSlam			0x00000100
+#define canClench		0x00000200
+#define canExpulse		0x00000400
+#define canDischarge	0x00000800
+#define canBoost		0x00001000	
+#define canSwim			0x00002000	
+#define canFly			0x00004000
+#define canJump			0x00008000
+#define canZanzoken		0x00010000
+#define canBallFlip		0x00020000
+#define canOverheal		0x00040000
+#define canBreakLimit	0x00080000
+#define canTransform	0x00100000
+#define canSoar			0x00200000
+#define advancedMelee	0x00400000
+#define advancedFlight	0x00800000
+#define causedDamage	0x01000000
+#define isRiding		0x02000000
+#define isBurning		0x04000000
 
 // Options
 

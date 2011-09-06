@@ -592,7 +592,7 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 	}
 
 	if ( style & UI_PULSE ) {
-		drawcolor[0] = color[0] * 0.7;
+		/*drawcolor[0] = color[0] * 0.7;
 		drawcolor[1] = color[1] * 0.7;
 		drawcolor[2] = color[2] * 0.7;
 		drawcolor[3] = 0.7;
@@ -603,7 +603,7 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 		drawcolor[2] = color[2];
 		drawcolor[3] = 0.7;
 		UI_DrawProportionalString2( x, y, str, drawcolor, sizeScale, uis.charsetPropGlow );
-		return;
+		return;*/
 	}
 
 	UI_DrawProportionalString2( x, y, str, color, sizeScale, uis.charsetProp );
@@ -743,18 +743,7 @@ void UI_DrawString( int x, int y, const char* str, int style, vec4_t color )
 		charh =	BIGCHAR_HEIGHT;
 	}
 
-	if (style & UI_PULSE)
-	{
-		lowlight[0] = 0.8*color[0]; 
-		lowlight[1] = 0.8*color[1];
-		lowlight[2] = 0.8*color[2];
-		lowlight[3] = 0.8*color[3];
-		UI_LerpColor(color,lowlight,newcolor,0.5+0.5*sin(uis.realtime/PULSE_DIVISOR));
-		drawcolor = newcolor;
-	}	
-	else
-		drawcolor = color;
-
+	drawcolor = color;
 	switch (style & UI_FORMATMASK)
 	{
 		case UI_CENTER:

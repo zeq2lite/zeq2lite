@@ -2,5 +2,5 @@
 #The first path is used for MinGW's toolset
 #The second one is for the ZEQ2-Lite project (Beta)
 
-C:\SVN\ZEQ2Lite\Beta\Source\Tools\MinGW\   /mingw
-C:\SVN\ZEQ2Lite\Beta\	/ZEQ2
+D:\Projects\ZEQ2-Lite\Source\Tools\MinGW\MinGW\   /mingw
+D:\Projects\ZEQ2-Lite\    /ZEQ2

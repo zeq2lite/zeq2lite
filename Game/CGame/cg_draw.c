@@ -1338,8 +1338,6 @@ Perform all drawing needed to completely fill the screen
 =====================*/
 void CG_DrawActive( stereoFrame_t stereoView ) {
 	vec4_t		water = {0.25f,0.5f,1.0f,0.1f};
-	vec4_t		slime = {0.25f,1.0f,0.25f,0.1f};
-	vec4_t		lava = {1.0f,0.5f,0.0f,0.1f};
 	int			contents;
 	if(!cg.snap){
 		CG_DrawInformation();
@@ -1348,27 +1346,15 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	CG_TileClear();
 	CG_MotionBlur();
 	trap_R_RenderScene(&cg.refdef);
-	contents = CG_PointContents( cg.refdef.vieworg, -1 );
-	if ( contents & CONTENTS_WATER ){
+	contents = CG_PointContents(cg.refdef.vieworg,-1);
+	if(contents & CONTENTS_WATER){
 		float phase = cg.time / 1000.0 * 0.2f * M_PI * 2;
 		water[3] = 0.1f + (0.02f*sin( phase ));
 		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, water);
-		trap_R_AddFogToScene(0,5000, 0,0,0,1,2,2);
-	}
-	else if(contents & CONTENTS_SLIME){
-		float phase = cg.time / 1000.0 * 0.2f * M_PI * 2;
-		slime[3] = 0.1f + (0.02f*sin( phase ));
-		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, slime);
-		trap_R_AddFogToScene(0,3000, 0.5,0.5,0.5,1,2,2);
-	}
-	else if (contents & CONTENTS_LAVA){
-		float phase = cg.time / 1000.0 * 0.2f * M_PI * 2;
-		lava[3] = 0.1f + (0.02f*sin( phase ));
-		CG_DrawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH*SCREEN_HEIGHT, lava);
-		trap_R_AddFogToScene(0,2000, 1,1,1,1,2,2);
+		//trap_R_AddFogToScene(0,5000,0,0,0,1,2,2);
 	}
 	else{
-		trap_R_AddFogToScene(0,0, 0,0,0,0,2,2);
+		//trap_R_AddFogToScene(10000,20000,0,0,0,0.2,2,0);
 	}
 	CG_DrawScreenFlash();
  	CG_Draw2D();

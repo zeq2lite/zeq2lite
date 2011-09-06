@@ -35,8 +35,7 @@ sfxHandle_t menu_null_sound;
 sfxHandle_t menu_exit_sound;
 
 static qhandle_t	sliderBar;
-static qhandle_t	sliderButton_0;
-static qhandle_t	sliderButton_1;
+static qhandle_t	sliderButton;
 
 vec4_t menu_text_color	    = {1.0f, 1.0f, 1.0f, 1.0f};
 vec4_t menu_dim_color       = {0.0f, 0.0f, 0.0f, 0.75f};
@@ -53,8 +52,8 @@ vec4_t color_dim	    = {0.00f, 0.00f, 0.00f, 0.25f};
 vec4_t pulse_color          = {1.00f, 1.00f, 1.00f, 1.00f};
 vec4_t text_color_disabled  = {0.50f, 0.50f, 0.50f, 1.00f};	// light gray
 vec4_t text_color_normal    = {1.00f, 1.00f, 1.00f, 1.00f};	// light blue
-vec4_t text_color_highlight = {1.00f, 1.00f, 0.00f, 1.00f};	// bright blue
-vec4_t listbar_color        = {0.75f, 0.75f, 1.00f, 0.30f};	// transluscent blue
+vec4_t text_color_highlight = {1.00f, 0.83f, 0.5f, 1.00f};	// bright blue
+vec4_t listbar_color        = {0.75f, 0.75f, 1.00f, 0.00f};	// transluscent blue
 vec4_t text_color_status    = {1.00f, 1.00f, 1.00f, 1.00f};	// bright white	
 
 // action widget
@@ -519,12 +518,10 @@ static void RadioButton_Draw( menuradiobutton_s *rb )
 	if ( !rb->curvalue )
 	{
 		UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y, 16, 16, uis.rb_off);
-		UI_DrawString( x + SMALLCHAR_WIDTH + 16, y, "off", style, color );
 	}
 	else
 	{
 		UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y, 16, 16, uis.rb_on );
-		UI_DrawString( x + SMALLCHAR_WIDTH + 16, y, "on", style, color );
 	}
 }
 
@@ -664,7 +661,7 @@ static void Slider_Draw( menuslider_s *s ) {
 		s->range = 0;
 	}
 
-	button = sliderButton_0;
+	button = sliderButton;
 
 	UI_DrawHandlePic( (int)( x + 2*SMALLCHAR_WIDTH + (SLIDER_RANGE-1)*SMALLCHAR_WIDTH* s->range ) - 2, y - 2, 12, 20, button );
 }
@@ -1734,7 +1731,6 @@ void Menu_Cache( void )
 	menu_null_sound = -1;
 
 	sliderBar = trap_R_RegisterShaderNoMip( "interface/art/slider2" );
-	sliderButton_0 = trap_R_RegisterShaderNoMip( "interface/art/sliderbutt_0" );
-	sliderButton_1 = trap_R_RegisterShaderNoMip( "interface/art/sliderbutt_1" );
+	sliderButton = trap_R_RegisterShaderNoMip( "interface/art/sliderbutton" );
 }
 	

@@ -6,17 +6,7 @@ void syncTier(gclient_t *client){
 	ps = &client->ps;
 	tier = &client->tiers[ps->powerLevel[plTierCurrent]];
 	ps->breakLimitRate = (float)tier->breakLimitRate * g_breakLimitRate.value;
-	ps->states &= ~canBoost;
-	ps->states &= ~canFly;
-	ps->states &= ~canZanzoken;
-	ps->states &= ~canJump;
-	ps->states &= ~canBallFlip;
-	if(tier->capableBoost){ps->states |= canBoost;}
-	if(tier->capableFly){ps->states |= canFly;}
-	if(tier->capableZanzoken){ps->states |= canZanzoken;}
-	if(tier->capableJump){ps->states |= canJump;}
-	if(tier->capableBallFlip){ps->states |= canBallFlip;}
-	ps->stats[stSpeed] = tier->speed * 450.0;
+	ps->states = tier->capabilities | (ps->states & advancedMelee) | (ps->states & advancedFlight);
 	ps->stats[stTransformFirstDuration] = tier->transformFirstDuration;
 	ps->stats[stTransformFirstEffectMaximum] = tier->transformFirstEffectMaximum;
 	ps->stats[stTransformFirstHealth] = tier->transformFirstHealth;
@@ -25,8 +15,9 @@ void syncTier(gclient_t *client){
 	ps->stats[stTransformFatigue] = tier->transformFatigue;
 	ps->stats[stTransformHealth] = tier->transformHealth;
 	ps->stats[stTransformEffectMaximum] = tier->transformEffectMaximum;
-	ps->stats[stZanzokenDistance] = tier->zanzokenDistance * 500.0;
-	ps->stats[stZanzokenSpeed] = tier->zanzokenSpeed * 4000.0;
+	ps->baseStats[stSpeed] = tier->speed;
+	ps->baseStats[stZanzokenDistance] = tier->zanzokenDistance;
+	ps->baseStats[stZanzokenSpeed] = tier->zanzokenSpeed;
 	ps->baseStats[stZanzokenCost] = tier->zanzokenCost;
 	ps->baseStats[stBoostCost] = tier->boostCost;
 	ps->baseStats[stFatigueRecovery] = tier->fatigueRecovery;
@@ -34,11 +25,11 @@ void syncTier(gclient_t *client){
 	ps->baseStats[stTransformSubsequentFatigueScale] = tier->transformSubsequentFatigueScale;
 	ps->baseStats[stTransformSubsequentHealthScale] = tier->transformSubsequentHealthScale;
 	ps->baseStats[stTransformSubsequentMaximumScale] = tier->transformSubsequentMaximumScale;
-	ps->stats[stAirBrakeCost] = tier->airBrakeCost;
-	ps->stats[stMeleeDefense] = tier->meleeDefense;
-	ps->stats[stMeleeAttack] = tier->meleeAttack;
-	ps->stats[stEnergyDefense] = tier->energyDefense;
-	ps->stats[stEnergyAttack] = tier->energyAttackDamage;
+	ps->baseStats[stAirBrakeCost] = tier->airBrakeCost;
+	ps->baseStats[stMeleeAttack] = tier->meleeAttack;
+	ps->baseStats[stEnergyAttack] = tier->energyAttackDamage;
+	ps->baseStats[stDefenseMelee] = tier->defenseMelee;
+	ps->baseStats[stDefenseEnergy] = tier->defenseEnergy;
 	ps->baseStats[stEnergyAttackCost] = tier->energyAttackCost;
 	ps->powerLevel[plDrainCurrent] = tier->effectCurrent;
 	ps->powerLevel[plDrainFatigue] = tier->effectFatigue;
@@ -141,35 +132,55 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->speed = atof(token);
 			}
-			else if(!Q_stricmp(token,"percentMeleeAttack")){
+			else if(!Q_stricmp(token,"meleeAttack")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->meleeAttack = atof(token);
 			}
-			else if(!Q_stricmp(token,"percentMeleeDefense")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->meleeDefense = atoi(token);
-			}
-			else if(!Q_stricmp(token,"percentEnergyDefense")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				tier->energyDefense = atoi(token);
-			}
-			else if(!Q_stricmp(token,"percentEnergyAttackDamage")){
+			else if(!Q_stricmp(token,"energyAttackDamage")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->energyAttackDamage = atof(token);
 			}
-			else if(!Q_stricmp(token,"percentEnergyAttackCost")){
+			else if(!Q_stricmp(token,"energyAttackCost")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->energyAttackCost = atof(token);
 			}
-			else if(!Q_stricmp(token,"knockBackPower")){
+			else if(!Q_stricmp(token,"defenseMelee")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->knockBackPower = atof(token);
+				tier->defenseMelee = atof(token);
+			}
+			else if(!Q_stricmp(token,"defenseEnergy")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->defenseEnergy = atof(token);
+			}
+			else if(!Q_stricmp(token,"defenseCapacity")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->defenseCapacity = atof(token);
+			}
+			else if(!Q_stricmp(token,"defenseRecovery")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->defenseRecovery = atof(token);
+			}
+			else if(!Q_stricmp(token,"defenseRecoveryDelay")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->defenseRecoveryDelay = atof(token);
+			}
+			else if(!Q_stricmp(token,"knockbackPower")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->knockbackPower = atof(token);
+			}
+			else if(!Q_stricmp(token,"knockbackIntensity")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->knockbackIntensity = atof(token);
 			}
 			else if(!Q_stricmp(token,"airBrakeCost")){
 				token = COM_Parse(&parse);
@@ -369,35 +380,100 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->permanent = strlen(token) == 4 ? qtrue : qfalse;
 			}
-			else if(!Q_stricmp(token,"tierCustomWeapons")){
+			else if(!Q_stricmp(token,"canBlock")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->customWeapons = strlen(token) == 4 ? qtrue : qfalse;
+				if(strlen(token) == 4){tier->capabilities |= canBlock;}
+			}
+			else if(!Q_stricmp(token,"canMelee")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canMelee;}
+			}
+			else if(!Q_stricmp(token,"canLockon")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canLockon;}
+			}
+			else if(!Q_stricmp(token,"canHandspring")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canHandspring;}
+			}
+			else if(!Q_stricmp(token,"canGrab")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canGrab;}
+			}
+			else if(!Q_stricmp(token,"canSlam")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canSlam;}
+			}
+			else if(!Q_stricmp(token,"canClench")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canClench;}
+			}
+			else if(!Q_stricmp(token,"canExpulse")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canExpulse;}
+			}
+			else if(!Q_stricmp(token,"canDischarge")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canDischarge;}
 			}
 			else if(!Q_stricmp(token,"canBoost")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->capableBoost = strlen(token) == 4 ? qtrue : qfalse;
+				if(strlen(token) == 4){tier->capabilities |= canBoost;}
+			}
+			else if(!Q_stricmp(token,"canSwim")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canSwim;}
 			}
 			else if(!Q_stricmp(token,"canFly")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->capableFly = strlen(token) == 4 ? qtrue : qfalse;
+				if(strlen(token) == 4){tier->capabilities |= canFly;}
 			}
 			else if(!Q_stricmp(token,"canJump")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->capableJump = strlen(token) == 4 ? qtrue : qfalse;
+				if(strlen(token) == 4){tier->capabilities |= canJump;}
 			}
 			else if(!Q_stricmp(token,"canZanzoken")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->capableZanzoken = strlen(token) == 4 ? qtrue : qfalse;
+				if(strlen(token) == 4){tier->capabilities |= canZanzoken;}
 			}
 			else if(!Q_stricmp(token,"canBallFlip")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				tier->capableBallFlip = strlen(token) == 4 ? qtrue : qfalse;
+				if(strlen(token) == 4){tier->capabilities |= canBallFlip;}
+			}
+			else if(!Q_stricmp(token,"canOverheal")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canOverheal;}
+			}
+			else if(!Q_stricmp(token,"canBreakLimit")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canBreakLimit;}
+			}
+			else if(!Q_stricmp(token,"canTransform")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canTransform;}
+			}
+			else if(!Q_stricmp(token,"canSoar")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canSoar;}
 			}
 		}
 	}
