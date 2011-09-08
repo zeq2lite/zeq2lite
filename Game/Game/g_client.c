@@ -637,8 +637,8 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 
 	s = Info_ValueForKey(userinfo,"cg_advancedFlight");
-	client->ps.states &= ~advancedFlight;
-	if(!Q_stricmp(s,"1")){client->ps.states |= advancedFlight;}
+	client->ps.options &= ~advancedFlight;
+	if(!Q_stricmp(s,"1")){client->ps.options |= advancedFlight;}
 	s = Info_ValueForKey(userinfo,"cg_predictItems");
 
 	// set name

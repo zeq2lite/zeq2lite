@@ -1219,6 +1219,7 @@ netField_t	playerStateFields[] =
 { PSF(breakLimitRate), 0 },
 { PSF(bitFlags), 32 },
 { PSF(states), 32 },
+{ PSF(options), 32 },
 { PSF(attackPowerTotal), 16 },
 { PSF(attackPowerCurrent), 16 }
 };

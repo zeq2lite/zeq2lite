@@ -30,20 +30,12 @@ CG_AdjustFrom640
 Adjusted for resolution and screen aspect ratio
 ================
 */
-void CG_AdjustFrom640( float *x, float *y, float *w, float *h,qboolean stretch) {
-	float ratio = ((float)cgs.screenXScale / (float)cgs.screenYScale);
-	if(0 && !stretch){
-		*x *= ratio;
-		*y *= ratio;
-		*w *= ratio;
-		*h *= ratio;
-	}
-	else{
+void CG_AdjustFrom640(float *x, float *y, float *w, float *h,qboolean stretch) {
+		stretch = qtrue;
 		*x *= cgs.screenXScale;
 		*y *= cgs.screenYScale;
-		*w *= cgs.screenXScale;
-		*h *= cgs.screenYScale;
-	}
+		*w *= stretch ? cgs.screenXScale : 1.6;
+		*h *= stretch ? cgs.screenYScale : 1.6;
 }
 /*
 ================

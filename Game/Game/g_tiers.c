@@ -6,7 +6,7 @@ void syncTier(gclient_t *client){
 	ps = &client->ps;
 	tier = &client->tiers[ps->powerLevel[plTierCurrent]];
 	ps->breakLimitRate = (float)tier->breakLimitRate * g_breakLimitRate.value;
-	ps->states = tier->capabilities | (ps->states & advancedMelee) | (ps->states & advancedFlight);
+	ps->options = tier->capabilities | (ps->options & advancedMelee) | (ps->options & advancedFlight);
 	ps->stats[stTransformFirstDuration] = tier->transformFirstDuration;
 	ps->stats[stTransformFirstEffectMaximum] = tier->transformFirstEffectMaximum;
 	ps->stats[stTransformFirstHealth] = tier->transformFirstHealth;
@@ -474,6 +474,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				if(strlen(token) == 4){tier->capabilities |= canSoar;}
+			}
+			else if(!Q_stricmp(token,"canAlter")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				if(strlen(token) == 4){tier->capabilities |= canAlter;}
 			}
 		}
 	}

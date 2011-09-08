@@ -48,11 +48,15 @@ DECLARATIONS
 ===============*/
 int PM_CheckDirection(vec3_t direction,qboolean player);
 void PM_StopBoost(void);
+void PM_StopBlink(void);
+void PM_CheckBlink(void);
 void PM_StopZanzoken(void);
 void PM_StopDash(void);
 void PM_StopJump(void);
+void PM_StopJumpChain(void);
 void PM_StopSoar(void);
 void PM_StopFlight(void);
+void PM_SuddenBrake(void);
 void PM_StopMovement(void);
 void PM_StopMelee(void);
 void PM_StopDirections(void);
@@ -182,7 +186,7 @@ void PM_CheckKnockback(void){
 	float scale,wishspeed;
 	int i,speed;
 	vertical = qfalse;
-	if(pm->ps->timers[tmFreeze]){return;}
+	//if(pm->ps->timers[tmFreeze]){return;}
 	if(pm->ps->timers[tmKnockback] < 0){
 		pm->ps->timers[tmKnockback] += pml.msec;
 		PM_ContinueLegsAnim(ANIM_KNOCKBACK_RECOVER_2);
@@ -240,6 +244,7 @@ void PM_CheckKnockback(void){
 		if((pm->cmd.buttons & BUTTON_ALT_ATTACK) && (pm->ps->timers[tmKnockback] < 4000)){
 			pm->ps->powerLevel[plUseFatigue] += ((float)pm->ps->timers[tmKnockback] / 5000.0) * (0.2 * pm->ps->powerLevel[plFatigue]);
 			pm->ps->timers[tmKnockback] = -500;
+			PM_AddEvent(EV_AIRBRAKE);
 			speed = 0;
 		}
 		else if(pm->cmd.buttons & BUTTON_ATTACK){
@@ -287,12 +292,11 @@ void PM_CheckZanzoken(void){
 	vec3_t pre_vel, post_vel,minSize,maxSize,forward,up,end;
 	int speed,cost;
 	trace_t trace;
-	if(!(pm->ps->states & canZanzoken)){return;}
-	if(pm->ps->powerLevel[plFatigue] <= 1){
+	if(!(pm->ps->options & canZanzoken)){return;}
+	if(pm->ps->powerLevel[plFatigue] <= pm->ps->powerLevel[plMaximum] * 0.15){
 		PM_StopZanzoken();
 		return;
 	}
-	if(!(pm->ps->states & canZanzoken)){return;}
 	if(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing || pm->ps->bitFlags & usingMelee){return;}
 	if(!(pm->cmd.buttons & BUTTON_TELEPORT)){
 		pm->ps->timers[tmZanzoken] = -1;
@@ -549,7 +553,7 @@ void PM_CheckStatus(void){
 	}
 }
 qboolean PM_CheckTransform(void){
-	if(!(pm->ps->states & canTransform)){return qfalse;}
+	if(!(pm->ps->options & canTransform)){return qfalse;}
 	pm->ps->timers[tmUpdateTier] += pml.msec;
 	if(pm->ps->timers[tmUpdateTier] > 300){
 		pm->ps->timers[tmUpdateTier] = 0;
@@ -625,6 +629,7 @@ void PM_CheckPowerLevel(void){
 		recovery *=  fatigueScale < 0.15 ? 0.15 : fatigueScale;
 		recovery *= pm->ps->baseStats[stFatigueRecovery];
 		if(pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar
+		|| pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBoost
 		|| pm->ps->bitFlags & isBreakingLimit || pm->ps->weaponstate >= WEAPON_GUIDING){recovery = 0;}
 		/*if(powerLevel[plCurrent] > powerLevel[plFatigue]){
 			newValue = powerLevel[plCurrent] - (powerLevel[plMaximum] * 0.005);
@@ -646,19 +651,22 @@ void PM_CheckPowerLevel(void){
 		}
 	}
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
-		qboolean canAlter;
+		qboolean usableAlter;
 		pm->ps->bitFlags &= ~keyTierDown;
 		pm->ps->bitFlags &= ~keyTierUp;
-		canAlter = qtrue;
-		if(pm->ps->bitFlags & usingJump){
+		usableAlter = qtrue;
+		if(pm->ps->bitFlags & usingJump && !(pm->ps->bitFlags & underWater)){
 			pm->ps->bitFlags |= usingFlight;
+			PM_SuddenBrake();
+			PM_StopDash();
 			PM_StopJump();
+			PM_StopJumpChain();
 		}
 		if(pm->ps->bitFlags & usingBoost || pm->ps->timers[tmTransform] < 0 || pm->ps->bitFlags & usingSoar ||
 		   pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING){
-			canAlter = qfalse;
+			usableAlter = qfalse;
 		}
-		if(canAlter && pm->cmd.upmove < 0){
+		if(usableAlter && pm->cmd.upmove < 0){
 			PM_StopFlight();
 			PM_ForceLegsAnim(ANIM_FLY_DOWN);
 		}
@@ -670,18 +678,18 @@ void PM_CheckPowerLevel(void){
 			pm->ps->bitFlags |= keyTierDown;
 			pm->ps->bitFlags &= ~usingAlter;
 		}
-		else if(canAlter && pm->cmd.rightmove < 0){
+		else if(usableAlter && pm->ps->options & canAlter && pm->cmd.rightmove < 0){
 			pm->ps->eFlags &= ~EF_AURA;
 			lower = powerLevel[plMaximum] * 0.01;
 			powerLevel[plCurrent] = (powerLevel[plCurrent] - lower > 1) ? powerLevel[plCurrent] - lower : 1;
 			if(!(pm->ps->bitFlags & usingAlter)){PM_AddEvent(EV_ALTERDOWN_START);}
 			pm->ps->bitFlags |= usingAlter;
 		}
-		else if(canAlter && (pm->cmd.rightmove > 0)){
+		else if(usableAlter && pm->ps->options & canAlter && (pm->cmd.rightmove > 0)){
 			pm->ps->eFlags |= EF_AURA;
 			timers[tmPowerRaise] += pml.msec;
 			while(timers[tmPowerRaise] >= 25){
-				if(!pm->ps->states & canBreakLimit){break;}
+				if(!pm->ps->options & canBreakLimit){break;}
 				timers[tmPowerRaise] -= 25;
 				raise = powerLevel[plMaximum] * 0.009;
 				if(raise < 1){raise = 1;}
@@ -700,7 +708,7 @@ void PM_CheckPowerLevel(void){
 							powerLevel[plUseFatigue] += raise * 0.25;
 						}
 					}
-					if(pm->ps->states & canOverheal){
+					if(pm->ps->options & canOverheal){
 						powerLevel[plHealthPool] -= raise * 0.3;
 						if(powerLevel[plHealthPool] < 0){powerLevel[plHealthPool] = 0;}
 						if(powerLevel[plHealth] > limit){powerLevel[plHealth] = limit;}
@@ -782,7 +790,7 @@ void PM_StopMovement(void){
 void PM_CheckBoost(void){
 	int limit;
 	limit = pm->ps->powerLevel[plLimit];
-	if(!(pm->ps->states & canBoost && !(pm->ps->bitFlags & isStruggling))){return;}
+	if(!(pm->ps->options & canBoost) || (pm->ps->bitFlags & isStruggling) || (pm->ps->baseStats[stJumpTimedPower] == -1)){return;}
 	if(!(pm->cmd.buttons & BUTTON_BOOST)){
 		PM_StopBoost();
 	}
@@ -792,13 +800,14 @@ void PM_CheckBoost(void){
 		pm->ps->timers[tmBoost] += pml.msec;
 		if(pm->ps->timers[tmBoost] > limit){pm->ps->timers[tmBoost] = limit;}
 		if(pm->ps->powerups[PW_BOOST] > 150){
-			pm->ps->powerLevel[plUseFatigue] += (pm->ps->powerLevel[plMaximum] * 0.003) * pm->ps->baseStats[stBoostCost];
+			pm->ps->powerLevel[plUseFatigue] += (pm->ps->powerLevel[plMaximum] * 0.002) * pm->ps->baseStats[stBoostCost];
 			pm->ps->powerups[PW_BOOST] -= 150;
 		}
 	}
 	else{
 		pm->ps->timers[tmBoost] = 0;
 		pm->ps->powerups[PW_BOOST] = 1;
+		pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.05;
 		if(!(pm->ps->bitFlags & usingBoost)){PM_AddEvent(EV_BOOST_START);}
 		pm->ps->bitFlags |= usingBoost;
 	}
@@ -892,17 +901,14 @@ void PM_Friction(void){
 PM_Accelerate
 ==============*/
 void PM_Accelerate(vec3_t wishdir, float wishspeed, float accel){
-#if 1
-	// q2 style
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
-
-	// clamp the speed lower if wading or moving underwater.
 	if(pm->waterlevel){
 		float waterScale;
 		pm->ps->bitFlags |= underWater;
 		waterScale = 1.0f - (1.0f - pm_swimScale)* (float)pm->waterlevel / 3.0f;
 		wishspeed = wishspeed * waterScale;
+		PM_StopJumpChain();
 	}
 	else{
 		pm->ps->bitFlags &= ~underWater;
@@ -920,28 +926,7 @@ void PM_Accelerate(vec3_t wishdir, float wishspeed, float accel){
 	for (i=0 ; i<3 ; i++) {
 		pm->ps->velocity[i] += accelspeed*wishdir[i];
 	}
-
-#else
-	// proper way (avoids strafe jump maxspeed bug), but feels bad
-	vec3_t		wishVelocity;
-	vec3_t		pushDir;
-	float		pushLen;
-	float		canPush;
-
-	VectorScale(wishdir, wishspeed, wishVelocity );
-	VectorSubtract(wishVelocity, pm->ps->velocity, pushDir );
-	pushLen = VectorNormalize(pushDir );
-
-	canPush = accel*pml.frametime*wishspeed;
-	if(canPush > pushLen) {
-		canPush = pushLen;
-	}
-
-	VectorMA(pm->ps->velocity, canPush, pushDir, pm->ps->velocity );
-#endif
 }
-
-
 
 /*
 ============
@@ -957,25 +942,21 @@ float PM_CmdScale(usercmd_t *cmd){
 	int		totalSpeed;
 	float	total;
 	float	scale;
-
-	max = abs(cmd->forwardmove );
-	if(abs(cmd->rightmove)> max){
-		max = abs(cmd->rightmove );
-	}
-	if(abs(cmd->upmove)> max){
-		max = abs(cmd->upmove );
-	}
-	if(!max){
-		return 0;
-	}
-	total = sqrt(cmd->forwardmove * cmd->forwardmove + cmd->rightmove * cmd->rightmove + cmd->upmove * cmd->upmove );
+	max = abs(cmd->forwardmove);
+	if(abs(cmd->rightmove)> max){max = abs(cmd->rightmove);}
+	if(abs(cmd->upmove)> max){max = abs(cmd->upmove);}
+	if(!max){return 0;}
+	total = sqrt(cmd->forwardmove * cmd->forwardmove + cmd->rightmove * cmd->rightmove + cmd->upmove * cmd->upmove);
 	totalSpeed = (pm->ps->powerLevel[plFatigue] / 72.81) + (pm->ps->baseStats[stSpeed] * 450);
+	if(pm->ps->bitFlags & usingSoar){totalSpeed *= pm->ps->bitFlags & usingBoost ? 2.5 : 3.5;}
+	if(pm->ps->bitFlags & usingBoost){totalSpeed *= pm->ps->timers[tmBoost] <= 1000 ? 4.2 : 2.8;}
+	if(pm->cmd.buttons & BUTTON_WALKING){totalSpeed = 1000;}
 	if(pm->ps->powerups[PW_DRIFTING] > 0){
-		totalSpeed = 500;
+		totalSpeed = 1000;
 		if(pm->ps->lockedPlayer->timers[tmMeleeIdle] > 1500 && pm->ps->timers[tmMeleeIdle] > 1500){totalSpeed = 1500;}
 	}
 	if(pm->ps->timers[tmMeleeIdle] < 0){totalSpeed = 4000;}
-	scale = (float)totalSpeed * max / (127.0 * total );
+	scale = (float)totalSpeed * max / (127.0 * total);
 	return scale;
 }
 /*=============
@@ -985,9 +966,22 @@ void PM_NotOnGround(void){
 	pml.groundPlane = qfalse;
 	pml.onGround = qfalse;
 	pm->ps->bitFlags &= ~atopGround;
+	pm->ps->timers[tmOnGround] = 0;
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 }
+void PM_StopJumpChain(void){
+	pm->ps->baseStats[stJumpTimedPower] = 0;
+	pm->ps->stats[stJumpTimed] = 0;
+	PM_StopBlink();
+}
+void PM_StopBlink(void){
+	pm->ps->timers[tmBlink] = 0;
+	pm->ps->bitFlags &= ~isBlinking;
+}
 void PM_StopJump(void){
+	if(!pm->ps->timers[tmJump]){
+		PM_StopJumpChain();
+	}
 	if(pm->ps->bitFlags & usingJump){
 		pm->ps->bitFlags &= ~usingJump;
 		VectorScale(pm->ps->velocity,0.01,pm->ps->velocity);
@@ -997,12 +991,35 @@ void PM_StopJump(void){
 		PM_AddEvent(EV_STOPLOOPINGSOUND);
 	}
 }
+void PM_CheckBlink(void){
+	qtime_t realRandom;
+	trap_RealTime(&realRandom);
+	if(pm->ps->timers[tmBlink] < 0){
+		pm->ps->timers[tmBlink] += pml.msec;
+		pm->ps->bitFlags |= isBlinking;
+		if(pm->ps->timers[tmBlink] >= 0){
+			pm->ps->timers[tmBlink] = (Q_random(&realRandom.tm_sec) * 100) + 33;
+		}
+	}
+	else if(pm->ps->timers[tmBlink] > 0){
+		pm->ps->bitFlags &= ~isBlinking;
+		pm->ps->timers[tmBlink] -= pml.msec;
+		if(pm->ps->timers[tmBlink] <= 0){
+			pm->ps->timers[tmBlink] = -(Q_random(&realRandom.tm_sec) * 1000) - 100;
+		}
+	}
+}
 void PM_CheckJump(void){
 	int jumpPower;
 	float jumpScale,jumpEmphasis;
 	vec3_t pre_vel,post_vel;
-	if(!(pm->ps->states & canJump)){return;}
+	if(!(pm->ps->options & canJump)){return;}
 	if(pm->ps->bitFlags & usingBallFlip){return;}
+	if(pm->ps->timers[tmOnGround] > 1000){PM_StopJumpChain();}
+	if(pm->cmd.buttons & BUTTON_JUMP){
+		pm->ps->timers[tmJump] += pml.msec;
+		if(pm->ps->timers[tmJump] > 4000){pm->ps->timers[tmJump] = 4000;}
+	}
 	if(pm->ps->bitFlags & usingJump){
 		if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){
 			PM_ContinueLegsAnim(ANIM_FLY_DOWN);
@@ -1014,43 +1031,71 @@ void PM_CheckJump(void){
 		}
 		return;
 	}	
-	if(pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight
+	if(pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & usingFlight || pm->cmd.upmove < 0 || pm->ps->weaponstate == WEAPON_GUIDING
 		|| pm->ps->bitFlags & isStruggling || (!(pm->ps->bitFlags & atopGround && !(pm->waterlevel)))){return;}
-	if(!(pm->cmd.buttons & BUTTON_JUMP) || pm->cmd.upmove < 0 || pm->ps->weaponstate == WEAPON_GUIDING){return;}
-	PM_NotOnGround();
-	PM_StopDash();
-	pm->ps->bitFlags |= usingJump;
-	jumpPower = (pm->ps->baseStats[stSpeed] * 450);
-	jumpEmphasis = 2500.0;
-	pm->ps->gravity[2] = 12000;
-	pm->ps->velocity[2] = 0;
-	VectorNormalize(pm->ps->velocity);
-	VectorCopy(pm->ps->velocity,pre_vel);
-	VectorScale(pm->ps->velocity,2500.0,pm->ps->velocity);
-	VectorNormalize2(pm->ps->velocity,post_vel);
-	if((pm->cmd.forwardmove != 0) || (pm->cmd.rightmove != 0)){
-		pm->ps->velocity[2] = jumpPower * 6;
-		pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.01;
-		PM_AddEvent(EV_HIGHJUMP);
-	} else{
-		pm->ps->gravity[2] = 6000;
-		pm->ps->velocity[2] = jumpPower * 8;
-		pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.06;
-		PM_AddEvent(EV_JUMP);
-	}
-	if(pm->cmd.forwardmove > 0){
-		PM_ForceLegsAnim(ANIM_JUMP_UP);
-		pm->ps->pm_flags |= PMF_FORWARDS_JUMP;
-		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-	}else if(pm->cmd.forwardmove < 0 || pm->ps->pm_flags & PMF_BACKWARDS_JUMP){
-		PM_ForceLegsAnim(ANIM_JUMP_BACK);
-		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
-		pm->ps->pm_flags &= ~PMF_FORWARDS_JUMP;
-	}
-	else{
-		PM_ForceLegsAnim(ANIM_JUMP_UP);
-		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-		pm->ps->pm_flags &= ~PMF_FORWARDS_JUMP;
+	if(!(pm->cmd.buttons & BUTTON_JUMP) && pm->ps->timers[tmJump]){
+		float extra;
+		float truePower;
+		qtime_t realRandom;
+		trap_RealTime(&realRandom);
+		pm->ps->bitFlags |= usingJump;
+		jumpPower = (pm->ps->baseStats[stSpeed] * 450);
+		jumpEmphasis = 2500.0;
+		pm->ps->gravity[2] = 12000;
+		if(pm->ps->timers[tmOnGround] < 500){
+			pm->ps->stats[stJumpTimed] += 1;
+		}
+		else{
+			PM_StopJumpChain();
+		}
+		PM_NotOnGround();
+		PM_StopDash();
+		if(pm->ps->timers[tmJump] < 500 && pm->ps->baseStats[stJumpTimedPower] <= 0){
+			PM_StopBoost();
+			extra = pm->ps->stats[stJumpTimed];
+			if(extra > 3){extra = 3;}
+			jumpEmphasis += (700) * extra;
+			if((pm->ps->stats[stJumpTimed] == 5) && !pm->ps->timers[tmBlink]){
+				pm->ps->timers[tmBlink] = -(Q_random(&realRandom.tm_sec) * 1000) - 100;
+			}
+			truePower = jumpPower * (4 + extra);
+			pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.005;
+			PM_AddEvent(EV_HIGHJUMP);
+			pm->ps->baseStats[stJumpTimedPower] = -1;
+		}
+		else{
+			extra = pm->ps->timers[tmJump] / 1000;
+			if(pm->cmd.forwardmove || pm->cmd.rightmove){extra *= 0.75;}
+			if(extra < 1.0){extra = 1.0;}
+			truePower = pm->ps->stats[stJumpTimed] ? pm->ps->baseStats[stJumpTimedPower] : jumpPower * (6 * extra);
+			if(pm->ps->bitFlags & usingBoost){jumpEmphasis = 5000;}
+			pm->ps->gravity[2] = 6000;
+			pm->ps->baseStats[stJumpTimedPower] = truePower;
+			pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.03;
+			PM_AddEvent(EV_JUMP);
+		}
+		if(pm->cmd.forwardmove > 0){
+			PM_ForceLegsAnim(ANIM_JUMP_UP);
+			pm->ps->pm_flags |= PMF_FORWARDS_JUMP;
+			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+		}
+		else if(pm->cmd.forwardmove < 0 || pm->ps->pm_flags & PMF_BACKWARDS_JUMP){
+			PM_ForceLegsAnim(ANIM_JUMP_BACK);
+			pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
+			pm->ps->pm_flags &= ~PMF_FORWARDS_JUMP;
+		}
+		else{
+			PM_ForceLegsAnim(ANIM_JUMP_UP);
+			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+			pm->ps->pm_flags &= ~PMF_FORWARDS_JUMP;
+		}
+		pm->ps->velocity[2] = 0;
+		VectorNormalize(pm->ps->velocity);
+		VectorCopy(pm->ps->velocity,pre_vel);
+		VectorScale(pm->ps->velocity,jumpEmphasis,pm->ps->velocity);
+		VectorNormalize2(pm->ps->velocity,post_vel);
+		pm->ps->velocity[2] = truePower;
+		pm->ps->timers[tmJump] = 0;
 	}
 }
 
@@ -1074,7 +1119,7 @@ PM_CheckBlock
 =============*/
 void PM_CheckBlock(void){
 	pm->ps->bitFlags &= ~usingBlock;
-	if(!(pm->ps->states & canBlock)){return;}
+	if(!(pm->ps->options & canBlock)){return;}
 	if((pm->cmd.buttons & BUTTON_BLOCK)
 		&& !(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)
 		&& !(pm->ps->bitFlags & usingAlter)
@@ -1093,13 +1138,19 @@ PM_FlyMove
 void PM_StopSoar(void){
 	pm->ps->bitFlags &= ~isPreparing;
 	pm->ps->bitFlags &= ~usingSoar;
-	pm->ps->bitFlags &= ~lockedRoll;
-	pm->ps->bitFlags &= ~lockedPitch;
-	pm->ps->bitFlags &= ~lockedYaw;
-	pm->ps->bitFlags &= ~locked360;
+	pm->ps->states &= ~lockedRoll;
+	pm->ps->states &= ~lockedPitch;
+	pm->ps->states &= ~lockedYaw;
+	pm->ps->states &= ~locked360;
 }
 void PM_StopFlight(void){
 	pm->ps->bitFlags &= ~usingFlight;
+}
+void PM_SuddenBrake(void){
+	pm->ps->timers[tmKnockback] = -500;
+	pm->ps->timers[tmFreeze] = 500;
+	pm->ps->powerLevel[plUseFatigue] += 0.01 * pm->ps->powerLevel[plFatigue];
+	PM_AddEvent(EV_AIRBRAKE);
 }
 void PM_FlyMove(void){
 	int		i;
@@ -1109,134 +1160,54 @@ void PM_FlyMove(void){
 	float	wishspeed;
 	float	fadeSpeed;
 	float	scale;
-	float	boostFactor;
-	if(!(pm->ps->states & canFly)){
+	if(!(pm->ps->options & canFly)){
 		pm->ps->bitFlags &= ~usingFlight;
 		return;
 	}
 	if(pm->cmd.upmove > 0){
+		if(pm->ps->bitFlags & usingJump && !(pm->ps->bitFlags & underWater)){PM_SuddenBrake();}
 		pm->ps->bitFlags |= usingFlight;
 		PM_StopDash();
 		PM_StopJump();
+		PM_StopJumpChain();
 	}
-	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity)){return;}
-	if(!(pm->ps->bitFlags & usingFlight) ||(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity))){return;}
-	boostFactor = pm->ps->bitFlags & usingBoost ? 4.4 : 1.1;
-	if(pm->cmd.buttons & BUTTON_WALKING){
-		boostFactor = 1.0;
-	}
+	if((pm->ps->bitFlags & usingAlter || pm->ps->timers[tmTransform]) && !VectorLength(pm->ps->velocity)){return;}
+	if(!(pm->ps->bitFlags & usingFlight)){return;}
 	if((pm->cmd.buttons & BUTTON_JUMP &&
 		!(pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) && 
 		!(pm->ps->weaponstate == WEAPON_GUIDING || pm->ps->weaponstate == WEAPON_ALTGUIDING) && 
 		!(pm->ps->bitFlags & usingZanzoken)) ||
-		(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & lockedYaw || pm->ps->bitFlags & lockedRoll)){
-		if(pm->ps->bitFlags & usingJump || !(pm->ps->states & canSoar)){return;}
+		(pm->ps->states & lockedPitch || pm->ps->states & lockedYaw || pm->ps->states & lockedRoll)){
+		if(pm->ps->bitFlags & usingJump || !(pm->ps->options & canSoar)){return;}
+		if(pm->ps->bitFlags & usingSoar && pm->ps->powerLevel[plFatigue] <= pm->ps->powerLevel[plMaximum] * 0.15){
+			PM_StopSoar();
+			return;
+		}
+		else if(!(pm->ps->bitFlags & usingSoar) && pm->ps->powerLevel[plFatigue] <= pm->ps->powerLevel[plMaximum] * 0.2){return;}
 		//if(PM_CheckDirection(pml.forward,qfalse)){PM_Crash(qtrue);}
 		pm->ps->timers[tmSoar] += pml.msec;
 		pm->ps->eFlags |= EF_AURA;
-		if(pm->cmd.buttons & BUTTON_POWERLEVEL){pm->cmd.forwardmove = 0;}
 		if(!(pm->ps->bitFlags & usingSoar)){
 			pm->cmd.upmove = pm->cmd.rightmove = pm->cmd.forwardmove = 0;
 			pm->ps->bitFlags |= isPreparing;
-			pm->ps->soarBase[YAW] = pm->ps->soarLimit[YAW] = pm->ps->viewangles[YAW];
-			pm->ps->soarBase[ROLL] = pm->ps->soarLimit[ROLL] = 0.0;
-			pm->ps->soarBase[PITCH] = pm->ps->soarLimit[PITCH] = 0.0;
-			pm->ps->viewangles[PITCH] = 0.0;
 			if(pm->ps->timers[tmSoar] < 700){return;}
 			pm->ps->bitFlags |= usingSoar;
 			pm->ps->bitFlags &= ~isPreparing;
 			pm->ps->timers[tmSoar] = 0;
 		}
 		soarCost = 0;
-		if(pm->ps->powerLevel[plMaximum] * 0.8 > pm->ps->powerLevel[plFatigue]){
+		if(pm->ps->powerLevel[plMaximum] * 0.7 > pm->ps->powerLevel[plFatigue]){
 			soarCost = pm->ps->powerLevel[plMaximum] * 0.001;
-		}
-		boostFactor = 5.8;
-		pm->ps->viewangles[PITCH] = pm->ps->soarBase[PITCH];
-		pm->ps->viewangles[YAW] = pm->ps->soarBase[YAW];
-		pm->ps->viewangles[ROLL] = pm->ps->soarBase[ROLL];
-		if(pm->cmd.upmove != 0){
-			if(pm->cmd.upmove < 0){pm->ps->soarLimit[PITCH] = 360.0;}
-			else if(pm->cmd.upmove > 0){pm->ps->soarLimit[PITCH] = -360.0;}
-			pm->ps->bitFlags |= locked360;
-		}
-		if(pm->cmd.forwardmove != 0){
-			if(pm->cmd.forwardmove < 0){pm->ps->soarLimit[PITCH] += 2.0;}
-			else if(pm->cmd.forwardmove > 0){pm->ps->soarLimit[PITCH] += -2.0;}
-			pm->ps->bitFlags |= lockedPitch;
-		}
-		if(pm->cmd.rightmove != 0){
-			if(pm->cmd.rightmove < 0){
-				if(!(pm->ps->bitFlags & lockedRoll) && !(pm->ps->bitFlags & lockedSpin) && pm->ps->soarLimit[ROLL] > -20){
-					pm->ps->soarLimit[ROLL] -= 2;
-				}
-				pm->ps->soarLimit[YAW] += 2.0;
-			}
-			else if(pm->cmd.rightmove > 0){
-				if(!(pm->ps->bitFlags & lockedRoll) && !(pm->ps->bitFlags & lockedSpin) && pm->ps->soarLimit[ROLL] < 20){
-					pm->ps->soarLimit[ROLL] += 2;
-				}
-				pm->ps->soarLimit[YAW] -= 2.0;
-			}
-			pm->ps->bitFlags |= lockedYaw;
-			pm->ps->bitFlags |= lockedRoll;
 		}
 		if(pm->cmd.buttons & BUTTON_BOOST){
 			if(soarCost){soarCost = pm->ps->powerLevel[plMaximum] * 0.002;}
-			boostFactor *= 1.5;
-		}
-		if(pm->cmd.buttons & BUTTON_ROLL_RIGHT || pm->cmd.buttons & BUTTON_ROLL_LEFT){
-			if(pm->cmd.buttons & BUTTON_ROLL_RIGHT){pm->ps->soarLimit[ROLL] = 360;}
-			else if(pm->cmd.buttons & BUTTON_ROLL_LEFT){pm->ps->soarLimit[ROLL] = -360;}
-			pm->ps->bitFlags |= lockedSpin;
 		}
 		fadeSpeed = 2.0;
 		while(pm->ps->timers[tmSoar] > 10){
-			if(pm->ps->bitFlags & lockedPitch || pm->ps->bitFlags & locked360){
-				if(pm->ps->bitFlags & locked360){fadeSpeed = 4;}
-				if(pm->ps->soarBase[PITCH] > 180){
-					pm->ps->soarBase[PITCH] = pm->ps->bitFlags & locked360 ? -184 : -182;
-					pm->ps->soarLimit[PITCH] = 0;
-				}
-				else if(pm->ps->soarBase[PITCH] < -180){
-					pm->ps->soarBase[PITCH] = pm->ps->bitFlags & locked360 ? 184 : 182;
-					pm->ps->soarLimit[PITCH] = 0;
-				}
-				if(pm->ps->soarBase[PITCH] > pm->ps->soarLimit[PITCH]){pm->ps->soarBase[PITCH] -= fadeSpeed;}
-				else if(pm->ps->soarBase[PITCH] < pm->ps->soarLimit[PITCH]){pm->ps->soarBase[PITCH] += fadeSpeed;}
-				else{
-					pm->ps->bitFlags &= ~lockedPitch;
-					pm->ps->bitFlags &= ~locked360;
-				}
-			}
-			if(pm->ps->bitFlags & lockedYaw){
-				if(pm->ps->soarBase[YAW] > pm->ps->soarLimit[YAW]){pm->ps->soarBase[YAW] -= fadeSpeed;}
-				else if(pm->ps->soarBase[YAW] < pm->ps->soarLimit[YAW]){pm->ps->soarBase[YAW] += fadeSpeed;}
-				else{pm->ps->bitFlags &= ~lockedYaw;}
-			}
-			if(pm->ps->bitFlags & lockedRoll || pm->ps->bitFlags & lockedSpin){
-				boostFactor *= 1.2;
-				if(pm->ps->bitFlags & lockedSpin){fadeSpeed = 4;}
-				if(pm->ps->soarBase[ROLL] > 180){
-					pm->ps->soarBase[ROLL] = pm->ps->bitFlags & lockedSpin ? -184 : -182;
-					pm->ps->soarLimit[ROLL] = 0;
-				}
-				else if(pm->ps->soarBase[ROLL] < -180){
-					pm->ps->soarBase[ROLL] = pm->ps->bitFlags & lockedSpin ? 184 : 182;
-					pm->ps->soarLimit[ROLL] = 0;
-				}
-				if(pm->ps->soarBase[ROLL] > pm->ps->soarLimit[ROLL]){pm->ps->soarBase[ROLL] -= fadeSpeed;}
-				else if(pm->ps->soarBase[ROLL] < pm->ps->soarLimit[ROLL]){pm->ps->soarBase[ROLL] += fadeSpeed;}
-				else{
-					pm->ps->bitFlags &= ~lockedRoll;
-					pm->ps->bitFlags &= ~lockedSpin;
-				}
-			}
 			pm->ps->timers[tmSoar] -= 10;
 			pm->ps->powerLevel[plUseFatigue] +=	soarCost;
 		}
-		pm->cmd.upmove = 0;
-		pm->cmd.rightmove = 0;
+		pm->cmd.upmove = pm->cmd.rightmove = 0;
 		pm->cmd.forwardmove = 127;
 	}
 	else if(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing){
@@ -1245,14 +1216,7 @@ void PM_FlyMove(void){
 		pm->ps->bitFlags &= ~isPreparing;
 		pm->ps->eFlags &= ~EF_AURA;
 	}
-	else{
-		/*
-		pm->ps->viewangles[ROLL] = pm->ps->soarBase[ROLL];
-		if(pm->cmd.buttons & BUTTON_ROLL_LEFT){pm->ps->soarBase[ROLL] -= 3;}
-		if(pm->cmd.buttons & BUTTON_ROLL_RIGHT){pm->ps->soarBase[ROLL] += 3;}
-		*/
-	}
-	scale = PM_CmdScale(&pm->cmd) * boostFactor;
+	scale = PM_CmdScale(&pm->cmd);
 	if(!scale){
 		wishvel[0] = 0;
 		wishvel[1] = 0;
@@ -1283,21 +1247,22 @@ void PM_AirMove(void){
 	usercmd_t	cmd;
 	backupDrift = pm->cmd.forwardmove;
 	if((!pm->ps->powerups[PW_DRIFTING] && pm->ps->timers[tmMeleeIdle] >= 0) && (pml.onGround
-		|| (pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity))
+		|| ((pm->ps->bitFlags & usingAlter || pm->ps->timers[tmTransform]) && !VectorLength(pm->ps->velocity))
 		&& !(pm->ps->bitFlags & isUnconcious) && !(pm->ps->bitFlags & isDead) && !(pm->ps->bitFlags & isCrashed))){return;}
 	if(pm->ps->bitFlags & isGuiding){return;}
-	if(!(pm->ps->bitFlags & usingFlight) && pm->ps->states & canBallFlip){
-		if(pm->ps->bitFlags & usingJump && pm->cmd.upmove < 0){
-			pm->ps->gravity[2] = 3000;
+	if(!(pm->ps->bitFlags & usingFlight) && pm->ps->options & canBallFlip){
+		if(pm->cmd.upmove < 0 && pm->ps->velocity[2] < 0 && !(pm->ps->bitFlags & nearGround) && !(pm->cmd.buttons & BUTTON_POWERLEVEL)){
+			pm->ps->velocity[1] = 0;
+			pm->ps->velocity[0] = 0;
+			pm->ps->gravity[2] = 1000;
 			pm->ps->bitFlags |= usingBallFlip;
 			PM_AddEvent(EV_BALLFLIP);
-			if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){PM_ContinueLegsAnim(ANIM_FLY_DOWN);}
-			else{PM_ContinueLegsAnim(ANIM_JUMP_FORWARD);}
+			PM_ContinueLegsAnim(ANIM_JUMP_FORWARD);
 		}
-		else if(pm->ps->bitFlags & usingJump && pm->ps->bitFlags & usingBallFlip && pm->cmd.upmove == 0){
-			pm->ps->gravity[2] = 6000;
+		else if(pm->ps->bitFlags & usingBallFlip){
 			pm->ps->bitFlags &= ~usingBallFlip;
 			PM_AddEvent(EV_STOPLOOPINGSOUND);
+			if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){PM_ContinueLegsAnim(ANIM_FLY_DOWN);}
 		}
 		if(pm->ps->bitFlags & usingBallFlip){PM_StopDirections();}
 	}
@@ -1365,7 +1330,7 @@ void PM_WalkMove(void){
 	fmove = pm->cmd.forwardmove;
 	smove = pm->cmd.rightmove;
 	cmd = pm->cmd;
-	scale = PM_CmdScale(&cmd) * 2.5;
+	scale = PM_CmdScale(&cmd);
 	// set the movementDir so clients can rotate the legs for strafing
 	pml.forward[2] = 0;
 	pml.right[2] = 0;
@@ -1404,14 +1369,12 @@ void PM_DashMove(void){
 	float		wishspeed;
 	float		scale;
 	float		dashAmount;
-	float		boostFactor;
 	float		accelerate;
 	usercmd_t	cmd;
 	dashAmount = VectorLength(pm->ps->dashDir);
-	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity)){return;}
+	if((pm->ps->bitFlags & usingAlter || pm->ps->timers[tmTransform]) && !VectorLength(pm->ps->velocity)){return;}
 	if((pml.onGround && !(pm->cmd.buttons & BUTTON_WALKING) && (pm->cmd.forwardmove || pm->cmd.rightmove))){
 		pm->cmd.upmove = 0;
-		boostFactor = pm->ps->bitFlags & usingBoost ? 4.4 : 1.1;
 		if(dashAmount == 0){
 			pm->ps->dashDir[0] = 0;
 			pm->ps->dashDir[1] = 0;
@@ -1433,7 +1396,7 @@ void PM_DashMove(void){
 		cmd = pm->cmd;
 		fmove = pm->cmd.forwardmove;
 		smove = pm->cmd.rightmove;
-		scale = PM_CmdScale(&cmd) * boostFactor;
+		scale = PM_CmdScale(&cmd);
 		pml.forward[2] = 0;
 		pml.right[2] = 0;
 		VectorNormalize(pml.forward);
@@ -1704,6 +1667,8 @@ void PM_GroundTrace(void){
 	pml.groundPlane = qtrue;
 	pml.onGround = qtrue;
 	pm->ps->bitFlags |= atopGround;
+	pm->ps->timers[tmOnGround] += pml.msec;
+	if(pm->ps->timers[tmOnGround] > 32000){pm->ps->timers[tmOnGround] = 32000;}
 	if(pm->ps->groundEntityNum == ENTITYNUM_NONE && (pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingFlight
 		|| pm->ps->bitFlags & usingBallFlip || pm->ps->bitFlags & isUnconcious || pm->ps->bitFlags & isDead)){
 		PM_StopFlight();
@@ -1712,7 +1677,7 @@ void PM_GroundTrace(void){
 	}
 	pm->ps->groundEntityNum = trace.entityNum;
 	// don't reset the z velocity for slopes
-	pm->ps->velocity[2] = 0;
+	//pm->ps->velocity[2] = 0;
 	PM_AddTouchEnt(trace.entityNum );
 }
 
@@ -2807,6 +2772,7 @@ void PM_Weapon(void){
 		pm->ps->timers[tmImpede] = 100;
 		break;
 	case WEAPON_CHARGING:
+		PM_StopJump();
 		chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
 		pm->ps->timers[tmAttack1] += pml.msec;
 		pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_RESTRICT_MOVEMENT];
@@ -2930,8 +2896,9 @@ void PM_CheckLockon(void){
 	int	lockBox;
 	trace_t	trace;
 	vec3_t minSize,maxSize,forward,up,end;
-	if(!(pm->ps->states & canLockon)){
-		return PM_StopLockon();
+	if(!(pm->ps->options & canLockon)){
+		PM_StopLockon();
+		return;
 	}
 	if(pm->ps->lockedTarget > 0){
 		pm->ps->lockedPlayerData[lkPowerCurrent] = pm->ps->lockedPlayer->powerLevel[plCurrent];
@@ -3012,7 +2979,7 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	vec3_t		new_angles;
 	float		pitchNorm;
 	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
-		return;		// no view changes at all
+		return;
 	}
 	if((pm->ps->lockedTarget > 0) && !(pm->ps->bitFlags & usingAlter) && *ps->lockedPosition){
 		vec3_t dir;
@@ -3024,12 +2991,13 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
 		}
 	}
-	else if(pm->ps->bitFlags & usingFlight && pm->ps->states & advancedFlight){
+	else if(pm->ps->bitFlags & usingFlight && (pm->ps->options & advancedFlight || pm->ps->bitFlags & usingSoar)){
+		int base = pm->ps->bitFlags & usingSoar ? 50 : 28;
 		if(cmd->buttons & BUTTON_ROLL_LEFT){
-			roll -= 28 * (pml.msec / 200.0f);
+			roll -= base * (pml.msec / 200.0f);
 		}
 		if(cmd->buttons & BUTTON_ROLL_RIGHT) {
-			roll += 28 * (pml.msec / 200.0f);
+			roll += base * (pml.msec / 200.0f);
 		}
 		for (i=0; i<3; i++) {
 			// Get the offsets for the angles
@@ -3163,6 +3131,7 @@ void PmoveSingle(pmove_t *pmove){
 			PM_CheckPowerLevel();
 			PM_CheckLockon();
 			PM_CheckZanzoken();
+			PM_CheckBlink();
 			if(!meleeRange){
 				PM_CheckBlock();
 				PM_CheckJump();

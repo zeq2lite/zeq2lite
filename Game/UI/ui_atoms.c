@@ -1079,19 +1079,11 @@ Adjusted for resolution and screen aspect ratio
 ================
 */
 void UI_AdjustFrom640( float *x, float *y, float *w, float *h ) {
-	// expect valid pointers
-	// JUHOX: apply the new scaling
-#if 0
-	*x = *x * uis.scale + uis.bias;
-	*y *= uis.scale;
-	*w *= uis.scale;
-	*h *= uis.scale;
-#else
+	qboolean stretch = qtrue;
 	*x *= uis.scaleX;
 	*y *= uis.scaleY;
-	*w *= uis.scaleX;
-	*h *= uis.scaleY;
-#endif
+	*w *= stretch ? uis.scaleX : 1.6;
+	*h *= stretch ? uis.scaleY : 1.6;
 }
 
 void UI_DrawNamedPic( float x, float y, float width, float height, const char *picname ) {

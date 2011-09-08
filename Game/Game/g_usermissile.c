@@ -711,7 +711,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 	int homingType;
 	vec3_t			muzzle, forward, right, up;
 	vec3_t			firingDir, firingStart; // <-- Contain the altered aiming and origin vectors.
-	powerScale = ((float)self->client->ps.powerLevel[plCurrent] / 1000.0) * self->client->ps.stats[stEnergyAttack];
+	powerScale = ((float)self->client->ps.powerLevel[plCurrent] / 1000.0) * self->client->ps.baseStats[stEnergyAttack];
 	// Get a hold of the weapon we're firing.
 	// If altfire is used and it exists, use altfire, else use regular fire
 	// Due to the nature of altfire presence detection, the regular fire must

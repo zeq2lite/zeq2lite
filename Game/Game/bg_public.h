@@ -228,6 +228,7 @@ void Pmove (pmove_t *pmove);
 //===================================================================================
 
 typedef enum {
+	stJumpTimed,
 	stChargePercentPrimary,
 	stChargePercentSecondary,
 	stTransformState,
@@ -244,6 +245,7 @@ typedef enum {
 	stTransformEffectMaximum
 }statIndex_t;
 typedef enum{
+	stJumpTimedPower,
 	stSpeed,
 	stAirBrakeCost,
 	stMeleeAttack,
@@ -286,7 +288,8 @@ typedef enum{
 	plTierTotal,
 	plDamageFromEnergy,
 	plDamageFromMelee,
-	plDamageGeneric
+	plDamageGeneric,
+	plBuffer
 }powerLevel_t;
 typedef enum{
 	lkPowerCurrent,
@@ -300,6 +303,8 @@ typedef enum{
 	tmKnockback,
 	tmZanzoken,
 	tmBoost,
+	tmJump,
+	tmBlink,
 	tmAttackLife,
 	tmAttack1,
 	tmAttack2,
@@ -321,7 +326,8 @@ typedef enum{
 	tmBlind,
 	tmSoar,
 	tmFall,
-	tmSafe
+	tmSafe,
+	tmOnGround
 }timers_t;
 typedef enum {
 	PW_NONE,
@@ -359,19 +365,28 @@ typedef enum {
 #define isTargeted		0x00200000
 #define isPreparing		0x00400000
 #define isUnsafe		0x00800000
-#define atopGround		0x01000000
-#define nearGround		0x02000000
-#define underWater		0x04000000	
-#define lockedPitch		0x08000000
-#define lockedYaw		0x10000000
-#define lockedRoll		0x20000000
-#define locked360		0x40000000
-#define lockedSpin		0x80000000
+#define isBlinking		0x01000000	
+#define atopGround		0x02000000
+#define nearGround		0x04000000
+#define underWater		0x08000000
 
 // States
-#define isHovering		0x00000001
-#define isDashing		0x00000002
-#define isTargetable	0x00000004
+#define lockedPitch		0x00000001
+#define lockedYaw		0x00000002
+#define lockedRoll		0x00000004
+#define locked360		0x00000008
+#define lockedSpin		0x00000010
+#define isRiding		0x00000020
+#define isBurning		0x00000040
+#define isHovering		0x00000080
+#define isDashing		0x00000100
+#define isTargetable	0x00000200
+#define causedDamage	0x00000400
+
+// Options / Capabilities
+#define advancedMelee	0x00000001
+#define advancedFlight	0x00000002
+#define canAlter		0x00000004
 #define canBlock		0x00000008
 #define canMelee		0x00000010
 #define canLockon		0x00000020
@@ -391,13 +406,6 @@ typedef enum {
 #define canBreakLimit	0x00080000
 #define canTransform	0x00100000
 #define canSoar			0x00200000
-#define advancedMelee	0x00400000
-#define advancedFlight	0x00800000
-#define causedDamage	0x01000000
-#define isRiding		0x02000000
-#define isBurning		0x04000000
-
-// Options
 
 // Melee
 typedef enum {

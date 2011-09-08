@@ -42,8 +42,6 @@ char systemChat[256];
 char teamChat1[256];
 char teamChat2[256];
 
-playerState_t lockedTargetPS;
-
 #ifdef MISSIONPACK
 
 int CG_Text_Width(const char *text, float scale, int limit) {
@@ -722,6 +720,7 @@ static void CG_DrawStatusBar( void ) {
 	//CG_DrawScoreboard();
 	CG_DrawScreenEffects();
 	if(ps->lockedTarget > 0 && cgs.clientinfo[ps->lockedTarget-1].infoValid){
+		playerState_t lockedTargetPS;
 		lockedTargetPS.clientNum = ps->lockedTarget-1;
 		lockedTargetPS.powerLevel[plCurrent] = ps->lockedPlayerData[lkPowerCurrent];
 		lockedTargetPS.powerLevel[plHealth] = ps->lockedPlayerData[lkPowerHealth];
@@ -1265,15 +1264,9 @@ static void CG_DrawWarmup( void ) {
 		scale = 0.45f;
 		break;
 	}
-
-#ifdef MISSIONPACK
-		w = CG_Text_Width(s, scale, 0);
-		CG_Text_Paint(320 - w / 2, 125, scale, colorWhite, s, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE);
-#else
 	w = CG_DrawStrlen( s );
 	CG_DrawStringExt(-1, 320 - w * cw/2, 70, s, colorWhite, 
 			qfalse, qtrue, cw, (int)(cw * 1.5), 0 );
-#endif
 }
 /*=================
 CG_Draw2D
