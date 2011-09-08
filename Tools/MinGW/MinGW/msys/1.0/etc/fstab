@@ -1,6 +1,0 @@
-#Both of these paths have to be modified once you get this from the SVN repository to reflect your real pathname
-#The first path is used for MinGW's toolset
-#The second one is for the ZEQ2-Lite project (Beta)
-
-D:\Projects\ZEQ2-Lite\Source\Tools\MinGW\MinGW\   /mingw
-D:\Projects\ZEQ2-Lite\    /ZEQ2
