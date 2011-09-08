@@ -170,21 +170,6 @@ static void MainMenu_DrawName( void *self ) {
 
 /*
 =================
-MainMenu_ExitAction
-=================
-*/
-static void MainMenu_ExitAction( qboolean result ) {
-	if( !result ) {
-		return;
-	}
-	UI_PopMenu();
-	UI_CreditMenu();
-}
-
-
-
-/*
-=================
 Main_MenuEvent
 =================
 */
@@ -200,11 +185,11 @@ void Main_MenuEvent (void* ptr, int event) {
 		break;
 	case ID_SETUP:
 		MainMenu_Save();
-		UI_SystemSettingsMenu();
+		UI_ControlsMenu();
 		break;
 	case ID_EXIT:
 		MainMenu_Save();
-		UI_ConfirmMenu( "Quit?", 0, MainMenu_ExitAction );
+		UI_CreditMenu();
 		break;
 	case ID_MODEL:
 		MainMenu_Save();

@@ -19,7 +19,6 @@ ui_preferences
 ui_qmenu
 ui_serverinfo
 ui_servers2
-ui_specifyserver
 ui_startserver
 ui_camera
 ui_system

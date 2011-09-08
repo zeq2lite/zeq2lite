@@ -1880,7 +1880,6 @@ UIOBJ_ = \
   $(B)/Base/UI/ui_qmenu.o \
   $(B)/Base/UI/ui_serverinfo.o \
   $(B)/Base/UI/ui_servers2.o \
-  $(B)/Base/UI/ui_specifyserver.o \
   $(B)/Base/UI/ui_shared.o \
   $(B)/Base/UI/ui_startserver.o \
   $(B)/Base/UI/ui_system.o \

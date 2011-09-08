@@ -262,7 +262,7 @@ const char *UI_GetArenaInfoByNumber( int num ) {
 	char	*value;
 
 	if( num < 0 || num >= ui_numArenas ) {
-		trap_Print( va( S_COLOR_RED "Invalid arena number: %i\n", num ) );
+		//trap_Print( va( S_COLOR_RED "Invalid arena number: %i\n", num ) );
 		return NULL;
 	}
 
@@ -356,7 +356,7 @@ UI_GetBotInfoByNumber
 */
 char *UI_GetBotInfoByNumber( int num ) {
 	if( num < 0 || num >= ui_numBots ) {
-		trap_Print( va( S_COLOR_RED "Invalid bot number: %i\n", num ) );
+		//trap_Print( va( S_COLOR_RED "Invalid bot number: %i\n", num ) );
 		return NULL;
 	}
 	return ui_botInfos[num];

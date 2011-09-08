@@ -252,7 +252,7 @@ static void Crosshair_Draw( void *self ) {
 	s = (menulist_s *)self;
 	x = s->generic.x;
 	y =	s->generic.y;
-	style = UI_SMALLFONT|UI_DROPSHADOW;
+	style = UI_TINYFONT|UI_DROPSHADOW;
 	focus = (s->generic.parent->cursor == s->generic.menuPosition);
 	if(s->generic.flags & QMF_GRAYED){
 		color = text_color_disabled;
@@ -275,7 +275,7 @@ static void Crosshair_Draw( void *self ) {
 	}
 	UI_DrawString( x - SMALLCHAR_WIDTH, y, s->generic.name, style|UI_RIGHT, color );
 	if(!s->curvalue){return;}
-	UI_DrawHandlePic( x + SMALLCHAR_WIDTH + 64 - 0.5f * crosshairSizeImage, y + 2 - 0.5f * crosshairSizeImage, crosshairSizeImage, crosshairSizeImage, s_preferences.crosshairShader[s->curvalue] );
+	UI_DrawHandlePic( x + SMALLCHAR_WIDTH + 8 - 0.5f * crosshairSizeImage, y + 6 - 0.5f * crosshairSizeImage, crosshairSizeImage, crosshairSizeImage, s_preferences.crosshairShader[s->curvalue] );
 }
 
 /*
@@ -339,7 +339,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.controls.generic.y			= y;
 	s_preferences.controls.string				= "CONTROLS";
 	s_preferences.controls.style				= style;
-	s_preferences.controls.color				= color_white;
+	s_preferences.controls.color				= color_silver;
 	y+=offset;
 	s_preferences.system.generic.type		= MTYPE_PTEXT;
 	s_preferences.system.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -349,7 +349,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.system.generic.y			= y;
 	s_preferences.system.string				= "SYSTEM";
 	s_preferences.system.style				= style;
-	s_preferences.system.color				= color_white;
+	s_preferences.system.color				= color_silver;
 	y+=offset;		
 	s_preferences.general.generic.type		= MTYPE_PTEXT;
 	s_preferences.general.generic.flags		= QMF_RIGHT_JUSTIFY;
@@ -359,7 +359,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.general.generic.y			= y;
 	s_preferences.general.string				= "GENERAL";
 	s_preferences.general.style				= style;
-	s_preferences.general.color				= color_white;
+	s_preferences.general.color				= color_silver;
 	y+=offset;	
 	s_preferences.back.generic.type			= MTYPE_PTEXT;
 	s_preferences.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -369,24 +369,24 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.back.generic.y			= y;
 	s_preferences.back.string				= "BACK";
 	s_preferences.back.style				= style;
-	s_preferences.back.color				= color_white;
+	s_preferences.back.color				= color_silver;
 	y+=offset;	
 	
-	y = 88;
+	y = 132;
 	s_preferences.crosshair.generic.type		= MTYPE_TEXT;
 	s_preferences.crosshair.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT|QMF_NODEFAULTINIT|QMF_OWNERDRAW;
-	s_preferences.crosshair.generic.x			= PREFERENCES_X_POS - 32;
+	s_preferences.crosshair.generic.x			= PREFERENCES_X_POS;
 	s_preferences.crosshair.generic.y			= y;
 	s_preferences.crosshair.generic.name		= "Crosshair:";
 	s_preferences.crosshair.generic.callback	= Preferences_Event;
 	s_preferences.crosshair.generic.ownerdraw	= Crosshair_Draw;
 	s_preferences.crosshair.generic.id			= ID_CROSSHAIR;
-	s_preferences.crosshair.generic.top			= y - 4;
-	s_preferences.crosshair.generic.bottom		= y + 20;
+	s_preferences.crosshair.generic.top			= y - 2;
+	s_preferences.crosshair.generic.bottom		= y + 16;
 	s_preferences.crosshair.generic.left		= PREFERENCES_X_POS - ( ( strlen(s_preferences.crosshair.generic.name) + 1 ) * SMALLCHAR_WIDTH ) - 32;
-	s_preferences.crosshair.generic.right		= PREFERENCES_X_POS + 48 - 32;
+	s_preferences.crosshair.generic.right		= PREFERENCES_X_POS;
 
-	y += BIGCHAR_HEIGHT+26;
+	y += BIGCHAR_HEIGHT+2;
 	s_preferences.crosshairSize.generic.type		= MTYPE_SPINCONTROL;
 	s_preferences.crosshairSize.generic.name		= "Crosshair Size:";
 	s_preferences.crosshairSize.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -499,7 +499,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.bloomIntensity.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_preferences.bloomIntensity.generic.callback	= Preferences_Event;
 	s_preferences.bloomIntensity.generic.id			= ID_BLOOMINTENSITY;
-	s_preferences.bloomIntensity.generic.x			= PREFERENCES_X_POS;
+	s_preferences.bloomIntensity.generic.x			= PREFERENCES_X_POS - 8;
 	s_preferences.bloomIntensity.generic.y			= y;
 	s_preferences.bloomIntensity.minvalue			= 0;
 	s_preferences.bloomIntensity.maxvalue			= 1;
@@ -510,7 +510,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.bloomAlpha.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_preferences.bloomAlpha.generic.callback	= Preferences_Event;
 	s_preferences.bloomAlpha.generic.id			= ID_BLOOMALPHA;
-	s_preferences.bloomAlpha.generic.x			= PREFERENCES_X_POS;
+	s_preferences.bloomAlpha.generic.x			= PREFERENCES_X_POS - 8;
 	s_preferences.bloomAlpha.generic.y			= y;
 	s_preferences.bloomAlpha.minvalue			= 0;
 	s_preferences.bloomAlpha.maxvalue			= 1;

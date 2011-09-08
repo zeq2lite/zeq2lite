@@ -71,7 +71,6 @@ typedef struct {
 	menulist_s  	lighting;
 	menulist_s  	allow_extensions;
 	menulist_s  	texturebits;
-	menulist_s  	colordepth;
 	menulist_s  	geometry;
 	menulist_s  	filter;
 	menulist_s		multisample;
@@ -82,7 +81,6 @@ typedef struct {
 	menuslider_s	musicvolume;
 	menulist_s		quality;	
 	
-	menubitmap_s	apply;
 	menutext_s	back;
 } systemsettings_t;
 
@@ -92,7 +90,6 @@ typedef struct
 	qboolean fullscreen;
 	int tq;
 	int lighting;
-	int colordepth;
 	int texturebits;
 	int geometry;
 	int filter;
@@ -285,7 +282,6 @@ SystemSettings_GetInitialVideo
 */
 static void SystemSettings_GetInitialVideo( void )
 {
-	s_ivo.colordepth  = s_systemsettings.colordepth.curvalue;
 	s_ivo.driver      = s_systemsettings.driver.curvalue;
 	s_ivo.mode        = s_systemsettings.mode.curvalue;
 	s_ivo.fullscreen  = s_systemsettings.fs.curvalue;
@@ -339,8 +335,6 @@ static void SystemSettings_CheckConfig( void )
 
 	for ( i = 0; i < NUM_IVO_TEMPLATES-1; i++ )
 	{
-		if ( s_ivo_templates[i].colordepth != s_systemsettings.colordepth.curvalue )
-			continue;
 		if ( s_ivo_templates[i].driver != s_systemsettings.driver.curvalue )
 			continue;
 		if ( SystemSettings_FindDetectedResolution(s_ivo_templates[i].mode) != s_systemsettings.mode.curvalue )
@@ -380,21 +374,10 @@ static void SystemSettings_UpdateMenuItems( void )
 	{
 		s_systemsettings.fs.curvalue = 1;
 		s_systemsettings.fs.generic.flags |= QMF_GRAYED;
-		s_systemsettings.colordepth.curvalue = 1;
 	}
 	else
 	{
 		s_systemsettings.fs.generic.flags &= ~QMF_GRAYED;
-	}
-
-	if ( s_systemsettings.fs.curvalue == 0 || s_systemsettings.driver.curvalue == 1 )
-	{
-		s_systemsettings.colordepth.curvalue = 0;
-		s_systemsettings.colordepth.generic.flags |= QMF_GRAYED;
-	}
-	else
-	{
-		s_systemsettings.colordepth.generic.flags &= ~QMF_GRAYED;
 	}
 
 	if ( s_systemsettings.allow_extensions.curvalue == 0 )
@@ -405,55 +388,51 @@ static void SystemSettings_UpdateMenuItems( void )
 		}
 	}
 
-	s_systemsettings.apply.generic.flags |= QMF_HIDDEN|QMF_INACTIVE;
+//	s_systemsettings.back.generic.flags |= QMF_HIDDEN|QMF_INACTIVE;
 
 	if ( s_ivo.mode != s_systemsettings.mode.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.fullscreen != s_systemsettings.fs.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.extensions != s_systemsettings.allow_extensions.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.tq != s_systemsettings.tq.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.lighting != s_systemsettings.lighting.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
-	}
-	if ( s_ivo.colordepth != s_systemsettings.colordepth.curvalue )
-	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.driver != s_systemsettings.driver.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.texturebits != s_systemsettings.texturebits.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.geometry != s_systemsettings.geometry.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.filter != s_systemsettings.filter.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.multisample != s_systemsettings.multisample.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 	if ( s_ivo.anisotropy != s_systemsettings.anisotropy.curvalue )
 	{
-		s_systemsettings.apply.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
+		s_systemsettings.back.generic.flags &= ~(QMF_HIDDEN|QMF_INACTIVE);
 	}
 
 	SystemSettings_CheckConfig();
@@ -461,10 +440,10 @@ static void SystemSettings_UpdateMenuItems( void )
 
 /*
 =================
-SystemSettings_ApplyChanges
+SystemSettings_backChanges
 =================
 */
-static void SystemSettings_ApplyChanges( void *unused, int notification )
+static void SystemSettings_backChanges( void *unused, int notification )
 {
 	if (notification != QM_ACTIVATED)
 		return;
@@ -510,7 +489,6 @@ static void SystemSettings_ApplyChanges( void *unused, int notification )
 		trap_Cvar_SetValue( "r_mode", s_systemsettings.mode.curvalue );
 
 	trap_Cvar_SetValue( "r_fullscreen", s_systemsettings.fs.curvalue );
-	trap_Cvar_SetValue( "r_colorbits", 0 );
 	trap_Cvar_SetValue( "r_depthbits", 0 );
 	trap_Cvar_SetValue( "r_stencilbits", 0 );
 	trap_Cvar_SetValue( "r_vertexLight", s_systemsettings.lighting.curvalue );
@@ -606,7 +584,7 @@ static void SystemSettings_Event( void* ptr, int event ) {
 	case ID_RATIO:
 		s_systemsettings.mode.curvalue =
 			ratioToRes[ s_systemsettings.ratio.curvalue ];
-		// fall through to apply mode constraints
+		// fall through to back mode constraints
 
 	case ID_MODE:
 		// clamp 3dfx video modes
@@ -629,7 +607,6 @@ static void SystemSettings_Event( void* ptr, int event ) {
 			resToRatio[ s_systemsettings.mode.curvalue ];
 		s_systemsettings.tq.curvalue          = ivo->tq;
 		s_systemsettings.lighting.curvalue    = ivo->lighting;
-		s_systemsettings.colordepth.curvalue  = ivo->colordepth;
 		s_systemsettings.texturebits.curvalue = ivo->texturebits;
 		s_systemsettings.geometry.curvalue    = ivo->geometry;
 		s_systemsettings.filter.curvalue      = ivo->filter;
@@ -837,28 +814,6 @@ static void SystemSettings_SetMenuItems( void )
 		s_systemsettings.geometry.curvalue = 2;
 	}
 
-	switch ( ( int ) trap_Cvar_VariableValue( "r_colorbits" ) )
-	{
-	default:
-	case 0:
-		s_systemsettings.colordepth.curvalue = 0;
-		break;
-	case 16:
-		s_systemsettings.colordepth.curvalue = 1;
-		break;
-	case 32:
-		s_systemsettings.colordepth.curvalue = 2;
-		break;
-	}
-
-	if ( s_systemsettings.fs.curvalue == 0 )
-	{
-		s_systemsettings.colordepth.curvalue = 0;
-	}
-	if ( s_systemsettings.driver.curvalue == 1 )
-	{
-		s_systemsettings.colordepth.curvalue = 1;
-	}
 }
 
 /*
@@ -898,14 +853,6 @@ void SystemSettings_MenuInit( void )
 	{
 		"Lightmap",
 		"Vertex",
-		NULL
-	};
-
-	static const char *colordepth_names[] =
-	{
-		"Default",
-		"16 bit",
-		"32 bit",
 		NULL
 	};
 
@@ -981,7 +928,7 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.controls.generic.y				= y;
 	s_systemsettings.controls.string				= "CONTROLS";
 	s_systemsettings.controls.style					= style;
-	s_systemsettings.controls.color					= color_white;
+	s_systemsettings.controls.color					= color_silver;
 	y+=offset;	
 	s_systemsettings.system.generic.type		= MTYPE_PTEXT;
 	s_systemsettings.system.generic.flags		= QMF_LEFT_JUSTIFY;
@@ -991,7 +938,7 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.system.generic.y			= y;
 	s_systemsettings.system.string				= "SYSTEM";
 	s_systemsettings.system.style				= style;
-	s_systemsettings.system.color				= color_white;
+	s_systemsettings.system.color				= color_silver;
 	y+=offset;	
 	s_systemsettings.general.generic.type		= MTYPE_PTEXT;
 	s_systemsettings.general.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -1001,17 +948,17 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.general.generic.y			= y;
 	s_systemsettings.general.string				= "GENERAL";
 	s_systemsettings.general.style				= style;
-	s_systemsettings.general.color				= color_white;
+	s_systemsettings.general.color				= color_silver;
 	y+=offset;
 	s_systemsettings.back.generic.type		= MTYPE_PTEXT;
 	s_systemsettings.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_systemsettings.back.generic.id		= ID_BACK2;
-	s_systemsettings.back.generic.callback	= SystemSettings_Event;
+	s_systemsettings.back.generic.callback	= SystemSettings_backChanges;
 	s_systemsettings.back.generic.x			= x;
 	s_systemsettings.back.generic.y			= y;
 	s_systemsettings.back.string			= "BACK";
 	s_systemsettings.back.style				= style;
-	s_systemsettings.back.color				= color_white;
+	s_systemsettings.back.color				= color_silver;
 	y+=offset;	
 
 	s_systemsettings.framel.generic.type  	= MTYPE_BITMAP;
@@ -1052,15 +999,6 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.ratio.generic.id       = ID_RATIO;
 	y += BIGCHAR_HEIGHT+2;
 
-	// references "r_colorbits"
-	s_systemsettings.colordepth.generic.type     = MTYPE_SPINCONTROL;
-	s_systemsettings.colordepth.generic.name     = "Color Depth:";
-	s_systemsettings.colordepth.generic.flags    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_systemsettings.colordepth.generic.x        = SYSTEM_X_POS;
-	s_systemsettings.colordepth.generic.y        = y;
-	s_systemsettings.colordepth.itemnames        = colordepth_names;
-	y += BIGCHAR_HEIGHT+2;
-
 	// references/modifies "r_fullscreen"
 	s_systemsettings.fs.generic.type     = MTYPE_SPINCONTROL;
 	s_systemsettings.fs.generic.name	  = "Fullscreen:";
@@ -1074,7 +1012,7 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.tq.generic.type	= MTYPE_SLIDER;
 	s_systemsettings.tq.generic.name	= "Texture Detail:";
 	s_systemsettings.tq.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_systemsettings.tq.generic.x		= SYSTEM_X_POS;
+	s_systemsettings.tq.generic.x		= SYSTEM_X_POS - 8;
 	s_systemsettings.tq.generic.y		= y;
 	s_systemsettings.tq.minvalue       = 0;
 	s_systemsettings.tq.maxvalue       = 3;
@@ -1123,7 +1061,7 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.sfxvolume.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_systemsettings.sfxvolume.generic.callback	= SystemSettings_Event;
 	s_systemsettings.sfxvolume.generic.id		= ID_EFFECTSVOLUME;
-	s_systemsettings.sfxvolume.generic.x		= SYSTEM_X_POS;
+	s_systemsettings.sfxvolume.generic.x		= SYSTEM_X_POS - 8;
 	s_systemsettings.sfxvolume.generic.y		= y;
 	s_systemsettings.sfxvolume.minvalue			= 0;
 	s_systemsettings.sfxvolume.maxvalue			= 10;
@@ -1134,11 +1072,11 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.musicvolume.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_systemsettings.musicvolume.generic.callback	= SystemSettings_Event;
 	s_systemsettings.musicvolume.generic.id			= ID_MUSICVOLUME;
-	s_systemsettings.musicvolume.generic.x			= SYSTEM_X_POS;
+	s_systemsettings.musicvolume.generic.x			= SYSTEM_X_POS - 8;
 	s_systemsettings.musicvolume.generic.y			= y;
 	s_systemsettings.musicvolume.minvalue			= 0;
 	s_systemsettings.musicvolume.maxvalue			= 10;
-	y += BIGCHAR_HEIGHT+2;
+	y += BIGCHAR_HEIGHT+5;
 
 	s_systemsettings.quality.generic.type		= MTYPE_SPINCONTROL;
 	s_systemsettings.quality.generic.name		= "Sound Quality:";
@@ -1150,16 +1088,6 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.quality.itemnames			= quality_items;	
 	y += BIGCHAR_HEIGHT+2;
 
-	s_systemsettings.apply.generic.type     = MTYPE_BITMAP;
-	s_systemsettings.apply.generic.name     = SYSTEMSETTINGS_ACCEPT0;
-	s_systemsettings.apply.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_HIDDEN|QMF_INACTIVE;
-	s_systemsettings.apply.generic.callback = SystemSettings_ApplyChanges;
-	s_systemsettings.apply.generic.x        = 640;
-	s_systemsettings.apply.generic.y        = 480-64;
-	s_systemsettings.apply.width			= 128;
-	s_systemsettings.apply.height  		 	= 64;
-	s_systemsettings.apply.focuspic         = SYSTEMSETTINGS_ACCEPT1;
-
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.framel );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.framer );
 	
@@ -1169,7 +1097,6 @@ void SystemSettings_MenuInit( void )
 
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.mode );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.ratio );
-	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.colordepth );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.fs );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.tq );
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.texturebits );
@@ -1186,7 +1113,6 @@ void SystemSettings_MenuInit( void )
 	s_systemsettings.quality.curvalue = !trap_Cvar_VariableValue( "s_compression" );
 
 	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.back );
-	Menu_AddItem( &s_systemsettings.menu, ( void * ) &s_systemsettings.apply );
 
 	SystemSettings_SetMenuItems();
 	SystemSettings_GetInitialVideo();

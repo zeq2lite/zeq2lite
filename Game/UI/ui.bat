@@ -48,8 +48,6 @@ set cc=call ..\..\..\Tools\Compiler\Perform.bat
 @if errorlevel 1 goto quit
 %cc% ../ui_servers2.c
 @if errorlevel 1 goto quit
-%cc% ../ui_specifyserver.c
-@if errorlevel 1 goto quit
 %cc% ../ui_startserver.c
 @if errorlevel 1 goto quit
 %cc% ../ui_camera.c

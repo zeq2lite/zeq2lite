@@ -85,7 +85,7 @@ typedef struct
 	menubitmap_s	framer;
 	menubitmap_s	ports;
 	menutext_s		banner;
-	menubitmap_s	back;
+	menutext_s		back;
 	menubitmap_s	player;
 	menubitmap_s	arrows;
 	menubitmap_s	left;
@@ -524,6 +524,10 @@ static void PlayerModel_MenuInit( void )
 	static char	skinname[32];
 
 	// zero set all our globals
+	int xmenu = 28;
+	int	ymenu = 119;
+	int	offset = 38;
+	int	style = UI_LEFT | UI_DROPSHADOW | UI_TINYFONT;
 	memset( &s_playermodel, 0 ,sizeof(playermodel_t) );
 
 	PlayerModel_Cache();
@@ -657,17 +661,17 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.right.width  				= 64;
 	s_playermodel.right.height  		    = 32;
 	s_playermodel.right.focuspic			= MODEL_ARROWSR;
-
-	s_playermodel.back.generic.type	    = MTYPE_BITMAP;
-	s_playermodel.back.generic.name     = MODEL_BACK0;
-	s_playermodel.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_playermodel.back.generic.callback = PlayerModel_MenuEvent;
-	s_playermodel.back.generic.id	    = ID_BACK;
-	s_playermodel.back.generic.x		= 0;
-	s_playermodel.back.generic.y		= 480-64;
-	s_playermodel.back.width  		    = 128;
-	s_playermodel.back.height  		    = 64;
-	s_playermodel.back.focuspic         = MODEL_BACK1;
+	
+	s_playermodel.back.generic.type			= MTYPE_PTEXT;
+	s_playermodel.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_playermodel.back.generic.id			= ID_BACK;
+	s_playermodel.back.generic.callback		= PlayerModel_MenuEvent;
+	s_playermodel.back.generic.x			= xmenu;
+	s_playermodel.back.generic.y			= ymenu;
+	s_playermodel.back.string				= "BACK";
+	s_playermodel.back.style				= style;
+	s_playermodel.back.color				= color_silver;
+	y+=offset;		
 
 	for (i=0; i<MAX_MODELSPERPAGE; i++)
 	{
@@ -714,7 +718,7 @@ void PlayerModel_Cache( void )
 void UI_PlayerModelMenu(void)
 {
 	PlayerModel_MenuInit();
-	uis.menuamount = 0;
+	uis.menuamount = 1;
 	uis.showFrame = qfalse;
 	uis.hideEarth = qtrue;	
 	UI_PushMenu( &s_playermodel.menu );
