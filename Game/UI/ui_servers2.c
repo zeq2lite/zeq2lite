@@ -219,6 +219,9 @@ static int				g_gametype;
 static int				g_sortkey;
 static int				g_emptyservers;
 static int				g_fullservers;
+int	currentValue;
+qboolean updateAddress;
+qboolean readPort;
 
 
 /*
@@ -319,30 +322,20 @@ ArenaServers_Go
 =================
 */
 static void ArenaServers_Go( void ) {
-	servernode_t*	servernode;
-	char	buff[256];
-
-//1 -- server browser address
-	servernode = g_arenaservers.table[g_arenaservers.list.curvalue].servernode;
-	if( servernode ) {
-		trap_Cmd_ExecuteText( EXEC_APPEND, va( "connect %s\n", servernode->adrstr ) );
-	}
-
-// 2 -- specify server input field
-	if (g_arenaservers.domain.field.buffer[0])
-	{
+	servernode_t* servernode;
+	char buff[256];
+	if(g_arenaservers.domain.field.buffer[0]){
 		strcpy(buff,g_arenaservers.domain.field.buffer);
-		if (g_arenaservers.port.field.buffer[0])
-			Com_sprintf( buff+strlen(buff), 128, ":%s", g_arenaservers.port.field.buffer );	
-		trap_Cmd_ExecuteText( EXEC_APPEND, va( "connect %s\n", buff ) );
+		if(g_arenaservers.port.field.buffer[0]){
+			Com_sprintf( buff+strlen(buff), 128, ":%s", g_arenaservers.port.field.buffer );
+		}
+		trap_Cmd_ExecuteText(EXEC_APPEND,va("connect %s\n",buff));
 	}
 }
 
-/*
-=================
+/*=================
 ArenaServers_UpdateMenu
-=================
-*/
+=================*/
 static void ArenaServers_UpdateMenu( void ) {
 	int				i;
 	int				j;
@@ -365,7 +358,7 @@ static void ArenaServers_UpdateMenu( void ) {
 			g_arenaservers.master.generic.flags		&= ~QMF_GRAYED;
 			//g_arenaservers.gametype.generic.flags	&= ~QMF_GRAYED;
 			g_arenaservers.sortkey.generic.flags	&= ~QMF_GRAYED;
-			//g_arenaservers.showempty.generic.flags	&= ~QMF_GRAYED;
+			//g_arenaservers.showempty.generic.flags&= ~QMF_GRAYED;
 			//g_arenaservers.showfull.generic.flags	&= ~QMF_GRAYED;
 			g_arenaservers.list.generic.flags		&= ~QMF_GRAYED;
 			g_arenaservers.refresh.generic.flags	&= ~QMF_GRAYED;
@@ -393,7 +386,7 @@ static void ArenaServers_UpdateMenu( void ) {
 			g_arenaservers.master.generic.flags		|= QMF_GRAYED;
 			//g_arenaservers.gametype.generic.flags	|= QMF_GRAYED;
 			g_arenaservers.sortkey.generic.flags	|= QMF_GRAYED;
-			//g_arenaservers.showempty.generic.flags	|= QMF_GRAYED;
+			//g_arenaservers.showempty.generic.flags|= QMF_GRAYED;
 			//g_arenaservers.showfull.generic.flags	|= QMF_GRAYED;
 			g_arenaservers.list.generic.flags		|= QMF_GRAYED;
 			g_arenaservers.refresh.generic.flags	|= QMF_GRAYED;
@@ -1179,11 +1172,41 @@ static void ArenaServers_Event( void* ptr, int event ) {
 ArenaServers_MenuDraw
 =================
 */
-static void ArenaServers_MenuDraw( void )
-{
-	if (g_arenaservers.refreshservers)
+void strrep(char *str, char old, char new)  {
+    char *pos;
+    while(1){
+        pos = strchr(str, old);
+        if (pos == NULL){
+            break;
+        }
+        *pos = new;
+    }
+}
+static void ArenaServers_MenuDraw( void ){
+	servernode_t*	servernode;
+	if (g_arenaservers.refreshservers){
 		ArenaServers_DoRefresh();
-
+	}
+	uis.menuamount = 4;
+	uis.hideEarth = qtrue;
+	uis.showFrame = qfalse;
+	updateAddress = qfalse;
+	if(currentValue != g_arenaservers.list.curvalue){
+		currentValue = g_arenaservers.list.curvalue;
+		updateAddress = qtrue;
+	}
+	if(updateAddress){
+		servernode = g_arenaservers.table[currentValue].servernode;
+		if(servernode){
+			char *piece,*simple;
+			char find = ':';
+			char replace = ' ';
+			simple = servernode->adrstr;
+			strrep(simple,find,replace);
+			strcpy(g_arenaservers.domain.field.buffer,COM_Parse(&simple));
+			strcpy(g_arenaservers.port.field.buffer,COM_Parse(&simple));
+		}
+	}
 	Menu_Draw( &g_arenaservers.menu );
 }
 
@@ -1509,8 +1532,5 @@ void UI_ArenaServersMenu( void ) {
 	//trap_S_StopBackgroundTrack();
 	//trap_S_StartBackgroundTrack("music/yamamoto/menu02.ogg", "music/yamamoto/menu02.ogg");
 	ArenaServers_MenuInit();
-	uis.menuamount = 4;
-	uis.hideEarth = qtrue;
-	uis.showFrame = qfalse;
 	UI_PushMenu( &g_arenaservers.menu );
 }						  

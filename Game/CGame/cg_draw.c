@@ -559,9 +559,9 @@ CG_DRAWCHAT
 ================*/
 void strrep(char *str, char old, char new)  {
     char *pos;
-    while (1)  {
+    while(1){
         pos = strchr(str, old);
-        if (pos == NULL)  {
+        if (pos == NULL){
             break;
         }
         *pos = new;
