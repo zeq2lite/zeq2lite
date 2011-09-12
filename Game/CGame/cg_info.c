@@ -131,19 +131,27 @@ void CG_DrawInformation( void ) {
 	const char	*sysInfo;
 	int			y;
 	int			value;
-	qhandle_t	levelshot,loading;
+	qhandle_t	levelshot,text,dots;
 	char		buf[1024];
 
 	info = CG_ConfigString( CS_SERVERINFO );
 	sysInfo = CG_ConfigString( CS_SYSTEMINFO );
 	s = Info_ValueForKey(info,"mapname");
 	levelshot = trap_R_RegisterShaderNoMip(va("maps/%s.jpg",s));
+	dots = trap_R_RegisterShaderNoMip("dots");
 	if(!levelshot){levelshot = trap_R_RegisterShaderNoMip("menuback");}
-	loading = trap_R_RegisterShaderNoMip("loadingBar") ;
 	trap_R_SetColor(NULL);
 	CG_DrawPic(qfalse,0,0,SCREEN_WIDTH,SCREEN_HEIGHT,levelshot);
 	CG_DrawLoadingIcons();
-	CG_DrawPic(qfalse,0,18,127,64,loading);
+	if(cg.infoScreenText[0]){
+		text = trap_R_RegisterShaderNoMip("loading");
+		CG_DrawPic(qfalse,0,18,127,64,text);
+		CG_DrawPic(qfalse,64,52,8,4,dots);
+	}
+	else{
+		text = trap_R_RegisterShaderNoMip("ready");
+		CG_DrawPic(qfalse,0,18,127,64,text);
+	}
 	y = 180-32;
 	// Remote Server only
 }

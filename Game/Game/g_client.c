@@ -673,7 +673,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	// setup tier information
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
-	if(g_pointGravity.value){G_Printf("Hurraaaaay!");client->ps.options |= pointGravity;}
+	if(g_pointGravity.value){client->ps.options |= pointGravity;}
 	// ADDING FOR ZEQ2
 	// REFPOINT: Loading the serverside weaponscripts here.
 	{
@@ -1039,7 +1039,7 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->ps.rolling = g_rolling.value;
 	client->ps.running = g_running.value;
-	if(g_pointGravity.value){G_Printf("Hurraaaaay!");client->ps.options |= pointGravity;}
+	if(g_pointGravity.value){client->ps.options |= pointGravity;}
 	client->ps.powerLevel[plTierCurrent] = 0;
 	if(g_powerlevel.value > 32767){
 		g_powerlevel.value = 32767;

@@ -162,7 +162,7 @@ to prevent it from blinking away too rapidly on local or lan games.
 void UI_DrawConnectScreen( qboolean overlay ) {
 	char			*s;
 	float x,y,w,h;
-	qhandle_t		connecting;
+	qhandle_t		text,dots;
 	uiClientState_t	cstate;
 	char			info[MAX_INFO_VALUE];
 
@@ -204,7 +204,8 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 		lastLoadingText[0] = '\0';
 	}
 	lastConnState = cstate.connState;
-	connecting = trap_R_RegisterShaderNoMip("connectingBar");
+	text = trap_R_RegisterShaderNoMip("connecting");
+	dots = trap_R_RegisterShaderNoMip("dots");
 	x = 0;
 	y = 18;
 	w = 127;
@@ -212,12 +213,19 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	UI_AdjustFrom640(&x,&y,&w,&h);
 	switch ( cstate.connState ) {
 		case CA_CONNECTING:
-			s = va("Looking for server... %i attempts", cstate.connectPacketCount);
-			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, connecting);
+			text = trap_R_RegisterShaderNoMip("searching");
+			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, text);
+			x = 70;
+			y = 52;
+			w = 8;
+			h = 4;
 			break;
 		case CA_CHALLENGING:
-			s = va("Awaiting connection...%i", cstate.connectPacketCount);
-			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, connecting);
+			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, text);
+			x = -100;
+			y = -100;
+			w = 0;
+			h = 0;
 			break;
 		case CA_CONNECTED: {
 			char downloadName[MAX_INFO_VALUE];
@@ -228,14 +236,19 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 					return;
 				}
 			}
-			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, connecting);
-			s = "Awaiting gamestate...";
+			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, text);
+			x = -100;
+			y = -100;
+			w = 0;
+			h = 0;
 			break;
 		break;
 	default:
 		return;
 	}
 
+	UI_AdjustFrom640(&x,&y,&w,&h);
+	trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, dots);
 	//UI_DrawProportionalString( 320, 128, s, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	// password required / connection rejected information goes here
