@@ -103,6 +103,7 @@ vmCvar_t	g_allowBlock;
 vmCvar_t	g_allowAdvancedMelee;
 vmCvar_t	g_rolling;
 vmCvar_t	g_running;
+vmCvar_t	g_pointGravity;
 
 static cvarTable_t		gameCvarTable[] = {
 	// don't override the cheat state set by the system
@@ -113,10 +114,6 @@ static cvarTable_t		gameCvarTable[] = {
 	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
 	{ &g_restarted, "g_restarted", "0", CVAR_ROM, 0, qfalse  },
 	{ NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
-#if MAPLENSFLARES	// JUHOX: cvars for map lens flares
-	{ &g_editmode, "g_editmode", "0", CVAR_SERVERINFO | CVAR_INIT, 0, qfalse },
-#endif
-
 	// latched vars
 	{ &g_gametype, "g_gametype", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qfalse  },
 
@@ -174,6 +171,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_powerlevelMaximum, "g_powerlevelMaximum", "32767", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
 	{ &g_rolling, "g_rolling", "1", CVAR_ARCHIVE, 0, qtrue },
 	{ &g_running, "g_running", "0", CVAR_ARCHIVE, 0, qtrue },
+	{ &g_pointGravity, "g_pointGravity", "0", CVAR_ARCHIVE, 0, qtrue },
 	{ &g_allowTiers, "g_allowTiers", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
 	//{ &g_allowScoreboard, "g_allowScoreboard", "0", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
 	{ &g_allowSoar, "g_allowSoar", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },

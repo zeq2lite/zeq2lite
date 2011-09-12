@@ -1332,16 +1332,6 @@ static void CG_RegisterGraphics( void ) {
 	CG_LoadingString( cgs.mapname );
 
 	trap_R_LoadWorldMap( cgs.mapname );
-
-#if MAPLENSFLARES	// JUHOX: load map lens flares
-	CG_LoadingString("lens flares");
-	CG_LoadLensFlares();
-	CG_LoadLensFlareEntities();
-	CG_LoadMissileLensFlares();
-	cg.lfEditor.copyOptions = -1;
-	cg.lfEditor.copiedLFEnt.dir[0] = 1;
-#endif
-
 	CG_LoadingString( "game media" );
 
 	for ( i=0 ; i<11 ; i++) {

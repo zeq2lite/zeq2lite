@@ -304,7 +304,6 @@ void PM_CheckZanzoken(void){
 	if((pm->ps->bitFlags & usingZanzoken) && (pm->ps->timers[tmZanzoken] <= 0)){
 		minSize[0] = minSize[1] = minSize[2] = -1;
 		maxSize[0] = maxSize[1] = maxSize[2] = 1;
-		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
 		VectorMA(pm->ps->origin,10,forward,end);
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY); 
 		if(trace.fraction == 1.0){
@@ -1016,7 +1015,7 @@ void PM_CheckJump(void){
 	if(!(pm->ps->options & canJump)){return;}
 	if(pm->ps->bitFlags & usingBallFlip){return;}
 	if(pm->ps->timers[tmOnGround] > 1000){PM_StopJumpChain();}
-	if(pm->cmd.buttons & BUTTON_JUMP){
+	if(pm->cmd.buttons & BUTTON_JUMP && (pm->ps->bitFlags & nearGround)){
 		pm->ps->timers[tmJump] += pml.msec;
 		if(pm->ps->timers[tmJump] > 4000){pm->ps->timers[tmJump] = 4000;}
 	}
@@ -1050,7 +1049,7 @@ void PM_CheckJump(void){
 		}
 		PM_NotOnGround();
 		PM_StopDash();
-		if(pm->ps->timers[tmJump] < 500 && pm->ps->baseStats[stJumpTimedPower] <= 0){
+		if(pm->ps->timers[tmJump] < 750 && pm->ps->baseStats[stJumpTimedPower] <= 0){
 			PM_StopBoost();
 			extra = pm->ps->stats[stJumpTimed];
 			if(extra > 3){extra = 3;}
@@ -1611,9 +1610,9 @@ void PM_NearGroundTrace(void){
 		return;
 	}
 	pm->ps->timers[tmFall] += pml.msec;
-	point[0] = pm->ps->origin[0];
-	point[1] = pm->ps->origin[1];
-	point[2] = pm->ps->origin[2] - 450.0f;
+	point[0] = pm->ps->origin[0] - (pml.gravityNormal[0] * 450.0f);
+	point[1] = pm->ps->origin[1] - (pml.gravityNormal[1] * 450.0f);
+	point[2] = pm->ps->origin[2] - (pml.gravityNormal[2] * 450.0f);
 	pm->trace(&trace,pm->ps->origin,pm->mins,pm->maxs,point,pm->ps->clientNum,pm->tracemask);
 	if(trace.allsolid && (!PM_CorrectAllSolid(&trace))){return;}
 	if(trace.fraction == 1.0){
@@ -1627,11 +1626,11 @@ PM_GroundTrace
 =============*/
 void PM_GroundTrace(void){
 	vec3_t		point;
+	vec3_t		distanceVector;
 	trace_t		trace;
 	if(pm->ps->bitFlags & usingSoar){return;}
-	point[0] = pm->ps->origin[0];
-	point[1] = pm->ps->origin[1];
-	point[2] = pm->ps->origin[2] - 0.75f;
+	VectorSubtract(pm->ps->origin,pml.gravityNormal,point);
+	//Com_Printf("Point : %f, %f, %f\n",point[0],point[1],point[2]);
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
 	if(trace.allsolid && (!PM_CorrectAllSolid(&trace))){return;}
@@ -2913,7 +2912,6 @@ void PM_CheckLockon(void){
 			PM_StopLockon();
 			return;
 		}
-		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
 		VectorMA(pm->ps->origin,131072,forward,end);
 		lockBox = 250;
 		minSize[0] = -lockBox;
@@ -2981,11 +2979,33 @@ void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd){
 	if(ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION) {
 		return;
 	}
+	//Com_Printf("Testing : %f, %f, %f\n",SHORT2ANGLE(ps->delta_angles[0]),SHORT2ANGLE(ps->delta_angles[1]),SHORT2ANGLE(ps->delta_angles[2]));
+	//VectorCopy(pml.gravityNormal,pml.up);
+	//VectorSubtract(pm->ps->delta_angles,pml.gravityNormal,pm->ps->delta_angles);
+	//VectorNormalize2(pm->ps->delta_angles,pml.gravityNormal);
+	if(pm->ps->bitFlags & usingZanzoken || pm->ps->lockedTarget > 0){
+		AngleVectors(pm->ps->viewangles,pml.forward,NULL,NULL);
+	}
+	/*AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
+	Com_Printf("View Angles : %f, %f, %f\n",pm->ps->viewangles[0],pm->ps->viewangles[1],pm->ps->viewangles[2]);
+	for (i = 0; i < 3; i++) {
+		ps->delta_angles[i] = ANGLE2SHORT(fixedAngles[i]) - cmd->angles[i];
+	}*/
+	if(pm->ps->options & pointGravity){
+		VectorSubtract(pm->ps->origin,pml.gravityPoint,pml.gravityDirection);
+		VectorNormalize2(pml.gravityDirection,pml.gravityNormal);
+	}
+	else{
+		pml.gravityNormal[0] = 0;
+		pml.gravityNormal[1] = 0;
+		pml.gravityNormal[2] = 1;
+	}
+	VectorScale(pml.gravityNormal,pm->ps->gravity[2],pml.gravityDirection);
 	if((pm->ps->lockedTarget > 0) && !(pm->ps->bitFlags & usingAlter) && *ps->lockedPosition){
 		vec3_t dir;
 		vec3_t angles;
 		VectorSubtract(*(ps->lockedPosition),ps->origin,dir);
-		vectoangles(dir, angles);
+		vectoangles(dir,angles);
 
 		for (i = 0; i < 3; i++) {
 			ps->delta_angles[i] = ANGLE2SHORT(angles[i]) - cmd->angles[i];
@@ -3089,6 +3109,8 @@ PmoveSingle
 void trap_SnapVector(float *v );
 void PmoveSingle(pmove_t *pmove){
 	int state;
+	vec3_t fixedDirection;
+	vec3_t fixedAngles;
 	qboolean meleeRange;
 	pm = pmove;
 	c_pmove++;
@@ -3103,7 +3125,13 @@ void PmoveSingle(pmove_t *pmove){
 	if(pml.msec < 1){pml.msec = 1;}
 	else if(pml.msec > 200){pml.msec = 200;}
 	if(abs(pm->cmd.forwardmove)> 64 || abs(pm->cmd.rightmove)> 64){pm->cmd.buttons &= ~BUTTON_WALKING;}
+	//CrossProduct(pm->ps->viewangles,pml.gravityDirection,fixedDirection);
+	//VectorScale(fixedDirection,-1,fixedDirection);
+	//rossProduct(fixedDirection,pml.gravityDirection,fixedDirection);
+	//vectoangles(fixedDirection,fixedAngles);
+	//VectorCopy(fixedAngles,pm->ps->viewangles);
 	AngleVectors(pm->ps->viewangles,pml.forward,pml.right,pml.up);
+	//VectorCopy(pml.gravityNormal,pml.up);
 	pml.previous_waterlevel = pmove->waterlevel;
 	PM_Impede();
 	PM_Burn();

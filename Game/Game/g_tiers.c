@@ -6,7 +6,7 @@ void syncTier(gclient_t *client){
 	ps = &client->ps;
 	tier = &client->tiers[ps->powerLevel[plTierCurrent]];
 	ps->breakLimitRate = (float)tier->breakLimitRate * g_breakLimitRate.value;
-	ps->options = tier->capabilities | (ps->options & advancedMelee) | (ps->options & advancedFlight);
+	ps->options = tier->capabilities | (ps->options & advancedMelee) | (ps->options & advancedFlight) | (ps->options & pointGravity);
 	ps->stats[stTransformFirstDuration] = tier->transformFirstDuration;
 	ps->stats[stTransformFirstEffectMaximum] = tier->transformFirstEffectMaximum;
 	ps->stats[stTransformFirstHealth] = tier->transformFirstHealth;

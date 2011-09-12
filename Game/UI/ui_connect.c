@@ -161,42 +161,20 @@ to prevent it from blinking away too rapidly on local or lan games.
 */
 void UI_DrawConnectScreen( qboolean overlay ) {
 	char			*s;
+	float x,y,w,h;
+	qhandle_t		connecting;
 	uiClientState_t	cstate;
 	char			info[MAX_INFO_VALUE];
 
 	Menu_Cache();
 
-	if ( !overlay ) {
-		// draw the dialog background
+	if(!overlay){
 		UI_SetColor( color_white );
-#if 0	// JUHOX: draw background picture for connect screen
-		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
-#else
 		UI_DrawBackPic(qtrue);
 		UI_MenuScene();
-//		UI_DrawHandlePic(30, 35, 580, 36, uis.menuBackTitleShader);	// "H U N T"
-#endif
 	}
-
-	// see what information we should display
 	trap_GetClientState( &cstate );
-
 	info[0] = '\0';
-	if( trap_GetConfigString( CS_SERVERINFO, info, sizeof(info) ) ) {
-		UI_DrawProportionalString( 320, 16, va( "Loading %s", Info_ValueForKey( info, "mapname" ) ), UI_BIGFONT|UI_CENTER|UI_DROPSHADOW, color_white );
-	}
-
-	UI_DrawProportionalString( 320, 64, va("Connecting to %s", cstate.servername), UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
-	//UI_DrawProportionalString( 320, 96, "Press Esc to abort", UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
-
-	// display global MOTD at bottom
-	UI_DrawProportionalString( SCREEN_WIDTH/2, SCREEN_HEIGHT-32, 
-		Info_ValueForKey( cstate.updateInfoString, "motd" ), UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
-	
-	// print any server info (server full, bad version, etc)
-	if ( cstate.connState < CA_CONNECTED ) {
-		UI_DrawProportionalString( 320, 192, cstate.messageString, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
-	}
 
 #if 0
 	// display password field
@@ -226,34 +204,39 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 		lastLoadingText[0] = '\0';
 	}
 	lastConnState = cstate.connState;
-
+	connecting = trap_R_RegisterShaderNoMip("connectingBar");
+	x = 0;
+	y = 18;
+	w = 127;
+	h = 64;
+	UI_AdjustFrom640(&x,&y,&w,&h);
 	switch ( cstate.connState ) {
-	case CA_CONNECTING:
-		s = va("Awaiting challenge...%i", cstate.connectPacketCount);
-		break;
-	case CA_CHALLENGING:
-		s = va("Awaiting connection...%i", cstate.connectPacketCount);
-		break;
-	case CA_CONNECTED: {
-		char downloadName[MAX_INFO_VALUE];
+		case CA_CONNECTING:
+			s = va("Looking for server... %i attempts", cstate.connectPacketCount);
+			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, connecting);
+			break;
+		case CA_CHALLENGING:
+			s = va("Awaiting connection...%i", cstate.connectPacketCount);
+			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, connecting);
+			break;
+		case CA_CONNECTED: {
+			char downloadName[MAX_INFO_VALUE];
 
-			trap_Cvar_VariableStringBuffer( "cl_downloadName", downloadName, sizeof(downloadName) );
-			if (*downloadName) {
-				UI_DisplayDownloadInfo( downloadName );
-				return;
+				trap_Cvar_VariableStringBuffer( "cl_downloadName", downloadName, sizeof(downloadName) );
+				if (*downloadName) {
+					UI_DisplayDownloadInfo( downloadName );
+					return;
+				}
 			}
-		}
-		s = "Awaiting gamestate...";
+			trap_R_DrawStretchPic(x,y,w,h, 0, 0, 1, 1, connecting);
+			s = "Awaiting gamestate...";
+			break;
 		break;
-	case CA_LOADING:
-		return;
-	case CA_PRIMED:
-		return;
 	default:
 		return;
 	}
 
-	UI_DrawProportionalString( 320, 128, s, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
+	//UI_DrawProportionalString( 320, 128, s, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	// password required / connection rejected information goes here
 }

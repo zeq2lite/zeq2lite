@@ -406,6 +406,7 @@ typedef enum {
 #define canBreakLimit	0x00080000
 #define canTransform	0x00100000
 #define canSoar			0x00200000
+#define pointGravity	0x00400000
 
 // Melee
 typedef enum {

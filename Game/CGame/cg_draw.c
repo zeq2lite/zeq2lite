@@ -1347,7 +1347,7 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		//trap_R_AddFogToScene(0,5000,0,0,0,1,2,2);
 	}
 	else{
-		//trap_R_AddFogToScene(10000,20000,0,0,0,0.2,2,0);
+		//trap_R_AddFogToScene(0,0, 0,0,0,0,2,2);
 	}
 	CG_DrawScreenFlash();
  	CG_Draw2D();

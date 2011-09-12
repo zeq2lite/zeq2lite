@@ -85,24 +85,6 @@ static void CG_Viewpos_f (void) {
 
 
 static void CG_ScoresDown_f( void ) {
-
-	// JUHOX: toggle lens flare editor move mode
-#if MAPLENSFLARES
-	if (cgs.editMode == EM_mlf) {
-		if (
-			cg.lfEditor.selectedLFEnt &&
-			cg.lfEditor.cmdMode == LFECM_main &&
-			cg.lfEditor.editMode > LFEEM_none
-		) {
-			CG_SetLFEdMoveMode(!cg.lfEditor.moveMode);
-		}
-		return;
-	}
-#endif
-
-#ifdef MISSIONPACK
-		CG_BuildSpectatorString();
-#endif
 	if ( cg.scoresRequestTime + 2000 < cg.time ) {
 		// the scores are more than two seconds out of data,
 		// so request new ones

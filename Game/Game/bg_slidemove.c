@@ -61,21 +61,13 @@ qboolean	PM_SlideMove( qboolean gravity ) {
 	numbumps = 4;
 
 	VectorCopy (pm->ps->velocity, primal_velocity);
-
-	if ( gravity ) {
+	if(gravity){
 		VectorCopy( pm->ps->velocity, endVelocity );
-		endVelocity[0] -= pm->ps->gravity[0] * pml.frametime;
-		endVelocity[1] -= pm->ps->gravity[1] * pml.frametime;
-		endVelocity[2] -= pm->ps->gravity[2] * pml.frametime;
-		pm->ps->velocity[2] = ( pm->ps->velocity[2] + endVelocity[2] ) * 0.5;
+		endVelocity[0] -= pml.gravityDirection[0] * pml.frametime;
+		endVelocity[1] -= pml.gravityDirection[1] * pml.frametime;
+		endVelocity[2] -= pml.gravityDirection[2] * pml.frametime;
 		primal_velocity[2] = endVelocity[2];
-		if ( pml.groundPlane ) {
-			// slide along the ground plane
-			PM_ClipVelocity (pm->ps->velocity, pml.groundTrace.plane.normal, 
-				pm->ps->velocity, OVERCLIP );
-		}
 	}
-
 	time_left = pml.frametime;
 
 	// never turn against the ground plane

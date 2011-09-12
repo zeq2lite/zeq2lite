@@ -887,6 +887,7 @@ typedef struct {
 	qhandle_t selectCursor;
 	qhandle_t sizeCursor;
 	// ADDING FOR ZEQ2
+	sfxHandle_t	blinkingSound;
 	sfxHandle_t	radarwarningSound;
 	sfxHandle_t	lightspeedSound1;
 	sfxHandle_t	lightspeedSound2;

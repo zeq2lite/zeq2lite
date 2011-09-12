@@ -63,21 +63,19 @@ typedef struct
 #define ID_MOVERIGHT	4
 #define ID_MOVEUP		5	
 #define ID_MOVEDOWN		6
-#define ID_LEFT			7	
-#define ID_RIGHT		8	
-#define ID_ATTACK		9
-#define ID_WEAPPREV		10
-#define ID_WEAPNEXT		11
-#define ID_LOCKON		12
-#define ID_CHAT			13
-#define ID_ATTACK2		14
-#define ID_ROLLLEFT		15
-#define ID_ROLLRIGHT	16
-#define ID_BOOST		17
-#define ID_CHARGEPL		18
-#define ID_BLOCK		19
-#define ID_ZANZOKEN		20
-#define ID_JUMP			21
+#define ID_ATTACK		7
+#define ID_WEAPPREV		8
+#define ID_WEAPNEXT		9
+#define ID_LOCKON		10
+#define ID_CHAT			11
+#define ID_ATTACK2		12
+#define ID_ROLLLEFT		13
+#define ID_ROLLRIGHT	14
+#define ID_BOOST		15
+#define ID_CHARGEPL		16
+#define ID_BLOCK		17
+#define ID_ZANZOKEN		18
+#define ID_JUMP			19
 
 #define UI_ANIM_IDLE		0
 #define UI_ANIM_RUN		1
@@ -168,25 +166,23 @@ static vec4_t controls_binding_color  = {1.0f, 1.00f, 1.00f, 1.00f}; // bk: Win3
 
 static bind_t g_bindings[] = 
 {
-	{"+speed", 			"dash / walk",		ID_SPEED,		UI_ANIM_WALK,			K_SHIFT,		-1,		-1,	-1},
+	{"+speed", 			"walk",		ID_SPEED,		UI_ANIM_WALK,			K_SHIFT,		-1,		-1,	-1},
 	{"+forward", 		"move forward",		ID_FORWARD,		UI_ANIM_DASH_FORWARD,	K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"move backward",	ID_BACKPEDAL,	UI_ANIM_DASH_BACKWARD,	K_DOWNARROW,	-1,		-1, -1},
 	{"+moveleft", 		"move left",		ID_MOVELEFT,	UI_ANIM_DASH_LEFT,		',',			-1,		-1, -1},
 	{"+moveright", 		"move right",		ID_MOVERIGHT,	UI_ANIM_DASH_RIGHT,	'.',			-1,		-1, -1},
 	{"+moveup",			"fly up",			ID_MOVEUP,		UI_ANIM_FLY_UP,		K_SPACE,		-1,		-1, -1},
 	{"+movedown",		"fly down",			ID_MOVEDOWN,	UI_ANIM_FLY_DOWN,		'c',			-1,		-1, -1},
-	{"+left", 			"turn left",		ID_LEFT,		UI_ANIM_TURNLEFT,		K_LEFTARROW,	-1,		-1, -1},
-	{"+right", 			"turn right",		ID_RIGHT,		UI_ANIM_TURNRIGHT,		K_RIGHTARROW,	-1,		-1, -1},
 	{"+attack", 		"attack primary",	ID_ATTACK,		UI_ANIM_ATTACK,		K_CTRL,			-1,		-1, -1},
-	{"weapprev",		"prev weapon",		ID_WEAPPREV,	UI_ANIM_IDLE,			'[',			-1,		-1, -1},
-	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	UI_ANIM_IDLE,			']',			-1,		-1, -1},
-	{"+button3", 		"lock on",			ID_LOCKON,		UI_ANIM_LOCKON,		K_MOUSE3,		-1,		-1, -1},
+	{"weapprev",		"previous skill",		ID_WEAPPREV,	UI_ANIM_IDLE,			'[',			-1,		-1, -1},
+	{"weapnext", 		"next skill",		ID_WEAPNEXT,	UI_ANIM_IDLE,			']',			-1,		-1, -1},
+	{"+button3", 		"lock-on",			ID_LOCKON,		UI_ANIM_LOCKON,		K_MOUSE3,		-1,		-1, -1},
 	{"messagemode", 	"chat",				ID_CHAT,		UI_ANIM_CHAT,			't',			-1,		-1, -1},
 	{"+button10",		"attack secondary",	ID_ATTACK2,		UI_ANIM_ATTACK,		K_MOUSE2,		-1,		-1, -1},
 	{"+button5",		"roll left",		ID_ROLLLEFT,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
 	{"+button6",		"roll right",		ID_ROLLRIGHT,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
-	{"+button7",		"ki boost",			ID_BOOST,		UI_ANIM_KI_CHARGE,		-1,				-1,		-1, -1},
-	{"+button12",		"charge power",		ID_CHARGEPL,	UI_ANIM_PL_UP,			-1,				-1,		-1, -1},
+	{"+button7",		"energy boost",			ID_BOOST,		UI_ANIM_KI_CHARGE,		-1,				-1,		-1, -1},
+	{"+button12",		"energy manipulate",		ID_CHARGEPL,	UI_ANIM_PL_UP,			-1,				-1,		-1, -1},
 	{"+button13",		"block",			ID_BLOCK,		UI_ANIM_BLOCK,			-1,				-1,		-1, -1},
 	{"+button9",		"zanzoken",			ID_ZANZOKEN,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
 	{"+button14",		"jump",				ID_JUMP,		UI_ANIM_JUMP,			-1,				-1,		-1, -1},
@@ -1068,18 +1064,6 @@ static void Controls_MenuInit( void )
 	s_controls.movedown.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.movedown.generic.id        = ID_MOVEDOWN;
 
-	s_controls.turnleft.generic.type	  = MTYPE_ACTION;
-	s_controls.turnleft.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.turnleft.generic.callback  = Controls_ActionEvent;
-	s_controls.turnleft.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.turnleft.generic.id        = ID_LEFT;
-
-	s_controls.turnright.generic.type	   = MTYPE_ACTION;
-	s_controls.turnright.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.turnright.generic.callback  = Controls_ActionEvent;
-	s_controls.turnright.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.turnright.generic.id        = ID_RIGHT;
-
 	s_controls.run.generic.type	     = MTYPE_ACTION;
 	s_controls.run.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.run.generic.callback  = Controls_ActionEvent;
@@ -1110,12 +1094,6 @@ static void Controls_MenuInit( void )
 	s_controls.rollright.generic.ownerdraw	= Controls_DrawKeyBinding;
 	s_controls.rollright.generic.id			= ID_ROLLRIGHT;
 
-	s_controls.boost.generic.type	    = MTYPE_ACTION;
-	s_controls.boost.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.boost.generic.callback	= Controls_ActionEvent;
-	s_controls.boost.generic.ownerdraw	= Controls_DrawKeyBinding;
-	s_controls.boost.generic.id			= ID_BOOST;
-
 	s_controls.attack.generic.type	    = MTYPE_ACTION;
 	s_controls.attack.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.attack.generic.callback  = Controls_ActionEvent;
@@ -1145,6 +1123,12 @@ static void Controls_MenuInit( void )
 	s_controls.lockon.generic.callback  = Controls_ActionEvent;
 	s_controls.lockon.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.lockon.generic.id        = ID_LOCKON;
+
+	s_controls.boost.generic.type	    = MTYPE_ACTION;
+	s_controls.boost.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.boost.generic.callback	= Controls_ActionEvent;
+	s_controls.boost.generic.ownerdraw	= Controls_DrawKeyBinding;
+	s_controls.boost.generic.id			= ID_BOOST;
 
 	s_controls.chargepl.generic.type	    = MTYPE_ACTION;
 	s_controls.chargepl.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1188,8 +1172,8 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.moveup );
 	Menu_AddItem( &s_controls.menu, &s_controls.movedown );
 	Menu_AddItem( &s_controls.menu, &s_controls.jump );
-	Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
-	Menu_AddItem( &s_controls.menu, &s_controls.turnright );
+	//Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
+	//Menu_AddItem( &s_controls.menu, &s_controls.turnright );
 	Menu_AddItem( &s_controls.menu, &s_controls.rollleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.rollright );
 

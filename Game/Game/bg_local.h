@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // pmove, just to make damn sure we don't have
 // any differences when running on client or server
 typedef struct {
-	vec3_t		forward, right, up;
+	vec3_t		forward, right, up, gravityDirection,gravityPoint,gravityNormal;
 	float		frametime;
 	int			msec;
 	qboolean	onGround;

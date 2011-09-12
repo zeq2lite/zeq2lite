@@ -2298,37 +2298,24 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// set up cg.snap and possibly cg.nextSnap
 	CG_ProcessSnapshots();
-
 	// if we haven't received any snapshots yet, all
 	// we can draw is the information screen
 	if ( !cg.snap || ( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) ) {
 		CG_DrawInformation();
 		return;
 	}
-
 	// let the client system know what our weapon and zoom settings are
 	trap_SetUserCmdValue( cg.weaponSelect, cg.zoomSensitivity );
-
 	// this counter will be bumped for every valid scene we generate
 	cg.clientFrame++;
-
 	// update cg.predictedPlayerState
 	CG_PredictPlayerState();
-
-
-	// ADDING FOR ZEQ2
-
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer ||
 							 (cg.snap->ps.powerLevel[plFatigue] <= 0) ||
 							 (cg.snap->ps.bitFlags & isCrashed) ||
 							 (cg.snap->ps.weaponstate == WEAPON_GUIDING) ||
 							 (cg.snap->ps.weaponstate == WEAPON_ALTGUIDING);
-/*
-	// decide on third person view
-	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.powerLevel[current] <= 0);
-*/
-
 	// END ADDING
 
 	// build cg.refdef
@@ -2353,9 +2340,6 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		CG_AddParticles ();
 		CG_AddLocalEntities();
 		CG_AddParticleSystems();
-#if MAPLENSFLARES	// JUHOX: add map lens flares
-		CG_AddMapLensFlares();
-#endif
 	}
 	//CG_AddViewWeapon( &cg.predictedPlayerState );
 
