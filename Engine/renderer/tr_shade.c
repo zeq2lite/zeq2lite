@@ -917,47 +917,59 @@ Draws outlines on surfaces with shader.hasOutlines set
 */
 static void RB_OutlinesPass( void ) {	
 
-	int		outlines;
 	float	outlinesAlpha;
+	int		outlineType;
+	int		outlineState;
+	qboolean outlineAlias;
 
-	outlines		= r_outlines->value;
 	outlinesAlpha	= r_outlinesAlpha->value;
 
-	if ( !tess.shader->hasOutlines )
-		return;	
-
-	if ( !r_outlines->integer )
-		return;
-
+	if (!tess.shader->hasOutlines){return;}
 	GL_Bind( tr.whiteImage );
 	qglColor4f( 0, 0, 0, outlinesAlpha );
-		
-	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
-	qglPolygonMode( GL_BACK, GL_LINE );
-	qglLineWidth( outlines + 1 );
-			
-	qglCullFace( GL_BACK );
-		
+	outlineState = GLS_POLYMODE_LINE;
+	GL_State( outlineState | GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
+	if(r_outlinesSmooth->value){qglEnable(GL_LINE_SMOOTH);}
+	if(r_outlinesType->value == 1){
+		qglLineStipple(r_outlinesPatternFactor->value,r_outlinesPattern->value);
+		qglEnable(GL_LINE_STIPPLE);
+	}
+	if(r_outlinesType->value == 2){
+		qglEnable(GL_DEPTH_TEST);
+		qglEnable(GL_POLYGON_OFFSET_FILL);
+		qglBlendFunc (GL_ZERO, GL_ONE);
+		qglEnable(GL_CULL_FACE);
+		qglPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+	}
+	else{
+		qglPolygonMode(GL_BACK,GL_LINE);
+		qglLineWidth(r_outlines->value + 1);
+	}
+	qglCullFace(GL_BACK);
 	qglDisableClientState( GL_COLOR_ARRAY );
 	qglDisableClientState( GL_TEXTURE_COORD_ARRAY );
-
 	qglVertexPointer (3, GL_FLOAT, 16, tess.xyz);	// padded for SIMD
-			
 	if (qglLockArraysEXT) {
 		qglLockArraysEXT(0, tess.numVertexes);
 		GLimp_LogComment( "glLockArraysEXT\n" );
 	}
-	
 	R_DrawElements( tess.numIndexes, tess.indexes );
-		
 	if (qglUnlockArraysEXT) {
 		qglUnlockArraysEXT();
 		GLimp_LogComment( "glUnlockArraysEXT\n" );
 	}
-
 	// FIX: Must reset these manually or renderer will b0rk!
-	qglCullFace( GL_FRONT ); 
-	qglLineWidth( 1 );
+	qglCullFace(GL_FRONT); 
+	qglLineWidth(1);
+	if(r_outlinesSmooth->value){qglDisable(GL_LINE_SMOOTH);}
+	if(r_outlinesType->value == 1){
+		qglDisable(GL_LINE_STIPPLE);
+	}
+	if(r_outlinesType->value == 2){
+		qglDisable(GL_CULL_FACE);
+		qglDisable(GL_DEPTH_TEST);
+		qglDisable(GL_POLYGON_OFFSET_FILL);
+	}
 }
 
 /*
@@ -1286,12 +1298,11 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 	for ( stage = 0; stage < MAX_SHADER_STAGES; stage++ )
 	{
 		shaderStage_t *pStage = tess.xstages[stage];
-
 		if ( !pStage )
 		{
 			break;
 		}
-
+		qglTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS,r_mipBias->value + pStage->mipBias);
 		ComputeColors( pStage );
 		ComputeTexCoords( pStage );
 

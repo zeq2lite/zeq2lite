@@ -324,6 +324,7 @@ typedef struct {
 	acff_t			adjustColorsForFog;
 
 	qboolean		isDetail;
+	int				mipBias;
 
 	qhandle_t		program;
 } shaderStage_t;
@@ -1128,6 +1129,7 @@ extern cvar_t	*r_verbose;				// used for verbose debug spew
 extern cvar_t	*r_ignoreFastPath;		// allows us to ignore our Tess fast paths
 
 extern cvar_t	*r_znear;				// near Z clip plane
+extern cvar_t	*r_zfar;
 extern cvar_t	*r_zproj;				// z distance of projection plane
 extern cvar_t	*r_stereoSeparation;			// separation of cameras for stereo rendering
 
@@ -1145,6 +1147,11 @@ extern cvar_t	*r_measureOverdraw;		// enables stencil buffer overdraw measuremen
 
 extern cvar_t	*r_lodbias;				// push/pull LOD transitions
 extern cvar_t	*r_lodscale;
+extern cvar_t	*r_mipmaps;
+extern cvar_t	*r_mipBase;
+extern cvar_t	*r_mipBias;
+extern cvar_t	*r_mipMinimum;
+extern cvar_t	*r_mipMaximum;
 
 extern cvar_t	*r_primitives;			// "0" = based on compiled vertex array existance
 										// "1" = glDrawElemet tristrips
@@ -1216,7 +1223,10 @@ extern	cvar_t	*r_flares;						// light flares
 extern	cvar_t	*r_meshLerp;
 extern	cvar_t	*r_outlines;
 extern	cvar_t	*r_outlinesAlpha;
-
+extern	cvar_t	*r_outlinesType;
+extern	cvar_t	*r_outlinesSmooth;
+extern	cvar_t	*r_outlinesPattern;
+extern	cvar_t	*r_outlinesPatternFactor;
 extern	cvar_t	*r_intensity;
 
 extern	cvar_t	*r_lockpvs;
@@ -1350,10 +1360,10 @@ qboolean	R_GetEntityToken( char *buffer, int size );
 model_t		*R_AllocModel( void );
 
 void    	R_Init( void );
-image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, int glWrapClampMode );
+image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, int glWrapClampMode);
 
 image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, qboolean mipmap
-					, qboolean allowPicmip, int wrapClampMode );
+					, qboolean allowPicmip, int wrapClampMode);
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
 
 void		R_SetColorMappings( void );

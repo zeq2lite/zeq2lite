@@ -53,6 +53,7 @@ cvar_t	*r_ignore;
 cvar_t	*r_detailTextures;
 
 cvar_t	*r_znear;
+cvar_t	*r_zfar;
 cvar_t	*r_zproj;
 cvar_t	*r_stereoSeparation;
 
@@ -76,6 +77,11 @@ cvar_t	*r_dlightBacks;
 
 cvar_t	*r_lodbias;
 cvar_t	*r_lodscale;
+cvar_t	*r_mipmaps;
+cvar_t	*r_mipBase;
+cvar_t	*r_mipMinimum;
+cvar_t	*r_mipMaximum;
+cvar_t	*r_mipBias;
 
 cvar_t	*r_norefresh;
 cvar_t	*r_drawentities;
@@ -115,6 +121,10 @@ cvar_t	*r_uiFullScreen;
 cvar_t	*r_shadows;
 cvar_t	*r_outlines;
 cvar_t	*r_outlinesAlpha;
+cvar_t	*r_outlinesType;
+cvar_t	*r_outlinesSmooth;
+cvar_t	*r_outlinesPattern;
+cvar_t	*r_outlinesPatternFactor;
 cvar_t	*r_flares;
 cvar_t	*r_mode;
 cvar_t	*r_nobind;
@@ -938,19 +948,19 @@ void R_Register( void )
 	//
 	// temporary latched variables that can only change over a restart
 	//
-	r_fullbright = ri.Cvar_Get ("r_fullbright", "0", CVAR_LATCH|CVAR_CHEAT );
+	r_fullbright = ri.Cvar_Get ("r_fullbright", "0", CVAR_LATCH|CVAR_ARCHIVE );
 	r_mapOverBrightBits = ri.Cvar_Get ("r_mapOverBrightBits", "2", CVAR_LATCH );
 	r_intensity = ri.Cvar_Get ("r_intensity", "1", CVAR_LATCH );
-	r_singleShader = ri.Cvar_Get ("r_singleShader", "0", CVAR_CHEAT | CVAR_LATCH );
+	r_singleShader = ri.Cvar_Get ("r_singleShader", "0", CVAR_ARCHIVE | CVAR_LATCH );
 
 	//
 	// archived variables that can change at any time
 	//
-	r_lodCurveError = ri.Cvar_Get( "r_lodCurveError", "250", CVAR_ARCHIVE|CVAR_CHEAT );
+	r_lodCurveError = ri.Cvar_Get( "r_lodCurveError", "250", CVAR_ARCHIVE|CVAR_ARCHIVE );
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_flares = ri.Cvar_Get ("r_flares", "0", CVAR_ARCHIVE );
-	r_znear = ri.Cvar_Get( "r_znear", "4", CVAR_CHEAT );
-	ri.Cvar_CheckRange( r_znear, 0.001f, 200, qfalse );
+	r_znear = ri.Cvar_Get( "r_znear", "4", CVAR_ARCHIVE );
+	r_zfar = ri.Cvar_Get( "r_zfar", "-1", CVAR_ARCHIVE );
 	r_zproj = ri.Cvar_Get( "r_zproj", "64", CVAR_ARCHIVE );
 	r_stereoSeparation = ri.Cvar_Get( "r_stereoSeparation", "64", CVAR_ARCHIVE );
 	r_ignoreGLErrors = ri.Cvar_Get( "r_ignoreGLErrors", "1", CVAR_ARCHIVE );
@@ -972,8 +982,8 @@ void R_Register( void )
 
 	r_primitives = ri.Cvar_Get( "r_primitives", "0", CVAR_ARCHIVE );
 
-	r_ambientScale = ri.Cvar_Get( "r_ambientScale", "0.6", CVAR_CHEAT );
-	r_directedScale = ri.Cvar_Get( "r_directedScale", "1", CVAR_CHEAT );
+	r_ambientScale = ri.Cvar_Get( "r_ambientScale", "0.6", CVAR_ARCHIVE );
+	r_directedScale = ri.Cvar_Get( "r_directedScale", "1", CVAR_ARCHIVE );
 	// <-- RiO_MotionBlur
 	r_motionBlur = Cvar_Get ("r_motionBlur", "1", CVAR_ARCHIVE);
 	// -->
@@ -986,48 +996,57 @@ void R_Register( void )
 	r_showImages = ri.Cvar_Get( "r_showImages", "0", CVAR_TEMP );
 
 	r_debugLight = ri.Cvar_Get( "r_debuglight", "0", CVAR_TEMP );
-	r_debugSort = ri.Cvar_Get( "r_debugSort", "0", CVAR_CHEAT );
+	r_debugSort = ri.Cvar_Get( "r_debugSort", "0", CVAR_ARCHIVE );
 	r_printShaders = ri.Cvar_Get( "r_printShaders", "0", 0 );
 	r_saveFontData = ri.Cvar_Get( "r_saveFontData", "0", 0 );
 
-	r_nocurves = ri.Cvar_Get ("r_nocurves", "0", CVAR_CHEAT );
-	r_drawworld = ri.Cvar_Get ("r_drawworld", "1", CVAR_CHEAT );
+	r_nocurves = ri.Cvar_Get ("r_nocurves", "0", CVAR_ARCHIVE );
+	r_drawworld = ri.Cvar_Get ("r_drawworld", "1", CVAR_ARCHIVE );
 	r_lightmap = ri.Cvar_Get ("r_lightmap", "0", 0 );
-	r_portalOnly = ri.Cvar_Get ("r_portalOnly", "0", CVAR_CHEAT );
+	r_portalOnly = ri.Cvar_Get ("r_portalOnly", "0", CVAR_ARCHIVE );
 
-	r_flareSize = ri.Cvar_Get ("r_flareSize", "40", CVAR_CHEAT);
-	r_flareFade = ri.Cvar_Get ("r_flareFade", "7", CVAR_CHEAT);
-	r_flareCoeff = ri.Cvar_Get ("r_flareCoeff", FLARE_STDCOEFF, CVAR_CHEAT);
+	r_flareSize = ri.Cvar_Get ("r_flareSize", "40", CVAR_ARCHIVE);
+	r_flareFade = ri.Cvar_Get ("r_flareFade", "7", CVAR_ARCHIVE);
+	r_flareCoeff = ri.Cvar_Get ("r_flareCoeff", FLARE_STDCOEFF, CVAR_ARCHIVE);
 
-	r_showSmp = ri.Cvar_Get ("r_showSmp", "0", CVAR_CHEAT);
-	r_skipBackEnd = ri.Cvar_Get ("r_skipBackEnd", "0", CVAR_CHEAT);
+	r_showSmp = ri.Cvar_Get ("r_showSmp", "0", CVAR_ARCHIVE);
+	r_skipBackEnd = ri.Cvar_Get ("r_skipBackEnd", "0", CVAR_ARCHIVE);
 
-	r_measureOverdraw = ri.Cvar_Get( "r_measureOverdraw", "0", CVAR_CHEAT );
-	r_lodscale = ri.Cvar_Get( "r_lodscale", "75", CVAR_CHEAT );
-	r_norefresh = ri.Cvar_Get ("r_norefresh", "0", CVAR_CHEAT);
-	r_drawentities = ri.Cvar_Get ("r_drawentities", "1", CVAR_CHEAT );
-	r_ignore = ri.Cvar_Get( "r_ignore", "1", CVAR_CHEAT );
-	r_nocull = ri.Cvar_Get ("r_nocull", "0", CVAR_CHEAT);
-	r_novis = ri.Cvar_Get ("r_novis", "0", CVAR_CHEAT);
-	r_showcluster = ri.Cvar_Get ("r_showcluster", "0", CVAR_CHEAT);
-	r_speeds = ri.Cvar_Get ("r_speeds", "0", CVAR_CHEAT);
-	r_verbose = ri.Cvar_Get( "r_verbose", "0", CVAR_CHEAT );
-	r_logFile = ri.Cvar_Get( "r_logFile", "0", CVAR_CHEAT );
-	r_debugSurface = ri.Cvar_Get ("r_debugSurface", "0", CVAR_CHEAT);
-	r_nobind = ri.Cvar_Get ("r_nobind", "0", CVAR_CHEAT);
-	r_showtris = ri.Cvar_Get ("r_showtris", "0", CVAR_CHEAT);
-	r_showsky = ri.Cvar_Get ("r_showsky", "0", CVAR_CHEAT);
-	r_shownormals = ri.Cvar_Get ("r_shownormals", "0", CVAR_CHEAT);
-	r_showbboxes = ri.Cvar_Get ("r_showbboxes", "0", CVAR_CHEAT);
-	r_clear = ri.Cvar_Get ("r_clear", "0", CVAR_CHEAT);
-	r_offsetFactor = ri.Cvar_Get( "r_offsetfactor", "-1", CVAR_CHEAT );
-	r_offsetUnits = ri.Cvar_Get( "r_offsetunits", "-2", CVAR_CHEAT );
-	r_drawBuffer = ri.Cvar_Get( "r_drawBuffer", "GL_BACK", CVAR_CHEAT );
-	r_lockpvs = ri.Cvar_Get ("r_lockpvs", "0", CVAR_CHEAT);
-	r_noportals = ri.Cvar_Get ("r_noportals", "0", CVAR_CHEAT);
+	r_measureOverdraw = ri.Cvar_Get( "r_measureOverdraw", "0", CVAR_ARCHIVE );
+	r_lodscale = ri.Cvar_Get( "r_lodscale", "75", CVAR_ARCHIVE );
+	r_mipmaps = ri.Cvar_Get( "r_mipmaps", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_mipBias = ri.Cvar_Get( "r_mipBias", "-1", CVAR_ARCHIVE );
+	r_mipBase = ri.Cvar_Get( "r_mipBase", "0", CVAR_ARCHIVE | CVAR_LATCH);
+	r_mipMinimum = ri.Cvar_Get( "r_mipMinimum", "-1000", CVAR_ARCHIVE | CVAR_LATCH);
+	r_mipMaximum = ri.Cvar_Get( "r_mipMaximum", "1000", CVAR_ARCHIVE | CVAR_LATCH);
+	r_norefresh = ri.Cvar_Get ("r_norefresh", "0", CVAR_ARCHIVE);
+	r_drawentities = ri.Cvar_Get ("r_drawentities", "1", CVAR_ARCHIVE );
+	r_ignore = ri.Cvar_Get( "r_ignore", "1", CVAR_ARCHIVE );
+	r_nocull = ri.Cvar_Get ("r_nocull", "0", CVAR_ARCHIVE);
+	r_novis = ri.Cvar_Get ("r_novis", "0", CVAR_ARCHIVE);
+	r_showcluster = ri.Cvar_Get ("r_showcluster", "0", CVAR_ARCHIVE);
+	r_speeds = ri.Cvar_Get ("r_speeds", "0", CVAR_ARCHIVE);
+	r_verbose = ri.Cvar_Get( "r_verbose", "0", CVAR_ARCHIVE );
+	r_logFile = ri.Cvar_Get( "r_logFile", "0", CVAR_ARCHIVE );
+	r_debugSurface = ri.Cvar_Get ("r_debugSurface", "0", CVAR_ARCHIVE);
+	r_nobind = ri.Cvar_Get ("r_nobind", "0", CVAR_ARCHIVE);
+	r_showtris = ri.Cvar_Get ("r_showtris", "0", CVAR_ARCHIVE);
+	r_showsky = ri.Cvar_Get ("r_showsky", "0", CVAR_ARCHIVE);
+	r_shownormals = ri.Cvar_Get ("r_shownormals", "0", CVAR_ARCHIVE);
+	r_showbboxes = ri.Cvar_Get ("r_showbboxes", "0", CVAR_ARCHIVE);
+	r_clear = ri.Cvar_Get ("r_clear", "0", CVAR_ARCHIVE);
+	r_offsetFactor = ri.Cvar_Get( "r_offsetfactor", "-1", CVAR_ARCHIVE );
+	r_offsetUnits = ri.Cvar_Get( "r_offsetunits", "-2", CVAR_ARCHIVE );
+	r_drawBuffer = ri.Cvar_Get( "r_drawBuffer", "GL_BACK", CVAR_ARCHIVE );
+	r_lockpvs = ri.Cvar_Get ("r_lockpvs", "0", CVAR_ARCHIVE);
+	r_noportals = ri.Cvar_Get ("r_noportals", "0", CVAR_ARCHIVE);
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
 	r_meshLerp = ri.Cvar_Get( "r_meshLerp", "0", CVAR_ARCHIVE );
 	r_outlines = ri.Cvar_Get( "r_outlines", "1", CVAR_ARCHIVE );
+	r_outlinesSmooth = ri.Cvar_Get( "r_outlinesSmooth", "0", CVAR_ARCHIVE );
+	r_outlinesType = ri.Cvar_Get( "r_outlinesType", "0", CVAR_ARCHIVE );
+	r_outlinesPattern = ri.Cvar_Get( "r_outlinesPattern", "1", CVAR_ARCHIVE );
+	r_outlinesPatternFactor = ri.Cvar_Get( "r_outlinesPatternFactor", "0xFFFFFF", CVAR_ARCHIVE );
 	r_outlinesAlpha = ri.Cvar_Get( "r_outlinesAlpha", "0.5", CVAR_ARCHIVE );
 
 	r_marksOnTriangleMeshes = ri.Cvar_Get("r_marksOnTriangleMeshes", "0", CVAR_ARCHIVE);

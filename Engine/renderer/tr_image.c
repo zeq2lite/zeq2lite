@@ -490,7 +490,7 @@ static void Upload32( unsigned *data,
 						  qboolean picmip, 
 							qboolean lightMap,
 						  int *format, 
-						  int *pUploadWidth, int *pUploadHeight )
+						  int *pUploadWidth, int *pUploadHeight)
 {
 	int			samples;
 	unsigned	*scaledBuffer = NULL;
@@ -500,7 +500,7 @@ static void Upload32( unsigned *data,
 	byte		*scan;
 	GLenum		internalFormat = GL_RGB;
 	float		rMax = 0, gMax = 0, bMax = 0;
-
+	if(!r_mipmaps->integer){mipmap = qfalse;}
 	//
 	// convert to exact power of 2 sizes
 	//
@@ -692,7 +692,7 @@ static void Upload32( unsigned *data,
 	*format = internalFormat;
 
 	qglTexImage2D (GL_TEXTURE_2D, 0, internalFormat, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaledBuffer );
-
+	//qglTexParameterf(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, r_mipmaps->integer);
 	if (mipmap)
 	{
 		int		miplevel;
@@ -717,15 +717,15 @@ static void Upload32( unsigned *data,
 		}
 	}
 done:
-
-	if (mipmap)
-	{
+	if(mipmap){
 		if ( textureFilterAnisotropic )
 			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-					(GLint)Com_Clamp( 1, maxAnisotropy, r_ext_max_anisotropy->integer ) );
-
+					(GLint)Com_Clamp( 1, maxAnisotropy, r_ext_max_anisotropy->integer ));
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, r_mipBase->integer);
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, r_mipMinimum->integer);
+		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, r_mipMaximum->integer);
 	}
 	else
 	{
@@ -753,7 +753,7 @@ This is the only way any image_t are created
 ================
 */
 image_t *R_CreateImage( const char *name, const byte *pic, int width, int height, 
-					   qboolean mipmap, qboolean allowPicmip, int glWrapClampMode ) {
+					   qboolean mipmap, qboolean allowPicmip, int glWrapClampMode) {
 	image_t		*image;
 	qboolean	isLightmap = qfalse;
 	long		hash;
@@ -801,7 +801,7 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 								isLightmap,
 								&image->internalFormat,
 								&image->uploadWidth,
-								&image->uploadHeight );
+								&image->uploadHeight);
 
 	qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapClampMode );
 	qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapClampMode );
@@ -927,7 +927,7 @@ Finds or loads the given image.
 Returns NULL if it fails, not a default image.
 ==============
 */
-image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, int glWrapClampMode ) {
+image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, int glWrapClampMode) {
 	image_t	*image;
 	int		width, height;
 	byte	*pic;
@@ -968,7 +968,7 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 		return NULL;
 	}
 
-	image = R_CreateImage( ( char * ) name, pic, width, height, mipmap, allowPicmip, glWrapClampMode );
+	image = R_CreateImage( ( char * ) name, pic, width, height, mipmap, allowPicmip, glWrapClampMode);
 	ri.Free( pic );
 	return image;
 }
@@ -1004,7 +1004,7 @@ static void R_CreateDlightImage( void ) {
 			data[y][x][3] = 255;			
 		}
 	}
-	tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, qfalse, qfalse, GL_CLAMP_TO_EDGE );
+	tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, qfalse, qfalse, GL_CLAMP_TO_EDGE);
 }
 
 
@@ -1094,7 +1094,7 @@ static void R_CreateFogImage( void ) {
 	// standard openGL clamping doesn't really do what we want -- it includes
 	// the border color at the edges.  OpenGL 1.2 has clamp-to-edge, which does
 	// what we want.
-	tr.fogImage = R_CreateImage("*fog", (byte *)data, FOG_S, FOG_T, qfalse, qfalse, GL_CLAMP_TO_EDGE );
+	tr.fogImage = R_CreateImage("*fog", (byte *)data, FOG_S, FOG_T, qfalse, qfalse, GL_CLAMP_TO_EDGE);
 	ri.Hunk_FreeTempMemory( data );
 
 	borderColor[0] = 1.0;
@@ -1138,7 +1138,7 @@ static void R_CreateDefaultImage( void ) {
 		data[x][DEFAULT_SIZE-1][2] =
 		data[x][DEFAULT_SIZE-1][3] = 255;
 	}
-	tr.defaultImage = R_CreateImage("*default", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qtrue, qfalse, GL_REPEAT );
+	tr.defaultImage = R_CreateImage("*default", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qtrue, qfalse, GL_REPEAT);
 }
 
 
@@ -1171,7 +1171,7 @@ void R_CreateMotionBlurImage( void ) {
 	data = ri.Hunk_AllocateTempMemory( width * height * 4 );
 	Com_Memset( data, 0, sizeof( data ));	
 
-	tr.motionBlurImage = R_CreateImage("*motionblur", (byte *)data, width, height, qfalse, qfalse, GL_CLAMP );
+	tr.motionBlurImage = R_CreateImage("*motionblur", (byte *)data, width, height, qfalse, qfalse, GL_CLAMP);
 
 	ri.Hunk_FreeTempMemory( data );
 
@@ -1196,7 +1196,7 @@ void R_CreateBuiltinImages( void ) {
 
 	// we use a solid white image instead of disabling texturing
 	Com_Memset( data, 255, sizeof( data ) );
-	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, qfalse, qfalse, GL_REPEAT );
+	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, qfalse, qfalse, GL_REPEAT);
 
 	// with overbright bits active, we need an image which is some fraction of full color,
 	// for default lightmaps, etc
@@ -1209,12 +1209,12 @@ void R_CreateBuiltinImages( void ) {
 		}
 	}
 
-	tr.identityLightImage = R_CreateImage("*identityLight", (byte *)data, 8, 8, qfalse, qfalse, GL_REPEAT );
+	tr.identityLightImage = R_CreateImage("*identityLight", (byte *)data, 8, 8, qfalse, qfalse, GL_REPEAT);
 
 
 	for(x=0;x<32;x++) {
 		// scratchimage is usually used for cinematic drawing
-		tr.scratchImage[x] = R_CreateImage("*scratch", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qfalse, qtrue, GL_CLAMP_TO_EDGE );
+		tr.scratchImage[x] = R_CreateImage("*scratch", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qfalse, qtrue, GL_CLAMP_TO_EDGE);
 	}
 
 	R_CreateDlightImage();

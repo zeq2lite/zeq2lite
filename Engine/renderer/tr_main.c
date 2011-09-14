@@ -571,7 +571,7 @@ void R_SetupProjectionZ(viewParms_t *dest)
 	float zNear, zFar, depth;
 	
 	zNear	= r_znear->value;
-	zFar	= dest->zFar;	
+	zFar	= r_zfar->value != -1 ? r_zfar->value : dest->zFar;	
 	depth	= zFar - zNear;
 
 	dest->projectionMatrix[2] = 0;
@@ -1290,7 +1290,7 @@ R_GenerateDrawSurfs
 ====================
 */
 void R_GenerateDrawSurfs( void ) {
-	R_AddWorldSurfaces ();
+	R_AddWorldSurfaces();
 
 	R_AddPolygonSurfaces();
 
@@ -1306,7 +1306,7 @@ void R_GenerateDrawSurfs( void ) {
 	// we know the size of the clipping volume. Now set the rest of the projection matrix.
 	R_SetupProjectionZ (&tr.viewParms);
 
-	R_AddEntitySurfaces ();
+	R_AddEntitySurfaces();
 }
 
 /*
