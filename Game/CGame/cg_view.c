@@ -548,18 +548,18 @@ static void CG_OffsetThirdPersonView2( void )
 	float deltayaw;
 	float		transformPercent;
 	float		orbit,pan,zoom;
-	int 		clientNum;
+	int 		clientNum,cameraAngle,cameraSlide,cameraHeight,cameraRange;
 	float		newAngle,newRange,newHeight;
 	entityState_t *ent;
 	clientInfo_t *ci;
-	tierConfig_cg *tier = &ci->tierConfig[ci->tierCurrent];
-	int cameraAngle = cg_thirdPersonAngle.value;
-	int cameraSlide = cg_thirdPersonSlide.value + ci->tierConfig[ci->tierCurrent].cameraOffset[0];
-	int cameraHeight = cg_thirdPersonHeight.value + ci->tierConfig[ci->tierCurrent].cameraOffset[1];
-	int cameraRange = cg_thirdPersonRange.value + ci->tierConfig[ci->tierCurrent].cameraOffset[2];
+	tierConfig_cg *tier;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
-
+	tier = &ci->tierConfig[ci->tierCurrent];
+	cameraAngle = cg_thirdPersonAngle.value;
+	cameraSlide = cg_thirdPersonSlide.value + tier->cameraOffset[0];
+	cameraHeight = cg_thirdPersonHeight.value + tier->cameraOffset[1];
+	cameraRange = cg_thirdPersonRange.value + tier->cameraOffset[2];
 	cameraStiffFactor = 0.0;
 
 	// Set camera viewing direction.
@@ -691,10 +691,11 @@ static void CG_OffsetThirdPersonView( void ) {
 	float		newAngle,newRange,newHeight;
 	entityState_t *ent;
 	clientInfo_t *ci;
-	tierConfig_cg *tier = &ci->tierConfig[ci->tierCurrent];
+	tierConfig_cg *tier;
 	ps = &cg.predictedPlayerState;
 	clientNum = cg.predictedPlayerState.clientNum;
 	ci = &cgs.clientinfo[clientNum];
+	tier = &ci->tierConfig[ci->tierCurrent];
 	cameraAngle = cg_thirdPersonAngle.value;
 	cameraSlide = cg_thirdPersonSlide.value + ci->tierConfig[ci->tierCurrent].cameraOffset[0];
 	cameraHeight = cg_thirdPersonHeight.value + ci->tierConfig[ci->tierCurrent].cameraOffset[1];
