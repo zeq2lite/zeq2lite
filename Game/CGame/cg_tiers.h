@@ -5,10 +5,10 @@ typedef struct{
 	char transformMusic[MAX_QPATH];
 	qhandle_t crosshair;
 	qhandle_t crosshairPowering;
-	qhandle_t screenEffect[9];
+	qhandle_t screenEffect[10];
 	qhandle_t screenEffectPowering;
 	qhandle_t screenEffectTransforming;
-	qhandle_t icon2D[9];
+	qhandle_t icon2D[10];
 	qhandle_t icon2DPowering;
 	qhandle_t icon2DTransforming;
 	qboolean damageFeatures;
