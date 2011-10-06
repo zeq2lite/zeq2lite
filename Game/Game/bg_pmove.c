@@ -606,7 +606,8 @@ void PM_CheckPowerLevel(void){
 	float statScale;
 	float fatigueScale;
 	float check;
-	float pushLimit;
+	static float fractionPool = 0;
+	int pushLimit;
 	int newValue;
 	int idleScale;
 	timers = pm->ps->timers;
@@ -700,27 +701,30 @@ void PM_CheckPowerLevel(void){
 				if(powerLevel[plCurrent] == powerLevel[plMaximum]){
 					if(!(pm->ps->bitFlags & isBreakingLimit)){PM_AddEvent(EV_POWERINGUP_START);}
 					pm->ps->bitFlags |= isBreakingLimit;
-					pushLimit = powerLevel[plCurrent] + pm->ps->breakLimitRate;
-					if(powerLevel[plHealthPool] > 0){
+					fractionPool += pm->ps->breakLimitRate - (int)pm->ps->breakLimitRate;
+					pushLimit = powerLevel[plCurrent] + (int)pm->ps->breakLimitRate + (int)fractionPool;
+					fractionPool -= (int)fractionPool;
+					if((pm->ps->options & canOverheal) && powerLevel[plHealth] < powerLevel[plMaximum] && powerLevel[plHealthPool] > 0){
 						if(powerLevel[plHealth] + raise * 0.3 < pushLimit){
 							powerLevel[plHealth] += raise * 0.3;
 							powerLevel[plUseFatigue] += raise * 0.25;
+							powerLevel[plHealthPool] -= raise * 0.3;
 						}
-					}
-					if(pm->ps->options & canOverheal){
-						powerLevel[plHealthPool] -= raise * 0.3;
+						else{
+							powerLevel[plHealthPool] -= pushLimit - powerLevel[plHealth];
+							powerLevel[plHealth] = pushLimit; //Transform bug problem line right here.
+						}
 						if(powerLevel[plHealthPool] < 0){powerLevel[plHealthPool] = 0;}
 						if(powerLevel[plHealth] > limit){powerLevel[plHealth] = limit;}
 					}
 					if(powerLevel[plMaximumPool] > 0){
-						if(pushLimit < limit){
-							powerLevel[plCurrent] = powerLevel[plMaximum] = pushLimit;
-						}
+						powerLevel[plCurrent] = powerLevel[plMaximum] = pushLimit;
+						if(powerLevel[plMaximum] > limit){powerLevel[plCurrent] = powerLevel[plMaximum] = limit;}
 					}
 					else{
 						powerLevel[plUseFatigue] += raise;
 					}
-					powerLevel[plMaximumPool] -= raise * 0.3;
+					powerLevel[plMaximumPool] -= raise * 0.3 * pm->ps->breakLimitRate;
 					if(powerLevel[plMaximumPool] < 0){powerLevel[plMaximumPool] = 0;}
 				}
 				if(pm->ps->bitFlags & isBreakingLimit){
