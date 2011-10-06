@@ -711,8 +711,14 @@ void PM_CheckPowerLevel(void){
 							powerLevel[plHealthPool] -= raise * 0.3;
 						}
 						else{
-							powerLevel[plHealthPool] -= pushLimit - powerLevel[plHealth];
-							powerLevel[plHealth] = pushLimit; //Transform bug problem line right here.
+							powerLevel[plHealthPool] -= powerLevel[plMaximum] - powerLevel[plHealth];
+							Com_Printf("Health pool = %d, reduced by %d\n", powerLevel[plHealthPool], pushLimit - powerLevel[plHealth]);
+							powerLevel[plHealth] = powerLevel[plMaximum];
+							Com_Printf("Health = %d\n", powerLevel[plHealth]);
+							if(powerLevel[plHealth] > powerLevel[plMaximum]){
+								powerLevel[plHealth] = powerLevel[plMaximum];
+								Com_Printf("Health corrected\n");
+							}
 						}
 						if(powerLevel[plHealthPool] < 0){powerLevel[plHealthPool] = 0;}
 						if(powerLevel[plHealth] > limit){powerLevel[plHealth] = limit;}
