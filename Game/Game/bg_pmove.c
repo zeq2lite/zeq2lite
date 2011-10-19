@@ -610,6 +610,7 @@ void PM_CheckPowerLevel(void){
 	int pushLimit;
 	int newValue;
 	int idleScale;
+	int smaller;
 	timers = pm->ps->timers;
 	powerLevel = pm->ps->powerLevel;
 	timers[tmPowerAuto] += pml.msec;
@@ -628,6 +629,7 @@ void PM_CheckPowerLevel(void){
 		recovery *=  statScale;
 		recovery *=  fatigueScale < 0.15 ? 0.15 : fatigueScale;
 		recovery *= pm->ps->baseStats[stFatigueRecovery];
+		if(recovery < 1){recovery = 1;}
 		if(pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar
 		|| pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBoost
 		|| pm->ps->bitFlags & isBreakingLimit || pm->ps->weaponstate >= WEAPON_GUIDING){recovery = 0;}
@@ -692,8 +694,8 @@ void PM_CheckPowerLevel(void){
 				if(!pm->ps->options & canBreakLimit){break;}
 				timers[tmPowerRaise] -= 25;
 				raise = powerLevel[plMaximum] * 0.009;
-				if(raise < 1){raise = 1;}
 				if(powerLevel[plCurrent] > powerLevel[plFatigue]){raise *= 0.6;}
+				if(raise < 1){raise = 1;}
 				newValue = powerLevel[plCurrent] + raise;
 				if(newValue > powerLevel[plMaximum]){newValue = powerLevel[plMaximum];}
 				if(newValue > limit){newValue = limit;}
@@ -701,37 +703,33 @@ void PM_CheckPowerLevel(void){
 				if(powerLevel[plCurrent] == powerLevel[plMaximum]){
 					if(!(pm->ps->bitFlags & isBreakingLimit)){PM_AddEvent(EV_POWERINGUP_START);}
 					pm->ps->bitFlags |= isBreakingLimit;
-					fractionPool += pm->ps->breakLimitRate - (int)pm->ps->breakLimitRate;
-					pushLimit = powerLevel[plCurrent] + (int)pm->ps->breakLimitRate + (int)fractionPool;
-					fractionPool -= (int)fractionPool;
+					fractionPool += pm->ps->breakLimitRate;
+					pushLimit = powerLevel[plCurrent] + (int)fractionPool;
+					if(pushLimit > limit){pushLimit = limit;}
 					if((pm->ps->options & canOverheal) && powerLevel[plHealth] < powerLevel[plMaximum] && powerLevel[plHealthPool] > 0){
-						if(powerLevel[plHealth] + raise * 0.3 < pushLimit){
-							powerLevel[plHealth] += raise * 0.3;
-							powerLevel[plUseFatigue] += raise * 0.25;
-							powerLevel[plHealthPool] -= raise * 0.3;
+						smaller = (powerLevel[plHealth] + raise * 0.3) < powerLevel[plMaximum] ? (raise * 0.3) : (powerLevel[plMaximum] - powerLevel[plHealth]);
+						if(powerLevel[plHealthPool] > smaller){
+							powerLevel[plHealth] += smaller;
+							powerLevel[plUseFatigue] += smaller * 0.84;
+							powerLevel[plHealthPool] -= smaller;
 						}
 						else{
-							powerLevel[plHealthPool] -= powerLevel[plMaximum] - powerLevel[plHealth];
-							Com_Printf("Health pool = %d, reduced by %d\n", powerLevel[plHealthPool], pushLimit - powerLevel[plHealth]);
-							powerLevel[plHealth] = powerLevel[plMaximum];
-							Com_Printf("Health = %d\n", powerLevel[plHealth]);
-							if(powerLevel[plHealth] > powerLevel[plMaximum]){
-								powerLevel[plHealth] = powerLevel[plMaximum];
-								Com_Printf("Health corrected\n");
-							}
+							powerLevel[plHealth] += powerLevel[plHealthPool];
+							powerLevel[plUseFatigue] += powerLevel[plHealthPool] * 0.84;
+							powerLevel[plHealthPool] = 0;
 						}
 						if(powerLevel[plHealthPool] < 0){powerLevel[plHealthPool] = 0;}
-						if(powerLevel[plHealth] > limit){powerLevel[plHealth] = limit;}
 					}
 					if(powerLevel[plMaximumPool] > 0){
+						powerLevel[plHealth] += pushLimit - powerLevel[plMaximum];
 						powerLevel[plCurrent] = powerLevel[plMaximum] = pushLimit;
-						if(powerLevel[plMaximum] > limit){powerLevel[plCurrent] = powerLevel[plMaximum] = limit;}
 					}
 					else{
-						powerLevel[plUseFatigue] += raise;
+						powerLevel[plUseFatigue] += raise * 0.75;
 					}
-					powerLevel[plMaximumPool] -= raise * 0.3 * pm->ps->breakLimitRate;
+					powerLevel[plMaximumPool] -= raise * 0.3 * (int)fractionPool;
 					if(powerLevel[plMaximumPool] < 0){powerLevel[plMaximumPool] = 0;}
+					fractionPool -= (int)fractionPool;
 				}
 				if(pm->ps->bitFlags & isBreakingLimit){
 					if(powerLevel[plCurrent] < ((float)powerLevel[plMaximum] * 0.95)){
