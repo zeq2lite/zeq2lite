@@ -802,7 +802,6 @@ void RB_StageIteratorSky( void ) {
 	if ( r_fastsky->integer ) {
 		return;
 	}
-
 	// go through all the polygons and project them onto
 	// the sky box to see which blocks on each side need
 	// to be drawn
@@ -829,7 +828,6 @@ void RB_StageIteratorSky( void ) {
 
 		qglPopMatrix();
 	}
-
 	// generate the vertexes for all the clouds, which will be drawn
 	// by the generic shader routine
 	R_BuildCloudData( &tess );
@@ -844,6 +842,11 @@ void RB_StageIteratorSky( void ) {
 
 	// note that sky was drawn so we will draw a sun later
 	backEnd.skyRenderedThisView = qtrue;
+	if(r_zfar->value != 0){
+		//tess.fogNum = 10000;
+		//tess.shader->fogPass = FP_EQUAL;
+		//RE_AddFogToScene(0,r_zfar->value*0.8,1,1,1,1,0,2);
+	}
 }
 
 /*

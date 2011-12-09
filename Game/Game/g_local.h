@@ -54,9 +54,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define FL_NO_BOTS				0x00002000	// spawn point not for bot use
 #define FL_NO_HUMANS			0x00004000	// spawn point just for bots
 #define FL_FORCE_GESTURE		0x00008000	// force gesture on client
-// ADDING FOR ZEQ2
-#define	FL_FLYING				0x00006000	// for when we're flying
-// END ADDING
 
 // movers are things like doors, plats, buttons, etc
 typedef enum {
@@ -431,9 +428,6 @@ typedef struct {
 
 	#if MAPLENSFLARES	// JUHOX: level locals for the lens flare editor
 	qboolean	lfeFMM;	// FMM = fine move mode
-#endif
-#ifdef MISSIONPACK
-	int			portalSequence;
 #endif
 } level_locals_t;
 

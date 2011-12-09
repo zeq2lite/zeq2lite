@@ -663,7 +663,7 @@ static void CG_Aura_AddTrail( centity_t *player, auraState_t *state, auraConfig_
 	}
 
 	// Update the trail only if we're using the boost aura
-	if(!(player->currentState.powerups &(1 << PW_BOOST))){
+	if(!(player->currentState.playerBitFlags & usingBoost)){
 		return;
 	}
 
@@ -696,12 +696,6 @@ static void CG_Aura_AddDebris( centity_t *player, auraState_t *state, auraConfig
 		return;
 	}
 	
-	// Generate the debris cloud only if we aren't using the boost aura (and thus
-	// are using the charge aura).
-	if(player->currentState.powerups &(1 << PW_BOOST)){
-		return;
-	}
-
 	// Spawn the debris system if the player has just entered PVS
 	if(!CG_FrameHist_HadAura( player->currentState.number)){
 		PSys_SpawnCachedSystem( "AuraDebris", player->lerpOrigin, NULL, player, NULL, qtrue, qfalse);
@@ -721,7 +715,7 @@ static void CG_Aura_AddSounds( centity_t *player, auraState_t *state, auraConfig
 	}
 
 	// Add looping sounds depending on aura type (boost or charge)
-	if(player->currentState.powerups &(1 << PW_BOOST)){
+	if(player->currentState.playerBitFlags & usingBoost){
 		if(config->boostLoopSound){
 			trap_S_AddLoopingSound( player->currentState.number, player->lerpOrigin, vec3_origin, config->boostLoopSound);
 		}
@@ -857,7 +851,7 @@ void CG_AuraStart( centity_t *player){
 	CG_AddEarthquake( player->lerpOrigin, 1000, 1, 0, 1, 200);
 
 	// We don't want smoke jets if this is a boost aura instead of a charge aura.
-	if(!(player->currentState.powerups &(1 << PW_BOOST))){
+	if(!(player->currentState.playerBitFlags & usingBoost)){
 		// Check if we're on, or near ground level
 		VectorCopy( player->lerpOrigin, groundPoint);
 		groundPoint[2] -= 48;
@@ -870,7 +864,7 @@ void CG_AuraStart( centity_t *player){
 
 			// Place the explosion just a bit off the surface
 			VectorNormalize2(trace.plane.normal, groundPoint);
-			VectorMA( trace.endpos, 5, groundPoint, groundPoint);
+			VectorMA( trace.endpos, 0, groundPoint, groundPoint);
 
 			VectorNormalize2( trace.plane.normal, tempAxis[0]);
 			MakeNormalVectors( tempAxis[0], tempAxis[1], tempAxis[2]);

@@ -18,8 +18,7 @@ void CG_MotionBlur( void ) {
 	//vec3_t			pos, axis[3];
 	//int i;	
 
-		
-	if ( !cg.snap->ps.powerups[PW_BOOST] && cg.snap->ps.timers[tmZanzoken] < 1 && !cg.snap->ps.timers[tmTransform]) {
+	if(!(cg.snap->ps.bitFlags & usingBoost) && cg.snap->ps.timers[tmZanzoken] < 1 && !cg.snap->ps.timers[tmTransform]) {
 		cg.refdef.rdflags &= ~RDF_MOTIONBLUR;
 
 		/*

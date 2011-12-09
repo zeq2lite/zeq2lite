@@ -996,12 +996,16 @@ typedef struct {
 // bit field limits
 #define	MAX_STATS				32
 #define	MAX_BASESTATS			32
+#define	MAX_RBUFFERS			32
 #define	MAX_PERSISTANT			32
 #define	MAX_POWERUPS			8
 #define	MAX_WEAPONS				32
 #define MAX_TIMERS				32
+#define MAX_COOLDOWN			32
+#define MAX_MEASURES			32
+#define MAX_SEQUENCE			24
 #define MAX_POWERSTATS			32
-#define MAX_LOCKED_STATS		3
+#define MAX_LOCKED_STATS		8
 
 #define	MAX_PS_EVENTS			2
 #define PS_PMOVEFRAMECOUNTBITS	6
@@ -1068,11 +1072,15 @@ typedef struct playerState_s {
 	int			options;
 	int			stats[MAX_STATS];
 	float		baseStats[MAX_BASESTATS];
+	float		buffers[MAX_RBUFFERS];
 	int			powerLevel[MAX_POWERSTATS];
-	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
-	int			powerups[MAX_POWERUPS];	// level.time that the powerup runs out
+	int			persistant[MAX_PERSISTANT];
 	int			timers[MAX_TIMERS];
+	int			cooldownTimers[MAX_COOLDOWN];
+	int			sequenceTimers[MAX_SEQUENCE];
+	int			measureTimers[MAX_MEASURES];
 	int			currentSkill[MAX_WEAPONS];
+	int			powerups[MAX_POWERUPS]; // Remove or replace eventually
 	int			generic1;
 	int			loopSound;
 	int			jumppad_ent;	// jumppad entity hit this frame

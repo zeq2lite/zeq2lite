@@ -286,35 +286,40 @@ void PM_StopZanzoken(void){
 		PM_AddEvent(EV_ZANZOKEN_END);
 		VectorClear(pm->ps->velocity);
 	}
-	pm->ps->timers[tmZanzoken] = 0;
+	pm->ps->timers[tmZanzoken] = -500;
 }
 void PM_CheckZanzoken(void){
 	vec3_t pre_vel, post_vel,minSize,maxSize,forward,up,end;
-	int speed,cost;
+	float stepCost;
+	int speed,cost,transfer;
 	trace_t trace;
 	if(!(pm->ps->options & canZanzoken)){return;}
-	if(pm->ps->powerLevel[plFatigue] <= pm->ps->powerLevel[plMaximum] * 0.15){
+	if(pm->ps->timers[tmZanzoken] < 0){
+		pm->ps->timers[tmZanzoken] += pml.msec;
+		if(pm->ps->timers[tmZanzoken] >= 0){pm->ps->timers[tmZanzoken] = 0;}
+		else{return;}
+	}
+	if((pm->ps->powerLevel[plFatigue] <= pm->ps->powerLevel[plMaximum] * 0.15)){
 		PM_StopZanzoken();
 		return;
 	}
 	if(pm->ps->bitFlags & usingSoar || pm->ps->bitFlags & isPreparing || pm->ps->bitFlags & usingMelee){return;}
-	if(!(pm->cmd.buttons & BUTTON_TELEPORT)){
-		pm->ps->timers[tmZanzoken] = -1;
-	}
-	if((pm->ps->bitFlags & usingZanzoken) && (pm->ps->timers[tmZanzoken] <= 0)){
-		minSize[0] = minSize[1] = minSize[2] = -1;
-		maxSize[0] = maxSize[1] = maxSize[2] = 1;
-		VectorMA(pm->ps->origin,10,forward,end);
-		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY); 
-		if(trace.fraction == 1.0){
-			PM_StopZanzoken();
-		} 
-	}
 	if(pm->ps->timers[tmZanzoken] > 0){
+		stepCost = ((pm->ps->powerLevel[plMaximum] * 0.09) * pm->ps->baseStats[stZanzokenCost]) / (pm->ps->timers[tmZanzoken] / 50.0);
 		speed = (pm->ps->powerLevel[plCurrent] / 13.1) + (pm->ps->baseStats[stZanzokenSpeed] * 4000);
-		pm->ps->timers[tmZanzoken] -= pml.msec;
-		if(pm->ps->timers[tmZanzoken] < 0){
-			pm->ps->timers[tmZanzoken] = 0;
+		pm->ps->measureTimers[mtZanzokenDistance] -= pml.msec;
+		if(pm->ps->measureTimers[mtZanzokenDistance] < 0 || !(pm->cmd.buttons & BUTTON_TELEPORT)){
+			PM_StopZanzoken();
+		}
+		pm->ps->measureTimers[mtZanzoken] += pml.msec;
+		while(pm->ps->measureTimers[mtZanzoken] > 50){
+			pm->ps->buffers[bfZanzokenCost] += stepCost;
+			if(pm->ps->buffers[bfZanzokenCost] > 1){
+				transfer = (int)pm->ps->buffers[bfZanzokenCost];
+				pm->ps->powerLevel[plUseFatigue] += transfer;
+				pm->ps->buffers[bfZanzokenCost] -= transfer;
+			}
+			pm->ps->measureTimers[mtZanzoken] -= 50;
 		}
 		VectorNormalize(pm->ps->velocity);
 		VectorCopy(pm->ps->velocity,pre_vel);
@@ -322,11 +327,12 @@ void PM_CheckZanzoken(void){
 		VectorScale(pm->ps->velocity,speed,pm->ps->velocity);
 		VectorNormalize2(pm->ps->velocity,post_vel);
 	}
-	if((pm->cmd.buttons & BUTTON_TELEPORT) && !(pm->ps->bitFlags & usingZanzoken) && (pm->ps->timers[tmZanzoken] == -1)){
+	else if(pm->cmd.buttons & BUTTON_TELEPORT){
 		PM_StopDash();
 		pm->ps->bitFlags |= usingZanzoken;
 		pm->ps->timers[tmZanzoken] = (pm->ps->powerLevel[plFatigue] / 93.62) + (pm->ps->baseStats[stZanzokenDistance] * 500);
-		cost = (pm->ps->powerLevel[plMaximum] * 0.12) * pm->ps->baseStats[stZanzokenCost];
+		pm->ps->measureTimers[mtZanzokenDistance] = pm->ps->timers[tmZanzoken];
+		cost = (pm->ps->powerLevel[plMaximum] * 0.03) * pm->ps->baseStats[stZanzokenCost];
 		if(pm->ps->lockedTarget > 0){cost *= 0.8;}
 		if(pm->ps->bitFlags & usingJump){cost *= 0.4;}
 		pm->ps->powerLevel[plUseFatigue] += cost;
@@ -615,9 +621,6 @@ void PM_CheckPowerLevel(void){
 	powerLevel = pm->ps->powerLevel;
 	timers[tmPowerAuto] += pml.msec;
 	limit = powerLevel[plLimit];
-	/*if(powerLevel[plFatigue] <= 0 && powerLevel[plCurrent] > 0){
-		powerLevel[plCurrent] = 1;
-	}*/
 	while(timers[tmPowerAuto] >= 100){
 		timers[tmPowerAuto] -= 100;
 		idleScale = (!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove) ? 2.8 : 1;
@@ -631,7 +634,7 @@ void PM_CheckPowerLevel(void){
 		recovery *= pm->ps->baseStats[stFatigueRecovery];
 		if(recovery < 1){recovery = 1;}
 		if(pm->ps->bitFlags & usingAlter || pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar
-		|| pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBoost
+		|| pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBoost || pm->ps->bitFlags & usingZanzoken
 		|| pm->ps->bitFlags & isBreakingLimit || pm->ps->weaponstate >= WEAPON_GUIDING){recovery = 0;}
 		/*if(powerLevel[plCurrent] > powerLevel[plFatigue]){
 			newValue = powerLevel[plCurrent] - (powerLevel[plMaximum] * 0.005);
@@ -652,7 +655,7 @@ void PM_CheckPowerLevel(void){
 			powerLevel[plFatigue] = powerLevel[plMaximum];
 		}
 	}
-	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
+	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !(pm->ps->bitFlags & usingSoar)){
 		qboolean usableAlter;
 		pm->ps->bitFlags &= ~keyTierDown;
 		pm->ps->bitFlags &= ~keyTierUp;
@@ -664,7 +667,7 @@ void PM_CheckPowerLevel(void){
 			PM_StopJump();
 			PM_StopJumpChain();
 		}
-		if(pm->ps->bitFlags & usingBoost || pm->ps->timers[tmTransform] < 0 || pm->ps->bitFlags & usingSoar ||
+		if(pm->ps->bitFlags & usingBoost || pm->ps->timers[tmTransform] < 0 ||
 		   pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING){
 			usableAlter = qfalse;
 		}
@@ -744,6 +747,8 @@ void PM_CheckPowerLevel(void){
 			pm->ps->bitFlags &= ~usingAlter;
 			pm->ps->bitFlags &= ~isBreakingLimit;
 		}
+		PM_StopDirections();
+		PM_ContinueLegsAnim(ANIM_IDLE);
 	}
 	else{
 		pm->ps->bitFlags &= ~usingAlter;
@@ -776,8 +781,8 @@ BOOST TYPES
 ===============*/
 void PM_StopBoost(void){
 	pm->ps->bitFlags &= ~usingBoost;
-	pm->ps->powerups[PW_BOOST] = 0;
-	pm->ps->timers[tmBoost] = 0;
+	pm->ps->measureTimers[mtBoost] = 0;
+	pm->ps->timers[tmBoost] = -1000;
 }
 void PM_StopDash(void){
 	VectorClear(pm->ps->dashDir);
@@ -798,22 +803,27 @@ void PM_CheckBoost(void){
 	int limit;
 	limit = pm->ps->powerLevel[plLimit];
 	if(!(pm->ps->options & canBoost) || (pm->ps->bitFlags & isStruggling) || (pm->ps->baseStats[stJumpTimedPower] == -1)){return;}
-	if(!(pm->cmd.buttons & BUTTON_BOOST)){
-		PM_StopBoost();
-	}
-	else if(pm->ps->powerups[PW_BOOST]){
-		pm->ps->eFlags |= EF_AURA;
-		pm->ps->powerups[PW_BOOST] += pml.msec;
+	if(pm->ps->timers[tmBoost] < 0){
 		pm->ps->timers[tmBoost] += pml.msec;
-		if(pm->ps->timers[tmBoost] > limit){pm->ps->timers[tmBoost] = limit;}
-		if(pm->ps->powerups[PW_BOOST] > 150){
-			pm->ps->powerLevel[plUseFatigue] += (pm->ps->powerLevel[plMaximum] * 0.002) * pm->ps->baseStats[stBoostCost];
-			pm->ps->powerups[PW_BOOST] -= 150;
+		if(pm->ps->timers[tmBoost] > 0){pm->ps->timers[tmBoost] = 0;}
+	}
+	if(pm->ps->measureTimers[mtBoost]){
+		if(!(pm->cmd.buttons & BUTTON_BOOST)){
+			PM_StopBoost();
+		}
+		else{
+			pm->ps->eFlags |= EF_AURA;
+			pm->ps->measureTimers[mtBoost] += pml.msec;
+			pm->ps->timers[tmBoost] += pml.msec;
+			if(pm->ps->timers[tmBoost] > limit){pm->ps->timers[tmBoost] = limit;}
+			if(pm->ps->measureTimers[mtBoost] > 150){
+				pm->ps->powerLevel[plUseFatigue] += (pm->ps->powerLevel[plMaximum] * 0.002) * pm->ps->baseStats[stBoostCost];
+				pm->ps->measureTimers[mtBoost] -= 150;
+			}
 		}
 	}
-	else{
-		pm->ps->timers[tmBoost] = 0;
-		pm->ps->powerups[PW_BOOST] = 1;
+	else if(!pm->ps->timers[tmBoost] && (pm->cmd.buttons & BUTTON_BOOST)){
+		pm->ps->measureTimers[mtBoost] = 1;
 		pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.05;
 		if(!(pm->ps->bitFlags & usingBoost)){PM_AddEvent(EV_BOOST_START);}
 		pm->ps->bitFlags |= usingBoost;
@@ -1660,9 +1670,10 @@ void PM_GroundTrace(void){
 		if((testVec[2] < 0.9f) || (pm->cmd.upmove >= 0)){
 			PM_NotOnGround();
 			return;
-		} else{
+		}
+		else{
 			PM_StopFlight();
-			pm->ps->timers[tmZanzoken] = 0;
+			PM_StopZanzoken();
 		}
 	}
 	// slopes that are too steep will not be considered onground
@@ -1747,8 +1758,8 @@ void PM_Footsteps(void){
 	int	old;
 	qboolean footstep;
 	if(pm->ps->bitFlags & usingZanzoken || pm->ps->bitFlags & usingJump || pm->ps->bitFlags & usingBallFlip){return;}
-	if(pm->ps->bitFlags & keyTierUp || pm->ps->bitFlags & keyTierDown && VectorLength(pm->ps->velocity) <= 5){return;}
-	if((pm->ps->bitFlags & usingAlter) && (VectorLength(pm->ps->velocity) <= 5)){
+	if(pm->ps->bitFlags & keyTierUp || pm->ps->bitFlags & keyTierDown){return;}
+	if(pm->ps->bitFlags & usingAlter){
 		if(pm->cmd.rightmove < 0){
 			PM_ContinueLegsAnim(ANIM_IDLE);
 			return;
@@ -2788,7 +2799,7 @@ void PM_Weapon(void){
 			if(pm->ps->stats[stChargePercentPrimary] < 100){
 				if(pm->ps->stats[stChargePercentPrimary] == 0 && pm->ps->bitFlags & usingBoost){
 					pm->ps->stats[stChargePercentPrimary] = 25;
-					costPrimary *= 25;
+					costPrimary *= 40;
 				}
 				pm->ps->stats[stChargePercentPrimary] += chargeRate;
 				if(pm->ps->stats[stChargePercentPrimary] > 100){

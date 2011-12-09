@@ -294,7 +294,8 @@ typedef enum{
 typedef enum{
 	lkPowerCurrent,
 	lkPowerHealth,
-	lkPowerMaximum
+	lkPowerMaximum,
+	lkAttackPower
 }lockedStat_t;
 typedef enum{
 	tmUpdateTier,
@@ -329,9 +330,30 @@ typedef enum{
 	tmSafe,
 	tmOnGround
 }timers_t;
+typedef enum{
+	cdLockon
+}cooldownTimers_t;
+typedef enum{
+	sqAttack,
+	sqAltAttack,
+	sqPowerLevel,
+	sqBlock,
+	sqWalk,
+	sqBoost,
+	sqLockon,
+	sqJump,
+	sqZanzoken,
+	sqForward,
+	sqLeft,
+	sqRight,
+	sqBack,
+	sqUp,
+	sqDown,
+	sqRollRight,
+	sqRollLeft
+}sequenceTimers_t;
 typedef enum {
 	PW_NONE,
-	PW_BOOST,
 	PW_STATE,
 	PW_SKILLS,
 	PW_DRIFTING,
@@ -339,6 +361,15 @@ typedef enum {
 	PW_KNOCKBACK_SPEED,
 	PW_NUM_POWERUPS,
 }powerup_t;
+typedef enum {
+	mtBoost,
+	mtZanzoken,
+	mtZanzokenDistance,
+	mtDrifting
+}measureTimers_t;
+typedef enum {
+	bfZanzokenCost
+}buffers_t;
 
 // Player stat bits
 #define hasFlipOffset	0x00000001
@@ -396,8 +427,8 @@ typedef enum {
 #define canClench		0x00000200
 #define canExpulse		0x00000400
 #define canDischarge	0x00000800
-#define canBoost		0x00001000	
-#define canSwim			0x00002000	
+#define canBoost		0x00001000
+#define canSwim			0x00002000
 #define canFly			0x00004000
 #define canJump			0x00008000
 #define canZanzoken		0x00010000

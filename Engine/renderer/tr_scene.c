@@ -287,7 +287,7 @@ void RE_AddFogToScene( float start, float end, float r, float g, float b, float 
 	int fogModefilter = mode;								// Which Fog To Use
 	int fogHint[] = { GL_DONT_CARE, GL_FASTEST, GL_NICEST };// Storage For Three Types Of Fog
 	int fogHintfilter = hint;								// Which Fog To Use
-	float fogColor[4] = {r, g, b, 1.0f};						// Fog Color
+	float fogColor[4] = {r, g, b, 1.0f};					// Fog Color
 
 	if ( ( start == 0 && end == 0 ) || opacity == 0 ){
 		qglDisable(GL_FOG);									// Disables GL_FOG

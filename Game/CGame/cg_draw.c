@@ -669,7 +669,6 @@ void CG_DrawHUD(playerState_t *ps,int clientNum,int x,int y,qboolean flipped){
 	vec4_t	plFatigueColor = {0.4f,0.4f,0.5f,1.0f};
 	vec4_t	clearColor = {0.0f,0.0f,0.0f,0.0f};
 	vec3_t	angles;
-	if(ps->bitFlags & usingSoar){return;}
 	CG_DrawHorGauge(x+60,y+41,200,16,powerColor,dullColor,ps->powerLevel[plCurrent],ps->powerLevel[plMaximum],qfalse);	
 	CG_DrawRightGauge(x+60,y+41,200,16,plFatigueColor,plFatigueColor,ps->powerLevel[plFatigue],ps->powerLevel[plMaximum]);
 	CG_DrawRightGauge(x+60,y+41,200,16,limitColor,limitColor,ps->powerLevel[plHealth],ps->powerLevel[plMaximum]);
@@ -731,7 +730,6 @@ static void CG_DrawStatusBar( void ) {
 		CG_DrawHUD(&lockedTargetPS,lockedTargetPS.clientNum,320,0,qtrue);
 	}
 	else{
-
 		CG_DrawHUD(ps,ps->clientNum,0,408,qfalse);
 		if(tier){
 			activeTier = &ci->tierConfig[ci->tierCurrent];
@@ -1288,10 +1286,8 @@ static void CG_Draw2D( void ) {
 		CG_DrawCrosshairNames();
 		CG_DrawRadar();
 	}
-	else {
+	else if(!(cg.snap->ps.bitFlags & usingSoar)){
 		if (!(cg.snap->ps.timers[tmTransform] > 1) && !(cg.snap->ps.powerups[PW_STATE] < 0)){
-		
-
 			playerState_t	*ps;
 			clientInfo_t *ci;
 			ci = &cgs.clientinfo[cg.snap->ps.clientNum];
@@ -1353,6 +1349,3 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
  	CG_Draw2D();
 	CG_LoadDeferredPlayers();
 }
-
-
-

@@ -439,7 +439,7 @@ static void R_SetFarClip( void )
 			farthestCornerDistance = distance;
 		}
 	}
-	tr.viewParms.zFar = sqrt( farthestCornerDistance );
+	tr.viewParms.zFar = r_zfar->value != 0 ? r_zfar->value : sqrt(farthestCornerDistance);
 }
 
 /*

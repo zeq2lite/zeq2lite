@@ -173,7 +173,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_running, "g_running", "0", CVAR_ARCHIVE, 0, qtrue },
 	{ &g_pointGravity, "g_pointGravity", "0", CVAR_ARCHIVE, 0, qtrue },
 	{ &g_allowTiers, "g_allowTiers", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
-	//{ &g_allowScoreboard, "g_allowScoreboard", "0", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_allowScoreboard, "g_allowScoreboard", "0", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
 	{ &g_allowSoar, "g_allowSoar", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
 	{ &g_allowBoost, "g_allowBoost", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
 	{ &g_allowFly, "g_allowFly", "1", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
