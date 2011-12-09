@@ -1061,8 +1061,6 @@ typedef struct playerState_s {
 	vec3_t		soarBase;
 	int			knockBackDirection;
 	float		breakLimitRate;
-	int			attackPowerTotal;
-	int			attackPowerCurrent;
 	int			damageEvent;	// when it changes, latch the other parms
 	int			damageYaw;
 	int			damagePitch;
@@ -1084,6 +1082,9 @@ typedef struct playerState_s {
 	int			generic1;
 	int			loopSound;
 	int			jumppad_ent;	// jumppad entity hit this frame
+	long		attackPower;
+	int			attackPowerTotal;
+	int			attackPowerCurrent;
 	// not communicated over the net at all
 	int			ping;
 	int			pmove_framecount;

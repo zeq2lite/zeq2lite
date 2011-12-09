@@ -1107,24 +1107,9 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 			continue;
 		}
 		CG_DrawPic(qfalse, x, y, 24, 24, weaponInfo->weaponIcon );
-
-		// draw selection marker
 		if ( i == cg.weaponSelect ) {
 			CG_DrawPic(qfalse, x-4, y-4, 32, 32, cgs.media.selectShader );
 		}
-
-		// ADDING FOR ZEQ2
-
-		// We never draw the ammo cross on top!
-		
-		/*
-		// no ammo cross on top
-		if ( !cg.snap->ps.currentSkill[ i ] ) {
-			CG_DrawPic(qfalse, x, y, 32, 32, cgs.media.noammoShader );
-		}
-		*/
-		// END ADDING
-
 		x += 30;
 	}
 

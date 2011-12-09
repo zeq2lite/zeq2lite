@@ -659,6 +659,10 @@ void CG_DrawHUD(playerState_t *ps,int clientNum,int x,int y,qboolean flipped){
 	int 		powerLevelOffset;
 	long	 	powerLevelDisplay;
 	float		multiplier;
+	cg_userWeapon_t	*skill;
+	int			chargePercent;
+	int			chargeReady;
+	qboolean charging = ps->weaponstate == WEAPON_CHARGING || ps->weaponstate == WEAPON_ALTCHARGING ? qtrue : qfalse;
 	vec4_t	powerColor = {0.0f,0.588f,1.0f,1.0f};
 	vec4_t	dullColor = {0.188f,0.278f,0.345f,1.0f};
 	vec4_t	limitColor = {1.0f,0.1f,0.0f,1.0f};
@@ -667,32 +671,62 @@ void CG_DrawHUD(playerState_t *ps,int clientNum,int x,int y,qboolean flipped){
 	vec4_t	healthFatigueColor = {1.0f,0.4f,0.2f,1.0f};
 	vec4_t	plFatigueHealthColor = {0.5f,0.16f,0.16f,1.0f};
 	vec4_t	plFatigueColor = {0.4f,0.4f,0.5f,1.0f};
+	vec4_t	readyColor = {0.588f,1.0f,0.0,1.0f};
 	vec4_t	clearColor = {0.0f,0.0f,0.0f,0.0f};
+	vec4_t	*chargeColor;
 	vec3_t	angles;
-	CG_DrawHorGauge(x+60,y+41,200,16,powerColor,dullColor,ps->powerLevel[plCurrent],ps->powerLevel[plMaximum],qfalse);	
-	CG_DrawRightGauge(x+60,y+41,200,16,plFatigueColor,plFatigueColor,ps->powerLevel[plFatigue],ps->powerLevel[plMaximum]);
-	CG_DrawRightGauge(x+60,y+41,200,16,limitColor,limitColor,ps->powerLevel[plHealth],ps->powerLevel[plMaximum]);
-	CG_DrawDiffGauge(x+60,y+41,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
-	CG_DrawDiffGauge(x+60,y+41,200,16,plFatigueHealthColor,plFatigueHealthColor,ps->powerLevel[plFatigue],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
-	CG_DrawDiffGauge(x+60,y+41,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[plCurrent],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
-	if((ps->powerLevel[plCurrent] > ps->powerLevel[plFatigue]) && (ps->powerLevel[plFatigue] > ps->powerLevel[plHealth])){
-		CG_DrawDiffGauge(x+60,y+41,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+	if(!charging){
+		CG_DrawHorGauge(x+60,y+41,200,16,powerColor,dullColor,ps->powerLevel[plCurrent],ps->powerLevel[plMaximum],qfalse);
+		CG_DrawRightGauge(x+60,y+41,200,16,plFatigueColor,plFatigueColor,ps->powerLevel[plFatigue],ps->powerLevel[plMaximum]);
+		CG_DrawRightGauge(x+60,y+41,200,16,limitColor,limitColor,ps->powerLevel[plHealth],ps->powerLevel[plMaximum]);
+		CG_DrawDiffGauge(x+60,y+41,200,16,beyondFatigueColor,beyondFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+		CG_DrawDiffGauge(x+60,y+41,200,16,plFatigueHealthColor,plFatigueHealthColor,ps->powerLevel[plFatigue],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
+		CG_DrawDiffGauge(x+60,y+41,200,16,beyondHealthColor,beyondHealthColor,ps->powerLevel[plCurrent],ps->powerLevel[plHealth],ps->powerLevel[plMaximum],1);
+		if((ps->powerLevel[plCurrent] > ps->powerLevel[plFatigue]) && (ps->powerLevel[plFatigue] > ps->powerLevel[plHealth])){
+			CG_DrawDiffGauge(x+60,y+41,200,16,healthFatigueColor,healthFatigueColor,ps->powerLevel[plCurrent],ps->powerLevel[plFatigue],ps->powerLevel[plMaximum],1);
+		}
+	}
+	else{
+		if(ps->weaponstate == WEAPON_CHARGING){
+			chargePercent = ps->stats[stChargePercentPrimary];
+			chargeReady = ps->currentSkill[WPSTAT_CHRGREADY];
+			chargeColor = chargePercent >= chargeReady ? &readyColor : &beyondFatigueColor;
+			powerLevelDisplay = ps->attackPower;
+		}
+		else{
+			chargePercent = ps->stats[stChargePercentSecondary];
+			chargeReady = ps->currentSkill[WPSTAT_ALT_CHRGREADY];
+			chargeColor = chargePercent >= chargeReady ? &readyColor : &beyondFatigueColor;
+			powerLevelDisplay = ps->attackPower;
+		}
+		CG_DrawHorGauge(x+60,y+41,200,16,*chargeColor,dullColor,chargePercent,100,qfalse);
 	}
 	CG_DrawPic(qfalse,x,y,288,72,cgs.media.hudShader);
-	CG_DrawHead(x+6,y+22,50,50,clientNum,angles);
-	if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
-		CG_DrawPic(qfalse,x+243,y+25,40,44,cgs.media.breakLimitShader);
+	if(!charging){
+		CG_DrawHead(x+6,y+22,50,50,clientNum,angles);
+		if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
+			CG_DrawPic(qfalse,x+243,y+25,40,44,cgs.media.breakLimitShader);
+		}
+		if(ps->powerLevel[plCurrent] == 9001){
+			powerLevelString = "Over ^3NINE-THOUSAND!!!";
+		}
+		multiplier = cgs.clientinfo[clientNum].tierConfig[cgs.clientinfo[clientNum].tierCurrent].hudMultiplier;
+		if(multiplier <= 0){
+			multiplier = 1.0;
+		}
+		powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
+		powerLevelString = powerLevelDisplay >= 1000000 ? va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0) : va("%i",powerLevelDisplay);
+		powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	}
-	if(ps->powerLevel[plCurrent] == 9001){
-		powerLevelString = "Over ^3NINE-THOUSAND!!!";
+	else{
+		skill = CG_FindUserWeaponGraphics(cg.snap->ps.clientNum,cg.weaponSelect);
+		CG_DrawPic(qfalse,x+6,y+22,50,50,skill->weaponIcon);
+		powerLevelString = powerLevelDisplay >= 1000000 ? va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0) : va("%i",powerLevelDisplay);
+		powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
+		if(chargeReady){
+			CG_DrawPic(qfalse,x+(int)(198*(chargeReady/100.0))+55,y+25,13,38,cgs.media.markerAscendShader);
+		}
 	}
-	multiplier = cgs.clientinfo[clientNum].tierConfig[cgs.clientinfo[clientNum].tierCurrent].hudMultiplier;
-	if(multiplier <= 0){
-		multiplier = 1.0;
-	}
-	powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
-	powerLevelString = powerLevelDisplay >= 1000000 ? va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0) : va("%i",powerLevelDisplay);
-	powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	CG_DrawSmallStringHalfHeight(x+239-powerLevelOffset,y+44,powerLevelString,1.0F);
 }
 static void CG_DrawStatusBar( void ) {
@@ -703,9 +737,10 @@ static void CG_DrawStatusBar( void ) {
 	clientInfo_t	*ci;
 	cg_userWeapon_t	*weaponGraphics;
 	tierConfig_cg	*activeTier;
-
+	qboolean charging;
 	ci = &cgs.clientinfo[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
+	charging = ps->weaponstate == WEAPON_CHARGING || ps->weaponstate == WEAPON_ALTCHARGING ? qtrue : qfalse;
 	if((ci->lockStartTimer > cg.time) /*(&& cg.time > ci->lockStartTimer - 500)*/){
 		CG_DrawPic(qfalse,0,0,640,480,cgs.media.speedLineSpinShader);
 	}
@@ -731,6 +766,7 @@ static void CG_DrawStatusBar( void ) {
 	}
 	else{
 		CG_DrawHUD(ps,ps->clientNum,0,408,qfalse);
+		if(charging){return;}
 		if(tier){
 			activeTier = &ci->tierConfig[ci->tierCurrent];
 			tierLast = 32767;
@@ -758,7 +794,8 @@ static void CG_DrawStatusBar( void ) {
 			}
 		}
 	}
-}/*==================
+}
+/*==================
 CG_DrawSnapshot
 ==================*/
 static float CG_DrawSnapshot( float y ) {

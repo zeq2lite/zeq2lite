@@ -2674,6 +2674,7 @@ void PM_Weapon(void){
 	int chargeRate;
 	int costPrimary,costSecondary;
 	float energyScale;
+	float powerScale = ((float)pm->ps->powerLevel[plCurrent] / 1000.0) * pm->ps->baseStats[stEnergyAttack];
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	if(pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar
@@ -2699,7 +2700,7 @@ void PM_Weapon(void){
 	// Retrieve our weapon's settings
 	weaponInfo = pm->ps->currentSkill;
 	if(weaponInfo[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT){
-		alt_weaponInfo = &weaponInfo[WPSTAT_ALT_POWERLEVELCOST];
+		alt_weaponInfo = &weaponInfo[WPSTAT_ALT_POWER];
 	} else{
 		alt_weaponInfo = weaponInfo;	 // Keep both sets the same.
 		if(pm->cmd.buttons & BUTTON_ALT_ATTACK) {	// ifwe have no altfire,
@@ -2757,11 +2758,12 @@ void PM_Weapon(void){
 				pm->ps->powerLevel[plUseFatigue] += costSecondary * pm->ps->baseStats[stEnergyAttackCost] * energyScale;
 				if(alt_weaponInfo[WPSTAT_BITFLAGS] & WPF_CONTINUOUS){
 					pm->ps->weaponstate = WEAPON_ALTFIRING;
-					PM_AddEvent(EV_ALTFIRE_WEAPON );
-				} else{
+					PM_AddEvent(EV_ALTFIRE_WEAPON);
+				}
+				else{
+					PM_AddEvent(EV_ALTFIRE_WEAPON);
 					pm->ps->weaponstate = WEAPON_COOLING;
 					pm->ps->weaponTime += alt_weaponInfo[WPSTAT_COOLTIME];
-					PM_AddEvent(EV_ALTFIRE_WEAPON );
 				}
 				PM_StartTorsoAnim(ANIM_KI_ATTACK1_ALT_FIRE + (pm->ps->weapon - 1) * 2 );
 				break;
@@ -2794,6 +2796,7 @@ void PM_Weapon(void){
 		chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
 		pm->ps->timers[tmAttack1] += pml.msec;
 		pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_RESTRICT_MOVEMENT];
+		pm->ps->attackPower = weaponInfo[WPSTAT_POWER] * ((float)pm->ps->stats[stChargePercentPrimary] / 100.0f) * powerScale;
 		if(pm->ps->timers[tmAttack1] >= weaponInfo[WPSTAT_CHRGTIME]){
 			pm->ps->timers[tmAttack1] -= weaponInfo[WPSTAT_CHRGTIME];
 			if(pm->ps->stats[stChargePercentPrimary] < 100){
@@ -2823,7 +2826,8 @@ void PM_Weapon(void){
 				}
 				PM_AddEvent(EV_FIRE_WEAPON);
 				PM_StartTorsoAnim(ANIM_KI_ATTACK1_FIRE + (pm->ps->weapon - 1) * 2 );
-			} else{
+			}
+			else{
 				pm->ps->weaponTime = 0;
 				pm->ps->weaponstate = WEAPON_READY;
 				pm->ps->stats[stChargePercentPrimary] = 0;
@@ -2832,9 +2836,11 @@ void PM_Weapon(void){
 		}
 		break;
 	case WEAPON_ALTCHARGING:
+		PM_StopJump();
 		chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
 		pm->ps->timers[tmAttack2] += pml.msec;
 		pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_ALT_RESTRICT_MOVEMENT];
+		pm->ps->attackPower = weaponInfo[WPSTAT_ALT_POWER] * ((float)pm->ps->stats[stChargePercentSecondary] / 100.0f) * powerScale;
 		if(pm->ps->timers[tmAttack2] >= weaponInfo[WPSTAT_ALT_CHRGTIME]){
 			pm->ps->timers[tmAttack2] -= weaponInfo[WPSTAT_ALT_CHRGTIME];
 			if(pm->ps->stats[stChargePercentSecondary] < 100){

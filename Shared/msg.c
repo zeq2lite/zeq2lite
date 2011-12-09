@@ -1220,8 +1220,7 @@ netField_t	playerStateFields[] =
 { PSF(bitFlags), 32 },
 { PSF(states), 32 },
 { PSF(options), 32 },
-{ PSF(attackPowerTotal), 16 },
-{ PSF(attackPowerCurrent), 16 }
+{ PSF(attackPower), 32 },
 };
 
 /*
@@ -1437,7 +1436,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, powerupbits, MAX_POWERUPS );
 		for (i=0 ; i<MAX_POWERUPS ; i++)
 			if (powerupbits & (1<<i) )
-				MSG_WriteLong( msg, to->powerups[i] );
+				MSG_WriteShort( msg, to->powerups[i] );
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1447,7 +1446,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, timerbits, MAX_TIMERS );
 		for (i=0 ; i<MAX_TIMERS ; i++)
 			if (timerbits & (1<<i) )
-				MSG_WriteLong( msg, to->timers[i] );
+				MSG_WriteShort( msg, to->timers[i] );
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1457,7 +1456,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, cooldownbits, MAX_COOLDOWN );
 		for (i=0 ; i<MAX_COOLDOWN ; i++)
 			if (cooldownbits & (1<<i) )
-				MSG_WriteLong( msg, to->cooldownTimers[i] );
+				MSG_WriteShort( msg, to->cooldownTimers[i] );
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1467,7 +1466,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, sequencebits, MAX_SEQUENCE );
 		for (i=0 ; i<MAX_SEQUENCE ; i++)
 			if (sequencebits & (1<<i) )
-				MSG_WriteLong( msg, to->sequenceTimers[i] );
+				MSG_WriteShort( msg, to->sequenceTimers[i] );
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1477,7 +1476,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, measurebits, MAX_MEASURES );
 		for (i=0 ; i<MAX_MEASURES ; i++)
 			if (measurebits & (1<<i) )
-				MSG_WriteLong( msg, to->measureTimers[i] );
+				MSG_WriteShort( msg, to->measureTimers[i] );
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1487,7 +1486,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, powerlevelbits, MAX_POWERSTATS );
 		for (i=0 ; i<MAX_POWERSTATS ; i++)
 			if (powerlevelbits & (1<<i) )
-				MSG_WriteLong( msg, to->powerLevel[i] );
+				MSG_WriteShort( msg, to->powerLevel[i] );
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1497,7 +1496,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, basestatsbits, MAX_BASESTATS );
 		for (i=0 ; i<MAX_BASESTATS ; i++)
 			if (basestatsbits & (1<<i) )
-				MSG_WriteLong( msg, to->baseStats[i] );
+				MSG_WriteFloat( msg, to->baseStats[i] );
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1507,7 +1506,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, bufferbits, MAX_RBUFFERS );
 		for (i=0 ; i<MAX_RBUFFERS ; i++)
 			if (bufferbits & (1<<i) )
-				MSG_WriteLong( msg, to->buffers[i] );
+				MSG_WriteFloat( msg, to->buffers[i] );
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1648,7 +1647,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_POWERUPS);
 			for (i=0 ; i<MAX_POWERUPS ; i++) {
 				if (bits & (1<<i) ) {
-					to->powerups[i] = MSG_ReadLong(msg);
+					to->powerups[i] = MSG_ReadShort(msg);
 				}
 			}
 		}
@@ -1659,7 +1658,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_TIMERS);
 			for (i=0 ; i<MAX_TIMERS ; i++) {
 				if (bits & (1<<i) ) {
-					to->timers[i] = MSG_ReadLong(msg);
+					to->timers[i] = MSG_ReadShort(msg);
 				}
 			}
 		}
@@ -1670,7 +1669,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_COOLDOWN);
 			for (i=0 ; i<MAX_COOLDOWN ; i++) {
 				if (bits & (1<<i) ) {
-					to->cooldownTimers[i] = MSG_ReadLong(msg);
+					to->cooldownTimers[i] = MSG_ReadShort(msg);
 				}
 			}
 		}
@@ -1681,7 +1680,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_SEQUENCE);
 			for (i=0 ; i<MAX_SEQUENCE ; i++) {
 				if (bits & (1<<i) ) {
-					to->sequenceTimers[i] = MSG_ReadLong(msg);
+					to->sequenceTimers[i] = MSG_ReadShort(msg);
 				}
 			}
 		}
@@ -1694,7 +1693,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_MEASURES);
 			for (i=0 ; i<MAX_MEASURES ; i++) {
 				if (bits & (1<<i) ) {
-					to->measureTimers[i] = MSG_ReadLong(msg);
+					to->measureTimers[i] = MSG_ReadShort(msg);
 				}
 			}
 		}
@@ -1705,7 +1704,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_POWERSTATS);
 			for (i=0 ; i<MAX_POWERSTATS ; i++) {
 				if (bits & (1<<i) ) {
-					to->powerLevel[i] = MSG_ReadLong(msg);
+					to->powerLevel[i] = MSG_ReadShort(msg);
 				}
 			}
 		}
@@ -1716,7 +1715,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_BASESTATS);
 			for (i=0 ; i<MAX_BASESTATS ; i++) {
 				if (bits & (1<<i) ) {
-					to->baseStats[i] = MSG_ReadLong(msg);
+					to->baseStats[i] = MSG_ReadFloat(msg);
 				}
 			}
 		}
@@ -1727,7 +1726,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_RBUFFERS);
 			for (i=0 ; i<MAX_RBUFFERS ; i++) {
 				if (bits & (1<<i) ) {
-					to->buffers[i] = MSG_ReadLong(msg);
+					to->buffers[i] = MSG_ReadFloat(msg);
 				}
 			}
 		}

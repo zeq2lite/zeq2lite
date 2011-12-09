@@ -123,7 +123,7 @@ void Think_Guided (gentity_t *self) {
 	float dist;
 	gentity_t *owner = GetMissileOwnerEntity(self);
 
-	self->s.dashDir[1] = owner->client->ps.attackPowerCurrent = self->powerLevelCurrent; // Use this free field to transfer current power level
+	self->s.dashDir[1] = self->powerLevelCurrent; // Use this free field to transfer current power level
 	if(self->isDrainable && self->s.eType != ET_BEAMHEAD){
 		self->powerLevelCurrent -= (float)self->powerLevelTotal * 0.01;
 	}
@@ -184,7 +184,7 @@ void Think_Homing (gentity_t *self) {
 	float		chosen_length;
 	gentity_t	*missileOwner = GetMissileOwnerEntity(self);
 
-	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent; // Use this free field to transfer current power level
+	self->s.dashDir[1] = self->powerLevelCurrent; // Use this free field to transfer current power level
 	if(self->isDrainable){
 		self->powerLevelCurrent -= (float)self->powerLevelTotal * 0.01;
 	}
@@ -283,7 +283,7 @@ void Think_CylinderHoming (gentity_t *self) {
 	float		chosen_length;
 	gentity_t	*missileOwner = GetMissileOwnerEntity(self);
 
-	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent; // Use this free field to transfer current power level
+	self->s.dashDir[1] = self->powerLevelCurrent; // Use this free field to transfer current power level
 	if(self->isDrainable){
 		self->powerLevelCurrent -= (float)self->powerLevelTotal * 0.01;
 	}
@@ -389,7 +389,7 @@ void Think_NormalMissile (gentity_t *self) {
 		VectorCopy( self->r.maxs, self->r.absmax );
 	}
 
-	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent; // Use this free field to transfer current power level
+	self->s.dashDir[1] = self->powerLevelCurrent; // Use this free field to transfer current power level
 
 	if ((self->missileSpawnTime + self->maxMissileTime) <= level.time){
 		self->think = G_ExplodeUserWeapon;
@@ -425,7 +425,7 @@ void Think_NormalMissileStruggle (gentity_t *self) {
 	vec3_t		forward,dir,dir2,start;
 	trace_t		*trace;
 	gentity_t	*missileOwner = GetMissileOwnerEntity( self );
-	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent;
+	self->s.dashDir[1] = self->powerLevelCurrent;
 	if(self->powerLevelCurrent < 1){
 		G_RemoveUserWeapon(self);
 		return;
@@ -829,7 +829,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		}
 		bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
 		bolt->powerLevelCurrent = bolt->powerLevelTotal = bolt->damage * ((float)bolt->chargelvl / 100.0f) * powerScale;
-		bolt->s.dashDir[0] = self->client->ps.attackPowerTotal = bolt->powerLevelTotal; // Use this free field to transfer total power level
+		bolt->s.dashDir[0] = bolt->powerLevelTotal; // Use this free field to transfer total power level
 		
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
@@ -1018,7 +1018,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		}
 		bolt->s.powerups = bolt->chargelvl;
 		bolt->powerLevelCurrent = bolt->powerLevelTotal = bolt->damage * (1.0f+(float)bolt->chargelvl / 100.0f) * powerScale;
-		bolt->s.dashDir[0] = self->client->ps.attackPowerTotal = bolt->powerLevelTotal; // Use this free field to transfer total power level
+		bolt->s.dashDir[0] = bolt->powerLevelTotal; // Use this free field to transfer total power level
 		// FIXME: Hack into the old mod style, since it's still needed for now
 		bolt->takedamage = qtrue;
 				
@@ -1414,7 +1414,7 @@ static void Think_NormalMissileStrugglePlayer( gentity_t *self ) {
 	AngleVectors(self->enemy->r.currentAngles, fwd, NULL, NULL);
 	VectorNormalize(fwd);
 	G_HoldUserMissile(self,self->enemy);
-	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent;
+	self->s.dashDir[1] = self->powerLevelCurrent;
 	self->bounceFrac = 0.0f;
 	self->enemy->client->ps.timers[tmStruggleBlock] += 100;
 	if(self->enemy->client->ps.timers[tmStruggleBlock] >= 3000){
@@ -1444,7 +1444,7 @@ static void Think_NormalMissileBurnPlayer( gentity_t *self ) {
 	AngleVectors(self->enemy->r.currentAngles, fwd, NULL, NULL);
 	VectorNormalize(fwd);
 	G_HoldUserMissile(self,self->enemy);
-	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent;
+	self->s.dashDir[1] = self->powerLevelCurrent;
 	self->bounceFrac = 0.0f;
 	self->enemy->client->ps.states |= isBurning;
 	self->enemy->client->ps.timers[tmBurning] += 100;
@@ -1460,7 +1460,7 @@ static void Think_NormalMissileRidePlayer( gentity_t *self ){
 	gentity_t	*missileOwner = GetMissileOwnerEntity( self );
 	AngleVectors(self->enemy->r.currentAngles, fwd, NULL, NULL);
 	VectorNormalize(fwd);
-	self->s.dashDir[1] = missileOwner->client->ps.attackPowerCurrent = self->powerLevelCurrent;
+	self->s.dashDir[1] = self->powerLevelCurrent;
 	self->bounceFrac = 0.0f;
 	self->enemy->client->ps.states |= isRiding;
 	self->enemy->client->ps.timers[tmRiding] += 100;

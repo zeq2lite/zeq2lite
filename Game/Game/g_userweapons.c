@@ -116,11 +116,13 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 	//       was not defined, so the next statement is SAFE.
 	weaponSettings = G_FindUserWeaponData( ps->clientNum, ps->weapon );
 	ps->currentSkill[WPSTAT_NUMCHECK] = ps->weapon;
+	ps->currentSkill[WPSTAT_POWER] = weaponSettings->damage_damage;
 	ps->currentSkill[WPSTAT_POWERLEVELCOST] = weaponSettings->costs_powerLevel;
 	ps->currentSkill[WPSTAT_MAXIMUMCOST] = weaponSettings->costs_maximum;
 	ps->currentSkill[WPSTAT_HEALTHCOST] = weaponSettings->costs_health;
 	ps->currentSkill[WPSTAT_FATIGUECOST] = weaponSettings->costs_fatigue;
 	ps->currentSkill[WPSTAT_CHRGTIME] = weaponSettings->costs_chargeTime;
+	ps->currentSkill[WPSTAT_CHRGREADY] = weaponSettings->costs_chargeReady;
 	ps->currentSkill[WPSTAT_COOLTIME] = weaponSettings->costs_cooldownTime;
 	ps->currentSkill[WPSTAT_RESTRICT_MOVEMENT] = weaponSettings->restrict_movement;
 	ps->currentSkill[WPSTAT_BITFLAGS] = weaponSettings->general_bitflags;
@@ -146,12 +148,13 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 	// Only attempt to link altfire weapon when it exists.
 	if (ps->currentSkill[WPSTAT_BITFLAGS] & WPF_ALTWEAPONPRESENT) {
 		alt_weaponSettings = G_FindUserAltWeaponData( ps->clientNum, ps->weapon );
-	
+		ps->currentSkill[WPSTAT_ALT_POWER] = alt_weaponSettings->damage_damage;
 		ps->currentSkill[WPSTAT_ALT_POWERLEVELCOST] = alt_weaponSettings->costs_powerLevel;
 		ps->currentSkill[WPSTAT_ALT_MAXIMUMCOST] = alt_weaponSettings->costs_maximum;
 		ps->currentSkill[WPSTAT_ALT_HEALTHCOST] = alt_weaponSettings->costs_health;
 		ps->currentSkill[WPSTAT_ALT_FATIGUECOST] = alt_weaponSettings->costs_fatigue;
 		ps->currentSkill[WPSTAT_ALT_CHRGTIME] = alt_weaponSettings->costs_chargeTime;
+		ps->currentSkill[WPSTAT_ALT_CHRGREADY] = alt_weaponSettings->costs_chargeReady;
 		ps->currentSkill[WPSTAT_ALT_COOLTIME] = alt_weaponSettings->costs_cooldownTime;
 		ps->currentSkill[WPSTAT_ALT_RESTRICT_MOVEMENT] = alt_weaponSettings->restrict_movement;
 		ps->currentSkill[WPSTAT_ALT_BITFLAGS] = alt_weaponSettings->general_bitflags;
