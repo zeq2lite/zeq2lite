@@ -33,8 +33,6 @@ if "%1"=="TA" goto TA
 @if errorlevel 1 goto quit
 %cc%  ../g_misc.c
 @if errorlevel 1 goto quit
-%cc%  ../g_missile.c
-@if errorlevel 1 goto quit
 %cc%  ../g_mover.c
 @if errorlevel 1 goto quit
 %cc%  ../g_session.c

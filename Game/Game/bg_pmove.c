@@ -55,6 +55,7 @@ void PM_StopDash(void);
 void PM_StopJump(void);
 void PM_StopJumpChain(void);
 void PM_StopSoar(void);
+void PM_StartFlight(void);
 void PM_StopFlight(void);
 void PM_SuddenBrake(void);
 void PM_StopMovement(void);
@@ -543,7 +544,7 @@ void PM_CheckStatus(void){
 			}
 			else if(pm->ps->bitFlags & isCrashed && !(pm->ps->bitFlags & atopGround)){
 				PM_StopMovement();
-				pm->ps->bitFlags |= usingFlight;
+				PM_StartFlight();
 				PM_ContinueTorsoAnim(ANIM_KNOCKBACK_HIT_WALL);
 				PM_ContinueLegsAnim(ANIM_KNOCKBACK_HIT_WALL);
 				return;
@@ -661,7 +662,7 @@ void PM_CheckPowerLevel(void){
 		pm->ps->bitFlags &= ~keyTierUp;
 		usableAlter = qtrue;
 		if(pm->ps->bitFlags & usingJump && !(pm->ps->bitFlags & underWater)){
-			pm->ps->bitFlags |= usingFlight;
+			PM_StartFlight();
 			PM_SuddenBrake();
 			PM_StopDash();
 			PM_StopJump();
@@ -1031,7 +1032,10 @@ void PM_CheckJump(void){
 	float jumpScale,jumpEmphasis;
 	vec3_t pre_vel,post_vel;
 	if(!(pm->ps->options & canJump)){return;}
-	if(pm->ps->bitFlags & usingBallFlip){return;}
+	if(pm->ps->bitFlags & usingBallFlip || pm->ps->bitFlags & usingFlight){
+		PM_StopJump();
+		return;
+	}
 	if(pm->ps->timers[tmOnGround] > 1000){PM_StopJumpChain();}
 	if(pm->cmd.buttons & BUTTON_JUMP && (pm->ps->bitFlags & nearGround)){
 		pm->ps->timers[tmJump] += pml.msec;
@@ -1045,6 +1049,9 @@ void PM_CheckJump(void){
 			if(pm->ps->pm_flags & PMF_BACKWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_BACK);}
 			else if(pm->ps->pm_flags & PMF_FORWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_UP);}
 			else{PM_ForceLegsAnim(ANIM_LAND_UP);}
+		}
+		if((pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){
+			PM_StartFlight();
 		}
 		return;
 	}	
@@ -1163,6 +1170,11 @@ void PM_StopSoar(void){
 void PM_StopFlight(void){
 	pm->ps->bitFlags &= ~usingFlight;
 }
+void PM_StartFlight(void){
+	PM_StopJump();
+	PM_StopBlink();
+	pm->ps->bitFlags |= usingFlight;
+}
 void PM_SuddenBrake(void){
 	pm->ps->timers[tmKnockback] = -500;
 	pm->ps->timers[tmFreeze] = 500;
@@ -1183,7 +1195,7 @@ void PM_FlyMove(void){
 	}
 	if(pm->cmd.upmove > 0){
 		if(pm->ps->bitFlags & usingJump && !(pm->ps->bitFlags & underWater)){PM_SuddenBrake();}
-		pm->ps->bitFlags |= usingFlight;
+		PM_StartFlight();
 		PM_StopDash();
 		PM_StopJump();
 		PM_StopJumpChain();
@@ -1211,6 +1223,7 @@ void PM_FlyMove(void){
 			pm->ps->bitFlags |= usingSoar;
 			pm->ps->bitFlags &= ~isPreparing;
 			pm->ps->timers[tmSoar] = 0;
+			PM_WeaponRelease();
 		}
 		soarCost = 0;
 		if(pm->ps->powerLevel[plMaximum] * 0.7 > pm->ps->powerLevel[plFatigue]){
@@ -2244,10 +2257,12 @@ void PM_SyncMelee(void){
 	pm->ps->pm_flags |= PMF_ATTACK2_HELD;
 	pm->ps->bitFlags |= usingMelee;
 	pm->ps->bitFlags |= usingFlight;
+	pm->ps->bitFlags &= ~isBlinking;
 	pm->ps->timers[tmUpdateMelee] = 300;
 	pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
 	pm->ps->lockedPlayer->bitFlags |= usingMelee;
 	pm->ps->lockedPlayer->bitFlags |= usingFlight;
+	pm->ps->lockedPlayer->bitFlags &= ~isBlinking;
 	pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
 	if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
 		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
@@ -2792,7 +2807,6 @@ void PM_Weapon(void){
 		pm->ps->timers[tmImpede] = 100;
 		break;
 	case WEAPON_CHARGING:
-		PM_StopJump();
 		chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
 		pm->ps->timers[tmAttack1] += pml.msec;
 		pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_RESTRICT_MOVEMENT];
@@ -2836,7 +2850,6 @@ void PM_Weapon(void){
 		}
 		break;
 	case WEAPON_ALTCHARGING:
-		PM_StopJump();
 		chargeRate = (pm->ps->bitFlags & usingBoost) ? 2 : 1;
 		pm->ps->timers[tmAttack2] += pml.msec;
 		pm->ps->timers[tmImpede] = weaponInfo[WPSTAT_ALT_RESTRICT_MOVEMENT];
@@ -3166,7 +3179,6 @@ void PmoveSingle(pmove_t *pmove){
 	if(PM_CheckTransform()){return;}
 	PM_CheckLoopingSound();
 	PM_SetWaterLevel();
-	if(usingJump && (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){pm->ps->bitFlags |= usingFlight;}
 	if(pm->cmd.buttons != 0 && pm->cmd.buttons != 2048){
 		//Com_Printf("%i\n",pm->cmd.buttons);
 	}

@@ -14,7 +14,6 @@ g_cmds
 g_combat
 g_mem
 g_misc
-g_missile
 g_mover
 g_session
 g_spawn

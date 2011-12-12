@@ -1169,7 +1169,6 @@ CG_NextWeapon_f
 void CG_NextWeapon_f( void ) {
 	int		i;
 	int		original;
-
 	if ( !cg.snap || cg.snap->ps.bitFlags & usingMelee ) {
 		return;
 	}

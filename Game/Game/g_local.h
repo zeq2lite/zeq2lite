@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	INTERMISSION_DELAY_TIME	1000
 #define	SP_INTERMISSION_DELAY_TIME	5000
+#define	MISSILE_PRESTEP_TIME	50
 
 // gentity->flags
 #define	FL_GODMODE				0x00000010
@@ -511,7 +512,6 @@ gentity_t *fire_nail( gentity_t *self, vec3_t start, vec3_t forward, vec3_t righ
 gentity_t *fire_prox( gentity_t *self, vec3_t start, vec3_t aimdir );
 #endif
 // ADDING FOR ZEQ2
-void G_FreeBeamTrail( gentity_t *ent, int secs);
 void G_ExplodeMissile( gentity_t *ent );
 // END ADDING
 

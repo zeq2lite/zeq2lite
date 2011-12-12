@@ -25,9 +25,6 @@ typedef struct auraConfig_s {
 	qboolean	auraAlways;
 	vec3_t		auraColor;
 	qhandle_t	auraShader;
-	qhandle_t	auraSwirlModel[8];
-	qhandle_t	auraSwirlSkin[8];
-	int			auraSwirlTiming[8];
 	float		auraScale;
 	float		tailLength;
 	sfxHandle_t	chargeStartSound;

@@ -550,11 +550,6 @@ static consoleCommand_t	commands[] = {
 	{ "vtell_target", CG_VoiceTellTarget_f },
 	{ "vtell_attacker", CG_VoiceTellAttacker_f },
 	{ "tcmd", CG_TargetCommand_f },
-#if MAPLENSFLARES
-	{ "lfsave", CG_SaveLensFlareEntities_f },
-	{ "lfrevert", CG_RevertLensFlareEntities_f },
-	{ "lfupdate", CG_UpdateLensFlares_f },
-#endif
 	{ "startOrbit", CG_StartOrbit_f },
 	//{ "camera", CG_Camera_f },
 	{ "loaddeferred", CG_LoadDeferredPlayers }
