@@ -32,7 +32,7 @@ orientation of the bone in the base frame to the orientation in this
 frame.
 
 */
-#if 0
+
 /*
 ==============
 R_AddAnimSurfaces
@@ -45,7 +45,7 @@ void R_AddAnimSurfaces( trRefEntity_t *ent ) {
 	shader_t		*shader;
 	int				i;
 
-	header = (md4Header_t *) tr.currentModel->md4;
+	header = (md4Header_t *) tr.currentModel->modelData;
 	lod = (md4LOD_t *)( (byte *)header + header->ofsLODs );
 
 	surface = (md4Surface_t *)( (byte *)lod + lod->ofsSurfaces );
@@ -167,7 +167,7 @@ void RB_SurfaceAnim( md4Surface_t *surface ) {
 	tess.numVertexes += surface->numVerts;
 }
 
-#endif
+
 #ifdef RAVENMD4
 
 // copied and adapted from tr_mesh.c
@@ -326,7 +326,7 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 	int				cull;
 	qboolean	personalModel;
 
-	header = (mdrHeader_t *) tr.currentModel->md4;
+	header = (mdrHeader_t *) tr.currentModel->modelData;
 	
 	personalModel = (ent->e.renderfx & RF_THIRD_PERSON) && !tr.viewParms.isPortal;
 	
@@ -444,7 +444,7 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 RB_MDRSurfaceAnim
 ==============
 */
-void RB_MDRSurfaceAnim( mdrSurface_t *surface )
+void RB_MDRSurfaceAnim( md4Surface_t *surface )
 {
 	int				i, j, k;
 	float			frontlerp, backlerp;

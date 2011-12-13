@@ -47,7 +47,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	RF_SHADOW_PLANE		0x0100		// use refEntity->shadowPlane
 #define	RF_WRAP_FRAMES		0x0200		// mod the model frames by the maxframes to allow continuous
-#define RF_SKEL				0x0400	// use refExtEntity->skel
+
 // refdef flags
 #define RDF_NOWORLDMODEL	0x0001		// used for player configuration screen
 #define RDF_HYPERSPACE		0x0004		// teleportation effect
@@ -118,88 +118,6 @@ typedef struct {
 	float		rotation;
 } refEntity_t;
 
-// ----------------------------------------
-// skeletal animation stuff below
-// ----------------------------------------
-
-#define MAX_SKEL_BONES	128
-
-typedef enum
-{
-	SKEL_FLAG_NONE,
-	SKEL_FLAG_A,
-	SKEL_FLAG_B,
-	SKEL_FLAG_C
-} skelFlag_t;
-
-typedef struct
-{
-	char		name[32];
-	int			parent;
-	skelFlag_t	flags;
-	vec3_t		axis[3];
-	vec3_t		origin;
-} skelBone_t;
-
-typedef struct
-{
-	vec3_t		bounds[2];
-	float		radius;
-	vec3_t		origin;
-	int			numBones;
-	skelBone_t	bones[MAX_SKEL_BONES];
-} skel_t;
-
-typedef struct
-{
-	// ----------------------------------------
-	// keep this the same as refEntity_t struct
-	// ----------------------------------------
-
-	refEntityType_t	reType;
-	int			renderfx;
-
-	qhandle_t	hModel;				// opaque type outside refresh
-
-	// most recent data
-	vec3_t		lightingOrigin;		// so multi-part models can be lit identically (RF_LIGHTING_ORIGIN)
-	float		shadowPlane;		// projection shadows go here, stencils go slightly lower
-
-	vec3_t		axis[3];			// rotation vectors
-	qboolean	nonNormalizedAxes;	// axis are not normalized, i.e. they have scale
-	float		origin[3];			// also used as MODEL_BEAM's "from"
-	int			frame;				// also used as MODEL_BEAM's diameter
-
-	// previous data for frame interpolation
-	float		oldorigin[3];		// also used as MODEL_BEAM's "to"
-	int			oldframe;
-	float		backlerp;			// 0.0 = current, 1.0 = old
-
-	// texturing
-	int			skinNum;			// inline skin index
-	qhandle_t	customSkin;			// NULL for default skin
-	qhandle_t	customShader;		// use one image for the entire thing
-
-	// misc
-	byte		shaderRGBA[4];		// colors used by rgbgen entity shaders
-	float		shaderTexCoord[2];	// texture coordinates used by tcMod entity modifiers
-	float		shaderTime;			// subtracted from refdef time to control effect start times
-
-	// <-- RiO_Outlines: needed to specify cell outlines correctly
-	byte		outlineRGBA[4];
-	byte		outlineWidth;
-	// -->
-
-	// extra sprite information
-	float		radius;
-	float		rotation;
-
-	// ----------------------------------------
-	// skeletal animation stuff below
-	// ----------------------------------------
-
-	skel_t			skel;
-} refExtEntity_t;
 
 #define	MAX_RENDER_STRINGS			8
 #define	MAX_RENDER_STRING_LENGTH	32

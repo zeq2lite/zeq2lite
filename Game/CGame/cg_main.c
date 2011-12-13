@@ -308,8 +308,8 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_smoothClients, "cg_smoothClients", "0", CVAR_USERINFO | CVAR_ARCHIVE},
 	{ &cg_cameraMode, "com_cameraMode", "0", CVAR_CHEAT},
 
-	{ &pmove_fixed, "pmove_fixed", "0", 0},
-	{ &pmove_msec, "pmove_msec", "8", 0},
+	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO},
+	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO},
 	{ &cg_noTaunt, "cg_noTaunt", "0", CVAR_ARCHIVE},
 	{ &cg_noProjectileTrail, "cg_noProjectileTrail", "0", CVAR_ARCHIVE},
 	{ &cg_smallFont, "ui_smallFont", "0.25", CVAR_ARCHIVE},
@@ -335,7 +335,7 @@ static cvarTable_t cvarTable[] = {
 //	{ &cg_pmove_fixed, "cg_pmove_fixed", "0", CVAR_USERINFO | CVAR_ARCHIVE }
 };
 
-static int  cvarTableSize = sizeof( cvarTable ) / sizeof( cvarTable[0] );
+static int  cvarTableSize = ARRAY_LEN( cvarTable );
 
 /*
 =================
@@ -399,7 +399,7 @@ void CG_UpdateCvars( void ) {
 
 	// check for modications here
 
-	// If team overlay is on, ask for updates from the server.  If its off,
+	// If team overlay is on, ask for updates from the server.  If it's off,
 	// let the server know so we don't receive it
 	if ( drawTeamOverlayModificationCount != cg_drawTeamOverlay.modificationCount ) {
 		drawTeamOverlayModificationCount = cg_drawTeamOverlay.modificationCount;

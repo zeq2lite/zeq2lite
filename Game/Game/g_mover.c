@@ -310,7 +310,7 @@ qboolean G_MoverPush( gentity_t *pusher, vec3_t move, vec3_t amove, gentity_t **
 
 	listedEntities = trap_EntitiesInBox( totalMins, totalMaxs, entityList, MAX_GENTITIES );
 
-	// move the pusher to it's final position
+	// move the pusher to its final position
 	VectorAdd( pusher->r.currentOrigin, move, pusher->r.currentOrigin );
 	VectorAdd( pusher->r.currentAngles, amove, pusher->r.currentAngles );
 	trap_LinkEntity( pusher );
@@ -768,26 +768,26 @@ Touch_DoorTriggerSpectator
 ================
 */
 static void Touch_DoorTriggerSpectator( gentity_t *ent, gentity_t *other, trace_t *trace ) {
-	int i, axis;
-	vec3_t origin, dir, angles;
+	int axis;
+	float doorMin, doorMax;
+	vec3_t origin;
 
 	axis = ent->count;
-	VectorClear(dir);
-	if (fabs(other->s.origin[axis] - ent->r.absmax[axis]) <
-		fabs(other->s.origin[axis] - ent->r.absmin[axis])) {
-		origin[axis] = ent->r.absmin[axis] - 10;
-		dir[axis] = -1;
+	// the constants below relate to constants in Think_SpawnNewDoorTrigger()
+	doorMin = ent->r.absmin[axis] + 100;
+	doorMax = ent->r.absmax[axis] - 100;
+
+	VectorCopy(other->client->ps.origin, origin);
+
+	if (origin[axis] < doorMin || origin[axis] > doorMax) return;
+
+	if (fabs(origin[axis] - doorMax) < fabs(origin[axis] - doorMin)) {
+		origin[axis] = doorMin - 10;
+	} else {
+		origin[axis] = doorMax + 10;
 	}
-	else {
-		origin[axis] = ent->r.absmax[axis] + 10;
-		dir[axis] = 1;
-	}
-	for (i = 0; i < 3; i++) {
-		if (i == axis) continue;
-		origin[i] = (ent->r.absmin[i] + ent->r.absmax[i]) * 0.5;
-	}
-	vectoangles(dir, angles);
-	TeleportPlayer(other, origin, angles );
+
+	TeleportPlayer(other, origin, tv(10000000.0, 0, 0));
 }
 
 /*
@@ -1122,7 +1122,7 @@ void Touch_Button(gentity_t *ent, gentity_t *other, trace_t *trace ) {
 
 
 /*QUAKED func_button (0 .5 .8) ?
-When a button is touched, it moves some distance in the direction of it's angle, triggers all of it's targets, waits some time, then returns to it's original position where it can be triggered again.
+When a button is touched, it moves some distance in the direction of its angle, triggers all of its targets, waits some time, then returns to its original position where it can be triggered again.
 
 "model2"	.md3 model to also draw
 "angle"		determines the opening direction

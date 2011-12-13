@@ -386,8 +386,12 @@ static void sort_symbols ()
   symbol_t *s;
   symbol_t **symlist;
 
+  if(!symbols)
+  	return;
+
 //crumb("sort_symbols: Constructing symlist array\n");
   for (elems = 0, s = symbols; s; s = s->next, elems++) /* nop */ ;
+
   symlist = malloc(elems * sizeof(symbol_t*));
   for (i = 0, s = symbols; s; s = s->next, i++)
     {
@@ -946,12 +950,11 @@ STAT("PROC");
 
 ASM(ENDPROC)
 {
-	int		v, v2;
 	if ( !strcmp( token, "endproc" ) ) {
 STAT("ENDPROC");
 		Parse();				// skip the function name
-		v = ParseValue();		// locals
-		v2 = ParseValue();		// arg marshalling
+		ParseValue();		// locals
+		ParseValue();		// arg marshalling
 
 		// all functions must leave something on the opstack
 		instructionCount++;

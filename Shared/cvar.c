@@ -35,8 +35,6 @@ int			cvar_numIndexes;
 #define FILE_HASH_SIZE		256
 static	cvar_t	*hashTable[FILE_HASH_SIZE];
 
-cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force);
-
 /*
 ================
 return a hash value for the filename
@@ -170,10 +168,15 @@ int Cvar_Flags(const char *var_name)
 {
 	cvar_t *var;
 	
-	if(! (var = Cvar_FindVar(var_name)) )
+	if(!(var = Cvar_FindVar(var_name)))
 		return CVAR_NONEXISTENT;
 	else
-		return var->flags;
+	{
+		if(var->modified)
+			return var->flags | CVAR_MODIFIED;
+		else
+			return var->flags;
+	}
 }
 
 /*
@@ -363,6 +366,18 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
 				flags &= ~CVAR_VM_CREATED;
 		}
 		
+		// Make sure servers cannot mark engine-added variables as SERVER_CREATED
+		if(var->flags & CVAR_SERVER_CREATED)
+		{
+			if(!(flags & CVAR_SERVER_CREATED))
+				var->flags &= ~CVAR_SERVER_CREATED;
+		}
+		else
+		{
+			if(flags & CVAR_SERVER_CREATED)
+				flags &= ~CVAR_SERVER_CREATED;
+		}
+		
 		var->flags |= flags;
 
 		// only allow one non-empty reset string without a warning
@@ -382,11 +397,11 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
 			var->latchedString = NULL;	// otherwise cvar_set2 would free it
 			Cvar_Set2( var_name, s, qtrue );
 			Z_Free( s );
-
-			// ZOID--needs to be set so that cvars the game sets as 
-			// SERVERINFO get sent to clients
-			cvar_modifiedFlags |= flags;
 		}
+
+		// ZOID--needs to be set so that cvars the game sets as 
+		// SERVERINFO get sent to clients
+		cvar_modifiedFlags |= flags;
 
 		return var;
 	}
@@ -612,6 +627,28 @@ void Cvar_Set( const char *var_name, const char *value) {
 
 /*
 ============
+Cvar_SetSafe
+============
+*/
+void Cvar_SetSafe( const char *var_name, const char *value )
+{
+	int flags = Cvar_Flags( var_name );
+
+	if((flags != CVAR_NONEXISTENT) && (flags & CVAR_PROTECTED))
+	{
+		if( value )
+			Com_Error( ERR_DROP, "Restricted source tried to set "
+				"\"%s\" to \"%s\"", var_name, value );
+		else
+			Com_Error( ERR_DROP, "Restricted source tried to "
+				"modify \"%s\"", var_name );
+		return;
+	}
+	Cvar_Set( var_name, value );
+}
+
+/*
+============
 Cvar_SetLatched
 ============
 */
@@ -635,6 +672,21 @@ void Cvar_SetValue( const char *var_name, float value) {
 	Cvar_Set (var_name, val);
 }
 
+/*
+============
+Cvar_SetValueSafe
+============
+*/
+void Cvar_SetValueSafe( const char *var_name, float value )
+{
+	char val[32];
+
+	if( Q_isintegral( value ) )
+		Com_sprintf( val, sizeof(val), "%i", (int)value );
+	else
+		Com_sprintf( val, sizeof(val), "%f", value );
+	Cvar_SetSafe( var_name, val );
+}
 
 /*
 ============
@@ -864,7 +916,7 @@ void Cvar_WriteVariables(fileHandle_t f)
 
 	for (var = cvar_vars; var; var = var->next)
 	{
-		if(!var->name)
+		if(!var->name || Q_stricmp( var->name, "cl_cdkey" ) == 0)
 			continue;
 
 		if( var->flags & CVAR_ARCHIVE ) {
@@ -1164,6 +1216,16 @@ void Cvar_Register(vmCvar_t *vmCvar, const char *varName, const char *defaultVal
 {
 	cvar_t	*cv;
 
+	// There is code in Cvar_Get to prevent CVAR_ROM cvars being changed by the
+	// user. In other words CVAR_ARCHIVE and CVAR_ROM are mutually exclusive
+	// flags. Unfortunately some historical game code (including single player
+	// baseq3) sets both flags. We unset CVAR_ROM for such cvars.
+	if ((flags & (CVAR_ARCHIVE | CVAR_ROM)) == (CVAR_ARCHIVE | CVAR_ROM)) {
+		Com_DPrintf( S_COLOR_YELLOW "WARNING: Unsetting CVAR_ROM cvar '%s', "
+			"since it is also CVAR_ARCHIVE\n", varName );
+		flags &= ~CVAR_ROM;
+	}
+
 	cv = Cvar_Get(varName, defaultValue, flags | CVAR_VM_CREATED);
 
 	if (!vmCvar)
@@ -1200,9 +1262,9 @@ void	Cvar_Update( vmCvar_t *vmCvar ) {
 	}
 	vmCvar->modificationCount = cv->modificationCount;
 	if ( strlen(cv->string)+1 > MAX_CVAR_VALUE_STRING ) 
-	  Com_Error( ERR_DROP, "Cvar_Update: src %s length %zd exceeds MAX_CVAR_VALUE_STRING",
+	  Com_Error( ERR_DROP, "Cvar_Update: src %s length %u exceeds MAX_CVAR_VALUE_STRING",
 		     cv->string, 
-		     strlen(cv->string));
+		     (unsigned int) strlen(cv->string));
 	Q_strncpyz( vmCvar->string, cv->string,  MAX_CVAR_VALUE_STRING ); 
 
 	vmCvar->value = cv->value;

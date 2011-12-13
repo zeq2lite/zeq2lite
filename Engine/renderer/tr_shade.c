@@ -233,7 +233,7 @@ static void R_BindAnimatedImage( textureBundle_t *bundle ) {
 
 	// it is necessary to do this messy calc to make sure animations line up
 	// exactly with waveforms of the same frequency
-	index = myftol( tess.shaderTime * bundle->imageAnimationSpeed * FUNCTABLE_SIZE );
+	index = ri.ftol(tess.shaderTime * bundle->imageAnimationSpeed * FUNCTABLE_SIZE);
 	index >>= FUNCTABLE_SIZE2;
 
 	if ( index < 0 ) {
@@ -336,67 +336,6 @@ static void DrawBBoxes (shaderCommands_t *input) {
 		qglUnlockArraysEXT();
 		GLimp_LogComment( "glUnlockArraysEXT\n" );
 	}
-	qglDepthRange( 0, 1 );
-}
-
-/*
-================
-DrawBones
-
-Draws bounding box outlines for debugging
-================
-*/
-void DrawBones (skel_t *pose) {
-	int i,j,k;
-	vec3_t boneStart, boneEnd;
-	GL_Bind( tr.whiteImage );
-	qglColor3f (1,1,1);
-	qglDepthRange( 0, 0 );	// never occluded
-	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE );
-
-	qglBegin (GL_LINES);
-	for (i = 0 ; i < pose->numBones; i++) {
-		if(strcmp(pose->bones[i].name,"tag_") < 0)
-		{
-			qglVertex3fv (pose->bones[i].origin);
-			qglColor3f (1,1,1);
-			if(pose->bones[i].parent == -1 || pose->bones[i].parent > pose->numBones)
-				qglVertex3fv (pose->bones[i].origin);
-			else
-				qglVertex3fv (pose->bones[pose->bones[i].parent].origin);
-
-			qglColor3f (1,0,0);
-			boneEnd[0] = pose->bones[i].origin[0] + pose->bones[i].axis[0][0];
-			boneEnd[1] = pose->bones[i].origin[1] + pose->bones[i].axis[1][0] ;
-			boneEnd[2] = pose->bones[i].origin[2] + pose->bones[i].axis[2][0];
-			qglVertex3fv (boneEnd);
-			boneEnd[0] = pose->bones[i].origin[0] - pose->bones[i].axis[0][0];
-			boneEnd[1] = pose->bones[i].origin[1] - pose->bones[i].axis[1][0];
-			boneEnd[2] = pose->bones[i].origin[2] - pose->bones[i].axis[2][0];
-			qglVertex3fv (boneEnd);
-			qglColor3f (0,1,0);
-			boneEnd[0] = pose->bones[i].origin[0] + pose->bones[i].axis[0][1];
-			boneEnd[1] = pose->bones[i].origin[1] + pose->bones[i].axis[1][1];
-			boneEnd[2] = pose->bones[i].origin[2] + pose->bones[i].axis[2][1];
-			qglVertex3fv (boneEnd);
-			boneEnd[0] = pose->bones[i].origin[0] - pose->bones[i].axis[0][1];
-			boneEnd[1] = pose->bones[i].origin[1] - pose->bones[i].axis[1][1];
-			boneEnd[2] = pose->bones[i].origin[2] - pose->bones[i].axis[2][1];
-			qglVertex3fv (boneEnd);
-			qglColor3f (0,0,1);
-			boneEnd[0] = pose->bones[i].origin[0] + pose->bones[i].axis[0][2];
-			boneEnd[1] = pose->bones[i].origin[1] + pose->bones[i].axis[1][2];
-			boneEnd[2] = pose->bones[i].origin[2] + pose->bones[i].axis[2][2];
-			qglVertex3fv (boneEnd);
-			boneEnd[0] = pose->bones[i].origin[0] - pose->bones[i].axis[0][2];
-			boneEnd[1] = pose->bones[i].origin[1] - pose->bones[i].axis[1][2];
-			boneEnd[2] = pose->bones[i].origin[2] - pose->bones[i].axis[2][2];
-			qglVertex3fv (boneEnd);
-			qglColor3f (1,1,1);
-		}
-	}
-	qglEnd ();
-
 	qglDepthRange( 0, 1 );
 }
 
@@ -554,8 +493,17 @@ static void ProjectDlightTexture_altivec( void ) {
 		{
 			float luminance;
 			
-			luminance = (dl->color[0] * 255.0f + dl->color[1] * 255.0f + dl->color[2] * 255.0f) / 3;
+			luminance = LUMA(dl->color[0], dl->color[1], dl->color[2]) * 255.0f;
 			floatColor[0] = floatColor[1] = floatColor[2] = luminance;
+		}
+		else if(r_greyscale->value)
+		{
+			float luminance;
+			
+			luminance = LUMA(dl->color[0], dl->color[1], dl->color[2]) * 255.0f;
+			floatColor[0] = LERP(dl->color[0] * 255.0f, luminance, r_greyscale->value);
+			floatColor[1] = LERP(dl->color[1] * 255.0f, luminance, r_greyscale->value);
+			floatColor[2] = LERP(dl->color[2] * 255.0f, luminance, r_greyscale->value);
 		}
 		else
 		{
@@ -707,9 +655,18 @@ static void ProjectDlightTexture_scalar( void ) {
 		if(r_greyscale->integer)
 		{
 			float luminance;
-			
-			luminance = (dl->color[0] * 255.0f + dl->color[1] * 255.0f + dl->color[2] * 255.0f) / 3;
+
+			luminance = LUMA(dl->color[0], dl->color[1], dl->color[2]) * 255.0f;
 			floatColor[0] = floatColor[1] = floatColor[2] = luminance;
+		}
+		else if(r_greyscale->value)
+		{
+			float luminance;
+			
+			luminance = LUMA(dl->color[0], dl->color[1], dl->color[2]) * 255.0f;
+			floatColor[0] = LERP(dl->color[0] * 255.0f, luminance, r_greyscale->value);
+			floatColor[1] = LERP(dl->color[1] * 255.0f, luminance, r_greyscale->value);
+			floatColor[2] = LERP(dl->color[2] * 255.0f, luminance, r_greyscale->value);
 		}
 		else
 		{
@@ -766,9 +723,9 @@ static void ProjectDlightTexture_scalar( void ) {
 				}
 			}
 			clipBits[i] = clip;
-			colors[0] = myftol(floatColor[0] * modulate);
-			colors[1] = myftol(floatColor[1] * modulate);
-			colors[2] = myftol(floatColor[2] * modulate);
+			colors[0] = ri.ftol(floatColor[0] * modulate);
+			colors[1] = ri.ftol(floatColor[1] * modulate);
+			colors[2] = ri.ftol(floatColor[2] * modulate);
 			colors[3] = 255;
 		}
 
@@ -1175,11 +1132,22 @@ static void ComputeColors( shaderStage_t *pStage )
 	if(r_greyscale->integer)
 	{
 		int scale;
+		for(i = 0; i < tess.numVertexes; i++)
+		{
+			scale = LUMA(tess.svars.colors[i][0], tess.svars.colors[i][1], tess.svars.colors[i][2]);
+ 			tess.svars.colors[i][0] = tess.svars.colors[i][1] = tess.svars.colors[i][2] = scale;
+		}
+	}
+	else if(r_greyscale->value)
+	{
+		float scale;
 		
 		for(i = 0; i < tess.numVertexes; i++)
 		{
-			scale = (tess.svars.colors[i][0] + tess.svars.colors[i][1] + tess.svars.colors[i][2]) / 3;
-			tess.svars.colors[i][0] = tess.svars.colors[i][1] = tess.svars.colors[i][2] = scale;
+			scale = LUMA(tess.svars.colors[i][0], tess.svars.colors[i][1], tess.svars.colors[i][2]);
+			tess.svars.colors[i][0] = LERP(tess.svars.colors[i][0], scale, r_greyscale->value);
+			tess.svars.colors[i][1] = LERP(tess.svars.colors[i][1], scale, r_greyscale->value);
+			tess.svars.colors[i][2] = LERP(tess.svars.colors[i][2], scale, r_greyscale->value);
 		}
 	}
 }
@@ -1281,7 +1249,7 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 				break;
 
 			default:
-				ri.Error( ERR_DROP, "ERROR: unknown texmod '%d' in shader '%s'\n", pStage->bundle[b].texMods[tm].type, tess.shader->name );
+				ri.Error( ERR_DROP, "ERROR: unknown texmod '%d' in shader '%s'", pStage->bundle[b].texMods[tm].type, tess.shader->name );
 				break;
 			}
 		}
@@ -1298,6 +1266,7 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 	for ( stage = 0; stage < MAX_SHADER_STAGES; stage++ )
 	{
 		shaderStage_t *pStage = tess.xstages[stage];
+
 		if ( !pStage )
 		{
 			break;
@@ -1358,8 +1327,10 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 void RB_StageIteratorGeneric( void )
 {
 	shaderCommands_t *input;
+	shader_t		*shader;
 
 	input = &tess;
+	shader = input->shader;
 
 	RB_DeformTessGeometry();
 
@@ -1376,10 +1347,10 @@ void RB_StageIteratorGeneric( void )
 	//
 	// set face culling appropriately
 	//
-	GL_Cull( input->shader->cullType );
+	GL_Cull( shader->cullType );
 
 	// set polygon offset if necessary
-	if ( input->shader->polygonOffset )
+	if ( shader->polygonOffset )
 	{
 		qglEnable( GL_POLYGON_OFFSET_FILL );
 		qglPolygonOffset( r_offsetFactor->value, r_offsetUnits->value );
@@ -1391,7 +1362,7 @@ void RB_StageIteratorGeneric( void )
 	// to avoid compiling those arrays since they will change
 	// during multipass rendering
 	//
-	if ( tess.numPasses > 1 || input->shader->multitextureEnv )
+	if ( tess.numPasses > 1 || shader->multitextureEnv )
 	{
 		setArraysOnce = qfalse;
 		qglDisableClientState (GL_COLOR_ARRAY);
@@ -1463,7 +1434,7 @@ void RB_StageIteratorGeneric( void )
 	//
 	// reset polygon offset
 	//
-	if ( input->shader->polygonOffset )
+	if ( shader->polygonOffset )
 	{
 		qglDisable( GL_POLYGON_OFFSET_FILL );
 	}
@@ -1479,7 +1450,6 @@ void RB_StageIteratorVertexLitTexture( void )
 	shader_t		*shader;
 
 	input = &tess;
-
 	shader = input->shader;
 
 	//
@@ -1500,7 +1470,7 @@ void RB_StageIteratorVertexLitTexture( void )
 	//
 	// set face culling appropriately
 	//
-	GL_Cull( input->shader->cullType );
+	GL_Cull( shader->cullType );
 
 	//
 	// set arrays and lock
@@ -1558,8 +1528,10 @@ void RB_StageIteratorVertexLitTexture( void )
 
 void RB_StageIteratorLightmappedMultitexture( void ) {
 	shaderCommands_t *input;
+	shader_t		*shader;
 
 	input = &tess;
+	shader = input->shader;
 
 	//
 	// log this call
@@ -1573,7 +1545,7 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	//
 	// set face culling appropriately
 	//
-	GL_Cull( input->shader->cullType );
+	GL_Cull( shader->cullType );
 
 	//
 	// set color, pointers, and lock
@@ -1660,328 +1632,6 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 		qglUnlockArraysEXT();
 		GLimp_LogComment( "glUnlockArraysEXT\n" );
 	}
-}
-
-/*
- * RB_GLSL_IterateStagesGeneric
- * Iterate over each stage of a shader
- */
-static void RB_GLSL_IterateStagesGeneric(shaderCommands_t *input) {
-	int	stage;
-
-	for(stage = 0; stage < MAX_SHADER_STAGES; stage++) {
-		shaderStage_t	*pStage = tess.xstages[stage];
-		glslProgram_t	*program;
-
-		if (!pStage || pStage->program == tr.skipProgram)
-			break;
-
-		/* set state */
-		GL_State(pStage->stateBits);
-
-		/*
-		 * this is an ugly hack to work around a GeForce driver
-		 * bug with multitexture and clip planes
-		 */
-		if (backEnd.viewParms.isPortal)
-			qglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-		if (pStage->program)
-			/* use specified program */
-			R_GLSL_UseProgram(pStage->program);
-		else
-			/* use default program */
-			R_GLSL_UseProgram(tr.defaultProgram);
-
-		program = tr.programs[glState.currentProgram];
-
-		/* alphaGen */
-		if (program->u_AlphaGen > -1)
-			R_GLSL_SetUniform_AlphaGen(program, pStage->alphaGen);
-
-		/* ambient light */
-		if (program->u_AmbientLight > -1)
-			R_GLSL_SetUniform_AmbientLight(program, backEnd.currentEntity->ambientLight);
-
-		/* dynamic light */
-		if (program->u_DynamicLight > -1)
-			R_GLSL_SetUniform_DynamicLight(program, backEnd.currentEntity->dynamicLight);
-
-		/* light distance */
-		if (program->u_LightDistance > -1)
-			R_GLSL_SetUniform_LightDistance(program, backEnd.currentEntity->lightDistance);
-
-		/* rgbGen */
-		if (program->u_ColorGen > -1)
-			R_GLSL_SetUniform_ColorGen(program, pStage->rgbGen);
-
-		/* constant color */
-		if (program->u_ConstantColor > -1)
-			R_GLSL_SetUniform_ConstantColor(program, pStage->constantColor);
-
-		/* directed light */
-		if (program->u_DirectedLight > -1)
-			R_GLSL_SetUniform_DirectedLight(program, backEnd.currentEntity->directedLight);
-
-		/* entity color */
-		if (program->u_EntityColor > -1)
-			R_GLSL_SetUniform_EntityColor(program, backEnd.currentEntity->e.shaderRGBA);
-
-		/* fog color */
-		if (program->u_FogColor > -1 && tess.fogNum)
-			R_GLSL_SetUniform_FogColor(program, (tr.world->fogs + tess.fogNum)->colorInt);
-
-		/* greyscale */
-		if (program->u_Greyscale > -1)
-			R_GLSL_SetUniform_Greyscale(program, r_greyscale->integer);
-
-		/* identity light */
-		if (program->u_IdentityLight > -1)
-			R_GLSL_SetUniform_IdentityLight(program, tr.identityLight);
-
-		/* light direction */
-		if (program->u_LightDirection > -1)
-			R_GLSL_SetUniform_LightDirection(program, backEnd.currentEntity->lightDir);
-
-		/* model view matrix */
-		if (program->u_ModelViewMatrix > -1)
-			R_GLSL_SetUniform_ModelViewMatrix(program, glState.currentModelViewMatrix);
-
-		/* model view projection matrix */
-		if (program->u_ModelViewProjectionMatrix > -1)
-			R_GLSL_SetUniform_ModelViewProjectionMatrix(program, glState.currentModelViewProjectionMatrix);
-
-		/* projection matrix */
-		if (program->u_ProjectionMatrix > -1)
-			R_GLSL_SetUniform_ProjectionMatrix(program, glState.currentProjectionMatrix);
-
-		/* texture coordinates 0 */
-		if (program->u_TCGen0 > -1)
-			R_GLSL_SetUniform_TCGen0(program, pStage->bundle[0].tcGen);
-
-		/* texture coordinates 1 */
-		if (program->u_TCGen1 > -1)
-			R_GLSL_SetUniform_TCGen1(program, pStage->bundle[1].tcGen);
-
-		/* tex env */
-		if (program->u_TexEnv > -1) {
-			if (r_lightmap->integer)
-				R_GLSL_SetUniform_TexEnv(program, GL_REPLACE);
-			else
-				R_GLSL_SetUniform_TexEnv(program, input->shader->multitextureEnv);
-		}
-
-		/* texture unit 0 */
-		if (program->u_Texture0 > -1 && pStage->bundle[0].image[0]) {
-			GL_SelectTexture(0);
-
-			if (pStage->bundle[0].vertexLightmap && ((r_vertexLight->integer && !r_uiFullScreen->integer) || glConfig.hardwareType == GLHW_PERMEDIA2) && r_lightmap->integer)
-				GL_Bind(tr.whiteImage);
-			else
-				R_BindAnimatedImage(&pStage->bundle[0]);
-		}
-
-		/* texture unit 1 */
-		if (program->u_Texture1 > -1 && pStage->bundle[1].image[0]) {
-			GL_SelectTexture(1);
-			qglEnable(GL_TEXTURE_2D);
-			R_BindAnimatedImage(&pStage->bundle[1]);
-		}
-
-		/* texture unit 2 */
-		if (program->u_Texture2 > -1 && pStage->bundle[2].image[0]) {
-			GL_SelectTexture(2);
-			qglEnable(GL_TEXTURE_2D);
-			R_BindAnimatedImage(&pStage->bundle[2]);
-		}
-
-		/* texture unit 3 */
-		if (program->u_Texture3 > -1 && pStage->bundle[3].image[0]) {
-			GL_SelectTexture(3);
-			qglEnable(GL_TEXTURE_2D);
-			R_BindAnimatedImage(&pStage->bundle[3]);
-		}
-
-		/* texture unit 4 */
-		if (program->u_Texture4 > -1 && pStage->bundle[4].image[0]) {
-			GL_SelectTexture(4);
-			qglEnable(GL_TEXTURE_2D);
-			R_BindAnimatedImage(&pStage->bundle[4]);
-		}
-
-		/* texture unit 5 */
-		if (program->u_Texture5 > -1 && pStage->bundle[5].image[0]) {
-			GL_SelectTexture(5);
-			qglEnable(GL_TEXTURE_2D);
-			R_BindAnimatedImage(&pStage->bundle[5]);
-		}
-
-		/* texture unit 6 */
-		if (program->u_Texture6 > -1 && pStage->bundle[6].image[0]) {
-			GL_SelectTexture(6);
-			qglEnable(GL_TEXTURE_2D);
-			R_BindAnimatedImage(&pStage->bundle[6]);
-		}
-
-		/* texture unit 7 */
-		if (program->u_Texture7 > -1 && pStage->bundle[7].image[0]) {
-			GL_SelectTexture(7);
-			qglEnable(GL_TEXTURE_2D);
-			R_BindAnimatedImage(&pStage->bundle[7]);
-		}
-
-		/* time */
-		if (program->u_Time > -1)
-			R_GLSL_SetUniform_Time(program, input->shaderTime);
-
-		/* view origin */
-		if (program->u_ViewOrigin > -1)
-			R_GLSL_SetUniform_ViewOrigin(program, backEnd.or.viewOrigin);
-
-		/* draw */
-		R_DrawElements(input->numIndexes, input->indexes);
-
-		/* disable texture unit 7 */
-		if (program->u_Texture7 > -1)
-			qglDisable(GL_TEXTURE_2D);
-
-		/* disable texture unit 6 */
-		if (program->u_Texture6 > -1) {
-			GL_SelectTexture(6);
-			qglDisable(GL_TEXTURE_2D);
-		}
-
-		/* disable texture unit 5 */
-		if (program->u_Texture5 > -1) {
-			GL_SelectTexture(5);
-			qglDisable(GL_TEXTURE_2D);
-		}
-
-		/* disable texture unit 4 */
-		if (program->u_Texture4 > -1) {
-			GL_SelectTexture(4);
-			qglDisable(GL_TEXTURE_2D);
-		}
-
-		/* disable texture unit 3 */
-		if (program->u_Texture3 > -1) {
-			GL_SelectTexture(3);
-			qglDisable(GL_TEXTURE_2D);
-		}
-
-		/* disable texture unit 2 */
-		if (program->u_Texture2 > -1) {
-			GL_SelectTexture(2);
-			qglDisable(GL_TEXTURE_2D);
-		}
-
-		/* disable texture unit 1 */
-		if (program->u_Texture1 > -1) {
-			GL_SelectTexture(1);
-			qglDisable(GL_TEXTURE_2D);
-			qglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
-
-		/* switch to texture unit 0 */
-		GL_SelectTexture(0);
-
-		/* allow skipping out to show just lightmaps during development */
-		if (r_lightmap->integer && (pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap || pStage->bundle[0].vertexLightmap))
-			break;
-	}
-
-	/* switch to standard rendering pipeline */
-	R_GLSL_UseProgram(0);
-}
-
-/*
- * RB_GLSL_StageIteratorGeneric
- * Stage iterator for GLSL programs
- */
-void RB_GLSL_StageIteratorGeneric(void) {
-	shaderCommands_t	*input;
-
-	input = &tess;
-
-	/* log this call */
-	if (r_logFile->integer) {
-		/* don't just call LogComment, or we will get a call to va() every frame! */
-		GLimp_LogComment(va("--- R_GLSL_StageIteratorGeneric( %s ) ---\n", input->shader->name));
-	}
-
-	/* set face culling appropiately */
-	GL_Cull(input->shader->cullType);
-
-	/* set polygon offset if necessary */
-	if (input->shader->polygonOffset) {
-		qglEnable(GL_POLYGON_OFFSET_FILL);
-		qglPolygonOffset(r_offsetFactor->value, r_offsetUnits->value);
-	}
-
-	/* set vertex color array */
-	qglEnableClientState(GL_COLOR_ARRAY);
-	qglColorPointer(4, GL_UNSIGNED_BYTE, 0, input->vertexColors);
-
-	/* set texture coordinate array 0 */
-	GL_SelectTexture(0);
-	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	qglTexCoordPointer(2, GL_FLOAT, 16, input->texCoords[0][0]);
-
-	/* set texture coordinate array 1 */
-	GL_SelectTexture(1);
-	qglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	qglTexCoordPointer(2, GL_FLOAT, 16, input->texCoords[0][1]);
-
-	/* set vertex normal array */
-	qglEnableClientState(GL_NORMAL_ARRAY);
-	qglNormalPointer(GL_FLOAT, 16, input->normal);
-
-	/* lock XYZ */
-	qglVertexPointer(3, GL_FLOAT, 16, input->xyz); /* padded SIMD */
-	if (qglLockArraysEXT) {
-		qglLockArraysEXT(0, input->numVertexes);
-		GLimp_LogComment("glLockArraysEXT\n");
-	}
-
-	RB_GLSL_IterateStagesGeneric(input);
-
-	/* now do any dynamic lighting needed */
-	if (input->dlightBits && input->shader->sort <= SS_OPAQUE && !(input->shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY)))
-		ProjectDlightTexture();
-
-	// <-- RiO_Outlines: now do outlines
-	RB_OutlinesPass();
-	// -->
-
-	/* now do fog */
-	if (input->fogNum && input->shader->fogPass)
-		RB_FogPass(); // TODO: uses svars which aren't set, so move to program
-
-	/* unlock arrays */
-	if (qglUnlockArraysEXT) {
-		qglUnlockArraysEXT();
-		GLimp_LogComment("glUnlockArraysExt\n");
-	}
-
-	/* reset polygon offset */
-	if (input->shader->polygonOffset)
-		qglDisable(GL_POLYGON_OFFSET_FILL);
-}
-
-/*
- * RB_GLSL_StageIteratorVertexLitTexture
- * Stage iterator for GLSL vertex lit texture program
- */
-void RB_GLSL_StageIteratorVertexLitTexture(void) {
-	RB_StageIteratorVertexLitTexture(); // TODO: placeholder
-}
-
-/*
- * RB_GLSL_StageIteratorLightmappedMultitexture
- * Stage iterator for GLSL lightmapped multitexture program
- */
-void RB_GLSL_StageIteratorLightmappedMultitexture(void) {
-	RB_StageIteratorLightmappedMultitexture(); // TODO: placeholder
 }
 
 /*

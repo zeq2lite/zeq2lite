@@ -1615,9 +1615,6 @@ CM_DrawDebugSurface
 Called from the renderer
 ==================
 */
-#ifndef BSPC
-void BotDrawDebugPolygons(void (*drawPoly)(int color, int numPoints, float *points), int value);
-#endif
 
 void CM_DrawDebugSurface( void (*drawPoly)(int color, int numPoints, float *points) ) {
 	static cvar_t	*cv;
@@ -1642,7 +1639,6 @@ void CM_DrawDebugSurface( void (*drawPoly)(int color, int numPoints, float *poin
 
 	if (cv2->integer != 1)
 	{
-		BotDrawDebugPolygons(drawPoly, cv2->integer);
 		return;
 	}
 #endif

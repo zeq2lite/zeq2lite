@@ -225,7 +225,7 @@ void CON_Init( void )
 	GetConsoleScreenBufferInfo( qconsole_hout, &info );
 	qconsole_attrib = info.wAttributes;
 
-	SetConsoleTitle("ZEQ2-Lite Dedicated Server Console");
+	SetConsoleTitle(CLIENT_WINDOW_TITLE " Dedicated Server Console");
 
 	// make cursor invisible
 	GetConsoleCursorInfo( qconsole_hout, &qconsole_orig_cursorinfo );
@@ -326,13 +326,14 @@ char *CON_Input( void )
 		}
 	}
 
-	CON_Show();
-
-	if( newlinepos < 0)
+	if( newlinepos < 0) {
+		CON_Show();
 		return NULL;
+	}
 
 	if( !qconsole_linelen )
 	{
+		CON_Show();
 		Com_Printf( "\n" );
 		return NULL;
 	}
@@ -341,6 +342,7 @@ char *CON_Input( void )
 	Com_Printf( "%s\n", qconsole_line );
 
 	qconsole_linelen = 0;
+	CON_Show();
 
 	return qconsole_line;
 }

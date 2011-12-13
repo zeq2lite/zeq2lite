@@ -34,7 +34,7 @@ constant, irrespective of distance, but the intensity should be proportional to 
 projected area of the light source.
 
 A surface that has been flagged as having a light flare will calculate the depth
-buffer value that it's midpoint should have when the surface is added.
+buffer value that its midpoint should have when the surface is added.
 
 After all opaque surfaces have been rendered, the depth buffer is read back for
 each flare in view.  If the point has not been obscured by a closer surface, the
@@ -114,7 +114,7 @@ This is called at surface tesselation time
 */
 void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t normal ) {
 	int				i;
-	flare_t			*f, *oldest;
+	flare_t			*f;
 	vec3_t			local;
 	float			d = 1;
 	vec4_t			eye, clip, normalized, window;
@@ -152,7 +152,6 @@ void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t 
 	}
 
 	// see if a flare with a matching surface, scene, and view exists
-	oldest = r_flareStructs;
 	for ( f = r_activeFlares ; f ; f = f->next ) {
 		if ( f->surface == surface && f->frameSceneNum == backEnd.viewParms.frameSceneNum
 			&& f->inPortal == backEnd.viewParms.isPortal ) {

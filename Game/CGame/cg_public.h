@@ -184,9 +184,6 @@ typedef enum {
 	// <-- RiO: Supply file list trap call
 	CG_FS_GETFILELIST,
 	CG_R_ADDFOGTOSCENE,
-	CG_R_ADDREFEXTENTITYTOSCENE,
-	CG_R_GETLERPPOSE,
-	CG_R_SETBLENDPOSE
 	// -->
 } cgameImport_t;
 

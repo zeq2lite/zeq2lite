@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tr_local.h"
 
-float ProjectRadius( float r, vec3_t location )
+static float ProjectRadius( float r, vec3_t location )
 {
 	float pr;
 	float dist;
@@ -185,12 +185,10 @@ int R_ComputeLOD( trRefEntity_t *ent ) {
 		// and use that as a criteria for selecting LOD
 
 #ifdef RAVENMD4
-		// This is an MDR model.
-		
-		if(tr.currentModel->md4)
+		if(tr.currentModel->type == MOD_MDR)
 		{
 			int frameSize;
-			mdr = (mdrHeader_t *) tr.currentModel->md4;
+			mdr = (mdrHeader_t *) tr.currentModel->modelData;
 			frameSize = (size_t) (&((mdrFrame_t *)0)->bones[mdr->numBones]);
 			
 			mdrframe = (mdrFrame_t *) ((byte *) mdr + mdr->ofsFrames + frameSize * ent->e.frame);
@@ -220,7 +218,7 @@ int R_ComputeLOD( trRefEntity_t *ent ) {
 		}
 
 		flod *= tr.currentModel->numLods;
-		lod = myftol( flod );
+		lod = ri.ftol(flod);
 
 		if ( lod < 0 )
 		{

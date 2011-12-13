@@ -62,22 +62,28 @@ void GL_Bind( image_t *image ) {
 /*
 ** GL_SelectTexture
 */
-void GL_SelectTexture(int unit) {
-	if (glState.currenttmu == unit)
+void GL_SelectTexture( int unit )
+{
+	if ( glState.currenttmu == unit )
+	{
 		return;
+	}
 
-	if (unit < glConfig.numTextureUnits) {
-		qglActiveTextureARB(GL_TEXTURE0_ARB + unit);
-
-		if (r_logFile->integer)
-			GLimp_LogComment(va("glActiveTextureARB( GL_TEXTURE%i_ARB )\n", unit));
-
-		qglClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
-
-		if (r_logFile->integer)
-			GLimp_LogComment(va("glClientActiveTextureARB( GL_TEXTURE%i_ARB )\n", unit));
+	if ( unit == 0 )
+	{
+		qglActiveTextureARB( GL_TEXTURE0_ARB );
+		GLimp_LogComment( "glActiveTextureARB( GL_TEXTURE0_ARB )\n" );
+		qglClientActiveTextureARB( GL_TEXTURE0_ARB );
+		GLimp_LogComment( "glClientActiveTextureARB( GL_TEXTURE0_ARB )\n" );
+	}
+	else if ( unit == 1 )
+	{
+		qglActiveTextureARB( GL_TEXTURE1_ARB );
+		GLimp_LogComment( "glActiveTextureARB( GL_TEXTURE1_ARB )\n" );
+		qglClientActiveTextureARB( GL_TEXTURE1_ARB );
+		GLimp_LogComment( "glClientActiveTextureARB( GL_TEXTURE1_ARB )\n" );
 	} else {
-		ri.Error(ERR_DROP, "GL_SelectTexture: unit = %i", unit);
+		ri.Error( ERR_DROP, "GL_SelectTexture: unit = %i", unit );
 	}
 
 	glState.currenttmu = unit;
@@ -183,7 +189,7 @@ void GL_TexEnv( int env )
 		qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD );
 		break;
 	default:
-		ri.Error( ERR_DROP, "GL_TexEnv: invalid env '%d' passed\n", env );
+		ri.Error( ERR_DROP, "GL_TexEnv: invalid env '%d' passed", env );
 		break;
 	}
 }
@@ -258,7 +264,7 @@ void GL_State( unsigned long stateBits )
 				break;
 			default:
 				srcFactor = GL_ONE;		// to get warning to shut up
-				ri.Error( ERR_DROP, "GL_State: invalid src blend state bits\n" );
+				ri.Error( ERR_DROP, "GL_State: invalid src blend state bits" );
 				break;
 			}
 
@@ -290,7 +296,7 @@ void GL_State( unsigned long stateBits )
 				break;
 			default:
 				dstFactor = GL_ONE;		// to get warning to shut up
-				ri.Error( ERR_DROP, "GL_State: invalid dst blend state bits\n" );
+				ri.Error( ERR_DROP, "GL_State: invalid dst blend state bits" );
 				break;
 			}
 
@@ -413,9 +419,6 @@ static void SetViewportAndScissor( void ) {
 		backEnd.viewParms.viewportWidth, backEnd.viewParms.viewportHeight );
 	qglScissor( backEnd.viewParms.viewportX, backEnd.viewParms.viewportY, 
 		backEnd.viewParms.viewportWidth, backEnd.viewParms.viewportHeight );
-
-	Matrix4Copy(backEnd.viewParms.projectionMatrix, glState.currentProjectionMatrix);
-	Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
 }
 
 /*
@@ -442,11 +445,6 @@ void RB_BeginDrawingView (void) {
 	// 2D images again
 	backEnd.projection2D = qfalse;
 
-	//
-	// set the modelview matrix for the viewer
-	//
-	SetViewportAndScissor();
-
 	// ensures that depth writes are enabled for the depth clear
 	GL_State( GLS_DEFAULT );
 	// clear relevant buffers
@@ -462,6 +460,11 @@ void RB_BeginDrawingView (void) {
 		qglClearColor( 0.0f, 0.3f, 1.0f, 1.0f );	// FIXME: get color of sky
 	}
 	qglClear( clearBits );
+
+	//
+	// set the modelview matrix for the viewer
+	//
+	SetViewportAndScissor();
 
 	if ( ( backEnd.refdef.rdflags & RDF_HYPERSPACE ) )
 	{
@@ -494,10 +497,6 @@ void RB_BeginDrawingView (void) {
 		plane2[3] = DotProduct (plane, backEnd.viewParms.or.origin) - plane[3];
 
 		qglLoadMatrixf( s_flipMatrix );
-
-		Matrix4Copy(s_flipMatrix, glState.currentModelViewMatrix);
-		Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
-
 		qglClipPlane (GL_CLIP_PLANE0, plane2);
 		qglEnable (GL_CLIP_PLANE0);
 	} else {
@@ -544,7 +543,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	backEnd.pc.c_surfaces += numDrawSurfs;
 
 	for (i = 0, drawSurf = drawSurfs ; i < numDrawSurfs ; i++, drawSurf++) {
-		if ( drawSurf->sort == oldSort && backEnd.currentEntity->e.skel.bones == 0) {
+		if ( drawSurf->sort == oldSort ) {
 			// fast path, same as previous sort
 			rb_surfaceTable[ *drawSurf->surface ]( drawSurf->surface );
 			continue;
@@ -556,8 +555,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		// change the tess parameters if needed
 		// a "entityMergable" shader is a shader that can have surfaces from seperate
 		// entities merged into a single batch, like smoke and blood puff sprites
-		if ((backEnd.currentEntity->e.skel.numBones > 0 || shader != oldShader) || fogNum != oldFogNum || dlighted != oldDlighted 
-			|| ( entityNum != oldEntityNum && !shader->entityMergable )) {
+		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted 
+			|| ( entityNum != oldEntityNum && !shader->entityMergable ) ) {
 			if (oldShader != NULL) {
 				RB_EndSurface();
 			}
@@ -608,9 +607,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 			qglLoadMatrixf( backEnd.or.modelMatrix );
 
-			Matrix4Copy(backEnd.or.modelMatrix, glState.currentModelViewMatrix);
-			Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
-
 			//
 			// change depthrange. Also change projection matrix so first person weapon does not look like coming
 			// out of the screen.
@@ -629,9 +625,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 								qglMatrixMode(GL_PROJECTION);
 								qglLoadMatrixf(backEnd.viewParms.projectionMatrix);
 								qglMatrixMode(GL_MODELVIEW);
-
-								Matrix4Copy(backEnd.viewParms.projectionMatrix, glState.currentProjectionMatrix);
-								Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
 							}
 						}
 						else
@@ -643,9 +636,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 							qglMatrixMode(GL_PROJECTION);
 							qglLoadMatrixf(temp.projectionMatrix);
 							qglMatrixMode(GL_MODELVIEW);
-
-							Matrix4Copy(temp.projectionMatrix, glState.currentProjectionMatrix);
-							Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
 						}
 					}
 
@@ -659,9 +649,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 						qglMatrixMode(GL_PROJECTION);
 						qglLoadMatrixf(backEnd.viewParms.projectionMatrix);
 						qglMatrixMode(GL_MODELVIEW);
-
-						Matrix4Copy(backEnd.viewParms.projectionMatrix, glState.currentProjectionMatrix);
-						Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
 					}
 
 					qglDepthRange (0, 1);
@@ -687,10 +674,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 	// go back to the world modelview matrix
 	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
-
-	Matrix4Copy(backEnd.viewParms.world.modelMatrix, glState.currentModelViewMatrix);
-	Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
-
 	if ( depthRange ) {
 		qglDepthRange (0, 1);
 	}
@@ -736,10 +719,6 @@ void	RB_SetGL2D (void) {
 	qglMatrixMode(GL_MODELVIEW);
     qglLoadIdentity ();
 
-    qglGetFloatv(GL_PROJECTION_MATRIX, glState.currentProjectionMatrix);
-    qglGetFloatv(GL_MODELVIEW_MATRIX, glState.currentModelViewMatrix);
-    Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
-
 	GL_State( GLS_DEPTHTEST_DISABLE |
 			  GLS_SRCBLEND_SRC_ALPHA |
 			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
@@ -774,7 +753,7 @@ void RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *
 	// we definately want to sync every frame for the cinematics
 	qglFinish();
 
-	start = end = 0;
+	start = 0;
 	if ( r_speeds->integer ) {
 		start = ri.Milliseconds();
 	}
@@ -1165,6 +1144,8 @@ void RB_ExecuteRenderCommands( const void *data ) {
 	}
 
 	while ( 1 ) {
+		data = PADP(data, sizeof(void *));
+
 		switch ( *(const int *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );

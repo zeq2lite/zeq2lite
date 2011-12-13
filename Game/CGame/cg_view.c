@@ -898,8 +898,6 @@ static void CG_OffsetFirstPersonView( void ) {
 		return;
 	}
 */
-	// add angles based on weapon kick
-	VectorAdd (angles, cg.kick_angles, angles);
 
 	// add angles based on damage kick
 	if ( cg.damageTime ) {
@@ -980,10 +978,6 @@ static void CG_OffsetFirstPersonView( void ) {
 
 	// add step offset
 	CG_StepOffset();
-
-	// add kick offset
-
-	VectorAdd (origin, cg.kick_origin, origin);
 
 	// pivot the eye based on a neck length
 #if 0

@@ -44,7 +44,7 @@ static const orderTask_t validOrders[] = {
 	{ VOICECHAT_FOLLOWFLAGCARRIER,	TEAMTASK_ESCORT		}
 };
 
-static const int numValidOrders = sizeof(validOrders) / sizeof(orderTask_t);
+static const int numValidOrders = ARRAY_LEN(validOrders);
 
 #ifdef MISSIONPACK
 static int CG_ValidOrder(const char *p) {
@@ -452,6 +452,7 @@ static void CG_MapRestart( void ) {
 	cg.timelimitWarnings = 0;
 
 	cg.intermissionStarted = qfalse;
+	cg.levelShot = qfalse;
 
 	cgs.voteTime = 0;
 
@@ -527,7 +528,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 		return qfalse;
 	}
 	if ( len >= MAX_VOICEFILESIZE ) {
-		trap_Print( va( S_COLOR_RED "voice chat file too large: %s is %i, max allowed is %i", filename, len, MAX_VOICEFILESIZE ) );
+		trap_Print( va( S_COLOR_RED "voice chat file too large: %s is %i, max allowed is %i\n", filename, len, MAX_VOICEFILESIZE ) );
 		trap_FS_FCloseFile( f );
 		return qfalse;
 	}
@@ -640,7 +641,7 @@ int CG_HeadModelVoiceChats( char *filename ) {
 		return -1;
 	}
 	if ( len >= MAX_VOICEFILESIZE ) {
-		trap_Print( va( S_COLOR_RED "voice chat file too large: %s is %i, max allowed is %i", filename, len, MAX_VOICEFILESIZE ) );
+		trap_Print( va( S_COLOR_RED "voice chat file too large: %s is %i, max allowed is %i\n", filename, len, MAX_VOICEFILESIZE ) );
 		trap_FS_FCloseFile( f );
 		return -1;
 	}

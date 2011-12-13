@@ -25,14 +25,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 
 #define MAX_LOADING_PLAYER_ICONS	16
-#define MAX_LOADING_ITEM_ICONS		26
 
 static int			loadingPlayerIconCount;
-static int			loadingItemIconCount;
 static char	 		loadingPlayerNames[MAX_LOADING_PLAYER_ICONS][32];
 static qhandle_t	loadingPlayerIcons[MAX_LOADING_PLAYER_ICONS];
-static qhandle_t	loadingItemIcons[MAX_LOADING_ITEM_ICONS];
-
 
 /*
 ===================
@@ -64,12 +60,6 @@ void CG_LoadingString( const char *s ) {
 	trap_UpdateScreen();
 }
 
-/*
-===================
-CG_LoadingItem
-===================
-*/
-void CG_LoadingItem( int itemNum ) {}
 
 /*
 ===================
@@ -89,7 +79,7 @@ void CG_LoadingClient( int clientNum ) {
 	if ( loadingPlayerIconCount < MAX_LOADING_PLAYER_ICONS ) {
 		Q_strncpyz( name, Info_ValueForKey( info, "n" ), sizeof(name) );
 		Q_strncpyz( model, Info_ValueForKey( info, "model" ), sizeof( model ) );
-		skin = Q_strrchr( model, '/' );
+		skin = strrchr( model, '/' );
 		if ( skin ) {
 			*skin++ = '\0';
 		} else {

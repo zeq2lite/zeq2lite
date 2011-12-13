@@ -100,6 +100,12 @@ void SND_setup(void) {
 	Com_Printf("Sound memory manager started\n");
 }
 
+void SND_shutdown(void)
+{
+		free(sfxScratchBuffer);
+		free(buffer);
+}
+
 /*
 ================
 ResampleSfx
@@ -216,12 +222,6 @@ qboolean S_LoadSound( sfx_t *sfx )
 		Com_DPrintf(S_COLOR_YELLOW "WARNING: %s is a 8 bit wav file\n", sfx->soundName);
 	}
 
-	/*
-	if ( info.rate != 22050 ) {
-		Com_DPrintf(S_COLOR_YELLOW "WARNING: %s is not a 22kHz wav file\n", sfx->soundName);
-	}
-	*/
-
 	samples = Hunk_AllocateTempMemory(info.samples * sizeof(short) * 2);
 
 	sfx->lastTimeUsed = Com_Milliseconds()+1;
@@ -257,7 +257,7 @@ qboolean S_LoadSound( sfx_t *sfx )
 	}
 	
 	Hunk_FreeTempMemory(samples);
-	Z_Free(data);
+	Hunk_FreeTempMemory(data);
 
 	return qtrue;
 }

@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Foobar; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -129,11 +129,10 @@ S_RawSamples
 =================
 */
 void S_RawSamples (int stream, int samples, int rate, int width, int channels,
-		   const byte *data, float volume)
+		   const byte *data, float volume, int entityNum)
 {
-	if( si.RawSamples ) {
-		si.RawSamples( stream, samples, rate, width, channels, data, volume );
-	}
+	if(si.RawSamples)
+		si.RawSamples(stream, samples, rate, width, channels, data, volume, entityNum);
 }
 
 /*
@@ -410,12 +409,9 @@ void S_Play_f( void ) {
 
 	i = 1;
 	while ( i<Cmd_Argc() ) {
-		if ( !Q_strrchr(Cmd_Argv(i), '.') ) {
-			Com_sprintf( name, sizeof(name), "%s.ogg", Cmd_Argv(1) );
-		} else {
-			Q_strncpyz( name, Cmd_Argv(i), sizeof(name) );
-		}
+		Q_strncpyz( name, Cmd_Argv(i), sizeof(name) );
 		h = si.RegisterSound( name, qfalse );
+
 		if( h ) {
 			si.StartLocalSound( h, CHAN_LOCAL_SOUND );
 		}
@@ -512,7 +508,7 @@ void S_Init( void )
 
 		if( started ) {
 			if( !S_ValidSoundInterface( &si ) ) {
-				Com_Error( ERR_FATAL, "Sound interface invalid." );
+				Com_Error( ERR_FATAL, "Sound interface invalid" );
 			}
 
 			S_SoundInfo( );

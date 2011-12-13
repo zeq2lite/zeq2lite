@@ -94,7 +94,6 @@ typedef struct {
 #define	CS_INTERMISSION			22		// when 1, fraglimit/timelimit has been hit and intermission will start in a second or two
 #define CS_FLAGSTATUS			23		// string indicating flag status in CTF
 #define CS_SHADERSTATE			24
-#define CS_BOTINFO				25
 
 #define	CS_ITEMS				27		// string of 0's and 1's that tell which items are present
 #define CS_CLIENTSREADY			29

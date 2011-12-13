@@ -46,8 +46,11 @@ void	trap_Print( const char *fmt ) {
 	syscall( CG_PRINT, fmt );
 }
 
-void	trap_Error( const char *fmt ) {
-	syscall( CG_ERROR, fmt );
+void trap_Error(const char *fmt)
+{
+	syscall(CG_ERROR, fmt);
+	// shut up GCC warning about returning functions, because we know better
+	exit(1);
 }
 
 int		trap_Milliseconds( void ) {
@@ -303,18 +306,6 @@ int		trap_R_LerpTag( orientation_t *tag, clipHandle_t mod, int startFrame, int e
 
 void	trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset ) {
 	syscall( CG_R_REMAP_SHADER, oldShader, newShader, timeOffset );
-}
-
-void	trap_R_AddRefExtendedEntityToScene( const refExtEntity_t *re ) {
-	syscall( CG_R_ADDREFEXTENTITYTOSCENE, re );
-}
-
-int		trap_R_GetLerpPose( skel_t *skel, qhandle_t mod, int startFrame, int endFrame, float frontLerp ) {
-	return syscall( CG_R_GETLERPPOSE, skel, mod, startFrame, endFrame, PASSFLOAT(frontLerp) );
-}
-
-int		trap_R_SetBlendPose( skel_t *skel, qhandle_t mod, int startFrame[3], int endFrame[3], float frontLerp[3], vec3_t angles[3] ) {
-	return syscall( CG_R_SETBLENDPOSE, skel, mod, startFrame, endFrame, frontLerp, angles );
 }
 
 void		trap_GetGlconfig( glconfig_t *glconfig ) {

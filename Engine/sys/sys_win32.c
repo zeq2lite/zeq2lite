@@ -37,18 +37,47 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <wincrypt.h>
 #include <shlobj.h>
 #include <psapi.h>
+#include <float.h>
 
 // Used to determine where to store user-specific files
 static char homePath[ MAX_OSPATH ] = { 0 };
 
-#ifdef __WIN64__
-void Sys_SnapVector( float *v )
-{
-        v[0] = rint(v[0]);
-        v[1] = rint(v[1]);
-        v[2] = rint(v[2]);
-}
+#ifndef DEDICATED
+static UINT timerResolution = 0;
 #endif
+
+/*
+================
+Sys_SetFPUCW
+Set FPU control word to default value
+================
+*/
+
+#ifndef _RC_CHOP
+// mingw doesn't seem to have these defined :(
+
+  #define _MCW_EM	0x0008001fU
+  #define _MCW_RC	0x00000300U
+  #define _MCW_PC	0x00030000U
+  #define _RC_NEAR      0x00000000U
+  #define _PC_53	0x00010000U
+  
+  unsigned int _controlfp(unsigned int new, unsigned int mask);
+#endif
+
+#define FPUCWMASK1 (_MCW_RC | _MCW_EM)
+#define FPUCW (_RC_NEAR | _MCW_EM | _PC_53)
+
+#if idx64
+#define FPUCWMASK	(FPUCWMASK1)
+#else
+#define FPUCWMASK	(FPUCWMASK1 | _MCW_PC)
+#endif
+
+void Sys_SetFloatEnv(void)
+{
+	_controlfp(FPUCW, FPUCWMASK);
+}
 
 /*
 ================
@@ -60,10 +89,7 @@ char *Sys_DefaultHomePath( void )
 	TCHAR szPath[MAX_PATH];
 	FARPROC qSHGetFolderPath;
 	HMODULE shfolder = LoadLibrary("shfolder.dll");
-	char  *basepath;
-
-	basepath = Cvar_VariableString( "fs_basepath" );
-
+	
 	if( !*homePath )
 	{
 		if(shfolder == NULL)
@@ -87,17 +113,15 @@ char *Sys_DefaultHomePath( void )
 			FreeLibrary(shfolder);
 			return NULL;
 		}
-		Q_strncpyz( homePath, szPath, sizeof( homePath ) );
-		Q_strcat( homePath, sizeof( homePath ), basepath );
+		
+		Com_sprintf(homePath, sizeof(homePath), "%s%c", szPath, PATH_SEP);
+
+		if(com_homepath->string[0])
+			Q_strcat(homePath, sizeof(homePath), com_homepath->string);
+		else
+			Q_strcat(homePath, sizeof(homePath), HOMEPATH_NAME_WIN);
+
 		FreeLibrary(shfolder);
-		if( !CreateDirectory( homePath, NULL ) )
-		{
-			if( GetLastError() != ERROR_ALREADY_EXISTS )
-			{
-				Com_Printf("Unable to create directory \"%s\"\n", homePath );
-				return NULL;
-			}
-		}
 	}
 
 	return homePath;
@@ -140,34 +164,6 @@ int Sys_Milliseconds (void)
 
 	return sys_curtime;
 }
-
-#ifndef __GNUC__ //see snapvectora.s
-/*
-================
-Sys_SnapVector
-================
-*/
-void Sys_SnapVector( float *v )
-{
-	int i;
-	float f;
-
-	f = *v;
-	__asm	fld		f;
-	__asm	fistp	i;
-	*v = i;
-	v++;
-	f = *v;
-	__asm	fld		f;
-	__asm	fistp	i;
-	*v = i;
-	v++;
-	f = *v;
-	__asm	fld		f;
-	__asm	fistp	i;
-	*v = i;
-}
-#endif
 
 /*
 ================
@@ -319,6 +315,17 @@ qboolean Sys_Mkdir( const char *path )
 	}
 
 	return qtrue;
+}
+
+/*
+==================
+Sys_Mkfifo
+Noop on windows because named pipes do not function the same way
+==================
+*/
+FILE *Sys_Mkfifo( const char *ospath )
+{
+	return NULL;
 }
 
 /*
@@ -708,8 +715,13 @@ Windows specific initialisation
 void Sys_PlatformInit( void )
 {
 #ifndef DEDICATED
+	TIMECAPS ptc;
 	const char *SDL_VIDEODRIVER = getenv( "SDL_VIDEODRIVER" );
+#endif
 
+	Sys_SetFloatEnv();
+
+#ifndef DEDICATED
 	if( SDL_VIDEODRIVER )
 	{
 		Com_Printf( "SDL_VIDEODRIVER is externally set to \"%s\", "
@@ -718,6 +730,36 @@ void Sys_PlatformInit( void )
 	}
 	else
 		SDL_VIDEODRIVER_externallySet = qfalse;
+
+	if(timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
+	{
+		timerResolution = ptc.wPeriodMin;
+
+		if(timerResolution > 1)
+		{
+			Com_Printf("Warning: Minimum supported timer resolution is %ums "
+				"on this system, recommended resolution 1ms\n", timerResolution);
+		}
+		
+		timeBeginPeriod(timerResolution);				
+	}
+	else
+		timerResolution = 0;
+#endif
+}
+
+/*
+==============
+Sys_PlatformExit
+
+Windows specific initialisation
+==============
+*/
+void Sys_PlatformExit( void )
+{
+#ifndef DEDICATED
+	if(timerResolution)
+		timeEndPeriod(timerResolution);
 #endif
 }
 
@@ -730,7 +772,10 @@ set/unset environment variables (empty value removes it)
 */
 void Sys_SetEnv(const char *name, const char *value)
 {
-	_putenv(va("%s=%s", name, value));
+	if(value)
+		_putenv(va("%s=%s", name, value));
+	else
+		_putenv(va("%s=", name));
 }
 
 /*

@@ -153,9 +153,7 @@ typedef struct {
 	int				painDirection;	// flip from 0 to 1
 	int				lightningFiring;
 
-	// railgun trail spawning
-	vec3_t			railgunImpact;
-	qboolean		railgunFlash;
+	int				railFireTime;
 
 	// machinegun spinning
 	float			barrelAngle;
@@ -164,7 +162,7 @@ typedef struct {
 
 	// needed to obtain tag positions after player entity has been processed.
 	// For linking beam attacks, particle systems, etc.
-	refExtEntity_t		legsRef, torsoRef, headRef;
+	refEntity_t		legsRef, torsoRef, headRef;
 } playerEntity_t;
 
 //=================================================
@@ -332,9 +330,12 @@ typedef struct {
 	qboolean		infoValid;
 	char			name[MAX_QPATH];
 	team_t			team;
-	int				botSkill;		// 0 = not bot, 1-5 = bot
 	vec3_t			color1;
 	vec3_t			color2;
+	
+	byte c1RGBA[4];
+	byte c2RGBA[4];
+
 	int				score;			// updated by score servercmds
 	int				location;		// location index for team mode
 	int				powerLevel;			// you only get this info about your teammates
@@ -388,7 +389,6 @@ typedef struct {
 	int				cameraBackup[4];
 	tierConfig_cg	tierConfig[8];
 	auraConfig_t	*auraConfig[8];
-	qboolean		usingMD4;
 } clientInfo_t;
 
 
@@ -428,7 +428,6 @@ typedef struct weaponInfo_s {
 
 	sfxHandle_t		readySound;
 	sfxHandle_t		firingSound;
-	qboolean		loopFireSound;
 } weaponInfo_t;
 
 
@@ -689,8 +688,10 @@ typedef struct {
 	int			spectatorOffset;						// current offset from start
 	int			spectatorPaintLen; 						// current offset from start
 
+#ifdef MISSIONPACK
 	// skull trails
 	skulltrail_t	skulltrails[MAX_CLIENTS];
+#endif
 
 	// centerprinting
 	int			centerPrintTime;
@@ -701,9 +702,6 @@ typedef struct {
 
 	// low ammo warning state
 	int			lowAmmoWarning;		// 1 = low, 2 = empty
-
-	// kill timers for carnage reward
-	int			lastKillTime;
 
 	// crosshair client ID
 	int			crosshairClientNum;
@@ -776,9 +774,6 @@ typedef struct {
 	float		v_dmg_time;
 	float		v_dmg_pitch;
 	float		v_dmg_roll;
-
-	vec3_t		kick_angles;	// weapon kicks
-	vec3_t		kick_origin;
 
 	// temp working variables for player view
 	float		bobfracsin;
@@ -1207,8 +1202,8 @@ extern	radar_t			cg_playerOrigins[MAX_CLIENTS];
 const char *CG_ConfigString( int index );
 const char *CG_Argv( int arg );
 
-void QDECL CG_Printf( const char *msg, ... );
-void QDECL CG_Error( const char *msg, ... );
+void QDECL CG_Printf( const char *msg, ... ) __attribute__ ((format (printf, 1, 2)));
+void QDECL CG_Error( const char *msg, ... ) __attribute__ ((noreturn, format (printf, 1, 2)));
 
 void CG_UpdateCvars( void );
 
@@ -1343,7 +1338,6 @@ qhandle_t CG_StatusHandle(int task);
 void CG_Player( centity_t *cent );
 void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team, qboolean auraAlways );
-void CG_AddRefExtEntityWithPowerups( refExtEntity_t *ent, entityState_t *state, int team, qboolean auraAlways );
 void CG_NewClientInfo( int clientNum );
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
 qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci );
@@ -1389,11 +1383,7 @@ void CG_Beam( centity_t *cent );
 void CG_AdjustPositionForMover( const vec3_t in, int moverNum, int fromTime, int toTime, vec3_t out );
 void CG_PositionEntityOnTag( refEntity_t *entity, const refEntity_t *parent, 
 							qhandle_t parentModel, char *tagName );
-void CG_PositionEntityOnTagMD4( refEntity_t *entity, const refExtEntity_t *parent, 
-							qhandle_t parentModel, char *tagName );
 void CG_PositionRotatedEntityOnTag( refEntity_t *entity, const refEntity_t *parent, 
-							qhandle_t parentModel, char *tagName );
-void CG_PositionRotatedEntityOnTagMD4( refEntity_t *entity, const refExtEntity_t *parent, 
 							qhandle_t parentModel, char *tagName );
 void CG_GetTagPosition( refEntity_t *parent, char *tagName, vec3_t outpos);
 void CG_GetTagOrientation( refEntity_t *parent, char *tagName, vec3_t dir);
@@ -1423,7 +1413,6 @@ void CG_RailTrail( clientInfo_t *ci, vec3_t start, vec3_t end );
 void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi );
 void CG_AddViewWeapon (playerState_t *ps);
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team );
-void CG_AddPlayerWeaponMD4( refExtEntity_t *parent, playerState_t *ps, centity_t *cent, int team );
 void CG_DrawWeaponSelect( void );
 
 void CG_OutOfAmmoChange( void );	// should this be in pmove?
@@ -1573,7 +1562,7 @@ void CG_CheckChangedPredictableEvents( playerState_t *ps );
 void		trap_Print( const char *fmt );
 
 // abort the game
-void		trap_Error( const char *fmt );
+void		trap_Error(const char *fmt) __attribute__((noreturn));
 
 // milliseconds should only be used for performance tuning, never
 // for anything game related.  Get time from the CG_DrawActiveFrame parameter
@@ -1685,10 +1674,6 @@ void		trap_R_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
 int			trap_R_LerpTag( orientation_t *tag, clipHandle_t mod, int startFrame, int endFrame, 
 					   float frac, const char *tagName );
 void		trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset );
-
-void		trap_R_AddRefExtendedEntityToScene( const refExtEntity_t *re );
-int			trap_R_GetLerpPose( skel_t *skel, qhandle_t mod, int startFrame, int endFrame, float frontLerp );
-int			trap_R_SetBlendPose( skel_t *skel, qhandle_t mod, int startFrame[3], int endFrame[3], float frontLerp[3], vec3_t angles[3] );
 
 // The glconfig_t will not change during the life of a cgame.
 // If it needs to change, the entire cgame will be restarted, because

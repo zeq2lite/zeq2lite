@@ -93,49 +93,6 @@ void CG_PositionEntityOnTag( refEntity_t *entity, const refEntity_t *parent,
 	entity->backlerp = parent->backlerp;
 }
 
-/*
-======================
-CG_PositionEntityOnTagMD4
-
-Modifies the entities position and axis by the given
-tag location
-======================
-*/
-void CG_PositionEntityOnTagMD4( refEntity_t *entity, const refExtEntity_t *parent, 
-							qhandle_t parentModel, char *tagName ) {
-	int				i;
-	orientation_t	lerped;
-	
-	// get bone if render flag is set
-	if(parent->renderfx & RF_SKEL)
-	{
-		for(i=0;i<parent->skel.numBones;i++)
-		{
-			if(!strcmp(parent->skel.bones[i].name,tagName))
-			{
-				VectorCopy(parent->skel.bones[i].origin,lerped.origin);
-				VectorCopy(parent->skel.bones[i].axis[0],lerped.axis[0]);
-				VectorCopy(parent->skel.bones[i].axis[1],lerped.axis[1]);
-				VectorCopy(parent->skel.bones[i].axis[2],lerped.axis[2]);
-			}
-		}
-	}
-	else
-	{
-		// lerp the tag
-		trap_R_LerpTag( &lerped, parentModel, parent->oldframe, parent->frame, 1.0 - parent->backlerp, tagName );
-	}
-
-	// FIXME: allow origin offsets along tag?
-	VectorCopy( parent->origin, entity->origin );
-	for ( i = 0 ; i < 3 ; i++ ) {
-		VectorMA( entity->origin, lerped.origin[i], parent->axis[i], entity->origin );
-	}
-
-	// had to cast away the const to avoid compiler problems...
-	MatrixMultiply( lerped.axis, ((refEntity_t *)parent)->axis, entity->axis );
-	entity->backlerp = parent->backlerp;
-}
 
 /*
 ======================
@@ -167,50 +124,7 @@ void CG_PositionRotatedEntityOnTag( refEntity_t *entity, const refEntity_t *pare
 	MatrixMultiply( tempAxis, ((refEntity_t *)parent)->axis, entity->axis );
 }
 
-/*
-======================
-CG_PositionRotatedEntityOnTagMD4
 
-Modifies the entities position and axis by the given
-tag location
-======================
-*/
-void CG_PositionRotatedEntityOnTagMD4( refEntity_t *entity, const refExtEntity_t *parent, 
-							qhandle_t parentModel, char *tagName ) {
-	int				i;
-	orientation_t	lerped;
-	vec3_t			tempAxis[3];
-
-	// get bone if render flag is set
-	if(parent->renderfx & RF_SKEL)
-	{
-		for(i=0;i<parent->skel.numBones;i++)
-		{
-			if(!strcmp(parent->skel.bones[i].name,tagName))
-			{
-				VectorCopy(parent->skel.bones[i].origin,lerped.origin);
-				VectorCopy(parent->skel.bones[i].axis[0],lerped.axis[0]);
-				VectorCopy(parent->skel.bones[i].axis[1],lerped.axis[1]);
-				VectorCopy(parent->skel.bones[i].axis[2],lerped.axis[2]);
-			}
-		}
-	}
-	else
-	{
-		// lerp the tag
-		trap_R_LerpTag( &lerped, parentModel, parent->oldframe, parent->frame, 1.0 - parent->backlerp, tagName );
-	}
-
-	// FIXME: allow origin offsets along tag?
-	VectorCopy( parent->origin, entity->origin );
-	for ( i = 0 ; i < 3 ; i++ ) {
-		VectorMA( entity->origin, lerped.origin[i], parent->axis[i], entity->origin );
-	}
-
-	// had to cast away the const to avoid compiler problems...
-	MatrixMultiply( entity->axis, lerped.axis, tempAxis );
-	MatrixMultiply( tempAxis, ((refEntity_t *)parent)->axis, entity->axis );
-}
 
 /*
 ==========================================================================
@@ -265,16 +179,17 @@ static void CG_EntityEffects( centity_t *cent ) {
 
 
 	// constant light glow
-	if ( cent->currentState.constantLight ) {
+	if(cent->currentState.constantLight)
+	{
 		int		cl;
-		int		i, r, g, b;
+		float		i, r, g, b;
 
 		cl = cent->currentState.constantLight;
-		r = cl & 255;
-		g = ( cl >> 8 ) & 255;
-		b = ( cl >> 16 ) & 255;
-		i = ( ( cl >> 24 ) & 255 ) * 4;
-		trap_R_AddLightToScene( cent->lerpOrigin, i, r, g, b );
+		r = (float) (cl & 0xFF) / 255.0;
+		g = (float) ((cl >> 8) & 0xFF) / 255.0;
+		b = (float) ((cl >> 16) & 0xFF) / 255.0;
+		i = (float) ((cl >> 24) & 0xFF) * 4.0;
+		trap_R_AddLightToScene(cent->lerpOrigin, i, r, g, b);
 	}
 
 }
@@ -343,16 +258,6 @@ static void CG_Speaker( centity_t *cent ) {
 	//	ent->s.clientNum = ent->random * 10;
 	cent->miscTime = cg.time + cent->currentState.frame * 100 + cent->currentState.clientNum * 100 * crandom();
 }
-
-/*
-==================
-CG_Item
-==================
-*/
-static void CG_Item( centity_t *cent ) {}
-
-//============================================================================
-
 
 /*
 ===============
@@ -1064,7 +969,7 @@ void CG_AdjustPositionForMover( const vec3_t in, int moverNum, int fromTime, int
 	BG_EvaluateTrajectory( &cent->currentState, &cent->currentState.apos, toTime, angles );
 
 	VectorSubtract( origin, oldOrigin, deltaOrigin );
-	VectorSubtract( angles, oldAngles, deltaAngles );
+	//VectorSubtract( angles, oldAngles, deltaAngles );
 
 	VectorAdd( in, deltaOrigin, out );
 
@@ -1182,14 +1087,10 @@ static void CG_AddCEntity( centity_t *cent ) {
 		CG_General( cent );
 		break;
 	case ET_PLAYER:
-		//CG_CalcEntityLerpWeaponCharges( cent );
 		CG_Player( cent );
 		break;
-	case ET_ITEM:
-		CG_Item( cent );
-		break;
 	case ET_MISSILE:
-		CG_Missile( cent );		
+		CG_Missile( cent );
 		break;
 	case ET_MOVER:
 		CG_Mover( cent );

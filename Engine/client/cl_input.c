@@ -267,21 +267,12 @@ void IN_Button14Up(void) {IN_KeyUp(&in_buttons[14]);}
 void IN_Button15Down(void) {IN_KeyDown(&in_buttons[15]);}
 void IN_Button15Up(void) {IN_KeyUp(&in_buttons[15]);}
 
-void IN_ButtonDown (void) {
-	IN_KeyDown(&in_buttons[1]);}
-void IN_ButtonUp (void) {
-	IN_KeyUp(&in_buttons[1]);}
-
 void IN_CenterView (void) {
 	cl.viewangles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
 }
 
 
 //==========================================================================
-
-cvar_t	*cl_upspeed;
-cvar_t	*cl_forwardspeed;
-cvar_t	*cl_sidespeed;
 
 cvar_t	*cl_yawspeed;
 cvar_t	*cl_pitchspeed;
@@ -399,13 +390,9 @@ CL_JoystickMove
 =================
 */
 void CL_JoystickMove( usercmd_t *cmd ) {
-	int		movespeed;
 	float	anglespeed;
 
-	if ( in_speed.active ^ cl_run->integer ) {
-		movespeed = 2;
-	} else {
-		movespeed = 1;
+	if ( !(in_speed.active ^ cl_run->integer) ) {
 		cmd->buttons |= BUTTON_WALKING;
 	}
 
@@ -416,15 +403,19 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	}
 
 	if ( !in_strafe.active ) {
-		cl.viewangles[YAW] += anglespeed * cl_yawspeed->value * cl.joystickAxis[AXIS_SIDE];
+		cl.viewangles[YAW] += anglespeed * j_yaw->value * cl.joystickAxis[j_yaw_axis->integer];
+		cmd->rightmove = ClampChar( cmd->rightmove + (int) (j_side->value * cl.joystickAxis[j_side_axis->integer]) );
 	} else {
-		cmd->rightmove = ClampChar( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
+		cl.viewangles[YAW] += anglespeed * j_side->value * cl.joystickAxis[j_side_axis->integer];
+		cmd->rightmove = ClampChar( cmd->rightmove + (int) (j_yaw->value * cl.joystickAxis[j_yaw_axis->integer]) );
 	}
 
 	if ( in_mlooking ) {
-		cl.viewangles[PITCH] += anglespeed * cl_pitchspeed->value * cl.joystickAxis[AXIS_FORWARD];
+		cl.viewangles[PITCH] += anglespeed * j_forward->value * cl.joystickAxis[j_forward_axis->integer];
+		cmd->forwardmove = ClampChar( cmd->forwardmove + (int) (j_pitch->value * cl.joystickAxis[j_pitch_axis->integer]) );
 	} else {
-		cmd->forwardmove = ClampChar( cmd->forwardmove + cl.joystickAxis[AXIS_FORWARD] );
+		cl.viewangles[PITCH] += anglespeed * j_pitch->value * cl.joystickAxis[j_pitch_axis->integer];
+		cmd->forwardmove = ClampChar( cmd->forwardmove + (int) (j_forward->value * cl.joystickAxis[j_forward_axis->integer]) );
 	}
 
 	cmd->upmove = ClampChar( cmd->upmove + cl.joystickAxis[AXIS_UP] );
@@ -613,10 +604,10 @@ usercmd_t CL_CreateCmd( void ) {
 	// draw debug graphs of turning for mouse testing
 	if ( cl_debugMove->integer ) {
 		if ( cl_debugMove->integer == 1 ) {
-			SCR_DebugGraph( abs(cl.viewangles[YAW] - oldAngles[YAW]), 0 );
+			SCR_DebugGraph( abs(cl.viewangles[YAW] - oldAngles[YAW]) );
 		}
 		if ( cl_debugMove->integer == 2 ) {
-			SCR_DebugGraph( abs(cl.viewangles[PITCH] - oldAngles[PITCH]), 0 );
+			SCR_DebugGraph( abs(cl.viewangles[PITCH] - oldAngles[PITCH]) );
 		}
 	}
 
@@ -632,11 +623,10 @@ Create a new usercmd_t structure for this frame
 =================
 */
 void CL_CreateNewCommands( void ) {
-	usercmd_t	*cmd;
 	int			cmdNum;
 
 	// no need to create usercmds until we have a gamestate
-	if ( cls.state < CA_PRIMED ) {
+	if ( clc.state < CA_PRIMED ) {
 		return;
 	}
 
@@ -654,7 +644,6 @@ void CL_CreateNewCommands( void ) {
 	cl.cmdNumber++;
 	cmdNum = cl.cmdNumber & CMD_MASK;
 	cl.cmds[cmdNum] = CL_CreateCmd ();
-	cmd = &cl.cmds[cmdNum];
 }
 
 /*
@@ -673,7 +662,7 @@ qboolean CL_ReadyToSendPacket( void ) {
 	int		delta;
 
 	// don't send anything if playing back a demo
-	if ( clc.demoplaying || cls.state == CA_CINEMATIC ) {
+	if ( clc.demoplaying || clc.state == CA_CINEMATIC ) {
 		return qfalse;
 	}
 
@@ -685,8 +674,8 @@ qboolean CL_ReadyToSendPacket( void ) {
 
 	// if we don't have a valid gamestate yet, only send
 	// one packet a second
-	if ( cls.state != CA_ACTIVE && 
-		cls.state != CA_PRIMED && 
+	if ( clc.state != CA_ACTIVE && 
+		clc.state != CA_PRIMED && 
 		!*clc.downloadTempName &&
 		cls.realtime - clc.lastPacketSentTime < 1000 ) {
 		return qfalse;
@@ -750,7 +739,7 @@ void CL_WritePacket( void ) {
 	int			count, key;
 
 	// don't send anything if playing back a demo
-	if ( clc.demoplaying || cls.state == CA_CINEMATIC ) {
+	if ( clc.demoplaying || clc.state == CA_CINEMATIC ) {
 		return;
 	}
 
@@ -795,87 +784,53 @@ void CL_WritePacket( void ) {
 	}
 
 #ifdef USE_VOIP
-	if (clc.voipOutgoingDataSize > 0) {  // only send if data.
-		// Move cl_voipSendTarget from a string to the bitmasks if needed.
-		if (cl_voipSendTarget->modified) {
-			char buffer[32];
-			const char *target = cl_voipSendTarget->string;
+	if (clc.voipOutgoingDataSize > 0)
+	{
+		if((clc.voipFlags & VOIP_SPATIAL) || Com_IsVoipTarget(clc.voipTargets, sizeof(clc.voipTargets), -1))
+		{
+			MSG_WriteByte (&buf, clc_voip);
+			MSG_WriteByte (&buf, clc.voipOutgoingGeneration);
+			MSG_WriteLong (&buf, clc.voipOutgoingSequence);
+			MSG_WriteByte (&buf, clc.voipOutgoingDataFrames);
+			MSG_WriteData (&buf, clc.voipTargets, sizeof(clc.voipTargets));
+			MSG_WriteByte(&buf, clc.voipFlags);
+			MSG_WriteShort (&buf, clc.voipOutgoingDataSize);
+			MSG_WriteData (&buf, clc.voipOutgoingData, clc.voipOutgoingDataSize);
 
-			if (Q_stricmp(target, "attacker") == 0) {
-				int player = VM_Call( cgvm, CG_LAST_ATTACKER );
-				Com_sprintf(buffer, sizeof (buffer), "%d", player);
-				target = buffer;
-			} else if (Q_stricmp(target, "crosshair") == 0) {
-				int player = VM_Call( cgvm, CG_CROSSHAIR_PLAYER );
-				Com_sprintf(buffer, sizeof (buffer), "%d", player);
-				target = buffer;
+			// If we're recording a demo, we have to fake a server packet with
+			//  this VoIP data so it gets to disk; the server doesn't send it
+			//  back to us, and we might as well eliminate concerns about dropped
+			//  and misordered packets here.
+			if(clc.demorecording && !clc.demowaiting)
+			{
+				const int voipSize = clc.voipOutgoingDataSize;
+				msg_t fakemsg;
+				byte fakedata[MAX_MSGLEN];
+				MSG_Init (&fakemsg, fakedata, sizeof (fakedata));
+				MSG_Bitstream (&fakemsg);
+				MSG_WriteLong (&fakemsg, clc.reliableAcknowledge);
+				MSG_WriteByte (&fakemsg, svc_voip);
+				MSG_WriteShort (&fakemsg, clc.clientNum);
+				MSG_WriteByte (&fakemsg, clc.voipOutgoingGeneration);
+				MSG_WriteLong (&fakemsg, clc.voipOutgoingSequence);
+				MSG_WriteByte (&fakemsg, clc.voipOutgoingDataFrames);
+				MSG_WriteShort (&fakemsg, clc.voipOutgoingDataSize );
+				MSG_WriteData (&fakemsg, clc.voipOutgoingData, voipSize);
+				MSG_WriteByte (&fakemsg, svc_EOF);
+				CL_WriteDemoMessage (&fakemsg, 0);
 			}
 
-			if ((*target == '\0') || (Q_stricmp(target, "all") == 0)) {
-				const int all = 0x7FFFFFFF;
-				clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = all;
-			} else if (Q_stricmp(target, "none") == 0) {
-				clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = 0;
-			} else {
-				const char *ptr = target;
-				clc.voipTarget1 = clc.voipTarget2 = clc.voipTarget3 = 0;
-				do {
-					if ((*ptr == ',') || (*ptr == '\0')) {
-						const int val = atoi(target);
-						target = ptr + 1;
-						if ((val >= 0) && (val < 31)) {
-							clc.voipTarget1 |= (1 << (val-0));
-						} else if ((val >= 31) && (val < 62)) {
-							clc.voipTarget2 |= (1 << (val-31));
-						} else if ((val >= 62) && (val < 93)) {
-							clc.voipTarget3 |= (1 << (val-62));
-						}
-					}
-				} while (*(ptr++));
-			}
-			cl_voipSendTarget->modified = qfalse;
+			clc.voipOutgoingSequence += clc.voipOutgoingDataFrames;
+			clc.voipOutgoingDataSize = 0;
+			clc.voipOutgoingDataFrames = 0;
 		}
-
-		MSG_WriteByte (&buf, clc_EOF);  // placate legacy servers.
-		MSG_WriteByte (&buf, clc_extension);
-		MSG_WriteByte (&buf, clc_voip);
-		MSG_WriteByte (&buf, clc.voipOutgoingGeneration);
-		MSG_WriteLong (&buf, clc.voipOutgoingSequence);
-		MSG_WriteByte (&buf, clc.voipOutgoingDataFrames);
-		MSG_WriteLong (&buf, clc.voipTarget1);
-		MSG_WriteLong (&buf, clc.voipTarget2);
-		MSG_WriteLong (&buf, clc.voipTarget3);
-		MSG_WriteShort (&buf, clc.voipOutgoingDataSize);
-		MSG_WriteData (&buf, clc.voipOutgoingData, clc.voipOutgoingDataSize);
-
-		// If we're recording a demo, we have to fake a server packet with
-		//  this VoIP data so it gets to disk; the server doesn't send it
-		//  back to us, and we might as well eliminate concerns about dropped
-		//  and misordered packets here.
-		if ( clc.demorecording && !clc.demowaiting ) {
-			const int voipSize = clc.voipOutgoingDataSize;
-			msg_t fakemsg;
-			byte fakedata[MAX_MSGLEN];
-			MSG_Init (&fakemsg, fakedata, sizeof (fakedata));
-			MSG_Bitstream (&fakemsg);
-			MSG_WriteLong (&fakemsg, clc.reliableAcknowledge);
-			MSG_WriteByte (&fakemsg, svc_EOF);
-			MSG_WriteByte (&fakemsg, svc_extension);
-			MSG_WriteByte (&fakemsg, svc_voip);
-			MSG_WriteShort (&fakemsg, clc.clientNum);
-			MSG_WriteByte (&fakemsg, clc.voipOutgoingGeneration);
-			MSG_WriteLong (&fakemsg, clc.voipOutgoingSequence);
-			MSG_WriteByte (&fakemsg, clc.voipOutgoingDataFrames);
-			MSG_WriteShort (&fakemsg, clc.voipOutgoingDataSize );
-			MSG_WriteData (&fakemsg, clc.voipOutgoingData, voipSize);
-			MSG_WriteByte (&fakemsg, svc_EOF);
-			CL_WriteDemoMessage (&fakemsg, 0);
+		else
+		{
+			// We have data, but no targets. Silently discard all data
+			clc.voipOutgoingDataSize = 0;
+			clc.voipOutgoingDataFrames = 0;
 		}
-
-		clc.voipOutgoingSequence += clc.voipOutgoingDataFrames;
-		clc.voipOutgoingDataSize = 0;
-		clc.voipOutgoingDataFrames = 0;
-	} else
+	}
 #endif
 
 	if ( count >= 1 ) {
@@ -924,16 +879,6 @@ void CL_WritePacket( void ) {
 	}
 
 	CL_Netchan_Transmit (&clc.netchan, &buf);	
-
-	// clients never really should have messages large enough
-	// to fragment, but in case they do, fire them all off
-	// at once
-	// TTimo: this causes a packet burst, which is bad karma for winsock
-	// added a WARNING message, we'll see if there are legit situations where this happens
-	while ( clc.netchan.unsentFragments ) {
-		Com_DPrintf( "WARNING: #462 unsent fragments (not supposed to happen!)\n" );
-		CL_Netchan_TransmitNextFragment( &clc.netchan );
-	}
 }
 
 /*
@@ -945,7 +890,7 @@ Called every frame to builds and sends a command packet to the server.
 */
 void CL_SendCmd( void ) {
 	// don't send any message if not connected
-	if ( cls.state < CA_CONNECTED ) {
+	if ( clc.state < CA_CONNECTED ) {
 		return;
 	}
 
@@ -1042,4 +987,78 @@ void CL_InitInput( void ) {
 
 	cl_nodelta = Cvar_Get ("cl_nodelta", "0", 0);
 	cl_debugMove = Cvar_Get ("cl_debugMove", "0", 0);
+}
+
+/*
+============
+CL_ShutdownInput
+============
+*/
+void CL_ShutdownInput(void)
+{
+	Cmd_RemoveCommand("centerview");
+
+	Cmd_RemoveCommand("+moveup");
+	Cmd_RemoveCommand("-moveup");
+	Cmd_RemoveCommand("+movedown");
+	Cmd_RemoveCommand("-movedown");
+	Cmd_RemoveCommand("+left");
+	Cmd_RemoveCommand("-left");
+	Cmd_RemoveCommand("+right");
+	Cmd_RemoveCommand("-right");
+	Cmd_RemoveCommand("+forward");
+	Cmd_RemoveCommand("-forward");
+	Cmd_RemoveCommand("+back");
+	Cmd_RemoveCommand("-back");
+	Cmd_RemoveCommand("+lookup");
+	Cmd_RemoveCommand("-lookup");
+	Cmd_RemoveCommand("+lookdown");
+	Cmd_RemoveCommand("-lookdown");
+	Cmd_RemoveCommand("+strafe");
+	Cmd_RemoveCommand("-strafe");
+	Cmd_RemoveCommand("+moveleft");
+	Cmd_RemoveCommand("-moveleft");
+	Cmd_RemoveCommand("+moveright");
+	Cmd_RemoveCommand("-moveright");
+	Cmd_RemoveCommand("+speed");
+	Cmd_RemoveCommand("-speed");
+	Cmd_RemoveCommand("+attack");
+	Cmd_RemoveCommand("-attack");
+	Cmd_RemoveCommand("+button0");
+	Cmd_RemoveCommand("-button0");
+	Cmd_RemoveCommand("+button1");
+	Cmd_RemoveCommand("-button1");
+	Cmd_RemoveCommand("+button2");
+	Cmd_RemoveCommand("-button2");
+	Cmd_RemoveCommand("+button3");
+	Cmd_RemoveCommand("-button3");
+	Cmd_RemoveCommand("+button4");
+	Cmd_RemoveCommand("-button4");
+	Cmd_RemoveCommand("+button5");
+	Cmd_RemoveCommand("-button5");
+	Cmd_RemoveCommand("+button6");
+	Cmd_RemoveCommand("-button6");
+	Cmd_RemoveCommand("+button7");
+	Cmd_RemoveCommand("-button7");
+	Cmd_RemoveCommand("+button8");
+	Cmd_RemoveCommand("-button8");
+	Cmd_RemoveCommand("+button9");
+	Cmd_RemoveCommand("-button9");
+	Cmd_RemoveCommand("+button10");
+	Cmd_RemoveCommand("-button10");
+	Cmd_RemoveCommand("+button11");
+	Cmd_RemoveCommand("-button11");
+	Cmd_RemoveCommand("+button12");
+	Cmd_RemoveCommand("-button12");
+	Cmd_RemoveCommand("+button13");
+	Cmd_RemoveCommand("-button13");
+	Cmd_RemoveCommand("+button14");
+	Cmd_RemoveCommand("-button14");
+	Cmd_RemoveCommand("+mlook");
+	Cmd_RemoveCommand("-mlook");
+
+#ifdef USE_VOIP
+	Cmd_RemoveCommand("+voiprecord");
+	Cmd_RemoveCommand("-voiprecord");
+#endif
 }

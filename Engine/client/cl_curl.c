@@ -22,10 +22,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef USE_CURL
 #include "client.h"
-cvar_t *cl_cURLLib;
 
 #ifdef USE_CURL_DLOPEN
 #include "../sys/sys_loadlib.h"
+
+cvar_t *cl_cURLLib;
 
 char* (*qcurl_version)(void);
 
@@ -94,30 +95,13 @@ qboolean CL_cURL_Init()
 
 
 	Com_Printf("Loading \"%s\"...", cl_cURLLib->string);
-	if( (cURLLib = Sys_LoadLibrary(cl_cURLLib->string)) == 0 )
+	if(!(cURLLib = Sys_LoadDll(cl_cURLLib->string, qtrue)))
 	{
-#ifdef _WIN32
-		return qfalse;
-#else
-		char fn[1024];
-
-		Q_strncpyz( fn, Sys_Cwd( ), sizeof( fn ) );
-		strncat(fn, "/", sizeof(fn)-strlen(fn)-1);
-		strncat(fn, cl_cURLLib->string, sizeof(fn)-strlen(fn)-1);
-
-		if((cURLLib = Sys_LoadLibrary(fn)) == 0)
-		{
 #ifdef ALTERNATE_CURL_LIB
-			// On some linux distributions there is no libcurl.so.3, but only libcurl.so.4. That one works too.
-			if( (cURLLib = Sys_LoadLibrary(ALTERNATE_CURL_LIB)) == 0 )
-			{
-				return qfalse;
-			}
-#else
-			return qfalse;
+		// On some linux distributions there is no libcurl.so.3, but only libcurl.so.4. That one works too.
+		if(!(cURLLib = Sys_LoadDll(ALTERNATE_CURL_LIB, qtrue)))
 #endif
-		}
-#endif /* _WIN32 */
+			return qfalse;
 	}
 
 	clc.cURLEnabled = qtrue;
@@ -251,16 +235,16 @@ void CL_cURL_BeginDownload( const char *localName, const char *remoteURL )
 	clc.downloadCURL = qcurl_easy_init();
 	if(!clc.downloadCURL) {
 		Com_Error(ERR_DROP, "CL_cURL_BeginDownload: qcurl_easy_init() "
-			"failed\n");
+			"failed");
 		return;
 	}
 	clc.download = FS_SV_FOpenFileWrite(clc.downloadTempName);
 	if(!clc.download) {
 		Com_Error(ERR_DROP, "CL_cURL_BeginDownload: failed to open "
-			"%s for writing\n", clc.downloadTempName);
+			"%s for writing", clc.downloadTempName);
 		return;
 	}
-	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_WRITEDATA, clc.download);
+
 	if(com_developer->integer)
 		qcurl_easy_setopt(clc.downloadCURL, CURLOPT_VERBOSE, 1);
 	qcurl_easy_setopt(clc.downloadCURL, CURLOPT_URL, clc.downloadURL);
@@ -284,7 +268,7 @@ void CL_cURL_BeginDownload( const char *localName, const char *remoteURL )
 		qcurl_easy_cleanup(clc.downloadCURL);
 		clc.downloadCURL = NULL;
 		Com_Error(ERR_DROP, "CL_cURL_BeginDownload: qcurl_multi_init() "
-			"failed\n");
+			"failed");
 		return;
 	}
 	qcurl_multi_add_handle(clc.downloadCURLM, clc.downloadCURL);

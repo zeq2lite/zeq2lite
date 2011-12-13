@@ -211,39 +211,24 @@ void RE_AddRefEntityToScene( const refEntity_t *ent ) {
 	if ( r_numentities >= MAX_ENTITIES ) {
 		return;
 	}
-	if ( ent->reType < 0 || ent->reType >= RT_MAX_REF_ENTITY_TYPE ) {
+	if ( Q_isnan(ent->origin[0]) || Q_isnan(ent->origin[1]) || Q_isnan(ent->origin[2]) ) {
+		static qboolean firstTime = qtrue;
+		if (firstTime) {
+			firstTime = qfalse;
+			ri.Printf( PRINT_WARNING, "RE_AddRefEntityToScene passed a refEntity which has an origin with a NaN component\n");
+		}
+		return;
+	}
+	if ( (int)ent->reType < 0 || ent->reType >= RT_MAX_REF_ENTITY_TYPE ) {
 		ri.Error( ERR_DROP, "RE_AddRefEntityToScene: bad reType %i", ent->reType );
 	}
 
-	//backEndData[tr.smpFrame]->entities[r_numentities].e = *ent;
-	Com_Memcpy(&backEndData[tr.smpFrame]->entities[r_numentities].e, ent, sizeof(refEntity_t));
+	backEndData[tr.smpFrame]->entities[r_numentities].e = *ent;
 	backEndData[tr.smpFrame]->entities[r_numentities].lightingCalculated = qfalse;
 
 	r_numentities++;
 }
 
-/*
-=====================
-RE_AddRefExtendedEntityToScene
-=====================
-*/
-void RE_AddRefExtendedEntityToScene( const refExtEntity_t *ent ) {
-	if ( !tr.registered ) {
-		return;
-	}
-	if ( r_numentities >= ENTITYNUM_WORLD ) {
-		return;
-	}
-	if ( ent->reType < 0 || ent->reType >= RT_MAX_REF_ENTITY_TYPE ) {
-		ri.Error( ERR_DROP, "RE_AddRefExtendedEntityToScene: bad reType %i", ent->reType );
-	}
-
-	//backEndData[tr.smpFrame]->entities[r_numentities].e = *ent;
-	Com_Memcpy(&backEndData[tr.smpFrame]->entities[r_numentities].e, ent, sizeof(refExtEntity_t));
-	backEndData[tr.smpFrame]->entities[r_numentities].lightingCalculated = qfalse;
-
-	r_numentities++;
-}
 
 /*
 =====================
@@ -287,7 +272,7 @@ void RE_AddFogToScene( float start, float end, float r, float g, float b, float 
 	int fogModefilter = mode;								// Which Fog To Use
 	int fogHint[] = { GL_DONT_CARE, GL_FASTEST, GL_NICEST };// Storage For Three Types Of Fog
 	int fogHintfilter = hint;								// Which Fog To Use
-	float fogColor[4] = {r, g, b, 1.0f};					// Fog Color
+	float fogColor[4] = {r, g, b, 1.0f};						// Fog Color
 
 	if ( ( start == 0 && end == 0 ) || opacity == 0 ){
 		qglDisable(GL_FOG);									// Disables GL_FOG

@@ -224,31 +224,34 @@ and sends over a command to the client to resize the view,
 hide the scoreboard, and take a special screenshot
 ==================
 */
-void Cmd_LevelShot_f( gentity_t *ent ) {
-	if ( !CheatsOk( ent ) ) {
+void Cmd_LevelShot_f(gentity_t *ent)
+{
+	if(!ent->client->pers.localClient)
+	{
+		trap_SendServerCommand(ent-g_entities,
+			"print \"The levelshot command must be executed by a local client\n\"");
 		return;
 	}
 
+	if(!CheatsOk(ent))
+		return;
+
 	// doesn't work in single player
-	if ( g_gametype.integer != 0 ) {
-		trap_SendServerCommand( ent-g_entities, 
-			"print \"Must be in g_gametype 0 for levelshot\n\"" );
+	if(g_gametype.integer == GT_SINGLE_PLAYER)
+	{
+		trap_SendServerCommand(ent-g_entities,
+			"print \"Must not be in singleplayer mode for levelshot\n\"" );
 		return;
 	}
 
 	BeginIntermission();
-	trap_SendServerCommand( ent-g_entities, "clientLevelShot" );
+	trap_SendServerCommand(ent-g_entities, "clientLevelShot");
 }
 
 
 /*
 ==================
-Cmd_LevelShot_f
-
-This is just to help generate the level pictures
-for the menus.  It goes to the intermission immediately
-and sends over a command to the client to resize the view,
-hide the scoreboard, and take a special screenshot
+Cmd_TeamTask_f
 ==================
 */
 void Cmd_TeamTask_f( gentity_t *ent ) {
@@ -268,7 +271,6 @@ void Cmd_TeamTask_f( gentity_t *ent ) {
 	trap_SetUserinfo(client, userinfo);
 	ClientUserinfoChanged(client);
 }
-
 
 
 /*
@@ -403,10 +405,10 @@ void SetTeam( gentity_t *ent, char *s ) {
 		ent->client->ps.powerLevel[plCurrent] = ent->powerLevelTotal = 0;
 
 	}
+
 	// they go to the end of the line for tournements
-	if ( team == TEAM_SPECTATOR ) {
-		client->sess.spectatorTime = level.time;
-	}
+	if(team == TEAM_SPECTATOR && oldTeam != team)
+		AddTournamentQueue(client);
 
 	client->sess.sessionTeam = team;
 	client->sess.spectatorState = specState;
@@ -774,7 +776,7 @@ static void G_VoiceTo( gentity_t *ent, gentity_t *other, int mode, const char *i
 		return;
 	}
 	// no chatting to players in tournements
-	if ( (g_gametype.integer == GT_TOURNAMENT )) {
+	if ( g_gametype.integer == GT_TOURNAMENT ) {
 		return;
 	}
 
@@ -921,7 +923,7 @@ void Cmd_GameCommand_f( gentity_t *ent ) {
 	if ( player < 0 || player >= MAX_CLIENTS ) {
 		return;
 	}
-	if ( order < 0 || order > sizeof(gc_orders)/sizeof(char *) ) {
+	if ( order < 0 || order > ARRAY_LEN( gc_orders ) ) {
 		return;
 	}
 	G_Say( ent, &g_entities[player], SAY_TELL, gc_orders[order] );
@@ -934,7 +936,7 @@ Cmd_Where_f
 ==================
 */
 void Cmd_Where_f( gentity_t *ent ) {
-	trap_SendServerCommand( ent-g_entities, va("print \"%s\n\"", vtos( ent->s.origin ) ) );
+	trap_SendServerCommand( ent-g_entities, va("print \"%s\n\"", vtos(ent->r.currentOrigin) ) );
 }
 
 static const char *gameNames[] = {

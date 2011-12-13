@@ -162,10 +162,13 @@ demo through a file.
 
 typedef struct {
 
+	connstate_t	state;				// connection status
+
 	int			clientNum;
 	int			lastPacketSentTime;			// for retransmits during connection
 	int			lastPacketTime;				// for timeouts
 
+	char		servername[MAX_OSPATH];		// name of server from original connect (used by reconnect)
 	netadr_t	serverAddress;
 	int			connectTime;				// for connection retransmits
 	int			connectPacketCount;			// for display on connection dialog
@@ -231,6 +234,7 @@ typedef struct {
 	unsigned char	timeDemoDurations[ MAX_TIMEDEMO_DURATIONS ];	// log of frame durations
 
 #ifdef USE_VOIP
+	qboolean voipEnabled;
 	qboolean speexInitialized;
 	int speexFrameSize;
 	int speexSampleRate;
@@ -246,9 +250,10 @@ typedef struct {
 	qboolean voipMuteAll;
 
 	// outgoing data...
-	int voipTarget1;  // these three ints make up a bit mask of 92 bits.
-	int voipTarget2;  //  the bits say who a VoIP pack is addressed to:
-	int voipTarget3;  //  (1 << clientnum). See cl_voipSendTarget cvar.
+	// if voipTargets[i / 8] & (1 << (i % 8)),
+	// then we are sending to clientnum i.
+	uint8_t voipTargets[(MAX_CLIENTS + 7) / 8];
+	uint8_t voipFlags;
 	SpeexPreprocessState *speexPreprocessor;
 	SpeexBits speexEncoderBits;
 	void *speexEncoder;
@@ -258,6 +263,10 @@ typedef struct {
 	byte voipOutgoingGeneration;
 	byte voipOutgoingData[1024];
 	float voipPower;
+#endif
+
+#ifdef LEGACY_PROTOCOL
+	qboolean compat;
 #endif
 
 	// big stuff at end of structure so most offsets are 15 bits or less
@@ -295,14 +304,13 @@ typedef struct {
 	int			maxPing;
 	int			ping;
 	qboolean	visible;
+	int			punkbuster;
+	int			g_humanplayers;
+	int			g_needpass;
 } serverInfo_t;
 
 typedef struct {
-	connstate_t	state;				// connection status
-
 	qboolean	cddialog;			// bring up the cd needed dialog next frame
-
-	char		servername[MAX_OSPATH];		// name of server from original connect (used by reconnect)
 
 	// when the server clears the hunk, all of these must be restarted
 	qboolean	rendererStarted;
@@ -330,6 +338,9 @@ typedef struct {
 	serverInfo_t	favoriteServers[MAX_OTHER_SERVERS];
 
 	int pingUpdateSource;		// source currently pinging or updating
+	
+	char		oldGame[MAX_QPATH];
+	qboolean	oldGameSet;
 
 	// update server info
 	netadr_t	updateServer;
@@ -389,6 +400,15 @@ extern	cvar_t	*m_forward;
 extern	cvar_t	*m_side;
 extern	cvar_t	*m_filter;
 
+extern	cvar_t	*j_pitch;
+extern	cvar_t	*j_yaw;
+extern	cvar_t	*j_forward;
+extern	cvar_t	*j_side;
+extern	cvar_t	*j_pitch_axis;
+extern	cvar_t	*j_yaw_axis;
+extern	cvar_t	*j_forward_axis;
+extern	cvar_t	*j_side_axis;
+
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;
 extern	cvar_t	*cl_aviMotionJpeg;
@@ -431,8 +451,6 @@ extern	cvar_t	*cl_voip;
 //
 
 void CL_Init (void);
-void CL_FlushMemory(void);
-void CL_ShutdownAll(void);
 void CL_AddReliableCommand(const char *cmd, qboolean isDisconnectCmd);
 
 void CL_StartHunkUsers( qboolean rendererOnly );
@@ -456,6 +474,7 @@ int CL_GetPingQueueCount( void );
 
 void CL_ShutdownRef( void );
 void CL_InitRef( void );
+qboolean CL_CDKeyValidate( const char *key, const char *checksum );
 int CL_ServerStatus( char *serverAddress, char *serverStatusString, int maxLen );
 
 qboolean CL_CheckPaused(void);
@@ -471,15 +490,8 @@ typedef struct {
 	qboolean	wasPressed;		// set when down, not cleared when up
 } kbutton_t;
 
-extern	kbutton_t	in_mlook, in_klook;
-extern 	kbutton_t 	in_strafe;
-extern 	kbutton_t 	in_speed;
-
-#ifdef USE_VOIP
-extern 	kbutton_t 	in_voiprecord;
-#endif
-
-void CL_InitInput (void);
+void CL_InitInput(void);
+void CL_ShutdownInput(void);
 void CL_SendCmd (void);
 void CL_ClearState (void);
 void CL_ReadPackets (void);
@@ -500,7 +512,6 @@ extern int cl_connectedToPureServer;
 extern int cl_connectedToCheatServer;
 
 #ifdef USE_VOIP
-extern int cl_connectedToVoipServer;
 void CL_Voip_f( void );
 #endif
 
@@ -523,7 +534,8 @@ qboolean CL_UpdateVisiblePings_f( int source );
 void Con_DrawCharacter (int cx, int line, int num);
 
 void Con_CheckResize (void);
-void Con_Init (void);
+void Con_Init(void);
+void Con_Shutdown(void);
 void Con_Clear_f (void);
 void Con_ToggleConsole_f (void);
 void Con_DrawNotify (void);
@@ -545,7 +557,7 @@ void CL_SaveConsoleHistory( void );
 void	SCR_Init (void);
 void	SCR_UpdateScreen (void);
 
-void	SCR_DebugGraph (float value, int color);
+void	SCR_DebugGraph (float value);
 
 int		SCR_GetBigStringWidth( const char *str );	// returns in virtual 640x480 coordinates
 
@@ -558,7 +570,7 @@ void	SCR_DrawNamedPic( float x, float y, float width, float height, const char *
 void	SCR_DrawBigString( int x, int y, const char *s, float alpha, qboolean noColorEscape );			// draws a string with embedded color control characters with fade
 void	SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color, qboolean noColorEscape );	// ignores embedded color control characters
 void	SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor, qboolean noColorEscape );
-void	SCR_DrawCustomString(int spacing,int x, int y, const char *string);
+void	SCR_DrawCustomString( int spacing, int x, int y, const char *string);
 void	SCR_DrawSmallChar( int x, int y, int ch );
 
 
@@ -605,7 +617,6 @@ void LAN_SaveServersToCache( void );
 // cl_net_chan.c
 //
 void CL_Netchan_Transmit( netchan_t *chan, msg_t* msg);	//int length, const byte *data );
-void CL_Netchan_TransmitNextFragment( netchan_t *chan );
 qboolean CL_Netchan_Process( netchan_t *chan, msg_t *msg );
 
 //

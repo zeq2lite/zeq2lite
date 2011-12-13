@@ -105,6 +105,3 @@ equ	testPrintFloat				-111
 equ acos						-112
 equ	trap_FS_GetFileList				-113
 equ	trap_R_AddFogToScene				-114
-equ trap_R_AddRefExtendedEntityToScene -115
-equ trap_R_GetLerpPose			-116
-equ trap_R_SetBlendPose			-117

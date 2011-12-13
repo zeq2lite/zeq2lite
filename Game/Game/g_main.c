@@ -110,7 +110,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_cheats, "sv_cheats", "", 0, 0, qfalse },
 
 	// noset vars
-	{ NULL, "gamename", GAME_VERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+	{ NULL, "gamename", GAMEVERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
 	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
 	{ &g_restarted, "g_restarted", "0", CVAR_ROM, 0, qfalse  },
 	{ NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
@@ -126,7 +126,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_timelimit, "timelimit", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 	{ &g_capturelimit, "capturelimit", "8", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
 
-	{ &g_synchronousClients, "g_synchronousClients", "0", CVAR_ARCHIVE, 0, qfalse  },
+	{ &g_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO, 0, qfalse  },
 
 	{ &g_friendlyFire, "g_friendlyFire", "0", CVAR_ARCHIVE, 0, qtrue  },
 
@@ -134,7 +134,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_teamForceBalance, "g_teamForceBalance", "0", CVAR_ARCHIVE  },
 
 	{ &g_warmup, "g_warmup", "20", CVAR_ARCHIVE, 0, qtrue  },
-	{ &g_doWarmup, "g_doWarmup", "0", 0, 0, qtrue  },
+	{ &g_doWarmup, "g_doWarmup", "0", CVAR_ARCHIVE, 0, qtrue  },
 	{ &g_logfile, "g_log", "games.log", CVAR_ARCHIVE, 0, qfalse  },
 	{ &g_logfileSync, "g_logsync", "0", CVAR_ARCHIVE, 0, qfalse  },
 
@@ -191,7 +191,7 @@ static cvarTable_t		gameCvarTable[] = {
 
 };
 
-static int gameCvarTableSize = sizeof( gameCvarTable ) / sizeof( gameCvarTable[0] );
+static int gameCvarTableSize = ARRAY_LEN( gameCvarTable );
 
 
 void G_InitGame( int levelTime, int randomSeed, int restart );
@@ -402,7 +402,7 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	int					i;
 
 	G_Printf ("------- Game Initialization -------\n");
-	G_Printf ("gamename: %s\n", GAME_VERSION);
+	G_Printf ("gamename: %s\n", GAMEVERSION);
 	G_Printf ("gamedate: %s\n", __DATE__);
 
 	srand( randomSeed );
@@ -459,6 +459,10 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// range are NEVER anything but clients
 	level.num_entities = MAX_CLIENTS;
 
+	for ( i=0 ; i<MAX_CLIENTS ; i++ ) {
+		g_entities[i].classname = "clientslot";
+	}
+
 	// let the server system know where the entites are
 	trap_LocateGameData( level.gentities, level.num_entities, sizeof( gentity_t ), 
 		&level.clients[0].ps, sizeof( level.clients[0] ) );
@@ -480,8 +484,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// to the client spawning functions!
 	if( g_gametype.integer == GT_SINGLE_PLAYER || trap_Cvar_VariableIntegerValue( "com_buildScript" ) ) {
 		G_ModelIndex( SP_PODIUM_MODEL );
-		G_SoundIndex( "sound/player/gurp1.ogg" );
-		G_SoundIndex( "sound/player/gurp2.ogg" );
 	}
 	G_RemapTeamShaders();
 }
@@ -500,6 +502,7 @@ void G_ShutdownGame( int restart ) {
 		G_LogPrintf("ShutdownGame:\n" );
 		G_LogPrintf("------------------------------------------------------------\n" );
 		trap_FS_FCloseFile( level.logFile );
+		level.logFile = 0;
 	}
 
 	// write all the client session data so we can get it back
@@ -578,9 +581,8 @@ void AddTournamentPlayer( void ) {
 			continue;
 		}
 
-		if ( !nextInLine || client->sess.spectatorTime < nextInLine->sess.spectatorTime ) {
+		if(!nextInLine || client->sess.spectatorNum > nextInLine->sess.spectatorNum)
 			nextInLine = client;
-		}
 	}
 
 	if ( !nextInLine ) {
@@ -591,6 +593,33 @@ void AddTournamentPlayer( void ) {
 
 	// set them to free-for-all team
 	SetTeam( &g_entities[ nextInLine - level.clients ], "f" );
+}
+
+/*
+=======================
+AddTournamentQueue
+
+Add client to end of tournament queue
+=======================
+*/
+
+void AddTournamentQueue(gclient_t *client)
+{
+	int index;
+	gclient_t *curclient;
+	
+	for(index = 0; index < level.maxclients; index++)
+	{
+		curclient = &level.clients[index];
+		
+		if(curclient->pers.connected != CON_DISCONNECTED)
+		{
+			if(curclient == client)
+				curclient->sess.spectatorNum = 0;
+			else if(curclient->sess.sessionTeam == TEAM_SPECTATOR)
+				curclient->sess.spectatorNum++;
+		}
+	}
 }
 
 /*
@@ -692,10 +721,10 @@ int QDECL SortRanks( const void *a, const void *b ) {
 
 	// then spectators
 	if ( ca->sess.sessionTeam == TEAM_SPECTATOR && cb->sess.sessionTeam == TEAM_SPECTATOR ) {
-		if ( ca->sess.spectatorTime < cb->sess.spectatorTime ) {
+		if ( ca->sess.spectatorNum > cb->sess.spectatorNum ) {
 			return -1;
 		}
-		if ( ca->sess.spectatorTime > cb->sess.spectatorTime ) {
+		if ( ca->sess.spectatorNum < cb->sess.spectatorNum ) {
 			return 1;
 		}
 		return 0;
@@ -741,9 +770,10 @@ void CalculateRanks( void ) {
 	level.numNonSpectatorClients = 0;
 	level.numPlayingClients = 0;
 	level.numVotingClients = 0;		// don't count bots
-	for ( i = 0; i < TEAM_NUM_TEAMS; i++ ) {
+
+	for (i = 0; i < ARRAY_LEN(level.numteamVotingClients); i++)
 		level.numteamVotingClients[i] = 0;
-	}
+
 	qsort( level.sortedClients, level.numConnectedClients, 
 		sizeof(level.sortedClients[0]), SortRanks );
 
@@ -814,7 +844,7 @@ void MoveClientToIntermission( gentity_t *ent ) {
 		StopFollowing( ent );
 	}
 
-
+	FindIntermissionPoint();
 	// move to the spot
 	VectorCopy( level.intermission_origin, ent->s.origin );
 	VectorCopy( level.intermission_origin, ent->client->ps.origin );
@@ -882,8 +912,17 @@ void BeginIntermission( void ) {
 	}
 
 	level.intermissiontime = level.time;
-	FindIntermissionPoint();
-
+	// move all clients to the intermission point
+	for (i=0 ; i< level.maxclients ; i++) {
+		client = g_entities + i;
+		if (!client->inuse)
+			continue;
+		// respawn if dead
+		if (client->powerLevelTotal <= 0) {
+			ClientRespawn(client);
+		}
+		MoveClientToIntermission( client );
+	}
 #ifdef MISSIONPACK
 	if (g_singlePlayer.integer) {
 		trap_Cvar_Set("ui_singlePlayerActive", "0");
@@ -896,19 +935,6 @@ void BeginIntermission( void ) {
 		SpawnModelsOnVictoryPads();
 	}
 #endif
-
-	// move all clients to the intermission point
-	for (i=0 ; i< level.maxclients ; i++) {
-		client = g_entities + i;
-		if (!client->inuse)
-			continue;
-		// respawn if dead
-		if (client->powerLevelTotal <= 0) {
-			respawn(client);
-		}
-		MoveClientToIntermission( client );
-	}
-
 	// send the current scoring to all clients
 	SendScoreboardMessageToAllClients();
 
@@ -992,7 +1018,7 @@ void QDECL G_LogPrintf( const char *fmt, ... ) {
 	char		string[1024];
 	int			min, tens, sec;
 
-	sec = level.time / 1000;
+	sec = ( level.time - level.startTime ) / 1000;
 
 	min = sec / 60;
 	sec -= min * 60;
@@ -1436,8 +1462,6 @@ Advances the non-player objects in the world
 void G_RunFrame( int levelTime ) {
 	int			i;
 	gentity_t	*ent;
-	int			msec;
-	int start, end;
 
 	// if we are waiting for the level to restart, do nothing
 	if ( level.restarted ) {
@@ -1447,7 +1471,6 @@ void G_RunFrame( int levelTime ) {
 	level.framenum++;
 	level.previousTime = level.time;
 	level.time = levelTime;
-	msec = level.time - level.previousTime;
 
 	// get any cvar changes
 	G_UpdateCvars();
@@ -1455,7 +1478,6 @@ void G_RunFrame( int levelTime ) {
 	//
 	// go through all allocated objects
 	//
-	start = trap_Milliseconds();
 	ent = &g_entities[0];
 	for (i=0 ; i<level.num_entities ; i++, ent++) {
 		if ( !ent->inuse ) {
@@ -1526,9 +1548,7 @@ void G_RunFrame( int levelTime ) {
 
 		G_RunThink( ent );
 	}
-	end = trap_Milliseconds();
 
-	start = trap_Milliseconds();
 	// perform final fixups on the players
 	ent = &g_entities[0];
 	for (i=0 ; i < level.maxclients ; i++, ent++ ) {
@@ -1536,8 +1556,6 @@ void G_RunFrame( int levelTime ) {
 			ClientEndFrame( ent );
 		}
 	}
-	end = trap_Milliseconds();
-
 	G_RadarUpdateCS();
 
 	// see if it is time to do a tournement restart

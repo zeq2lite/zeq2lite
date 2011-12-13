@@ -29,32 +29,26 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../../Shared/qcommon.h"
 #include "tr_public.h"
 #include "qgl.h"
+#include "iqm.h"
 
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
-
-// fast float to int conversion
-#if id386 && !defined(__GNUC__)
-long myftol( float f );
-#else
-#define	myftol(x) ((int)(x))
-#endif
-
 
 // everything that is needed by the backend needs
 // to be double buffered to allow it to run in
 // parallel on a dual cpu machine
 #define	SMP_FRAMES		2
 
-// 12 bits
+// 14 bits
+// can't be increased without changing bit packing for drawsurfs
 // see QSORT_SHADERNUM_SHIFT
-#define	MAX_SHADERS				16384
+#define SHADERNUM_BITS	14
+#define MAX_SHADERS		(1<<SHADERNUM_BITS)
 
 //#define MAX_SHADER_STATES 2048
 #define MAX_STATES_PER_SHADER 32
 #define MAX_STATE_NAME 32
 
-// can't be increased without changing bit packing for drawsurfs
 
 
 typedef struct dlight_s {
@@ -70,8 +64,7 @@ typedef struct dlight_s {
 // a trRefEntity_t has all the information passed in by
 // the client game, as well as some locally derived info
 typedef struct {
-	refEntity_t	ex;
-	refExtEntity_t	e;
+	refEntity_t	e;
 
 	float		axisLength;		// compensate for non-normalized axis
 
@@ -304,7 +297,7 @@ typedef struct {
 	qboolean		isVideoMap;
 } textureBundle_t;
 
-#define NUM_TEXTURE_BUNDLES 8
+#define NUM_TEXTURE_BUNDLES 2
 
 typedef struct {
 	qboolean		active;
@@ -325,8 +318,6 @@ typedef struct {
 
 	qboolean		isDetail;
 	int				mipBias;
-
-	qhandle_t		program;
 } shaderStage_t;
 
 struct shaderCommands_s;
@@ -545,6 +536,7 @@ typedef enum {
 #ifdef RAVENMD4
 	SF_MDR,
 #endif
+	SF_IQM,
 	SF_FLARE,
 	SF_ENTITY,				// beams, rails, lightning, etc that can be determined by entity
 	SF_DISPLAY_LIST,
@@ -651,6 +643,40 @@ typedef struct {
 	drawVert_t		*verts;
 } srfTriangles_t;
 
+// inter-quake-model
+typedef struct {
+	int		num_vertexes;
+	int		num_triangles;
+	int		num_frames;
+	int		num_surfaces;
+	int		num_joints;
+	struct srfIQModel_s	*surfaces;
+
+	float		*positions;
+	float		*texcoords;
+	float		*normals;
+	float		*tangents;
+	byte		*blendIndexes;
+	byte		*blendWeights;
+	byte		*colors;
+	int		*triangles;
+
+	int		*jointParents;
+	float		*poseMats;
+	float		*bounds;
+	char		*names;
+} iqmData_t;
+
+// inter-quake-model surface
+typedef struct srfIQModel_s {
+	surfaceType_t	surfaceType;
+	char		name[MAX_QPATH];
+	shader_t	*shader;
+	iqmData_t	*data;
+	int		first_vertex, num_vertexes;
+	int		first_triangle, num_triangles;
+} srfIQModel_t;
+
 
 extern	void (*rb_surfaceTable[SF_NUM_SURFACE_TYPES])(void *);
 
@@ -751,85 +777,6 @@ typedef struct {
 	char		*entityParsePoint;
 } world_t;
 
-#define MAX_PROGRAMS 256
-#define MAX_PROGRAM_OBJECTS 8
-
-typedef struct {
-	int				index;
-	char			name[MAX_QPATH];
-	qboolean		valid;
-	GLhandleARB		program;
-
-	GLint			u_AlphaGen;
-	alphaGen_t		v_AlphaGen;
-
-	GLint			u_AmbientLight;
-	vec3_t			v_AmbientLight;
-
-	GLint			u_DynamicLight;
-	vec3_t			v_DynamicLight;
-
-	GLint			u_LightDistance;
-	float			v_LightDistance;
-
-	GLint			u_ColorGen;
-	colorGen_t		v_ColorGen;
-
-	GLint			u_ConstantColor;
-	byte			v_ConstantColor[4];
-
-	GLint			u_DirectedLight;
-	vec3_t			v_DirectedLight;
-
-	GLint			u_EntityColor;
-	byte			v_EntityColor[4];
-
-	GLint			u_FogColor;
-	unsigned		v_FogColor;
-
-	GLint			u_Greyscale;
-	int				v_Greyscale;
-
-	GLint			u_IdentityLight;
-	float			v_IdentityLight;
-
-	GLint			u_LightDirection;
-	vec3_t			v_LightDirection;
-
-	GLint			u_ModelViewMatrix;
-	float			v_ModelViewMatrix[16];
-
-	GLint			u_ModelViewProjectionMatrix;
-	float			v_ModelViewProjectionMatrix[16];
-
-	GLint			u_ProjectionMatrix;
-	float			v_ProjectionMatrix[16];
-
-	GLint			u_TCGen0;
-	texCoordGen_t	v_TCGen0;
-
-	GLint			u_TCGen1;
-	texCoordGen_t	v_TCGen1;
-
-	GLint			u_TexEnv;
-	int				v_TexEnv;
-
-	GLint			u_Texture0;
-	GLint			u_Texture1;
-	GLint			u_Texture2;
-	GLint			u_Texture3;
-	GLint			u_Texture4;
-	GLint			u_Texture5;
-	GLint			u_Texture6;
-	GLint			u_Texture7;
-
-	GLint			u_Time;
-	float			v_Time;
-
-	GLint			u_ViewOrigin;
-	vec3_t			v_ViewOrigin;
-} glslProgram_t;
-
 //======================================================================
 
 typedef enum {
@@ -838,20 +785,21 @@ typedef enum {
 	MOD_MESH,
 	MOD_MD4,
 #ifdef RAVENMD4
-	MOD_MDR
+	MOD_MDR,
 #endif
+	MOD_IQM
 } modtype_t;
 
 typedef struct model_s {
 	char		name[MAX_QPATH];
 	modtype_t	type;
-	int			index;				// model = tr.models[model->index]
+	int			index;		// model = tr.models[model->index]
 
-	int			dataSize;			// just for listing purposes
-	bmodel_t	*bmodel;			// only if type == MOD_BRUSH
+	int			dataSize;	// just for listing purposes
+	bmodel_t	*bmodel;		// only if type == MOD_BRUSH
 	md3Header_t	*md3[MD3_MAX_LODS];	// only if type == MOD_MESH
-	md4bHeader_t	*md4;				// only if type == (MOD_MD4 | MOD_MDR)
-	md4aHeader_t	*animations;
+	void	*modelData;			// only if type == (MOD_MD4 | MOD_MDR | MOD_IQM)
+
 	int			 numLods;
 } model_t;
 
@@ -865,16 +813,6 @@ int			R_LerpTag( orientation_t *tag, qhandle_t handle, int startFrame, int endFr
 void		R_ModelBounds( qhandle_t handle, vec3_t mins, vec3_t maxs );
 
 void		R_Modellist_f (void);
-//===================================================
-//	renderer traps for skeletal animation below
-//===================================================
-
-void	R_CalcQuickBounds( skel_t *skel );
-void	R_CalcBoundsForPose( skel_t *skel, qhandle_t mod );
-int		R_GetPoseForFrame( skel_t *skel, qhandle_t mod, int framenum );
-int		R_GetLerpPose( skel_t *skel, qhandle_t mod, int startFrame, int endFrame, float frontLerp );
-int		R_SetBlendPose( skel_t *skel, qhandle_t mod, int startFrame[3], int endFrame[3], float frontLerp[3], vec3_t angles[3] );
-int		R_GetLerpBone( skelBone_t *bone, qhandle_t mod, int startFrame, int endFrame, float frontLerp, const char *name );
 
 //====================================================
 extern	refimport_t		ri;
@@ -894,21 +832,24 @@ compared quickly during the qsorting process
 
 the bits are allocated as follows:
 
-21 - 31	: sorted shader index
-11 - 20	: entity index
-2 - 6	: fog index
-//2		: used to be clipped flag REMOVED - 03.21.00 rad
 0 - 1	: dlightmap index
+//2		: used to be clipped flag REMOVED - 03.21.00 rad
+2 - 6	: fog index
+11 - 20	: entity index
+21 - 31	: sorted shader index
 
 	TTimo - 1.32
-17-31 : sorted shader index
-7-16  : entity index
-2-6   : fog index
 0-1   : dlightmap index
+2-6   : fog index
+7-16  : entity index
+17-30 : sorted shader index
 */
-#define	QSORT_SHADERNUM_SHIFT	17
+#define	QSORT_FOGNUM_SHIFT	2
 #define	QSORT_ENTITYNUM_SHIFT	7
-#define	QSORT_FOGNUM_SHIFT		2
+#define	QSORT_SHADERNUM_SHIFT	(QSORT_ENTITYNUM_SHIFT+GENTITYNUM_BITS)
+#if (QSORT_SHADERNUM_SHIFT+SHADERNUM_BITS) > 32
+	#error "Need to update sorting, too many bits."
+#endif
 
 extern	int			gl_filter_min, gl_filter_max;
 
@@ -936,10 +877,6 @@ typedef struct {
 typedef struct {
 	int			currenttextures[2];
 	int			currenttmu;
-	float		currentModelViewMatrix[16];
-	float		currentModelViewProjectionMatrix[16];
-	float		currentProjectionMatrix[16];
-	qhandle_t	currentProgram;
 	qboolean	finishCalled;
 	int			texEnv[2];
 	int			faceCulling;
@@ -1025,17 +962,8 @@ typedef struct {
 	shader_t				*flareShader;
 	shader_t				*sunShader;
 
-	qhandle_t				skipProgram;
-	qhandle_t				defaultProgram;
-	qhandle_t				vertexLitProgram;
-	qhandle_t				lightmappedMultitextureProgram;
-	qhandle_t				skyProgram;
-
-	int						numPrograms;
-	glslProgram_t			*programs[MAX_PROGRAMS];
-
 	int						numLightmaps;
-	image_t					*lightmaps[MAX_LIGHTMAPS];
+	image_t					**lightmaps;
 
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world
@@ -1067,9 +995,6 @@ typedef struct {
 	//
 	model_t					*models[MAX_MOD_KNOWN];
 	int						numModels;
-	
-	int						numAnimations;
-
 
 	int						numImages;
 	image_t					*images[MAX_DRAWIMAGES];
@@ -1102,7 +1027,6 @@ extern glstate_t	glState;		// outside of TR since it shouldn't be cleared during
 // the glconfig_t struct.
 extern qboolean  textureFilterAnisotropic;
 extern int       maxAnisotropy;
-extern qboolean  vertexShaders;
 extern float     displayAspect;
 
 
@@ -1190,8 +1114,6 @@ extern cvar_t	*r_ext_texture_env_add;
 extern cvar_t	*r_ext_texture_filter_anisotropic;
 extern cvar_t	*r_ext_max_anisotropy;
 
-extern cvar_t	*r_ext_vertex_shader;
-
 extern	cvar_t	*r_nobind;						// turns off binding to appropriate textures
 extern	cvar_t	*r_singleShader;				// make most world faces use default shader
 extern	cvar_t	*r_roundImagesDown;
@@ -1199,7 +1121,6 @@ extern	cvar_t	*r_colorMipLevels;				// development aid to see texture mip usage
 extern	cvar_t	*r_picmip;						// controls picmip values
 extern	cvar_t	*r_finish;
 extern	cvar_t	*r_drawBuffer;
-extern  cvar_t  *r_glDriver;
 extern	cvar_t	*r_swapInterval;
 extern	cvar_t	*r_textureMode;
 extern	cvar_t	*r_offsetFactor;
@@ -1215,7 +1136,6 @@ extern	cvar_t	*r_showtris;					// enables wireframe rendering of the world
 extern	cvar_t	*r_showsky;						// forces sky in front of all surfaces
 extern	cvar_t	*r_shownormals;					// draws wireframe normals
 extern	cvar_t	*r_showbboxes;					// draws bounding boxes
-//extern	cvar_t	*r_showbones;					// draws bones
 extern	cvar_t	*r_clear;						// force screen clear every frame
 
 extern	cvar_t	*r_shadows;						// controls shadows: 0 = none, 1 = blur, 2 = stencil, 3 = black planar projection
@@ -1259,8 +1179,6 @@ extern	cvar_t	*r_printShaders;
 extern	cvar_t	*r_saveFontData;
 
 extern cvar_t	*r_marksOnTriangleMeshes;
-
-extern	cvar_t	*r_GLlibCoolDownMsec;
 
 //====================================================================
 
@@ -1360,10 +1278,10 @@ qboolean	R_GetEntityToken( char *buffer, int size );
 model_t		*R_AllocModel( void );
 
 void    	R_Init( void );
-image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, int glWrapClampMode);
+image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, int glWrapClampMode );
 
 image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, qboolean mipmap
-					, qboolean allowPicmip, int wrapClampMode);
+					, qboolean allowPicmip, int wrapClampMode );
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
 
 void		R_SetColorMappings( void );
@@ -1421,6 +1339,7 @@ void		GLimp_FrontEndSleep( void );
 void		GLimp_WakeRenderer( void *data );
 
 void		GLimp_LogComment( char *comment );
+void		GLimp_Minimize(void);
 
 // NOTE TTimo linux works with float gamma value, not the gamma table
 //   the params won't be used, getting the r_gamma cvar directly
@@ -1447,19 +1366,19 @@ typedef struct stageVars
 
 typedef struct shaderCommands_s 
 {
-	glIndex_t	indexes[SHADER_MAX_INDEXES] ALIGN(16);
-	vec4_t		xyz[SHADER_MAX_VERTEXES] ALIGN(16);
-	vec4_t		normal[SHADER_MAX_VERTEXES] ALIGN(16);
-	vec2_t		texCoords[SHADER_MAX_VERTEXES][2] ALIGN(16);
-	color4ub_t	vertexColors[SHADER_MAX_VERTEXES] ALIGN(16);
-	int			vertexDlightBits[SHADER_MAX_VERTEXES] ALIGN(16);
+	glIndex_t	indexes[SHADER_MAX_INDEXES] QALIGN(16);
+	vec4_t		xyz[SHADER_MAX_VERTEXES] QALIGN(16);
+	vec4_t		normal[SHADER_MAX_VERTEXES] QALIGN(16);
+	vec2_t		texCoords[SHADER_MAX_VERTEXES][2] QALIGN(16);
+	color4ub_t	vertexColors[SHADER_MAX_VERTEXES] QALIGN(16);
+	int			vertexDlightBits[SHADER_MAX_VERTEXES] QALIGN(16);
 
-	stageVars_t	svars ALIGN(16);
+	stageVars_t	svars QALIGN(16);
 
-	color4ub_t	constantColor255[SHADER_MAX_VERTEXES] ALIGN(16);
+	color4ub_t	constantColor255[SHADER_MAX_VERTEXES] QALIGN(16);
 
 	shader_t	*shader;
-  float   shaderTime;
+	float		shaderTime;
 	int			fogNum;
 
 	int			dlightBits;	// or together of all vertexDlightBits
@@ -1517,252 +1436,6 @@ void R_ClearFlares( void );
 void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t normal );
 void RB_AddDlightFlares( void );
 void RB_RenderFlares (void);
-
-/*
-============================================================
-
-GLSL
-
-============================================================
-*/
-
-/*
- * R_GLSL_SetUniform
- * Only upload uniform data when value changes
- */
-static ID_INLINE void R_GLSL_SetUniform_AlphaGen(glslProgram_t *program, alphaGen_t value) {
-	if (program->v_AlphaGen == value)
-		return;
-
-	program->v_AlphaGen = value;
-	qglUniform1iARB(program->u_AlphaGen, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_AmbientLight(glslProgram_t *program, const vec3_t value) {
-	if (VectorCompare(program->v_AmbientLight, value))
-		return;
-
-	VectorCopy(value, program->v_AmbientLight);
-	qglUniform3fARB(program->u_AmbientLight, value[0] / 255.0f, value[1] / 255.0f, value[2] / 255.0f);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_DynamicLight(glslProgram_t *program, const vec3_t value) {
-	if (VectorCompare(program->v_DynamicLight, value))
-		return;
-
-	VectorCopy(value, program->v_DynamicLight);
-	qglUniform3fARB(program->u_DynamicLight, value[0] / 255.0f, value[1] / 255.0f, value[2] / 255.0f);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_LightDistance(glslProgram_t *program, float value) {
-	if (program->v_LightDistance == value)
-		return;
-
-	program->v_LightDistance = value;
-	qglUniform1fARB(program->u_LightDistance, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_ColorGen(glslProgram_t *program, colorGen_t value) {
-	if (program->v_ColorGen == value)
-		return;
-
-	program->v_ColorGen = value;
-	qglUniform1iARB(program->u_ColorGen, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_ConstantColor(glslProgram_t *program, byte value[4]) {
-	if (program->v_ConstantColor[0] == value[0] &&
-		program->v_ConstantColor[1] == value[1] &&
-		program->v_ConstantColor[2] == value[2] &&
-		program->v_ConstantColor[3] == value[3])
-		return;
-
-	program->v_ConstantColor[0] = value[0];
-	program->v_ConstantColor[1] = value[1];
-	program->v_ConstantColor[2] = value[2];
-	program->v_ConstantColor[3] = value[3];
-	qglUniform4fARB(program->u_ConstantColor, value[0] / 255.0f, value[1] / 255.0f, value[2] / 255.0f, value[3] / 255.0f);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_DirectedLight(glslProgram_t *program, const vec3_t value) {
-	if (VectorCompare(program->v_DirectedLight, value))
-		return;
-
-	VectorCopy(value, program->v_DirectedLight);
-	qglUniform3fARB(program->u_DirectedLight, value[0] / 255.0f, value[1] / 255.0f, value[2] / 255.0f);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_EntityColor(glslProgram_t *program, byte value[4]) {
-	if (program->v_EntityColor[0] == value[0] &&
-		program->v_EntityColor[1] == value[1] &&
-		program->v_EntityColor[2] == value[2] &&
-		program->v_EntityColor[3] == value[3])
-		return;
-
-	program->v_EntityColor[0] = value[0];
-	program->v_EntityColor[1] = value[1];
-	program->v_EntityColor[2] = value[2];
-	program->v_EntityColor[3] = value[3];
-	qglUniform4fARB(program->u_EntityColor, value[0] / 255.0f, value[1] / 255.0f, value[2] / 255.0f, value[3] / 255.0f);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_FogColor(glslProgram_t *program, unsigned value) {
-	byte	temp[4];
-
-	if (program->v_FogColor == value)
-		return;
-
-	*(unsigned *)temp = value;
-
-	program->v_FogColor = value;
-	qglUniform4fARB(program->u_FogColor, temp[0] / 255.0f, temp[1] / 255.0f, temp[2] / 255.0f, temp[3] / 255.0f);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Greyscale(glslProgram_t *program, int value) {
-	if (program->v_Greyscale == value)
-		return;
-
-	program->v_Greyscale = value;
-	qglUniform1iARB(program->u_Greyscale, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_IdentityLight(glslProgram_t *program, float value) {
-	if (program->v_IdentityLight == value)
-		return;
-
-	program->v_IdentityLight = value;
-	qglUniform1fARB(program->u_IdentityLight, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_LightDirection(glslProgram_t *program, const vec3_t value) {
-	if (VectorCompare(program->v_LightDirection, value))
-		return;
-
-	VectorCopy(value, program->v_LightDirection);
-	qglUniform3fARB(program->u_LightDirection, value[0], value[1], value[2]);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_ModelViewMatrix(glslProgram_t *program, const float value[16]) {
-	if (Matrix4Compare(program->v_ModelViewMatrix, value))
-		return;
-
-	Matrix4Copy(value, program->v_ModelViewMatrix);
-	qglUniformMatrix4fvARB(program->u_ModelViewMatrix, 1, GL_FALSE, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_ModelViewProjectionMatrix(glslProgram_t *program, const float value[16]) {
-	if (Matrix4Compare(program->v_ModelViewProjectionMatrix, value))
-		return;
-
-	Matrix4Copy(value, program->v_ModelViewProjectionMatrix);
-	qglUniformMatrix4fvARB(program->u_ModelViewProjectionMatrix, 1, GL_FALSE, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_ProjectionMatrix(glslProgram_t *program, const float value[16]) {
-	if (Matrix4Compare(program->v_ProjectionMatrix, value))
-		return;
-
-	Matrix4Copy(value, program->v_ProjectionMatrix);
-	qglUniformMatrix4fvARB(program->u_ProjectionMatrix, 1, GL_FALSE, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_TCGen0(glslProgram_t *program, texCoordGen_t value) {
-	if (program->v_TCGen0 == value)
-		return;
-
-	program->v_TCGen0 = value;
-	qglUniform1iARB(program->u_TCGen0, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_TCGen1(glslProgram_t *program, texCoordGen_t value) {
-	if (program->v_TCGen1 == value)
-		return;
-
-	program->v_TCGen1 = value;
-	qglUniform1iARB(program->u_TCGen1, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_TexEnv(glslProgram_t *program, int value) {
-	switch (value) {
-		case GL_REPLACE:
-			value = 0;
-			break;
-		case GL_MODULATE:
-			value = 1;
-			break;
-		case GL_DECAL:
-			value = 2;
-			break;
-		case GL_ADD:
-			value = 4;
-			break;
-		default:
-			value = -1;
-	}
-
-	if (program->v_TexEnv == value)
-		return;
-
-	program->v_TexEnv = value;
-
-	qglUniform1iARB(program->u_TexEnv, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Texture0(glslProgram_t *program, GLint value) {
-	qglUniform1iARB(program->u_Texture0, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Texture1(glslProgram_t *program, GLint value) {
-	qglUniform1iARB(program->u_Texture1, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Texture2(glslProgram_t *program, GLint value) {
-	qglUniform1iARB(program->u_Texture2, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Texture3(glslProgram_t *program, GLint value) {
-	qglUniform1iARB(program->u_Texture3, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Texture4(glslProgram_t *program, GLint value) {
-	qglUniform1iARB(program->u_Texture4, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Texture5(glslProgram_t *program, GLint value) {
-	qglUniform1iARB(program->u_Texture5, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Texture6(glslProgram_t *program, GLint value) {
-	qglUniform1iARB(program->u_Texture6, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Texture7(glslProgram_t *program, GLint value) {
-	qglUniform1iARB(program->u_Texture7, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_Time(glslProgram_t *program, float value) {
-	if (program->v_Time == value)
-		return;
-
-	program->v_Time = value;
-	qglUniform1fARB(program->u_Time, value);
-}
-
-static ID_INLINE void R_GLSL_SetUniform_ViewOrigin(glslProgram_t *program, const vec3_t value) {
-	if (VectorCompare(program->v_ViewOrigin, value))
-		return;
-
-	VectorCopy(value, program->v_ViewOrigin);
-	qglUniform3fARB(program->u_ViewOrigin, value[0], value[1], value[2]);
-}
-
-void R_GLSL_Init(void);
-qhandle_t RE_GLSL_RegisterProgram(const char *name, const char *programVertexObjects, int numVertexObjects, const char *programFragmentObjects, int numFragmentObjects);
-void R_GLSL_UseProgram(qhandle_t index);
-void RB_GLSL_StageIteratorGeneric(void);
-void RB_GLSL_StageIteratorVertexLitTexture(void);
-void RB_GLSL_StageIteratorLightmappedMultitexture(void);
-void RB_GLSL_StageIteratorSky(void);
 
 /*
 ============================================================
@@ -1844,7 +1517,6 @@ void R_ToggleSmpFrame( void );
 
 void RE_ClearScene( void );
 void RE_AddRefEntityToScene( const refEntity_t *ent );
-void RE_AddRefExtendedEntityToScene( const refExtEntity_t *ent );
 void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
 void RE_AddFogToScene( float start, float end, float r, float g, float b, float opacity, float mode, float hint );
 void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
@@ -1880,16 +1552,19 @@ ANIMATED MODELS
 =============================================================
 */
 
-void R_AddMD4Surfaces( trRefEntity_t *ent );
-void RB_SurfaceMD4( md4bSurface_t *surfType );
 // void R_MakeAnimModel( model_t *model );      haven't seen this one really, so not needed I guess.
 void R_AddAnimSurfaces( trRefEntity_t *ent );
-void RB_SurfaceAnim( md4bSurface_t *surfType );
-void DrawBones (skel_t *pose);
+void RB_SurfaceAnim( md4Surface_t *surfType );
 #ifdef RAVENMD4
 void R_MDRAddAnimSurfaces( trRefEntity_t *ent );
 void RB_MDRSurfaceAnim( md4Surface_t *surface );
 #endif
+qboolean R_LoadIQM (model_t *mod, void *buffer, int filesize, const char *name );
+void R_AddIQMSurfaces( trRefEntity_t *ent );
+void RB_IQMSurfaceAnim( surfaceType_t *surface );
+int R_IQMLerpTag( orientation_t *tag, iqmData_t *data,
+                  int startFrame, int endFrame,
+                  float frac, const char *tagName );
 
 /*
 =============================================================
@@ -2104,10 +1779,10 @@ void RE_StretchPic ( float x, float y, float w, float h,
 					  float s1, float t1, float s2, float t2, qhandle_t hShader );
 void RE_BeginFrame( stereoFrame_t stereoFrame );
 void RE_EndFrame( int *frontEndMsec, int *backEndMsec );
-void SaveJPG(char * filename, int quality, int image_width, int image_height, unsigned char *image_buffer);
-int SaveJPGToBuffer( byte *buffer, int quality,
-		int image_width, int image_height,
-		byte *image_buffer );
+void RE_SaveJPG(char * filename, int quality, int image_width, int image_height,
+                unsigned char *image_buffer, int padding);
+size_t RE_SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality,
+		          int image_width, int image_height, byte *image_buffer, int padding);
 void RE_TakeVideoFrame( int width, int height,
 		byte *captureBuffer, byte *encodeBuffer, qboolean motionJpeg );
 

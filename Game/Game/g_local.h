@@ -257,7 +257,7 @@ typedef struct {
 // MUST be dealt with in G_InitSessionData() / G_ReadSessionData() / G_WriteSessionData()
 typedef struct {
 	team_t		sessionTeam;
-	int			spectatorTime;		// for determining next-in-line to play
+	int			spectatorNum;		// for determining next-in-line to play
 	spectatorState_t	spectatorState;
 	int			spectatorClient;	// for chasecam and follow mode
 	int			wins, losses;		// tournament stats
@@ -356,7 +356,7 @@ typedef struct {
 
 	struct gentity_s	*gentities;
 	int			gentitySize;
-	int			num_entities;		// current number, <= MAX_GENTITIES
+	int			num_entities;		// MAX_CLIENTS <= num_entities <= ENTITYNUM_MAX_NORMAL
 
 	int			warmupTime;			// restart match at this time
 
@@ -501,7 +501,6 @@ void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int d
 //
 void G_RunMissile( gentity_t *ent );
 
-gentity_t *fire_blaster (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir);
@@ -556,7 +555,7 @@ team_t PickTeam( int ignoreClientNum );
 void SetClientViewAngle( gentity_t *ent, vec3_t angle );
 gentity_t *SelectSpawnPoint (vec3_t avoidPoint, vec3_t origin, vec3_t angles, qboolean isbot);
 void CopyToBodyQue( gentity_t *ent );
-void respawn (gentity_t *ent);
+void ClientRespawn(gentity_t *ent);
 void BeginIntermission (void);
 void InitClientPersistant (gclient_t *client);
 void InitClientResp (gclient_t *client);
@@ -606,10 +605,11 @@ void FindIntermissionPoint( void );
 void SetLeader(int team, int client);
 void CheckTeamLeader( int team );
 void G_RunThink (gentity_t *ent);
-void QDECL G_LogPrintf( const char *fmt, ... );
+void AddTournamentQueue(gclient_t *client);
+void QDECL G_LogPrintf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
 void SendScoreboardMessageToAllClients( void );
-void QDECL G_Printf( const char *fmt, ... );
-void QDECL G_Error( const char *fmt, ... );
+void QDECL G_Printf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
+void QDECL G_Error( const char *fmt, ... ) __attribute__ ((noreturn, format (printf, 1, 2)));
 
 //
 // g_client.c
@@ -794,7 +794,7 @@ extern	vmCvar_t	g_editmode;
 #endif
 
 void	trap_Printf( const char *fmt );
-void	trap_Error( const char *fmt );
+void	trap_Error(const char *fmt) __attribute__((noreturn));
 int		trap_Milliseconds( void );
 int		trap_RealTime( qtime_t *qtime );
 int		trap_Argc( void );

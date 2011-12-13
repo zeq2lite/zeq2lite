@@ -278,9 +278,6 @@ void RB_ShadowFinish( void ) {
 
     qglLoadIdentity ();
 
-    qglGetFloatv(GL_MODELVIEW_MATRIX, glState.currentModelViewMatrix);
-    Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
-
 	qglColor3f( 0.6f, 0.6f, 0.6f );
 	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO );
 

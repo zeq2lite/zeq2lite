@@ -287,7 +287,7 @@ RB_SurfaceBeam
 static void RB_SurfaceBeam( void )
 {
 #define NUM_BEAM_SEGS 6
-	refExtEntity_t *e;
+	refEntity_t *e;
 	int	i;
 	vec3_t perpvec;
 	vec3_t direction, normalized_direction;
@@ -455,7 +455,7 @@ static void DoRailDiscs( int numSegs, const vec3_t start, const vec3_t dir, cons
 ** RB_SurfaceRailRinges
 */
 static void RB_SurfaceRailRings( void ) {
-	refExtEntity_t *e;
+	refEntity_t *e;
 	int			numSegs;
 	int			len;
 	vec3_t		vec;
@@ -485,7 +485,7 @@ static void RB_SurfaceRailRings( void ) {
 ** RB_SurfaceRailCore
 */
 static void RB_SurfaceRailCore( void ) {
-	refExtEntity_t *e;
+	refEntity_t *e;
 	int			len;
 	vec3_t		right;
 	vec3_t		vec;
@@ -515,7 +515,7 @@ static void RB_SurfaceRailCore( void ) {
 ** RB_SurfaceLightningBolt
 */
 static void RB_SurfaceLightningBolt( void ) {
-	refExtEntity_t *e;
+	refEntity_t *e;
 	int			len;
 	vec3_t		right;
 	vec3_t		vec;
@@ -615,10 +615,10 @@ static void LerpMeshVertexes_altivec(md3Surface_t *surf, float backlerp)
 {
 	short	*oldXyz, *newXyz, *oldNormals, *newNormals;
 	float	*outXyz, *outNormal;
-	float	oldXyzScale ALIGN(16);
-	float   newXyzScale ALIGN(16);
-	float	oldNormalScale ALIGN(16);
-	float newNormalScale ALIGN(16);
+	float	oldXyzScale QALIGN(16);
+	float   newXyzScale QALIGN(16);
+	float	oldNormalScale QALIGN(16);
+	float newNormalScale QALIGN(16);
 	int		vertNum;
 	unsigned lat, lng;
 	int		numVerts;
@@ -752,10 +752,7 @@ static void LerpMeshVertexes_scalar(md3Surface_t *surf, float backlerp)
 
 	outXyz = tess.xyz[tess.numVertexes];
 	outNormal = tess.normal[tess.numVertexes];
-	
-	if(r_meshLerp->value){
-		backlerp = r_meshLerp->value;
-	}
+
 	newXyz = (short *)((byte *)surf + surf->ofsXyzNormals)
 		+ (backEnd.currentEntity->e.frame * surf->numVerts * 4);
 	newNormals = newXyz + 3;
@@ -931,10 +928,6 @@ static void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 
 	tess.numIndexes += surf->numIndices;
 
-	v = surf->points[0];
-
-	ndx = tess.numVertexes;
-
 	numPoints = surf->numPoints;
 
 	if ( tess.shader->needsNormal ) {
@@ -1049,7 +1042,6 @@ static void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 	// in the tess structure, so we may have to issue it in multiple passes
 
 	used = 0;
-	rows = 0;
 	while ( used < lodHeight - 1 ) {
 		// see how many rows of both verts and indexes we can add without overflowing
 		do {
@@ -1241,11 +1233,11 @@ void (*rb_surfaceTable[SF_NUM_SURFACE_TYPES])( void *) = {
 	(void(*)(void*))RB_SurfaceTriangles,		// SF_TRIANGLES,
 	(void(*)(void*))RB_SurfacePolychain,		// SF_POLY,
 	(void(*)(void*))RB_SurfaceMesh,			// SF_MD3,
-//	(void(*)(void*))RB_SurfaceAnim,			// SF_MD4,
-	(void(*)(void*))RB_SurfaceMD4,			// SF_MD4,
+	(void(*)(void*))RB_SurfaceAnim,			// SF_MD4,
 #ifdef RAVENMD4
 	(void(*)(void*))RB_MDRSurfaceAnim,		// SF_MDR,
 #endif
+	(void(*)(void*))RB_IQMSurfaceAnim,		// SF_IQM,
 	(void(*)(void*))RB_SurfaceFlare,		// SF_FLARE,
 	(void(*)(void*))RB_SurfaceEntity,		// SF_ENTITY
 	(void(*)(void*))RB_SurfaceDisplayList		// SF_DISPLAY_LIST

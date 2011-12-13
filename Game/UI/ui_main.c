@@ -237,7 +237,7 @@ static cvarTable_t		cvarTable[] = {
 	{ &s_mastermusicvolume, "s_mastermusicvolume", "0.5", CVAR_ARCHIVE }
 };
 
-static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
+static int cvarTableSize = ARRAY_LEN( cvarTable );
 
 
 /*

@@ -35,22 +35,9 @@ woven in by Terry Thorsen 1/2003.
  */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "../../Shared/q_shared.h"
+#include "../../Shared/qcommon.h"
 #include "unzip.h"
-
-#ifdef STDC
-#  include <stddef.h>
-#  include <string.h>
-#  include <stdlib.h>
-#endif
-#ifdef NO_ERRNO_H
-    extern int errno;
-#else
-#   include <errno.h>
-#endif
-
 
 #ifndef local
 #  define local static
@@ -74,10 +61,10 @@ woven in by Terry Thorsen 1/2003.
 #endif
 
 #ifndef ALLOC
-# define ALLOC(size) (malloc(size))
+# define ALLOC(size) (Z_Malloc(size))
 #endif
 #ifndef TRYFREE
-# define TRYFREE(p) {if (p) free(p);}
+# define TRYFREE(p) {if (p) Z_Free(p);}
 #endif
 
 #define SIZECENTRALDIRITEM (0x2e)
@@ -1263,7 +1250,7 @@ extern int ZEXPORT unzReadCurrentFile  (file, buf, len)
         return UNZ_PARAMERROR;
 
 
-    if ((pfile_in_zip_read_info->read_buffer == NULL))
+    if (pfile_in_zip_read_info->read_buffer == NULL)
         return UNZ_END_OF_LIST_OF_FILE;
     if (len==0)
         return 0;

@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 
-#define	WAVEVALUE( table, base, amplitude, phase, freq )  ((base) + table[ myftol( ( ( (phase) + tess.shaderTime * (freq) ) * FUNCTABLE_SIZE ) ) & FUNCTABLE_MASK ] * (amplitude))
+#define	WAVEVALUE( table, base, amplitude, phase, freq )  ((base) + table[ ri.ftol( ( ( (phase) + tess.shaderTime * (freq) ) * FUNCTABLE_SIZE ) ) & FUNCTABLE_MASK ] * (amplitude))
 
 static float *TableForFunc( genFunc_t func ) 
 {
@@ -48,7 +48,7 @@ static float *TableForFunc( genFunc_t func )
 		break;
 	}
 
-	ri.Error( ERR_DROP, "TableForFunc called with invalid function '%d' in shader '%s'\n", func, tess.shader->name );
+	ri.Error( ERR_DROP, "TableForFunc called with invalid function '%d' in shader '%s'", func, tess.shader->name );
 	return NULL;
 }
 
@@ -634,7 +634,7 @@ void RB_CalcColorFromOneMinusEntity( unsigned char *dstColors )
 
 	for ( i = 0; i < tess.numVertexes; i++, pColors++ )
 	{
-		*pColors = * ( int * ) invModulate;
+		*pColors = c;
 	}
 }
 
@@ -699,7 +699,7 @@ void RB_CalcWaveColor( const waveForm_t *wf, unsigned char *dstColors )
 		glow = 1;
 	}
 
-	v = myftol( 255 * glow );
+	v = ri.ftol(255 * glow);
 	color[0] = color[1] = color[2] = v;
 	color[3] = 255;
 	v = *(int *)color;
@@ -1099,21 +1099,6 @@ void RB_CalcRotateTexCoords( float degsPerSecond, float *st )
 }
 
 
-
-
-
-
-#if id386 && !defined(__GNUC__)
-
-long myftol( float f ) {
-	static int tmp;
-	__asm fld f
-	__asm fistp tmp
-	__asm mov eax, tmp
-}
-
-#endif
-
 /*
 ** RB_CalcSpecularAlpha
 **
@@ -1279,19 +1264,19 @@ static void RB_CalcDiffuseColor_scalar( unsigned char *colors )
 			*(int *)&colors[i*4] = ambientLightInt;
 			continue;
 		} 
-		j = myftol( ambientLight[0] + incoming * directedLight[0] );
+		j = ri.ftol(ambientLight[0] + incoming * directedLight[0]);
 		if ( j > 255 ) {
 			j = 255;
 		}
 		colors[i*4+0] = j;
 
-		j = myftol( ambientLight[1] + incoming * directedLight[1] );
+		j = ri.ftol(ambientLight[1] + incoming * directedLight[1]);
 		if ( j > 255 ) {
 			j = 255;
 		}
 		colors[i*4+1] = j;
 
-		j = myftol( ambientLight[2] + incoming * directedLight[2] );
+		j = ri.ftol(ambientLight[2] + incoming * directedLight[2]);
 		if ( j > 255 ) {
 			j = 255;
 		}

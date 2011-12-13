@@ -475,7 +475,7 @@ static void FillCloudySkySide( const int mins[2], const int maxs[2], qboolean ad
 
 			if ( tess.numVertexes >= SHADER_MAX_VERTEXES )
 			{
-				ri.Error( ERR_DROP, "SHADER_MAX_VERTEXES hit in FillCloudySkySide()\n" );
+				ri.Error( ERR_DROP, "SHADER_MAX_VERTEXES hit in FillCloudySkySide()" );
 			}
 		}
 	}
@@ -553,10 +553,10 @@ static void FillCloudBox( const shader_t *shader, int stage )
 			continue;
 		}
 
-		sky_mins_subd[0] = myftol( sky_mins[0][i] * HALF_SKY_SUBDIVISIONS );
-		sky_mins_subd[1] = myftol( sky_mins[1][i] * HALF_SKY_SUBDIVISIONS );
-		sky_maxs_subd[0] = myftol( sky_maxs[0][i] * HALF_SKY_SUBDIVISIONS );
-		sky_maxs_subd[1] = myftol( sky_maxs[1][i] * HALF_SKY_SUBDIVISIONS );
+		sky_mins_subd[0] = ri.ftol(sky_mins[0][i] * HALF_SKY_SUBDIVISIONS);
+		sky_mins_subd[1] = ri.ftol(sky_mins[1][i] * HALF_SKY_SUBDIVISIONS);
+		sky_maxs_subd[0] = ri.ftol(sky_maxs[0][i] * HALF_SKY_SUBDIVISIONS);
+		sky_maxs_subd[1] = ri.ftol(sky_maxs[1][i] * HALF_SKY_SUBDIVISIONS);
 
 		if ( sky_mins_subd[0] < -HALF_SKY_SUBDIVISIONS ) 
 			sky_mins_subd[0] = -HALF_SKY_SUBDIVISIONS;
@@ -618,14 +618,14 @@ void R_BuildCloudData( shaderCommands_t *input )
 	tess.numIndexes = 0;
 	tess.numVertexes = 0;
 
-	if ( input->shader->sky.cloudHeight )
+	if ( shader->sky.cloudHeight )
 	{
 		for ( i = 0; i < MAX_SHADER_STAGES; i++ )
 		{
 			if ( !tess.xstages[i] ) {
 				break;
 			}
-			FillCloudBox( input->shader, i );
+			FillCloudBox( shader, i );
 		}
 	}
 }
@@ -710,9 +710,6 @@ void RB_DrawSun( void ) {
 	}
 	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
 	qglTranslatef (backEnd.viewParms.or.origin[0], backEnd.viewParms.or.origin[1], backEnd.viewParms.or.origin[2]);
-
-	qglGetFloatv(GL_MODELVIEW_MATRIX, glState.currentModelViewMatrix);
-	Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
 
 	dist = 	backEnd.viewParms.zFar / 1.75;		// div sqrt(3)
 	size = dist * 0.4;
@@ -802,6 +799,7 @@ void RB_StageIteratorSky( void ) {
 	if ( r_fastsky->integer ) {
 		return;
 	}
+
 	// go through all the polygons and project them onto
 	// the sky box to see which blocks on each side need
 	// to be drawn
@@ -828,6 +826,7 @@ void RB_StageIteratorSky( void ) {
 
 		qglPopMatrix();
 	}
+
 	// generate the vertexes for all the clouds, which will be drawn
 	// by the generic shader routine
 	R_BuildCloudData( &tess );
@@ -842,18 +841,5 @@ void RB_StageIteratorSky( void ) {
 
 	// note that sky was drawn so we will draw a sun later
 	backEnd.skyRenderedThisView = qtrue;
-	if(r_zfar->value != 0){
-		//tess.fogNum = 10000;
-		//tess.shader->fogPass = FP_EQUAL;
-		//RE_AddFogToScene(0,r_zfar->value*0.8,1,1,1,1,0,2);
-	}
-}
-
-/*
- * RB_GLSL_StageIteratorSky
- * Set up stage iterator for GLSL sky rendering
- */
-void RB_GLSL_StageIteratorSky(void) {
-	RB_StageIteratorSky(); // TODO: placeholder
 }
 

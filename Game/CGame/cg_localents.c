@@ -229,7 +229,7 @@ void CG_AddFragment( localEntity_t *le ) {
 	// if it is in a nodrop zone, remove it
 	// this keeps gibs from waiting at the bottom of pits of death
 	// and floating levels
-	if ( trap_CM_PointContents( trace.endpos, 0 ) & CONTENTS_NODROP ) {
+	if ( CG_PointContents( trace.endpos, 0 ) & CONTENTS_NODROP ) {
 		CG_FreeLocalEntity( le );
 		return;
 	}
@@ -789,9 +789,6 @@ void CG_AddKamikaze( localEntity_t *le ) {
 			le->angles.trBase[0] = random() * 360;
 			le->angles.trBase[1] = random() * 360;
 			le->angles.trBase[2] = random() * 360;
-		}
-		else {
-			c = 0;
 		}
 		memset(&shockwave, 0, sizeof(shockwave));
 		shockwave.hModel = cgs.media.kamikazeShockWave;

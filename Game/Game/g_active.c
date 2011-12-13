@@ -619,7 +619,7 @@ void ClientThink_real( gentity_t *ent ) {
 	client->buttons = ucmd->buttons;
 	client->latched_buttons |= client->buttons & ~client->oldbuttons;
 	if (client->ps.bitFlags & isDead){
-		if(level.time > client->respawnTime){respawn(ent);}
+		if(level.time > client->respawnTime){ClientRespawn(ent);}
 		return;
 	}
 }
@@ -710,13 +710,11 @@ while a slow client may have multiple ClientEndFrame between ClientThink.
 */
 void ClientEndFrame( gentity_t *ent ) {
 //	int			i;
-	clientPersistant_t	*pers;
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		SpectatorClientEndFrame( ent );
 		return;
 	}
 
-	pers = &ent->client->pers;
 	//
 	// If the end of unit layout is displayed, don't give
 	// the player any normal movement attributes

@@ -25,20 +25,30 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
-// repatched the file for a fix
-#define PRODUCT_NAME              "zeq2lite"
-#define BASEGAME			"ZEQ2"
-#define CLIENT_WINDOW_TITLE       "ZEQ2-Lite "
-#define CLIENT_WINDOW_MIN_TITLE   "ZEQ2-Lite"
-#define GAMENAME_FOR_MASTER		"ZEQ2Lite"
 
-#ifdef _MSC_VER
-  #define PRODUCT_VERSION ""
+
+#define PRODUCT_NAME			"zeq2lite"
+#define BASEGAME			"ZEQ2"
+#define CLIENT_WINDOW_TITLE     	"ZEQ2-Lite"
+#define CLIENT_WINDOW_MIN_TITLE 	"ZEQ2-Lite"
+#define HOMEPATH_NAME_UNIX		".zeq2"
+#define HOMEPATH_NAME_WIN		"ZEQ2-Lite"
+#define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
+#define GAMENAME_FOR_MASTER		"zeq2"	// must NOT contain whitespace
+
+// Heartbeat for dpmaster protocol. You shouldn't change this unless you know what you're doing
+#define HEARTBEAT_FOR_MASTER		"DarkPlaces"
+
+#ifndef PRODUCT_VERSION
+  #define PRODUCT_VERSION "1.36"
 #endif
 
 #define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
 
-#define MAX_TEAMNAME 32
+#define MAX_TEAMNAME		32
+#define MAX_MASTER_SERVERS      5	// number of supported master servers
+
+#define DEMOEXT	"dm_"			// standard demo extension
 
 #ifdef _MSC_VER
 
@@ -117,16 +127,6 @@ typedef int intptr_t;
 #include <ctype.h>
 #include <limits.h>
 
-// vsnprintf is ISO/IEC 9899:1999
-// abstracting this to make it portable
-#ifdef _WIN32
-  #define Q_vsnprintf _vsnprintf
-  #define Q_snprintf _snprintf
-#else
-  #define Q_vsnprintf vsnprintf
-  #define Q_snprintf snprintf
-#endif
-
 #ifdef _MSC_VER
   #include <io.h>
 
@@ -138,8 +138,14 @@ typedef int intptr_t;
   typedef unsigned __int32 uint32_t;
   typedef unsigned __int16 uint16_t;
   typedef unsigned __int8 uint8_t;
+
+  // vsnprintf is ISO/IEC 9899:1999
+  // abstracting this to make it portable
+  int Q_vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #else
   #include <stdint.h>
+
+  #define Q_vsnprintf vsnprintf
 #endif
 
 #endif
@@ -164,12 +170,15 @@ typedef int		sfxHandle_t;
 typedef int		fileHandle_t;
 typedef int		clipHandle_t;
 
-#define PAD(x,y) (((x)+(y)-1) & ~((y)-1))
+#define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
+#define PADLEN(base, alignment)	(PAD((base), (alignment)) - (base))
+
+#define PADP(base, alignment)	((void *) PAD((intptr_t) (base), (alignment)))
 
 #ifdef __GNUC__
-#define ALIGN(x) __attribute__((aligned(x)))
+#define QALIGN(x) __attribute__((aligned(x)))
 #else
-#define ALIGN(x)
+#define QALIGN(x)
 #endif
 
 #ifndef NULL
@@ -183,8 +192,8 @@ typedef int		clipHandle_t;
 #define	MAX_QINT			0x7fffffff
 #define	MIN_QINT			(-MAX_QINT-1)
 
-#define ARRAY_LEN(x)			(sizeof(x) / sizeof(*x))
-
+#define ARRAY_LEN(x)			(sizeof(x) / sizeof(*(x)))
+#define STRARRAY_LEN(x)			(ARRAY_LEN(x) - 1)
 
 // angle indexes
 #define	PITCH				0		// up / down
@@ -401,6 +410,60 @@ extern	vec3_t	axisDefault[3];
 
 #define	IS_NAN(x) (((*(int *)&x)&nanmask)==nanmask)
 
+int Q_isnan(float x);
+
+#if idx64
+  extern long qftolsse(float f);
+  extern int qvmftolsse(void);
+  extern void qsnapvectorsse(vec3_t vec);
+
+  #define Q_ftol qftolsse
+  #define Q_SnapVector qsnapvectorsse
+
+  extern int (*Q_VMftol)(void);
+#elif id386
+  extern long QDECL qftolx87(float f);
+  extern long QDECL qftolsse(float f);
+  extern int QDECL qvmftolx87(void);
+  extern int QDECL qvmftolsse(void);
+  extern void QDECL qsnapvectorx87(vec3_t vec);
+  extern void QDECL qsnapvectorsse(vec3_t vec);
+
+  extern long (QDECL *Q_ftol)(float f);
+  extern int (QDECL *Q_VMftol)(void);
+  extern void (QDECL *Q_SnapVector)(vec3_t vec);
+#else
+  // Q_ftol must expand to a function name so the pluggable renderer can take
+  // its address
+  #define Q_ftol lrintf
+  #define Q_SnapVector(vec)\
+	do\
+	{\
+		vec3_t *temp = (vec);\
+		\
+		(*temp)[0] = round((*temp)[0]);\
+		(*temp)[1] = round((*temp)[1]);\
+		(*temp)[2] = round((*temp)[2]);\
+	} while(0)
+#endif
+/*
+// if your system does not have lrintf() and round() you can try this block. Please also open a bug report at bugzilla.icculus.org
+// or write a mail to the ioq3 mailing list.
+#else
+  #define Q_ftol(v) ((long) (v))
+  #define Q_round(v) do { if((v) < 0) (v) -= 0.5f; else (v) += 0.5f; (v) = Q_ftol((v)); } while(0)
+  #define Q_SnapVector(vec) \
+	do\
+	{\
+		vec3_t *temp = (vec);\
+		\
+		Q_round((*temp)[0]);\
+		Q_round((*temp)[1]);\
+		Q_round((*temp)[2]);\
+	} while(0)
+#endif
+*/
+
 #if idppc
 
 static ID_INLINE float Q_rsqrt( float number ) {
@@ -474,6 +537,8 @@ typedef struct {
 #define VectorNegate(a,b)		((b)[0]=-(a)[0],(b)[1]=-(a)[1],(b)[2]=-(a)[2])
 #define VectorSet(v, x, y, z)	((v)[0]=(x), (v)[1]=(y), (v)[2]=(z))
 #define Vector4Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
+
+#define Byte4Copy(a,b)			((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
 
 #define	SnapVector(v) {v[0]=((int)(v[0]));v[1]=((int)(v[1]));v[2]=((int)(v[2]));}
 // just in case you do't want to use the macros
@@ -617,14 +682,10 @@ void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up );
 // perpendicular vector could be replaced by this
 
 //int	PlaneTypeForNormal (vec3_t normal);
-qboolean Matrix4Compare(const float a[16], const float b[16]);
-void Matrix4Copy(const float in[16], float out[16]);
-void Matrix4Multiply(const float a[16], const float b[16], float out[16]);
+
 void MatrixMultiply(float in1[3][3], float in2[3][3], float out[3][3]);
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
 void PerpendicularVector( vec3_t dst, const vec3_t src );
-int Q_isnan( float x );
-
 // ADDING FOR ZEQ2
 #define QuatInit(w,x,y,z,q) ((q)[0]=(w),(q)[1]=(x),(q)[2]=(y),(q)[3]=(z));
 
@@ -650,6 +711,13 @@ double hack_asin( double x );
 
 // END ADDING
 
+#ifndef MAX
+#define MAX(x,y) ((x)>(y)?(x):(y))
+#endif
+
+#ifndef MIN
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#endif
 
 //=============================================
 
@@ -658,6 +726,7 @@ float Com_Clamp( float min, float max, float value );
 char	*COM_SkipPath( char *pathname );
 const char	*COM_GetExtension( const char *name );
 void	COM_StripExtension(const char *in, char *out, int destsize);
+qboolean COM_CompareExtension(const char *in, const char *ext);
 void	COM_DefaultExtension( char *path, int maxSize, const char *extension );
 
 void	COM_BeginParseSession( const char *name );
@@ -701,7 +770,7 @@ void Parse2DMatrix (char **buf_p, int y, int x, float *m);
 void Parse3DMatrix (char **buf_p, int z, int y, int x, float *m);
 int Com_HexStrToInt( const char *str );
 
-void	QDECL Com_sprintf (char *dest, int size, const char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
+int QDECL Com_sprintf (char *dest, int size, const char *fmt, ...) __attribute__ ((format (printf, 3, 4)));
 
 char *Com_SkipTokens( char *s, int numTokens, char *sep );
 char *Com_SkipCharset( char *s, char *sep );
@@ -737,7 +806,6 @@ int		Q_strncmp (const char *s1, const char *s2, int n);
 int		Q_stricmpn (const char *s1, const char *s2, int n);
 char	*Q_strlwr( char *s1 );
 char	*Q_strupr( char *s1 );
-char	*Q_strrchr( const char* string, int c );
 const char	*Q_stristr( const char *s, const char *find);
 
 // buffer size safe library replacements
@@ -799,7 +867,7 @@ qboolean Info_Validate( const char *s );
 void Info_NextPair( const char **s, char *key, char *value );
 
 // this is only here so the functions in q_shared.c and bg_*.c can link
-void	QDECL Com_Error( int level, const char *error, ... ) __attribute__ ((format (printf, 2, 3)));
+void	QDECL Com_Error( int level, const char *error, ... ) __attribute__ ((noreturn, format(printf, 2, 3)));
 void	QDECL Com_Printf( const char *msg, ... ) __attribute__ ((format (printf, 1, 2)));
 
 
@@ -835,7 +903,10 @@ default values.
 
 #define CVAR_SERVER_CREATED	0x0800	// cvar was created by a server the client connected to.
 #define CVAR_VM_CREATED		0x1000	// cvar was created exclusively in one of the VMs.
-#define CVAR_NONEXISTENT	0xFFFFFFFF	// Cvar doesn't exist.
+#define CVAR_PROTECTED		0x2000	// prevent modifying this var from VMs or the server
+// These flags are only returned by the Cvar_Flags() function
+#define CVAR_MODIFIED		0x40000000	// Cvar was modified
+#define CVAR_NONEXISTENT	0x80000000	// Cvar doesn't exist.
 
 // nothing outside the Cvar_*() functions should modify these fields!
 typedef struct cvar_s cvar_t;
@@ -875,6 +946,23 @@ typedef struct {
 	int			integer;
 	char		string[MAX_CVAR_VALUE_STRING];
 } vmCvar_t;
+
+
+/*
+==============================================================
+
+VoIP
+
+==============================================================
+*/
+
+// if you change the count of flags be sure to also change VOIP_FLAGNUM
+#define VOIP_SPATIAL		0x01		// spatialized voip message
+#define VOIP_DIRECT		0x02		// non-spatialized voip message
+
+// number of flags voip knows. You will have to bump protocol version number if you
+// change this.
+#define VOIP_FLAGCNT		2
 
 /*
 ==============================================================
@@ -927,21 +1015,32 @@ typedef struct {
 
 // trace->entityNum can also be 0 to (MAX_GENTITIES-1)
 // or ENTITYNUM_NONE, ENTITYNUM_WORLD
+
+
 // markfragments are returned by CM_MarkFragments()
 typedef struct {
 	int		firstPoint;
 	int		numPoints;
 } markFragment_t;
+
+
+
 typedef struct {
 	vec3_t		origin;
 	vec3_t		axis[3];
 } orientation_t;
+
+//=====================================================================
+
+
 // in order from highest priority to lowest
 // if none of the catchers are active, bound key strings will be executed
 #define KEYCATCH_CONSOLE		0x0001
 #define	KEYCATCH_UI				0x0002
 #define	KEYCATCH_MESSAGE		0x0004
 #define	KEYCATCH_CGAME			0x0008
+
+
 // sound channels
 // channel 0 never willingly overrides
 // other channels will allways override a playing sound on that channel
@@ -954,36 +1053,54 @@ typedef enum {
 	CHAN_BODY,
 	CHAN_LOCAL_SOUND,	// chat messages, etc
 	CHAN_ANNOUNCER		// announcer voices, etc
-}soundChannel_t;
-/*========================================================================
+} soundChannel_t;
+
+
+/*
+========================================================================
+
   ELEMENTS COMMUNICATED ACROSS THE NET
-========================================================================*/
+
+========================================================================
+*/
+
 #define	ANGLE2SHORT(x)	((int)((x)*65536/360) & 65535)
 #define	SHORT2ANGLE(x)	((x)*(360.0/65536))
+
 #define	SNAPFLAG_RATE_DELAYED	1
 #define	SNAPFLAG_NOT_ACTIVE		2	// snapshot used during connection and for zombies
 #define SNAPFLAG_SERVERCOUNT	4	// toggled every map_restart so transitions can be detected
+
 //
 // per-level limits
 //
 #define	MAX_CLIENTS			64		// absolute limit
 #define MAX_LOCATIONS		64
+
 #define	GENTITYNUM_BITS		10		// don't need to send any more
 #define	MAX_GENTITIES		(1<<GENTITYNUM_BITS)
+
 // entitynums are communicated with GENTITY_BITS, so any reserved
 // values that are going to be communicated over the net need to
 // also be in this range
 #define	ENTITYNUM_NONE		(MAX_GENTITIES-1)
 #define	ENTITYNUM_WORLD		(MAX_GENTITIES-2)
 #define	ENTITYNUM_MAX_NORMAL	(MAX_GENTITIES-2)
+
+
 #define	MAX_MODELS			256		// these are sent over the net as 8 bits
 #define	MAX_SOUNDS			256		// so they cannot be blindly increased
+
+
 #define	MAX_CONFIGSTRINGS	1024
+
 // these are the only configstrings that the system reserves, all the
 // other ones are strictly for servergame to clientgame communication
 #define	CS_SERVERINFO		0		// an info string with all the serverinfo cvars
 #define	CS_SYSTEMINFO		1		// an info string for server system to client system configuration (timescale, etc)
+
 #define	RESERVED_CONFIGSTRINGS	2	// game can't modify below this, only the system can
+
 #define	MAX_GAMESTATE_CHARS	16000
 typedef struct {
 	int			stringOffsets[MAX_CONFIGSTRINGS];
@@ -1295,5 +1412,8 @@ typedef enum _flag_status {
 #define CDKEY_LEN 16
 #define CDCHKSUM_LEN 2
 
+
+#define LERP( a, b, w ) ( ( a ) * ( 1.0f - ( w ) ) + ( b ) * ( w ) )
+#define LUMA( red, green, blue ) ( 0.2126f * ( red ) + 0.7152f * ( green ) + 0.0722f * ( blue ) )
 
 #endif	// __Q_SHARED_H

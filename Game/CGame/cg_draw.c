@@ -448,15 +448,6 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 
 /*
 ================
-CG_DrawFlagModel
-
-Used for both the status bar and the scoreboard
-================
-*/
-void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean force2D ) {}
-
-/*
-================
 CG_DrawStatusBarHead
 
 ================
@@ -512,18 +503,6 @@ static void CG_DrawStatusBarHead( float x ) {
 
 	CG_DrawHead( x, 480 - size, size, size, 
 				cg.snap->ps.clientNum, angles );
-}
-#endif // MISSIONPACK
-
-/*
-================
-CG_DrawStatusBarFlag
-
-================
-*/
-#ifndef MISSIONPACK
-static void CG_DrawStatusBarFlag( float x, int team ) {
-	CG_DrawFlagModel( x, 480 - ICON_SIZE, ICON_SIZE, ICON_SIZE, team, qfalse );
 }
 #endif // MISSIONPACK
 
@@ -1174,9 +1153,9 @@ static void CG_DrawTeamVote(void) {
 	char	*s;
 	int		sec, cs_offset;
 
-	if ( cgs.clientinfo->team == TEAM_RED )
+	if ( cgs.clientinfo[cg.clientNum].team == TEAM_RED )
 		cs_offset = 0;
-	else if ( cgs.clientinfo->team == TEAM_BLUE )
+	else if ( cgs.clientinfo[cg.clientNum].team == TEAM_BLUE )
 		cs_offset = 1;
 	else
 		return;

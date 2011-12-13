@@ -91,7 +91,7 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	char		text[32000];
 	fileHandle_t	f;
 	animation_t *animations;
-	qboolean doneMeshType;
+
 	animations = ci->animations;
 	// load the file
 	len = trap_FS_FOpenFile( filename, &f, FS_READ );
@@ -108,17 +108,14 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	trap_FS_FCloseFile( f );
 	// parse the text
 	text_p = text;
-	skip = 0;	// quiet the compiler warning
+	skip = 0;	// quite the compiler warning
+
 	ci->footsteps = FOOTSTEP_NORMAL;
 	VectorClear( ci->headOffset );
 	ci->gender = GENDER_MALE;
 	ci->fixedlegs = qfalse;
 	ci->fixedtorso = qfalse;
 	ci->overrideHead = qfalse;
-	// Alex Adding For MD4 Handling
-	ci->usingMD4 = qfalse;
-	doneMeshType = qfalse;
-	//Alex End Adding 
 	// read optional parameters
 	while ( 1 ) {
 		prev = text_p;	// so we can unget
@@ -126,31 +123,6 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 		if ( !*token ) {
 			break;
 		}
-		//Alex Adding For MD4 Handling...
-		if(!Q_stricmp( token, "mesh_type") && doneMeshType != qtrue){
-			token = COM_Parse( &text_p );
-			//Com_Printf("Parsing MeshType: %s\n", token);
-			if( !Q_stricmp( token, "md4" ) || !Q_stricmp( token, "skeletalanimation")){
-				doneMeshType = qtrue;
-				ci->usingMD4 = qtrue;
-				//Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
-				continue;
-			}
-			else if( !Q_stricmp( token, "md3") || !Q_stricmp( token, "vertexanimation"))
-			{
-				doneMeshType = qtrue;
-				ci->usingMD4 = qfalse;
-				//Com_Printf("Setting ci->usingMD4 = %i\n", ci->usingMD4);
-				continue;
-			}
-			else{
-				doneMeshType = qtrue;
-				ci->usingMD4 = qfalse;
-				Com_Printf( "Bad MESH_TYPE param in %s: %s\n", filename, token );
-				continue;
-			}
-		}
-		//Alex end adding
 		if ( !Q_stricmp( token, "footsteps" ) ) {
 			token = COM_Parse( &text_p );
 			if ( !*token ) {
@@ -207,9 +179,9 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 			text_p = prev;	// unget the token
 			break;
 		}
-		Com_Printf( "unknown token '%s' in %s\n", token, filename );
+		Com_Printf( "unknown token '%s' is %s\n", token, filename );
 	}
-	if(doneMeshType!=qtrue) ci->usingMD4 = qfalse;
+
 	// read information for each frame
 	for ( i = 0 ; i < MAX_ANIMATIONS ; i++ ) {
 		token = COM_Parse( &text_p );
@@ -287,6 +259,12 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 			animations[i].continuous = atoi( token );
 		}
 	}
+
+	if ( i != MAX_ANIMATIONS ) {
+		CG_Printf( "Error parsing animation file: %s\n", filename );
+		return qfalse;
+	}
+
 	memcpy(&animations[ANIM_BACKWALK], &animations[ANIM_WALK], sizeof(animation_t));
 	animations[ANIM_BACKWALK].reversed = qtrue;
 	memcpy(&animations[ANIM_BACKRUN], &animations[ANIM_RUN], sizeof(animation_t));
@@ -460,7 +438,6 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	teamname[0] = 0;
 
 	modelloaded = qtrue;
-	ci->usingMD4 = qfalse;
 	//Com_Printf("LoadClientInfo pre CG_RegisterClientModelname\n");
 	if (!CG_RegisterClientModelname(ci,ci->modelName,ci->skinName, ci->headModelName,ci->headSkinName,teamname)){
 		strcpy(ci->modelName,DEFAULT_MODEL);
@@ -608,7 +585,7 @@ static qboolean CG_ScanForExistingClientInfo( clientInfo_t *ci ) {
 			&& !Q_stricmp( ci->blueTeam, match->blueTeam ) 
 			&& !Q_stricmp( ci->redTeam, match->redTeam )
 			&& (cgs.gametype < GT_TEAM || ci->team == match->team) ) {
-			// this clientinfo is identical, so use it's handles
+			// this clientinfo is identical, so use its handles
 
 			ci->deferred = qfalse;
 
@@ -760,11 +737,7 @@ void CG_LoadDeferredPlayers( void ) {
 		if ( ci->infoValid && ci->deferred ) {
 			// if we are low on memory, leave it deferred
 			if ( trap_MemoryRemaining() < 4000000 ) {
-				CG_Printf( "Memory is low.  Using deferred model.\n" );
-				// ADDING FOR ZEQ2
-				// REFPOINT: Add dialogbox to initiate vid_restart for cache purge here!
-
-				// END ADDING
+				CG_Printf( "Memory is low. Using deferred model.\n" );
 				ci->deferred = qfalse;
 				continue;
 			}
@@ -1715,13 +1688,13 @@ void CG_PlayerSplash( centity_t *cent, int scale ) {
 
 	// if the feet aren't in liquid, don't make a mark
 	// this won't handle moving water brushes, but they wouldn't draw right anyway...
-	contents = trap_CM_PointContents( end, 0 );
+	contents = CG_PointContents( end, 0 );
 	if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) ) {
 		return;
 	}
 
 	// if the head isn't out of liquid, don't make a mark
-	contents = trap_CM_PointContents( start, 0 );
+	contents = CG_PointContents( start, 0 );
 	if ( contents & ( CONTENTS_SOLID | CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
 		return;
 	}
@@ -1843,22 +1816,6 @@ void CG_PlayerDirtPush( centity_t *cent, int scale, qboolean once ) {
 
 /*
 ===============
-CG_AddRefExtEntityWithPowerups
-
-Adds a piece with modifications or duplications for powerups
-Also called by CG_Missile for quad rockets, but nobody can tell...
-===============
-*/
-void CG_AddRefExtEntityWithPowerups( refExtEntity_t *ent, entityState_t *state, int team, qboolean auraAlways ) {
-	trap_R_AddRefExtendedEntityToScene( ent );
-	if(!auraAlways){
-		ent->customShader = cgs.media.globalCelLighting;
-		trap_R_AddRefExtendedEntityToScene( ent );
-	}
-}
-
-/*
-===============
 CG_AddRefEntityWithPowerups
 
 Adds a piece with modifications or duplications for powerups
@@ -1928,16 +1885,15 @@ CG_Player
 */
 void CG_Player( centity_t *cent ) {
 	clientInfo_t	*ci;
-	refEntity_t		legs,torso,head;
-	refExtEntity_t	altLegs, altTorso;
+	refEntity_t		legs;
+	refEntity_t		torso;
+	refEntity_t		head;
 	playerState_t	*ps;
 	int				clientNum;
 	int				renderfx;
 	qboolean		shadow;
 	float			shadowPlane;
-	int				oframes[3],nframes[3];
-	float			lerps[3];
-	vec3_t			angles[3];
+	float			meshScale;
 	qboolean		onBodyQue;
 	int				tier,health,damageState,damageTextureState,damageModelState;
 	int				state,enemyState;
@@ -2025,80 +1981,47 @@ void CG_Player( centity_t *cent ) {
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
-	memcpy(&altLegs, &legs, sizeof(legs));
 	if (!legs.hModel){return;}
-	if(ci->usingMD4==qtrue){
-		memcpy(&altTorso, &torso, sizeof(torso));
-		oframes[0] = altLegs.oldframe;
-		oframes[1] = altTorso.oldframe;
-		oframes[2] = oframes[1];
-		nframes[0] = altLegs.frame;
-		nframes[1] = altTorso.frame;
-		nframes[2] = nframes[1];
-		lerps[0] = 1.0 - altLegs.backlerp;
-		lerps[1] = 1.0 - altTorso.backlerp;
-		lerps[2] = lerps[1];
-		angles[0][PITCH] = 0;
-		angles[0][YAW] = 0;
-		angles[0][ROLL] = 0;
-		angles[1][PITCH] = cent->pe.torso.pitchAngle - cent->pe.legs.pitchAngle;
-		angles[1][YAW] = cent->pe.torso.yawAngle - cent->pe.legs.yawAngle;
-		angles[1][ROLL] = 0;
-		angles[2][PITCH] = cent->lerpAngles[PITCH];
-		angles[2][YAW] = cent->lerpAngles[YAW] - cent->pe.legs.yawAngle;
-		angles[2][ROLL] = 0;
-		trap_R_SetBlendPose(&altLegs.skel,altLegs.hModel,oframes,nframes,lerps,angles);
-		altLegs.renderfx |= RF_SKEL;
-		memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
-		memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
-		CG_BreathPuffs(cent,&legs);
-		CG_BubblesTrail(cent,&legs);
-		CG_InnerAuraSpikes(cent,&legs);
-		CG_AddRefExtEntityWithPowerups( &altLegs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-		CG_AddPlayerWeaponMD4(&altLegs,NULL,cent,ci->team);
-		CG_PlayerPowerups(cent,&legs);
-	}
-	else{
-		float meshScale = ci->tierConfig[tier].meshScale;
-		torso.hModel = ci->modelDamageState[tier][1][damageModelState];
-		torso.customSkin = ci->skinDamageState[tier][1][damageTextureState];
-		if(!torso.hModel){return;}
-		VectorCopy(cent->lerpOrigin,torso.lightingOrigin);
-		legs.origin[2] += ci->tierConfig[tier].meshOffset;
-		VectorScale(torso.axis[0],meshScale,torso.axis[0]);
-		VectorScale(torso.axis[1],meshScale,torso.axis[1]);
-		VectorScale(torso.axis[2],meshScale,torso.axis[2]);
-		VectorScale(legs.axis[0],meshScale,legs.axis[0]);
-		VectorScale(legs.axis[1],meshScale,legs.axis[1]);
-		VectorScale(legs.axis[2],meshScale,legs.axis[2]);
-		CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel, "tag_torso");
-		VectorScale(torso.axis[0],1/meshScale,torso.axis[0]);
-		VectorScale(torso.axis[1],1/meshScale,torso.axis[1]);
-		VectorScale(torso.axis[2],1/meshScale,torso.axis[2]);
-		//VectorScale(cent->mins,2.0,cent->mins);
-		torso.shadowPlane = shadowPlane;
-		torso.renderfx = renderfx;
-		head.hModel = ci->modelDamageState[tier][0][damageModelState];
-		head.customSkin = ci->skinDamageState[tier][0][damageTextureState];
-		if(!head.hModel){return;}
-		VectorCopy( cent->lerpOrigin, head.lightingOrigin );
-		CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
-		head.shadowPlane = shadowPlane;
-		head.renderfx = renderfx;
-		CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-		CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-		CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
-		CG_BreathPuffs(cent,&head);
-		CG_BubblesTrail(cent,&head);
-		CG_InnerAuraSpikes(cent,&head);
-		memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
-		memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
-		memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
-		memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
-		if(onBodyQue){return;}
-		CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
-		CG_PlayerPowerups(cent,&torso);
-	}
+	meshScale = ci->tierConfig[tier].meshScale;
+	torso.hModel = ci->modelDamageState[tier][1][damageModelState];
+	torso.customSkin = ci->skinDamageState[tier][1][damageTextureState];
+	if(!torso.hModel){return;}
+	VectorCopy(cent->lerpOrigin,torso.lightingOrigin);
+	legs.origin[2] += ci->tierConfig[tier].meshOffset;
+	VectorScale(torso.axis[0],meshScale,torso.axis[0]);
+	VectorScale(torso.axis[1],meshScale,torso.axis[1]);
+	VectorScale(torso.axis[2],meshScale,torso.axis[2]);
+	VectorScale(legs.axis[0],meshScale,legs.axis[0]);
+	VectorScale(legs.axis[1],meshScale,legs.axis[1]);
+	VectorScale(legs.axis[2],meshScale,legs.axis[2]);
+	CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel, "tag_torso");
+	VectorScale(torso.axis[0],1/meshScale,torso.axis[0]);
+	VectorScale(torso.axis[1],1/meshScale,torso.axis[1]);
+	VectorScale(torso.axis[2],1/meshScale,torso.axis[2]);
+	//VectorScale(cent->mins,2.0,cent->mins);
+	torso.shadowPlane = shadowPlane;
+	torso.renderfx = renderfx;
+	head.hModel = ci->modelDamageState[tier][0][damageModelState];
+	head.customSkin = ci->skinDamageState[tier][0][damageTextureState];
+	if(!head.hModel){return;}
+	VectorCopy( cent->lerpOrigin, head.lightingOrigin );
+	CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel, "tag_head");
+	head.shadowPlane = shadowPlane;
+	head.renderfx = renderfx;
+	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team, ci->auraConfig[tier]->auraAlways );
+	CG_BreathPuffs(cent,&head);
+	CG_BubblesTrail(cent,&head);
+	CG_InnerAuraSpikes(cent,&head);
+	memcpy( &(cent->pe.headRef ), &head , sizeof(refEntity_t));
+	memcpy( &(cent->pe.torsoRef), &torso, sizeof(refEntity_t));
+	memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
+	memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
+	if(onBodyQue){return;}
+	CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
+	CG_PlayerPowerups(cent,&torso);
+
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){
 		CG_AuraStart(cent);
 		if(!xyzspeed){CG_PlayerDirtPush(cent,scale,qfalse);}
@@ -2170,26 +2093,6 @@ qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *t
 		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
 
 		return qtrue;
-	} else if(pe->legsRef.renderfx & RF_SKEL) {
-		//Com_Printf("Trying to get an zMesh Tag\n");
-		/*for(i=0;i<pe->legsRef.skel.numBones;i++)
-		{
-			if(!strcmp(pe->headRef.skel.bones[i].name,tagName))
-			{
-				VectorCopy(pe->headRef.skel.bones[i].origin,lerped.origin);
-				VectorCopy(pe->headRef.skel.bones[i].axis[0],lerped.axis[0]);
-				VectorCopy(pe->headRef.skel.bones[i].axis[1],lerped.axis[1]);
-				VectorCopy(pe->headRef.skel.bones[i].axis[2],lerped.axis[2]);
-			}
-		}
-		VectorCopy( pe->headRef.origin, tagOrient->origin );
-		for ( i = 0 ; i < 3 ; i++ ) {
-			VectorMA( tagOrient->origin, lerped.origin[i], pe->headRef.axis[i], tagOrient->origin );
-		}
-
-		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
-		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
-		return qtrue;*/
 	}
 
 	// If we didn't find the tag, return false
@@ -2474,7 +2377,7 @@ void CG_ResetPlayerEntity( centity_t *cent ) {
 	cent->pe.torso.pitching = qfalse;
 
 	if ( cg_debugPosition.integer ) {
-		CG_Printf("%i ResetPlayerEntity yaw=%i\n", cent->currentState.number, cent->pe.torso.yawAngle );
+		CG_Printf("%i ResetPlayerEntity yaw=%f\n", cent->currentState.number, cent->pe.torso.yawAngle );
 	}
 }
 

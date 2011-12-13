@@ -81,16 +81,6 @@ const char *TeamName(int team)  {
 	return "FREE";
 }
 
-const char *OtherTeamName(int team) {
-	if (team==TEAM_RED)
-		return "BLUE";
-	else if (team==TEAM_BLUE)
-		return "RED";
-	else if (team==TEAM_SPECTATOR)
-		return "SPECTATOR";
-	return "FREE";
-}
-
 const char *TeamColorString(int team) {
 	if (team==TEAM_RED)
 		return S_COLOR_RED;
@@ -102,13 +92,13 @@ const char *TeamColorString(int team) {
 }
 
 // NULL for everyone
-void QDECL PrintMsg( gentity_t *ent, const char *fmt, ... ) {
+static __attribute__ ((format (printf, 2, 3))) void QDECL PrintMsg( gentity_t *ent, const char *fmt, ... ) {
 	char		msg[1024];
 	va_list		argptr;
 	char		*p;
 	
 	va_start (argptr,fmt);
-	if (Q_vsnprintf (msg, sizeof(msg), fmt, argptr) > sizeof(msg)) {
+	if (Q_vsnprintf (msg, sizeof(msg), fmt, argptr) >= sizeof(msg)) {
 		G_Error ( "PrintMsg overrun" );
 	}
 	va_end (argptr);
@@ -563,7 +553,7 @@ void TeamplayInfoMessage( gentity_t *ent ) {
 				i, player->client->pers.teamState.location, h, a, 
 				player->client->ps.weapon, player->s.powerups);
 			j = strlen(entry);
-			if (stringlength + j > sizeof(string))
+			if (stringlength + j >= sizeof(string))
 				break;
 			strcpy (string + stringlength, entry);
 			stringlength += j;
