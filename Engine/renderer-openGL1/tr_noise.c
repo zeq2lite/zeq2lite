@@ -20,7 +20,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 // tr_noise.c
-#include "tr_local.h"
+#include "../../Shared/q_shared.h"
+#include "../../Shared/qfiles.h"
+#include "../../Shared/qcommon.h"
 
 #define NOISE_SIZE 256
 #define NOISE_MASK ( NOISE_SIZE - 1 )

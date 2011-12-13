@@ -1,6 +1,6 @@
 /*
 ===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
+Copyright (C) 2010 James Canete (use.less01@gmail.com)
 
 This file is part of Quake III Arena source code.
 
@@ -19,38 +19,30 @@ along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-#include "../renderer-OpenGL1/tr_local.h"
+// tr_subs.c - common function replacements for modular renderer
 
+#include "tr_local.h"
 
-qboolean ( * qwglSwapIntervalEXT)( int interval );
-void ( * qglMultiTexCoord2fARB )( GLenum texture, float s, float t );
-void ( * qglActiveTextureARB )( GLenum texture );
-void ( * qglClientActiveTextureARB )( GLenum texture );
-
-
-void ( * qglLockArraysEXT)( int, int);
-void ( * qglUnlockArraysEXT) ( void );
-
-
-void		GLimp_EndFrame( void ) {
-}
-
-int 		GLimp_Init( void )
+void QDECL Com_Printf( const char *msg, ... )
 {
+	va_list         argptr;
+	char            text[1024];
+
+	va_start(argptr, msg);
+	Q_vsnprintf(text, sizeof(text), msg, argptr);
+	va_end(argptr);
+
+	ri.Printf(PRINT_ALL, "%s", text);
 }
 
-void		GLimp_Shutdown( void ) {
-}
+void QDECL Com_Error( int level, const char *error, ... )
+{
+	va_list         argptr;
+	char            text[1024];
 
-void		GLimp_EnableLogging( qboolean enable ) {
-}
+	va_start(argptr, error);
+	Q_vsnprintf(text, sizeof(text), error, argptr);
+	va_end(argptr);
 
-void GLimp_LogComment( char *comment ) {
-}
-
-qboolean QGL_Init( const char *dllname ) {
-	return qtrue;
-}
-
-void		QGL_Shutdown( void ) {
+	ri.Error(level, "%s", text);
 }

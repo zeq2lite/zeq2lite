@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 //
 #include "../../Shared/q_shared.h" 
-#include "../../Engine/renderer/tr_types.h"
+#include "../../Engine/renderer-OpenGL1/tr_types.h"
 #include "../Game/bg_public.h"
 // ADDING FOR ZEQ2
 #include "../Game/bg_userweapons.h"
