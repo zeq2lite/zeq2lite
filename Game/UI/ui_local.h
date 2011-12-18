@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define __UI_LOCAL_H__
 
 #include "../../Shared/q_shared.h"
-#include "../../Engine/renderer-OpenGL1/tr_types.h"
+#include "../../Engine/renderer-openGL1/tr_types.h"
 //NOTE: include the ui_public.h from the new UI
 #include "ui_public.h"
 //redefine to old API version

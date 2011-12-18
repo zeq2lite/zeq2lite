@@ -599,6 +599,7 @@ static qboolean ParseStage( shaderStage_t *stage, char **text )
 	char *token;
 	int depthMaskBits = GLS_DEPTHMASK_TRUE, blendSrcBits = 0, blendDstBits = 0, atestBits = 0, depthFuncBits = 0;
 	qboolean depthMaskExplicit = qfalse;
+	qboolean stageMipmaps = !shader.noMipMaps;
 
 	stage->active = qtrue;
 
@@ -621,6 +622,9 @@ static qboolean ParseStage( shaderStage_t *stage, char **text )
 		else if ( !Q_stricmp( token, "mipOffset" ) ){
 			token = COM_ParseExt(text,qfalse);
 			stage->mipBias = atoi(token);
+		}
+		else if ( !Q_stricmp( token, "nomipmaps" ) ){
+			stageMipmaps = qfalse;
 		}
 		else if ( !Q_stricmp( token, "map" ) )
 		{
@@ -720,6 +724,36 @@ static qboolean ParseStage( shaderStage_t *stage, char **text )
 			if (stage->bundle[0].videoMapHandle != -1) {
 				stage->bundle[0].isVideoMap = qtrue;
 				stage->bundle[0].image[0] = tr.scratchImage[stage->bundle[0].videoMapHandle];
+			}
+		}
+		else if ( !Q_stricmp( token, "clampAnimMap" ) )
+		{
+			token = COM_ParseExt( text, qfalse );
+			if ( !token[0] )
+			{
+				ri.Printf( PRINT_WARNING, "WARNING: missing parameter for 'clampAnimMmap' keyword in shader '%s'\n", shader.name );
+				return qfalse;
+			}
+			stage->bundle[0].imageAnimationSpeed = atof( token );
+
+			// parse up to MAX_IMAGE_ANIMATIONS animations
+			while ( 1 ) {
+				int		num;
+
+				token = COM_ParseExt( text, qfalse );
+				if ( !token[0] ) {
+					break;
+				}
+				num = stage->bundle[0].numImageAnimations;
+				if ( num < MAX_IMAGE_ANIMATIONS ) {
+					stage->bundle[0].image[num] = R_FindImageFile( token, stageMipmaps, !shader.noPicMip, GL_CLAMP_TO_EDGE );
+					if ( !stage->bundle[0].image[num] )
+					{
+						ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
+						return qfalse;
+					}
+					stage->bundle[0].numImageAnimations++;
+				}
 			}
 		}
 		//
@@ -3111,3 +3145,4 @@ void R_InitShaders( void ) {
 
 	CreateExternalShaders();
 }
+

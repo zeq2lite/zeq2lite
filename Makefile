@@ -200,6 +200,8 @@ LOKISETUPDIR=Tools/Installer/setup
 NSISDIR=Tools/Installer/nsis
 SDLHDIR=Engine/SDL12
 LIBSDIR=Engine/libs
+OGGDIR=Engine/libogg
+VORBISDIR=Engine/libvorbis
 
 bin_path=$(shell which $(1) 2> /dev/null)
 
@@ -214,8 +216,6 @@ ifneq ($(BUILD_CLIENT),0)
     OPENAL_LIBS=$(shell pkg-config --silence-errors --libs openal)
     SDL_CFLAGS=$(shell pkg-config --silence-errors --cflags sdl|sed 's/-Dmain=SDL_main//')
     SDL_LIBS=$(shell pkg-config --silence-errors --libs sdl)
-    OGG_CFLAGS=$(shell pkg-config --silence-errors --cflags ogg vorbis vorbisfile)
-    OGG_LIBS=$(shell pkg-config --silence-errors --libs ogg vorbis vorbisfile)
   endif
   # Use sdl-config if all else fails
   ifeq ($(SDL_CFLAGS),)
@@ -509,10 +509,6 @@ ifeq ($(PLATFORM),mingw32)
     endif
   endif
 
-  ifeq ($(USE_CODEC_VORBIS),1)
-    CLIENT_LIBS += -lvorbisfile -lvorbis -logg
-  endif
-
   ifeq ($(ARCH),x86)
     # build 32bit
     BASE_CFLAGS += -m32
@@ -537,6 +533,20 @@ ifeq ($(PLATFORM),mingw32)
     RENDERER_LIBS += $(LIBSDIR)/win64/libSDLmain.a \
                       $(LIBSDIR)/win64/libSDL64.dll.a
     endif
+    
+   ifeq ($(USE_CODEC_VORBIS),1)
+      CLIENT_CFLAGS += -I$(OGGDIR)/include \
+                      -I$(VORBISDIR)/include
+      ifeq ($(ARCH), x86)
+      CLIENT_LIBS += $(LIBSDIR)/win32/libvorbisfile.a \
+                      $(LIBSDIR)/win32/libvorbis.a \
+                      $(LIBSDIR)/win32/libogg.a
+      else
+      CLIENT_LIBS += $(LIBSDIR)/win64/libvorbisfile.a \
+                      $(LIBSDIR)/win64/libvorbis.a \
+                      $(LIBSDIR)/win64/libogg.a
+	endif
+      endif
   else
     CLIENT_CFLAGS += $(SDL_CFLAGS)
     CLIENT_LIBS += $(SDL_LIBS)
