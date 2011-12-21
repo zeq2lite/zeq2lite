@@ -839,158 +839,27 @@ CG_OffsetFirstPersonView
 
 ===============
 */
-//static playerEntity_t	playerInfoDuplicate[MAX_GENTITIES];
-static void CG_OffsetFirstPersonView( void ) {
-	float			*origin;
-	float			*angles;
-	float			bob;
-	float			ratio;
-	float			delta;
-	float			speed;
-	float			f;
-	vec3_t			predictedVelocity;
-	int				timeDelta;
-	int 			clientNum;
-	int				i;
-	orientation_t	*tagOrient;
-	orientation_t	lerped;
-	playerEntity_t	*pe;
-	vec3_t			tempAxis[3];
-	clientNum = cg.predictedPlayerState.clientNum;
-
+void CG_OffsetFirstPersonView( centity_t *cent ) {
+	vec3_t			forward, up;
+	orientation_t	tagOrient;
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
 		return;
 	}
-
-	// HACK: Use this copy, which is sure to be stored correctly, unlike
-	//       reading it from cg_entities, which tends to clear out its
-	//       fields every now and then. WTF?!
-	//pe = &playerInfoDuplicate[clientNum];
-	
-	// Prepare the destination orientation_t
-	//AxisClear( tagOrient->axis );
-
-	// Try to find the tag and return its coordinates
-	if ( trap_R_LerpTag( &lerped, pe->headRef.hModel, pe->head.oldFrame, pe->head.frame, 1.0 - pe->head.backlerp, "tag_eyes" ) ) {
-		VectorCopy( pe->headRef.origin, tagOrient->origin );
-		for ( i = 0 ; i < 3 ; i++ ) {
-			VectorMA( tagOrient->origin, lerped.origin[i], pe->headRef.axis[i], tagOrient->origin );
-		}
-
-		MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
-		MatrixMultiply( tempAxis, pe->headRef.axis, tagOrient->axis );
-
-		VectorCopy( tagOrient->origin, origin);
-		//origin = cg.refdef.vieworg;
-		angles = cg.refdefViewAngles;
-	} else {
-		origin = cg.refdef.vieworg;
-		angles = cg.refdefViewAngles;
-	}
-
-/*
-	// if dead, fix the angle and don't add any kick
-	if ( cg.snap->ps.powerLevel[current] <= 0 ) {
-		angles[ROLL] = 40;
-		angles[PITCH] = -15;
-		angles[YAW] = cg.snap->ps.stats[deathCameraAngle];
-		origin[2] += cg.predictedPlayerState.viewheight;
-		return;
-	}
-*/
-
-	// add angles based on damage kick
-	if ( cg.damageTime ) {
-		ratio = cg.time - cg.damageTime;
-		if ( ratio < DAMAGE_DEFLECT_TIME ) {
-			ratio /= DAMAGE_DEFLECT_TIME;
-			angles[PITCH] += ratio * cg.v_dmg_pitch;
-			angles[ROLL] += ratio * cg.v_dmg_roll;
+	if (!CG_GetTagOrientationFromPlayerEntity( cent, "tag_eyes", &tagOrient)) {
+		if (!CG_GetTagOrientationFromPlayerEntity( cent, "tag_head", &tagOrient)) {
+			// add view height
+			cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 		} else {
-			ratio = 1.0 - ( ratio - DAMAGE_DEFLECT_TIME ) / DAMAGE_RETURN_TIME;
-			if ( ratio > 0 ) {
-				angles[PITCH] += ratio * cg.v_dmg_pitch;
-				angles[ROLL] += ratio * cg.v_dmg_roll;
-			}
+			VectorCopy( tagOrient.origin, cg.refdef.vieworg);
+			#define	NECK_LENGTH		8
+			cg.refdef.vieworg[2] -= NECK_LENGTH;
+			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
+			VectorMA( cg.refdef.vieworg, 3, forward, cg.refdef.vieworg );
+			VectorMA( cg.refdef.vieworg, NECK_LENGTH, up, cg.refdef.vieworg );
 		}
+	} else {
+		VectorCopy( tagOrient.origin, cg.refdef.vieworg);
 	}
-
-	// add pitch based on fall kick
-#if 0
-	ratio = ( cg.time - cg.landTime) / FALL_TIME;
-	if (ratio < 0)
-		ratio = 0;
-	angles[PITCH] += ratio * cg.fall_value;
-#endif
-
-	// add angles based on velocity
-	VectorCopy( cg.predictedPlayerState.velocity, predictedVelocity );
-
-	delta = DotProduct ( predictedVelocity, cg.refdef.viewaxis[0]);
-	angles[PITCH] += delta * cg_runpitch.value;
-	
-	delta = DotProduct ( predictedVelocity, cg.refdef.viewaxis[1]);
-	angles[ROLL] -= delta * cg_runroll.value;
-
-	// add angles based on bob
-
-	// make sure the bob is visible even at low speeds
-	speed = cg.xyspeed > 200 ? cg.xyspeed : 200;
-
-	delta = cg.bobfracsin * cg_bobpitch.value * speed;
-	angles[PITCH] += delta;
-	delta = cg.bobfracsin * cg_bobroll.value * speed;
-	if (cg.bobcycle & 1)
-		delta = -delta;
-	angles[ROLL] += delta;
-
-//===================================
-
-	// add view height
-	origin[2] += cg.predictedPlayerState.viewheight;
-
-	// smooth out duck height changes
-	timeDelta = cg.time - cg.duckTime;
-	if ( timeDelta < DUCK_TIME) {
-		cg.refdef.vieworg[2] -= cg.duckChange 
-			* (DUCK_TIME - timeDelta) / DUCK_TIME;
-	}
-
-	// add bob height
-	bob = cg.bobfracsin * cg.xyspeed * cg_bobup.value;
-	if (bob > 6) {
-		bob = 6;
-	}
-
-	origin[2] += bob;
-
-
-	// add fall height
-	delta = cg.time - cg.landTime;
-	if ( delta < LAND_DEFLECT_TIME ) {
-		f = delta / LAND_DEFLECT_TIME;
-		cg.refdef.vieworg[2] += cg.landChange * f;
-	} else if ( delta < LAND_DEFLECT_TIME + LAND_RETURN_TIME ) {
-		delta -= LAND_DEFLECT_TIME;
-		f = 1.0 - ( delta / LAND_RETURN_TIME );
-		cg.refdef.vieworg[2] += cg.landChange * f;
-	}
-
-	// add step offset
-	CG_StepOffset();
-
-	// pivot the eye based on a neck length
-#if 0
-	{
-#define	NECK_LENGTH		8
-	vec3_t			forward, up;
- 
-	cg.refdef.vieworg[2] -= NECK_LENGTH;
-	AngleVectors( cg.refdefViewAngles, forward, NULL, up );
-	VectorMA( cg.refdef.vieworg, 3, forward, cg.refdef.vieworg );
-	VectorMA( cg.refdef.vieworg, NECK_LENGTH, up, cg.refdef.vieworg );
-	}
-#endif
 }
 
 //======================================================================
@@ -1329,9 +1198,6 @@ static int CG_CalcViewValues( void ) {
 		else{
 			CG_OffsetThirdPersonView();
 		}
-	} else {
-		// offset for local bobbing and kicks
-		CG_OffsetFirstPersonView();
 	}
 
 #if EARTHQUAKE_SYSTEM	// JUHOX: add earthquakes

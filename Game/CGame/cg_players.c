@@ -2040,6 +2040,7 @@ void CG_Player( centity_t *cent ) {
 	}
 	if(ci->auraConfig[tier]->showLightning){CG_LightningEffect(cent->lerpOrigin, ci, tier);}
 	if(ci->auraConfig[tier]->showLightning && ps->bitFlags & usingMelee){CG_BigLightningEffect(cent->lerpOrigin);}
+	if(cg_thirdPersonCamera.value <= 0){CG_OffsetFirstPersonView(cent);}
 }
 qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *tagName, orientation_t *tagOrient ) {
 	int				i, clientNum;
