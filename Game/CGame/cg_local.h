@@ -585,6 +585,16 @@ typedef struct {
 #endif
 
 typedef struct {
+	qhandle_t	shader;
+	qboolean	active;
+	int			x;
+	int			y;
+	int			width;
+	int			height;
+	int			endTime;
+} overlay2D;
+
+typedef struct {
 	int			clientFrame;		// incremented each frame
 
 	int			clientNum;
@@ -702,6 +712,9 @@ typedef struct {
 
 	// low ammo warning state
 	int			lowAmmoWarning;		// 1 = low, 2 = empty
+
+	// Dynamic 2D effects
+	overlay2D	scripted2D[16];
 
 	// crosshair client ID
 	int			crosshairClientNum;
@@ -1083,6 +1096,8 @@ extern	vmCvar_t		cg_crosshairSize;
 extern	vmCvar_t		cg_crosshairMargin;
 extern	vmCvar_t		cg_crosshairHealth;
 extern	vmCvar_t		cg_crosshairBars;
+extern	vmCvar_t		cg_scripted2D;
+extern	vmCvar_t		cg_scriptedCamera;
 extern	vmCvar_t		cg_drawStatus;
 extern	vmCvar_t		cg_draw2D;
 extern	vmCvar_t		cg_animSpeed;

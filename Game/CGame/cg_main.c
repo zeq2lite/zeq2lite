@@ -101,6 +101,8 @@ vmCvar_t	cg_crosshairBars;
 vmCvar_t	cg_crosshairX;
 vmCvar_t	cg_crosshairY;
 vmCvar_t	cg_crosshairHealth;
+vmCvar_t	cg_scripted2D;
+vmCvar_t	cg_scriptedCamera;
 vmCvar_t	cg_draw2D;
 vmCvar_t	cg_drawStatus;
 vmCvar_t	cg_animSpeed;
@@ -192,6 +194,7 @@ vmCvar_t	cg_beamControl;
 vmCvar_t	cg_music;
 vmCvar_t	cg_playTransformTrackToEnd;
 vmCvar_t	cg_particlesQuality;
+vmCvar_t	cg_particlesType;
 vmCvar_t	cg_particlesStop;
 vmCvar_t	cg_particlesMaximum;
 //END ADDING
@@ -219,6 +222,8 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
 	{ &cg_shadows, "cg_shadows", "1", CVAR_ARCHIVE  },
 	{ &cg_gibs, "cg_gibs", "1", CVAR_ARCHIVE  },
+	{ &cg_scripted2D, "cg_scripted2D", "1", CVAR_ARCHIVE  },
+	{ &cg_scriptedCamera, "cg_scriptedCamera", "1", CVAR_ARCHIVE  },
 	{ &cg_draw2D, "cg_draw2D", "1", CVAR_ARCHIVE  },
 	{ &cg_drawStatus, "cg_drawStatus", "1", CVAR_ARCHIVE  },
 	{ &cg_drawTimer, "cg_drawTimer", "0", CVAR_ARCHIVE  },
@@ -328,6 +333,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE},
 	{ &cg_music, "cg_music", "0.6", CVAR_ARCHIVE},
 	{ &cg_playTransformTrackToEnd, "cg_playTransformTrackToEnd", "0", CVAR_ARCHIVE},
+	{ &cg_particlesType, "cg_particlesType", "1", CVAR_ARCHIVE},
 	{ &cg_particlesQuality, "cg_particlesQuality", "1", CVAR_ARCHIVE},
 	{ &cg_particlesStop, "cg_particlesStop", "0", CVAR_ARCHIVE},
 	{ &cg_particlesMaximum, "cg_particlesMaximum", "1024", CVAR_ARCHIVE}

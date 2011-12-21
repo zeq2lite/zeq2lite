@@ -1285,6 +1285,20 @@ static void CG_DrawWarmup( void ) {
 /*=================
 CG_Draw2D
 =================*/
+void CG_DrawScripted2D(void){
+	int index;
+	overlay2D *current;
+	for(index=0;index<16;++index){
+		current = &cg.scripted2D[index];
+		if(current->active){
+			if((cg.time <= current->endTime) || (current->endTime == -1)){
+				CG_DrawPic(qfalse,current->x,current->y,current->width,current->height,current->shader);
+				continue;
+			}
+			current->active = qfalse;
+		}
+	}
+}
 static void CG_Draw2D( void ) {
 	// if we are taking a levelshot for the menu, don't draw anything
 	if ( cg.levelShot ) {
@@ -1295,6 +1309,9 @@ static void CG_Draw2D( void ) {
 	}
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
 		return;
+	}
+	if(cg_scripted2D.integer != 0){
+		CG_DrawScripted2D();
 	}
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		CG_DrawSpectator();

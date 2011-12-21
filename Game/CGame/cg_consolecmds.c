@@ -502,6 +502,45 @@ static void CG_EditHud_f( void ) {
 
 /*
 ==================
+CG_Draw2D_f
+Example : draw2D <shader> <x> <y> <width> <height> <duration>
+==================
+*/
+static void CG_Draw2D_f(void){
+	char shaderName[256];
+	overlay2D *current;
+	int index;
+	if(trap_Argc()<2){
+		CG_Printf("^3Usage : ^7draw2D <^5shaderName^7> <^5x^7> <^5y^7> <^5width^7> <^5height^7> <^5duration^7>\n");
+		return;
+	}
+	Q_strncpyz(shaderName,CG_Argv(1),256);
+	for(index=0;index<16;++index){
+		if(!cg.scripted2D[index].active){break;}
+		if(index == 15){
+			CG_Printf("^3Warning : ^7Cannot add overlay.  Maximum overlay surfaces of [^3%i^7] active.\n",16);
+			return;
+		}
+	}
+	current = &cg.scripted2D[index];
+	current->shader = trap_R_RegisterShader(shaderName);
+	if(!current->shader){
+		CG_Printf("^1Error : ^7Shader by the name [^1%s^7] could not be found.\n",shaderName);
+		return;
+	}
+	current->active = qtrue;	
+	current->x = atoi(CG_Argv(2));
+	current->y = atoi(CG_Argv(3));
+	current->width = atoi(CG_Argv(4)) ? atoi(CG_Argv(4)) : 640;
+	current->height = atoi(CG_Argv(5)) ? atoi(CG_Argv(5)) : 480;
+	current->endTime = atoi(CG_Argv(6)) ? atoi(CG_Argv(6)) : -1;
+	if(current->endTime != -1){
+		current->endTime += cg.time;
+	}
+}
+
+/*
+==================
 CG_StartOrbit_f
 ==================
 */
@@ -551,6 +590,8 @@ static consoleCommand_t	commands[] = {
 	{ "vtell_attacker", CG_VoiceTellAttacker_f },
 	{ "tcmd", CG_TargetCommand_f },
 	{ "startOrbit", CG_StartOrbit_f },
+	{ "draw2D", CG_Draw2D_f },
+	{ "draw2d", CG_Draw2D_f },
 	//{ "camera", CG_Camera_f },
 	{ "loaddeferred", CG_LoadDeferredPlayers }
 };
