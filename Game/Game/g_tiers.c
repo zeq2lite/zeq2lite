@@ -50,7 +50,8 @@ void checkTier(gclient_t *client){
 		}
 		++tier;
 	}
-	while(1){
+	//while(1)
+	//{
 		tier = ps->powerLevel[plTierCurrent];
 		if(((tier+1) < 8) && (client->tiers[tier+1].exists)){
 			nextTier = &client->tiers[tier+1];
@@ -74,10 +75,11 @@ void checkTier(gclient_t *client){
 					ps->stats[stTransformState] = 2;
 				}
 				else{ps->stats[stTransformState] = 1;}
-				continue;
+				//continue;
+				return;
 			}
 		}
-		if(tier > 0){
+		if(tier > 0 ){
 			baseTier = &client->tiers[tier];
 			if(!baseTier->permanent && ((baseTier->requirementButtonDown && (ps->bitFlags & keyTierDown)) || !baseTier->requirementButtonDown) ||
 			   (ps->powerLevel[plCurrent] < baseTier->sustainCurrent) ||
@@ -88,11 +90,11 @@ void checkTier(gclient_t *client){
 				ps->timers[tmTransform] = -1;
 				--ps->powerLevel[plTierCurrent];
 				ps->stats[stTransformState] = -1;
-				break;
+				//break;
 			}
 		}
-		break;
-	}
+		//break;
+	//}
 }
 void setupTiers(gclient_t *client){
 	int	i;

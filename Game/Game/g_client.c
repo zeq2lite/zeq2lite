@@ -1041,6 +1041,8 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.running = g_running.value;
 	if(g_pointGravity.value){client->ps.options |= pointGravity;}
 	client->ps.powerLevel[plTierCurrent] = 0;
+	client->ps.powerLevel[plTierTotal] = 0;
+
 	if(g_powerlevel.value > 32767){
 		g_powerlevel.value = 32767;
 	}

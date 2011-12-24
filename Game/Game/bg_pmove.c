@@ -1358,7 +1358,9 @@ void PM_WalkMove(void){
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity)){return;}
 	if(!pml.onGround || VectorLength(pm->ps->dashDir)){return;}
 	fmove = pm->cmd.forwardmove;
-	smove = pm->cmd.rightmove;
+	//smove = pm->cmd.rightmove;
+	//With 0, the char cannot walk sideways
+	smove = 0;
 	cmd = pm->cmd;
 	scale = PM_CmdScale(&cmd);
 	// set the movementDir so clients can rotate the legs for strafing
@@ -1875,7 +1877,13 @@ void PM_Footsteps(void){
 	}
 	else{
 		bobmove = 0.3f;
-		if(pm->cmd.forwardmove < 0){
+		//If the player is pressing left or righ and is not moving forward/backwards, the legs must play the idle animation.
+		if(pm->cmd.rightmove != 0 && pm->cmd.forwardmove == 0)
+		{
+			PM_ContinueLegsAnim(ANIM_IDLE);
+		}
+
+		else if(pm->cmd.forwardmove < 0){
 			PM_ContinueLegsAnim(ANIM_BACKWALK );
 		}
 		else{
