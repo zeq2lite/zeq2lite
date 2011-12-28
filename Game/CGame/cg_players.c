@@ -1340,7 +1340,12 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	// ADDING FOR ZEQ2
 	// We're flying, so we change the entire body's directions altogether.
-	if(((&cg.predictedPlayerState)->weaponstate != WEAPON_READY || cent->currentState.weaponstate != WEAPON_READY) && !cg_advancedFlight.string){
+	if(cg_advancedFlight.value){
+		VectorCopy( cent->lerpAngles, headAngles );
+		VectorCopy( cent->lerpAngles, torsoAngles );
+		VectorCopy( cent->lerpAngles, legsAngles );
+	}
+	else if(((&cg.predictedPlayerState)->weaponstate != WEAPON_READY || cent->currentState.weaponstate != WEAPON_READY)){
 		VectorCopy( cent->lerpAngles, headAngles );
 	} 
 	else if((&cg.predictedPlayerState)->bitFlags & usingFlight || cent->currentState.playerBitFlags & usingFlight){
