@@ -7,6 +7,7 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 	char tempPath[MAX_QPATH];
 	char legsPath[MAX_QPATH];
 	char headPath[MAX_QPATH];
+	char cameraPath[MAX_QPATH];
 	char headPrefix[8],upperPrefix[8],lowerPrefix[8];
 	qhandle_t tempShader;
 	strcpy(headPrefix,"head_");
@@ -14,14 +15,22 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 	strcpy(upperPrefix,"upper_");
 	Com_sprintf(legsPath,sizeof(legsPath),"%s",modelName);
 	Com_sprintf(headPath,sizeof(headPath),"%s",modelName);
+	Com_sprintf(cameraPath,sizeof(cameraPath),"%s",modelName);
+	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animCam.cfg",modelName);
+	if(ci->cameraModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(cameraPath,sizeof(modelName),"%s",ci->cameraModelName);}
 	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animation.cfg",ci->legsModelName);
 	if(ci->legsModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(legsPath,sizeof(legsPath),"%s",ci->legsModelName);}
 	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animation.cfg",ci->headModelName);
 	if(ci->headModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(headPath,sizeof(headPath),"%s",ci->headModelName);}
 	Com_sprintf(filename,sizeof(filename),"players/%s/animation.cfg",modelName);
-	if(!CG_ParseAnimationFile(filename,ci)){
+	if(!CG_ParseAnimationFile(filename,ci,qtrue)){
 		Com_sprintf(filename,sizeof(filename),"players/characters/%s/animation.cfg",modelName);
-		if(!CG_ParseAnimationFile(filename,ci)){return qfalse;}
+		if(!CG_ParseAnimationFile(filename,ci,qtrue)){return qfalse;}
+	}
+	Com_sprintf(filename,sizeof(filename),"players/%s/animCam.cfg",modelName);
+	if(!CG_ParseAnimationFile(filename,ci,qfalse)){
+		Com_sprintf(filename,sizeof(filename),"players/animCam.cfg");
+		if(!CG_ParseAnimationFile(filename,ci,qfalse)){return qfalse;}
 	}
 	for(i=0;i<8;++i){
 		// ===================================
@@ -84,6 +93,14 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		else{
 			if(i == 0){return qfalse;}
 			else{ci->headModel[i] = ci->headModel[i - 1];}
+		}
+		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/camera.md3", modelName, i+1);
+		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->cameraModel[i] = trap_R_RegisterModel(filename);}
+		else if(trap_FS_FOpenFile(filename,0,FS_READ)<1){
+			ci->cameraModel[i] = trap_R_RegisterModel("players/cameraDefault.md3");}
+		else{ 
+			if(i == 0){return qfalse;}
+			else{ci->cameraModel[i] = ci->cameraModel[i - 1];}
 		}
 		// ===================================
 		// Skins

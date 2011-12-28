@@ -50,7 +50,8 @@ GAME OPTIONS MENU
 #define ID_BLOOMALPHA			138
 #define ID_OUTLINES				139
 #define ID_CROSSHAIRNAMES		140
-#define ID_BACK2				141
+#define ID_PORTALS				141
+#define ID_BACK2				142
 #define	NUM_CROSSHAIRS			10
 typedef struct{
 	menuframework_s		menu;
@@ -73,6 +74,7 @@ typedef struct{
 	menuradiobutton_s	outlines;
 	menuradiobutton_s	flight;
 	menuradiobutton_s	crosshairNames;
+	menuradiobutton_s	portals;
 	menubitmap_s		apply;
 	menutext_s			back;
 	qhandle_t			crosshairShader[NUM_CROSSHAIRS];
@@ -83,7 +85,7 @@ static const char *particlesQuality_names[] = {"Off","Sprites","Models",0};
 static const char *particlesOptimise_names[] = {"Remove After Awhile","Remove On Stop",	0};
 static const char *beamdetail_names[] = {"Very Low","Low","Medium","High","Very High", 0};
 static const char *beamcontrol_names[] = {"Beam Head Focus","Crosshair Focus",0};
-static const char *camerastyle_names[] = {"Locked Behind Head","Locked Behind Character","Delay Behind Character",0};
+static const char *camerastyle_names[] = {"Eyes","Behind Character","Behind Head","Delay Behind Character","Animated",0};
 static const char *crosshairSize_names[] = {"Tiny!","Very Small","Small","Normal","Large","Extra Large!","Extra Extra Large?!",0};
 static const char *bloomQuality_names[] = {"Off","Low","Medium","High","Very High", 0};
 static const char *bloomIntensity_names[] = {"Low","Medium","High", 0};
@@ -91,7 +93,7 @@ static const char *bloomDarken_names[] = {"Low","Medium","High", 0};
 static const char *bloomAlpha_names[] = {"Low","Medium","High", 0};
 static void Preferences_SetMenuItems( void ) {
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
-	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
+	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 4, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
 	s_preferences.crosshairSize.curvalue	= Com_Clamp( 0, 6, trap_Cvar_VariableValue( "cg_crosshairSize" ) );
 	s_preferences.beamdetail.curvalue		= Com_Clamp( 0, 4, trap_Cvar_VariableValue( "r_beamDetail" ) );
 	s_preferences.particlesQuality.curvalue	= Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_particlesQuality" ) );
@@ -100,6 +102,7 @@ static void Preferences_SetMenuItems( void ) {
 	s_preferences.outlines.curvalue			= trap_Cvar_VariableValue( "r_outlines" ) != 0;
 	s_preferences.flight.curvalue			= trap_Cvar_VariableValue( "cg_advancedFlight" ) != 0;
 	s_preferences.crosshairNames.curvalue	= trap_Cvar_VariableValue( "cg_drawCrosshairNames" ) != 0;
+	s_preferences.portals.curvalue			= trap_Cvar_VariableValue( "r_portals" ) != 0;
 	// Bloom Quality
 	switch ( ( int ) trap_Cvar_VariableValue( "r_bloom_sample_size" ) )
 	{
@@ -171,6 +174,9 @@ static void Preferences_Event( void* ptr, int notification ) {
 		break;
 	case ID_PARTICLESOPTIMISE:
 		trap_Cvar_SetValue( "cg_particlesStop", s_preferences.particlesOptimise.curvalue );
+		break;
+	case ID_PORTALS:
+		trap_Cvar_SetValue( "r_portals", s_preferences.portals.curvalue );
 		break;
 	case ID_OUTLINES:
 		trap_Cvar_SetValue( "r_outlines", s_preferences.outlines.curvalue );
@@ -353,11 +359,11 @@ static void Preferences_MenuInit( void ) {
 	y+=offset;		
 	s_preferences.general.generic.type		= MTYPE_PTEXT;
 	s_preferences.general.generic.flags		= QMF_RIGHT_JUSTIFY;
-	s_preferences.general.generic.id			= ID_GENERAL;
+	s_preferences.general.generic.id		= ID_GENERAL;
 	s_preferences.general.generic.callback	= Preferences_Event;
 	s_preferences.general.generic.x			= x;
 	s_preferences.general.generic.y			= y;
-	s_preferences.general.string				= "GENERAL";
+	s_preferences.general.string			= "GENERAL";
 	s_preferences.general.style				= style;
 	s_preferences.general.color				= color_silver;
 	y+=offset;	
@@ -456,6 +462,15 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.particlesOptimise.itemnames			= particlesOptimise_names;
 
 	y += BIGCHAR_HEIGHT+2;
+	s_preferences.portals.generic.type		= MTYPE_RADIOBUTTON;
+	s_preferences.portals.generic.name		= "Reflections:";
+	s_preferences.portals.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.portals.generic.callback	= Preferences_Event;
+	s_preferences.portals.generic.id		= ID_PORTALS;
+	s_preferences.portals.generic.x			= PREFERENCES_X_POS;
+	s_preferences.portals.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT+2;
 	s_preferences.outlines.generic.type			= MTYPE_RADIOBUTTON;
 	s_preferences.outlines.generic.name			= "Character Outlines:";
 	s_preferences.outlines.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -539,6 +554,7 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.beamdetail );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesQuality );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.particlesOptimise );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.portals );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.outlines );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.flight );		
 	Menu_AddItem( &s_preferences.menu, &s_preferences.bloomQuality );

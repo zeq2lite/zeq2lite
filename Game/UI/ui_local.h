@@ -117,7 +117,7 @@ extern vmCvar_t s_mastermusicvolume;
 #define	MAX_EDIT_LINE			256
 
 #define MAX_MENUDEPTH			8
-#define MAX_MENUITEMS			64
+#define MAX_MENUITEMS			96
 
 #define MTYPE_NULL				0
 #define MTYPE_SLIDER			1	

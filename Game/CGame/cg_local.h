@@ -148,7 +148,7 @@ typedef struct {
 
 
 typedef struct {
-	lerpFrame_t		legs, torso, head, flag;
+	lerpFrame_t		legs, torso, head, camera, flag;
 	int				painTime;
 	int				painDirection;	// flip from 0 to 1
 	int				lightningFiring;
@@ -162,7 +162,7 @@ typedef struct {
 
 	// needed to obtain tag positions after player entity has been processed.
 	// For linking beam attacks, particle systems, etc.
-	refEntity_t		legsRef, torsoRef, headRef;
+	refEntity_t		legsRef, torsoRef, headRef, cameraRef;
 } playerEntity_t;
 
 //=================================================
@@ -353,6 +353,7 @@ typedef struct {
 	int				bubbleTrailTime;
 	char			modelName[MAX_QPATH];
 	char			skinName[MAX_QPATH];
+	char			cameraModelName[MAX_QPATH];
 	char			headModelName[MAX_QPATH];
 	char			headSkinName[MAX_QPATH];
 	char			legsModelName[MAX_QPATH];
@@ -375,8 +376,10 @@ typedef struct {
 	qhandle_t		torsoSkin[8];
 	qhandle_t		headModel[8];
 	qhandle_t		headSkin[8];
+	qhandle_t		cameraModel[8];
 	qhandle_t		modelIcon;
 	animation_t		animations[MAX_TOTALANIMATIONS];
+	animation_t		camAnimations[MAX_TOTALANIMATIONS];
 	sfxHandle_t		sounds[9][MAX_CUSTOM_SOUNDS];
 	//ADDING FOR ZEQ2
 	int				damageModelState;
@@ -1255,7 +1258,7 @@ void CG_TestModelPrevSkin_f (void);
 void CG_ZoomDown_f( void );
 void CG_ZoomUp_f( void );
 void CG_AddBufferedSound( sfxHandle_t sfx);
-void CG_OffsetFirstPersonView( centity_t *cent );
+void CG_OffsetTagView( centity_t *cent );
 qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y );
 qboolean CG_WorldCoordToScreenCoordVec( vec3_t world, vec2_t screen );
 
@@ -1356,8 +1359,9 @@ void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team, qboolean auraAlways );
 void CG_NewClientInfo( int clientNum );
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
-qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci );
+qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci, qboolean isCamera );
 qboolean CG_GetTagOrientationFromPlayerEntity( centity_t *cent, char *tagName, orientation_t *tagOrient );
+qboolean CG_GetTagOrientationFromPlayerEntityCameraModel( centity_t *cent, char *tagName, orientation_t *tagOrient );
 qboolean CG_GetTagOrientationFromPlayerEntityHeadModel( centity_t *cent, char *tagName, orientation_t *tagOrient );
 qboolean CG_GetTagOrientationFromPlayerEntityTorsoModel( centity_t *cent, char *tagName, orientation_t *tagOrient );
 qboolean CG_GetTagOrientationFromPlayerEntityLegsModel( centity_t *cent, char *tagName, orientation_t *tagOrient );

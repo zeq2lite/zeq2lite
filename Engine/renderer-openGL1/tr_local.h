@@ -1150,7 +1150,7 @@ extern	cvar_t	*r_outlinesPatternFactor;
 extern	cvar_t	*r_intensity;
 
 extern	cvar_t	*r_lockpvs;
-extern	cvar_t	*r_noportals;
+extern	cvar_t	*r_portals;
 extern	cvar_t	*r_portalOnly;
 
 extern	cvar_t	*r_subdivisions;

@@ -145,7 +145,7 @@ cvar_t	*r_offsetUnits;
 cvar_t	*r_gamma;
 cvar_t	*r_intensity;
 cvar_t	*r_lockpvs;
-cvar_t	*r_noportals;
+cvar_t	*r_portals;
 cvar_t	*r_portalOnly;
 
 cvar_t	*r_subdivisions;
@@ -1136,7 +1136,7 @@ void R_Register( void )
 	r_offsetUnits = ri.Cvar_Get( "r_offsetunits", "-2", CVAR_ARCHIVE );
 	r_drawBuffer = ri.Cvar_Get( "r_drawBuffer", "GL_BACK", CVAR_ARCHIVE );
 	r_lockpvs = ri.Cvar_Get ("r_lockpvs", "0", CVAR_ARCHIVE);
-	r_noportals = ri.Cvar_Get ("r_noportals", "0", CVAR_ARCHIVE);
+	r_portals = ri.Cvar_Get ("r_portals", "0", CVAR_ARCHIVE);
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
 	r_meshLerp = ri.Cvar_Get( "r_meshLerp", "0", CVAR_ARCHIVE );
 	r_outlines = ri.Cvar_Get( "r_outlines", "1", CVAR_ARCHIVE );

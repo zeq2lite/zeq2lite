@@ -966,7 +966,7 @@ qboolean R_MirrorViewBySurface (drawSurf_t *drawSurf, int entityNum) {
 		return qfalse;
 	}
 
-	if ( r_noportals->integer || (r_fastsky->integer == 1) ) {
+	if ( (r_portals->integer == 0) || (r_fastsky->integer == 1) ) {
 		return qfalse;
 	}
 

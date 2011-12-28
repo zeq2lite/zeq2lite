@@ -780,7 +780,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	}
 	//cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
 	// ADDING FOR ZEQ2
-	if (cg_thirdPersonCamera.value == 0) {
+	if (cg_thirdPersonCamera.value == 2) {
 		//if(cg.snap->ps.bitFlags & usingFlight){
 			VectorCopy( overrideAngles, cg.refdefViewAngles );
 			// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
@@ -835,30 +835,39 @@ static void CG_StepOffset( void ) {
 
 /*
 ===============
-CG_OffsetFirstPersonView
+CG_OffsetTagView
 
 ===============
 */
-void CG_OffsetFirstPersonView( centity_t *cent ) {
+#define	NECK_LENGTH		8
+void CG_OffsetTagView( centity_t *cent ) {
 	vec3_t			forward, up;
-	orientation_t	tagOrient;
-	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
-		return;
-	}
-	if (!CG_GetTagOrientationFromPlayerEntity( cent, "tag_eyes", &tagOrient)) {
-		if (!CG_GetTagOrientationFromPlayerEntity( cent, "tag_head", &tagOrient)) {
-			// add view height
-			cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
-		} else {
+	orientation_t	tagOrient,tagOrient2;
+	if (cg_thirdPersonCamera.value == 0)
+	{
+		if (CG_GetTagOrientationFromPlayerEntity( cent, "tag_eyes", &tagOrient)) {
 			VectorCopy( tagOrient.origin, cg.refdef.vieworg);
-			#define	NECK_LENGTH		8
+		} else if (CG_GetTagOrientationFromPlayerEntity( cent, "tag_head", &tagOrient)) {
+			VectorCopy( tagOrient.origin, cg.refdef.vieworg);
 			cg.refdef.vieworg[2] -= NECK_LENGTH;
 			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
 			VectorMA( cg.refdef.vieworg, 3, forward, cg.refdef.vieworg );
 			VectorMA( cg.refdef.vieworg, NECK_LENGTH, up, cg.refdef.vieworg );
+		} else {
+			cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 		}
-	} else {
-		VectorCopy( tagOrient.origin, cg.refdef.vieworg);
+	}
+	else if (cg_thirdPersonCamera.value >= 4){
+		if(CG_GetTagOrientationFromPlayerEntity( cent, "tag_cam", &tagOrient))
+		{
+			if (CG_GetTagOrientationFromPlayerEntity( cent, "tag_camTar", &tagOrient2)) {
+				VectorSubtract( tagOrient2.origin, tagOrient.origin, forward );
+				VectorNormalize( forward );
+				vectoangles( forward, cg.refdefViewAngles );
+			}
+			VectorCopy( tagOrient.origin, cg.refdef.vieworg);
+			AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
+		}
 	}
 }
 
@@ -1162,7 +1171,7 @@ static int CG_CalcViewValues( void ) {
 	memset( &cg.refdef, 0, sizeof( cg.refdef ) );
 	CG_CalcVrect();
 	ps = &cg.predictedPlayerState;
-	if ( ps->pm_type == PM_INTERMISSION ) {
+	if ( ps->pm_type == PM_INTERMISSION) {
 		VectorCopy( ps->origin, cg.refdef.vieworg );
 		VectorCopy( ps->viewangles, cg.refdefViewAngles );		
 		AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
@@ -1191,14 +1200,16 @@ static int CG_CalcViewValues( void ) {
 			cg.predictedErrorTime = 0;
 		}
 	}
-	if(cg.renderingThirdPerson){
-		if(cg_thirdPersonCamera.value >= 2){
-			CG_OffsetThirdPersonView2();
-		}
-		else{
-			CG_OffsetThirdPersonView();
-		}
+
+	if(cg_thirdPersonCamera.value == 3){
+		CG_OffsetThirdPersonView2();
 	}
+	else if(cg_thirdPersonCamera.value >= 1){
+		CG_OffsetThirdPersonView();
+	}
+	else
+		cg_thirdPersonCamera.value = 0;
+
 
 #if EARTHQUAKE_SYSTEM	// JUHOX: add earthquakes
 	{

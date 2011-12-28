@@ -424,11 +424,11 @@ static void UI_PlayerAnimation( playerInfo_t *pi,
 
 	UI_LegsSequencing( pi );
 
-	if ( pi->legs.yawing && ( pi->legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_IDLE ) {
-		UI_RunLerpFrame( pi, &pi->legs, ANIM_TURN );
-	} else {
+//	if ( pi->legs.yawing && ( pi->legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_IDLE ) {
+//		UI_RunLerpFrame( pi, &pi->legs, ANIM_TURN );
+//	} else {
 		UI_RunLerpFrame( pi, &pi->legs, pi->legsAnim );
-	}
+//	}
 	*legsOld = pi->legs.oldFrame;
 	*legs = pi->legs.frame;
 	*legsBackLerp = pi->legs.backlerp;

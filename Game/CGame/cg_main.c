@@ -329,7 +329,7 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_verboseParse, "cg_verboseParse", "0", CVAR_ARCHIVE},
 	{ &r_beamDetail,	"r_beamDetail", "2", CVAR_ARCHIVE},
 	{ &cg_soundAttenuation, "cg_soundAttenuation", "0.0001", CVAR_CHEAT},
-	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "0", CVAR_ARCHIVE},
+	{ &cg_thirdPersonCamera, "cg_thirdPersonCamera", "1", CVAR_ARCHIVE},
 	{ &cg_beamControl, "cg_beamControl", "1", CVAR_ARCHIVE},
 	{ &cg_music, "cg_music", "0.6", CVAR_ARCHIVE},
 	{ &cg_playTransformTrackToEnd, "cg_playTransformTrackToEnd", "0", CVAR_ARCHIVE},
