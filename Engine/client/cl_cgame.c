@@ -169,9 +169,11 @@ qboolean	CL_GetSnapshot( int snapshotNumber, snapshot_t *snapshot ) {
 CL_SetUserCmdValue
 =====================
 */
-void CL_SetUserCmdValue( int userCmdValue, float sensitivityScale ) {
+void CL_SetUserCmdValue( int userCmdValue, float sensitivityScale, int userTierCmdValue, byte userWeaponChangedValue) {
 	cl.cgameUserCmdValue = userCmdValue;
 	cl.cgameSensitivity = sensitivityScale;
+	cl.cgameUserTierCmdValue = userTierCmdValue;
+	cl.cgameUserWeaponChanged = userWeaponChangedValue;
 }
 
 /*
@@ -605,7 +607,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_GETUSERCMD:
 		return CL_GetUserCmd( args[1], VMA(2) );
 	case CG_SETUSERCMDVALUE:
-		CL_SetUserCmdValue( args[1], VMF(2) );
+		CL_SetUserCmdValue( args[1], VMF(2), args[3], args[4] );
 		return 0;
 	case CG_MEMORY_REMAINING:
 		return Hunk_MemoryRemaining();

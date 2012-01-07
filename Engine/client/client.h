@@ -117,7 +117,9 @@ typedef struct {
 
 	// cgame communicates a few values to the client system
 	int			cgameUserCmdValue;	// current weapon to add to usercmd_t
+	int 		cgameUserTierCmdValue;
 	float		cgameSensitivity;
+	byte		cgameUserWeaponChanged;
 
 	// cmds[cmdNumber] is the predicted command, [cmdNumber-1] is the last
 	// properly generated command

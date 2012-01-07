@@ -142,6 +142,11 @@ void CG_Respawn( void ) {
 
 	// select the weapon the server says we are using
 	cg.weaponSelect = cg.snap->ps.weapon;
+	cg.tierCurrent = 0;
+	cg.tierSelect = -1;
+	cg.weaponDesired = 1;
+	cg.weaponChanged = 0;
+
 }
 
 extern char *eventnames[];
@@ -269,6 +274,8 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 CG_TransitionPlayerState
 ===============*/
 void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
+
+
 	if(ps->clientNum != ops->clientNum){
 		cg.thisFrameTeleport = qtrue;
 		*ops = *ps;
@@ -289,4 +296,23 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 		cg.duckChange = ps->viewheight - ops->viewheight;
 		cg.duckTime = cg.time;
 	}
+
+
+
+	cg.weaponDesired = -1;
+
+	if(ps->currentSkill[WPSTAT_CHANGED] == 1)
+	{
+		cg.weaponSelect = ps->weapon;
+		cg.drawWeaponBar = 1;
+	}
+
+	if(ps->powerLevel[plTierChanged] == 1 && ops->powerLevel[plTierChanged] != 1)
+	{
+		cg.tierCurrent = ps->powerLevel[plTierCurrent];
+	}
+
+	cg.tierSelect = -1;
+	cg.weaponChanged = 0;
+
 }

@@ -788,6 +788,8 @@ extern	vmCvar_t	g_allowAdvancedMelee;
 extern	vmCvar_t	g_rolling;
 extern	vmCvar_t	g_running;
 extern	vmCvar_t	g_pointGravity;
+extern	vmCvar_t	g_quickTransformCost;
+extern	vmCvar_t	g_quickTransformCostPerTier ;
 // END ADDING
 #if MAPLENSFLARES	// JUHOX: cvars for map lens flares
 extern	vmCvar_t	g_editmode;

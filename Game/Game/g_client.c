@@ -434,6 +434,13 @@ void ClientRespawn( gentity_t *ent ) {
 	CopyToBodyQue (ent);
 	ClientSpawn(ent);
 
+	tent->client->ps.powerLevel[plTierCurrent] = 0;
+	tent->client->ps.powerLevel[plTierDesired] = 0;
+	tent->client->ps.powerLevel[plTierChanged] = 2;
+
+	ent->client->ps.powerLevel[plTierCurrent] = 0;
+	ent->client->ps.powerLevel[plTierDesired] = 0;
+	ent->client->ps.powerLevel[plTierChanged] = 2;
 	// add a teleportation effect
 	tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
 	tent->s.clientNum = ent->s.clientNum;
@@ -764,6 +771,9 @@ void ClientUserinfoChanged( int clientNum ) {
 			client->pers.maxHealth, client->sess.wins, client->sess.losses, teamTask, teamLeader);
 	}
 	client->ps.powerLevel[plTierCurrent] = 0;
+	client->ps.powerLevel[plTierDesired] = 0;
+	client->ps.powerLevel[plTierChanged] = 2;
+
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
 	if(shouldRespawn==1){ClientRespawn(ent);}
 	if(shouldRespawn==2){client->ps.powerLevel[plUseHealth] = 32767;}
@@ -1042,6 +1052,8 @@ void ClientSpawn(gentity_t *ent) {
 	if(g_pointGravity.value){client->ps.options |= pointGravity;}
 	client->ps.powerLevel[plTierCurrent] = 0;
 	client->ps.powerLevel[plTierTotal] = 0;
+	client->ps.powerLevel[plTierDesired] = 0;
+	client->ps.powerLevel[plTierChanged] = 2;
 
 	if(g_powerlevel.value > 32767){
 		g_powerlevel.value = 32767;
@@ -1081,6 +1093,8 @@ void ClientSpawn(gentity_t *ent) {
 		// Either we assign a valid weapon, or we assign 0, which means
 		client->ps.weapon = i;
 		client->ps.weaponstate = WEAPON_READY;
+
+
 	}
 
 	// don't allow full run speed for a bit

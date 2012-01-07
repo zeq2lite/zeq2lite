@@ -687,6 +687,7 @@ static void CG_DrawWeaponSelectQuarterFan( void ) {
 
 	color = CG_FadeColor( cg.weaponSelectTime, WEAPON_SELECT_TIME, 200 );
 	if ( !color ) {
+		cg.drawWeaponBar = 0;
 		return;
 	}
 	trap_R_SetColor( color );
@@ -718,7 +719,6 @@ static void CG_DrawWeaponSelectQuarterFan( void ) {
 			sin(startAngle + angleUnit * (count % 3)) * (startOffset + lineOffset * (count / 3));
 		y = rootY - (iconH / 2) +
 			-1 * cos(startAngle + angleUnit * (count % 3)) * (startOffset + lineOffset * (count / 3));
-		
 		// draw weapon icon
 		if ( weaponInfo->weaponIcon ) {
 			CG_DrawPic(qfalse, x, y, 32, 32, weaponInfo->weaponIcon );
@@ -727,7 +727,6 @@ static void CG_DrawWeaponSelectQuarterFan( void ) {
 		if ( i == cg.weaponSelect ) {
 			CG_DrawPic(qfalse, x-4, y-4, 40, 40, cgs.media.selectShader );
 		}
-
 		count++;
 	}
 
@@ -745,7 +744,6 @@ static void CG_DrawWeaponSelectQuarterFan( void ) {
 
 		CG_DrawMediumStringColor(textX, textY, name, color);
 	}
-
 	trap_R_SetColor( NULL );
 	
 }
@@ -767,8 +765,10 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 
 	color = CG_FadeColor( cg.weaponSelectTime, WEAPON_SELECT_TIME, 200 );
 	if ( !color ) {
+		cg.drawWeaponBar = 0;
 		return;
 	}
+
 	trap_R_SetColor( color );
 
 	// count the number of weapons owned
@@ -809,6 +809,7 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 			CG_DrawPic(qfalse, x-4, y-4, 32, 32, cgs.media.selectShader );
 		}
 		x += 30;
+
 	}
 
 	weaponInfo = CG_FindUserWeaponGraphics( cg.snap->ps.clientNum, cg.weaponSelect );
@@ -829,12 +830,16 @@ static void CG_DrawWeaponSelectHorCenterBar( void ) {
 	}
 
 	trap_R_SetColor( NULL );
+
 }
 
 void CG_DrawWeaponSelect( void ) {
 	cg.itemPickupTime = 0;
-	CG_DrawWeaponSelectHorCenterBar();
-	//CG_DrawWeaponSelectQuarterFan();
+	if(cg.drawWeaponBar == 1)
+	{
+		CG_DrawWeaponSelectHorCenterBar();
+		//CG_DrawWeaponSelectQuarterFan();
+	}
 }
 
 
@@ -946,10 +951,8 @@ void CG_Weapon_f( void ) {
 	}
 	cg.weaponSelectTime = cg.time;
 
-	if ( ! ( cg.snap->ps.stats[stSkills] & ( 1 << num ) ) ) {
-		return;		// don't have the weapon
-	}
-	cg.weaponSelect = num;
+	cg.weaponDesired = num;
+	cg.weaponChanged = 1;
 }
 
 /*

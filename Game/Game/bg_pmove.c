@@ -69,6 +69,7 @@ void PM_ContinueTorsoAnim(int anim);
 void PM_Accelerate(vec3_t wishdir,float wishspeed,float accel);
 void PM_WeaponRelease(void);
 float PM_CmdScale(usercmd_t *cmd);
+void PM_CheckContextOperations(void);
 /*===================
 PM_StartTorsoAnim
 ===================*/
@@ -477,6 +478,7 @@ void PM_CheckStatus(void){
 			pm->ps->bitFlags &= ~isStruggling;
 			pm->ps->powerups[PW_STATE] = -2;
 			pm->ps->timers[tmFreeze] = 0;
+
 			PM_StopMovement();
 			PM_StopFlight();
 			PM_WeaponRelease();
@@ -558,6 +560,34 @@ void PM_CheckStatus(void){
 		pm->ps->powerups[PW_STATE] = 0;
 	}
 }
+
+void PM_CheckContextOperations(void)
+{
+
+	//Transforming operations
+
+	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
+		if(pm->cmd.weaponChange == 1)
+		{
+			pm->cmd.weaponChange = 0;
+			pm->cmd.tier = pm->cmd.weapon-1;
+
+			pm->ps->powerLevel[plTierDesired] = pm->cmd.weapon- 1;
+			pm->cmd.weapon = pm->ps->weapon;
+		}
+
+	}
+	else if(pm->ps->powerLevel[plTierCurrent] != pm->cmd.tier)
+	{
+		pm->ps->powerLevel[plTierDesired] = pm->cmd.tier;
+	}
+
+
+
+
+
+}
+
 qboolean PM_CheckTransform(void){
 	if(!(pm->ps->options & canTransform)){return qfalse;}
 	pm->ps->timers[tmUpdateTier] += pml.msec;
@@ -567,8 +597,11 @@ qboolean PM_CheckTransform(void){
 		else if(pm->ps->stats[stTransformState] == 1){PM_AddEvent(EV_TIERUP);}
 		else if(pm->ps->stats[stTransformState] == 2){PM_AddEvent(EV_TIERUP_FIRST);}
 		pm->ps->stats[stTransformState] = 0;
-		PM_AddEvent(EV_TIERCHECK);
+
+		//PM_AddEvent(EV_TIERCHECK);
 	}
+
+
 	if(pm->ps->timers[tmTransform] == 1){
 		pm->ps->timers[tmTransform] = -100;
 		PM_AddEvent(EV_SYNCTIER);
@@ -1358,8 +1391,8 @@ void PM_WalkMove(void){
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL && !VectorLength(pm->ps->velocity)){return;}
 	if(!pml.onGround || VectorLength(pm->ps->dashDir)){return;}
 	fmove = pm->cmd.forwardmove;
+	//With smove = 0, the char cannot walk sideways
 	//smove = pm->cmd.rightmove;
-	//With 0, the char cannot walk sideways
 	smove = 0;
 	cmd = pm->cmd;
 	scale = PM_CmdScale(&cmd);
@@ -1960,6 +1993,7 @@ PM_BeginWeaponChange
 void PM_BeginWeaponChange(int weapon){
 	qboolean charging;
 	qboolean usable;
+
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
 	if(pm->ps->weapon == pm->cmd.weapon){
 		return;
@@ -1995,6 +2029,9 @@ void PM_BeginWeaponChange(int weapon){
 			if(weapon < 1){weapon = 6;}
 		}
 	}
+
+
+	pm->ps->currentSkill[WPSTAT_CHANGED] = 1;
 	pm->ps->weapon = weapon;
 	pm->ps->timers[tmAttack1] = 0;
 	pm->ps->timers[tmAttack2] = 0;
@@ -2677,6 +2714,30 @@ void PM_Melee(void){
 	pm->ps->timers[tmMeleeCharge] = meleeCharge;
 	if(distance <= 64){pm->cmd.rightmove = 0;}
 }
+
+/*
+===============
+CG_WeaponSelectable
+===============
+*/
+qboolean PM_WeaponSelectable( int i ) {
+	qboolean usable;
+	usable = qfalse;
+	/*if ( ! (pm->ps->stats[ stSkills ] & ( 1 << i ) ) ) {
+		return qfalse;
+	}
+*/
+	if(i == 1 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL1)){usable = qtrue;}
+	if(i == 2 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL2)){usable = qtrue;}
+	if(i == 3 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL3)){usable = qtrue;}
+	if(i == 4 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL4)){usable = qtrue;}
+	if(i == 5 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL5)){usable = qtrue;}
+	if(i == 6 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL6)){usable = qtrue;}
+
+	if(!usable){return qfalse;}
+	return qtrue;
+}
+
 /*==============
 PM_Weapon
 Generates weapon events and modifes the weapon counter
@@ -2696,8 +2757,30 @@ void PM_Weapon(void){
 	int	*alt_weaponInfo;
 	int chargeRate;
 	int costPrimary,costSecondary;
+	int i;
 	float energyScale;
+	qboolean usable;
 	float powerScale = ((float)pm->ps->powerLevel[plCurrent] / 1000.0) * pm->ps->baseStats[stEnergyAttack];
+	pm->ps->currentSkill[WPSTAT_CHANGED] = 0;
+
+	if(pm->ps->powerLevel[plTierChanged] == 1)
+	{
+		for(i = 6; i > 0; i--)
+		{
+			if(PM_WeaponSelectable(i))
+			{
+				pm->cmd.weapon = i;
+				break;
+			}
+		}
+	}
+	else
+	{
+		if(!PM_WeaponSelectable(pm->cmd.weapon))
+		{
+			return;
+		}
+	}
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	if(pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar
@@ -2731,7 +2814,8 @@ void PM_Weapon(void){
 			pm->cmd.buttons |= BUTTON_ATTACK;
 		}
 	}
-	if(weaponInfo[WPSTAT_NUMCHECK] != pm->ps->weapon){return;}
+
+	if(weaponInfo[WPSTAT_NUMCHECK] != pm->ps->weapon){ return; }
 	costPrimary = weaponInfo[WPSTAT_POWERLEVELCOST];
 	costSecondary = alt_weaponInfo[WPSTAT_POWERLEVELCOST];
 	energyScale = (float)pm->ps->powerLevel[plCurrent] / (float)pm->ps->powerLevel[plMaximum];
@@ -3184,6 +3268,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_Ride();
 	PM_CheckKnockback();
 	PM_CheckHover();
+	PM_CheckContextOperations();
 	if(PM_CheckTransform()){return;}
 	PM_CheckLoopingSound();
 	PM_SetWaterLevel();

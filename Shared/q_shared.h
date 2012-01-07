@@ -1162,7 +1162,7 @@ typedef struct playerState_s {
 	int			externalEventParm;
 	int			externalEventTime;
 	int			clientNum;		// ranges from 0 to MAX_CLIENTS-1
-	int			weapon;			// copied to entityState_t->weapon
+	int			weapon;			// copied to entityState_t->weapon`
 	int			weaponstate;
 	vec3_t		viewangles;		// for fixed views
 	int			viewheight;
@@ -1232,6 +1232,8 @@ typedef struct usercmd_s {
 	int 			buttons;
 	byte			weapon;
 	signed char	forwardmove, rightmove, upmove;
+	signed char 	tier;
+	byte			weaponChange;
 } usercmd_t;
 // if entityState->solid == SOLID_BMODEL, modelindex is an inline model number
 #define	SOLID_BMODEL	0xffffff

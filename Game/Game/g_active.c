@@ -421,13 +421,11 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_LOCKON_END:
 			break;
 		case EV_DEATH:
-			ps->powerLevel[plTierCurrent] = 0;
 			ent->r.contents &= ~CONTENTS_BODY;
 			syncTier(client);
 			client->respawnTime = level.time + 10000;
 			break;
 		case EV_UNCONCIOUS:
-			ps->powerLevel[plTierCurrent] = 0;
 			syncTier(client);
 			break;
 		default:
@@ -592,6 +590,8 @@ void ClientThink_real( gentity_t *ent ) {
 
 	VectorCopy( client->ps.origin, client->oldOrigin );
 	Pmove(&pm);
+	checkTier(client);
+
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}

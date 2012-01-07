@@ -501,6 +501,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_DEATH:
 		DEBUGNAME("EV_DEATH");
+		cg.tierCurrent = 0;
+		cg.tierSelect = 0;
 		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"death"));
 		break;
 	case EV_UNCONCIOUS:

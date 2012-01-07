@@ -2176,8 +2176,16 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		CG_DrawInformation();
 		return;
 	}
-	// let the client system know what our weapon and zoom settings are
-	trap_SetUserCmdValue( cg.weaponSelect, cg.zoomSensitivity );
+
+	if(cg.tierSelect > -1)
+	{
+		cg.tierCurrent = cg.tierSelect;
+	}
+
+		// let the client system know what our weapon and zoom settings are
+	trap_SetUserCmdValue( cg.weaponDesired > 0 ? cg.weaponDesired : cg.weaponSelect, cg.zoomSensitivity, cg.tierCurrent, cg.weaponChanged);
+	cg.weaponChanged = 0;
+
 	// this counter will be bumped for every valid scene we generate
 	cg.clientFrame++;
 	// update cg.predictedPlayerState

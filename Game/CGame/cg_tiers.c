@@ -446,3 +446,97 @@ void parseTier(char *path,tierConfig_cg *tier){
 		}
 	}
 }
+
+
+/*
+===============
+CG_NextTier_f
+===============
+*/
+void CG_NextTier_f( void ) {
+	/*int		i;
+	int		original;
+	if ( !cg.snap || cg.snap->ps.bitFlags & usingMelee ) {
+		return;
+	}
+	if ( cg.snap->ps.pm_flags & PMF_FOLLOW ) {
+		return;
+	}
+
+	cg.weaponSelectTime = cg.time;
+	original = cg.weaponSelect;
+
+	for ( i = 0 ; i < 16 ; i++ ) {
+		cg.weaponSelect++;
+		if ( cg.weaponSelect == 16 ) {
+			cg.weaponSelect = 0;
+		}
+		if ( CG_WeaponSelectable( cg.weaponSelect ) ) {
+			break;
+		}
+	}
+	if ( i == 16 ) {
+		cg.weaponSelect = original;
+	}*/
+}
+
+/*
+===============
+CG_PrevTier_f
+===============
+*/
+void CG_PrevTier_f( void ) {
+
+	/*int		i;
+	int		original;
+
+	if ( !cg.snap ) {
+		return;
+	}
+	if ( cg.snap->ps.pm_flags & PMF_FOLLOW ) {
+		return;
+	}
+	cg.weaponSelectTime = cg.time;
+	original = cg.weaponSelect;
+
+	for ( i = 0 ; i < 16 ; i++ ) {
+		cg.weaponSelect--;
+		if ( cg.weaponSelect == -1 ) {
+			cg.weaponSelect = 15;
+		}
+		if ( CG_WeaponSelectable( cg.weaponSelect ) ) {
+			break;
+		}
+	}
+	if ( i == 16 ) {
+		cg.weaponSelect = original;
+	}*/
+}
+
+
+
+/*
+===============
+Tier
+===============
+*/
+void CG_Tier_f( void ) {
+	int		num;
+
+	if ( !cg.snap ) {
+		return;
+	}
+	if ( cg.snap->ps.pm_flags & PMF_FOLLOW ) {
+		return;
+	}
+	num = atoi( CG_Argv( 1 ) );
+
+	if ( num < 0 || num > 10 ) {
+		return;
+	}
+
+	if(cg.tierSelect == -1)
+	{
+		cg.tierSelect = num;
+	}
+}

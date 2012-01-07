@@ -288,7 +288,9 @@ typedef enum{
 	plDamageFromEnergy,
 	plDamageFromMelee,
 	plDamageGeneric,
-	plBuffer
+	plBuffer,
+	plTierDesired,
+	plTierChanged
 }powerLevel_t;
 typedef enum{
 	lkPowerCurrent,

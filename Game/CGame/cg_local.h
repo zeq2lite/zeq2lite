@@ -644,12 +644,17 @@ typedef struct {
 
 	// input state sent to server
 	int			weaponSelect;
+	int			weaponDesired;
+	byte		weaponChanged;
+	int			tierSelect;
+	int			tierCurrent;
 
 	// auto rotating items
 	vec3_t		autoAngles;
 	vec3_t		autoAxis[3];
 	vec3_t		autoAnglesFast;
 	vec3_t		autoAxisFast[3];
+	byte		drawWeaponBar;
 
 	// view rendering
 	refdef_t	refdef;
@@ -1413,6 +1418,13 @@ void CG_Mover(centity_t *cent);
 #endif
 
 //
+// cg_tiers.c
+//
+void CG_NextTier_f( void );
+void CG_PrevTier_f( void );
+void CG_Tier_f( void );
+
+//
 // cg_weapons.c
 //
 void CG_NextWeapon_f( void );
@@ -1728,7 +1740,7 @@ int			trap_GetCurrentCmdNumber( void );
 qboolean	trap_GetUserCmd( int cmdNumber, usercmd_t *ucmd );
 
 // used for the weapon select and zoom
-void		trap_SetUserCmdValue( int stateValue, float sensitivityScale );
+void		trap_SetUserCmdValue( int stateValue, float sensitivityScale, int tierStateValue, byte weaponChangedState );
 
 // aids for VM testing
 void		testPrintInt( char *string, int i );
