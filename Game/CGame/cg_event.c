@@ -501,8 +501,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_DEATH:
 		DEBUGNAME("EV_DEATH");
-		cg.tierCurrent = 0;
-		cg.tierSelect = 0;
 		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"death"));
 		break;
 	case EV_UNCONCIOUS:
@@ -553,9 +551,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MELEE_BREAKER:
 		DEBUGNAME("EV_MELEE_BREAKER");
 		trap_S_StartSound(cent->lerpOrigin,es->number,CHAN_BODY,cgs.media.powerStunSound1);
-		break;
-	case EV_TIERCHECK:
-		DEBUGNAME("EV_TIERCHECK");
 		break;
 	case EV_TIERUP_FIRST:
 		DEBUGNAME("EV_TIERUP_FIRST");

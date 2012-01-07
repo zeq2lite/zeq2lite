@@ -398,9 +398,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			enemy = &g_entities[ps->lockedTarget-1];
 			enemy->enemy = ent;
 			break;
-		case EV_TIERCHECK:
-			checkTier(client);
-			break;
 		case EV_TIERUP_FIRST:
 		case EV_TIERUP:
 		case EV_TIERDOWN:

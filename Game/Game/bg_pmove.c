@@ -565,7 +565,6 @@ void PM_CheckContextOperations(void)
 {
 
 	//Transforming operations
-
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
 		if(pm->cmd.weaponChange == 1)
 		{
@@ -583,9 +582,6 @@ void PM_CheckContextOperations(void)
 	}
 
 
-
-
-
 }
 
 qboolean PM_CheckTransform(void){
@@ -597,10 +593,7 @@ qboolean PM_CheckTransform(void){
 		else if(pm->ps->stats[stTransformState] == 1){PM_AddEvent(EV_TIERUP);}
 		else if(pm->ps->stats[stTransformState] == 2){PM_AddEvent(EV_TIERUP_FIRST);}
 		pm->ps->stats[stTransformState] = 0;
-
-		//PM_AddEvent(EV_TIERCHECK);
 	}
-
 
 	if(pm->ps->timers[tmTransform] == 1){
 		pm->ps->timers[tmTransform] = -100;
@@ -2765,6 +2758,7 @@ void PM_Weapon(void){
 
 	if(pm->ps->powerLevel[plTierChanged] == 1)
 	{
+		if(!PM_WeaponSelectable(pm->cmd.weapon))
 		for(i = 6; i > 0; i--)
 		{
 			if(PM_WeaponSelectable(i))

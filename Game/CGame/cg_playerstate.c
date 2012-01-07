@@ -300,9 +300,9 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 
 
 	cg.weaponDesired = -1;
-
 	if(ps->currentSkill[WPSTAT_CHANGED] == 1)
 	{
+		//If the server validated a weapon change, changes it
 		cg.weaponSelect = ps->weapon;
 		cg.drawWeaponBar = 1;
 	}

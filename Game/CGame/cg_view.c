@@ -2182,7 +2182,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		cg.tierCurrent = cg.tierSelect;
 	}
 
-		// let the client system know what our weapon and zoom settings are
+	// let the client system know what our weapon and zoom settings are
 	trap_SetUserCmdValue( cg.weaponDesired > 0 ? cg.weaponDesired : cg.weaponSelect, cg.zoomSensitivity, cg.tierCurrent, cg.weaponChanged);
 	cg.weaponChanged = 0;
 

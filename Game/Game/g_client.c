@@ -434,13 +434,10 @@ void ClientRespawn( gentity_t *ent ) {
 	CopyToBodyQue (ent);
 	ClientSpawn(ent);
 
-	tent->client->ps.powerLevel[plTierCurrent] = 0;
-	tent->client->ps.powerLevel[plTierDesired] = 0;
-	tent->client->ps.powerLevel[plTierChanged] = 2;
-
 	ent->client->ps.powerLevel[plTierCurrent] = 0;
 	ent->client->ps.powerLevel[plTierDesired] = 0;
 	ent->client->ps.powerLevel[plTierChanged] = 2;
+
 	// add a teleportation effect
 	tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
 	tent->s.clientNum = ent->s.clientNum;
