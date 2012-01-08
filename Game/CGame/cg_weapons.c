@@ -331,6 +331,15 @@ static void CG_AddPlayerWeaponCharge( refEntity_t *parent, cg_userWeapon_t *weap
 		VectorScale(charge->axis[0], chargeScale, charge->axis[0]);
 		VectorScale(charge->axis[1], chargeScale, charge->axis[1]);
 		VectorScale(charge->axis[2], chargeScale, charge->axis[2]);
+
+		if(cg_drawBBox.value){
+			vec3_t	mins,maxs;
+			trap_R_ModelBounds( charge->hModel, mins, maxs, charge->frame );
+			VectorScale(mins, chargeScale, mins);
+			VectorScale(maxs, chargeScale, maxs);
+			CG_DrawBoundingBox( charge->origin, mins, maxs );
+		}
+
 	}
 
 	trap_R_AddRefEntityToScene( charge );
@@ -414,6 +423,14 @@ static void CG_AddPlayerWeaponFlash( refEntity_t *parent, cg_userWeapon_t *weapo
 		VectorScale(flash->axis[0], flashScale, flash->axis[0]);
 		VectorScale(flash->axis[1], flashScale, flash->axis[1]);
 		VectorScale(flash->axis[2], flashScale, flash->axis[2]);
+
+		if(cg_drawBBox.value){
+			vec3_t	mins,maxs;
+			trap_R_ModelBounds( flash->hModel, mins, maxs, flash->frame );
+			VectorScale(mins, flashScale, mins);
+			VectorScale(maxs, flashScale, maxs);
+			CG_DrawBoundingBox( flash->origin, mins, maxs );
+		}
 	}
 
 	trap_R_AddRefEntityToScene( flash );

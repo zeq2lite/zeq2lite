@@ -1227,6 +1227,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		VectorScale(expShell->refEntity.axis[0], explosionScale/*weaponGraphics->explosionSize*/, expShell->refEntity.axis[0]);
 		VectorScale(expShell->refEntity.axis[1], explosionScale/*weaponGraphics->explosionSize*/, expShell->refEntity.axis[1]);
 		VectorScale(expShell->refEntity.axis[2], explosionScale/*weaponGraphics->explosionSize*/, expShell->refEntity.axis[2]);
+		expShell->refEntity.radius = explosionScale;
 
 		// set origin
 		VectorCopy( origin, newOrigin );
@@ -1268,6 +1269,7 @@ void CG_MakeUserExplosion( vec3_t origin, vec3_t dir, cg_userWeapon_t *weaponGra
 		expShell->lightColor[1] = weaponGraphics->explosionDlightColor[1];
 		expShell->lightColor[2] = weaponGraphics->explosionDlightColor[2];
 		expShell->light = weaponGraphics->explosionDlightRadius * 100;
+
 	}
 
 	// JUHOX: draw BeamHead missile lens flare effects

@@ -133,7 +133,6 @@ cvar_t	*r_picmip;
 cvar_t	*r_showtris;
 cvar_t	*r_showsky;
 cvar_t	*r_shownormals;
-cvar_t	*r_showbboxes;
 cvar_t	*r_meshLerp;
 //cvar_t	*r_showbones;
 cvar_t	*r_finish;
@@ -1130,7 +1129,6 @@ void R_Register( void )
 	r_showtris = ri.Cvar_Get ("r_showtris", "0", CVAR_ARCHIVE);
 	r_showsky = ri.Cvar_Get ("r_showsky", "0", CVAR_ARCHIVE);
 	r_shownormals = ri.Cvar_Get ("r_shownormals", "0", CVAR_ARCHIVE);
-	r_showbboxes = ri.Cvar_Get ("r_showbboxes", "0", CVAR_ARCHIVE);
 	r_clear = ri.Cvar_Get ("r_clear", "0", CVAR_ARCHIVE);
 	r_offsetFactor = ri.Cvar_Get( "r_offsetfactor", "-1", CVAR_ARCHIVE );
 	r_offsetUnits = ri.Cvar_Get( "r_offsetunits", "-2", CVAR_ARCHIVE );

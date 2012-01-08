@@ -1,12 +1,12 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CGame", "CGame.vcproj", "{C878E295-CB82-4B40-8ECF-5CE5525466FA}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CGame", "CGame.vcxproj", "{C878E295-CB82-4B40-8ECF-5CE5525466FA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "Game.vcproj", "{F9EE10DA-2404-4154-B904-F93C936C040A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "Game.vcxproj", "{F9EE10DA-2404-4154-B904-F93C936C040A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UI", "UI.vcproj", "{D454C4C7-7765-4149-ABAD-05FDEB9D94F8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UI", "UI.vcxproj", "{D454C4C7-7765-4149-ABAD-05FDEB9D94F8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Engine.vcproj", "{81CB51C4-B434-4E12-B69B-BAEE102F2852}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Engine.vcxproj", "{81CB51C4-B434-4E12-B69B-BAEE102F2852}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

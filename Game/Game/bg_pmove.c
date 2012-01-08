@@ -1810,12 +1810,12 @@ void PM_Footsteps(void){
 		return;
 	}
 	pm->xyspeed = sqrt(pm->ps->velocity[0] * pm->ps->velocity[0] +  pm->ps->velocity[1] * pm->ps->velocity[1]);
-	if(pm->waterlevel > 2 && !(pm->ps->bitFlags & usingFlight)){
-		if(pm->cmd.forwardmove > 0){
+	if(pm->waterlevel > 2){
+		if(pm->cmd.forwardmove > 0 && !(pm->ps->bitFlags & usingFlight) ){
 			PM_ContinueLegsAnim(ANIM_SWIM);
 			return;
 		}
-		else if(!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove){
+		else if(!pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.upmove && !(pm->ps->bitFlags & usingSoar)){
 			PM_ContinueLegsAnim(ANIM_SWIM_IDLE);
 			return;
 		}

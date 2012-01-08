@@ -305,39 +305,7 @@ static void DrawNormals (shaderCommands_t *input) {
 	qglDepthRange( 0, 1 );
 }
 
-/*
-================
-DrawBBoxes
 
-Draws bounding box outlines for debugging
-================
-*/
-static void DrawBBoxes (shaderCommands_t *input) {
-	GL_Bind( tr.whiteImage );
-//	qglColor3f (1,1,1);
-	qglColor4f ( 0, 0, 0, 0.5f );
-
-	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE );
-	qglDepthRange( 0, 0 );
-
-	qglDisableClientState (GL_COLOR_ARRAY);
-	qglDisableClientState (GL_TEXTURE_COORD_ARRAY);
-
-	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
-
-	if (qglLockArraysEXT) {
-		qglLockArraysEXT(0, input->numVertexes);
-		GLimp_LogComment( "glLockArraysEXT\n" );
-	}
-
-	R_DrawElements( input->numIndexes, input->indexes );
-
-	if (qglUnlockArraysEXT) {
-		qglUnlockArraysEXT();
-		GLimp_LogComment( "glUnlockArraysEXT\n" );
-	}
-	qglDepthRange( 0, 1 );
-}
 
 /*
 ==============
@@ -1685,9 +1653,7 @@ void RB_EndSurface( void ) {
 	if ( r_shownormals->integer ) {
 		DrawNormals (input);
 	}
-	if ( r_showbboxes->integer ) {
-		DrawBBoxes (input);
-	}
+
 	// clear shader so we can tell we don't have any unclosed surfaces
 	tess.numIndexes = 0;
 

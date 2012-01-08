@@ -841,7 +841,11 @@ CG_OffsetTagView
 */
 #define	NECK_LENGTH		8
 void CG_OffsetTagView( centity_t *cent ) {
-	vec3_t			forward, up;
+	trace_t			trace;
+	static vec3_t	mins = { -4, -4, -4 };
+	static vec3_t	maxs = { 4, 4, 4 };
+	vec3_t			view, forward, up;
+	int 			clientNum;
 	orientation_t	tagOrient,tagOrient2;
 	if (cg_thirdPersonCamera.value == 0)
 	{
@@ -865,7 +869,13 @@ void CG_OffsetTagView( centity_t *cent ) {
 				VectorNormalize( forward );
 				vectoangles( forward, cg.refdefViewAngles );
 			}
-			VectorCopy( tagOrient.origin, cg.refdef.vieworg);
+			clientNum = cent->currentState.clientNum;
+			VectorCopy( tagOrient.origin, view );
+			CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, clientNum, MASK_SOLID );
+			if ( trace.fraction != 1.0 )
+				VectorCopy( trace.endpos, cg.refdef.vieworg );
+			else
+				VectorCopy( tagOrient.origin, cg.refdef.vieworg);
 			AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
 		}
 	}

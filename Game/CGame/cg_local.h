@@ -1209,6 +1209,7 @@ extern	vmCvar_t		cg_playTransformTrackToEnd;
 extern	vmCvar_t		cg_particlesQuality;
 extern	vmCvar_t		cg_particlesStop;
 extern  vmCvar_t		cg_particlesMaximum;
+extern	vmCvar_t		cg_drawBBox;
 // END ADDING
 #if MAPLENSFLARES
 extern	vmCvar_t		cg_lensFlare;		// JUHOX
@@ -1402,6 +1403,7 @@ void CG_PainEvent( centity_t *cent, int powerLevel );
 //
 // cg_ents.c
 //
+void CG_DrawBoundingBox( vec3_t origin, vec3_t mins, vec3_t maxs );
 void CG_SetEntitySoundPosition( centity_t *cent );
 void CG_AddPacketEntities( void );
 void CG_Beam( centity_t *cent );
@@ -1702,7 +1704,7 @@ void		trap_R_RenderScene( const refdef_t *fd );
 void		trap_R_SetColor( const float *rgba );	// NULL = 1,1,1,1
 void		trap_R_DrawStretchPic( float x, float y, float w, float h, 
 			float s1, float t1, float s2, float t2, qhandle_t hShader );
-void		trap_R_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
+void		trap_R_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs, int frame );
 int			trap_R_LerpTag( orientation_t *tag, clipHandle_t mod, int startFrame, int endFrame, 
 					   float frac, const char *tagName );
 void		trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset );

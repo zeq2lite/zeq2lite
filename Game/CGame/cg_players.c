@@ -1308,13 +1308,28 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	legsAngles[YAW] = headAngles[YAW] + movementOffsets[ dir ];
 	torsoAngles[YAW] = headAngles[YAW] + 0.25 * movementOffsets[ dir ];
 
-	// torso
-	if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != ANIM_IDLE){
-		CG_SwingAngles( torsoAngles[YAW], 25, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-		CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
-	} else {
-		headAngles[YAW] = cent->pe.torso.yawAngle;
+	switch ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) ){
+		default:
+			CG_SwingAngles( torsoAngles[YAW], 25, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
+			CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+			break;
+		case ANIM_IDLE:
+			break;
+		case ANIM_FLY_IDLE:
+			break;
+		case ANIM_FLY_UP:
+			break;
+		case ANIM_FLY_DOWN:
+			break;
+		case ANIM_SWIM_IDLE:
+			if(((&cg.predictedPlayerState)->weaponstate != WEAPON_READY || cent->currentState.weaponstate != WEAPON_READY)){
+				CG_SwingAngles( torsoAngles[YAW], 25, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
+				CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+			}
+			break;
 	}
+
+	headAngles[YAW] = cent->pe.torso.yawAngle;
 	torsoAngles[YAW] = cent->pe.torso.yawAngle;
 	legsAngles[YAW] = cent->pe.legs.yawAngle;
 	if ( headAngles[PITCH] > 180 ) {
@@ -1323,7 +1338,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		dest = headAngles[PITCH] * 0.75f;
 	}
 	CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
-	torsoAngles[PITCH] = cent->pe.torso.pitchAngle;
+	//torsoAngles[PITCH] = cent->pe.torso.pitchAngle;
 	if ( ci->fixedtorso || cent->currentState.weaponstate == WEAPON_CHARGING || cent->currentState.weaponstate == WEAPON_ALTCHARGING || 
 				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_DEATH_GROUND || 
 				( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_DEATH_AIR || 
@@ -1340,19 +1355,15 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	// ADDING FOR ZEQ2
 	// We're flying, so we change the entire body's directions altogether.
-	if(cg_advancedFlight.value){
+	if(cg_advancedFlight.value || (&cg.predictedPlayerState)->bitFlags & usingSoar || cent->currentState.playerBitFlags & usingSoar){
 		VectorCopy( cent->lerpAngles, headAngles );
 		VectorCopy( cent->lerpAngles, torsoAngles );
 		VectorCopy( cent->lerpAngles, legsAngles );
 	}
 	else if(((&cg.predictedPlayerState)->weaponstate != WEAPON_READY || cent->currentState.weaponstate != WEAPON_READY)){
 		VectorCopy( cent->lerpAngles, headAngles );
-	} 
-	else if((&cg.predictedPlayerState)->bitFlags & usingFlight || cent->currentState.playerBitFlags & usingFlight){
-		VectorCopy( cent->lerpAngles, headAngles );
-		VectorCopy( cent->lerpAngles, torsoAngles );
-		VectorCopy( cent->lerpAngles, legsAngles );
 	}
+
 	VectorCopy( cent->lerpAngles, cameraAngles );
 	// END ADDING
 
@@ -1935,6 +1946,8 @@ void CG_Player( centity_t *cent ) {
 	int				state,enemyState;
 	int				scale;
 	float			xyzspeed;
+	vec3_t			mins = {-15, -15, -24};
+	vec3_t			maxs = {15, 15, 32};
 	ps = &cg.snap->ps;
 	clientNum = cent->currentState.clientNum;
 	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ){CG_Error( "Bad clientNum on player entity" );}
@@ -2078,6 +2091,14 @@ void CG_Player( centity_t *cent ) {
 	}
 	else{CG_AuraEnd(cent);}
 	CG_AddAuraToScene(cent);
+	if(cg_drawBBox.value){
+	trap_R_ModelBounds( head.hModel, mins, maxs, head.frame );
+	CG_DrawBoundingBox( head.origin, mins, maxs );
+	trap_R_ModelBounds( torso.hModel, mins, maxs, torso.frame );
+	CG_DrawBoundingBox( torso.origin, mins, maxs );
+	trap_R_ModelBounds( legs.hModel, mins, maxs, legs.frame );
+	CG_DrawBoundingBox( legs.origin, mins, maxs );
+	}
 	if(ps->timers[tmKnockback]){
 		if(ps->timers[tmKnockback] > 0){
 			trap_S_StartSound(cent->lerpOrigin,ENTITYNUM_NONE,CHAN_BODY,cgs.media.knockbackSound);

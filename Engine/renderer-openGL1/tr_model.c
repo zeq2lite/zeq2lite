@@ -1255,7 +1255,7 @@ int R_LerpTag( orientation_t *tag, qhandle_t handle, int startFrame, int endFram
 R_ModelBounds
 ====================
 */
-void R_ModelBounds( qhandle_t handle, vec3_t mins, vec3_t maxs ) {
+void R_ModelBounds( qhandle_t handle, vec3_t mins, vec3_t maxs, int modelFrame ) {
 	model_t		*model;
 
 	model = R_GetModelByHandle( handle );
@@ -1270,7 +1270,7 @@ void R_ModelBounds( qhandle_t handle, vec3_t mins, vec3_t maxs ) {
 		md3Frame_t	*frame;
 
 		header = model->md3[0];
-		frame = (md3Frame_t *) ((byte *)header + header->ofsFrames);
+		frame = (md3Frame_t *) ((byte *)header + header->ofsFrames) + modelFrame;
 
 		VectorCopy( frame->bounds[0], mins );
 		VectorCopy( frame->bounds[1], maxs );
@@ -1281,7 +1281,7 @@ void R_ModelBounds( qhandle_t handle, vec3_t mins, vec3_t maxs ) {
 		md4Frame_t	*frame;
 
 		header = (md4Header_t *)model->modelData;
-		frame = (md4Frame_t *) ((byte *)header + header->ofsFrames);
+		frame = (md4Frame_t *) ((byte *)header + header->ofsFrames) + modelFrame;
 
 		VectorCopy( frame->bounds[0], mins );
 		VectorCopy( frame->bounds[1], maxs );
@@ -1293,7 +1293,7 @@ void R_ModelBounds( qhandle_t handle, vec3_t mins, vec3_t maxs ) {
 		mdrFrame_t	*frame;
 
 		header = (mdrHeader_t *)model->modelData;
-		frame = (mdrFrame_t *) ((byte *)header + header->ofsFrames);
+		frame = (mdrFrame_t *) ((byte *)header + header->ofsFrames) + modelFrame;
 
 		VectorCopy( frame->bounds[0], mins );
 		VectorCopy( frame->bounds[1], maxs );

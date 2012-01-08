@@ -582,6 +582,16 @@ static void CG_AddZEQExplosion( localEntity_t *le ) {
 	VectorScale(ent->axis[1], 1 - c, ent->axis[1]);
 	VectorScale(ent->axis[2], 1 - c, ent->axis[2]);
 
+	if(cg_drawBBox.value){
+		vec3_t	mins,maxs;
+		trap_R_ModelBounds( ent->hModel, mins, maxs, ent->frame );
+		VectorScale(mins, ent->radius, mins);
+		VectorScale(maxs, ent->radius, maxs);
+		VectorScale(mins, 1 - c, mins);
+		VectorScale(maxs, 1 - c, maxs);
+		CG_DrawBoundingBox( ent->origin, mins, maxs );
+	}
+
 	// add the entity
 	trap_R_AddRefEntityToScene( ent );
 

@@ -434,7 +434,7 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	else{
 		cm = ci->headModel[ci->tierCurrent];
 		if(!cm){return;}
-		trap_R_ModelBounds(cm,mins,maxs );
+		trap_R_ModelBounds(cm,mins,maxs,0);
 		len = 0.7 * ( maxs[2] - mins[2] );		
 		origin[0] = len / (1.0 - tier->icon3DZoom);
 		origin[1] = 0.5 * (mins[1] + maxs[1]);

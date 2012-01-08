@@ -26,6 +26,99 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
 ======================
+CG_DrawBoxFace
+
+Draws a bounding box face
+======================
+*/
+static void CG_DrawBoxFace( vec3_t a, vec3_t b, vec3_t c, vec3_t d )
+{
+  polyVert_t  verts[ 4 ];
+  vec4_t      color = { 255.0f, 0.0f, 0.0f, 128.0f };
+	qhandle_t bboxShader;
+
+  VectorCopy( d, verts[ 0 ].xyz );
+  verts[ 0 ].st[ 0 ] = 1;
+  verts[ 0 ].st[ 1 ] = 1;
+  Vector4Copy( color, verts[ 0 ].modulate );
+
+  VectorCopy( c, verts[ 1 ].xyz );
+  verts[ 1 ].st[ 0 ] = 1;
+  verts[ 1 ].st[ 1 ] = 0;
+  Vector4Copy( color, verts[ 1 ].modulate );
+
+  VectorCopy( b, verts[ 2 ].xyz );
+  verts[ 2 ].st[ 0 ] = 0;
+  verts[ 2 ].st[ 1 ] = 0;
+  Vector4Copy( color, verts[ 2 ].modulate );
+
+  VectorCopy( a, verts[ 3 ].xyz );
+  verts[ 3 ].st[ 0 ] = 0;
+  verts[ 3 ].st[ 1 ] = 1;
+  Vector4Copy( color, verts[ 3 ].modulate );
+
+  bboxShader = trap_R_RegisterShader( "bbox_nocull" );
+
+  trap_R_AddPolyToScene( bboxShader, 4, verts );
+}
+
+/*
+======================
+CG_DrawBoundingBox
+
+Draws a bounding box
+======================
+*/
+void CG_DrawBoundingBox( vec3_t origin, vec3_t mins, vec3_t maxs )
+{
+  vec3_t  ppp, mpp, mmp, pmp;
+  vec3_t  mmm, pmm, ppm, mpm;
+
+  ppp[ 0 ] = origin[ 0 ] + maxs[ 0 ];
+  ppp[ 1 ] = origin[ 1 ] + maxs[ 1 ];
+  ppp[ 2 ] = origin[ 2 ] + maxs[ 2 ];
+
+  mpp[ 0 ] = origin[ 0 ] + mins[ 0 ];
+  mpp[ 1 ] = origin[ 1 ] + maxs[ 1 ];
+  mpp[ 2 ] = origin[ 2 ] + maxs[ 2 ];
+
+  mmp[ 0 ] = origin[ 0 ] + mins[ 0 ];
+  mmp[ 1 ] = origin[ 1 ] + mins[ 1 ];
+  mmp[ 2 ] = origin[ 2 ] + maxs[ 2 ];
+
+  pmp[ 0 ] = origin[ 0 ] + maxs[ 0 ];
+  pmp[ 1 ] = origin[ 1 ] + mins[ 1 ];
+  pmp[ 2 ] = origin[ 2 ] + maxs[ 2 ];
+
+  ppm[ 0 ] = origin[ 0 ] + maxs[ 0 ];
+  ppm[ 1 ] = origin[ 1 ] + maxs[ 1 ];
+  ppm[ 2 ] = origin[ 2 ] + mins[ 2 ];
+
+  mpm[ 0 ] = origin[ 0 ] + mins[ 0 ];
+  mpm[ 1 ] = origin[ 1 ] + maxs[ 1 ];
+  mpm[ 2 ] = origin[ 2 ] + mins[ 2 ];
+
+  mmm[ 0 ] = origin[ 0 ] + mins[ 0 ];
+  mmm[ 1 ] = origin[ 1 ] + mins[ 1 ];
+  mmm[ 2 ] = origin[ 2 ] + mins[ 2 ];
+
+  pmm[ 0 ] = origin[ 0 ] + maxs[ 0 ];
+  pmm[ 1 ] = origin[ 1 ] + mins[ 1 ];
+  pmm[ 2 ] = origin[ 2 ] + mins[ 2 ];
+
+  //phew!
+
+  CG_DrawBoxFace( ppp, mpp, mmp, pmp );
+  CG_DrawBoxFace( ppp, pmp, pmm, ppm );
+  CG_DrawBoxFace( mpp, ppp, ppm, mpm );
+  CG_DrawBoxFace( mmp, mpp, mpm, mmm );
+  CG_DrawBoxFace( pmp, mmp, mmm, pmm );
+  CG_DrawBoxFace( mmm, mpm, ppm, pmm );
+}
+
+
+/*
+======================
 CG_GetTagPosition
 
 Retrieves the position of a tag directly
@@ -203,6 +296,7 @@ CG_General
 static void CG_General( centity_t *cent ) {
 	refEntity_t			ent;
 	entityState_t		*s1;
+	int num;
 
 	s1 = &cent->currentState;
 
@@ -742,6 +836,7 @@ static void CG_Missile( centity_t *cent ) {
 		//ent.shaderRGBA[1] = radiusScale;
 		//ent.shaderRGBA[2] = radiusScale;
 		//ent.shaderRGBA[3] = radiusScale;
+
 		trap_R_AddRefEntityToScene( &ent );
 		CG_PlayerSplash(cent, 500 / (missileScale / 4));
 	} else {
@@ -805,6 +900,14 @@ static void CG_Missile( centity_t *cent ) {
 		VectorScale(ent.axis[0], missileScale, ent.axis[0]);
 		VectorScale(ent.axis[1], missileScale, ent.axis[1]);
 		VectorScale(ent.axis[2], missileScale, ent.axis[2]);
+
+		if(cg_drawBBox.value){
+			vec3_t	mins,maxs;
+			trap_R_ModelBounds( ent.hModel, mins, maxs, ent.frame );
+			VectorScale(mins, missileScale, mins);
+			VectorScale(maxs, missileScale, maxs);
+			CG_DrawBoundingBox( ent.origin, mins, maxs );
+		}
 
 		trap_R_AddRefEntityToScene( &ent );
 		CG_PlayerSplash(cent, 500 / missileScale);
