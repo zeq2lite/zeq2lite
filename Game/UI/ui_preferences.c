@@ -85,7 +85,7 @@ static const char *particlesQuality_names[] = {"Off","Sprites","Models",0};
 static const char *particlesOptimise_names[] = {"Remove After Awhile","Remove On Stop",	0};
 static const char *beamdetail_names[] = {"Very Low","Low","Medium","High","Very High", 0};
 static const char *beamcontrol_names[] = {"Beam Head Focus","Crosshair Focus",0};
-static const char *camerastyle_names[] = {"Eyes","Behind Character","Behind Head","Delay Behind Character","Animated",0};
+static const char *camerastyle_names[] = {"Eyes","Behind Character",0};
 static const char *crosshairSize_names[] = {"Tiny!","Very Small","Small","Normal","Large","Extra Large!","Extra Extra Large?!",0};
 static const char *bloomQuality_names[] = {"Off","Low","Medium","High","Very High", 0};
 static const char *bloomIntensity_names[] = {"Low","Medium","High", 0};
@@ -93,7 +93,7 @@ static const char *bloomDarken_names[] = {"Low","Medium","High", 0};
 static const char *bloomAlpha_names[] = {"Low","Medium","High", 0};
 static void Preferences_SetMenuItems( void ) {
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
-	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 4, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
+	s_preferences.camerastyle.curvalue		= Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cg_thirdPersonCamera" ) );
 	s_preferences.crosshairSize.curvalue	= Com_Clamp( 0, 6, trap_Cvar_VariableValue( "cg_crosshairSize" ) );
 	s_preferences.beamdetail.curvalue		= Com_Clamp( 0, 4, trap_Cvar_VariableValue( "r_beamDetail" ) );
 	s_preferences.particlesQuality.curvalue	= Com_Clamp( 0, 2, trap_Cvar_VariableValue( "cg_particlesQuality" ) );

@@ -203,34 +203,6 @@ void parseTier(char *path,tierConfig_cg *tier){
 				if(!token[0]){break;}
 				tier->hudMultiplier = atof(token);
 			}
-			else if(!Q_stricmp(token,"transformCameraDefault")){
-				for(i=0;i<3;i++){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->transformCameraDefault[i] = atoi(token);
-				}
-			}
-			else if(!Q_stricmp(token,"transformCameraOrbit")){
-				for(i=0;i<2;i++){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->transformCameraOrbit[i] = atoi(token);
-				}
-			}
-			else if(!Q_stricmp(token,"transformCameraZoom")){
-				for(i=0;i<2;i++){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->transformCameraZoom[i] = atoi(token);
-				}
-			}
-			else if(!Q_stricmp(token,"transformCameraPan")){
-				for(i=0;i<2;i++){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					tier->transformCameraPan[i] = atoi(token);
-				}
-			}
 			else if(!Q_stricmp(token,"sustainCurrent")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}

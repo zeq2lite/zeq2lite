@@ -250,16 +250,27 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci, qboolean
 		}
 		animations[i].frameLerp = 1000 / fps;
 		animations[i].initialLerp = 1000 / fps;
-		// ADDING FOR ZEQ2
-		// Read the continuous flag for ki attack animations
-		if ( i >= ANIM_KI_ATTACK1_FIRE &&
-			 i < MAX_ANIMATIONS &&
-			 (i - ANIM_KI_ATTACK1_FIRE) % 2 == 0 ) {
+
+		if(!isCamera)
+		{
 			token = COM_Parse( &text_p );
 			if ( !*token ) {
 				break;
 			}
 			animations[i].continuous = atoi( token );
+		}
+		else
+		{
+			// Read the continuous flag for ki attack animations
+			if ( i >= ANIM_KI_ATTACK1_FIRE &&
+				 i < MAX_ANIMATIONS &&
+				 (i - ANIM_KI_ATTACK1_FIRE) % 2 == 0 ) {
+				token = COM_Parse( &text_p );
+				if ( !*token ) {
+					break;
+				}
+				animations[i].continuous = atoi( token );
+			}
 		}
 	}
 
@@ -1314,11 +1325,8 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 			CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
 			break;
 		case ANIM_IDLE:
-			break;
 		case ANIM_FLY_IDLE:
-			break;
 		case ANIM_FLY_UP:
-			break;
 		case ANIM_FLY_DOWN:
 			break;
 		case ANIM_SWIM_IDLE:
@@ -1355,7 +1363,10 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 	// ADDING FOR ZEQ2
 	// We're flying, so we change the entire body's directions altogether.
-	if(cg_advancedFlight.value || (&cg.predictedPlayerState)->bitFlags & usingSoar || cent->currentState.playerBitFlags & usingSoar){
+	if(cg_advancedFlight.value 
+		|| !cg_thirdPersonCamera.value
+		|| (&cg.predictedPlayerState)->bitFlags & usingSoar 
+		|| cent->currentState.playerBitFlags & usingSoar){
 		VectorCopy( cent->lerpAngles, headAngles );
 		VectorCopy( cent->lerpAngles, torsoAngles );
 		VectorCopy( cent->lerpAngles, legsAngles );
@@ -2079,7 +2090,7 @@ void CG_Player( centity_t *cent ) {
 	memcpy( &(cent->pe.legsRef ), &legs , sizeof(refEntity_t));
 	memcpy( &playerInfoDuplicate[cent->currentState.number], &cent->pe, sizeof(playerEntity_t));
 	if(onBodyQue){return;}
-	CG_OffsetTagView(cent);
+	CG_Camera(cent);
 	CG_AddPlayerWeapon(&torso,NULL,cent,ci->team);
 	CG_PlayerPowerups(cent,&torso);
 	if((cent->currentState.eFlags & EF_AURA) || ci->auraConfig[tier]->auraAlways){

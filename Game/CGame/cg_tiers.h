@@ -34,10 +34,6 @@ typedef struct{
 	int requirementHealth;
 	int requirementHealthMaximum;
 	int requirementMaximum;
-	int transformCameraDefault[3];
-	int transformCameraOrbit[2];
-	int transformCameraZoom[2];
-	int transformCameraPan[2];
 	int transformMusicLength;
 	sfxHandle_t soundTransformFirst;
 	sfxHandle_t soundTransformUp;

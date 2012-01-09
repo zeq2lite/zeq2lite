@@ -1264,7 +1264,7 @@ void CG_TestModelPrevSkin_f (void);
 void CG_ZoomDown_f( void );
 void CG_ZoomUp_f( void );
 void CG_AddBufferedSound( sfxHandle_t sfx);
-void CG_OffsetTagView( centity_t *cent );
+void CG_Camera( centity_t *cent );
 qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y );
 qboolean CG_WorldCoordToScreenCoordVec( vec3_t world, vec2_t screen );
 
