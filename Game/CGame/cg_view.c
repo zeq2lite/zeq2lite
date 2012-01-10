@@ -70,34 +70,34 @@ Creates an entity in front of the current position, which
 can then be moved around
 =================
 */
-void CG_TestModel_f (void) {
+void CG_TestModel_f (void){
 	vec3_t		angles;
 
-	memset( &cg.testModelEntity, 0, sizeof(cg.testModelEntity) );
-	if ( trap_Argc() < 2 ) {
+	memset(&cg.testModelEntity, 0, sizeof(cg.testModelEntity));
+	if(trap_Argc() < 2 ){
 		return;
 	}
 
-	Q_strncpyz (cg.testModelName, CG_Argv( 1 ), MAX_QPATH );
-	cg.testModelEntity.hModel = trap_R_RegisterModel( cg.testModelName );
+	Q_strncpyz (cg.testModelName, CG_Argv(1 ), MAX_QPATH);
+	cg.testModelEntity.hModel = trap_R_RegisterModel(cg.testModelName);
 
-	if ( trap_Argc() == 3 ) {
-		cg.testModelEntity.backlerp = atof( CG_Argv( 2 ) );
+	if(trap_Argc() == 3 ){
+		cg.testModelEntity.backlerp = atof(CG_Argv(2 ));
 		cg.testModelEntity.frame = 1;
 		cg.testModelEntity.oldframe = 0;
 	}
-	if (! cg.testModelEntity.hModel ) {
-		CG_Printf( "Can't register model\n" );
+	if(! cg.testModelEntity.hModel ){
+		CG_Printf("Can't register model\n");
 		return;
 	}
 
-	VectorMA( cg.refdef.vieworg, 100, cg.refdef.viewaxis[0], cg.testModelEntity.origin );
+	VectorMA(cg.refdef.vieworg, 100, cg.refdef.viewaxis[0], cg.testModelEntity.origin);
 
 	angles[PITCH] = 0;
 	angles[YAW] = 180 + cg.refdefViewAngles[1];
 	angles[ROLL] = 0;
 
-	AnglesToAxis( angles, cg.testModelEntity.axis );
+	AnglesToAxis(angles, cg.testModelEntity.axis);
 	cg.testGun = qfalse;
 }
 
@@ -108,65 +108,65 @@ CG_TestGun_f
 Replaces the current view weapon with the given model
 =================
 */
-void CG_TestGun_f (void) {
+void CG_TestGun_f (void){
 	CG_TestModel_f();
 	cg.testGun = qtrue;
 	cg.testModelEntity.renderfx = RF_MINLIGHT | RF_DEPTHHACK | RF_FIRST_PERSON;
 }
 
 
-void CG_TestModelNextFrame_f (void) {
+void CG_TestModelNextFrame_f (void){
 	cg.testModelEntity.frame++;
-	CG_Printf( "frame %i\n", cg.testModelEntity.frame );
+	CG_Printf("frame %i\n", cg.testModelEntity.frame);
 }
 
-void CG_TestModelPrevFrame_f (void) {
+void CG_TestModelPrevFrame_f (void){
 	cg.testModelEntity.frame--;
-	if ( cg.testModelEntity.frame < 0 ) {
+	if(cg.testModelEntity.frame < 0 ){
 		cg.testModelEntity.frame = 0;
 	}
-	CG_Printf( "frame %i\n", cg.testModelEntity.frame );
+	CG_Printf("frame %i\n", cg.testModelEntity.frame);
 }
 
-void CG_TestModelNextSkin_f (void) {
+void CG_TestModelNextSkin_f (void){
 	cg.testModelEntity.skinNum++;
-	CG_Printf( "skin %i\n", cg.testModelEntity.skinNum );
+	CG_Printf("skin %i\n", cg.testModelEntity.skinNum);
 }
 
-void CG_TestModelPrevSkin_f (void) {
+void CG_TestModelPrevSkin_f (void){
 	cg.testModelEntity.skinNum--;
-	if ( cg.testModelEntity.skinNum < 0 ) {
+	if(cg.testModelEntity.skinNum < 0 ){
 		cg.testModelEntity.skinNum = 0;
 	}
-	CG_Printf( "skin %i\n", cg.testModelEntity.skinNum );
+	CG_Printf("skin %i\n", cg.testModelEntity.skinNum);
 }
 
-static void CG_AddTestModel (void) {
+static void CG_AddTestModel (void){
 	int		i;
 
 	// re-register the model, because the level may have changed
-	cg.testModelEntity.hModel = trap_R_RegisterModel( cg.testModelName );
-	if (! cg.testModelEntity.hModel ) {
+	cg.testModelEntity.hModel = trap_R_RegisterModel(cg.testModelName);
+	if(! cg.testModelEntity.hModel ){
 		CG_Printf ("Can't register model\n");
 		return;
 	}
 
 	// if testing a gun, set the origin reletive to the view origin
-	if ( cg.testGun ) {
-		VectorCopy( cg.refdef.vieworg, cg.testModelEntity.origin );
-		VectorCopy( cg.refdef.viewaxis[0], cg.testModelEntity.axis[0] );
-		VectorCopy( cg.refdef.viewaxis[1], cg.testModelEntity.axis[1] );
-		VectorCopy( cg.refdef.viewaxis[2], cg.testModelEntity.axis[2] );
+	if(cg.testGun ){
+		VectorCopy(cg.refdef.vieworg, cg.testModelEntity.origin);
+		VectorCopy(cg.refdef.viewaxis[0], cg.testModelEntity.axis[0]);
+		VectorCopy(cg.refdef.viewaxis[1], cg.testModelEntity.axis[1]);
+		VectorCopy(cg.refdef.viewaxis[2], cg.testModelEntity.axis[2]);
 
 		// allow the position to be adjusted
-		for (i=0 ; i<3 ; i++) {
+		for (i=0 ; i<3 ; i++){
 			cg.testModelEntity.origin[i] += cg.refdef.viewaxis[0][i] * cg_gun_x.value;
 			cg.testModelEntity.origin[i] += cg.refdef.viewaxis[1][i] * cg_gun_y.value;
 			cg.testModelEntity.origin[i] += cg.refdef.viewaxis[2][i] * cg_gun_z.value;
 		}
 	}
 
-	trap_R_AddRefEntityToScene( &cg.testModelEntity );
+	trap_R_AddRefEntityToScene(&cg.testModelEntity);
 }
 
 
@@ -181,21 +181,21 @@ CG_CalcVrect
 Sets the coordinates of the rendered window
 =================
 */
-static void CG_CalcVrect (void) {
+static void CG_CalcVrect (void){
 	int		size;
 
 	// the intermission should allways be full screen
-	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
+	if(cg.snap->ps.pm_type == PM_INTERMISSION ){
 		size = 100;
-	} else {
+	} else{
 		// bound normal viewsize
-		if (cg_viewsize.integer < 30) {
+		if(cg_viewsize.integer < 30){
 			trap_Cvar_Set ("cg_viewsize","30");
 			size = 30;
-		} else if (cg_viewsize.integer > 100) {
+		} else if(cg_viewsize.integer > 100){
 			trap_Cvar_Set ("cg_viewsize","100");
 			size = 100;
-		} else {
+		} else{
 			size = cg_viewsize.integer;
 		}
 
@@ -224,7 +224,7 @@ CG_WorldCoordToScreenCoordFloat
 Gives screen projection of point in worldspace.
 Returns false if out of view.
 */
-qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y) {
+qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y){
 	float xcenter, ycenter;
 	vec3_t local, transformed;
 	vec3_t vforward;
@@ -236,21 +236,21 @@ qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y) 
 	xcenter = 640.0f / 2.0f;//gives screen coords in virtual 640x480, to be adjusted when drawn
 	ycenter = 480.0f / 2.0f;//gives screen coords in virtual 640x480, to be adjusted when drawn
 
-	AngleVectors( cg.refdefViewAngles, vforward, vright, vup );
+	AngleVectors(cg.refdefViewAngles, vforward, vright, vup);
 
-	VectorSubtract( worldCoord, cg.refdef.vieworg, local );
+	VectorSubtract(worldCoord, cg.refdef.vieworg, local);
 
-	transformed[0] = DotProduct( local,vright );
-	transformed[1] = DotProduct( local,vup );
-	transformed[2] = DotProduct( local,vforward );
+	transformed[0] = DotProduct(local,vright);
+	transformed[1] = DotProduct(local,vup);
+	transformed[2] = DotProduct(local,vforward);
 
 	// Make sure Z is not negative.
-	if(transformed[2] < 0.01f) {
+	if(transformed[2] < 0.01f){
 		return qfalse;
 	}
 
-	xzi = xcenter / transformed[2] * (  96.0f / cg.refdef.fov_x );
-	yzi = ycenter / transformed[2] * ( 102.0f / cg.refdef.fov_y );
+	xzi = xcenter / transformed[2] * ( 96.0f / cg.refdef.fov_x);
+	yzi = ycenter / transformed[2] * (102.0f / cg.refdef.fov_y);
 
 	*x = xcenter + xzi * transformed[0];
 	*y = ycenter - yzi * transformed[1];
@@ -259,34 +259,31 @@ qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y) 
 }
 
 
-qboolean CG_WorldCoordToScreenCoordVec( vec3_t world, vec2_t screen ) {
-	return CG_WorldCoordToScreenCoordFloat( world, &screen[0], &screen[1] );
+qboolean CG_WorldCoordToScreenCoordVec(vec3_t world, vec2_t screen ){
+	return CG_WorldCoordToScreenCoordFloat(world, &screen[0], &screen[1]);
 }
 
 
 //==============================================================================
 
 // this causes a compiler bug on mac MrC compiler
-static void CG_StepOffset( void ) {
+static void CG_StepOffset(void ){
 	int		timeDelta;
 	
 	// smooth out stair climbing
 	timeDelta = cg.time - cg.stepTime;
-	if ( timeDelta < STEP_TIME ) {
+	if(timeDelta < STEP_TIME ){
 		cg.refdef.vieworg[2] -= cg.stepChange 
 			* (STEP_TIME - timeDelta) / STEP_TIME;
 	}
 }
 static void AddEarthquakeTremble(earthquake_t* quake);
-/*
-===============
+/*===============
 CG_Camera
-
-===============
-*/
+===============*/
 #define	NECK_LENGTH		8
-void CG_Camera( centity_t *cent ) {
-	static vec3_t	mins = { -4, -4, -4 }, maxs = { 4, 4, 4 };
+void CG_Camera(centity_t *cent ){
+	static vec3_t	mins ={ -4, -4, -4 }, maxs ={ 4, 4, 4 };
 	vec3_t			view, right, forward, up, overrideAngles, overrideOrg, focusAngles, focusPoint;
 	int 			i,clientNum,cameraRange,cameraAngle,cameraSlide,cameraHeight;
 	float			forwardScale, sideScale, focusDist;
@@ -295,47 +292,50 @@ void CG_Camera( centity_t *cent ) {
 	clientInfo_t	*ci;
 	tierConfig_cg	*tier;
 	playerState_t	*ps;
+	centity_t 		targetEntity;
+	char			targetTag[256];
 	ps = &cg.snap->ps;
 	clientNum = cent->currentState.clientNum;
+	if(clientNum != ps->clientNum){return;}
 	ci = &cgs.clientinfo[clientNum];
 	tier = &ci->tierConfig[ci->tierCurrent];
 	cameraAngle = cg_thirdPersonAngle.value;
 	cameraSlide = cg_thirdPersonSlide.value + ci->tierConfig[ci->tierCurrent].cameraOffset[0];
 	cameraHeight = cg_thirdPersonHeight.value + ci->tierConfig[ci->tierCurrent].cameraOffset[1];
 	cameraRange = cg_thirdPersonRange.value + ci->tierConfig[ci->tierCurrent].cameraOffset[2];
-	if (cg_thirdPersonCamera.value == 0)
-	{
-		if (CG_GetTagOrientationFromPlayerEntity( cent, "tag_eyes", &tagOrient)) {
-			VectorCopy( tagOrient.origin, cg.refdef.vieworg);
-		} else if (CG_GetTagOrientationFromPlayerEntity( cent, "tag_head", &tagOrient)) {
-			VectorCopy( tagOrient.origin, cg.refdef.vieworg);
+	if(cg_thirdPersonCamera.value == 0){
+		if(CG_GetTagOrientationFromPlayerEntity(cent,"tag_eyes",&tagOrient)){
+			VectorCopy(tagOrient.origin, cg.refdef.vieworg);
+		}
+		else if(CG_GetTagOrientationFromPlayerEntity(cent,"tag_head",&tagOrient)){
+			VectorCopy(tagOrient.origin, cg.refdef.vieworg);
 			cg.refdef.vieworg[2] -= NECK_LENGTH;
-			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
-			VectorMA( cg.refdef.vieworg, 3, forward, cg.refdef.vieworg );
-			VectorMA( cg.refdef.vieworg, NECK_LENGTH, up, cg.refdef.vieworg );
-		} else {
+			AngleVectors(cg.refdefViewAngles, forward, NULL, up);
+			VectorMA(cg.refdef.vieworg, 3, forward, cg.refdef.vieworg);
+			VectorMA(cg.refdef.vieworg, NECK_LENGTH, up, cg.refdef.vieworg);
+		}
+		else{
 			cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 		}
 	}
-	else if (cg_thirdPersonCamera.value == 1){
-		if(CG_GetTagOrientationFromPlayerEntity( cent, "tag_cam", &tagOrient))
-		{
+	else if(cg_thirdPersonCamera.value == 1){
+		if(CG_GetTagOrientationFromPlayerEntity(cent, "tag_cam", &tagOrient)){
 			if(!cent->pe.camera.animation->continuous){
 				VectorCopy(cent->lerpOrigin,tagOrient.origin);
 				tagOrient.origin[2] += cg.predictedPlayerState.viewheight;
 			}
 			else if((cg_beamControl.value == 0) && ((cent->currentState.weaponstate == WEAPON_GUIDING) 
-				|| (cent->currentState.weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)) {
-				float oldRoll;
-				VectorSubtract( cg.guide_target, tagOrient.origin, forward );
-				VectorNormalize( forward );
-				oldRoll = cg.refdefViewAngles[ROLL];
-				vectoangles( forward, cg.refdefViewAngles );
-				cg.refdefViewAngles[ROLL] = oldRoll;
-				VectorCopy( tagOrient.origin,cg.guide_target);
-				cg.guide_view = qfalse;
+				|| (cent->currentState.weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)){
+					float oldRoll;
+					VectorSubtract(cg.guide_target, tagOrient.origin, forward);
+					VectorNormalize(forward);
+					oldRoll = cg.refdefViewAngles[ROLL];
+					vectoangles(forward, cg.refdefViewAngles);
+					cg.refdefViewAngles[ROLL] = oldRoll;
+					VectorCopy(tagOrient.origin,cg.guide_target);
+					cg.guide_view = qfalse;
 			}
-			else if (cg_advancedFlight.value
+			else if(cg_advancedFlight.value
 				|| (cent->currentState.playerBitFlags & usingSoar)
 				|| (cent->currentState.weaponstate == WEAPON_GUIDING)
 				|| (cent->currentState.weaponstate == WEAPON_ALTGUIDING)
@@ -343,56 +343,55 @@ void CG_Camera( centity_t *cent ) {
 				|| (cent->currentState.legsAnim == ANIM_PL_UP)
 				|| (cent->currentState.legsAnim == ANIM_PL_DOWN)){
 			}
-			else if (CG_GetTagOrientationFromPlayerEntity( cent, "tag_camTar", &tagOrient2)) {
-				VectorSubtract( tagOrient2.origin, tagOrient.origin, forward );
-				VectorNormalize( forward );
-				vectoangles( forward, cg.refdefViewAngles );
+			else if(CG_GetTagOrientationFromPlayerEntity(cent, "tag_camTar", &tagOrient2)){
+				VectorSubtract(tagOrient2.origin, tagOrient.origin, forward);
+				VectorNormalize(forward);
+				vectoangles(forward, cg.refdefViewAngles);
 			}
-			VectorCopy( cg.refdefViewAngles, overrideAngles );
-			VectorCopy( tagOrient.origin, overrideOrg );
+			VectorCopy(cg.refdefViewAngles, overrideAngles);
+			VectorCopy(tagOrient.origin, overrideOrg);
 			cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
-			VectorCopy( cg.refdefViewAngles, focusAngles );
-			AngleVectors( focusAngles, forward, NULL, NULL );
-			VectorMA( tagOrient.origin, 512, forward, focusPoint );
-			VectorCopy( tagOrient.origin, view );	
-			AngleVectors( cg.refdefViewAngles, forward, right, up );
+			VectorCopy(cg.refdefViewAngles, focusAngles);
+			AngleVectors(focusAngles, forward, NULL, NULL);
+			VectorMA(tagOrient.origin, 512, forward, focusPoint);
+			VectorCopy(tagOrient.origin, view);	
+			AngleVectors(cg.refdefViewAngles, forward, right, up);
 			if(!cent->pe.camera.animation->continuous){
 				VectorMA(view,cameraSlide,right,view);
 				view[2] += cameraHeight;
 				forwardScale = cos(cameraAngle / 180 * M_PI);	
-				sideScale = sin(cameraAngle / 180 * M_PI );
-				VectorMA( view, -cameraRange * forwardScale, forward, view );
-				VectorMA( view, -cameraRange * sideScale, right, view );
+				sideScale = sin(cameraAngle / 180 * M_PI);
+				VectorMA(view, -cameraRange * forwardScale, forward, view);
+				VectorMA(view, -cameraRange * sideScale, right, view);
 				cg.refdefViewAngles[YAW] -= cameraAngle;
 			}
-			CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, clientNum, MASK_SOLID );
-			if ( trace.fraction != 1.0 )
-				VectorCopy( trace.endpos, cg.refdef.vieworg );
-			else
-				VectorCopy( view, cg.refdef.vieworg);
-			AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
+			CG_Trace(&trace, cg.refdef.vieworg, mins, maxs, view, clientNum, MASK_SOLID);
+			if(trace.fraction != 1.0){VectorCopy(trace.endpos, cg.refdef.vieworg);}
+			else{VectorCopy(view, cg.refdef.vieworg);}
+			AnglesToAxis(cg.refdefViewAngles, cg.refdef.viewaxis);
 		}
 	}
-	for (i = 0; i < MAX_EARTHQUAKES; i++) {
-	earthquake_t* quake;
-	quake = &cg.earthquakes[i];
-	if (!quake->startTime) continue;
-	AddEarthquakeTremble(quake);}
+	for(i = 0;i < MAX_EARTHQUAKES;i++){
+		earthquake_t* quake;
+		quake = &cg.earthquakes[i];
+		if(!quake->startTime){continue;}
+		AddEarthquakeTremble(quake);
+	}
 	AddEarthquakeTremble(NULL);
 }
 
 //======================================================================
 
-void CG_ZoomDown_f( void ) { 
-	if ( cg.zoomed ) {
+void CG_ZoomDown_f(void ){ 
+	if(cg.zoomed ){
 		return;
 	}
 	cg.zoomed = qtrue;
 	cg.zoomTime = cg.time;
 }
 
-void CG_ZoomUp_f( void ) { 
-	if ( !cg.zoomed ) {
+void CG_ZoomUp_f(void ){ 
+	if(!cg.zoomed ){
 		return;
 	}
 	cg.zoomed = qfalse;
@@ -410,7 +409,7 @@ Fixed fov at intermissions, otherwise account for fov variable and zooms.
 #define	WAVE_AMPLITUDE	1
 #define	WAVE_FREQUENCY	0.4
 
-static int CG_CalcFov( void ) {
+static int CG_CalcFov(void ){
 	float	x;
 	float	phase;
 	float	v;
@@ -420,62 +419,62 @@ static int CG_CalcFov( void ) {
 	float	f;
 	int		inwater;
 
-	if ( cg.predictedPlayerState.pm_type == PM_INTERMISSION ) {
+	if(cg.predictedPlayerState.pm_type == PM_INTERMISSION ){
 		// if in intermission, use a fixed value
 		fov_x = 90;
-	} else {
+	} else{
 		// user selectable
-		if ( cgs.dmflags & DF_FIXED_FOV ) {
+		if(cgs.dmflags & DF_FIXED_FOV ){
 			// dmflag to prevent wide fov for all clients
 			fov_x = 90;
-		} else {
+		} else{
 			fov_x = cg_fov.value;
-			if ( fov_x < 1 ) {
+			if(fov_x < 1 ){
 				fov_x = 1;
-			} else if ( fov_x > 160 ) {
+			} else if(fov_x > 160 ){
 				fov_x = 160;
 			}
 		}
 
 		// account for zooms
 		zoomFov = cg_zoomFov.value;
-		if ( zoomFov < 1 ) {
+		if(zoomFov < 1 ){
 			zoomFov = 1;
-		} else if ( zoomFov > 160 ) {
+		} else if(zoomFov > 160 ){
 			zoomFov = 160;
 		}
 
-		if ( cg.zoomed ) {
-			f = ( cg.time - cg.zoomTime ) / (float)ZOOM_TIME;
-			if ( f > 1.0 ) {
+		if(cg.zoomed ){
+			f = (cg.time - cg.zoomTime ) / (float)ZOOM_TIME;
+			if(f > 1.0 ){
 				fov_x = zoomFov;
-			} else {
-				fov_x = fov_x + f * ( zoomFov - fov_x );
+			} else{
+				fov_x = fov_x + f * (zoomFov - fov_x);
 			}
-		} else {
-			f = ( cg.time - cg.zoomTime ) / (float)ZOOM_TIME;
-			if ( f > 1.0 ) {
+		} else{
+			f = (cg.time - cg.zoomTime ) / (float)ZOOM_TIME;
+			if(f > 1.0 ){
 				fov_x = fov_x;
-			} else {
-				fov_x = zoomFov + f * ( fov_x - zoomFov );
+			} else{
+				fov_x = zoomFov + f * (fov_x - zoomFov);
 			}
 		}
 	}
 
-	x = cg.refdef.width / tan( fov_x / 360 * M_PI );
-	fov_y = atan2( cg.refdef.height, x );
+	x = cg.refdef.width / tan(fov_x / 360 * M_PI);
+	fov_y = atan2(cg.refdef.height, x);
 	fov_y = fov_y * 360 / M_PI;
 
 	// warp if underwater
-	contents = CG_PointContents( cg.refdef.vieworg, -1 );
-	if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ){
+	contents = CG_PointContents(cg.refdef.vieworg, -1);
+	if(contents & (CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ){
 		phase = cg.time / 1000.0 * WAVE_FREQUENCY * M_PI * 2;
-		v = WAVE_AMPLITUDE * sin( phase );
+		v = WAVE_AMPLITUDE * sin(phase);
 		fov_x += v;
 		fov_y -= v;
 		inwater = qtrue;
 	}
-	else {
+	else{
 		inwater = qfalse;
 	}
 
@@ -483,9 +482,9 @@ static int CG_CalcFov( void ) {
 	cg.refdef.fov_x = fov_x;
 	cg.refdef.fov_y = fov_y;
 
-	if ( !cg.zoomed ) {
+	if(!cg.zoomed ){
 		cg.zoomSensitivity = 1;
-	} else {
+	} else{
 		cg.zoomSensitivity = cg.refdef.fov_y / 75.0;
 	}
 
@@ -500,46 +499,46 @@ CG_DamageBlendBlob
 
 ===============
 */
-static void CG_DamageBlendBlob( void ) {
+static void CG_DamageBlendBlob(void ){
 	int			t;
 	int			maxTime;
 	refEntity_t		ent;
 
-	if ( !cg.damageValue ) {
+	if(!cg.damageValue ){
 		return;
 	}
 
-	//if (cg.cameraMode) {
+	//if(cg.cameraMode){
 	//	return;
 	//}
 
 	// ragePro systems can't fade blends, so don't obscure the screen
-	if ( cgs.glconfig.hardwareType == GLHW_RAGEPRO ) {
+	if(cgs.glconfig.hardwareType == GLHW_RAGEPRO ){
 		return;
 	}
 
 	maxTime = DAMAGE_TIME;
 	t = cg.time - cg.damageTime;
-	if ( t <= 0 || t >= maxTime ) {
+	if(t <= 0 || t >= maxTime ){
 		return;
 	}
 
 
-	memset( &ent, 0, sizeof( ent ) );
+	memset(&ent, 0, sizeof(ent ));
 	ent.reType = RT_SPRITE;
 	ent.renderfx = RF_FIRST_PERSON;
 
-	VectorMA( cg.refdef.vieworg, 8, cg.refdef.viewaxis[0], ent.origin );
-	VectorMA( ent.origin, cg.damageX * -8, cg.refdef.viewaxis[1], ent.origin );
-	VectorMA( ent.origin, cg.damageY * 8, cg.refdef.viewaxis[2], ent.origin );
+	VectorMA(cg.refdef.vieworg, 8, cg.refdef.viewaxis[0], ent.origin);
+	VectorMA(ent.origin, cg.damageX * -8, cg.refdef.viewaxis[1], ent.origin);
+	VectorMA(ent.origin, cg.damageY * 8, cg.refdef.viewaxis[2], ent.origin);
 
 	ent.radius = cg.damageValue * 3;
 	ent.customShader = cgs.media.viewBloodShader;
 	ent.shaderRGBA[0] = 255;
 	ent.shaderRGBA[1] = 255;
 	ent.shaderRGBA[2] = 255;
-	ent.shaderRGBA[3] = 200 * ( 1.0 - ((float)t / maxTime) );
-	trap_R_AddRefEntityToScene( &ent );
+	ent.shaderRGBA[3] = 200 * (1.0 - ((float)t / maxTime));
+	trap_R_AddRefEntityToScene(&ent);
 }
 
 /*
@@ -552,24 +551,24 @@ void CG_AddEarthquake(
 	const vec3_t origin, float radius,
 	float duration, float fadeIn, float fadeOut,	// in seconds
 	float amplitude
-) {
+){
 	int i;
 
 	// So camera dosn't make your head explode from too much shaking ...
-	if ( amplitude > 1500 ) {
+	if(amplitude > 1500 ){
 		amplitude = 1500;
 	}
 
-	if (duration <= 0) {
+	if(duration <= 0){
 		float a;
 
 		a = amplitude / 100;
 
-		if (radius > 0) {
+		if(radius > 0){
 			float distance;
 			
 			distance = Distance(cg.refdef.vieworg, origin);
-			if (distance >= radius) return;
+			if(distance >= radius) return;
 
 			a *= 1 - (distance / radius);
 		}
@@ -578,11 +577,11 @@ void CG_AddEarthquake(
 		return;
 	}
 
-	for (i = 0; i < MAX_EARTHQUAKES; i++) {
+	for (i = 0; i < MAX_EARTHQUAKES; i++){
 		earthquake_t* quake;
 
 		quake = &cg.earthquakes[i];
-		if (quake->startTime) continue;
+		if(quake->startTime) continue;
 
 		quake->startTime = cg.time;
 		quake->endTime = (int) floor(cg.time + 1000 * duration + 0.5);
@@ -602,15 +601,15 @@ JUHOX: CG_AdjustEarthquakes
 ===============
 */
 #if EARTHQUAKE_SYSTEM
-void CG_AdjustEarthquakes(const vec3_t delta) {
+void CG_AdjustEarthquakes(const vec3_t delta){
 	int i;
 
-	for (i = 0; i < MAX_EARTHQUAKES; i++) {
+	for (i = 0; i < MAX_EARTHQUAKES; i++){
 		earthquake_t* quake;
 
 		quake = &cg.earthquakes[i];
-		if (!quake->startTime) continue;
-		if (quake->radius <= 0) continue;
+		if(!quake->startTime) continue;
+		if(quake->radius <= 0) continue;
 
 		VectorAdd(quake->origin, delta, quake->origin);
 	}
@@ -623,40 +622,40 @@ JUHOX: AddEarthquakeTremble
 ===============
 */
 #if EARTHQUAKE_SYSTEM
-static void AddEarthquakeTremble(earthquake_t* quake) {
+static void AddEarthquakeTremble(earthquake_t* quake){
 	int time;
 	float a;
 	const float offsetAmplitude = 0.2;
 	const float angleAmplitude = 0.2;
 
-	if (quake) {
-		if (cg.time >= quake->endTime) {
+	if(quake){
+		if(cg.time >= quake->endTime){
 			memset(quake, 0, sizeof(*quake));
 			return;
 		}
 
-		if (quake->radius > 0) {
+		if(quake->radius > 0){
 			float distance;
 			
 			distance = Distance(cg.refdef.vieworg, quake->origin);
-			if (distance >= quake->radius) return;
+			if(distance >= quake->radius) return;
 
 			a = 1 - (distance / quake->radius);
 		}
-		else {
+		else{
 			a = 1;
 		}
 
 		time = cg.time - quake->startTime;
 		a *= quake->amplitude / 100;
-		if (time < quake->fadeInTime) {
+		if(time < quake->fadeInTime){
 			a *= (float)time / (float)(quake->fadeInTime);
 		}
-		else if (cg.time > quake->endTime - quake->fadeOutTime) {
+		else if(cg.time > quake->endTime - quake->fadeOutTime){
 			a *= (float)(quake->endTime - cg.time) / (float)(quake->fadeOutTime);
 		}
 	}
-	else {
+	else{
 		a = cg.additionalTremble;
 	}
 
@@ -676,25 +675,25 @@ CG_CalcViewValues
 Sets cg.refdef view values
 ===============
 */
-static int CG_CalcViewValues( void ) {
+static int CG_CalcViewValues(void ){
 	playerState_t	*ps;
-	memset( &cg.refdef, 0, sizeof( cg.refdef ) );
+	memset(&cg.refdef, 0, sizeof(cg.refdef ));
 	CG_CalcVrect();
 	ps = &cg.predictedPlayerState;
-	if ( ps->pm_type == PM_INTERMISSION || cg_thirdPersonCamera.value >= 4) {
-		VectorCopy( ps->origin, cg.refdef.vieworg );
-		VectorCopy( ps->viewangles, cg.refdefViewAngles );		
-		AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
+	if(ps->pm_type == PM_INTERMISSION || cg_thirdPersonCamera.value >= 4){
+		VectorCopy(ps->origin, cg.refdef.vieworg);
+		VectorCopy(ps->viewangles, cg.refdefViewAngles);		
+		AnglesToAxis(cg.refdefViewAngles, cg.refdef.viewaxis);
 		return CG_CalcFov();
 	}
-	cg.bobcycle = ( ps->bobCycle & 128 ) >> 7;
-	cg.bobfracsin = fabs( sin( ( ps->bobCycle & 127 ) / 127.0 * M_PI ) );
-	cg.xyspeed = sqrt( ps->velocity[0] * ps->velocity[0] +
-		ps->velocity[1] * ps->velocity[1] );
-	VectorCopy( ps->origin, cg.refdef.vieworg );
-	VectorCopy( ps->viewangles, cg.refdefViewAngles );
+	cg.bobcycle = (ps->bobCycle & 128 ) >> 7;
+	cg.bobfracsin = fabs(sin((ps->bobCycle & 127 ) / 127.0 * M_PI ));
+	cg.xyspeed = sqrt(ps->velocity[0] * ps->velocity[0] +
+		ps->velocity[1] * ps->velocity[1]);
+	VectorCopy(ps->origin, cg.refdef.vieworg);
+	VectorCopy(ps->viewangles, cg.refdefViewAngles);
 	if(cg_cameraOrbit.integer){
-		if (cg.time > cg.nextOrbitTime) {
+		if(cg.time > cg.nextOrbitTime){
 			cg.nextOrbitTime = cg.time + cg_cameraOrbitDelay.integer;
 			cg_thirdPersonAngle.value += cg_cameraOrbit.value;
 		}
@@ -703,10 +702,10 @@ static int CG_CalcViewValues( void ) {
 		int		t;
 		float	f;
 		t = cg.time - cg.predictedErrorTime;
-		f = ( cg_errorDecay.value - t ) / cg_errorDecay.value;
-		if ( f > 0 && f < 1 ) {
-			VectorMA( cg.refdef.vieworg, f, cg.predictedError, cg.refdef.vieworg );
-		} else {
+		f = (cg_errorDecay.value - t ) / cg_errorDecay.value;
+		if(f > 0 && f < 1 ){
+			VectorMA(cg.refdef.vieworg, f, cg.predictedError, cg.refdef.vieworg);
+		} else{
 			cg.predictedErrorTime = 0;
 		}
 	}
@@ -715,11 +714,11 @@ static int CG_CalcViewValues( void ) {
 	{
 		int i;
 
-		for (i = 0; i < MAX_EARTHQUAKES; i++) {
+		for (i = 0; i < MAX_EARTHQUAKES; i++){
 			earthquake_t* quake;
 
 			quake = &cg.earthquakes[i];
-			if (!quake->startTime) continue;
+			if(!quake->startTime) continue;
 
 			AddEarthquakeTremble(quake);
 		}
@@ -728,20 +727,20 @@ static int CG_CalcViewValues( void ) {
 #endif
 
 	// position eye reletive to origin
-	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
+	AnglesToAxis(cg.refdefViewAngles, cg.refdef.viewaxis);
 
 	// JUHOX: offset vieworg for lens flare editor fine move mode
 #if MAPLENSFLARES
-	if (
+	if(
 		cgs.editMode == EM_mlf &&
 		cg.lfEditor.selectedLFEnt &&
 		cg.lfEditor.editMode > LFEEM_none &&
 		cg.lfEditor.moveMode == LFEMM_fine
-	) {
+	){
 		vec3_t cursor;
 
 		CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, cursor);
-		if (cg.lfEditor.editMode == LFEEM_pos) {
+		if(cg.lfEditor.editMode == LFEEM_pos){
 			VectorAdd(cg.refdef.vieworg, cg.lfEditor.fmm_offset, cursor);
 			CG_SetLFEntOrigin(cg.lfEditor.selectedLFEnt, cursor);
 		}
@@ -749,7 +748,7 @@ static int CG_CalcViewValues( void ) {
 	}
 #endif
 
-	if ( cg.hyperspace ) {
+	if(cg.hyperspace ){
 		cg.refdef.rdflags |= RDF_NOWORLDMODEL | RDF_HYPERSPACE;
 	}
 
@@ -763,21 +762,21 @@ static int CG_CalcViewValues( void ) {
 CG_PowerupTimerSounds
 =====================
 */
-static void CG_PowerupTimerSounds( void ) {
+static void CG_PowerupTimerSounds(void ){
 	int		i;
 	int		t;
 
 	// powerup timers going away
-	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
+	for (i = 0 ; i < MAX_POWERUPS ; i++ ){
 		t = cg.snap->ps.powerups[i];
-		if ( t <= cg.time ) {
+		if(t <= cg.time ){
 			continue;
 		}
-		if ( t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ) {
+		if(t - cg.time >= POWERUP_BLINKS * POWERUP_BLINK_TIME ){
 			continue;
 		}
-		if ( ( t - cg.time ) / POWERUP_BLINK_TIME != ( t - cg.oldTime ) / POWERUP_BLINK_TIME ) {
-			trap_S_StartSound( NULL, cg.snap->ps.clientNum, CHAN_ITEM, cgs.media.wearOffSound );
+		if((t - cg.time ) / POWERUP_BLINK_TIME != (t - cg.oldTime ) / POWERUP_BLINK_TIME ){
+			trap_S_StartSound(NULL, cg.snap->ps.clientNum, CHAN_ITEM, cgs.media.wearOffSound);
 		}
 	}
 }
@@ -787,12 +786,12 @@ static void CG_PowerupTimerSounds( void ) {
 CG_AddBufferedSound
 =====================
 */
-void CG_AddBufferedSound( sfxHandle_t sfx ) {
-	if ( !sfx )
+void CG_AddBufferedSound(sfxHandle_t sfx ){
+	if(!sfx )
 		return;
 	cg.soundBuffer[cg.soundBufferIn] = sfx;
 	cg.soundBufferIn = (cg.soundBufferIn + 1) % MAX_SOUNDBUFFER;
-	if (cg.soundBufferIn == cg.soundBufferOut) {
+	if(cg.soundBufferIn == cg.soundBufferOut){
 		cg.soundBufferOut++;
 	}
 }
@@ -802,9 +801,9 @@ void CG_AddBufferedSound( sfxHandle_t sfx ) {
 CG_PlayBufferedSounds
 =====================
 */
-static void CG_PlayBufferedSounds( void ) {
-	if ( cg.soundTime < cg.time ) {
-		if (cg.soundBufferOut != cg.soundBufferIn && cg.soundBuffer[cg.soundBufferOut]) {
+static void CG_PlayBufferedSounds(void ){
+	if(cg.soundTime < cg.time ){
+		if(cg.soundBufferOut != cg.soundBufferIn && cg.soundBuffer[cg.soundBufferOut]){
 			trap_S_StartLocalSound(cg.soundBuffer[cg.soundBufferOut], CHAN_ANNOUNCER);
 			cg.soundBuffer[cg.soundBufferOut] = 0;
 			cg.soundBufferOut = (cg.soundBufferOut + 1) % MAX_SOUNDBUFFER;
@@ -825,7 +824,7 @@ static void CG_DrawMapLensFlare(
 	float distance,
 	vec3_t center, vec3_t dir, vec3_t angles,
 	float alpha, float visibleLight
-) {
+){
 	refEntity_t ent;
 	float radius;
 
@@ -833,7 +832,7 @@ static void CG_DrawMapLensFlare(
 
 	radius = lf->size;
 
-	switch (lf->mode) {
+	switch (lf->mode){
 	case LFM_reflexion:
 		alpha *= 0.2 * lf->rgba[3];
 
@@ -858,7 +857,7 @@ static void CG_DrawMapLensFlare(
 	}
 
 	alpha *= visibleLight;
-	if (alpha > 255) alpha = 255;
+	if(alpha > 255) alpha = 255;
 
 	ent.reType = RT_SPRITE;
 	ent.customShader = lf->shader;
@@ -885,7 +884,7 @@ JUHOX: CG_AddLensFlareMarker
 =====================
 */
 #if MAPLENSFLARES
-static void CG_AddLensFlareMarker(int lfe) {
+static void CG_AddLensFlareMarker(int lfe){
 	const lensFlareEntity_t* lfent;
 	float radius;
 	refEntity_t ent;
@@ -901,15 +900,15 @@ static void CG_AddLensFlareMarker(int lfe) {
 	ent.shaderRGBA[0] = 0x00;
 	ent.shaderRGBA[1] = 0x80;
 	ent.shaderRGBA[2] = 0x00;
-	if (lfent->angle >= 0) {
+	if(lfent->angle >= 0){
 		ent.shaderRGBA[0] = 0x00;
 		ent.shaderRGBA[1] = 0x00;
 		ent.shaderRGBA[2] = 0x80;
 	}
-	if (
+	if(
 		!cg.lfEditor.selectedLFEnt &&
 		lfe == cg.lfEditor.markedLFEnt
-	) {
+	){
 		int c;
 
 		c = 0x40 * (1 + sin(0.01 * cg.time));
@@ -917,20 +916,20 @@ static void CG_AddLensFlareMarker(int lfe) {
 		ent.shaderRGBA[1] += c;
 		ent.shaderRGBA[2] += c;
 	}
-	else if (cg.lfEditor.selectedLFEnt == lfent) {
+	else if(cg.lfEditor.selectedLFEnt == lfent){
 		ent.shaderRGBA[0] = 0xff;
 		ent.shaderRGBA[1] >>= 1;
 		ent.shaderRGBA[2] >>= 1;
-		if (cg.lfEditor.editMode == LFEEM_radius) {
+		if(cg.lfEditor.editMode == LFEEM_radius){
 			radius = cg.lfEditor.selectedLFEnt->lightRadius;
 		}
-		else if (cg.lfEditor.cursorSize == LFECS_small) {
+		else if(cg.lfEditor.cursorSize == LFECS_small){
 			radius = 2;
 		}
-		else if (cg.lfEditor.cursorSize == LFECS_lightRadius) {
+		else if(cg.lfEditor.cursorSize == LFECS_lightRadius){
 			radius = cg.lfEditor.selectedLFEnt->lightRadius;
 		}
-		else {
+		else{
 			radius = cg.lfEditor.selectedLFEnt->radius;
 		}
 	}
@@ -945,7 +944,7 @@ static void CG_AddLensFlareMarker(int lfe) {
 	ent.nonNormalizedAxes = qtrue;
 	trap_R_AddRefEntityToScene(&ent);
 
-	if (lfent->angle >= 0) {
+	if(lfent->angle >= 0){
 		float len;
 		vec3_t end;
 
@@ -953,7 +952,7 @@ static void CG_AddLensFlareMarker(int lfe) {
 		VectorMA(origin, len, lfent->dir, end);
 		CG_Draw3DLine(origin, end, trap_R_RegisterShader("dischargeFlash"));
 
-		if (lfent->angle < 70) {
+		if(lfent->angle < 70){
 			float size;
 			vec3_t right, up;
 			vec3_t p1, p2;
@@ -979,7 +978,7 @@ JUHOX: CG_IsLFVisible
 =====================
 */
 #if MAPLENSFLARES
-static qboolean CG_IsLFVisible(const vec3_t origin, const vec3_t pos, float lfradius) {
+static qboolean CG_IsLFVisible(const vec3_t origin, const vec3_t pos, float lfradius){
 	trace_t trace;
 
 	CG_SmoothTrace(&trace, cg.refdef.vieworg, NULL, NULL, pos, cg.snap->ps.clientNum, MASK_OPAQUE|CONTENTS_BODY);
@@ -1001,9 +1000,9 @@ static float CG_ComputeVisibleLightSample(
 	float distance,				// ditto
 	vec3_t visOrigin,
 	int quality
-) {
+){
 	/*
-	static const float angleTab[48] = {
+	static const float angleTab[48] ={
 		0, 45, 90, 135, 180, 225, 270, 315,
 		7.5, 15, 22.5, 30, 37.5, 52.5, 60, 67.5,
 		75, 82.5, 97.5, 105, 112.5, 120, 127.5, 142.5,
@@ -1016,27 +1015,27 @@ static float CG_ComputeVisibleLightSample(
 	int visCount;
 	int i;
 
-	if (lfent->lightRadius <= 1 || quality < 2) {
+	if(lfent->lightRadius <= 1 || quality < 2){
 		VectorCopy(origin, visOrigin);
 		return CG_IsLFVisible(origin, origin, lfent->radius);
 	}
 
 	visCount = 0;
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 8; i++){
 		vec3_t corner;
 
 		VectorCopy(origin, corner);
 		corner[0] += i&1? lfent->lightRadius : -lfent->lightRadius;
 		corner[1] += i&2? lfent->lightRadius : -lfent->lightRadius;
 		corner[2] += i&4? lfent->lightRadius : -lfent->lightRadius;
-		if (!CG_IsLFVisible(origin, corner, 1.8 * lfent->radius)) continue;	// 1.8 = rough approx. of sqrt(3)
+		if(!CG_IsLFVisible(origin, corner, 1.8 * lfent->radius)) continue;	// 1.8 = rough approx. of sqrt(3)
 		visCount++;
 	}
-	if (visCount == 0) {
+	if(visCount == 0){
 		VectorClear(visOrigin);
 		return 0;
 	}
-	else if (visCount == 8) {
+	else if(visCount == 8){
 		VectorCopy(origin, visOrigin);
 		return 1;
 	}
@@ -1055,7 +1054,7 @@ static float CG_ComputeVisibleLightSample(
 	visCount = 0;
 	VectorClear(visOrigin);
 	//offset = 45 * random();
-	for (i = 0; i < NUMVISSAMPLES; i++) {
+	for (i = 0; i < NUMVISSAMPLES; i++){
 		vec3_t end;
 
 		VectorCopy(origin, end);
@@ -1065,9 +1064,9 @@ static float CG_ComputeVisibleLightSample(
 			float x, y;
 
 			/*
-			if (i == 8) {
-				if (visCount <= 0) return 0;
-				if (visCount >= 8) {
+			if(i == 8){
+				if(visCount <= 0) return 0;
+				if(visCount >= 8){
 					VectorCopy(origin, visOrigin);
 					return 1;
 				}
@@ -1088,13 +1087,13 @@ static float CG_ComputeVisibleLightSample(
 			VectorMA(end, y, vy, end);
 		}
 
-		if (!CG_IsLFVisible(origin, end, lfent->radius)) continue;
+		if(!CG_IsLFVisible(origin, end, lfent->radius)) continue;
 
 		VectorAdd(visOrigin, end, visOrigin);
 		visCount++;
 	}
 
-	if (visCount > 0) {
+	if(visCount > 0){
 		_VectorScale(visOrigin, 1.0 / visCount, visOrigin);
 	}
 
@@ -1108,13 +1107,13 @@ JUHOX: CG_SetVisibleLightSample
 =====================
 */
 #if MAPLENSFLARES
-static void CG_SetVisibleLightSample(lensFlareEntity_t* lfent, float visibleLight, const vec3_t visibleOrigin) {
+static void CG_SetVisibleLightSample(lensFlareEntity_t* lfent, float visibleLight, const vec3_t visibleOrigin){
 	vec3_t vorg;
 
 	lfent->lib[lfent->libPos].light = visibleLight;
 	VectorCopy(visibleOrigin, vorg);
 #if ESCAPE_MODE
-	if (cgs.gametype == GT_EFH) {
+	if(cgs.gametype == GT_EFH){
 		vorg[0] += cg.currentReferenceX;
 		vorg[1] += cg.currentReferenceY;
 		vorg[2] += cg.currentReferenceZ;
@@ -1122,7 +1121,7 @@ static void CG_SetVisibleLightSample(lensFlareEntity_t* lfent, float visibleLigh
 #endif
 	VectorCopy(vorg, lfent->lib[lfent->libPos].origin);
 	lfent->libPos++;
-	if (lfent->libPos >= LIGHT_INTEGRATION_BUFFER_SIZE) {
+	if(lfent->libPos >= LIGHT_INTEGRATION_BUFFER_SIZE){
 		lfent->libPos = 0;
 	}
 	lfent->libNumEntries++;
@@ -1135,41 +1134,41 @@ JUHOX: CG_GetVisibleLight
 =====================
 */
 #if MAPLENSFLARES
-static float CG_GetVisibleLight(lensFlareEntity_t* lfent, vec3_t visibleOrigin) {
+static float CG_GetVisibleLight(lensFlareEntity_t* lfent, vec3_t visibleOrigin){
 	int maxLibEntries;
 	int i;
 	float visLight;
 	vec3_t visOrigin;
 	int numVisPoints;
 
-	if (lfent->lightRadius < 1) {
+	if(lfent->lightRadius < 1){
 		maxLibEntries = 1;
 	}
-	else if (cg.viewMovement > 1 || lfent->lock) {
+	else if(cg.viewMovement > 1 || lfent->lock){
 		maxLibEntries = LIGHT_INTEGRATION_BUFFER_SIZE / 2;
 	}
-	else {
+	else{
 		maxLibEntries = LIGHT_INTEGRATION_BUFFER_SIZE;
 	}
 
-	if (lfent->libNumEntries > maxLibEntries) {
+	if(lfent->libNumEntries > maxLibEntries){
 		lfent->libNumEntries = maxLibEntries;
 	}
 
 	visLight = 0;
 	VectorClear(visOrigin);
 	numVisPoints = 0;
-	for (i = 1; i <= lfent->libNumEntries; i++) {
+	for (i = 1; i <= lfent->libNumEntries; i++){
 		const lightSample_t* sample;
 
 		sample = &lfent->lib[(lfent->libPos - i) & (LIGHT_INTEGRATION_BUFFER_SIZE - 1)];
-		if (sample->light > 0) {
+		if(sample->light > 0){
 			vec3_t sorg;
 
 			visLight += sample->light;
 			VectorCopy(sample->origin, sorg);
 #if ESCAPE_MODE
-			if (cgs.gametype == GT_EFH) {
+			if(cgs.gametype == GT_EFH){
 				sorg[0] -= cg.currentReferenceX;
 				sorg[1] -= cg.currentReferenceY;
 				sorg[2] -= cg.currentReferenceZ;
@@ -1179,11 +1178,11 @@ static float CG_GetVisibleLight(lensFlareEntity_t* lfent, vec3_t visibleOrigin) 
 			numVisPoints++;
 		}
 	}
-	if (lfent->libNumEntries > 0) visLight /= lfent->libNumEntries;
-	if (numVisPoints > 0) {
+	if(lfent->libNumEntries > 0) visLight /= lfent->libNumEntries;
+	if(numVisPoints > 0){
 		VectorScale(visOrigin, 1.0 / numVisPoints, visibleOrigin);
 	}
-	else {
+	else{
 		VectorCopy(visOrigin, visibleOrigin);
 	}
 	return visLight;
@@ -1197,7 +1196,7 @@ JUHOX: CG_AddLensFlare
 */
 #if MAPLENSFLARES
 #define SPRITE_DISTANCE 8
-void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality) {
+void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality){
 	const lensFlareEffect_t* lfeff;
 	vec3_t origin;
 	float distanceSqr;
@@ -1215,34 +1214,34 @@ void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality) {
 	int j;
 
 	lfeff = lfent->lfeff;
-	if (!lfeff) return;
+	if(!lfeff) return;
 
 	CG_LFEntOrigin(lfent, origin);
 
 	distanceSqr = DistanceSquared(origin, cg.refdef.vieworg);
-	if (lfeff->range > 0 && distanceSqr >= lfeff->rangeSqr) {
+	if(lfeff->range > 0 && distanceSqr >= lfeff->rangeSqr){
 		SkipLF:
 		lfent->libNumEntries = 0;
 		return;
 	}
-	if (distanceSqr < Square(16)) goto SkipLF;
+	if(distanceSqr < Square(16)) goto SkipLF;
 
 	VectorSubtract(origin, cg.refdef.vieworg, dir);
 
 	distance = VectorNormalize(dir);
 	cosViewAngle = DotProduct(dir, cg.refdef.viewaxis[0]);
 	viewAngle = acos(cosViewAngle) * (180.0 / M_PI);
-	if (viewAngle >= 89.99) goto SkipLF;
+	if(viewAngle >= 89.99) goto SkipLF;
 
 	// for spotlights
 	angleToLightSource = acos(-DotProduct(dir, lfent->dir)) * (180.0 / M_PI);
-	if (angleToLightSource > lfent->maxVisAngle) goto SkipLF;
+	if(angleToLightSource > lfent->maxVisAngle) goto SkipLF;
 
-	if (
+	if(
 		cg.numFramesWithoutViewMovement <= LIGHT_INTEGRATION_BUFFER_SIZE ||
 		lfent->lock ||
 		lfent->libNumEntries <= 0
-	) {
+	){
 		float vls;
 
 		vls = CG_ComputeVisibleLightSample(lfent, origin, distance, visibleOrigin, quality);
@@ -1251,7 +1250,7 @@ void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality) {
 
 	VectorCopy(origin, visibleOrigin);
 	visibleLight = CG_GetVisibleLight(lfent, visibleOrigin);
-	if (visibleLight <= 0) return;
+	if(visibleLight <= 0) return;
 
 	VectorSubtract(visibleOrigin, cg.refdef.vieworg, dir);
 	VectorNormalize(dir);
@@ -1260,14 +1259,14 @@ void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality) {
 	angles[PITCH] = AngleSubtract(angles[PITCH], cg.predictedPlayerState.viewangles[PITCH]);
 
 	VectorMA(cg.refdef.vieworg, SPRITE_DISTANCE / cosViewAngle, dir, virtualOrigin);
-	if (lfeff->range < 0) {
+	if(lfeff->range < 0){
 		alpha = -lfeff->range / distance;
 	}
-	else {
+	else{
 		alpha = 1.0 - distance / lfeff->range;
 	}
 
-	if (viewAngle > 0.5 * cg.refdef.fov_x) {
+	if(viewAngle > 0.5 * cg.refdef.fov_x){
 		alpha *= 1.0 - (viewAngle - 0.5 * cg.refdef.fov_x) / (90 - 0.5 * cg.refdef.fov_x);
 	}
 
@@ -1281,7 +1280,7 @@ void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality) {
 		angles[ROLL] = 90.0 - atan2(v[2], v[1]) * (180.0/M_PI);
 	}
 
-	for (j = 0; j < lfeff->numLensFlares; j++) {
+	for (j = 0; j < lfeff->numLensFlares; j++){
 		float a;
 		float vl;
 		const lensFlare_t* lf;
@@ -1289,29 +1288,29 @@ void CG_AddLensFlare(lensFlareEntity_t* lfent, int quality) {
 		a = alpha;
 		vl = visibleLight;
 		lf = &lfeff->lensFlares[j];
-		if (lfent->angle >= 0) {
+		if(lfent->angle >= 0){
 			float innerAngle;
 			
 			innerAngle = lfent->angle * lf->entityAngleFactor;
-			if (angleToLightSource > innerAngle) {
+			if(angleToLightSource > innerAngle){
 				float fadeAngle;
 
 				fadeAngle = lfeff->fadeAngle * lf->fadeAngleFactor;
-				if (fadeAngle < 0.1) continue;
-				if (angleToLightSource >= innerAngle + fadeAngle) continue;
+				if(fadeAngle < 0.1) continue;
+				if(angleToLightSource >= innerAngle + fadeAngle) continue;
 
 				vl *= 1.0 - (angleToLightSource - innerAngle) / fadeAngle;
 			}
 		}
-		if (lf->intensityThreshold > 0) {
+		if(lf->intensityThreshold > 0){
 			float threshold;
 			float intensity;
 
 			threshold = lf->intensityThreshold;
 			intensity = a * vl;
-			if (intensity < threshold) continue;
+			if(intensity < threshold) continue;
 			intensity -= threshold;
-			if (lfeff->range >= 0) intensity /= 1 - threshold;
+			if(lfeff->range >= 0) intensity /= 1 - threshold;
 			a = intensity / vl;
 		}
 		CG_DrawMapLensFlare(lf, distance, center, dir, angles, a, vl);
@@ -1326,50 +1325,50 @@ JUHOX: CG_AddMapLensFlares
 */
 #if MAPLENSFLARES
 #define SPRITE_DISTANCE 8
-static void CG_AddMapLensFlares(void) {
+static void CG_AddMapLensFlares(void){
 	int i;
 
 	cg.viewMovement = Distance(cg.refdef.vieworg, cg.lastViewOrigin);
-	if (cg.viewMovement > 0) {
+	if(cg.viewMovement > 0){
 		cg.numFramesWithoutViewMovement = 0;
 	}
-	else {
+	else{
 		cg.numFramesWithoutViewMovement++;
 	}
 
-	if (cgs.editMode == EM_mlf) {
-		if (cg.lfEditor.drawMode == LFEDM_none) {
-			if (!cg.lfEditor.selectedLFEnt && cg.lfEditor.markedLFEnt >= 0) {
+	if(cgs.editMode == EM_mlf){
+		if(cg.lfEditor.drawMode == LFEDM_none){
+			if(!cg.lfEditor.selectedLFEnt && cg.lfEditor.markedLFEnt >= 0){
 				CG_AddLensFlareMarker(cg.lfEditor.markedLFEnt);
 			}
 			return;
 		}
-		if (cg.lfEditor.drawMode == LFEDM_marks) {
+		if(cg.lfEditor.drawMode == LFEDM_marks){
 			int selectedLFEntNum;
 
 			selectedLFEntNum = cg.lfEditor.selectedLFEnt - cgs.lensFlareEntities;
-			for (i = 0; i < cgs.numLensFlareEntities; i++) {
-				if (i == selectedLFEntNum) continue;
+			for (i = 0; i < cgs.numLensFlareEntities; i++){
+				if(i == selectedLFEntNum) continue;
 
 				CG_AddLensFlareMarker(i);
 			}
 			return;
 		}
 	}
-	else if (
+	else if(
 		!cg_lensFlare.integer ||
 		(
 			!cg_mapFlare.integer &&
 			!cg_sunFlare.integer
 		)
-	) {
+	){
 		return;
 	}
 
-//	if (cg.viewMode == VIEW_scanner) return;
-	if (cg.clientFrame < 5) return;
+//	if(cg.viewMode == VIEW_scanner) return;
+	if(cg.clientFrame < 5) return;
 
-	for (i = -1; i < cgs.numLensFlareEntities; i++) {
+	for (i = -1; i < cgs.numLensFlareEntities; i++){
 		lensFlareEntity_t* lfent;
 		const lensFlareEffect_t* lfeff;
 		vec3_t origin;
@@ -1388,26 +1387,26 @@ static void CG_AddMapLensFlares(void) {
 		vec3_t center;
 		int j;
 
-		if (i < 0) {
-			if (!cg_sunFlare.integer && cgs.editMode != EM_mlf) continue;
+		if(i < 0){
+			if(!cg_sunFlare.integer && cgs.editMode != EM_mlf) continue;
 
 			lfent = &cgs.sunFlare;
 			lfeff = lfent->lfeff;
-			if (!lfeff) continue;
+			if(!lfeff) continue;
 
 			VectorAdd(lfent->origin, cg.refdef.vieworg, origin);
 
 			quality = cg_sunFlare.integer;
 		}
-		else {
-			if (!cg_mapFlare.integer && cgs.editMode != EM_mlf) continue;
+		else{
+			if(!cg_mapFlare.integer && cgs.editMode != EM_mlf) continue;
 
 			lfent = &cgs.lensFlareEntities[i];
 			lfeff = lfent->lfeff;
-			if (!lfeff) continue;
+			if(!lfeff) continue;
 
 			/*
-			if (cgs.editMode == EM_mlf && !cg.lfEditor.selectedLFEnt && cg.lfEditor.markedLFEnt == i) {
+			if(cgs.editMode == EM_mlf && !cg.lfEditor.selectedLFEnt && cg.lfEditor.markedLFEnt == i){
 				CG_AddLensFlareMarker(i);
 			}
 			*/
@@ -1418,29 +1417,29 @@ static void CG_AddMapLensFlares(void) {
 		}
 
 		distanceSqr = DistanceSquared(origin, cg.refdef.vieworg);
-		if (lfeff->range > 0 && distanceSqr >= lfeff->rangeSqr) {
+		if(lfeff->range > 0 && distanceSqr >= lfeff->rangeSqr){
 			SkipLF:
 			lfent->libNumEntries = 0;
 			continue;
 		}
-		if (distanceSqr < Square(16)) goto SkipLF;
+		if(distanceSqr < Square(16)) goto SkipLF;
 
 		VectorSubtract(origin, cg.refdef.vieworg, dir);
 
 		distance = VectorNormalize(dir);
 		cosViewAngle = DotProduct(dir, cg.refdef.viewaxis[0]);
 		viewAngle = acos(cosViewAngle) * (180.0 / M_PI);
-		if (viewAngle >= 89.99) goto SkipLF;
+		if(viewAngle >= 89.99) goto SkipLF;
 
 		// for spotlights
 		angleToLightSource = acos(-DotProduct(dir, lfent->dir)) * (180.0 / M_PI);
-		if (angleToLightSource > lfent->maxVisAngle) goto SkipLF;
+		if(angleToLightSource > lfent->maxVisAngle) goto SkipLF;
 
-		if (
+		if(
 			cg.numFramesWithoutViewMovement <= LIGHT_INTEGRATION_BUFFER_SIZE ||
 			lfent->lock ||
 			lfent->libNumEntries <= 0
-		) {
+		){
 			float vls;
 
 			vls = CG_ComputeVisibleLightSample(lfent, origin, distance, visibleOrigin, quality);
@@ -1449,7 +1448,7 @@ static void CG_AddMapLensFlares(void) {
 
 		VectorCopy(origin, visibleOrigin);
 		visibleLight = CG_GetVisibleLight(lfent, visibleOrigin);
-		if (visibleLight <= 0) continue;
+		if(visibleLight <= 0) continue;
 
 		VectorSubtract(visibleOrigin, cg.refdef.vieworg, dir);
 		VectorNormalize(dir);
@@ -1458,22 +1457,22 @@ static void CG_AddMapLensFlares(void) {
 		angles[PITCH] = AngleSubtract(angles[PITCH], cg.predictedPlayerState.viewangles[PITCH]);
 
 		VectorMA(cg.refdef.vieworg, SPRITE_DISTANCE / cosViewAngle, dir, virtualOrigin);
-		if (lfeff->range < 0) {
+		if(lfeff->range < 0){
 			alpha = -lfeff->range / distance;
 		}
-		else {
+		else{
 			alpha = 1.0 - distance / lfeff->range;
 		}
 
 		/*
-		if (fabs(angles[YAW]) > 0.5 * cg.refdef.fov_x) {
+		if(fabs(angles[YAW]) > 0.5 * cg.refdef.fov_x){
 			alpha *= 1.0 - (fabs(angles[YAW]) - 0.5 * cg.refdef.fov_x) / (90 - 0.5 * cg.refdef.fov_x);
 		}
-		if (fabs(angles[PITCH]) > 0.5 * cg.refdef.fov_y) {
+		if(fabs(angles[PITCH]) > 0.5 * cg.refdef.fov_y){
 			alpha *= 1.0 - (fabs(angles[PITCH]) - 0.5 * cg.refdef.fov_y) / (90 - 0.5 * cg.refdef.fov_y);
 		}
 		*/
-		if (viewAngle > 0.5 * cg.refdef.fov_x) {
+		if(viewAngle > 0.5 * cg.refdef.fov_x){
 			alpha *= 1.0 - (viewAngle - 0.5 * cg.refdef.fov_x) / (90 - 0.5 * cg.refdef.fov_x);
 		}
 
@@ -1487,7 +1486,7 @@ static void CG_AddMapLensFlares(void) {
 			angles[ROLL] = 90.0 - atan2(v[2], v[1]) * (180.0/M_PI);
 		}
 
-		for (j = 0; j < lfeff->numLensFlares; j++) {
+		for (j = 0; j < lfeff->numLensFlares; j++){
 			float a;
 			float vl;
 			const lensFlare_t* lf;
@@ -1495,29 +1494,29 @@ static void CG_AddMapLensFlares(void) {
 			a = alpha;
 			vl = visibleLight;
 			lf = &lfeff->lensFlares[j];
-			if (lfent->angle >= 0) {
+			if(lfent->angle >= 0){
 				float innerAngle;
 				
 				innerAngle = lfent->angle * lf->entityAngleFactor;
-				if (angleToLightSource > innerAngle) {
+				if(angleToLightSource > innerAngle){
 					float fadeAngle;
 
 					fadeAngle = lfeff->fadeAngle * lf->fadeAngleFactor;
-					if (fadeAngle < 0.1) continue;
-					if (angleToLightSource >= innerAngle + fadeAngle) continue;
+					if(fadeAngle < 0.1) continue;
+					if(angleToLightSource >= innerAngle + fadeAngle) continue;
 
 					vl *= 1.0 - (angleToLightSource - innerAngle) / fadeAngle;
 				}
 			}
-			if (lf->intensityThreshold > 0) {
+			if(lf->intensityThreshold > 0){
 				float threshold;
 				float intensity;
 
 				threshold = lf->intensityThreshold;
 				intensity = a * vl;
-				if (intensity < threshold) continue;
+				if(intensity < threshold) continue;
 				intensity -= threshold;
-				if (lfeff->range >= 0) intensity /= 1 - threshold;
+				if(lfeff->range >= 0) intensity /= 1 - threshold;
 				a = intensity / vl;
 			}
 			CG_DrawMapLensFlare(lf, distance, center, dir, angles, a, vl);
@@ -1534,20 +1533,20 @@ JUHOX: CG_AddLFEditorCursor
 =====================
 */
 #if MAPLENSFLARES
-void CG_AddLFEditorCursor(void) {
+void CG_AddLFEditorCursor(void){
 	trace_t trace;
 	vec3_t end;
 	refEntity_t ent;
 
-	if (cgs.editMode != EM_mlf) return;
+	if(cgs.editMode != EM_mlf) return;
 
 	cg.lfEditor.markedLFEnt = -1;
-	if (!cg.lfEditor.selectedLFEnt) {
+	if(!cg.lfEditor.selectedLFEnt){
 		int i;
 		float lowestWeight;
 
 		lowestWeight = 10000000.0;
-		for (i = 0; i < cgs.numLensFlareEntities; i++) {
+		for (i = 0; i < cgs.numLensFlareEntities; i++){
 			const lensFlareEntity_t* lfent;
 			vec3_t origin;
 			vec3_t dir;
@@ -1556,22 +1555,22 @@ void CG_AddLFEditorCursor(void) {
 			float weight;
 
 			lfent = &cgs.lensFlareEntities[i];
-			if (!lfent->lfeff) continue;
+			if(!lfent->lfeff) continue;
 
 			CG_LFEntOrigin(lfent, origin);
 			VectorSubtract(origin, cg.refdef.vieworg, dir);
 			distance = VectorNormalize(dir);
-			if (distance > 2000) continue;
+			if(distance > 2000) continue;
 
 			alpha = acos(DotProduct(dir, cg.refdef.viewaxis[0])) * (180.0 / M_PI);
-			if (alpha > 10.0) continue;
+			if(alpha > 10.0) continue;
 
 			weight = alpha * distance;
-			if (weight >= lowestWeight) continue;
+			if(weight >= lowestWeight) continue;
 
 			/* NOTE: with this trace enabled one would not be able to select entities within solids
 			CG_SmoothTrace(&trace, cg.refdef.vieworg, NULL, NULL, origin, -1, MASK_SOLID);
-			if (trace.fraction < 1.0) continue;
+			if(trace.fraction < 1.0) continue;
 			*/
 
 			lowestWeight = weight;
@@ -1580,8 +1579,8 @@ void CG_AddLFEditorCursor(void) {
 		return;
 	}
 
-	if (cg.lfEditor.editMode == LFEEM_pos) {
-		if (cg.lfEditor.moveMode == LFEMM_coarse) {
+	if(cg.lfEditor.editMode == LFEEM_pos){
+		if(cg.lfEditor.moveMode == LFEMM_coarse){
 			vec3_t cursor;
 
 			VectorMA(cg.refdef.vieworg, 10000, cg.refdef.viewaxis[0], end);
@@ -1597,7 +1596,7 @@ void CG_AddLFEditorCursor(void) {
 	{
 		int i;
 
-		for (i = 0; i < 50; i++) {
+		for (i = 0; i < 50; i++){
 			vec3_t dir;
 			float len;
 			int grey;
@@ -1606,12 +1605,12 @@ void CG_AddLFEditorCursor(void) {
 			dir[1] = crandom();
 			dir[2] = crandom();
 			len = VectorNormalize(dir);
-			if (len > 1 || len < 0.01) continue;
+			if(len > 1 || len < 0.01) continue;
 
 			CG_LFEntOrigin(cg.lfEditor.selectedLFEnt, end);
 			VectorMA(end, cg.lfEditor.selectedLFEnt->radius, dir, end);
 			CG_SmoothTrace(&trace, cg.refdef.vieworg, NULL, NULL, end, -1, MASK_OPAQUE|CONTENTS_BODY);
-			if (trace.fraction < 1) continue;
+			if(trace.fraction < 1) continue;
 
 			VectorSubtract(end, cg.refdef.vieworg, dir);
 			VectorNormalize(dir);
@@ -1643,7 +1642,7 @@ CG_DrawActiveFrame
 Generates and draws a game scene and status information at the given time.
 =================
 */
-void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback ) {
+void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoPlayback ){
 	int		inwater;
 	float	attenuation;
 	char	var[MAX_TOKEN_CHARS];
@@ -1656,7 +1655,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// if we are only updating the screen as a loading
 	// pacifier, don't even try to read snapshots
-	if ( cg.infoScreenText[0] != 0 ) {
+	if(cg.infoScreenText[0] != 0 ){
 		CG_DrawInformation();
 		return;
 	}
@@ -1672,7 +1671,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	CG_ProcessSnapshots();
 	// if we haven't received any snapshots yet, all
 	// we can draw is the information screen
-	if ( !cg.snap || ( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) ) {
+	if(!cg.snap || (cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) ){
 		CG_DrawInformation();
 		return;
 	}
@@ -1683,7 +1682,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	}
 
 	// let the client system know what our weapon and zoom settings are
-	trap_SetUserCmdValue( cg.weaponDesired > 0 ? cg.weaponDesired : cg.weaponSelect, cg.zoomSensitivity, cg.tierCurrent, cg.weaponChanged);
+	trap_SetUserCmdValue(cg.weaponDesired > 0 ? cg.weaponDesired : cg.weaponSelect, cg.zoomSensitivity, cg.tierCurrent, cg.weaponChanged);
 	cg.weaponChanged = 0;
 
 	// this counter will be bumped for every valid scene we generate
@@ -1706,12 +1705,12 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 #endif
 
 	// first person blend blobs, done after AnglesToAxis
-	if ( !cg.renderingThirdPerson ) {
+	if(!cg.renderingThirdPerson ){
 		CG_DamageBlendBlob();
 	}
 
 	// build the render lists
-	if ( !cg.hyperspace ) {
+	if(!cg.hyperspace ){
 		CG_FrameHist_NextFrame();
 		CG_AddPacketEntities();			// adter calcViewValues, so predicted player state is correct
 		CG_AddBeamTables();
@@ -1721,7 +1720,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		CG_AddLocalEntities();
 		CG_AddParticleSystems();
 	}
-	//CG_AddViewWeapon( &cg.predictedPlayerState );
+	//CG_AddViewWeapon(&cg.predictedPlayerState);
 
 	// add buffered sounds
 	CG_PlayBufferedSounds();
@@ -1730,11 +1729,11 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	CG_PlayBufferedVoiceChats();
 
 	// finish up the rest of the refdef
-	if ( cg.testModelEntity.hModel ) {
+	if(cg.testModelEntity.hModel ){
 		CG_AddTestModel();
 	}
 	cg.refdef.time = cg.time;
-	memcpy( cg.refdef.areamask, cg.snap->areamask, sizeof( cg.refdef.areamask ) );
+	memcpy(cg.refdef.areamask, cg.snap->areamask, sizeof(cg.refdef.areamask ));
 
 	// warning sounds when powerup is wearing off
 	CG_PowerupTimerSounds();
@@ -1742,39 +1741,39 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	attenuation = cg_soundAttenuation.value; // 0.0001f; // Quake 3 default was 0.0008f;
 
 	// update audio positions
-	trap_S_Respatialize( cg.snap->ps.clientNum, cg.refdef.vieworg, cg.refdef.viewaxis, inwater, attenuation );
+	trap_S_Respatialize(cg.snap->ps.clientNum, cg.refdef.vieworg, cg.refdef.viewaxis, inwater, attenuation);
 
-	if ( stereoView != STEREO_RIGHT ) {
+	if(stereoView != STEREO_RIGHT ){
 		cg.frametime = cg.time - cg.oldTime;
-		if ( cg.frametime < 0 ) {
+		if(cg.frametime < 0 ){
 			cg.frametime = 0;
 		}
 		cg.oldTime = cg.time;
 	}
-	if (cg_timescale.value != cg_timescaleFadeEnd.value) {
-		if (cg_timescale.value < cg_timescaleFadeEnd.value) {
+	if(cg_timescale.value != cg_timescaleFadeEnd.value){
+		if(cg_timescale.value < cg_timescaleFadeEnd.value){
 			cg_timescale.value += cg_timescaleFadeSpeed.value * ((float)cg.frametime) / 1000;
-			if (cg_timescale.value > cg_timescaleFadeEnd.value)
+			if(cg_timescale.value > cg_timescaleFadeEnd.value)
 				cg_timescale.value = cg_timescaleFadeEnd.value;
 		}
-		else {
+		else{
 			cg_timescale.value -= cg_timescaleFadeSpeed.value * ((float)cg.frametime) / 1000;
-			if (cg_timescale.value < cg_timescaleFadeEnd.value)
+			if(cg_timescale.value < cg_timescaleFadeEnd.value)
 				cg_timescale.value = cg_timescaleFadeEnd.value;
 		}
-		if (cg_timescaleFadeSpeed.value) {
+		if(cg_timescaleFadeSpeed.value){
 			trap_Cvar_Set("timescale", va("%f", cg_timescale.value));
 		}
 	}
 	// actually issue the rendering calls
-	CG_DrawActive( stereoView );
+	CG_DrawActive(stereoView);
 	CG_CheckMusic();
 
-	trap_Cvar_VariableStringBuffer( "cl_paused", var, sizeof( var ) );
-	cgs.clientPaused = atoi( var );
+	trap_Cvar_VariableStringBuffer("cl_paused", var, sizeof(var ));
+	cgs.clientPaused = atoi(var);
 
-	if ( cg_stats.integer ) {
-		CG_Printf( "cg.clientFrame:%i\n", cg.clientFrame );
+	if(cg_stats.integer ){
+		CG_Printf("cg.clientFrame:%i\n", cg.clientFrame);
 	}
 
 }

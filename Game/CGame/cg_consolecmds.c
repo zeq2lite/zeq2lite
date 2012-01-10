@@ -595,7 +595,10 @@ static consoleCommand_t	commands[] = {
 	{ "startOrbit", CG_StartOrbit_f },
 	{ "draw2D", CG_Draw2D_f },
 	{ "draw2d", CG_Draw2D_f },
-	//{ "camera", CG_Camera_f },
+	/*{ "draw2DTween", CG_Draw2DTween_f },
+	{ "draw2dTween", CG_Draw2DTween_f },
+	{ "cameraTween", CG_Camera_f },
+	{ "queue", CG_Queue_f },*/
 	{ "loaddeferred", CG_LoadDeferredPlayers }
 };
 

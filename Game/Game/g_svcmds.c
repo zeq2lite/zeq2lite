@@ -278,6 +278,20 @@ void Svcmd_AddIP_f (void)
 
 /*
 =================
+Svcmd_AddParticle_f
+=================
+*/
+void Svcmd_AddParticle_f (void){
+	/*char		str[MAX_TOKEN_CHARS];
+	if ( trap_Argc() < 2 ) {
+		G_Printf("Usage:  addip <ip-mask>\n");
+		return;
+	}
+	trap_Argv(1,str,sizeof(str));*/
+}
+
+/*
+=================
 Svcmd_RemoveIP_f
 =================
 */
@@ -482,6 +496,11 @@ qboolean	ConsoleCommand( void ) {
 
 	if (Q_stricmp (cmd, "addip") == 0) {
 		Svcmd_AddIP_f();
+		return qtrue;
+	}
+
+	if (Q_stricmp (cmd, "addParticle") == 0) {
+		Svcmd_AddParticle_f();
 		return qtrue;
 	}
 
