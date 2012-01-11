@@ -588,6 +588,10 @@ void ClientThink_real( gentity_t *ent ) {
 	VectorCopy( client->ps.origin, client->oldOrigin );
 	Pmove(&pm);
 	checkTier(client);
+	if(pm.ps->powerLevel[plTierChanged] == 1)
+	{
+		PM_Weapon();
+	}
 
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;

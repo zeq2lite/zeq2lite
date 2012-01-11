@@ -2716,10 +2716,10 @@ CG_WeaponSelectable
 qboolean PM_WeaponSelectable( int i ) {
 	qboolean usable;
 	usable = qfalse;
-	/*if ( ! (pm->ps->stats[ stSkills ] & ( 1 << i ) ) ) {
+	if ( ! (pm->ps->stats[ stSkills ] & ( 1 << i ) ) ) {
 		return qfalse;
 	}
-*/
+
 	if(i == 1 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL1)){usable = qtrue;}
 	if(i == 2 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL2)){usable = qtrue;}
 	if(i == 3 && (pm->ps->powerups[PW_SKILLS] & USABLE_SKILL3)){usable = qtrue;}
@@ -2759,12 +2759,14 @@ void PM_Weapon(void){
 	if(pm->ps->powerLevel[plTierChanged] == 1)
 	{
 		if(!PM_WeaponSelectable(pm->cmd.weapon))
-		for(i = 6; i > 0; i--)
 		{
-			if(PM_WeaponSelectable(i))
+			for(i = 6; i > 0; i--)
 			{
-				pm->cmd.weapon = i;
-				break;
+				if(PM_WeaponSelectable(i))
+				{
+					pm->cmd.weapon = i;
+					break;
+				}
 			}
 		}
 	}
