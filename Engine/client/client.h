@@ -120,6 +120,8 @@ typedef struct {
 	int 		cgameUserTierCmdValue;
 	float		cgameSensitivity;
 	byte		cgameUserWeaponChanged;
+	byte		cgameUserWeaponSelectionMode;
+	byte		cgameUserTierSelectionMode;
 
 	// cmds[cmdNumber] is the predicted command, [cmdNumber-1] is the last
 	// properly generated command

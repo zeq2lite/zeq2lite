@@ -36,17 +36,169 @@ void syncTier(gclient_t *client){
 	ps->powerLevel[plDrainHealth] = tier->effectHealth;
 	ps->powerLevel[plDrainMaximum] = tier->effectMaximum;
 }
+
+qboolean checkTierUpTransformation(gclient_t *client, int nextTierIndex, int currentTierIndex, int tierChangeMode)
+{
+	qboolean hasRequirementsToTransform = qfalse;
+	playerState_t *ps;
+	tierConfig_g *nextTier, *currentTier;
+	int newPowerLevel;
+
+	ps = &client->ps;
+
+	if(tierChangeMode > 1 )
+	{
+		if(nextTierIndex > -1 && ((nextTierIndex) < 8) && (client->tiers[nextTierIndex].exists)){
+				nextTier = &client->tiers[nextTierIndex];
+				currentTier = &client->tiers[currentTierIndex];
+
+				hasRequirementsToTransform =
+						   (((ps->powerLevel[plCurrent] >= nextTier->requirementCurrent)  &&
+						   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
+						   ((ps->powerLevel[plMaximum] >= nextTier->requirementCurrent)  &&
+						   (ps->powerLevel[plMaximum] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
+						   tierChangeMode == 3))  &&
+						   (ps->powerLevel[plFatigue] >= nextTier->requirementFatigue) &&
+						   (ps->powerLevel[plHealth]  >= nextTier->requirementHealth) &&
+						   (ps->powerLevel[plHealth]  <= nextTier->requirementHealthMaximum / 100.0f * ps->powerLevel[plMaximum]) &&
+						   (ps->powerLevel[plMaximum] >= nextTier->requirementMaximum) &&
+						   (((ps->powerLevel[plCurrent] >= nextTier->sustainCurrent) &&
+						   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
+						   ((ps->powerLevel[plMaximum] >= nextTier->sustainCurrent) &&
+						   (ps->powerLevel[plMaximum] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
+						   tierChangeMode == 0)) &&
+						   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
+						   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
+						   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum);
+
+				if((((nextTier->requirementButtonUp && (tierChangeMode > 0)) || !nextTier->requirementButtonUp) &&
+						hasRequirementsToTransform == 1) ){
+					ps->timers[tmTransform] = 1;
+
+					ps->powerLevel[plTierCurrent] = nextTierIndex;
+					ps->powerLevel[plTierDesired] = nextTierIndex;
+					ps->powerLevel[plTierChanged] = 1;
+
+					newPowerLevel = (int)(nextTier->requirementCurrent * 1.1 );
+
+					if(nextTierIndex > ps->powerLevel[plTierTotal]){
+						ps->powerLevel[plTierTotal] = nextTierIndex;
+						ps->timers[tmTransform] = client->tiers[ps->powerLevel[plTierCurrent]].transformTime;
+						ps->stats[stTransformState] = 2;
+
+						if(ps->powerLevel[plCurrent] < nextTier->requirementCurrent)
+						{
+							ps->powerLevel[plCurrent] = newPowerLevel ;
+						}
+					}
+					else
+					{
+						ps->stats[stTransformState] = 1;
+						if(tierChangeMode==3)
+						{
+							if(ps->powerLevel[plCurrent] < nextTier->requirementCurrent)
+							{
+								ps->powerLevel[plFatigue] -= (newPowerLevel - ps->powerLevel[plCurrent]) *(g_quickTransformCost.value +( (nextTierIndex - currentTierIndex) * g_quickTransformCostPerTier.value)) ;
+								ps->powerLevel[plCurrent] = newPowerLevel ;
+							}
+						}
+					}
+
+					ps->powerLevel[plTierSelectionMode]=0;
+					return qtrue;
+				}
+				else if (!hasRequirementsToTransform && tierChangeMode==3)
+				{
+					ps->powerLevel[plTierDesired] = -1;
+					ps->powerLevel[plTierCurrent] = nextTierIndex;
+					ps->powerLevel[plTierChanged] = 1;
+				}
+
+				if(tierChangeMode>0)
+				{
+					ps->powerLevel[plTierChanged] = 1;
+					ps->powerLevel[plTierSelectionMode]=0;
+				}
+			}
+	}
+	return qfalse;
+}
+
+qboolean checkTierDownTransformation(gclient_t *client, int nextTierIndex, int currentTierIndex, int tierChangeMode)
+{
+	playerState_t *ps;
+	tierConfig_g *baseTier, *currentTier;
+	int newPowerLevel;
+
+	ps = &client->ps;
+
+	if(tierChangeMode == 1 || tierChangeMode == 3)
+	{
+		if(nextTierIndex > -1 ){
+				currentTier = &client->tiers[currentTierIndex];
+				baseTier = &client->tiers[(nextTierIndex)];
+
+				if(!baseTier->permanent && !currentTier->permanent && (((baseTier->requirementButtonDown && tierChangeMode > 0 ) || !baseTier->requirementButtonDown) ||
+				   (ps->powerLevel[plCurrent] < baseTier->sustainCurrent) ||
+				   (ps->powerLevel[plCurrent] < baseTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) ||
+				   (ps->powerLevel[plHealth] < baseTier->sustainHealth) ||
+				   (ps->powerLevel[plFatigue] < baseTier->sustainFatigue) ||
+				   (ps->powerLevel[plMaximum] < baseTier->sustainMaximum))){
+
+					if( !currentTier->permanent)
+					{
+						ps->timers[tmTransform] = -1;
+						ps->stats[stTransformState] = -1;
+						ps->powerLevel[plTierChanged] = 1;
+
+						if(tierChangeMode==3)
+						{
+							newPowerLevel = (int)((currentTier->requirementCurrent + baseTier->requirementCurrent) * 0.5);
+							if( ps->powerLevel[plCurrent] > newPowerLevel)
+							{
+								ps->powerLevel[plCurrent] = newPowerLevel ;
+							}
+						}
+						ps->powerLevel[plTierCurrent] = nextTierIndex;
+					}
+
+					ps->powerLevel[plTierDesired] = ps->powerLevel[plTierCurrent];
+					ps->powerLevel[plTierSelectionMode]=0;
+					return qtrue;
+				}
+			}
+	}
+	return qfalse;
+}
+
+qboolean checkDefaultTierConfiguration(playerState_t *ps)
+{
+
+	//The value of 2 means the player was spawned, and the default tier configuration must be sent to the client
+	if(ps->powerLevel[plTierChanged] == 2)
+	{
+		if(ps->powerLevel[plTierCurrent] == 0 && ps->powerLevel[plTierDesired] == 0)
+		{
+			ps->powerLevel[plTierChanged] = 1;
+		}
+		ps->powerLevel[plTierDesired] = 0;
+		ps->powerLevel[plTierCurrent] = 0;
+		ps->powerLevel[plTierSelectionMode]=-1;
+		return qtrue;
+	}
+	return qfalse;
+}
+
 void checkTier(gclient_t *client){
 	int trigger;
 	int tier = 1;
 	int tierUp = -1;
 	int tierDown = -1;
 	int desiredTier = -1;
-	int jumpToDesiredTier = 0;
-	int newPowerLevel = 0;
-	int hasRequirementsToTransform = 0;
+
+	int tierChangeMode = 0;
+
 	playerState_t *ps;
-	tierConfig_g *nextTier,*baseTier, *currentTier;
 	ps = &client->ps;
 	if(ps->timers[tmTransform]){return;}
 	while(client->tiers[tier].exists){
@@ -60,33 +212,39 @@ void checkTier(gclient_t *client){
 	desiredTier = ps->powerLevel[plTierDesired];
 	tier = ps->powerLevel[plTierCurrent];
 
-	//The value of 2 means the player was spawned, and the default tier configuration must be sent to the client
-	if(ps->powerLevel[plTierChanged] == 2)
-	{
-		if(ps->powerLevel[plTierCurrent] == 0 && ps->powerLevel[plTierDesired] == 0)
-		{
-			ps->powerLevel[plTierChanged] = 1;
-		}
-		ps->powerLevel[plTierDesired] = 0;
-		ps->powerLevel[plTierCurrent] = 0;
-		return;
-	}
+	if(checkDefaultTierConfiguration(ps)) { return; }
 
 	ps->powerLevel[plTierChanged] = 0;
-
-	if(desiredTier == tier)
+	if(ps->stats[stTransformState] != 0)
 	{
-		jumpToDesiredTier = 0;
+		ps->powerLevel[plTierChanged] = 1;
+	}
+	else if(desiredTier == tier || ps->powerLevel[plTierSelectionMode] <3)
+	{
+		tierChangeMode = ps->powerLevel[plTierSelectionMode];
+
+		if(ps->bitFlags & keyTierUp)
+		{
+			tierChangeMode = 2;
+		}
+		if(ps->bitFlags & keyTierDown)
+		{
+			tierChangeMode = 1;
+		}
+
 		tierUp = tier + 1;
 		tierDown = tier - 1;
 	}
 	else if(!client->tiers[desiredTier].exists)
 	{
 		 ps->powerLevel[plTierDesired] = -1;
+		 ps->powerLevel[plTierSelectionMode]=0;
+		 ps->powerLevel[plTierChanged] = 1;
 		return;
 	}
-	else
+	else if(ps->powerLevel[plTierSelectionMode] == 3)
 	{
+		ps->powerLevel[plTierSelectionMode] = 0;
 		if(desiredTier > tier )
 		{
 			if(desiredTier > ps->powerLevel[plTierTotal]+1)
@@ -95,115 +253,20 @@ void checkTier(gclient_t *client){
 				return;
 			}
 			tierUp = desiredTier;
-			jumpToDesiredTier = 1;
 		}
 		else if (desiredTier < tier)
 		{
 			tierDown = desiredTier;
-			jumpToDesiredTier = -1;
 		}
+		tierChangeMode = 3;
 	}
 
-	if(tierUp > -1 && ((tierUp) < 8) && (client->tiers[tierUp].exists)){
-		nextTier = &client->tiers[tierUp];
-		currentTier = &client->tiers[tier];
-
-		hasRequirementsToTransform =
-				   (((ps->powerLevel[plCurrent] >= nextTier->requirementCurrent)  &&
-				   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
-				   ((ps->powerLevel[plMaximum] >= nextTier->requirementCurrent)  &&
-				   (ps->powerLevel[plMaximum] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
-				   jumpToDesiredTier == 1))  &&
-				   (ps->powerLevel[plFatigue] >= nextTier->requirementFatigue) &&
-				   (ps->powerLevel[plHealth]  >= nextTier->requirementHealth) &&
-				   (ps->powerLevel[plHealth]  <= nextTier->requirementHealthMaximum / 100.0f * ps->powerLevel[plMaximum]) &&
-				   (ps->powerLevel[plMaximum] >= nextTier->requirementMaximum) &&
-				   (((ps->powerLevel[plCurrent] >= nextTier->sustainCurrent) &&
-				   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
-				   ((ps->powerLevel[plMaximum] >= nextTier->sustainCurrent) &&
-				   (ps->powerLevel[plMaximum] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
-				   jumpToDesiredTier == 1)) &&
-				   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
-				   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
-				   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum);
-
-		if((((nextTier->requirementButtonUp && ((ps->bitFlags & keyTierUp) || jumpToDesiredTier == 1)) || !nextTier->requirementButtonUp) &&
-				hasRequirementsToTransform == 1) ){
-			ps->timers[tmTransform] = 1;
-
-			ps->powerLevel[plTierCurrent] = tierUp;
-			ps->powerLevel[plTierDesired] = tierUp;
-			ps->powerLevel[plTierChanged] = 1;
-
-			newPowerLevel = (int)(nextTier->requirementCurrent * 1.1 );
-
-			if(tierUp > ps->powerLevel[plTierTotal]){
-				ps->powerLevel[plTierTotal] = tierUp;
-				ps->timers[tmTransform] = client->tiers[ps->powerLevel[plTierCurrent]].transformTime;
-				ps->stats[stTransformState] = 2;
-
-				if(ps->powerLevel[plCurrent] < nextTier->requirementCurrent)
-				{
-					ps->powerLevel[plCurrent] = newPowerLevel ;
-				}
-			}
-			else
-			{
-				ps->stats[stTransformState] = 1;
-				if(jumpToDesiredTier==1)
-				{
-					if(ps->powerLevel[plCurrent] < nextTier->requirementCurrent)
-					{
-						ps->powerLevel[plFatigue] -= (newPowerLevel - ps->powerLevel[plCurrent]) *(g_quickTransformCost.value +( (tierUp - tier) * g_quickTransformCostPerTier.value)) ;
-						ps->powerLevel[plCurrent] = newPowerLevel ;
-					}
-				}
-			}
-
-			jumpToDesiredTier = 0;
-			return;
-		}
-		else if (!hasRequirementsToTransform && jumpToDesiredTier==1)
-		{
-			ps->powerLevel[plTierDesired] = -1;
-			ps->powerLevel[plTierCurrent] = tier;
-			ps->powerLevel[plTierChanged] = 1;
-		}
+	if(!checkTierUpTransformation(client,tierUp,tier,tierChangeMode))
+	{
+		checkTierDownTransformation(client,tierDown,tier,tierChangeMode);
 	}
 
-	if(tierDown > -1 ){
-		currentTier = &client->tiers[tier];
-		baseTier = &client->tiers[(tierDown)];
-
-		if(!baseTier->permanent && !currentTier->permanent && ((jumpToDesiredTier==-1 || (baseTier->requirementButtonDown && ps->bitFlags & keyTierDown) || !baseTier->requirementButtonDown) ||
-		   (ps->powerLevel[plCurrent] < baseTier->sustainCurrent) ||
-		   (ps->powerLevel[plCurrent] < baseTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) ||
-		   (ps->powerLevel[plHealth] < baseTier->sustainHealth) ||
-		   (ps->powerLevel[plFatigue] < baseTier->sustainFatigue) ||
-		   (ps->powerLevel[plMaximum] < baseTier->sustainMaximum))){
-
-			if( !currentTier->permanent)
-			{
-				ps->timers[tmTransform] = -1;
-				ps->stats[stTransformState] = -1;
-				ps->powerLevel[plTierChanged] = 1;
-
-				if(jumpToDesiredTier==-1)
-				{
-					newPowerLevel = (int)((currentTier->requirementCurrent + baseTier->requirementCurrent) * 0.5);
-					if( ps->powerLevel[plCurrent] > newPowerLevel)
-					{
-						ps->powerLevel[plCurrent] = newPowerLevel ;
-					}
-				}
-				ps->powerLevel[plTierCurrent] = tierDown;
-			}
-
-			ps->powerLevel[plTierDesired] = ps->powerLevel[plTierCurrent];
-			jumpToDesiredTier = 0;
-			return;
-		}
-	}
+	ps->powerLevel[plTierSelectionMode]=0;
 
 }
 void setupTiers(gclient_t *client){

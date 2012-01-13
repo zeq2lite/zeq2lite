@@ -146,6 +146,7 @@ void CG_Respawn( void ) {
 	cg.tierSelect = -1;
 	cg.weaponDesired = 1;
 	cg.weaponChanged = 0;
+	cg.weaponSelectionMode = 0;
 
 }
 
@@ -300,6 +301,11 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 
 
 	cg.weaponDesired = -1;
+	cg.tierSelectionMode = 0;
+	cg.weaponSelectionMode = 0;
+	cg.tierSelect = -1;
+	cg.weaponChanged = 0;
+
 	if(ps->currentSkill[WPSTAT_CHANGED] == 1)
 	{
 		//If the server validated a weapon change, changes it
@@ -312,7 +318,5 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 		cg.tierCurrent = ps->powerLevel[plTierCurrent];
 	}
 
-	cg.tierSelect = -1;
-	cg.weaponChanged = 0;
 
 }

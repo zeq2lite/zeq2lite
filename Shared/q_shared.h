@@ -1234,6 +1234,8 @@ typedef struct usercmd_s {
 	signed char	forwardmove, rightmove, upmove;
 	signed char 	tier;
 	byte			weaponChange;
+	byte			weaponSelectionMode;
+	byte			tierSelectionMode;
 } usercmd_t;
 // if entityState->solid == SOLID_BMODEL, modelindex is an inline model number
 #define	SOLID_BMODEL	0xffffff

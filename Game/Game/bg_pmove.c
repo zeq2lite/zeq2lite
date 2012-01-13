@@ -563,29 +563,31 @@ void PM_CheckStatus(void){
 
 void PM_CheckContextOperations(void)
 {
-
 	//Transforming operations
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
 		if(pm->cmd.weaponChange == 1)
 		{
+			pm->ps->powerLevel[plTierSelectionMode] = 0;
 			pm->cmd.weaponChange = 0;
-			pm->cmd.tier = pm->cmd.weapon-1;
 
-			pm->ps->powerLevel[plTierDesired] = pm->cmd.weapon- 1;
+			pm->cmd.tier = pm->cmd.weapon- 1;
 			pm->cmd.weapon = pm->ps->weapon;
+			pm->cmd.tierSelectionMode = pm->cmd.weaponSelectionMode;
+			pm->cmd.weaponSelectionMode = 0;
 		}
-
 	}
-	else if(pm->ps->powerLevel[plTierCurrent] != pm->cmd.tier)
-	{
-		pm->ps->powerLevel[plTierDesired] = pm->cmd.tier;
-	}
-
 
 }
 
 qboolean PM_CheckTransform(void){
-	if(!(pm->ps->options & canTransform)){return qfalse;}
+	if(!(pm->ps->options & canTransform)){
+		pm->ps->powerLevel[plTierChanged] = 1;
+		return qfalse;
+	}
+
+	pm->ps->powerLevel[plTierDesired] = pm->cmd.tier;
+	pm->ps->powerLevel[plTierSelectionMode] = pm->cmd.tierSelectionMode;
+
 	pm->ps->timers[tmUpdateTier] += pml.msec;
 	if(pm->ps->timers[tmUpdateTier] > 300){
 		pm->ps->timers[tmUpdateTier] = 0;
@@ -2735,6 +2737,48 @@ qboolean PM_WeaponSelectable( int i ) {
 PM_Weapon
 Generates weapon events and modifes the weapon counter
 ==============*/
+void PM_CheckWeaponSelectionMode(void)
+{
+	int weaponIndex;
+	int originalWeaponIndex = pm->cmd.weapon;
+
+	switch(pm->cmd.weaponSelectionMode)
+	{
+	case 0:
+		return;
+	case 1:
+			for ( weaponIndex = 0 ; weaponIndex < 16 ; weaponIndex++ ) {
+				pm->cmd.weapon--;
+				if ( pm->cmd.weapon == 0 ) {
+					pm->cmd.weapon = 15;
+				}
+				if ( PM_WeaponSelectable( pm->cmd.weapon ) ) {
+					break;
+				}
+			}
+			if ( weaponIndex == 16 ) {
+				pm->cmd.weapon = originalWeaponIndex;
+			}
+		return;
+	case 2:
+			for ( weaponIndex = 0 ; weaponIndex < 16 ; weaponIndex++ ) {
+				pm->cmd.weapon++;
+					if ( pm->cmd.weapon == 16 ) {
+						pm->cmd.weapon = 0;
+					}
+					if ( PM_WeaponSelectable( pm->cmd.weapon ) ) {
+						break;
+					}
+			}
+			if ( weaponIndex == 16 ) {
+				pm->cmd.weapon = originalWeaponIndex;
+			}
+		return;
+	default: return;
+	}
+
+}
+
 void PM_WeaponRelease(void){
 	if(pm->ps->bitFlags & isStruggling){return;}
 	if(pm->ps->bitFlags & isGuiding){
@@ -2772,6 +2816,7 @@ void PM_Weapon(void){
 	}
 	else
 	{
+		PM_CheckWeaponSelectionMode();
 		if(!PM_WeaponSelectable(pm->cmd.weapon))
 		{
 			return;

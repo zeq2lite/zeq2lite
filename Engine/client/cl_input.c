@@ -555,6 +555,8 @@ void CL_FinishMove( usercmd_t *cmd ) {
 	cmd->weapon = cl.cgameUserCmdValue;
 	cmd->tier = cl.cgameUserTierCmdValue;
 	cmd->weaponChange = cl.cgameUserWeaponChanged;
+	cmd->weaponSelectionMode = cl.cgameUserWeaponSelectionMode;
+	cmd->tierSelectionMode = cl.cgameUserTierSelectionMode;
 
 	// send the current server time so the amount of movement
 	// can be determined without allowing cheating

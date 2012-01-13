@@ -290,7 +290,8 @@ typedef enum{
 	plDamageGeneric,
 	plBuffer,
 	plTierDesired,
-	plTierChanged
+	plTierChanged,
+	plTierSelectionMode //0 means tier select, 1 means previous tier, 2 means next tier
 }powerLevel_t;
 typedef enum{
 	lkPowerCurrent,

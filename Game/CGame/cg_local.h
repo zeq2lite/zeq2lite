@@ -646,7 +646,9 @@ typedef struct {
 	int			weaponSelect;
 	int			weaponDesired;
 	byte		weaponChanged;
+	byte		weaponSelectionMode; // 0 means weapon directly selected; 1 means previous weapon; 2 means next weapon
 	int			tierSelect;
+	byte		tierSelectionMode; //0 means tier directly selected; 1 means previous tier; 2 means next tier
 	int			tierCurrent;
 
 	// auto rotating items
@@ -1742,7 +1744,7 @@ int			trap_GetCurrentCmdNumber( void );
 qboolean	trap_GetUserCmd( int cmdNumber, usercmd_t *ucmd );
 
 // used for the weapon select and zoom
-void		trap_SetUserCmdValue( int stateValue, float sensitivityScale, int tierStateValue, byte weaponChangedState );
+void		trap_SetUserCmdValue( int stateValue, float sensitivityScale, int tierStateValue, byte weaponChangedState, byte weaponSelectionModeState, byte tierSelectionModeState );
 
 // aids for VM testing
 void		testPrintInt( char *string, int i );
