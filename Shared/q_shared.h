@@ -651,6 +651,7 @@ float	Q_crandom( int *seed );
 
 void vectoangles( const vec3_t value1, vec3_t angles);
 void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
+void AxisToAngles( vec3_t axis[3], vec3_t angles );
 
 void AxisClear( vec3_t axis[3] );
 void AxisCopy( vec3_t in[3], vec3_t out[3] );
