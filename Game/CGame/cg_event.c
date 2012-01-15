@@ -542,9 +542,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_MELEE_STUN:
 		DEBUGNAME("EV_MELEE_STUN");
 		break;
-	case EV_MELEE_CHECK:
-		DEBUGNAME("EV_MELEE_CHECK");
-		break;
 	case EV_MELEE_KNOCKOUT:
 		DEBUGNAME("EV_MELEE_KNOCKOUT");
 		break;

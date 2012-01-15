@@ -367,25 +367,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_BALLFLIP:
 			break;
-		case EV_MELEE_CHECK:
-			if(ps->lockedTarget>0){
-				if(!&g_entities[ps->lockedTarget-1].client || &g_entities[ps->lockedTarget-1].client->pers.connected == CON_DISCONNECTED){
-					ps->lockedPosition = 0;
-					ps->lockedPlayer = 0;
-					ps->lockedTarget = 0;
-					break;
-				}
-				if(ps->lockedPlayer->bitFlags & isStruggling || ps->lockedPlayer->bitFlags & isDead || ps->lockedPlayer->bitFlags & isUnconcious ||
-				   ps->lockedPlayer->bitFlags & isTransforming || ps->lockedPlayer->bitFlags & isCrashed){
-					ps->lockedPosition = 0;
-					ps->lockedPlayer = 0;
-					ps->lockedTarget = 0;
-					break;
-				}
-				ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
-				ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
-			}
-			break;
 		case EV_MELEE_SPEED:
 			break;
 		case EV_MELEE_MISS:
@@ -502,6 +483,35 @@ void G_CheckSafety(vec3_t origin,playerState_t *ps){
 		}
 	}*/
 }
+
+
+
+
+void LockonCheck(gclient_t	*client)
+{
+	playerState_t *ps;
+	ps = &client->ps;
+	if(ps->lockedTarget>0){
+		if(!&g_entities[ps->lockedTarget-1].client || &g_entities[ps->lockedTarget-1].client->pers.connected == CON_DISCONNECTED){
+			ps->lockedPosition = 0;
+			ps->lockedPlayer = 0;
+			ps->lockedTarget = 0;
+			return;
+		}
+		if( ps->lockedPlayer){
+			if( ps->lockedPlayer->bitFlags & isTransforming || ps->lockedPlayer->bitFlags & isStruggling || ps->lockedPlayer->bitFlags & isDead ||
+					ps->lockedPlayer->bitFlags & isUnconcious || ps->lockedPlayer->bitFlags & isCrashed ){
+				ps->lockedPosition = 0;
+				ps->lockedPlayer = 0;
+				ps->lockedTarget = 0;
+				return;
+			}
+		}
+		ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;
+		ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
+	}
+}
+
 /*
 ==============
 ClientThink
@@ -590,8 +600,12 @@ void ClientThink_real( gentity_t *ent ) {
 	checkTier(client);
 	if(pm.ps->powerLevel[plTierChanged] == 1)
 	{
-		PM_Weapon();
+		if(pm.ps->stats[stMeleeState] != stMeleeUsingPower || pm.ps->stats[stMeleeState] != stMeleeUsingStun){
+			PM_UpdateViewAngles(pm.ps,&pm.cmd);
+			PM_Weapon();
+		}
 	}
+	LockonCheck(client);
 
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;

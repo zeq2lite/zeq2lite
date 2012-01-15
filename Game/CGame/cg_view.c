@@ -1698,28 +1698,22 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 		CG_DrawInformation();
 		return;
 	}
-
-	if(cg.tierSelect > -1)
-	{
-		switch(cg.tierSelectionMode)
-		{
-		case 1:
-			cg.tierCurrent--;
-			break;
-		case 2:
-			cg.tierCurrent++;
-			break;
-		default:
-			cg.tierCurrent = cg.tierSelect;
-			break;
+	if(cg.tierSelect > -1)	{
+		switch(cg.tierSelectionMode) {
+			case 1:
+				cg.tierCurrent--;
+				break;
+			case 2:
+				cg.tierCurrent++;
+				break;
+			default:
+				cg.tierCurrent = cg.tierSelect;
+				break;
 		}
 	}
 
 	// let the client system know what our weapon and zoom settings are
 	trap_SetUserCmdValue(cg.weaponDesired > 0 ? cg.weaponDesired : cg.weaponSelect, cg.zoomSensitivity, cg.tierCurrent, cg.weaponChanged, cg.weaponSelectionMode, cg.tierSelectionMode);
-
-	cg.weaponSelectionMode = 0;
-	cg.weaponChanged = 0;
 
 	// this counter will be bumped for every valid scene we generate
 	cg.clientFrame++;

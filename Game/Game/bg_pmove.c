@@ -1988,7 +1988,7 @@ PM_BeginWeaponChange
 void PM_BeginWeaponChange(int weapon){
 	qboolean charging;
 	qboolean usable;
-
+	pm->ps->currentSkill[WPSTAT_CHANGED] = -1;
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
 	if(pm->ps->weapon == pm->cmd.weapon){
 		return;
@@ -1996,13 +1996,12 @@ void PM_BeginWeaponChange(int weapon){
 	if(weapon <= WP_NONE || weapon >= WP_NUM_WEAPONS){
 		return;
 	}
-	if(pm->ps->stats[stMeleeState] || pm->ps->timers[tmTransform] || charging){
+	if(pm->ps->stats[stMeleeState] > 2 || pm->ps->timers[tmTransform] || charging){
 		return;
 	}
 	if(!(pm->ps->stats[stSkills] & (1 << weapon))){
 		return;
 	}
-
 	if(pm->ps->weaponstate == WEAPON_DROPPING){
 		return;
 	}
@@ -2024,8 +2023,6 @@ void PM_BeginWeaponChange(int weapon){
 			if(weapon < 1){weapon = 6;}
 		}
 	}
-
-
 	pm->ps->currentSkill[WPSTAT_CHANGED] = 1;
 	pm->ps->weapon = weapon;
 	pm->ps->timers[tmAttack1] = 0;
@@ -2279,43 +2276,51 @@ void PM_StopMelee(void){
 	}
 }
 void PM_CheckDrift(void){
-	if(!pm->ps->lockedPlayer->powerups[PW_DRIFTING] && pm->ps->stats[stMeleeState] & stMeleeUsingSpeed){
-		pm->ps->powerups[PW_DRIFTING] = 1;
-		pm->ps->lockedPlayer->powerups[PW_DRIFTING] = 2;
+	if(pm->ps->lockedPlayer){
+		if(!pm->ps->lockedPlayer->powerups[PW_DRIFTING] && pm->ps->stats[stMeleeState] & stMeleeUsingSpeed){
+			pm->ps->powerups[PW_DRIFTING] = 1;
+			pm->ps->lockedPlayer->powerups[PW_DRIFTING] = 2;
+		}
 	}
 }
 void PM_EndDrift(void){
 	pm->ps->powerups[PW_DRIFTING] = 0;
-	if(pm->ps->lockedTarget > 0){pm->ps->lockedPlayer->powerups[PW_DRIFTING] = 0;}
+	if(pm->ps->lockedTarget > 0){
+		if(pm->ps->lockedPlayer){pm->ps->lockedPlayer->powerups[PW_DRIFTING] = 0;}
+	}
 }
 void PM_StopDrift(void){
 	if(pm->ps->powerups[PW_DRIFTING] == 1){PM_EndDrift();}
 }
 void PM_SyncMelee(void){
-	if(pm->ps->lockedPlayer->bitFlags & usingZanzoken || pm->ps->lockedPlayer->bitFlags & usingZanzoken){return;}
-	pm->ps->pm_flags |= PMF_ATTACK1_HELD;
-	pm->ps->pm_flags |= PMF_ATTACK2_HELD;
-	pm->ps->bitFlags |= usingMelee;
-	pm->ps->bitFlags |= usingFlight;
-	pm->ps->bitFlags &= ~isBlinking;
-	pm->ps->timers[tmUpdateMelee] = 300;
-	pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
-	pm->ps->lockedPlayer->bitFlags |= usingMelee;
-	pm->ps->lockedPlayer->bitFlags |= usingFlight;
-	pm->ps->lockedPlayer->bitFlags &= ~isBlinking;
-	pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
-	if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
-		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
-		pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK2_HELD;
-		pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
-		pm->ps->lockedPlayer->lockedPlayer = 0;
+	if(pm->ps->lockedPlayer){
+		if(pm->ps->lockedPlayer->bitFlags & usingZanzoken || pm->ps->lockedPlayer->bitFlags & usingZanzoken){return;}
+		pm->ps->pm_flags |= PMF_ATTACK1_HELD;
+		pm->ps->pm_flags |= PMF_ATTACK2_HELD;
+		pm->ps->bitFlags |= usingMelee;
+		pm->ps->bitFlags |= usingFlight;
+		pm->ps->bitFlags &= ~isBlinking;
+		pm->ps->timers[tmUpdateMelee] = 300;
+		pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
+		pm->ps->lockedPlayer->bitFlags |= usingMelee;
+		pm->ps->lockedPlayer->bitFlags |= usingFlight;
+		pm->ps->lockedPlayer->bitFlags &= ~isBlinking;
+		pm->ps->lockedPlayer->weaponstate = WEAPON_READY;
+		if(pm->ps->lockedPlayer->stats[stMeleeState] == 0){
+			pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK1_HELD;
+			pm->ps->lockedPlayer->pm_flags |= PMF_ATTACK2_HELD;
+			pm->ps->lockedPlayer->lockedTarget = pm->ps->clientNum + 1;
+			pm->ps->lockedPlayer->lockedPlayer = 0;
+		}
 	}
 }
 void PM_MeleeIdle(void){
 	pm->ps->timers[tmMeleeIdle] += pml.msec;
-	if(pm->ps->timers[tmMeleeIdle] > 1500 && pm->ps->lockedPlayer->timers[tmMeleeIdle] > 1500){
-		pm->ps->powerups[PW_DRIFTING] = 2;
-		pm->ps->lockedPlayer->powerups[PW_DRIFTING] = 2;
+	if(pm->ps->lockedPlayer){
+		if(pm->ps->timers[tmMeleeIdle] > 1500 && pm->ps->lockedPlayer->timers[tmMeleeIdle] > 1500){
+			pm->ps->powerups[PW_DRIFTING] = 2;
+			pm->ps->lockedPlayer->powerups[PW_DRIFTING] = 2;
+		}
 	}
 }
 void PM_Melee(void){
@@ -2335,7 +2340,6 @@ void PM_Melee(void){
 	if(pm->ps->lockedTarget > 0 && !charging){
 		if(pm->ps->timers[tmUpdateMelee] >= 300){
 			pm->ps->timers[tmUpdateMelee] = 0;
-			PM_AddEvent(EV_MELEE_CHECK);
 		}
 		if(pm->ps->bitFlags & usingZanzoken){
 			PM_StopMelee();
@@ -2368,8 +2372,10 @@ void PM_Melee(void){
 	damage = 0;
 	animation = pm->ps->bitFlags & usingMelee ? ANIM_FLY_IDLE : 0;
 	meleeCharge = pm->ps->timers[tmMeleeCharge];
-	enemyState = pm->ps->lockedPlayer->stats[stMeleeState];
-	enemyDefense = enemyState == stMeleeUsingEvade || enemyState == stMeleeUsingBlock ? qtrue : qfalse;
+	if(pm->ps->lockedPlayer){
+		enemyState = pm->ps->lockedPlayer->stats[stMeleeState];
+		enemyDefense = enemyState == stMeleeUsingEvade || enemyState == stMeleeUsingBlock ? qtrue : qfalse;
+	}
 	// ===================
 	// Melee Logic
 	// ===================
@@ -2625,9 +2631,11 @@ void PM_Melee(void){
 	// ===========================
 	// Melee Animations / Events
 	// ===========================
-	enemyChanged = pm->ps->lockedPlayer->stats[stMeleeState] == enemyState ? qfalse : qtrue;
-	if(pm->ps->lockedPlayer->lockedTarget != pm->ps->clientNum + 1 && !enemyChanged){enemyState = -1;}
-	if((pm->ps->lockedPlayer->timers[tmKnockback] || pm->ps->lockedPlayer->timers[tmFreeze]) && !enemyChanged){enemyState = -1;}
+	if(pm->ps->lockedPlayer){
+		enemyChanged = pm->ps->lockedPlayer->stats[stMeleeState] == enemyState ? qfalse : qtrue;
+		if(pm->ps->lockedPlayer->lockedTarget != pm->ps->clientNum + 1 && !enemyChanged){enemyState = -1;}
+		if((pm->ps->lockedPlayer->timers[tmKnockback] || pm->ps->lockedPlayer->timers[tmFreeze]) && !enemyChanged){enemyState = -1;}
+	}
 	if(state){
 		if(state == stMeleeStartAttack){animation = ANIM_BREAKER_MELEE_ATTACK1;}
 		if(state == stMeleeStartHit){animation = ANIM_BREAKER_MELEE_HIT1;}
@@ -2648,13 +2656,15 @@ void PM_Melee(void){
 		}
 		if(state == stMeleeUsingPower || state == stMeleeStartPower || enemyState == stMeleeUsingPower || enemyState == stMeleeStartPower){
 			if(state == stMeleeUsingPower || state == stMeleeStartPower){
-				direction = pm->ps->lockedPlayer->knockBackDirection;
-				if(direction == 1){animation = ANIM_POWER_MELEE_4_HIT;}
-				else if(direction == 2){animation = ANIM_POWER_MELEE_2_HIT;}
-				else if(direction == 3){animation = ANIM_POWER_MELEE_6_HIT;}
-				else if(direction == 4){animation = ANIM_POWER_MELEE_5_HIT;}
-				else if(pm->ps->bitFlags & usingBoost && state != stMeleeStartPower){animation = ANIM_POWER_MELEE_3_HIT;}
-				else{animation = ANIM_POWER_MELEE_1_HIT;}
+				if(pm->ps->lockedPlayer){
+					direction = pm->ps->lockedPlayer->knockBackDirection;
+					if(direction == 1){animation = ANIM_POWER_MELEE_4_HIT;}
+					else if(direction == 2){animation = ANIM_POWER_MELEE_2_HIT;}
+					else if(direction == 3){animation = ANIM_POWER_MELEE_6_HIT;}
+					else if(direction == 4){animation = ANIM_POWER_MELEE_5_HIT;}
+					else if(pm->ps->bitFlags & usingBoost && state != stMeleeStartPower){animation = ANIM_POWER_MELEE_3_HIT;}
+					else{animation = ANIM_POWER_MELEE_1_HIT;}
+				}
 			}
 			else{
 				if(state == stMeleeUsingBlock){animation = ANIM_BLOCK;}
@@ -2671,40 +2681,46 @@ void PM_Melee(void){
 			}
 		}
 		if(state == stMeleeChargingPower){
-			direction = pm->ps->lockedPlayer->knockBackDirection;
-			if(direction == 1){animation = ANIM_POWER_MELEE_4_CHARGE;}
-			else if(direction == 2){animation = ANIM_POWER_MELEE_2_CHARGE;}
-			else if(direction == 3){animation = ANIM_POWER_MELEE_6_CHARGE;}
-			else if(direction == 4){animation = ANIM_POWER_MELEE_5_CHARGE;}
-			else if(pm->ps->bitFlags & usingBoost){animation = ANIM_POWER_MELEE_3_CHARGE;}
-			else{animation = ANIM_POWER_MELEE_1_CHARGE;}
+			if(pm->ps->lockedPlayer){
+				direction = pm->ps->lockedPlayer->knockBackDirection;
+				if(direction == 1){animation = ANIM_POWER_MELEE_4_CHARGE;}
+				else if(direction == 2){animation = ANIM_POWER_MELEE_2_CHARGE;}
+				else if(direction == 3){animation = ANIM_POWER_MELEE_6_CHARGE;}
+				else if(direction == 4){animation = ANIM_POWER_MELEE_5_CHARGE;}
+				else if(pm->ps->bitFlags & usingBoost){animation = ANIM_POWER_MELEE_3_CHARGE;}
+				else{animation = ANIM_POWER_MELEE_1_CHARGE;}
+			}
 		}
 		if(state == stMeleeChargingStun){
 			animation = ANIM_POWER_MELEE_1_CHARGE;
 		}
 		if(state == stMeleeUsingSpeedBreaker || enemyState == stMeleeUsingSpeedBreaker || state == stMeleeUsingChargeBreaker || enemyState == stMeleeUsingChargeBreaker){
 			int breaker = pm->ps->stats[stAnimState];
-			int enemyBreaker = pm->ps->lockedPlayer->stats[stAnimState];
-			if(state == stMeleeUsingSpeedBreaker || state == stMeleeUsingChargeBreaker){
-				if(breaker == 1){animation = ANIM_BREAKER_MELEE_ATTACK1;}
-				else if(breaker == 2){animation = ANIM_BREAKER_MELEE_ATTACK2;}
-				else if(breaker == 3){animation = ANIM_BREAKER_MELEE_ATTACK3;}
-				else if(breaker == 4){animation = ANIM_BREAKER_MELEE_ATTACK4;}
-				else if(breaker == 5){animation = ANIM_BREAKER_MELEE_ATTACK5;}
-				else if(breaker == 6){animation = ANIM_BREAKER_MELEE_ATTACK6;}
-			}
-			else{
-				if(enemyBreaker == 1){animation = ANIM_BREAKER_MELEE_HIT1;}
-				else if(enemyBreaker == 2){animation = ANIM_BREAKER_MELEE_HIT2;}
-				else if(enemyBreaker == 3){animation = ANIM_BREAKER_MELEE_HIT3;}
-				else if(enemyBreaker == 4){animation = ANIM_BREAKER_MELEE_HIT4;}
-				else if(enemyBreaker == 5){animation = ANIM_BREAKER_MELEE_HIT5;}
-				else if(enemyBreaker == 6){animation = ANIM_BREAKER_MELEE_HIT6;}
+			if(pm->ps->lockedPlayer){
+				int enemyBreaker = pm->ps->lockedPlayer->stats[stAnimState];
+				if(state == stMeleeUsingSpeedBreaker || state == stMeleeUsingChargeBreaker){
+					if(breaker == 1){animation = ANIM_BREAKER_MELEE_ATTACK1;}
+					else if(breaker == 2){animation = ANIM_BREAKER_MELEE_ATTACK2;}
+					else if(breaker == 3){animation = ANIM_BREAKER_MELEE_ATTACK3;}
+					else if(breaker == 4){animation = ANIM_BREAKER_MELEE_ATTACK4;}
+					else if(breaker == 5){animation = ANIM_BREAKER_MELEE_ATTACK5;}
+					else if(breaker == 6){animation = ANIM_BREAKER_MELEE_ATTACK6;}
+				}
+				else{
+					if(enemyBreaker == 1){animation = ANIM_BREAKER_MELEE_HIT1;}
+					else if(enemyBreaker == 2){animation = ANIM_BREAKER_MELEE_HIT2;}
+					else if(enemyBreaker == 3){animation = ANIM_BREAKER_MELEE_HIT3;}
+					else if(enemyBreaker == 4){animation = ANIM_BREAKER_MELEE_HIT4;}
+					else if(enemyBreaker == 5){animation = ANIM_BREAKER_MELEE_HIT5;}
+					else if(enemyBreaker == 6){animation = ANIM_BREAKER_MELEE_HIT6;}
+				}
 			}
 		}
 	}
 	if(animation){PM_ContinueLegsAnim(animation);}
-	if(enemyState != -1){pm->ps->lockedPlayer->stats[stMeleeState] = enemyState;}
+	if(enemyState != -1){
+		if(pm->ps->lockedPlayer){pm->ps->lockedPlayer->stats[stMeleeState] = enemyState;}
+	}
 	pm->ps->stats[stMeleeState] = state;
 	pm->ps->timers[tmMeleeCharge] = meleeCharge;
 	if(distance <= 64){pm->cmd.rightmove = 0;}
@@ -2741,42 +2757,16 @@ void PM_CheckWeaponSelectionMode(void)
 {
 	int weaponIndex;
 	int originalWeaponIndex = pm->cmd.weapon;
-
-	switch(pm->cmd.weaponSelectionMode)
-	{
-	case 0:
-		return;
-	case 1:
-			for ( weaponIndex = 0 ; weaponIndex < 16 ; weaponIndex++ ) {
-				pm->cmd.weapon--;
-				if ( pm->cmd.weapon == 0 ) {
-					pm->cmd.weapon = 15;
-				}
-				if ( PM_WeaponSelectable( pm->cmd.weapon ) ) {
-					break;
-				}
-			}
-			if ( weaponIndex == 16 ) {
-				pm->cmd.weapon = originalWeaponIndex;
-			}
-		return;
-	case 2:
-			for ( weaponIndex = 0 ; weaponIndex < 16 ; weaponIndex++ ) {
-				pm->cmd.weapon++;
-					if ( pm->cmd.weapon == 16 ) {
-						pm->cmd.weapon = 0;
-					}
-					if ( PM_WeaponSelectable( pm->cmd.weapon ) ) {
-						break;
-					}
-			}
-			if ( weaponIndex == 16 ) {
-				pm->cmd.weapon = originalWeaponIndex;
-			}
-		return;
-	default: return;
+	int offset = 0;
+	if(pm->cmd.weaponSelectionMode == 1){offset = -1;}
+	if(pm->cmd.weaponSelectionMode == 2){offset = 1;}
+	for(weaponIndex = 0;weaponIndex < 16;weaponIndex++){
+		pm->cmd.weapon += offset;
+		if(pm->cmd.weapon == 0){pm->cmd.weapon = 15;}
+		if(pm->cmd.weapon == 16){pm->cmd.weapon = 0;}
+		if(PM_WeaponSelectable(pm->cmd.weapon)){break;}
 	}
-
+	if(weaponIndex == 16){pm->cmd.weapon = originalWeaponIndex;}
 }
 
 void PM_WeaponRelease(void){
@@ -2799,34 +2789,25 @@ void PM_Weapon(void){
 	qboolean usable;
 	float powerScale = ((float)pm->ps->powerLevel[plCurrent] / 1000.0) * pm->ps->baseStats[stEnergyAttack];
 	pm->ps->currentSkill[WPSTAT_CHANGED] = 0;
-
-	if(pm->ps->powerLevel[plTierChanged] == 1)
-	{
-		if(!PM_WeaponSelectable(pm->cmd.weapon))
-		{
-			for(i = 6; i > 0; i--)
-			{
-				if(PM_WeaponSelectable(i))
-				{
+	if(pm->ps->powerLevel[plTierChanged] == 1){
+		if(!PM_WeaponSelectable(pm->cmd.weapon)){
+			for(i = 6; i > 0; i--){
+				if(PM_WeaponSelectable(i)){
 					pm->cmd.weapon = i;
 					break;
 				}
 			}
 		}
 	}
-	else
-	{
+	else{
 		PM_CheckWeaponSelectionMode();
-		if(!PM_WeaponSelectable(pm->cmd.weapon))
-		{
-			return;
-		}
+		if(!PM_WeaponSelectable(pm->cmd.weapon)) { return; }
 	}
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
 	if(pm->ps->bitFlags & isStruggling || pm->ps->bitFlags & usingSoar
 		|| pm->ps->bitFlags & isPreparing || pm->ps->timers[tmTransform] > 1 || pm->ps->bitFlags & usingMelee
-		|| (pm->ps->lockedTarget && pm->ps->lockedPlayer->timers[tmKnockback] && VectorLength(pm->ps->velocity))){
+		|| (pm->ps->lockedPlayer && pm->ps->lockedTarget && pm->ps->lockedPlayer->timers[tmKnockback] && VectorLength(pm->ps->velocity))){
 		if(pm->ps->timers[tmTransform] > 1 || pm->ps->bitFlags & usingMelee){PM_WeaponRelease();}
 		return;
 	}
@@ -2835,7 +2816,9 @@ void PM_Weapon(void){
 		PM_WeaponRelease();
 		return;
 	}
-	if(pm->ps->lockedTarget && pm->ps->lockedPlayer->timers[tmKnockback] && VectorLength(pm->ps->velocity)){return;}
+	if(pm->ps->lockedPlayer){
+		if(pm->ps->lockedTarget && pm->ps->lockedPlayer->timers[tmKnockback] && VectorLength(pm->ps->velocity)){return;}
+	}
 	if(pm->ps->pm_flags & PMF_ATTACK1_HELD){
 		if(!(pm->cmd.buttons & BUTTON_ATTACK)){pm->ps->pm_flags &= ~PMF_ATTACK1_HELD;}
 		else{return;}
@@ -3071,10 +3054,12 @@ void PM_CheckLockon(void){
 		return;
 	}
 	if(pm->ps->lockedTarget > 0){
-		pm->ps->lockedPlayerData[lkPowerCurrent] = pm->ps->lockedPlayer->powerLevel[plCurrent];
-		pm->ps->lockedPlayerData[lkPowerHealth] = pm->ps->lockedPlayer->powerLevel[plHealth];
-		pm->ps->lockedPlayerData[lkPowerMaximum] = pm->ps->lockedPlayer->powerLevel[plMaximum];
-		pm->ps->lockedPlayer->bitFlags |= isTargeted;
+		if(pm->ps->lockedPlayer){
+			pm->ps->lockedPlayerData[lkPowerCurrent] = pm->ps->lockedPlayer->powerLevel[plCurrent];
+			pm->ps->lockedPlayerData[lkPowerHealth] = pm->ps->lockedPlayer->powerLevel[plHealth];
+			pm->ps->lockedPlayerData[lkPowerMaximum] = pm->ps->lockedPlayer->powerLevel[plMaximum];
+			pm->ps->lockedPlayer->bitFlags |= isTargeted;
+		}
 	}
 	if(pm->cmd.buttons & BUTTON_GESTURE && pm->ps->stats[stMeleeState] == 0){
 		if(pm->ps->pm_flags & PMF_LOCK_HELD){return;}
@@ -3083,6 +3068,7 @@ void PM_CheckLockon(void){
 			PM_StopLockon();
 			return;
 		}
+		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
 		VectorMA(pm->ps->origin,131072,forward,end);
 		lockBox = 250;
 		minSize[0] = -lockBox;
@@ -3092,7 +3078,7 @@ void PM_CheckLockon(void){
 		maxSize[1] = -minSize[1];
 		maxSize[2] = -minSize[2];
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
-		if((trace.entityNum >= MAX_CLIENTS)){return;}
+		if((trace.entityNum >= MAX_CLIENTS)){ return; }
 		PM_AddEvent(EV_LOCKON_START);
 		pm->ps->lockedTarget = trace.entityNum+1;
 	}

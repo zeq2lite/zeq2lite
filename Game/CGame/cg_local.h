@@ -646,9 +646,9 @@ typedef struct {
 	int			weaponSelect;
 	int			weaponDesired;
 	byte		weaponChanged;
-	byte		weaponSelectionMode; // 0 means weapon directly selected; 1 means previous weapon; 2 means next weapon
+	byte		weaponSelectionMode; // 0 means no change; 1 means previous weapon; 2 means next weapon; 3 means weapon directly selected
 	int			tierSelect;
-	byte		tierSelectionMode; //0 means tier directly selected; 1 means previous tier; 2 means next tier
+	byte		tierSelectionMode; //0 means no change; 1 means previous tier; 2 means next tier; 3 means tier directly selected
 	int			tierCurrent;
 
 	// auto rotating items
