@@ -1321,8 +1321,8 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	switch ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) ){
 		default:
-			CG_SwingAngles( torsoAngles[YAW], 25, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-			CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+			CG_SwingAngles( torsoAngles[YAW], 25, 90, 1, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
+			CG_SwingAngles( legsAngles[YAW], 40, 90, 1, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
 			break;
 		case ANIM_IDLE:
 		case ANIM_FLY_IDLE:
@@ -1331,8 +1331,8 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 			break;
 		case ANIM_SWIM_IDLE:
 			if(((&cg.predictedPlayerState)->weaponstate != WEAPON_READY || cent->currentState.weaponstate != WEAPON_READY)){
-				CG_SwingAngles( torsoAngles[YAW], 25, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-				CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+				CG_SwingAngles( torsoAngles[YAW], 25, 90, 1, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
+				CG_SwingAngles( legsAngles[YAW], 40, 90, 1, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
 			}
 			break;
 	}

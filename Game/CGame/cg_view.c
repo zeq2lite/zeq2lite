@@ -284,11 +284,12 @@ CG_Camera
 #define	NECK_LENGTH		8
 #define CAMERA_BOUNDS	25
 vec3_t cameraCurLoc;
+vec3_t cameraCurAng;
 int cameraLastFrame;
 void CG_Camera(centity_t *cent ){
 	static vec3_t	cameramins = { -CAMERA_SIZE, -CAMERA_SIZE, -CAMERA_SIZE };
 	static vec3_t	cameramaxs = { CAMERA_SIZE, CAMERA_SIZE, CAMERA_SIZE };
-	vec3_t			view, right, forward, up, overrideAngles, overrideOrg, focusAngles, focusPoint, tagForwardAngles, locdiff;
+	vec3_t			view, right, forward, up, overrideAngles, overrideOrg, focusAngles, focusPoint, tagForwardAngles, locdiff, angdiff, diff;
 	int 			i,clientNum,cameraRange,cameraAngle,cameraSlide,cameraHeight;
 	float			lerpFactor = 0.0, lerpTime, ratio, forwardScale, sideScale, focusDist;
 	orientation_t	tagOrient,tagOrient2;
@@ -324,19 +325,23 @@ void CG_Camera(centity_t *cent ){
 	}
 	else if(cg_thirdPersonCamera.value >= 1){
 		if(CG_GetTagOrientationFromPlayerEntity(cent, "tag_cam", &tagOrient)){
-			if(CG_GetTagOrientationFromPlayerEntity(cent, "tag_camTar", &tagOrient2)){
-				VectorSubtract(tagOrient2.origin, tagOrient.origin, forward);
-				VectorNormalize(forward);
-				vectoangles(forward, tagForwardAngles);
-				cg.refdefViewAngles[YAW] = tagForwardAngles[YAW];
-				cg.refdefViewAngles[PITCH] = tagForwardAngles[PITCH];
-			}
 			if(!cent->pe.camera.animation->continuous){
 				VectorCopy(cent->lerpOrigin,tagOrient.origin);
 				tagOrient.origin[2] += cg.predictedPlayerState.viewheight;
 			}
-			else if((cg_beamControl.value == 0) && ((cent->currentState.weaponstate == WEAPON_GUIDING) 
-				|| (cent->currentState.weaponstate == WEAPON_ALTGUIDING) ) && (cg.guide_view)){
+			else if(!((cent->currentState.weaponstate == WEAPON_GUIDING) 
+				|| (cent->currentState.weaponstate == WEAPON_ALTGUIDING)
+				|| (cent->currentState.playerBitFlags & usingSoar))){
+					if(CG_GetTagOrientationFromPlayerEntity(cent, "tag_camTar", &tagOrient2)){
+					VectorSubtract(tagOrient2.origin, tagOrient.origin, forward);
+					VectorNormalize(forward);
+					vectoangles(forward, tagForwardAngles);
+					cg.refdefViewAngles[YAW] = tagForwardAngles[YAW];
+					cg.refdefViewAngles[PITCH] = tagForwardAngles[PITCH];
+				}
+			}
+			if((cg_beamControl.value == 0) && ((cent->currentState.weaponstate == WEAPON_GUIDING) 
+				|| (cent->currentState.weaponstate == WEAPON_ALTGUIDING)) && (cg.guide_view)){
 					float oldRoll;
 					VectorSubtract(cg.guide_target, tagOrient.origin, forward);
 					VectorNormalize(forward);
@@ -366,26 +371,34 @@ void CG_Camera(centity_t *cent ){
 			CG_Trace(&trace, cg.refdef.vieworg, cameramins, cameramaxs, view, clientNum, MASK_CAMERACLIP);
 			if(trace.fraction != 1.0){VectorCopy(trace.endpos, cg.refdef.vieworg);}
 			else{VectorCopy(view, cg.refdef.vieworg);}
-			if(cent->currentState.playerBitFlags & usingSoar/*
-				|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_IDLE
-				|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_FLY_IDLE
-				|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == ANIM_SWIM_IDLE*/){
+			if((cent->currentState.playerBitFlags & usingSoar) || (cg_thirdPersonCamera.value >= 5)){
 				if(cameraLastFrame == 0 || cameraLastFrame > cg.time){
 					VectorCopy(cg.refdef.vieworg, cameraCurLoc);
 					cameraLastFrame = cg.time;
 				}
 				else{
 					if(cg_thirdPersonCameraDamp.value != 0.0){lerpFactor = cg_thirdPersonCameraDamp.value;}
-					if(lerpFactor>=1.0
-						|| cg.thisFrameTeleport
-						|| cent->currentState.playerBitFlags & usingZanzoken){VectorCopy(cg.refdef.vieworg, cameraCurLoc);}
+					if(lerpFactor>=1.0 || cg.thisFrameTeleport || cent->currentState.playerBitFlags & usingZanzoken){
+							VectorCopy(cg.refdef.vieworg, cameraCurLoc);
+					}
 					else if(lerpFactor>=0.0){
 						VectorSubtract(cg.refdef.vieworg, cameraCurLoc, locdiff);
 						lerpFactor = 1.0-lerpFactor;
 						VectorMA(cg.refdef.vieworg, -lerpFactor, locdiff, cameraCurLoc);
 					}
 					CG_Trace(&trace, cg.refdef.vieworg, cameramins, cameramaxs, cameraCurLoc, cg.snap->ps.clientNum, MASK_CAMERACLIP);
-					if (trace.fraction < 1.0){VectorCopy( trace.endpos, cameraCurLoc );}
+					if(trace.fraction < 1.0){VectorCopy( trace.endpos, cameraCurLoc );}
+				}
+				if(cg_thirdPersonCamera.value >= 6){
+					VectorMA(view, 500, forward, cameraCurAng);
+					VectorSubtract(cameraCurAng, cameraCurLoc, diff);
+					{
+						float dist = VectorNormalize(diff);
+						if(!dist || (diff[0] == 0 || diff[1] == 0)){
+							VectorCopy( forward, diff );
+						}
+					}
+					vectoangles(diff, cg.refdefViewAngles);
 				}
 				VectorCopy(cameraCurLoc, cg.refdef.vieworg);
 				cameraLastFrame = cg.time;

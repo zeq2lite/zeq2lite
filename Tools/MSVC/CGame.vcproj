@@ -773,6 +773,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\CGame\cg_tiers.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\CGame\cg_userweapons.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\CGame\cg_weapGfxParser.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Shared\q_shared.h"
 				>
 			</File>

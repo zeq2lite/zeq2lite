@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="Engine"
 	ProjectGUID="{81CB51C4-B434-4E12-B69B-BAEE102F2852}"
 	TargetFrameworkVersion="131072"
@@ -1360,10 +1360,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Engine\renderer\qgl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Engine\win32\resource.h"
 				>
 			</File>
@@ -1841,126 +1837,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Engine\botlib\l_utils.h"
-					>
-				</File>
-			</Filter>
-		</Filter>
-		<Filter
-			Name="renderer"
-			>
-			<Filter
-				Name="Source Files"
-				>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_animation.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_backend.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_bsp.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_cmds.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_curve.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_flares.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_font.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_image.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_image_bmp.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_image_jpg.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_image_pcx.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_image_png.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_image_tga.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_init.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_light.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_main.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_marks.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_mesh.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_model.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_noise.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_scene.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_shade.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_shade_calc.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_shader.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_shadows.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_sky.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_surface.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Engine\renderer\tr_world.c"
 					>
 				</File>
 			</Filter>
