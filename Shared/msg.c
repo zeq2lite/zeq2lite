@@ -1256,7 +1256,6 @@ netField_t	playerStateFields[] =
 { PSF(states), 32 },
 { PSF(options), 32 },
 { PSF(attackPower), 32 },
-{ PSF(lastLockedPlayer), 32 },
 };
 
 /*
