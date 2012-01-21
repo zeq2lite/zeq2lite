@@ -735,9 +735,9 @@ static void CG_DrawStatusBar( void ) {
 	if(ps->lockedTarget > 0 && cgs.clientinfo[ps->lockedTarget-1].infoValid){
 		playerState_t lockedTargetPS;
 		lockedTargetPS.clientNum = ps->lockedTarget-1;
-		lockedTargetPS.powerLevel[plCurrent] = ps->lockedPlayerData[lkPowerCurrent];
-		lockedTargetPS.powerLevel[plHealth] = ps->lockedPlayerData[lkPowerHealth];
-		lockedTargetPS.powerLevel[plMaximum] = ps->lockedPlayerData[lkPowerMaximum];
+		lockedTargetPS.powerLevel[plCurrent] = ps->lockonData[lkPowerCurrent];
+		lockedTargetPS.powerLevel[plHealth] = ps->lockonData[lkPowerHealth];
+		lockedTargetPS.powerLevel[plMaximum] = ps->lockonData[lkPowerMaximum];
 		lockedTargetPS.powerLevel[plFatigue] = lockedTargetPS.powerLevel[plMaximum];
 		lockedTargetPS.powerLevel[plTierCurrent] = cgs.clientinfo[lockedTargetPS.clientNum].tierCurrent;
 		CG_DrawHUD(ps,ps->clientNum,0,0,qfalse);

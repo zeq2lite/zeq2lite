@@ -3044,46 +3044,96 @@ void PM_StopLockon(void){
 	}
 	pm->ps->lockedPosition = NULL;
 	pm->ps->lockedTarget = 0;
+	pm->ps->timers[tmLockon] = 0;
+	pm->ps->lockonData[lkLastLockedPlayer] = -1;
+	pm->ps->lockedPlayer = NULL;
 }
-void PM_CheckLockon(void){
-	int	lockBox;
+
+int PM_VerifyTrace(int lockBoxSize)
+{
+	int entityNum = -1;
+	int baseLockBoxValue = 1;
 	trace_t	trace;
-	vec3_t minSize,maxSize,forward,up,end;
+	vec3_t minSize,maxSize,forward,end;
+	AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
+	VectorMA(pm->ps->origin,131072,forward,end);
+	minSize[0] = -lockBoxSize;
+	minSize[1] = -lockBoxSize;
+	minSize[2] = -baseLockBoxValue;
+	maxSize[0] = lockBoxSize;
+	maxSize[1] = lockBoxSize;
+	maxSize[2] = baseLockBoxValue;
+	pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
+	if((trace.entityNum >= MAX_CLIENTS)) {
+		minSize[0] = -baseLockBoxValue;
+		minSize[2] = -lockBoxSize;
+		maxSize[0] = baseLockBoxValue;
+		maxSize[2] = lockBoxSize;
+		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
+		if((trace.entityNum >= MAX_CLIENTS)) {
+			minSize[0] = -lockBoxSize;
+			minSize[1] = -baseLockBoxValue;
+			maxSize[0] = lockBoxSize;
+			maxSize[1] = baseLockBoxValue;
+			pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
+			if((trace.entityNum < MAX_CLIENTS)) { entityNum = trace.entityNum; }
+		}
+		else { entityNum = trace.entityNum; }
+	}
+	else { entityNum = trace.entityNum; }
+	return entityNum;
+}
+
+void PM_CheckLockon(void){
+	int	entityNum = -1;
+
 	if(!(pm->ps->options & canLockon)){
 		PM_StopLockon();
 		return;
 	}
 	if(pm->ps->lockedTarget > 0){
 		if(pm->ps->lockedPlayer){
-			pm->ps->lockedPlayerData[lkPowerCurrent] = pm->ps->lockedPlayer->powerLevel[plCurrent];
-			pm->ps->lockedPlayerData[lkPowerHealth] = pm->ps->lockedPlayer->powerLevel[plHealth];
-			pm->ps->lockedPlayerData[lkPowerMaximum] = pm->ps->lockedPlayer->powerLevel[plMaximum];
+			pm->ps->lockonData[lkPowerCurrent] = pm->ps->lockedPlayer->powerLevel[plCurrent];
+			pm->ps->lockonData[lkPowerHealth] = pm->ps->lockedPlayer->powerLevel[plHealth];
+			pm->ps->lockonData[lkPowerMaximum] = pm->ps->lockedPlayer->powerLevel[plMaximum];
 			pm->ps->lockedPlayer->bitFlags |= isTargeted;
+
 		}
 	}
-	if(pm->cmd.buttons & BUTTON_GESTURE && pm->ps->stats[stMeleeState] == 0){
+	if((pm->cmd.buttons & BUTTON_GESTURE) && pm->ps->stats[stMeleeState] == 0 && !(pm->ps->bitFlags & usingSoar)){
 		if(pm->ps->pm_flags & PMF_LOCK_HELD){return;}
 		pm->ps->pm_flags |= PMF_LOCK_HELD;
 		if(pm->ps->lockedTarget>0){
 			PM_StopLockon();
 			return;
 		}
-		AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
-		VectorMA(pm->ps->origin,131072,forward,end);
-		lockBox = 250;
-		minSize[0] = -lockBox;
-		minSize[1] = -lockBox;
-		minSize[2] = -lockBox;
-		maxSize[0] = -minSize[0];
-		maxSize[1] = -minSize[1];
-		maxSize[2] = -minSize[2];
-		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,CONTENTS_BODY);
-		if((trace.entityNum >= MAX_CLIENTS)){ return; }
+		entityNum = PM_VerifyTrace(250);
+		if(entityNum == -1){ return; }
 		PM_AddEvent(EV_LOCKON_START);
-		pm->ps->lockedTarget = trace.entityNum+1;
+		pm->ps->lockedTarget = entityNum+1;
+		pm->ps->timers[tmLockon] = 0;
+		pm->ps->lockonData[lkLastLockedPlayer] = -1;
 	}
 	else{
 		pm->ps->pm_flags &= ~PMF_LOCK_HELD;
+	}
+	if(pm->ps->lockonData[lkLastLockedPlayer] != -1) {
+		pm->ps->timers[tmLockon] += pml.msec;
+		if(pm->ps->timers[tmLockon] < 3000) {
+			entityNum = PM_VerifyTrace(2500);
+			if(entityNum > -1 && pm->ps->lockedPlayer && !(pm->ps->lockedPlayer->bitFlags & usingZanzoken)){
+				if(entityNum == pm->ps->lockonData[lkLastLockedPlayer] ) {
+					pm->ps->lockonData[lkLastLockedPlayer] = -1;
+					pm->ps->lockedTarget = entityNum+1;
+					pm->ps->timers[tmLockon] = 0;
+					pm->ps->lockedPlayer = 0;
+					PM_AddEvent(EV_LOCKON_RESTART);
+				}
+			}
+		}
+		else {
+			PM_StopLockon();
+		}
 	}
 }
 /*

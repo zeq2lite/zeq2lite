@@ -265,7 +265,7 @@ typedef enum{
 	stTransformSubsequentDuration,
 	stTransformSubsequentFatigueScale,
 	stTransformSubsequentHealthScale,
-	stTransformSubsequentMaximumScale
+	stTransformSubsequentMaximumScale,
 }baseStats_t;
 typedef enum{
 	plCurrent,
@@ -297,7 +297,8 @@ typedef enum{
 	lkPowerCurrent,
 	lkPowerHealth,
 	lkPowerMaximum,
-	lkAttackPower
+	lkAttackPower,
+	lkLastLockedPlayer
 }lockedStat_t;
 typedef enum{
 	tmUpdateTier,
@@ -330,7 +331,8 @@ typedef enum{
 	tmSoar,
 	tmFall,
 	tmSafe,
-	tmOnGround
+	tmOnGround,
+	tmLockon
 }timers_t;
 typedef enum{
 	cdLockon
@@ -367,7 +369,8 @@ typedef enum {
 	mtBoost,
 	mtZanzoken,
 	mtZanzokenDistance,
-	mtDrifting
+	mtDrifting,
+
 }measureTimers_t;
 typedef enum {
 	bfZanzokenCost
@@ -600,6 +603,7 @@ typedef enum {
 	EV_DEBUG_LINE,
 	EV_STOPLOOPINGSOUND,
 	EV_LOCKON_START,
+	EV_LOCKON_RESTART,
 	EV_LOCKON_END,
 	EV_STUNNED,
 	EV_BLOCK,

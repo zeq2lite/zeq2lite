@@ -1256,6 +1256,7 @@ netField_t	playerStateFields[] =
 { PSF(states), 32 },
 { PSF(options), 32 },
 { PSF(attackPower), 32 },
+{ PSF(lastLockedPlayer), 32 },
 };
 
 /*
@@ -1350,7 +1351,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 	}
 	lockedbits = 0;
 	for (i=0 ; i<MAX_LOCKED_STATS ; i++) {
-		if (to->lockedPlayerData[i] != from->lockedPlayerData[i]) {
+		if (to->lockonData[i] != from->lockonData[i]) {
 			lockedbits |= 1<<i;
 		}
 	}
@@ -1438,7 +1439,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, struct playerState_s *from, struct p
 		MSG_WriteBits( msg, lockedbits, MAX_LOCKED_STATS );
 		for (i=0 ; i<MAX_LOCKED_STATS ; i++)
 			if (lockedbits & (1<<i) )
-				MSG_WriteShort (msg, to->lockedPlayerData[i]);
+				MSG_WriteShort (msg, to->lockonData[i]);
 	} else {
 		MSG_WriteBits( msg, 0, 1 );	// no change
 	}
@@ -1645,7 +1646,7 @@ void MSG_ReadDeltaPlayerstate (msg_t *msg, playerState_t *from, playerState_t *t
 			bits = MSG_ReadBits (msg, MAX_LOCKED_STATS);
 			for (i=0 ; i<MAX_LOCKED_STATS ; i++) {
 				if (bits & (1<<i) ) {
-					to->lockedPlayerData[i] = MSG_ReadShort(msg);
+					to->lockonData[i] = MSG_ReadShort(msg);
 				}
 			}
 		}

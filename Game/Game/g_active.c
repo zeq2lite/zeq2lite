@@ -396,6 +396,8 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 		case EV_LOCKON_START:
 			break;
+		case EV_LOCKON_RESTART:
+			break;
 		case EV_LOCKON_END:
 			break;
 		case EV_DEATH:
@@ -489,22 +491,33 @@ void G_CheckSafety(vec3_t origin,playerState_t *ps){
 
 void LockonCheck(gclient_t	*client)
 {
+	int entityNum = -1;
 	playerState_t *ps;
 	ps = &client->ps;
 	if(ps->lockedTarget>0){
 		if(!&g_entities[ps->lockedTarget-1].client || &g_entities[ps->lockedTarget-1].client->pers.connected == CON_DISCONNECTED){
+			ps->lockonData[lkLastLockedPlayer] = -1;
 			ps->lockedPosition = 0;
 			ps->lockedPlayer = 0;
 			ps->lockedTarget = 0;
 			return;
 		}
 		if( ps->lockedPlayer){
+			ps->timers[tmLockon] += pml.msec;
 			if( ps->lockedPlayer->bitFlags & isTransforming || ps->lockedPlayer->bitFlags & isStruggling || ps->lockedPlayer->bitFlags & isDead ||
 					ps->lockedPlayer->bitFlags & isUnconcious || ps->lockedPlayer->bitFlags & isCrashed ){
 				ps->lockedPosition = 0;
 				ps->lockedPlayer = 0;
 				ps->lockedTarget = 0;
 				return;
+			}
+			entityNum = PM_VerifyTrace(250);
+			if(!(ps->bitFlags & usingZanzoken) && ps->lockedPlayer && ((entityNum == -1) || ps->lockedPlayer->bitFlags & usingZanzoken)){
+					ps->lockonData[lkLastLockedPlayer] = ps->lockedPlayer->clientNum;
+					ps->lockedPosition = 0;
+					ps->lockedTarget = 0;
+					ps->timers[tmLockon] = 0;
+					return;
 			}
 		}
 		ps->lockedPosition = &g_entities[ps->lockedTarget-1].r.currentOrigin;

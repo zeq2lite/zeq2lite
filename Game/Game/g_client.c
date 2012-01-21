@@ -437,6 +437,7 @@ void ClientRespawn( gentity_t *ent ) {
 	ent->client->ps.powerLevel[plTierCurrent] = 0;
 	ent->client->ps.powerLevel[plTierDesired] = 0;
 	ent->client->ps.powerLevel[plTierChanged] = 2;
+	ent->client->ps.lockonData[lkLastLockedPlayer] = -1;
 
 	// add a teleportation effect
 	tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
@@ -770,6 +771,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	client->ps.powerLevel[plTierCurrent] = 0;
 	client->ps.powerLevel[plTierDesired] = 0;
 	client->ps.powerLevel[plTierChanged] = 2;
+	client->ps.lockonData[lkLastLockedPlayer] = -1;
 
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
 	if(shouldRespawn==1){ClientRespawn(ent);}
@@ -1051,6 +1053,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.powerLevel[plTierTotal] = 0;
 	client->ps.powerLevel[plTierDesired] = 0;
 	client->ps.powerLevel[plTierChanged] = 2;
+	client->ps.lockonData[lkLastLockedPlayer] = -1;
 
 	if(g_powerlevel.value > 32767){
 		g_powerlevel.value = 32767;

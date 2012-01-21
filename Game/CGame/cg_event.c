@@ -337,6 +337,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "taunt" ));
 		}
 		break;
+	case EV_LOCKON_RESTART:
+		DEBUGNAME("EV_LOCKON_RESTART");
+		ci->lockStartTimer = cg.time + 800;
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.lockonStart);
+		break;
 	case EV_LOCKON_END:
 		DEBUGNAME("EV_LOCKON_END");
 		break;

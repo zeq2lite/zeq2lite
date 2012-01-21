@@ -1172,7 +1172,7 @@ typedef struct playerState_s {
 	int			rolling;
 	int			running;
 	int			lockedTarget;
-	int			lockedPlayerData[MAX_LOCKED_STATS];
+	int			lockonData[MAX_LOCKED_STATS];
 	playerState *lockedPlayer;
 	vec3_t		*lockedPosition;
 	vec3_t		soarLimit;
