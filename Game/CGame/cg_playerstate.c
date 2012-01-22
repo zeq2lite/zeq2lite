@@ -299,19 +299,12 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 
 	cg.tierSelectionMode = 0;
 	cg.tierSelect = -1;
-	if(cg.weaponSelectionMode == 2)	{
-		cg.weaponSelectionMode = 0;
-		cg.weaponSelect++;
-	}
-	else if(cg.weaponSelectionMode == 1)	{
-		cg.weaponSelectionMode = 0;
-		cg.weaponSelect--;
-	}
+	cg.weaponSelectionMode = 0;
+	cg.weaponChanged = 0;
 	if(ps->currentSkill[WPSTAT_CHANGED] != 0) {
 		//If the server validated a weapon change, changes it
 		cg.weaponDesired = -1;
 		cg.weaponSelectionMode = 0;
-		cg.weaponChanged = 0;
 		cg.weaponSelect = ps->weapon;
 		if(ps->currentSkill[WPSTAT_CHANGED] == 1) {
 			cg.drawWeaponBar = 1;

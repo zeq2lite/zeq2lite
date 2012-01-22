@@ -569,7 +569,6 @@ void PM_CheckContextOperations(void)
 		{
 			pm->ps->powerLevel[plTierSelectionMode] = 0;
 			pm->cmd.weaponChange = 0;
-
 			pm->cmd.tier = pm->cmd.weapon- 1;
 			pm->cmd.weapon = pm->ps->weapon;
 			pm->cmd.tierSelectionMode = pm->cmd.weaponSelectionMode;
@@ -2801,7 +2800,10 @@ void PM_Weapon(void){
 	}
 	else{
 		PM_CheckWeaponSelectionMode();
-		if(!PM_WeaponSelectable(pm->cmd.weapon)) { return; }
+		if(!PM_WeaponSelectable(pm->cmd.weapon)) {
+			pm->ps->currentSkill[WPSTAT_CHANGED] = -1;
+			return;
+		}
 	}
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}

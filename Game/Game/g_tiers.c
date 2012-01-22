@@ -47,26 +47,26 @@ qboolean checkTierUpTransformation(gclient_t *client, int nextTierIndex, int cur
 	ps = &client->ps;
 	if(tierChangeMode > 1 )	{
 		if(nextTierIndex > -1 && ((nextTierIndex) < 8) && (client->tiers[nextTierIndex].exists)){
-				nextTier = &client->tiers[nextTierIndex];
-				currentTier = &client->tiers[currentTierIndex];
-				hasRequirementsToTransform =
-						   (((ps->powerLevel[plCurrent] >= nextTier->requirementCurrent)  &&
-						   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
-						   ((ps->powerLevel[plMaximum] >= nextTier->requirementCurrent)  &&
-						   (ps->powerLevel[plMaximum] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
-						   tierChangeMode == 3))  &&
-						   (ps->powerLevel[plFatigue] >= nextTier->requirementFatigue) &&
-						   (ps->powerLevel[plHealth]  >= nextTier->requirementHealth) &&
-						   (ps->powerLevel[plHealth]  <= nextTier->requirementHealthMaximum / 100.0f * ps->powerLevel[plMaximum]) &&
-						   (ps->powerLevel[plMaximum] >= nextTier->requirementMaximum) &&
-						   (((ps->powerLevel[plCurrent] >= nextTier->sustainCurrent) &&
-						   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
-						   ((ps->powerLevel[plMaximum] >= nextTier->sustainCurrent) &&
-						   (ps->powerLevel[plMaximum] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
-						   tierChangeMode == 0)) &&
-						   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
-						   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
-						   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum);
+			nextTier = &client->tiers[nextTierIndex];
+			currentTier = &client->tiers[currentTierIndex];
+			hasRequirementsToTransform =
+					   (((ps->powerLevel[plCurrent] >= nextTier->requirementCurrent)  &&
+					   (ps->powerLevel[plCurrent] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
+					   ((ps->powerLevel[plMaximum] >= nextTier->requirementCurrent)  &&
+					   (ps->powerLevel[plMaximum] >= nextTier->requirementCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
+					   tierChangeMode == 3))  &&
+					   (ps->powerLevel[plFatigue] >= nextTier->requirementFatigue) &&
+					   (ps->powerLevel[plHealth]  >= nextTier->requirementHealth) &&
+					   (ps->powerLevel[plHealth]  <= nextTier->requirementHealthMaximum / 100.0f * ps->powerLevel[plMaximum]) &&
+					   (ps->powerLevel[plMaximum] >= nextTier->requirementMaximum) &&
+					   (((ps->powerLevel[plCurrent] >= nextTier->sustainCurrent) &&
+					   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
+					   ((ps->powerLevel[plMaximum] >= nextTier->sustainCurrent) &&
+					   (ps->powerLevel[plMaximum] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
+					   tierChangeMode == 0)) &&
+					   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
+					   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
+					   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum);
 
 				if((((nextTier->requirementButtonUp && (tierChangeMode > 0)) || !nextTier->requirementButtonUp) &&
 						hasRequirementsToTransform == 1) ){
@@ -186,8 +186,9 @@ void checkTier(gclient_t *client){
 	if(ps->stats[stTransformState] != 0) {
 		ps->powerLevel[plTierChanged] = 1;
 	}
-	else if(desiredTier == tier || ps->powerLevel[plTierSelectionMode] <3) {
+	else if(desiredTier == tier || ps->powerLevel[plTierSelectionMode] < 3) {
 		tierChangeMode = ps->powerLevel[plTierSelectionMode];
+		if(tierChangeMode == 3) { tierChangeMode = 0; }
 		if(ps->bitFlags & keyTierUp) { tierChangeMode = 2; }
 		if(ps->bitFlags & keyTierDown) { tierChangeMode = 1; }
 		tierUp = tier + 1;
