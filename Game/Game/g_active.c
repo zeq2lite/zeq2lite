@@ -669,14 +669,14 @@ void ClientThink( int clientNum ) {
 	// phone jack if they don't get any for a while
 	ent->client->lastCmdTime = level.time;
 
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
+	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer ) {
 		ClientThink_real( ent );
 	}
 }
 
 
 void G_RunClient( gentity_t *ent ) {
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
+	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer) {
 		return;
 	}
 	ent->client->pers.cmd.serverTime = level.time;

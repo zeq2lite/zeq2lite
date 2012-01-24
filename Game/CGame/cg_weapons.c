@@ -893,10 +893,9 @@ void CG_NextWeapon_f( void ) {
 	if ( cg.snap->ps.pm_flags & PMF_FOLLOW ) {
 		return;
 	}
-
-	cg.weaponSelectTime = cg.time;
-	cg.weaponChanged = 1;
 	cg.weaponSelectionMode = 2;
+	cg.weaponChanged = 1;
+	cg.weaponSelectTime = cg.time;
 }
 
 /*
@@ -905,15 +904,15 @@ CG_PrevWeapon_f
 ===============
 */
 void CG_PrevWeapon_f( void ) {
-	if ( !cg.snap ) {
+	if ( !cg.snap || cg.snap->ps.bitFlags & usingMelee ) {
 		return;
 	}
 	if ( cg.snap->ps.pm_flags & PMF_FOLLOW ) {
 		return;
 	}
-	cg.weaponSelectTime = cg.time;
-	cg.weaponChanged = 1;
 	cg.weaponSelectionMode = 1;
+	cg.weaponChanged = 1;
+	cg.weaponSelectTime = cg.time;
 }
 
 
@@ -938,7 +937,6 @@ void CG_Weapon_f( void ) {
 		return;
 	}
 	cg.weaponSelectTime = cg.time;
-
 	cg.weaponDesired = num;
 	cg.weaponSelectionMode = 3;
 	cg.weaponChanged = 1;

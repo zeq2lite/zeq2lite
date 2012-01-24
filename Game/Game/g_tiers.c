@@ -63,7 +63,7 @@ qboolean checkTierUpTransformation(gclient_t *client, int nextTierIndex, int cur
 					   (ps->powerLevel[plCurrent] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum])) ||
 					   ((ps->powerLevel[plMaximum] >= nextTier->sustainCurrent) &&
 					   (ps->powerLevel[plMaximum] >= nextTier->sustainCurrentPercent / 100.0f * ps->powerLevel[plMaximum]) &&
-					   tierChangeMode == 0)) &&
+					   tierChangeMode == 3)) &&
 					   (ps->powerLevel[plHealth]  >= nextTier->sustainHealth) &&
 					   (ps->powerLevel[plFatigue] >= nextTier->sustainFatigue) &&
 					   (ps->powerLevel[plMaximum] >= nextTier->sustainMaximum);
@@ -97,7 +97,7 @@ qboolean checkTierUpTransformation(gclient_t *client, int nextTierIndex, int cur
 				}
 				else if (!hasRequirementsToTransform && tierChangeMode==3) {
 					ps->powerLevel[plTierDesired] = -1;
-					ps->powerLevel[plTierCurrent] = nextTierIndex;
+					ps->powerLevel[plTierCurrent] = currentTierIndex;
 					ps->powerLevel[plTierChanged] = 1;
 				}
 				if(tierChangeMode>0) {

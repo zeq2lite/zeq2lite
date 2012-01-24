@@ -183,18 +183,6 @@ static void CG_TransitionSnapshot( void ) {
 		// if we are not doing client side movement prediction for any
 		// reason, then the client events and view changes will be issued now
 		if (cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) || cg_nopredict.integer || cg_synchronousClients.integer || cg.snap->ps.lockedTarget){
-			if(cg.snap->ps.lockedTarget){
-				if(cg.weaponSelectionMode == 1){offset = -1;}
-				if(cg.weaponSelectionMode == 2){offset = 1;}
-				for(i = 0;i < 16;i++){
-					cg.weaponSelect += offset;
-					if(cg.weaponSelect == 0){cg.weaponSelect = 15;}
-					if(cg.weaponSelect == 16){cg.weaponSelect = 0;}
-					if(CG_WeaponSelectable(cg.weaponSelect)){break;}
-				}
-				if(i == 16){cg.weaponSelect = originalWeaponIndex;}
-				cg.weaponSelectionMode = 0;
-			}
 			CG_TransitionPlayerState( ps, ops );
 		}
 

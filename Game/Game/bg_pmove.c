@@ -575,7 +575,6 @@ void PM_CheckContextOperations(void)
 			pm->cmd.weaponSelectionMode = 0;
 		}
 	}
-
 }
 
 qboolean PM_CheckTransform(void){
@@ -3059,17 +3058,17 @@ int PM_VerifyTrace(int lockBoxSize)
 	vec3_t minSize,maxSize,forward,end;
 	AngleVectors(pm->ps->viewangles,forward,NULL,NULL);
 	VectorMA(pm->ps->origin,131072,forward,end);
-	minSize[0] = -lockBoxSize;
-	minSize[1] = -lockBoxSize;
+	minSize[0] = -baseLockBoxValue;
+	minSize[1] = -baseLockBoxValue;
 	minSize[2] = -baseLockBoxValue;
-	maxSize[0] = lockBoxSize;
-	maxSize[1] = lockBoxSize;
+	maxSize[0] = baseLockBoxValue;
+	maxSize[1] = baseLockBoxValue;
 	maxSize[2] = baseLockBoxValue;
 	pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
 	if((trace.entityNum >= MAX_CLIENTS)) {
-		minSize[0] = -baseLockBoxValue;
+		minSize[1] = -lockBoxSize;
 		minSize[2] = -lockBoxSize;
-		maxSize[0] = baseLockBoxValue;
+		maxSize[1] = lockBoxSize;
 		maxSize[2] = lockBoxSize;
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
 		if((trace.entityNum >= MAX_CLIENTS)) {
@@ -3078,7 +3077,15 @@ int PM_VerifyTrace(int lockBoxSize)
 			maxSize[0] = lockBoxSize;
 			maxSize[1] = baseLockBoxValue;
 			pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
-			if((trace.entityNum < MAX_CLIENTS)) { entityNum = trace.entityNum; }
+			if((trace.entityNum >= MAX_CLIENTS)) {
+				minSize[1] = -lockBoxSize;
+				minSize[2] = -baseLockBoxValue;
+				maxSize[1] = lockBoxSize;
+				maxSize[2] = baseLockBoxValue;
+				pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
+				if((trace.entityNum < MAX_CLIENTS)) { entityNum = trace.entityNum; }
+				}
+			else { entityNum = trace.entityNum; }
 		}
 		else { entityNum = trace.entityNum; }
 	}
