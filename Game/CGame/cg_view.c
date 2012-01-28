@@ -1725,7 +1725,7 @@ void CG_DrawActiveFrame(int serverTime, stereoFrame_t stereoView, qboolean demoP
 		}
 	}
 	// let the client system know what our weapon and zoom settings are
-	trap_SetUserCmdValue(cg.weaponDesired > 0 ? cg.weaponDesired : cg.weaponSelect, cg.zoomSensitivity, cg.tierCurrent, cg.weaponChanged, cg.weaponSelectionMode, cg.tierSelectionMode);
+	trap_SetUserCmdValue(cg.weaponDesired > 0 ? cg.weaponDesired : cg.weaponSelect, cg.zoomSensitivity, cg.tierCurrent, cg.weaponSelectionMode, cg.tierSelectionMode);
 	// this counter will be bumped for every valid scene we generate
 	cg.clientFrame++;
 	// update cg.predictedPlayerState

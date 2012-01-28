@@ -894,7 +894,6 @@ void CG_NextWeapon_f( void ) {
 		return;
 	}
 	cg.weaponSelectionMode = 2;
-	cg.weaponChanged = 1;
 	cg.weaponSelectTime = cg.time;
 }
 
@@ -911,7 +910,6 @@ void CG_PrevWeapon_f( void ) {
 		return;
 	}
 	cg.weaponSelectionMode = 1;
-	cg.weaponChanged = 1;
 	cg.weaponSelectTime = cg.time;
 }
 
@@ -939,7 +937,6 @@ void CG_Weapon_f( void ) {
 	cg.weaponSelectTime = cg.time;
 	cg.weaponDesired = num;
 	cg.weaponSelectionMode = 3;
-	cg.weaponChanged = 1;
 }
 
 /*

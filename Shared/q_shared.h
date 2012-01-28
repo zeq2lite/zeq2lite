@@ -1234,7 +1234,6 @@ typedef struct usercmd_s {
 	byte			weapon;
 	signed char	forwardmove, rightmove, upmove;
 	signed char 	tier;
-	byte			weaponChange;
 	byte			weaponSelectionMode;
 	byte			tierSelectionMode;
 } usercmd_t;

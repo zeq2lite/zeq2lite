@@ -565,12 +565,16 @@ void PM_CheckContextOperations(void)
 {
 	//Transforming operations
 	if(pm->cmd.buttons & BUTTON_POWERLEVEL){
-		if(pm->cmd.weaponChange == 1)
+		if(pm->cmd.weapon - 1 != pm->ps->powerLevel[plTierCurrent])
 		{
 			pm->ps->powerLevel[plTierSelectionMode] = 0;
-			pm->cmd.weaponChange = 0;
 			pm->cmd.tier = pm->cmd.weapon- 1;
 			pm->cmd.weapon = pm->ps->weapon;
+			pm->cmd.tierSelectionMode = pm->cmd.weaponSelectionMode;
+			pm->cmd.weaponSelectionMode = 0;
+		}
+		else if(pm->cmd.weaponSelectionMode > 0)
+		{
 			pm->cmd.tierSelectionMode = pm->cmd.weaponSelectionMode;
 			pm->cmd.weaponSelectionMode = 0;
 		}
@@ -1986,8 +1990,8 @@ PM_BeginWeaponChange
 void PM_BeginWeaponChange(int weapon){
 	qboolean charging;
 	qboolean usable;
-	pm->ps->currentSkill[WPSTAT_CHANGED] = -1;
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
+	pm->ps->currentSkill[WPSTAT_CHANGED] = -1;
 	if(pm->ps->weapon == pm->cmd.weapon){
 		return;
 	}
@@ -2787,22 +2791,10 @@ void PM_Weapon(void){
 	qboolean usable;
 	float powerScale = ((float)pm->ps->powerLevel[plCurrent] / 1000.0) * pm->ps->baseStats[stEnergyAttack];
 	pm->ps->currentSkill[WPSTAT_CHANGED] = 0;
-	if(pm->ps->powerLevel[plTierChanged] == 1){
-		if(!PM_WeaponSelectable(pm->cmd.weapon)){
-			for(i = 6; i > 0; i--){
-				if(PM_WeaponSelectable(i)){
-					pm->cmd.weapon = i;
-					break;
-				}
-			}
-		}
-	}
-	else{
-		PM_CheckWeaponSelectionMode();
-		if(!PM_WeaponSelectable(pm->cmd.weapon)) {
-			pm->ps->currentSkill[WPSTAT_CHANGED] = -1;
-			return;
-		}
+	PM_CheckWeaponSelectionMode();
+	if(!PM_WeaponSelectable(pm->cmd.weapon)) {
+		pm->ps->currentSkill[WPSTAT_CHANGED] = -1;
+		return;
 	}
 	if(pm->ps->weaponstate != WEAPON_GUIDING){pm->ps->bitFlags &= ~isGuiding;}
 	if(pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR){return;}
@@ -3066,18 +3058,23 @@ int PM_VerifyTrace(int lockBoxSize)
 	maxSize[2] = baseLockBoxValue;
 	pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
 	if((trace.entityNum >= MAX_CLIENTS)) {
+		Com_Printf("Second try\n");
+		minSize[0] = -baseLockBoxValue;
 		minSize[1] = -lockBoxSize;
 		minSize[2] = -lockBoxSize;
+		maxSize[0] = baseLockBoxValue;
 		maxSize[1] = lockBoxSize;
 		maxSize[2] = lockBoxSize;
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
 		if((trace.entityNum >= MAX_CLIENTS)) {
+			Com_Printf("Third try\n");
 			minSize[0] = -lockBoxSize;
 			minSize[1] = -baseLockBoxValue;
 			maxSize[0] = lockBoxSize;
 			maxSize[1] = baseLockBoxValue;
 			pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
 			if((trace.entityNum >= MAX_CLIENTS)) {
+				Com_Printf("Fourth try\n");
 				minSize[1] = -lockBoxSize;
 				minSize[2] = -baseLockBoxValue;
 				maxSize[1] = lockBoxSize;

@@ -119,7 +119,6 @@ typedef struct {
 	int			cgameUserCmdValue;	// current weapon to add to usercmd_t
 	int 		cgameUserTierCmdValue;
 	float		cgameSensitivity;
-	byte		cgameUserWeaponChanged;
 	byte		cgameUserWeaponSelectionMode;
 	byte		cgameUserTierSelectionMode;
 

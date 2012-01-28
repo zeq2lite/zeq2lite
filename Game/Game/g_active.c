@@ -542,6 +542,7 @@ void ClientThink_real( gentity_t *ent ) {
 	int			oldEventSequence;
 	int			msec;
 	usercmd_t	*ucmd;
+	int			i;
 	client = ent->client;
 	if (client->pers.connected != CON_CONNECTED){return;}
 	ucmd = &ent->client->pers.cmd;
@@ -613,9 +614,15 @@ void ClientThink_real( gentity_t *ent ) {
 	checkTier(client);
 	if(pm.ps->powerLevel[plTierChanged] == 1)
 	{
-		if(pm.ps->stats[stMeleeState] != stMeleeUsingPower || pm.ps->stats[stMeleeState] != stMeleeUsingStun){
-			PM_UpdateViewAngles(pm.ps,&pm.cmd);
-			PM_Weapon();
+		if(pm.ps->powerLevel[plTierChanged] == 1){
+			if(!PM_WeaponSelectable(pm.ps->weapon)){
+				for(i = 6; i > 0; i--){
+					if(PM_WeaponSelectable(i)){
+						pm.ps->weapon = i;
+						break;
+					}
+				}
+			}
 		}
 	}
 	LockonCheck(client);
@@ -669,14 +676,14 @@ void ClientThink( int clientNum ) {
 	// phone jack if they don't get any for a while
 	ent->client->lastCmdTime = level.time;
 
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer ) {
+	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
 		ClientThink_real( ent );
 	}
 }
 
 
 void G_RunClient( gentity_t *ent ) {
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer) {
+	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
 		return;
 	}
 	ent->client->pers.cmd.serverTime = level.time;

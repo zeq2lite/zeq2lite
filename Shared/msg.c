@@ -698,7 +698,6 @@ void MSG_WriteDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *to ) {
 	MSG_WriteDelta( msg, from->buttons, to->buttons, 16 );
 	MSG_WriteDelta( msg, from->weapon, to->weapon, 8 );
 	MSG_WriteDelta( msg, from->tier, to->tier, 8 );
-	MSG_WriteDelta( msg, from->weaponChange, to->weaponChange, 8 );
 	MSG_WriteDelta( msg, from->weaponSelectionMode, to->weaponSelectionMode, 8 );
 	MSG_WriteDelta( msg, from->tierSelectionMode, to->tierSelectionMode, 8 );
 }
@@ -724,7 +723,6 @@ void MSG_ReadDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *to ) {
 	to->buttons = MSG_ReadDelta( msg, from->buttons, 16);
 	to->weapon = MSG_ReadDelta( msg, from->weapon, 8);
 	to->tier = MSG_ReadDelta( msg, from->tier, 8);
-	to->weaponChange = MSG_ReadDelta( msg, from->weaponChange, 8);
 	to->weaponSelectionMode = MSG_ReadDelta( msg, from->weaponSelectionMode, 8);
 	to->tierSelectionMode = MSG_ReadDelta( msg, from->tierSelectionMode, 8);
 }
@@ -751,7 +749,6 @@ void MSG_WriteDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *
 		from->buttons == to->buttons &&
 		from->weapon == to->weapon &&
 		from->tier == to->tier &&
-		from->weaponChange == to->weaponChange &&
 		from->weaponSelectionMode == to->weaponSelectionMode &&
 		from->tierSelectionMode == to->tierSelectionMode) {
 			MSG_WriteBits( msg, 0, 1 );				// no change
@@ -769,7 +766,6 @@ void MSG_WriteDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *
 	MSG_WriteDeltaKey( msg, key, from->buttons, to->buttons, 16 );
 	MSG_WriteDeltaKey( msg, key, from->weapon, to->weapon, 8 );
 	MSG_WriteDeltaKey( msg, key, from->tier, to->tier, 8 );
-	MSG_WriteDeltaKey( msg, key, from->weaponChange, to->weaponChange, 8 );
 	MSG_WriteDeltaKey( msg, key, from->weaponSelectionMode, to->weaponSelectionMode, 8 );
 	MSG_WriteDeltaKey( msg, key, from->tierSelectionMode, to->tierSelectionMode, 8 );
 }
@@ -797,7 +793,6 @@ void MSG_ReadDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *t
 		to->buttons = MSG_ReadDeltaKey( msg, key, from->buttons, 16);
 		to->weapon = MSG_ReadDeltaKey( msg, key, from->weapon, 8);
 		to->tier = MSG_ReadDeltaKey( msg, key, from->tier, 8);
-		to->weaponChange = MSG_ReadDeltaKey( msg, key, from->weaponChange, 8);
 		to->weaponSelectionMode = MSG_ReadDeltaKey( msg, key, from->weaponSelectionMode, 8);
 		to->tierSelectionMode = MSG_ReadDeltaKey( msg, key, from->tierSelectionMode, 8);
 	} else {
@@ -810,7 +805,6 @@ void MSG_ReadDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *t
 		to->buttons = from->buttons;
 		to->weapon = from->weapon;
 		to->tier = from->tier;
-		to->weaponChange = from->weaponChange;
 		to->weaponSelectionMode = from->weaponSelectionMode;
 		to->tierSelectionMode = from->tierSelectionMode;
 	}
