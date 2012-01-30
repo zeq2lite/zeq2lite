@@ -73,7 +73,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // for windows fastcall option
 #define QDECL
-#define QCALL
 
 //================================================================= WIN64/32 ===
 
@@ -84,9 +83,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #undef QDECL
 #define QDECL __cdecl
-
-#undef QCALL
-#define QCALL __stdcall
 
 #if defined( _MSC_VER )
 #define OS_STRING "win_msvc64"
@@ -112,9 +108,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #undef QDECL
 #define QDECL __cdecl
 
-#undef QCALL
-#define QCALL __stdcall
-
 #if defined( _MSC_VER )
 #define OS_STRING "win_msvc"
 #elif defined __MINGW32__
@@ -135,7 +128,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DLL_EXT ".dll"
 
 #endif
-
 
 //============================================================== MAC OS X ===
 

@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../../Shared/q_shared.h"
 #include "../../Shared/qcommon.h"
-#include "../../Engine/renderer-openGL1/tr_public.h"
+#include "../../Engine/renderer/tr_public.h"
 #include "../../Game/UI/ui_public.h"
 #include "keys.h"
 #include "snd_public.h"
@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 // file full of random crap that gets used to create cl_guid
-#define QKEY_FILE "qkey"
+#define QKEY_FILE "key"
 #define QKEY_SIZE 2048
 
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits

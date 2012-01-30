@@ -736,7 +736,7 @@ int BoxOnPlaneSide2 (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 int BoxOnPlaneSide(vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 {
 	float	dist[2];
-	int		sides; //, b, i;
+	int		sides, b, i;
 
 	// fast axial cases
 	if (p->type < 3)
@@ -749,7 +749,6 @@ int BoxOnPlaneSide(vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 	}
 
 	// general case
-#if 0
 	dist[0] = dist[1] = 0;
 	if (p->signbits < 8) // >= 8: default case is original code (dist[0]=dist[1]=0)
 	{
@@ -760,47 +759,6 @@ int BoxOnPlaneSide(vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 			dist[!b] += p->normal[i]*emins[i];
 		}
 	}
-#else
-	// general case
-	switch (p->signbits)
-	{
-		case 0:
-			dist[0] = p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2];
-			dist[1] = p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2];
-			break;
-		case 1:
-			dist[0] = p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2];
-			dist[1] = p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2];
-			break;
-		case 2:
-			dist[0] = p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2];
-			dist[1] = p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2];
-			break;
-		case 3:
-			dist[0] = p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2];
-			dist[1] = p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2];
-			break;
-		case 4:
-			dist[0] = p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2];
-			dist[1] = p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2];
-			break;
-		case 5:
-			dist[0] = p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emins[2];
-			dist[1] = p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emaxs[2];
-			break;
-		case 6:
-			dist[0] = p->normal[0] * emaxs[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2];
-			dist[1] = p->normal[0] * emins[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2];
-			break;
-		case 7:
-			dist[0] = p->normal[0] * emins[0] + p->normal[1] * emins[1] + p->normal[2] * emins[2];
-			dist[1] = p->normal[0] * emaxs[0] + p->normal[1] * emaxs[1] + p->normal[2] * emaxs[2];
-			break;
-		default:
-			dist[0] = dist[1] = 0;	// shut up compiler
-			break;
-	}
-#endif
 
 	sides = 0;
 	if (dist[0] >= p->dist)
@@ -1515,33 +1473,3 @@ int Q_Sign( const float a ) {
 }
 
 // END ADDING
-
-//------------------------------------------------------------------------
-
-#ifndef Q3_VM
-/*
-=====================
-Q_acos
-
-the msvc acos doesn't always return a value between -PI and PI:
-
-int i;
-i = 1065353246;
-acos(*(float*) &i) == -1.#IND0
-
-=====================
-*/
-float Q_acos(float c) {
-	float angle;
-
-	angle = acos(c);
-
-	if (angle > M_PI) {
-		return (float)M_PI;
-	}
-	if (angle < -M_PI) {
-		return (float)M_PI;
-	}
-	return angle;
-}
-#endif

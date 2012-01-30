@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #	include <SDL.h>
 #endif
 
-#include "../renderer-openGL1/tr_local.h"
+#include "../renderer/tr_local.h"
 #include "../../Shared/qcommon.h"
 
 /*
@@ -39,7 +39,7 @@ void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 	Uint16 table[3][256];
 	int i, j;
 
-	if( !glConfig.deviceSupportsGamma || r_ignorehwgamma->integer )
+	if( !glConfig.deviceSupportsGamma )
 		return;
 
 	for (i = 0; i < 256; i++)
@@ -60,7 +60,7 @@ void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 		GetVersionEx( &vinfo );
 		if( vinfo.dwMajorVersion >= 5 && vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
 		{
-			ri.Printf( PRINT_DEVELOPER, "performing gamma clamp.\n" );
+			Com_DPrintf( "performing gamma clamp.\n" );
 			for( j = 0 ; j < 3 ; j++ )
 			{
 				for( i = 0 ; i < 128 ; i++ )
