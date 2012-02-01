@@ -116,10 +116,6 @@ ifndef USE_OPENAL_DLOPEN
 USE_OPENAL_DLOPEN=1
 endif
 
-ifndef USE_CG
-USE_CG=0
-endif
-
 ifndef USE_CURL
 USE_CURL=1
 endif
@@ -325,11 +321,6 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
       CLIENT_LIBS += -lopenal
     endif
   endif
-  
-  ifeq ($(USE_CG),1)
-    CLIENT_CFLAGS += -DUSE_CG
-    CLIENT_LIBS += -lcg -lcgGL
-  endif
 
   ifeq ($(USE_CURL),1)
     ifneq ($(USE_CURL_DLOPEN),1)
@@ -394,11 +385,6 @@ ifeq ($(PLATFORM),darwin)
     ifneq ($(USE_OPENAL_DLOPEN),1)
       CLIENT_LIBS += -framework OpenAL
     endif
-  endif
-  
-    ifeq ($(USE_CG),1)
-    CLIENT_CFLAGS += -DUSE_CG
-    CLIENT_LIBS += -lcg -lcgGL
   endif
 
   ifeq ($(USE_CURL),1)
@@ -494,11 +480,6 @@ ifeq ($(PLATFORM),mingw32)
   CLIENT_LDFLAGS += -mwindows
   CLIENT_LIBS = -lgdi32 -lole32 -lopengl32
   
-  ifeq ($(USE_CG),1)
-    CLIENT_CFLAGS += -DUSE_CG
-    CLIENT_LIBS += -lcg -lcgGL
-  endif
-
   ifeq ($(USE_CURL),1)
     CLIENT_CFLAGS += $(CURL_CFLAGS)
     ifneq ($(USE_CURL_DLOPEN),1)
@@ -591,11 +572,6 @@ ifeq ($(PLATFORM),freebsd)
       CLIENT_LIBS += $(THREAD_LIBS) -lopenal
     endif
   endif
-  
-  ifeq ($(USE_CG),1)
-    CLIENT_CFLAGS += -DUSE_CG
-    CLIENT_LIBS += -lcg -lcgGL
-  endif
 
   ifeq ($(USE_CURL),1)
     ifeq ($(USE_CURL_DLOPEN),1)
@@ -654,11 +630,6 @@ ifeq ($(PLATFORM),openbsd)
     ifneq ($(USE_OPENAL_DLOPEN),1)
       CLIENT_LIBS += $(THREAD_LIBS) -lossaudio -lopenal
     endif
-  endif
-  
-  ifeq ($(USE_CG),1)
-    CLIENT_CFLAGS += -DUSE_CG
-    CLIENT_LIBS += -lcg -lcgGL
   endif
 
   ifeq ($(USE_CODEC_VORBIS),1)
@@ -1355,30 +1326,35 @@ Q3OBJ = \
   $(B)/client/jutils.o \
   \
   $(B)/client/tr_backend.o \
+  $(B)/client/tr_bloom.o \
   $(B)/client/tr_bsp.o \
-  $(B)/client/tr_cg.o \
   $(B)/client/tr_cmds.o \
   $(B)/client/tr_curve.o \
   $(B)/client/tr_glsl.o \
   $(B)/client/tr_image.o \
-  $(B)/client/tr_png.o \
-  $(B)/client/tr_jpg.o \
-  $(B)/client/tr_tga.o \
+  $(B)/client/tr_image_png.o \
+  $(B)/client/tr_image_jpg.o \
+  $(B)/client/tr_image_bmp.o \
+  $(B)/client/tr_image_tga.o \
+  $(B)/client/tr_image_pcx.o \
+  $(B)/client/tr_flares.o \
+  $(B)/client/tr_font.o \
   $(B)/client/tr_init.o \
   $(B)/client/tr_light.o \
   $(B)/client/tr_main.o \
   $(B)/client/tr_marks.o \
-  $(B)/client/tr_matrix.o \
-  $(B)/client/tr_md3.o \
-  $(B)/client/tr_mdm.o \
+  $(B)/client/tr_mesh.o \
   $(B)/client/tr_model.o \
+  $(B)/client/tr_model_iqm.o \
+  $(B)/client/tr_motionblur.o \
+  $(B)/client/tr_noise.o \
   $(B)/client/tr_scene.o \
   $(B)/client/tr_shade.o \
+  $(B)/client/tr_shade_calc.o \
   $(B)/client/tr_shader.o \
   $(B)/client/tr_shadows.o \
   $(B)/client/tr_sky.o \
   $(B)/client/tr_surface.o \
-  $(B)/client/tr_vbo.o \
   $(B)/client/tr_world.o \
   \
   $(B)/client/sdl_gamma.o \
@@ -1765,6 +1741,7 @@ CGOBJ_ = \
   $(B)/Base/CGame/cg_tiers.o \
   $(B)/Base/CGame/cg_music.o \
   $(B)/Base/CGame/cg_frameHist.o \
+  $(B)/Base/CGame/cg_motionblur.o \
   \
   $(B)/Base/Shared/q_math.o \
   $(B)/Base/Shared/q_shared.o

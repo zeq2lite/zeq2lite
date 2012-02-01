@@ -78,6 +78,8 @@ if "%1"=="TA" goto TA
 @if errorlevel 1 goto quit
 %cc% ../cg_frameHist.c
 @if errorlevel 1 goto quit
+%cc% ../cg_motionblur.c
+@if errorlevel 1 goto quit
 
 
 ..\..\..\Tools\Compiler\q3asm -f ../cgame

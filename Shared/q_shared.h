@@ -683,7 +683,9 @@ void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up );
 // perpendicular vector could be replaced by this
 
 //int	PlaneTypeForNormal (vec3_t normal);
-
+qboolean Matrix4Compare(const float a[16], const float b[16]);
+void Matrix4Copy(const float in[16], float out[16]);
+void Matrix4Multiply(const float a[16], const float b[16], float out[16]);
 void MatrixMultiply(float in1[3][3], float in2[3][3], float out[3][3]);
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
 void PerpendicularVector( vec3_t dst, const vec3_t src );
@@ -977,11 +979,10 @@ COLLISION DETECTION
 
 // plane types are used to speed some tests
 // 0-2 are axial planes
-#define	PLANE_X				0
-#define	PLANE_Y				1
-#define	PLANE_Z				2
-#define	PLANE_NON_AXIAL		3
-#define	PLANE_NON_PLANAR	4
+#define	PLANE_X			0
+#define	PLANE_Y			1
+#define	PLANE_Z			2
+#define	PLANE_NON_AXIAL	3
 
 
 /*
@@ -990,7 +991,7 @@ PlaneTypeForNormal
 =================
 */
 
-#define PlaneTypeForNormal(x) (x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : (x[0] == 0.0f && x[1] == 0.0f && x[2] == 0.0f ? PLANE_NON_PLANAR : PLANE_NON_AXIAL))))
+#define PlaneTypeForNormal(x) (x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL) ) )
 
 // plane_t structure
 // !!! if this is changed, it must be changed in asm code too !!!

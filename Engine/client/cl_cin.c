@@ -52,8 +52,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define MAX_VIDEO_HANDLES	16
 
-extern glconfig_t glConfig;
-
 
 static void RoQ_init( void );
 
@@ -987,8 +985,21 @@ static void readQuadInfo( byte *qData )
 	cinTable[currentHandle].t[0] = cinTable[currentHandle].screenDelta;
 	cinTable[currentHandle].t[1] = -cinTable[currentHandle].screenDelta;
 
-	cinTable[currentHandle].drawX = cinTable[currentHandle].CIN_WIDTH;
-	cinTable[currentHandle].drawY = cinTable[currentHandle].CIN_HEIGHT;
+        cinTable[currentHandle].drawX = cinTable[currentHandle].CIN_WIDTH;
+        cinTable[currentHandle].drawY = cinTable[currentHandle].CIN_HEIGHT;
+        
+	// rage pro is very slow at 512 wide textures, voodoo can't do it at all
+	if ( cls.glconfig.hardwareType == GLHW_RAGEPRO || cls.glconfig.maxTextureSize <= 256) {
+                if (cinTable[currentHandle].drawX>256) {
+                        cinTable[currentHandle].drawX = 256;
+                }
+                if (cinTable[currentHandle].drawY>256) {
+                        cinTable[currentHandle].drawY = 256;
+                }
+		if (cinTable[currentHandle].CIN_WIDTH != 256 || cinTable[currentHandle].CIN_HEIGHT != 256) {
+			Com_Printf("HACK: approxmimating cinematic for Rage Pro or Voodoo\n");
+		}
+	}
 }
 
 /******************************************************************************

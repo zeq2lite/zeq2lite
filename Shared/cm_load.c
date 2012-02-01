@@ -626,9 +626,9 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
 		((int *)&header)[i] = LittleLong ( ((int *)&header)[i]);
 	}
 
-	if ( header.version != Q3_BSP_VERSION && header.version != ET_BSP_VERSION ) {
-		Com_Error (ERR_DROP, "CM_LoadMap: %s has wrong version number (%i should be %i or %i)"
-		, name, header.version, Q3_BSP_VERSION, ET_BSP_VERSION );
+	if ( header.version != BSP_VERSION ) {
+		Com_Error (ERR_DROP, "CM_LoadMap: %s has wrong version number (%i should be %i)"
+		, name, header.version, BSP_VERSION );
 	}
 
 	cmod_base = (byte *)buf.i;

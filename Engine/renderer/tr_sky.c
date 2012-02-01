@@ -363,7 +363,6 @@ static float	s_skyTexCoords[SKY_SUBDIVISIONS+1][SKY_SUBDIVISIONS+1][2];
 
 static void DrawSkySide( struct image_s *image, const int mins[2], const int maxs[2] )
 {
-#if 0
 	int s, t;
 
 	GL_Bind( image );
@@ -383,7 +382,6 @@ static void DrawSkySide( struct image_s *image, const int mins[2], const int max
 
 		qglEnd();
 	}
-#endif
 }
 
 static void DrawSkyBox( shader_t *shader )
@@ -470,8 +468,8 @@ static void FillCloudySkySide( const int mins[2], const int maxs[2], qboolean ad
 		for ( s = mins[0]+HALF_SKY_SUBDIVISIONS; s <= maxs[0]+HALF_SKY_SUBDIVISIONS; s++ )
 		{
 			VectorAdd( s_skyPoints[t][s], backEnd.viewParms.or.origin, tess.xyz[tess.numVertexes] );
-			tess.texCoords[0][tess.numVertexes][0] = s_skyTexCoords[t][s][0];
-			tess.texCoords[0][tess.numVertexes][1] = s_skyTexCoords[t][s][1];
+			tess.texCoords[tess.numVertexes][0][0] = s_skyTexCoords[t][s][0];
+			tess.texCoords[tess.numVertexes][0][1] = s_skyTexCoords[t][s][1];
 
 			tess.numVertexes++;
 
@@ -695,6 +693,101 @@ void R_InitSkyTexCoords( float heightCloud )
 
 //======================================================================================
 
+/*
+** RB_DrawSun
+*/
+void RB_DrawSun( void ) {
+	float		size;
+	float		dist;
+	vec3_t		origin, vec1, vec2;
+	vec3_t		temp;
+
+	if ( !backEnd.skyRenderedThisView ) {
+		return;
+	}
+	if ( !r_drawSun->integer ) {
+		return;
+	}
+	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
+	qglTranslatef (backEnd.viewParms.or.origin[0], backEnd.viewParms.or.origin[1], backEnd.viewParms.or.origin[2]);
+
+	qglGetFloatv(GL_MODELVIEW_MATRIX, glState.currentModelViewMatrix);
+	Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
+
+	dist = 	backEnd.viewParms.zFar / 1.75;		// div sqrt(3)
+	size = dist * 0.4;
+
+	VectorScale( tr.sunDirection, dist, origin );
+	PerpendicularVector( vec1, tr.sunDirection );
+	CrossProduct( tr.sunDirection, vec1, vec2 );
+
+	VectorScale( vec1, size, vec1 );
+	VectorScale( vec2, size, vec2 );
+
+	// farthest depth range
+	qglDepthRange( 1.0, 1.0 );
+
+	// FIXME: use quad stamp
+	RB_BeginSurface( tr.sunShader, tess.fogNum );
+		VectorCopy( origin, temp );
+		VectorSubtract( temp, vec1, temp );
+		VectorSubtract( temp, vec2, temp );
+		VectorCopy( temp, tess.xyz[tess.numVertexes] );
+		tess.texCoords[tess.numVertexes][0][0] = 0;
+		tess.texCoords[tess.numVertexes][0][1] = 0;
+		tess.vertexColors[tess.numVertexes][0] = 255;
+		tess.vertexColors[tess.numVertexes][1] = 255;
+		tess.vertexColors[tess.numVertexes][2] = 255;
+		tess.numVertexes++;
+
+		VectorCopy( origin, temp );
+		VectorAdd( temp, vec1, temp );
+		VectorSubtract( temp, vec2, temp );
+		VectorCopy( temp, tess.xyz[tess.numVertexes] );
+		tess.texCoords[tess.numVertexes][0][0] = 0;
+		tess.texCoords[tess.numVertexes][0][1] = 1;
+		tess.vertexColors[tess.numVertexes][0] = 255;
+		tess.vertexColors[tess.numVertexes][1] = 255;
+		tess.vertexColors[tess.numVertexes][2] = 255;
+		tess.numVertexes++;
+
+		VectorCopy( origin, temp );
+		VectorAdd( temp, vec1, temp );
+		VectorAdd( temp, vec2, temp );
+		VectorCopy( temp, tess.xyz[tess.numVertexes] );
+		tess.texCoords[tess.numVertexes][0][0] = 1;
+		tess.texCoords[tess.numVertexes][0][1] = 1;
+		tess.vertexColors[tess.numVertexes][0] = 255;
+		tess.vertexColors[tess.numVertexes][1] = 255;
+		tess.vertexColors[tess.numVertexes][2] = 255;
+		tess.numVertexes++;
+
+		VectorCopy( origin, temp );
+		VectorSubtract( temp, vec1, temp );
+		VectorAdd( temp, vec2, temp );
+		VectorCopy( temp, tess.xyz[tess.numVertexes] );
+		tess.texCoords[tess.numVertexes][0][0] = 1;
+		tess.texCoords[tess.numVertexes][0][1] = 0;
+		tess.vertexColors[tess.numVertexes][0] = 255;
+		tess.vertexColors[tess.numVertexes][1] = 255;
+		tess.vertexColors[tess.numVertexes][2] = 255;
+		tess.numVertexes++;
+
+		tess.indexes[tess.numIndexes++] = 0;
+		tess.indexes[tess.numIndexes++] = 1;
+		tess.indexes[tess.numIndexes++] = 2;
+		tess.indexes[tess.numIndexes++] = 0;
+		tess.indexes[tess.numIndexes++] = 2;
+		tess.indexes[tess.numIndexes++] = 3;
+
+	RB_EndSurface();
+
+	// back to normal depth range
+	qglDepthRange( 0.0, 1.0 );
+}
+
+
+
 
 /*
 ================
@@ -706,6 +799,9 @@ Other things could be stuck in here, like birds in the sky, etc
 ================
 */
 void RB_StageIteratorSky( void ) {
+	if ( r_fastsky->integer ) {
+		return;
+	}
 
 	// go through all the polygons and project them onto
 	// the sky box to see which blocks on each side need
@@ -721,24 +817,17 @@ void RB_StageIteratorSky( void ) {
 		qglDepthRange( 1.0, 1.0 );
 	}
 
-	/* draw the outer skybox */
-	if (tess.shader->sky.outerbox[0] && tess.shader->sky.outerbox[0] != tr.defaultImage) {
-		matrix_t oldModelViewMatrix;
-		matrix_t matrix;
-
-		GL_State(0);
+	// draw the outer skybox
+	if ( tess.shader->sky.outerbox[0] && tess.shader->sky.outerbox[0] != tr.defaultImage ) {
+		qglColor3f( tr.identityLight, tr.identityLight, tr.identityLight );
 		
-		R_MatrixCopy(glState.modelViewMatrix, oldModelViewMatrix);
+		qglPushMatrix ();
+		GL_State( 0 );
+		qglTranslatef (backEnd.viewParms.or.origin[0], backEnd.viewParms.or.origin[1], backEnd.viewParms.or.origin[2]);
 
-		R_MatrixCopy(glState.modelViewMatrix, matrix);
-		R_MatrixTranslate(matrix, backEnd.viewParms.or.origin[0], backEnd.viewParms.or.origin[1], backEnd.viewParms.or.origin[2]);
-		R_LoadModelViewMatrix(matrix);
+		DrawSkyBox( tess.shader );
 
-		// TODO voidTech3: just draw regular geometry with cubemap $sky
-		// instead. cubemap $sky should be supplied automatically to glsl if a cubemap is requested but none assigned similar to $auto
-		DrawSkyBox(tess.shader);
-
-		R_LoadModelViewMatrix(oldModelViewMatrix);
+		qglPopMatrix();
 	}
 
 	// generate the vertexes for all the clouds, which will be drawn
@@ -755,4 +844,18 @@ void RB_StageIteratorSky( void ) {
 
 	// note that sky was drawn so we will draw a sun later
 	backEnd.skyRenderedThisView = qtrue;
+	if(r_zfar->value != 0){
+		//tess.fogNum = 10000;
+		//tess.shader->fogPass = FP_EQUAL;
+		//RE_AddFogToScene(0,r_zfar->value*0.8,1,1,1,1,0,2);
+	}
 }
+
+/*
+ * RB_GLSL_StageIteratorSky
+ * Set up stage iterator for GLSL sky rendering
+ */
+void RB_GLSL_StageIteratorSky(void) {
+	RB_StageIteratorSky(); // TODO: placeholder
+}
+

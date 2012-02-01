@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tr_local.h"
 
+#include <string.h> // memcpy
+
 trGlobals_t		tr;
 
 static float	s_flipMatrix[16] = {
@@ -437,7 +439,7 @@ static void R_SetFarClip( void )
 			farthestCornerDistance = distance;
 		}
 	}
-	tr.viewParms.zFar = sqrt( farthestCornerDistance );
+	tr.viewParms.zFar = r_zfar->value != 0 ? r_zfar->value : sqrt(farthestCornerDistance);
 }
 
 /*
@@ -569,7 +571,7 @@ void R_SetupProjectionZ(viewParms_t *dest)
 	float zNear, zFar, depth;
 	
 	zNear	= r_znear->value;
-	zFar	= dest->zFar;	
+	zFar	= r_zfar->value != -1 ? r_zfar->value : dest->zFar;	
 	depth	= zFar - zNear;
 
 	dest->projectionMatrix[2] = 0;
@@ -618,7 +620,9 @@ R_PlaneForSurface
 =============
 */
 void R_PlaneForSurface (surfaceType_t *surfType, cplane_t *plane) {
+	srfTriangles_t	*tri;
 	srfPoly_t		*poly;
+	drawVert_t		*v1, *v2, *v3;
 	vec4_t			plane4;
 
 	if (!surfType) {
@@ -627,8 +631,17 @@ void R_PlaneForSurface (surfaceType_t *surfType, cplane_t *plane) {
 		return;
 	}
 	switch (*surfType) {
+	case SF_FACE:
+		*plane = ((srfSurfaceFace_t *)surfType)->plane;
+		return;
 	case SF_TRIANGLES:
-		*plane = ((srfTriangles_t *)surfType)->plane;
+		tri = (srfTriangles_t *)surfType;
+		v1 = tri->verts + tri->indexes[0];
+		v2 = tri->verts + tri->indexes[1];
+		v3 = tri->verts + tri->indexes[2];
+		PlaneFromPoints( plane4, v1->xyz, v2->xyz, v3->xyz );
+		VectorCopy( plane4, plane->normal ); 
+		plane->dist = plane4[3];
 		return;
 	case SF_POLY:
 		poly = (srfPoly_t *)surfType;
@@ -838,9 +851,16 @@ static qboolean IsMirror( const drawSurf_t *drawSurf, int entityNum )
 ** Determines if a surface is completely offscreen.
 */
 static qboolean SurfIsOffscreen( const drawSurf_t *drawSurf, vec4_t clipDest[128] ) {
+	float shortest = 100000000;
 	int entityNum;
+	int numTriangles;
 	shader_t *shader;
 	int		fogNum;
+	int dlighted;
+	vec4_t clip, eye;
+	int i;
+	unsigned int pointOr = 0;
+	unsigned int pointAnd = (unsigned int)~0;
 
 	if ( glConfig.smpActive ) {		// FIXME!  we can't do RB_BeginSurface/RB_EndSurface stuff with smp!
 		return qfalse;
@@ -848,11 +868,82 @@ static qboolean SurfIsOffscreen( const drawSurf_t *drawSurf, vec4_t clipDest[128
 
 	R_RotateForViewer();
 
-	R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum);
+	R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum, &dlighted );
+	RB_BeginSurface( shader, fogNum );
+	rb_surfaceTable[ *drawSurf->surface ]( drawSurf->surface );
+
+	assert( tess.numVertexes < 128 );
+
+	for ( i = 0; i < tess.numVertexes; i++ )
+	{
+		int j;
+		unsigned int pointFlags = 0;
+
+		R_TransformModelToClip( tess.xyz[i], tr.or.modelMatrix, tr.viewParms.projectionMatrix, eye, clip );
+
+		for ( j = 0; j < 3; j++ )
+		{
+			if ( clip[j] >= clip[3] )
+			{
+				pointFlags |= (1 << (j*2));
+			}
+			else if ( clip[j] <= -clip[3] )
+			{
+				pointFlags |= ( 1 << (j*2+1));
+			}
+		}
+		pointAnd &= pointFlags;
+		pointOr |= pointFlags;
+	}
+
+	// trivially reject
+	if ( pointAnd )
+	{
+		return qtrue;
+	}
+
+	// determine if this surface is backfaced and also determine the distance
+	// to the nearest vertex so we can cull based on portal range.  Culling
+	// based on vertex distance isn't 100% correct (we should be checking for
+	// range to the surface), but it's good enough for the types of portals
+	// we have in the game right now.
+	numTriangles = tess.numIndexes / 3;
+
+	for ( i = 0; i < tess.numIndexes; i += 3 )
+	{
+		vec3_t normal;
+		float len;
+
+		VectorSubtract( tess.xyz[tess.indexes[i]], tr.viewParms.or.origin, normal );
+
+		len = VectorLengthSquared( normal );			// lose the sqrt
+		if ( len < shortest )
+		{
+			shortest = len;
+		}
+
+		if ( DotProduct( normal, tess.normal[tess.indexes[i]] ) >= 0 )
+		{
+			numTriangles--;
+		}
+	}
+	if ( !numTriangles )
+	{
+		return qtrue;
+	}
 
 	// mirrors can early out at this point, since we don't do a fade over distance
 	// with them (although we could)
-	IsMirror( drawSurf, entityNum );
+	if ( IsMirror( drawSurf, entityNum ) )
+	{
+		return qfalse;
+	}
+
+	if ( shortest > (tess.shader->portalRange*tess.shader->portalRange) )
+	{
+		return qtrue;
+	}
+
 	return qfalse;
 }
 
@@ -875,7 +966,7 @@ qboolean R_MirrorViewBySurface (drawSurf_t *drawSurf, int entityNum) {
 		return qfalse;
 	}
 
-	if ( r_noportals->integer ) {
+	if ( r_noportals->integer || (r_fastsky->integer == 1) ) {
 		return qfalse;
 	}
 
@@ -1012,8 +1103,8 @@ static void R_RadixSort( drawSurf_t *source, int size )
 R_AddDrawSurf
 =================
 */
-void R_AddDrawSurf(surfaceType_t *surface, shader_t *shader,
-				   int fogIndex ) {
+void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader, 
+				   int fogIndex, int dlightMap ) {
 	int			index;
 
 	// instead of checking for overflow, we just mask the index
@@ -1022,7 +1113,7 @@ void R_AddDrawSurf(surfaceType_t *surface, shader_t *shader,
 	// the sort data is packed into a single 32 bit value so it can be
 	// compared quickly during the qsorting process
 	tr.refdef.drawSurfs[index].sort = (shader->sortedIndex << QSORT_SHADERNUM_SHIFT) 
-		| tr.shiftedEntityNum | ( fogIndex << QSORT_FOGNUM_SHIFT );
+		| tr.shiftedEntityNum | ( fogIndex << QSORT_FOGNUM_SHIFT ) | (int)dlightMap;
 	tr.refdef.drawSurfs[index].surface = surface;
 	tr.refdef.numDrawSurfs++;
 }
@@ -1033,10 +1124,11 @@ R_DecomposeSort
 =================
 */
 void R_DecomposeSort( unsigned sort, int *entityNum, shader_t **shader, 
-					 int *fogNum ) {
+					 int *fogNum, int *dlightMap ) {
 	*fogNum = ( sort >> QSORT_FOGNUM_SHIFT ) & 31;
 	*shader = tr.sortedShaders[ ( sort >> QSORT_SHADERNUM_SHIFT ) & (MAX_SHADERS-1) ];
-	*entityNum = ( sort >> QSORT_ENTITYNUM_SHIFT ) & 1023;
+	*entityNum = ( sort >> QSORT_ENTITYNUM_SHIFT ) & (MAX_GENTITIES-1);
+	*dlightMap = sort & 3;
 }
 
 /*
@@ -1048,6 +1140,7 @@ void R_SortDrawSurfs( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	shader_t		*shader;
 	int				fogNum;
 	int				entityNum;
+	int				dlighted;
 	int				i;
 
 	// it is possible for some views to not have any surfaces
@@ -1070,7 +1163,7 @@ void R_SortDrawSurfs( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	// check for any pass through drawing, which
 	// may cause another view to be rendered first
 	for ( i = 0 ; i < numDrawSurfs ; i++ ) {
-		R_DecomposeSort( (drawSurfs+i)->sort, &entityNum, &shader, &fogNum );
+		R_DecomposeSort( (drawSurfs+i)->sort, &entityNum, &shader, &fogNum, &dlighted );
 
 		if ( shader->sort > SS_PORTAL ) {
 			break;
@@ -1112,6 +1205,8 @@ void R_AddEntitySurfaces (void) {
 		  tr.currentEntityNum++ ) {
 		ent = tr.currentEntity = &tr.refdef.entities[tr.currentEntityNum];
 
+		ent->needDlights = qfalse;
+
 		// preshift the value we are going to OR into the drawsurf sort
 		tr.shiftedEntityNum = tr.currentEntityNum << QSORT_ENTITYNUM_SHIFT;
 
@@ -1140,7 +1235,7 @@ void R_AddEntitySurfaces (void) {
 				continue;
 			}
 			shader = R_GetShaderByHandle( ent->e.customShader );
-			R_AddDrawSurf(&entitySurface, shader, R_SpriteFogNum( ent ) );
+			R_AddDrawSurf( &entitySurface, shader, R_SpriteFogNum( ent ), 0 );
 			break;
 
 		case RT_MODEL:
@@ -1149,11 +1244,14 @@ void R_AddEntitySurfaces (void) {
 
 			tr.currentModel = R_GetModelByHandle( ent->e.hModel );
 			if (!tr.currentModel) {
-				R_AddDrawSurf(&entitySurface, tr.defaultShader, 0 );
+				R_AddDrawSurf( &entitySurface, tr.defaultShader, 0, 0 );
 			} else {
 				switch ( tr.currentModel->type ) {
-				case MOD_MD3:
+				case MOD_MESH:
 					R_AddMD3Surfaces( ent );
+					break;
+				case MOD_IQM:
+					R_AddIQMSurfaces( ent );
 					break;
 				case MOD_BRUSH:
 					R_AddBrushModelSurfaces( ent );
@@ -1162,7 +1260,7 @@ void R_AddEntitySurfaces (void) {
 					if ( (ent->e.renderfx & RF_THIRD_PERSON) && !tr.viewParms.isPortal) {
 						break;
 					}
-					R_AddDrawSurf( &entitySurface, tr.defaultShader, 0 );
+					R_AddDrawSurf( &entitySurface, tr.defaultShader, 0, 0 );
 					break;
 				default:
 					ri.Error( ERR_DROP, "R_AddEntitySurfaces: Bad modeltype" );
@@ -1208,98 +1306,30 @@ void R_GenerateDrawSurfs( void ) {
 R_DebugPolygon
 ================
 */
-void R_DebugPolygon(int color, int numPoints, float *points) {
-	void		*buffer;
-	vec4_t		*xyz;
-	color4ub_t	*colors;
-	vec2_t		*texCoords;
-	glIndex_t	*indexes;
-	int			i;
+void R_DebugPolygon( int color, int numPoints, float *points ) {
+	int		i;
 
-	/* allocate buffer */
-	buffer = ri.Hunk_AllocateTempMemory(numPoints * (sizeof(*xyz) + sizeof(*colors) + sizeof(*texCoords) + sizeof(*indexes)));
+	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
 
-	/* calculate buffer offsets */
-	xyz			= (vec4_t *)buffer;
-	colors		= (color4ub_t *)((char *)xyz + numPoints * sizeof(*xyz));
-	texCoords	= (vec2_t *)((char *)colors + numPoints * sizeof(*colors));
-	indexes		= (glIndex_t *)((char *)texCoords + numPoints * sizeof(*texCoords));
+	// draw solid shade
 
-	/* bind program */
-	R_UseProgram(tr.passthroughProgram);
-
-	/* color map */
-	R_SetUniform_ColorMap(tr.passthroughProgram, 0);
-
-	/* model view projection matrix */
-	R_SetUniform_ModelViewProjectionMatrix(tr.passthroughProgram, glState.modelViewProjectionMatrix);
-
-	/* portal clipping */
-	R_SetUniform_PortalClipping(tr.passthroughProgram, backEnd.viewParms.isPortal);
-
-	/* portal plane */
-	if (backEnd.viewParms.isPortal) {
-		vec4_t	plane;
-
-		plane[0] = backEnd.viewParms.portalPlane.normal[0];
-		plane[1] = backEnd.viewParms.portalPlane.normal[1];
-		plane[2] = backEnd.viewParms.portalPlane.normal[2];
-		plane[3] = backEnd.viewParms.portalPlane.dist;
-
-		R_SetUniform_PortalPlane(tr.passthroughProgram, plane);
+	qglColor3f( color&1, (color>>1)&1, (color>>2)&1 );
+	qglBegin( GL_POLYGON );
+	for ( i = 0 ; i < numPoints ; i++ ) {
+		qglVertex3fv( points + i * 3 );
 	}
+	qglEnd();
 
-	/* bind vertex buffer object */
-	R_BindIBO(tr.defaultIBO);
-	R_BindVBO(tr.defaultVBO);
-
-	/* bind vertex attributes */
-	GL_VertexAttributeState(tr.passthroughProgram->attributes);
-	GL_VertexAttributePointers(tr.passthroughProgram->attributes);
-
-	/* draw solid shade */
-	GL_State(GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE);
-
-	for (i = 0; i < numPoints; i++) {
-		xyz[i][0]		= points[i * 3    ];
-		xyz[i][1]		= points[i * 3 + 1];
-		xyz[i][2]		= points[i * 3 + 2];
-		xyz[i][3]		= 1.0f;
-
-		colors[i][0]	= (color & 1) * 255;
-		colors[i][1]	= ((color >> 1) & 1) * 255;
-		colors[i][2]	= ((color >> 2) & 1) * 255;
-		colors[i][3]	= 255;
-
-		texCoords[i][0]	= i % 2;
-		texCoords[i][1]	= i % 2;
-
-		indexes[i]		= i;
+	// draw wireframe outline
+	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
+	qglDepthRange( 0, 0 );
+	qglColor3f( 1, 1, 1 );
+	qglBegin( GL_POLYGON );
+	for ( i = 0 ; i < numPoints ; i++ ) {
+		qglVertex3fv( points + i * 3 );
 	}
-
-	R_UpdateIBO(indexes, numPoints);
-	R_UpdateVBO(xyz, NULL, colors, texCoords, NULL, NULL, NULL, numPoints);
-
-	qglDrawElements(GL_POLYGON, numPoints, GL_INDEX_TYPE, 0);
-
-	/* draw wireframe outline */
-	GL_State(GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE);
-	qglDepthRange(0, 0);
-
-	for (i = 0; i < numPoints; i++) {
-		colors[i][0]		= 255;
-		colors[i][1]		= 255;
-		colors[i][2]		= 255;
-	}
-
-	R_UpdateVBO(xyz, NULL, colors, texCoords, NULL, NULL, NULL, numPoints);
-
-	qglDrawElements(GL_POLYGON, numPoints, GL_INDEX_TYPE, 0);
-
-	qglDepthRange(0, 1);
-
-	/* free buffer */
-	ri.Hunk_FreeTempMemory(buffer);
+	qglEnd();
+	qglDepthRange( 0, 1 );
 }
 
 /*

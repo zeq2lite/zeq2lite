@@ -71,11 +71,17 @@ typedef enum
 static SDL_Surface *screen = NULL;
 static const SDL_VideoInfo *videoInfo = NULL;
 
+cvar_t *r_allowSoftwareGL; // Don't abort out if a hardware visual can't be obtained
 cvar_t *r_allowResize; // make window resizable
 cvar_t *r_centerWindow;
 cvar_t *r_sdlDriver;
 
 void (APIENTRYP qglActiveTextureARB) (GLenum texture);
+void (APIENTRYP qglClientActiveTextureARB) (GLenum texture);
+void (APIENTRYP qglMultiTexCoord2fARB) (GLenum target, GLfloat s, GLfloat t);
+
+void (APIENTRYP qglLockArraysEXT) (GLint first, GLsizei count);
+void (APIENTRYP qglUnlockArraysEXT) (void);
 
 // GL_ARB_shader_objects
 GLvoid (APIENTRYP qglDeleteObjectARB) (GLhandleARB obj);
@@ -170,18 +176,6 @@ GLvoid (APIENTRYP qglGetVertexAttribfvARB) (GLuint index, GLenum pname, GLfloat 
 GLvoid (APIENTRYP qglGetVertexAttribivARB) (GLuint index, GLenum pname, GLint *params);
 GLvoid (APIENTRYP qglGetVertexAttribPointervARB) (GLuint index, GLenum pname, GLvoid **pointer);
 
-GLvoid (APIENTRY * qglBindBufferARB) (GLenum target, GLuint buffer);
-GLvoid (APIENTRY * qglDeleteBuffersARB) (GLsizei n, const GLuint * buffers);
-GLvoid (APIENTRY * qglGenBuffersARB) (GLsizei n, GLuint * buffers);
-GLboolean (APIENTRY * qglIsBufferARB) (GLuint buffer);
-GLvoid (APIENTRY * qglBufferDataARB) (GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
-GLvoid (APIENTRY * qglBufferSubDataARB) (GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
-GLvoid (APIENTRY * qglGetBufferSubDataARB) (GLenum target, GLintptrARB offset, GLsizeiptrARB size, GLvoid * data);
-GLvoid *(APIENTRY * qglMapBufferARB) (GLenum target, GLenum access);
-GLboolean (APIENTRY * qglUnmapBufferARB) (GLenum target);
-GLvoid (APIENTRY * qglGetBufferParameterivARB) (GLenum target, GLenum pname, GLint * params);
-GLvoid (APIENTRY * qglGetBufferPointervARB) (GLenum target, GLenum pname, GLvoid * *params);
-
 /*
 ===============
 GLimp_Shutdown
@@ -197,19 +191,6 @@ void GLimp_Shutdown( void )
 	Com_Memset( &glConfig, 0, sizeof( glConfig ) );
 	Com_Memset( &glState, 0, sizeof( glState ) );
 }
-
-/*
-===============
-GLimp_Minimize
-
-Minimize the game so that user is back at the desktop
-===============
-*/
-void GLimp_Minimize(void)
-{
-	SDL_WM_IconifyWindow();
-}
-
 
 /*
 ===============
@@ -234,8 +215,8 @@ static int GLimp_CompareModes( const void *a, const void *b )
 	float aspectB = (float)modeB->w / (float)modeB->h;
 	int areaA = modeA->w * modeA->h;
 	int areaB = modeB->w * modeB->h;
-	float aspectDiffA = fabs( aspectA - glConfig.displayAspect );
-	float aspectDiffB = fabs( aspectB - glConfig.displayAspect );
+	float aspectDiffA = fabs( aspectA - displayAspect );
+	float aspectDiffB = fabs( aspectB - displayAspect );
 	float aspectDiffsDiff = aspectDiffA - aspectDiffB;
 
 	if( aspectDiffsDiff > ASPECT_EPSILON )
@@ -336,9 +317,9 @@ static int GLimp_SetMode(int mode, qboolean fullscreen, qboolean noborder)
 			// Guess the display aspect ratio through the desktop resolution
 			// by assuming (relatively safely) that it is set at or close to
 			// the display's native aspect ratio
-			glConfig.displayAspect = (float)videoInfo->current_w / (float)videoInfo->current_h;
+			displayAspect = (float)videoInfo->current_w / (float)videoInfo->current_h;
 
-			ri.Printf( PRINT_ALL, "Estimated display aspect: %.3f\n", glConfig.displayAspect );
+			ri.Printf( PRINT_ALL, "Estimated display aspect: %.3f\n", displayAspect );
 		}
 		else
 		{
@@ -470,6 +451,18 @@ static int GLimp_SetMode(int mode, qboolean fullscreen, qboolean noborder)
 		
 		SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
+#if 0 // See http://bugzilla.icculus.org/show_bug.cgi?id=3526
+		// If not allowing software GL, demand accelerated
+		if( !r_allowSoftwareGL->integer )
+		{
+			if( SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 ) < 0 )
+			{
+				ri.Printf( PRINT_ALL, "Unable to guarantee accelerated "
+						"visual with libSDL < 1.2.10\n" );
+			}
+		}
+#endif
+
 		if( SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, r_swapInterval->integer ) < 0 )
 			ri.Printf( PRINT_ALL, "r_swapInterval requires libSDL >= 1.2.10\n" );
 
@@ -594,208 +587,273 @@ static qboolean GLimp_HaveExtension(const char *ext)
 GLimp_InitExtensions
 ===============
 */
-static void GLimp_InitExtensions(void) {
-	ri.Printf(PRINT_ALL, "Initializing OpenGL extensions\n");
-
-	/* GL_ARB_multitexture */
-	if (GLimp_HaveExtension("GL_ARB_multitexture")) {
-		qglActiveTextureARB = SDL_GL_GetProcAddress("glActiveTextureARB");
-		qglGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &glConfig.numTextureUnits);
-		ri.Printf(PRINT_ALL, "...using GL_ARB_multitexture\n");
-	} else {
-		ri.Error(ERR_FATAL, "...GL_ARB_multitexture not found\n");
+static void GLimp_InitExtensions( void )
+{
+	if ( !r_allowExtensions->integer )
+	{
+		ri.Printf( PRINT_ALL, "* IGNORING OPENGL EXTENSIONS *\n" );
+		return;
 	}
 
-	/* GL_ARB_texture_cube_map */
-	if (GLimp_HaveExtension("GL_ARB_texture_cube_map")) {
-		/* stub */
-		ri.Printf(PRINT_ALL, "...using GL_ARB_texture_cube_map\n");
-	} else {
-		ri.Error(ERR_FATAL, "...GL_ARB_texture_cube_map not found\n");
-	}
+	ri.Printf( PRINT_ALL, "Initializing OpenGL extensions\n" );
 
-	/* GL_ARB_vertex_buffer_object */
-	if (GLimp_HaveExtension("GL_ARB_vertex_buffer_object")) {
-		qglBindBufferARB			= (GLvoid (APIENTRYP)(GLenum, GLuint))SDL_GL_GetProcAddress("glBindBufferARB");
-		qglDeleteBuffersARB			= (GLvoid (APIENTRYP)(GLsizei, const GLuint *))SDL_GL_GetProcAddress("glDeleteBuffersARB");
-		qglGenBuffersARB			= (GLvoid (APIENTRYP)(GLsizei, GLuint *))SDL_GL_GetProcAddress("glGenBuffersARB");
-		qglIsBufferARB				= (GLboolean (APIENTRYP)(GLuint))SDL_GL_GetProcAddress("glIsBufferARB");
-		qglBufferDataARB			= (GLvoid (APIENTRYP)(GLenum, GLsizeiptrARB, const GLvoid *, GLenum))SDL_GL_GetProcAddress("glBufferDataARB");
-		qglBufferSubDataARB			= (GLvoid (APIENTRYP)(GLenum, GLintptrARB, GLsizeiptrARB, const GLvoid *))SDL_GL_GetProcAddress("glBufferSubDataARB");
-		qglGetBufferSubDataARB		= (GLvoid (APIENTRYP)(GLenum, GLintptrARB, GLsizeiptrARB, GLvoid *))SDL_GL_GetProcAddress("glGetBufferSubDataARB");
-		qglMapBufferARB				= (GLvoid *(APIENTRYP)(GLenum,GLenum)) SDL_GL_GetProcAddress("glMapBufferARB");
-		qglUnmapBufferARB			= (GLboolean (APIENTRYP)(GLenum))SDL_GL_GetProcAddress("glUnmapBufferARB");
-		qglGetBufferParameterivARB	= (GLvoid (APIENTRYP)(GLenum, GLenum, GLint *))SDL_GL_GetProcAddress("glGetBufferParameterivARB");
-		qglGetBufferPointervARB		= (GLvoid (APIENTRYP)(GLenum, GLenum, GLvoid **))SDL_GL_GetProcAddress("glGetBufferPointervARB");
-		ri.Printf(PRINT_ALL, "...using GL_ARB_vertex_buffer_object\n");
-	} else {
-		ri.Error(ERR_FATAL, "...GL_ARB_vertex_buffer_object not found\n");
-	}
+	glConfig.textureCompression = TC_NONE;
 
-	/* GL_ARB_shader_objects */
-	if (GLimp_HaveExtension("GL_ARB_shader_objects")) {
-		qglDeleteObjectARB				= (GLvoid (APIENTRYP)(GLhandleARB))SDL_GL_GetProcAddress("glDeleteObjectARB");
-		qglGetHandleARB					= (GLhandleARB (APIENTRYP)(GLenum))SDL_GL_GetProcAddress("glGetHandleARB");
-		qglDetachObjectARB				= (GLvoid (APIENTRYP)(GLhandleARB, GLhandleARB))SDL_GL_GetProcAddress("glDetachObjectARB");
-		qglCreateShaderObjectARB		= (GLhandleARB (APIENTRYP)(GLenum))SDL_GL_GetProcAddress("glCreateShaderObjectARB");
-		qglShaderSourceARB				= (GLvoid (APIENTRYP)(GLhandleARB, GLsizei, const GLcharARB **, const GLint *))SDL_GL_GetProcAddress("glShaderSourceARB");
-		qglCompileShaderARB				= (GLvoid (APIENTRYP)(GLhandleARB))SDL_GL_GetProcAddress("glCompileShaderARB");
-		qglCreateProgramObjectARB		= (GLhandleARB (APIENTRYP)(void))SDL_GL_GetProcAddress("glCreateProgramObjectARB");
-		qglAttachObjectARB				= (GLvoid (APIENTRYP)(GLhandleARB, GLhandleARB))SDL_GL_GetProcAddress("glAttachObjectARB");
-		qglLinkProgramARB				= (GLvoid (APIENTRYP)(GLhandleARB))SDL_GL_GetProcAddress("glLinkProgramARB");
-		qglUseProgramObjectARB			= (GLvoid (APIENTRYP)(GLhandleARB))SDL_GL_GetProcAddress("glUseProgramObjectARB");
-		qglValidateProgramARB			= (GLvoid (APIENTRYP)(GLhandleARB))SDL_GL_GetProcAddress("glValidateProgramARB");
-		qglUniform1fARB					= (GLvoid (APIENTRYP)(GLint, GLfloat))SDL_GL_GetProcAddress("glUniform1fARB");
-		qglUniform2fARB					= (GLvoid (APIENTRYP)(GLint, GLfloat, GLfloat))SDL_GL_GetProcAddress("glUniform2fARB");
-		qglUniform3fARB					= (GLvoid (APIENTRYP)(GLint, GLfloat, GLfloat, GLfloat))SDL_GL_GetProcAddress("glUniform3fARB");
-		qglUniform4fARB					= (GLvoid (APIENTRYP)(GLint, GLfloat, GLfloat, GLfloat, GLfloat))SDL_GL_GetProcAddress("glUniform4fARB");
-		qglUniform1iARB					= (GLvoid (APIENTRYP)(GLint, GLint))SDL_GL_GetProcAddress("glUniform1iARB");
-		qglUniform2iARB					= (GLvoid (APIENTRYP)(GLint, GLint, GLint))SDL_GL_GetProcAddress("glUniform2iARB");
-		qglUniform3iARB					= (GLvoid (APIENTRYP)(GLint, GLint, GLint, GLint))SDL_GL_GetProcAddress("glUniform3iARB");
-		qglUniform4iARB					= (GLvoid (APIENTRYP)(GLint, GLint, GLint, GLint, GLint))SDL_GL_GetProcAddress("glUniform4iARB");
-		qglUniform1fvARB				= (GLvoid (APIENTRYP)(GLint, GLsizei, const GLfloat *))SDL_GL_GetProcAddress("glUniform1fvARB");
-		qglUniform2fvARB				= (GLvoid (APIENTRYP)(GLint, GLsizei, const GLfloat *))SDL_GL_GetProcAddress("glUniform2fvARB");
-		qglUniform3fvARB				= (GLvoid (APIENTRYP)(GLint, GLsizei, const GLfloat *))SDL_GL_GetProcAddress("glUniform3fvARB");
-		qglUniform4fvARB				= (GLvoid (APIENTRYP)(GLint, GLsizei, const GLfloat *))SDL_GL_GetProcAddress("glUniform4fvARB");
-		qglUniform1ivARB				= (GLvoid (APIENTRYP)(GLint, GLsizei, const GLint *))SDL_GL_GetProcAddress("glUniform1ivARB");
-		qglUniform2ivARB				= (GLvoid (APIENTRYP)(GLint, GLsizei, const GLint *))SDL_GL_GetProcAddress("glUniform2ivARB");
-		qglUniform3ivARB				= (GLvoid (APIENTRYP)(GLint, GLsizei, const GLint *))SDL_GL_GetProcAddress("glUniform3ivARB");
-		qglUniform4ivARB				= (GLvoid (APIENTRYP)(GLint, GLsizei, const GLint *))SDL_GL_GetProcAddress("glUniform4ivARB");
-		qglUniformMatrix2fvARB			= (GLvoid (APIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *))SDL_GL_GetProcAddress("glUniformMatrix2fvARB");
-		qglUniformMatrix3fvARB			= (GLvoid (APIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *))SDL_GL_GetProcAddress("glUniformMatrix3fvARB");
-		qglUniformMatrix4fvARB			= (GLvoid (APIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *))SDL_GL_GetProcAddress("glUniformMatrix4fvARB");
-		qglGetObjectParameterfvARB		= (GLvoid (APIENTRYP)(GLhandleARB, GLenum, GLfloat *))SDL_GL_GetProcAddress("glGetObjectParameterfvARB");
-		qglGetObjectParameterivARB		= (GLvoid (APIENTRYP)(GLhandleARB, GLenum, GLint *))SDL_GL_GetProcAddress("glGetObjectParameterivARB");
-		qglGetInfoLogARB				= (GLvoid (APIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *))SDL_GL_GetProcAddress("glGetInfoLogARB");
-		qglGetAttachedObjectsARB		= (GLvoid (APIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLhandleARB *))SDL_GL_GetProcAddress("glGetAttachedObjectsARB");
-		qglGetUniformLocationARB		= (GLint (APIENTRYP)(GLhandleARB, const GLcharARB *))SDL_GL_GetProcAddress("glGetUniformLocationARB");
-		qglGetActiveUniformARB			= (GLvoid (APIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *))SDL_GL_GetProcAddress("glGetActiveUniformARB");
-		qglGetUniformfvARB				= (GLvoid (APIENTRYP)(GLhandleARB, GLint, GLfloat *))SDL_GL_GetProcAddress("glGetUniformfvARB");
-		qglGetUniformivARB				= (GLvoid (APIENTRYP)(GLhandleARB, GLint, GLint *))SDL_GL_GetProcAddress("glGetUniformivARB");
-		qglGetShaderSourceARB			= (GLvoid (APIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *))SDL_GL_GetProcAddress("glGetShaderSourceARB");
-		ri.Printf(PRINT_ALL, "...using GL_ARB_shader_objects\n");
-	} else {
-		ri.Error(ERR_FATAL, "...GL_ARB_shader_objects not found\n");
-	}
-
-	/* GL_ARB_vertex_shader */
-	if (GLimp_HaveExtension("GL_ARB_vertex_shader")) {
-		qglVertexAttrib1fARB			= (GLvoid (APIENTRYP)(GLuint, GLfloat))SDL_GL_GetProcAddress("glVertexAttrib1fARB");
-		qglVertexAttrib1sARB			= (GLvoid (APIENTRYP)(GLuint, GLshort))SDL_GL_GetProcAddress("glVertexAttrib1sARB");
-		qglVertexAttrib1dARB			= (GLvoid (APIENTRYP)(GLuint, GLdouble))SDL_GL_GetProcAddress("glVertexAttrib1dARB");
-		qglVertexAttrib2fARB			= (GLvoid (APIENTRYP)(GLuint, GLfloat, GLfloat))SDL_GL_GetProcAddress("glVertexAttrib2fARB");
-		qglVertexAttrib2sARB			= (GLvoid (APIENTRYP)(GLuint, GLshort, GLshort))SDL_GL_GetProcAddress("glVertexAttrib2sARB");
-		qglVertexAttrib2dARB			= (GLvoid (APIENTRYP)(GLuint, GLdouble, GLdouble))SDL_GL_GetProcAddress("glVertexAttrib2dARB");
-		qglVertexAttrib3fARB			= (GLvoid (APIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat))SDL_GL_GetProcAddress("glVertexAttrib3fARB");
-		qglVertexAttrib3sARB			= (GLvoid (APIENTRYP)(GLuint, GLshort, GLshort, GLshort))SDL_GL_GetProcAddress("glVertexAttrib3sARB");
-		qglVertexAttrib3dARB			= (GLvoid (APIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble))SDL_GL_GetProcAddress("glVertexAttrib3dARB");
-		qglVertexAttrib4fARB			= (GLvoid (APIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat, GLfloat))SDL_GL_GetProcAddress("glVertexAttrib4fARB");
-		qglVertexAttrib4sARB			= (GLvoid (APIENTRYP)(GLuint, GLshort, GLshort, GLshort, GLshort))SDL_GL_GetProcAddress("glVertexAttrib4sARB");
-		qglVertexAttrib4dARB			= (GLvoid (APIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble, GLdouble))SDL_GL_GetProcAddress("glVertexAttrib4dARB");
-		qglVertexAttrib4NubARB			= (GLvoid (APIENTRYP)(GLuint, GLubyte, GLubyte, GLubyte, GLubyte))SDL_GL_GetProcAddress("glVertexAttrib4NubARB");
-		qglVertexAttrib1fvARB			= (GLvoid (APIENTRYP)(GLuint, GLfloat *))SDL_GL_GetProcAddress("glVertexAttrib1fvARB");
-		qglVertexAttrib1svARB			= (GLvoid (APIENTRYP)(GLuint, GLshort *))SDL_GL_GetProcAddress("glVertexAttrib1svARB");
-		qglVertexAttrib1dvARB			= (GLvoid (APIENTRYP)(GLuint, GLdouble *))SDL_GL_GetProcAddress("glVertexAttrib1dvARB");
-		qglVertexAttrib2fvARB			= (GLvoid (APIENTRYP)(GLuint, GLfloat *))SDL_GL_GetProcAddress("glVertexAttrib2fvARB");
-		qglVertexAttrib2svARB			= (GLvoid (APIENTRYP)(GLuint, GLshort *))SDL_GL_GetProcAddress("glVertexAttrib2svARB");
-		qglVertexAttrib2dvARB			= (GLvoid (APIENTRYP)(GLuint, GLdouble *))SDL_GL_GetProcAddress("glVertexAttrib2dvARB");
-		qglVertexAttrib3fvARB			= (GLvoid (APIENTRYP)(GLuint, GLfloat *))SDL_GL_GetProcAddress("glVertexAttrib3fvARB");
-		qglVertexAttrib3svARB			= (GLvoid (APIENTRYP)(GLuint, GLshort *))SDL_GL_GetProcAddress("glVertexAttrib3svARB");
-		qglVertexAttrib3dvARB			= (GLvoid (APIENTRYP)(GLuint, GLdouble *))SDL_GL_GetProcAddress("glVertexAttrib3dvARB");
-		qglVertexAttrib4fvARB			= (GLvoid (APIENTRYP)(GLuint, GLfloat *))SDL_GL_GetProcAddress("glVertexAttrib4fvARB");
-		qglVertexAttrib4svARB			= (GLvoid (APIENTRYP)(GLuint, GLshort *))SDL_GL_GetProcAddress("glVertexAttrib4svARB");
-		qglVertexAttrib4dvARB			= (GLvoid (APIENTRYP)(GLuint, GLdouble *))SDL_GL_GetProcAddress("glVertexAttrib4dvARB");
-		qglVertexAttrib4ivARB			= (GLvoid (APIENTRYP)(GLuint, GLint *))SDL_GL_GetProcAddress("glVertexAttrib4ivARB");
-		qglVertexAttrib4bvARB			= (GLvoid (APIENTRYP)(GLuint, GLbyte *))SDL_GL_GetProcAddress("glVertexAttrib4bvARB");
-		qglVertexAttrib4ubvARB			= (GLvoid (APIENTRYP)(GLuint, GLubyte *))SDL_GL_GetProcAddress("glVertexAttrib4ubvARB");
-		qglVertexAttrib4usvARB			= (GLvoid (APIENTRYP)(GLuint, GLushort *))SDL_GL_GetProcAddress("glVertexAttrib4usvARB");
-		qglVertexAttrib4uivARB			= (GLvoid (APIENTRYP)(GLuint, GLuint *))SDL_GL_GetProcAddress("glVertexAttrib4uivARB");
-		qglVertexAttrib4NbvARB			= (GLvoid (APIENTRYP)(GLuint, const GLbyte *))SDL_GL_GetProcAddress("glVertexAttrib4NbvARB");
-		qglVertexAttrib4NsvARB			= (GLvoid (APIENTRYP)(GLuint, const GLshort *))SDL_GL_GetProcAddress("glVertexAttrib4NsvARB");
-		qglVertexAttrib4NivARB			= (GLvoid (APIENTRYP)(GLuint, const GLint *))SDL_GL_GetProcAddress("glVertexAttrib4NivARB");
-		qglVertexAttrib4NubvARB			= (GLvoid (APIENTRYP)(GLuint, const GLubyte *))SDL_GL_GetProcAddress("glVertexAttrib4NubvARB");
-		qglVertexAttrib4NusvARB			= (GLvoid (APIENTRYP)(GLuint, const GLushort *))SDL_GL_GetProcAddress("glVertexAttrib4NusvARB");
-		qglVertexAttrib4NuivARB			= (GLvoid (APIENTRYP)(GLuint, const GLuint *))SDL_GL_GetProcAddress("glVertexAttrib4NuivARB");
-		qglVertexAttribPointerARB		= (GLvoid (APIENTRYP)(GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *))SDL_GL_GetProcAddress("glVertexAttribPointerARB");
-		qglEnableVertexAttribArrayARB	= (GLvoid (APIENTRYP)(GLuint))SDL_GL_GetProcAddress("glEnableVertexAttribArrayARB");
-		qglDisableVertexAttribArrayARB	= (GLvoid (APIENTRYP)(GLuint))SDL_GL_GetProcAddress("glDisableVertexAttribArrayARB");
-		qglBindAttribLocationARB		= (GLvoid (APIENTRYP)(GLhandleARB, GLuint, const GLcharARB *))SDL_GL_GetProcAddress("glBindAttribLocationARB");
-		qglGetActiveAttribARB			= (GLvoid (APIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *))SDL_GL_GetProcAddress("glGetActiveAttribARB");
-		qglGetAttribLocationARB			= (GLint (APIENTRYP)(GLhandleARB, const GLcharARB *)) SDL_GL_GetProcAddress("glGetAttribLocationARB");
-		qglGetVertexAttribdvARB			= (GLvoid (APIENTRYP)(GLuint, GLenum, GLdouble *))SDL_GL_GetProcAddress("glGetVertexAttribdvARB");
-		qglGetVertexAttribfvARB			= (GLvoid (APIENTRYP)(GLuint, GLenum, GLfloat *))SDL_GL_GetProcAddress("glGetVertexAttribfvARB");
-		qglGetVertexAttribivARB			= (GLvoid (APIENTRYP)(GLuint, GLenum, GLint *))SDL_GL_GetProcAddress("glGetVertexAAttribivARB");
-		qglGetVertexAttribPointervARB	= (GLvoid (APIENTRYP)(GLuint, GLenum, GLvoid **))SDL_GL_GetProcAddress("glGetVertexAttribPointervARB");
-		ri.Printf(PRINT_ALL, "...using GL_ARB_vertex_shader\n");
-	} else {
-		ri.Error(ERR_FATAL, "...GL_ARB_vertex_shader not found\n");
-	}
-
-	/* GL_ARB_fragment_shader */
-	if (GLimp_HaveExtension("GL_ARB_fragment_shader")) {
-		ri.Printf(PRINT_ALL, "...using GL_ARB_fragment_shader\n");
-	} else {
-		ri.Error(ERR_FATAL, "...GL_ARB_vertex_shader not found\n");
-	}
-
-	/* GL_ARB_shading_language_100 */
-	if (GLimp_HaveExtension("GL_ARB_shading_language_100")) {
-		ri.Printf(PRINT_ALL, "...using GL_ARB_shading_language_100\n");
-	} else {
-		ri.Error(ERR_FATAL, "...GL_ARB_shading_language_100 not found\n");
-	}
-
-	/* GL_EXT_framebuffer_object */
-	if (GLimp_HaveExtension("GL_EXT_framebuffer_object")) {
-		/* stub */
-		ri.Printf(PRINT_ALL, "...using GL_EXT_framebuffer_object\n");
-	} else {
-		ri.Error(ERR_FATAL, "...GL_EXT_framebuffer_object not found\n");
-	}
-
-	/* GL_ARB_texture_non_power_of_two */
-	if (GLimp_HaveExtension("GL_ARB_texture_non_power_of_two")) {
-		glConfig.textureNPOT = qtrue;
-		ri.Printf(PRINT_ALL, "...using GL_ARB_texture_non_power_of_two\n");
-	} else {
-		glConfig.textureNPOT = qfalse;
-		ri.Printf(PRINT_ALL, "...GL_ARB_texture_non_power_of_two not found\n");
-	}
-
-	/* GL_EXT_texture_compression_s3tc */
-	if (GLimp_HaveExtension("GL_EXT_texture_compression_s3tc")) {
-		if (r_ext_compressed_textures->value) {
+	// GL_EXT_texture_compression_s3tc
+	if ( GLimp_HaveExtension( "GL_ARB_texture_compression" ) &&
+	     GLimp_HaveExtension( "GL_EXT_texture_compression_s3tc" ) )
+	{
+		if ( r_ext_compressed_textures->value )
+		{
 			glConfig.textureCompression = TC_S3TC_ARB;
-			ri.Printf(PRINT_ALL, "...using GL_EXT_texture_compression_s3tc\n");
-		} else {
-			glConfig.textureCompression = TC_NONE;
-			ri.Printf(PRINT_ALL, "...ignoring GL_EXT_texture_compression_s3tc\n");
+			ri.Printf( PRINT_ALL, "...using GL_EXT_texture_compression_s3tc\n" );
 		}
-	} else {
-		glConfig.textureCompression = TC_NONE;
-		ri.Printf(PRINT_ALL, "...GL_EXT_texture_compression_s3tc not found\n");
+		else
+		{
+			ri.Printf( PRINT_ALL, "...ignoring GL_EXT_texture_compression_s3tc\n" );
+		}
+	}
+	else
+	{
+		ri.Printf( PRINT_ALL, "...GL_EXT_texture_compression_s3tc not found\n" );
 	}
 
-	/* GL_EXT_texture_filter_anisotropic */
-	glConfig.textureFilterAnisotropic = qfalse;
-	if (GLimp_HaveExtension("GL_EXT_texture_filter_anisotropic")) {
-		if (r_ext_texture_filter_anisotropic->integer) {
-			qglGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint *)&glConfig.maxAnisotropy);
-
-			if (glConfig.maxAnisotropy <= 0) {
-				ri.Printf(PRINT_ALL, "...GL_EXT_texture_filter_anisotropic not properly supported!\n");
-				glConfig.maxAnisotropy = 0;
-			} else {
-				ri.Printf(PRINT_ALL, "...using GL_EXT_texture_filter_anisotropic (max: %i)\n", glConfig.maxAnisotropy);
-				glConfig.textureFilterAnisotropic = qtrue;
+	// GL_S3_s3tc ... legacy extension before GL_EXT_texture_compression_s3tc.
+	if (glConfig.textureCompression == TC_NONE)
+	{
+		if ( GLimp_HaveExtension( "GL_S3_s3tc" ) )
+		{
+			if ( r_ext_compressed_textures->value )
+			{
+				glConfig.textureCompression = TC_S3TC;
+				ri.Printf( PRINT_ALL, "...using GL_S3_s3tc\n" );
+			}
+			else
+			{
+				ri.Printf( PRINT_ALL, "...ignoring GL_S3_s3tc\n" );
 			}
 		}
-		else {
-			ri.Printf(PRINT_ALL, "...ignoring GL_EXT_texture_filter_anisotropic\n");
+		else
+		{
+			ri.Printf( PRINT_ALL, "...GL_S3_s3tc not found\n" );
 		}
 	}
-	else {
-		ri.Printf(PRINT_ALL, "...GL_EXT_texture_filter_anisotropic not found\n");
+
+
+	// GL_EXT_texture_env_add
+	glConfig.textureEnvAddAvailable = qfalse;
+	if ( GLimp_HaveExtension( "EXT_texture_env_add" ) )
+	{
+		if ( r_ext_texture_env_add->integer )
+		{
+			glConfig.textureEnvAddAvailable = qtrue;
+			ri.Printf( PRINT_ALL, "...using GL_EXT_texture_env_add\n" );
+		}
+		else
+		{
+			glConfig.textureEnvAddAvailable = qfalse;
+			ri.Printf( PRINT_ALL, "...ignoring GL_EXT_texture_env_add\n" );
+		}
+	}
+	else
+	{
+		ri.Printf( PRINT_ALL, "...GL_EXT_texture_env_add not found\n" );
+	}
+
+	// GL_ARB_multitexture
+	qglMultiTexCoord2fARB = NULL;
+	qglActiveTextureARB = NULL;
+	qglClientActiveTextureARB = NULL;
+	if ( GLimp_HaveExtension( "GL_ARB_multitexture" ) )
+	{
+		if ( r_ext_multitexture->value )
+		{
+			qglMultiTexCoord2fARB = SDL_GL_GetProcAddress( "glMultiTexCoord2fARB" );
+			qglActiveTextureARB = SDL_GL_GetProcAddress( "glActiveTextureARB" );
+			qglClientActiveTextureARB = SDL_GL_GetProcAddress( "glClientActiveTextureARB" );
+
+			if ( qglActiveTextureARB )
+			{
+				GLint glint = 0;
+				qglGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &glint );
+				glConfig.numTextureUnits = (int) glint;
+				if ( glConfig.numTextureUnits > 1 )
+				{
+					ri.Printf( PRINT_ALL, "...using GL_ARB_multitexture\n" );
+				}
+				else
+				{
+					qglMultiTexCoord2fARB = NULL;
+					qglActiveTextureARB = NULL;
+					qglClientActiveTextureARB = NULL;
+					ri.Printf( PRINT_ALL, "...not using GL_ARB_multitexture, < 2 texture units\n" );
+				}
+			}
+		}
+		else
+		{
+			ri.Printf( PRINT_ALL, "...ignoring GL_ARB_multitexture\n" );
+		}
+	}
+	else
+	{
+		ri.Printf( PRINT_ALL, "...GL_ARB_multitexture not found\n" );
+	}
+
+	// GL_EXT_compiled_vertex_array
+	if ( GLimp_HaveExtension( "GL_EXT_compiled_vertex_array" ) )
+	{
+		if ( r_ext_compiled_vertex_array->value )
+		{
+			ri.Printf( PRINT_ALL, "...using GL_EXT_compiled_vertex_array\n" );
+			qglLockArraysEXT = ( void ( APIENTRY * )( GLint, GLint ) ) SDL_GL_GetProcAddress( "glLockArraysEXT" );
+			qglUnlockArraysEXT = ( void ( APIENTRY * )( void ) ) SDL_GL_GetProcAddress( "glUnlockArraysEXT" );
+			if (!qglLockArraysEXT || !qglUnlockArraysEXT)
+			{
+				ri.Error (ERR_FATAL, "bad getprocaddress");
+			}
+		}
+		else
+		{
+			ri.Printf( PRINT_ALL, "...ignoring GL_EXT_compiled_vertex_array\n" );
+		}
+	}
+	else
+	{
+		ri.Printf( PRINT_ALL, "...GL_EXT_compiled_vertex_array not found\n" );
+	}
+
+	textureFilterAnisotropic = qfalse;
+	if ( GLimp_HaveExtension( "GL_EXT_texture_filter_anisotropic" ) )
+	{
+		if ( r_ext_texture_filter_anisotropic->integer ) {
+			qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint *)&maxAnisotropy );
+			if ( maxAnisotropy <= 0 ) {
+				ri.Printf( PRINT_ALL, "...GL_EXT_texture_filter_anisotropic not properly supported!\n" );
+				maxAnisotropy = 0;
+			}
+			else
+			{
+				ri.Printf( PRINT_ALL, "...using GL_EXT_texture_filter_anisotropic (max: %i)\n", maxAnisotropy );
+				textureFilterAnisotropic = qtrue;
+			}
+		}
+		else
+		{
+			ri.Printf( PRINT_ALL, "...ignoring GL_EXT_texture_filter_anisotropic\n" );
+		}
+	}
+	else
+	{
+		ri.Printf( PRINT_ALL, "...GL_EXT_texture_filter_anisotropic not found\n" );
+	}
+
+	vertexShaders = qfalse;
+	if ( GLimp_HaveExtension( "GL_ARB_shader_objects" )
+	     && GLimp_HaveExtension( "GL_ARB_fragment_shader" )
+	     && GLimp_HaveExtension( "GL_ARB_vertex_shader" )
+	     && GLimp_HaveExtension( "GL_ARB_shading_language_100" ) )
+	{
+		if ( r_ext_vertex_shader->integer ) {
+		  ri.Printf( PRINT_ALL, "...using GL_ARB_vertex_shader\n" );
+
+		  qglDeleteObjectARB = (GLvoid (APIENTRYP)(GLhandleARB)) SDL_GL_GetProcAddress("glDeleteObjectARB");
+		  qglGetHandleARB = (GLhandleARB (APIENTRYP)(GLenum)) SDL_GL_GetProcAddress("glGetHandleARB");
+		  qglDetachObjectARB = (GLvoid (APIENTRYP)(GLhandleARB, GLhandleARB)) SDL_GL_GetProcAddress("glDetachObjectARB");
+		  qglCreateShaderObjectARB = (GLhandleARB (APIENTRYP)(GLenum)) SDL_GL_GetProcAddress("glCreateShaderObjectARB");
+		  qglShaderSourceARB = (GLvoid (APIENTRYP)(GLhandleARB, GLsizei, const GLcharARB **,
+							   const GLint *)) SDL_GL_GetProcAddress("glShaderSourceARB");
+		  qglCompileShaderARB = (GLvoid (APIENTRYP)(GLhandleARB)) SDL_GL_GetProcAddress("glCompileShaderARB");
+		  qglCreateProgramObjectARB = (GLhandleARB (APIENTRYP)(void)) SDL_GL_GetProcAddress("glCreateProgramObjectARB");
+		  qglAttachObjectARB = (GLvoid (APIENTRYP)(GLhandleARB, GLhandleARB)) SDL_GL_GetProcAddress("glAttachObjectARB");
+		  qglLinkProgramARB = (GLvoid (APIENTRYP)(GLhandleARB)) SDL_GL_GetProcAddress("glLinkProgramARB");
+		  qglUseProgramObjectARB = (GLvoid (APIENTRYP)(GLhandleARB)) SDL_GL_GetProcAddress("glUseProgramObjectARB");
+		  qglValidateProgramARB = (GLvoid (APIENTRYP)(GLhandleARB)) SDL_GL_GetProcAddress("glValidateProgramARB");
+		  qglUniform1fARB = (GLvoid (APIENTRYP)(GLint, GLfloat)) SDL_GL_GetProcAddress("glUniform1fARB");
+		  qglUniform2fARB = (GLvoid (APIENTRYP)(GLint, GLfloat, GLfloat)) SDL_GL_GetProcAddress("glUniform2fARB");
+		  qglUniform3fARB = (GLvoid (APIENTRYP)(GLint, GLfloat, GLfloat, GLfloat)) SDL_GL_GetProcAddress("glUniform3fARB");
+		  qglUniform4fARB = (GLvoid (APIENTRYP)(GLint, GLfloat, GLfloat, GLfloat, GLfloat)) SDL_GL_GetProcAddress("glUniform4fARB");
+		  qglUniform1iARB = (GLvoid (APIENTRYP)(GLint, GLint)) SDL_GL_GetProcAddress("glUniform1iARB");
+		  qglUniform2iARB = (GLvoid (APIENTRYP)(GLint, GLint, GLint)) SDL_GL_GetProcAddress("glUniform2iARB");
+		  qglUniform3iARB = (GLvoid (APIENTRYP)(GLint, GLint, GLint, GLint)) SDL_GL_GetProcAddress("glUniform3iARB");
+		  qglUniform4iARB = (GLvoid (APIENTRYP)(GLint, GLint, GLint, GLint, GLint)) SDL_GL_GetProcAddress("glUniform4iARB");
+		  qglUniform1fvARB = (GLvoid (APIENTRYP)(GLint, GLsizei, const GLfloat *)) SDL_GL_GetProcAddress("glUniform1fvARB");
+		  qglUniform2fvARB = (GLvoid (APIENTRYP)(GLint, GLsizei, const GLfloat *)) SDL_GL_GetProcAddress("glUniform2fvARB");
+		  qglUniform3fvARB = (GLvoid (APIENTRYP)(GLint, GLsizei, const GLfloat *)) SDL_GL_GetProcAddress("glUniform3fvARB");
+		  qglUniform4fvARB = (GLvoid (APIENTRYP)(GLint, GLsizei, const GLfloat *)) SDL_GL_GetProcAddress("glUniform4fvARB");
+		  qglUniform1ivARB = (GLvoid (APIENTRYP)(GLint, GLsizei, const GLint *)) SDL_GL_GetProcAddress("glUniform1ivARB");
+		  qglUniform2ivARB = (GLvoid (APIENTRYP)(GLint, GLsizei, const GLint *)) SDL_GL_GetProcAddress("glUniform2ivARB");
+		  qglUniform3ivARB = (GLvoid (APIENTRYP)(GLint, GLsizei, const GLint *)) SDL_GL_GetProcAddress("glUniform3ivARB");
+		  qglUniform4ivARB = (GLvoid (APIENTRYP)(GLint, GLsizei, const GLint *)) SDL_GL_GetProcAddress("glUniform4ivARB");
+		  qglUniformMatrix2fvARB = (GLvoid (APIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)) SDL_GL_GetProcAddress("glUniformMatrix2fvARB");
+		  qglUniformMatrix3fvARB = (GLvoid (APIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)) SDL_GL_GetProcAddress("glUniformMatrix3fvARB");
+		  qglUniformMatrix4fvARB = (GLvoid (APIENTRYP)(GLint, GLsizei, GLboolean, const GLfloat *)) SDL_GL_GetProcAddress("glUniformMatrix4fvARB");
+		  qglGetObjectParameterfvARB = (GLvoid (APIENTRYP)(GLhandleARB, GLenum, GLfloat *)) SDL_GL_GetProcAddress("glGetObjectParameterfvARB");
+		  qglGetObjectParameterivARB = (GLvoid (APIENTRYP)(GLhandleARB, GLenum, GLint *)) SDL_GL_GetProcAddress("glGetObjectParameterivARB");
+		  qglGetInfoLogARB = (GLvoid (APIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)) SDL_GL_GetProcAddress("glGetInfoLogARB");
+		  qglGetAttachedObjectsARB = (GLvoid (APIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLhandleARB *)) SDL_GL_GetProcAddress("glGetAttachedObjectsARB");
+		  qglGetUniformLocationARB = (GLint (APIENTRYP)(GLhandleARB, const GLcharARB *)) SDL_GL_GetProcAddress("glGetUniformLocationARB");
+		  qglGetActiveUniformARB = (GLvoid (APIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)) SDL_GL_GetProcAddress("glGetActiveUniformARB");
+		  qglGetUniformfvARB = (GLvoid (APIENTRYP)(GLhandleARB, GLint, GLfloat *)) SDL_GL_GetProcAddress("glGetUniformfvARB");
+		  qglGetUniformivARB = (GLvoid (APIENTRYP)(GLhandleARB, GLint, GLint *)) SDL_GL_GetProcAddress("glGetUniformivARB");
+		  qglGetShaderSourceARB = (GLvoid (APIENTRYP)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *)) SDL_GL_GetProcAddress("glGetShaderSourceARB");
+
+		  qglVertexAttrib1fARB = (GLvoid (APIENTRYP)(GLuint, GLfloat)) SDL_GL_GetProcAddress("glVertexAttrib1fARB");
+		  qglVertexAttrib1sARB = (GLvoid (APIENTRYP)(GLuint, GLshort)) SDL_GL_GetProcAddress("glVertexAttrib1sARB");
+		  qglVertexAttrib1dARB = (GLvoid (APIENTRYP)(GLuint, GLdouble)) SDL_GL_GetProcAddress("glVertexAttrib1dARB");
+		  qglVertexAttrib2fARB = (GLvoid (APIENTRYP)(GLuint, GLfloat, GLfloat)) SDL_GL_GetProcAddress("glVertexAttrib2fARB");
+		  qglVertexAttrib2sARB = (GLvoid (APIENTRYP)(GLuint, GLshort, GLshort)) SDL_GL_GetProcAddress("glVertexAttrib2sARB");
+		  qglVertexAttrib2dARB = (GLvoid (APIENTRYP)(GLuint, GLdouble, GLdouble)) SDL_GL_GetProcAddress("glVertexAttrib2dARB");
+		  qglVertexAttrib3fARB = (GLvoid (APIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat)) SDL_GL_GetProcAddress("glVertexAttrib3fARB");
+		  qglVertexAttrib3sARB = (GLvoid (APIENTRYP)(GLuint, GLshort, GLshort, GLshort)) SDL_GL_GetProcAddress("glVertexAttrib3sARB");
+		  qglVertexAttrib3dARB = (GLvoid (APIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble)) SDL_GL_GetProcAddress("glVertexAttrib3dARB");
+		  qglVertexAttrib4fARB = (GLvoid (APIENTRYP)(GLuint, GLfloat, GLfloat, GLfloat, GLfloat)) SDL_GL_GetProcAddress("glVertexAttrib4fARB");
+		  qglVertexAttrib4sARB = (GLvoid (APIENTRYP)(GLuint, GLshort, GLshort, GLshort, GLshort)) SDL_GL_GetProcAddress("glVertexAttrib4sARB");
+		  qglVertexAttrib4dARB = (GLvoid (APIENTRYP)(GLuint, GLdouble, GLdouble, GLdouble, GLdouble)) SDL_GL_GetProcAddress("glVertexAttrib4dARB");
+		  qglVertexAttrib4NubARB = (GLvoid (APIENTRYP)(GLuint, GLubyte, GLubyte, GLubyte, GLubyte)) SDL_GL_GetProcAddress("glVertexAttrib4NubARB");
+		  qglVertexAttrib1fvARB = (GLvoid (APIENTRYP)(GLuint, GLfloat *)) SDL_GL_GetProcAddress("glVertexAttrib1fvARB");
+		  qglVertexAttrib1svARB = (GLvoid (APIENTRYP)(GLuint, GLshort *)) SDL_GL_GetProcAddress("glVertexAttrib1svARB");
+		  qglVertexAttrib1dvARB = (GLvoid (APIENTRYP)(GLuint, GLdouble *)) SDL_GL_GetProcAddress("glVertexAttrib1dvARB");
+		  qglVertexAttrib2fvARB = (GLvoid (APIENTRYP)(GLuint, GLfloat *)) SDL_GL_GetProcAddress("glVertexAttrib2fvARB");
+		  qglVertexAttrib2svARB = (GLvoid (APIENTRYP)(GLuint, GLshort *)) SDL_GL_GetProcAddress("glVertexAttrib2svARB");
+		  qglVertexAttrib2dvARB = (GLvoid (APIENTRYP)(GLuint, GLdouble *)) SDL_GL_GetProcAddress("glVertexAttrib2dvARB");
+		  qglVertexAttrib3fvARB = (GLvoid (APIENTRYP)(GLuint, GLfloat *)) SDL_GL_GetProcAddress("glVertexAttrib3fvARB");
+		  qglVertexAttrib3svARB = (GLvoid (APIENTRYP)(GLuint, GLshort *)) SDL_GL_GetProcAddress("glVertexAttrib3svARB");
+		  qglVertexAttrib3dvARB = (GLvoid (APIENTRYP)(GLuint, GLdouble *)) SDL_GL_GetProcAddress("glVertexAttrib3dvARB");
+		  qglVertexAttrib4fvARB = (GLvoid (APIENTRYP)(GLuint, GLfloat *)) SDL_GL_GetProcAddress("glVertexAttrib4fvARB");
+		  qglVertexAttrib4svARB = (GLvoid (APIENTRYP)(GLuint, GLshort *)) SDL_GL_GetProcAddress("glVertexAttrib4svARB");
+		  qglVertexAttrib4dvARB = (GLvoid (APIENTRYP)(GLuint, GLdouble *)) SDL_GL_GetProcAddress("glVertexAttrib4dvARB");
+		  qglVertexAttrib4ivARB = (GLvoid (APIENTRYP)(GLuint, GLint *)) SDL_GL_GetProcAddress("glVertexAttrib4ivARB");
+		  qglVertexAttrib4bvARB = (GLvoid (APIENTRYP)(GLuint, GLbyte *)) SDL_GL_GetProcAddress("glVertexAttrib4bvARB");
+		  qglVertexAttrib4ubvARB = (GLvoid (APIENTRYP)(GLuint, GLubyte *)) SDL_GL_GetProcAddress("glVertexAttrib4ubvARB");
+		  qglVertexAttrib4usvARB = (GLvoid (APIENTRYP)(GLuint, GLushort *)) SDL_GL_GetProcAddress("glVertexAttrib4usvARB");
+		  qglVertexAttrib4uivARB = (GLvoid (APIENTRYP)(GLuint, GLuint *)) SDL_GL_GetProcAddress("glVertexAttrib4uivARB");
+		  qglVertexAttrib4NbvARB = (GLvoid (APIENTRYP)(GLuint, const GLbyte *)) SDL_GL_GetProcAddress("glVertexAttrib4NbvARB");
+		  qglVertexAttrib4NsvARB = (GLvoid (APIENTRYP)(GLuint, const GLshort *)) SDL_GL_GetProcAddress("glVertexAttrib4NsvARB");
+		  qglVertexAttrib4NivARB = (GLvoid (APIENTRYP)(GLuint, const GLint *)) SDL_GL_GetProcAddress("glVertexAttrib4NivARB");
+		  qglVertexAttrib4NubvARB = (GLvoid (APIENTRYP)(GLuint, const GLubyte *)) SDL_GL_GetProcAddress("glVertexAttrib4NubvARB");
+		  qglVertexAttrib4NusvARB = (GLvoid (APIENTRYP)(GLuint, const GLushort *)) SDL_GL_GetProcAddress("glVertexAttrib4NusvARB");
+		  qglVertexAttrib4NuivARB = (GLvoid (APIENTRYP)(GLuint, const GLuint *)) SDL_GL_GetProcAddress("glVertexAttrib4NuivARB");
+		  qglVertexAttribPointerARB = (GLvoid (APIENTRYP)(GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *)) SDL_GL_GetProcAddress("glVertexAttribPointerARB");
+		  qglEnableVertexAttribArrayARB = (GLvoid (APIENTRYP)(GLuint)) SDL_GL_GetProcAddress("glEnableVertexAttribArrayARB");
+		  qglDisableVertexAttribArrayARB = (GLvoid (APIENTRYP)(GLuint)) SDL_GL_GetProcAddress("glDisableVertexAttribArrayARB");
+		  qglBindAttribLocationARB = (GLvoid (APIENTRYP)(GLhandleARB, GLuint, const GLcharARB *)) SDL_GL_GetProcAddress("glBindAttribLocationARB");
+		  qglGetActiveAttribARB = (GLvoid (APIENTRYP)(GLhandleARB, GLuint, GLsizei, GLsizei *, GLint *, GLenum *, GLcharARB *)) SDL_GL_GetProcAddress("glGetActiveAttribARB");
+		  qglGetAttribLocationARB = (GLint (APIENTRYP)(GLhandleARB, const GLcharARB *)) SDL_GL_GetProcAddress("glGetAttribLocationARB");
+		  qglGetVertexAttribdvARB = (GLvoid (APIENTRYP)(GLuint, GLenum, GLdouble *)) SDL_GL_GetProcAddress("glGetVertexAttribdvARB");
+		  qglGetVertexAttribfvARB = (GLvoid (APIENTRYP)(GLuint, GLenum, GLfloat *)) SDL_GL_GetProcAddress("glGetVertexAttribfvARB");
+		  qglGetVertexAttribivARB = (GLvoid (APIENTRYP)(GLuint, GLenum, GLint *)) SDL_GL_GetProcAddress("glGetVertexAAttribivARB");
+		  qglGetVertexAttribPointervARB = (GLvoid (APIENTRYP)(GLuint, GLenum, GLvoid **)) SDL_GL_GetProcAddress("glGetVertexAttribPointervARB");
+		  vertexShaders = qtrue;
+		}
+		else
+		{
+			ri.Printf( PRINT_ALL, "...ignoring GL_ARB_vertex_shader\n" );
+		}
+	}
+	else
+	{
+		ri.Printf( PRINT_ALL, "...GL_ARB_vertex_shader not found\n" );
 	}
 }
 
@@ -811,6 +869,7 @@ of OpenGL
 */
 void GLimp_Init( void )
 {
+	r_allowSoftwareGL = ri.Cvar_Get( "r_allowSoftwareGL", "0", CVAR_LATCH );
 	r_sdlDriver = ri.Cvar_Get( "r_sdlDriver", "", CVAR_ROM );
 	r_allowResize = ri.Cvar_Get( "r_allowResize", "0", CVAR_ARCHIVE );
 	r_centerWindow = ri.Cvar_Get( "r_centerWindow", "0", CVAR_ARCHIVE );
@@ -842,13 +901,14 @@ void GLimp_Init( void )
 	{
 		ri.Printf( PRINT_ALL, "Setting r_mode %d failed, falling back on r_mode %d\n",
 				r_mode->integer, R_MODE_FALLBACK );
+		ri.Cvar_Set("r_ext_multisample", "0");
 
 		if(GLimp_StartDriverAndSetMode(R_MODE_FALLBACK, qfalse, qfalse))
 			goto success;
 	}
 
 	// Nothing worked, give up
-	ri.Error( ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem" );
+	ri.Error( ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem\n" );
 
 success:
 	// This values force the UI to disable driver selection

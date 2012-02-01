@@ -54,10 +54,20 @@ void R_PerformanceCounters( void ) {
 	} else if (r_speeds->integer == 3) {
 		ri.Printf (PRINT_ALL, "viewcluster: %i\n", tr.viewCluster );
 	} else if (r_speeds->integer == 4) {
+		if ( backEnd.pc.c_dlightVertexes ) {
+			ri.Printf (PRINT_ALL, "dlight srf:%i  culled:%i  verts:%i  tris:%i\n", 
+				tr.pc.c_dlightSurfaces, tr.pc.c_dlightSurfacesCulled,
+				backEnd.pc.c_dlightVertexes, backEnd.pc.c_dlightIndexes / 3 );
+		}
 	} 
 	else if (r_speeds->integer == 5 )
 	{
 		ri.Printf( PRINT_ALL, "zFar: %.0f\n", tr.viewParms.zFar );
+	}
+	else if (r_speeds->integer == 6 )
+	{
+		ri.Printf( PRINT_ALL, "flare adds:%i tests:%i renders:%i\n", 
+			backEnd.pc.c_flareAdds, backEnd.pc.c_flareTests, backEnd.pc.c_flareRenders );
 	}
 
 	Com_Memset( &tr.pc, 0, sizeof( tr.pc ) );
@@ -185,6 +195,7 @@ void *R_GetCommandBuffer( int bytes ) {
 	renderCommandList_t	*cmdList;
 
 	cmdList = &backEndData[tr.smpFrame]->commands;
+	bytes = PAD(bytes, sizeof(void *));
 
 	// always leave room for the end of list command
 	if ( cmdList->used + bytes + 4 > MAX_RENDER_COMMANDS ) {
@@ -400,7 +411,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 
 		R_SyncRenderThread();
 		if ((err = qglGetError()) != GL_NO_ERROR)
-			ri.Error(ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!\n", err);
+			ri.Error(ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!", err);
 	}
 
 	if (glConfig.stereoEnabled) {
@@ -504,14 +515,11 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 	if ( !tr.registered ) {
 		return;
 	}
-
-	if (!(tr.refdef.rdflags & RDF_NODISPLAY)) {
-		cmd = R_GetCommandBuffer( sizeof( *cmd ) );
-		if ( !cmd ) {
-			return;
-		}
-		cmd->commandId = RC_SWAP_BUFFERS;
+	cmd = R_GetCommandBuffer( sizeof( *cmd ) );
+	if ( !cmd ) {
+		return;
 	}
+	cmd->commandId = RC_SWAP_BUFFERS;
 
 	R_IssueRenderCommands( qtrue );
 

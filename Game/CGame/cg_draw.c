@@ -1366,6 +1366,7 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		return;
 	}
 	CG_TileClear();
+	CG_MotionBlur();
 	trap_R_RenderScene(&cg.refdef);
 	contents = CG_PointContents(cg.refdef.vieworg,-1);
 	if(contents & CONTENTS_WATER){

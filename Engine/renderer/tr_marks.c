@@ -163,6 +163,16 @@ void R_BoxSurfaces_r(mnode_t *node, vec3_t mins, vec3_t maxs, surfaceType_t **li
 			surf->viewCount = tr.viewCount;
 		}
 		// extra check for surfaces to avoid list overflows
+		else if (*(surf->data) == SF_FACE) {
+			// the face plane should go through the box
+			s = BoxOnPlaneSide( mins, maxs, &(( srfSurfaceFace_t * ) surf->data)->plane );
+			if (s == 1 || s == 2) {
+				surf->viewCount = tr.viewCount;
+			} else if (DotProduct((( srfSurfaceFace_t * ) surf->data)->plane.normal, dir) > -0.5) {
+			// don't add faces that make sharp angles with the projection direction
+				surf->viewCount = tr.viewCount;
+			}
+		}
 		else if (*(surfaceType_t *) (surf->data) != SF_GRID &&
 			 *(surfaceType_t *) (surf->data) != SF_TRIANGLES)
 			surf->viewCount = tr.viewCount;
@@ -313,7 +323,7 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 	for ( i = 0 ; i < numsurfaces ; i++ ) {
 
 		if (*surfaces[i] == SF_GRID) {
-/*
+
 			cv = (srfGridMesh_t *) surfaces[i];
 			for ( m = 0 ; m < cv->height - 1 ; m++ ) {
 				for ( n = 0 ; n < cv->width - 1 ; n++ ) {
@@ -390,10 +400,37 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 						}
 					}
 				}
-			}*/
+			}
 		}
-		else if(*surfaces[i] == SF_TRIANGLES) {
-/*
+		else if (*surfaces[i] == SF_FACE) {
+
+			srfSurfaceFace_t *surf = ( srfSurfaceFace_t * ) surfaces[i];
+
+			// check the normal of this face
+			if (DotProduct(surf->plane.normal, projectionDir) > -0.5) {
+				continue;
+			}
+
+			indexes = (int *)( (byte *)surf + surf->ofsIndices );
+			for ( k = 0 ; k < surf->numIndices ; k += 3 ) {
+				for ( j = 0 ; j < 3 ; j++ ) {
+					v = surf->points[0] + VERTEXSIZE * indexes[k+j];;
+					VectorMA( v, MARKER_OFFSET, surf->plane.normal, clipPoints[0][j] );
+				}
+
+				// add the fragments of this face
+				R_AddMarkFragments( 3 , clipPoints,
+								   numPlanes, normals, dists,
+								   maxPoints, pointBuffer,
+								   maxFragments, fragmentBuffer,
+								   &returnedPoints, &returnedFragments, mins, maxs);
+				if ( returnedFragments == maxFragments ) {
+					return returnedFragments;	// not enough space for more fragments
+				}
+			}
+		}
+		else if(*surfaces[i] == SF_TRIANGLES && r_marksOnTriangleMeshes->integer) {
+
 			srfTriangles_t *surf = (srfTriangles_t *) surfaces[i];
 
 			for (k = 0; k < surf->numIndexes; k += 3)
@@ -413,7 +450,7 @@ int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projectio
 				{
 					return returnedFragments;	// not enough space for more fragments
 				}
-			}*/
+			}
 		}
 	}
 	return returnedFragments;

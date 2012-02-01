@@ -1117,6 +1117,8 @@ void SystemSettings_MenuInit( void )
 	SystemSettings_SetMenuItems();
 	SystemSettings_GetInitialVideo();
 
+	if ( uis.glconfig.driverType == GLDRV_ICD &&
+		 uis.glconfig.hardwareType == GLHW_3DFX_2D3D )
 	{
 		s_systemsettings.driver.generic.flags |= QMF_HIDDEN|QMF_INACTIVE;
 	}

@@ -21,6 +21,124 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "tr_local.h"
 
+
+/*
+
+  for a projection shadow:
+
+  point[x] += light vector * ( z - shadow plane )
+  point[y] +=
+  point[z] = shadow plane
+
+  1 0 light[x] / light[z]
+
+*/
+
+typedef struct {
+	int		i2;
+	int		facing;
+} edgeDef_t;
+
+#define	MAX_EDGE_DEFS	32
+
+static	edgeDef_t	edgeDefs[SHADER_MAX_VERTEXES][MAX_EDGE_DEFS];
+static	int			numEdgeDefs[SHADER_MAX_VERTEXES];
+static	int			facing[SHADER_MAX_INDEXES/3];
+
+void R_AddEdgeDef( int i1, int i2, int facing ) {
+	int		c;
+
+	c = numEdgeDefs[ i1 ];
+	if ( c == MAX_EDGE_DEFS ) {
+		return;		// overflow
+	}
+	edgeDefs[ i1 ][ c ].i2 = i2;
+	edgeDefs[ i1 ][ c ].facing = facing;
+
+	numEdgeDefs[ i1 ]++;
+}
+
+void R_RenderShadowEdges( void ) {
+	int		i;
+
+#if 0
+	int		numTris;
+
+	// dumb way -- render every triangle's edges
+	numTris = tess.numIndexes / 3;
+
+	for ( i = 0 ; i < numTris ; i++ ) {
+		int		i1, i2, i3;
+
+		if ( !facing[i] ) {
+			continue;
+		}
+
+		i1 = tess.indexes[ i*3 + 0 ];
+		i2 = tess.indexes[ i*3 + 1 ];
+		i3 = tess.indexes[ i*3 + 2 ];
+
+		qglBegin( GL_TRIANGLE_STRIP );
+		qglVertex3fv( tess.xyz[ i1 ] );
+		qglVertex3fv( tess.xyz[ i1 + tess.numVertexes ] );
+		qglVertex3fv( tess.xyz[ i2 ] );
+		qglVertex3fv( tess.xyz[ i2 + tess.numVertexes ] );
+		qglVertex3fv( tess.xyz[ i3 ] );
+		qglVertex3fv( tess.xyz[ i3 + tess.numVertexes ] );
+		qglVertex3fv( tess.xyz[ i1 ] );
+		qglVertex3fv( tess.xyz[ i1 + tess.numVertexes ] );
+		qglEnd();
+	}
+#else
+	int		c, c2;
+	int		j, k;
+	int		i2;
+	int		c_edges, c_rejected;
+	int		hit[2];
+
+	// an edge is NOT a silhouette edge if its face doesn't face the light,
+	// or if it has a reverse paired edge that also faces the light.
+	// A well behaved polyhedron would have exactly two faces for each edge,
+	// but lots of models have dangling edges or overfanned edges
+	c_edges = 0;
+	c_rejected = 0;
+
+	for ( i = 0 ; i < tess.numVertexes ; i++ ) {
+		c = numEdgeDefs[ i ];
+		for ( j = 0 ; j < c ; j++ ) {
+			if ( !edgeDefs[ i ][ j ].facing ) {
+				continue;
+			}
+
+			hit[0] = 0;
+			hit[1] = 0;
+
+			i2 = edgeDefs[ i ][ j ].i2;
+			c2 = numEdgeDefs[ i2 ];
+			for ( k = 0 ; k < c2 ; k++ ) {
+				if ( edgeDefs[ i2 ][ k ].i2 == i ) {
+					hit[ edgeDefs[ i2 ][ k ].facing ]++;
+				}
+			}
+
+			// if it doesn't share the edge with another front facing
+			// triangle, it is a sil edge
+			if ( hit[ 1 ] == 0 ) {
+				qglBegin( GL_TRIANGLE_STRIP );
+				qglVertex3fv( tess.xyz[ i ] );
+				qglVertex3fv( tess.xyz[ i + tess.numVertexes ] );
+				qglVertex3fv( tess.xyz[ i2 ] );
+				qglVertex3fv( tess.xyz[ i2 + tess.numVertexes ] );
+				qglEnd();
+				c_edges++;
+			} else {
+				c_rejected++;
+			}
+		}
+	}
+#endif
+}
+
 /*
 =================
 RB_ShadowTessEnd
@@ -33,81 +151,105 @@ triangleFromEdge[ v1 ][ v2 ]
   }
 =================
 */
-void RB_ShadowTessEnd(void) {
+void RB_ShadowTessEnd( void ) {
+	int		i;
+	int		numTris;
+	vec3_t	lightDir;
 	GLboolean rgba[4];
 
-	/* check stencil buffer */
-	if (glConfig.stencilBits < 4)
+	// we can only do this if we have enough space in the vertex buffers
+	if ( tess.numVertexes >= SHADER_MAX_VERTEXES / 2 ) {
 		return;
+	}
 
-	/* enable face culling */
-	qglEnable(GL_CULL_FACE);
+	if ( glConfig.stencilBits < 4 ) {
+		return;
+	}
 
-	/* set state */
-	GL_State(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO);
+	VectorCopy( backEnd.currentEntity->lightDir, lightDir );
 
-	/* don't write to the color buffer */
+	// project vertexes away from light direction
+	for ( i = 0 ; i < tess.numVertexes ; i++ ) {
+		VectorMA( tess.xyz[i], -512, lightDir, tess.xyz[i+tess.numVertexes] );
+	}
+
+	// decide which triangles face the light
+	Com_Memset( numEdgeDefs, 0, 4 * tess.numVertexes );
+
+	numTris = tess.numIndexes / 3;
+	for ( i = 0 ; i < numTris ; i++ ) {
+		int		i1, i2, i3;
+		vec3_t	d1, d2, normal;
+		float	*v1, *v2, *v3;
+		float	d;
+
+		i1 = tess.indexes[ i*3 + 0 ];
+		i2 = tess.indexes[ i*3 + 1 ];
+		i3 = tess.indexes[ i*3 + 2 ];
+
+		v1 = tess.xyz[ i1 ];
+		v2 = tess.xyz[ i2 ];
+		v3 = tess.xyz[ i3 ];
+
+		VectorSubtract( v2, v1, d1 );
+		VectorSubtract( v3, v1, d2 );
+		CrossProduct( d1, d2, normal );
+
+		d = DotProduct( normal, lightDir );
+		if ( d > 0 ) {
+			facing[ i ] = 1;
+		} else {
+			facing[ i ] = 0;
+		}
+
+		// create the edges
+		R_AddEdgeDef( i1, i2, facing[ i ] );
+		R_AddEdgeDef( i2, i3, facing[ i ] );
+		R_AddEdgeDef( i3, i1, facing[ i ] );
+	}
+
+	// draw the silhouette edges
+
+	GL_Bind( tr.whiteImage );
+	qglEnable( GL_CULL_FACE );
+	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );
+	qglColor3f( 0.2f, 0.2f, 0.2f );
+
+	// don't write to the color buffer
 	qglGetBooleanv(GL_COLOR_WRITEMASK, rgba);
-	qglColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	qglColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
 
-	/* bind program */
-	R_UseProgram(tr.shadowProgram);
+	qglEnable( GL_STENCIL_TEST );
+	qglStencilFunc( GL_ALWAYS, 1, 255 );
 
-	/* light direction */
-	R_SetUniform_LightDirection(tr.shadowProgram, backEnd.currentEntity->lightDir);
+	// mirrors have the culling order reversed
+	if ( backEnd.viewParms.isMirror ) {
+		qglCullFace( GL_FRONT );
+		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
 
-	/* model view projection matrix */
-	R_SetUniform_ModelViewProjectionMatrix(tr.shadowProgram, glState.modelViewProjectionMatrix);
+		R_RenderShadowEdges();
 
-	/* non-static surface */
-	if (!tess.isStatic) {
-		/* bind vertex buffer object */
-		R_BindIBO(tr.defaultIBO);
-		R_BindVBO(tr.defaultVBO);
+		qglCullFace( GL_BACK );
+		qglStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
 
-		/* upload vertex data */
-		R_UpdateIBO(tess.indexes, tess.numIndexes);
-		R_UpdateVBO(tess.xyz, tess.normal, NULL, NULL, NULL, NULL, NULL, tess.numVertexes);
-	}
-
-	/* bind vertex attributes */
-	GL_VertexAttributeState(tr.shadowProgram->attributes);
-	GL_VertexAttributePointers(tr.shadowProgram->attributes);
-
-	/* enable stencil test */
-	qglEnable(GL_STENCIL_TEST);
-	qglStencilFunc(GL_ALWAYS, 1, 255);
-
-	/* mirrors have the culling order reversed */
-	if (backEnd.viewParms.isMirror) {
-		qglCullFace(GL_FRONT);
-		qglStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-
-		/* draw */
-		GL_DrawElements(tess.offsetIndexes, tess.numIndexes);
-
-		qglCullFace(GL_BACK);
-		qglStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-
-		/* draw */
-		GL_DrawElements(tess.offsetIndexes, tess.numIndexes);
+		R_RenderShadowEdges();
 	} else {
-		qglCullFace(GL_BACK);
-		qglStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+		qglCullFace( GL_BACK );
+		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
 
-		/* draw */
-		GL_DrawElements(tess.offsetIndexes, tess.numIndexes);
+		R_RenderShadowEdges();
 
-		qglCullFace(GL_FRONT);
-		qglStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+		qglCullFace( GL_FRONT );
+		qglStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
 
-		/* draw */
-		GL_DrawElements(tess.offsetIndexes, tess.numIndexes);
+		R_RenderShadowEdges();
 	}
 
-	/* reenable writing to the color buffer */
+
+	// reenable writing to the color buffer
 	qglColorMask(rgba[0], rgba[1], rgba[2], rgba[3]);
 }
+
 
 /*
 =================
@@ -119,144 +261,86 @@ because otherwise shadows from different body parts would
 overlap and double darken.
 =================
 */
-void RB_ShadowFinish(void) {
-	matrix_t	matrix;
-	glIndex_t	indexes[6];
-	vec4_t		xyz[4];
-	color4ub_t	colors[4];
-	vec2_t		texCoords[4];
-	int			numIndexes;
-	int			numVertexes;
-
-	/* stencil shadows are disabled */
-	if (r_shadows->integer != 2)
+void RB_ShadowFinish( void ) {
+	if ( r_shadows->integer != 2 ) {
 		return;
-
-	/* stencil buffer too small */
-	if (glConfig.stencilBits < 4)
+	}
+	if ( glConfig.stencilBits < 4 ) {
 		return;
+	}
+	qglEnable( GL_STENCIL_TEST );
+	qglStencilFunc( GL_NOTEQUAL, 0, 255 );
 
-	/* enable stencil test */
-	qglEnable(GL_STENCIL_TEST);
-	qglStencilFunc(GL_NOTEQUAL, 0, 255);
+	qglDisable (GL_CLIP_PLANE0);
+	qglDisable (GL_CULL_FACE);
 
-	/* disable face culling */
-	qglDisable(GL_CULL_FACE);
+	GL_Bind( tr.whiteImage );
 
-	/* texture upload */
-	GL_Bind(tr.whiteImage);
+    qglLoadIdentity ();
 
-	/* set model view matrix */
-	R_MatrixIdentity(matrix);
-	R_LoadModelViewMatrix(matrix);
+    qglGetFloatv(GL_MODELVIEW_MATRIX, glState.currentModelViewMatrix);
+    Matrix4Multiply(glState.currentProjectionMatrix, glState.currentModelViewMatrix, glState.currentModelViewProjectionMatrix);
 
-	/* set state */
-	GL_State(GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO);
+	qglColor3f( 0.6f, 0.6f, 0.6f );
+	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO );
 
-	/* bind program */
-	R_UseProgram(tr.passthroughProgram);
+//	qglColor3f( 1, 0, 0 );
+//	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );
 
-	/* color map */
-	R_SetUniform_ColorMap(tr.passthroughProgram, 0);
+	qglBegin( GL_QUADS );
+	qglVertex3f( -100, 100, -10 );
+	qglVertex3f( 100, 100, -10 );
+	qglVertex3f( 100, -100, -10 );
+	qglVertex3f( -100, -100, -10 );
+	qglEnd ();
 
-	/* model view projection matrix */
-	R_SetUniform_ModelViewProjectionMatrix(tr.passthroughProgram, glState.modelViewProjectionMatrix);
-
-	/* portal clipping */
-	R_SetUniform_PortalClipping(tr.passthroughProgram, qfalse);
+	qglColor4f(1,1,1,1);
+	qglDisable( GL_STENCIL_TEST );
+}
 
 
-	/* create full-screen quad */
-	numIndexes = 0;
-	numVertexes = 0;
+/*
+=================
+RB_ProjectionShadowDeform
 
-	/* vertex 1 */
-	xyz[numVertexes][0] = -100.0f;
-	xyz[numVertexes][1] = 100.0f;
-	xyz[numVertexes][2] = -10.0f;
-	xyz[numVertexes][3] = 1.0f;
+=================
+*/
+void RB_ProjectionShadowDeform( void ) {
+	float	*xyz;
+	int		i;
+	float	h;
+	vec3_t	ground;
+	vec3_t	light;
+	float	groundDist;
+	float	d;
+	vec3_t	lightDir;
 
-	colors[numVertexes][0] = 153;
-	colors[numVertexes][1] = 153;
-	colors[numVertexes][2] = 153;
-	colors[numVertexes][3] = 255;
+	xyz = ( float * ) tess.xyz;
 
-	texCoords[numVertexes][0] = 0.0f;
-	texCoords[numVertexes][1] = 0.0f;
+	ground[0] = backEnd.or.axis[0][2];
+	ground[1] = backEnd.or.axis[1][2];
+	ground[2] = backEnd.or.axis[2][2];
 
-	numVertexes++;
+	groundDist = backEnd.or.origin[2] - backEnd.currentEntity->e.shadowPlane;
 
-		/* vertex 2 */
-	xyz[numVertexes][0] = 100.0f;
-	xyz[numVertexes][1] = 100.0f;
-	xyz[numVertexes][2] = -10.0f;
-	xyz[numVertexes][3] = 1.0f;
+	VectorCopy( backEnd.currentEntity->lightDir, lightDir );
+	d = DotProduct( lightDir, ground );
+	// don't let the shadows get too long or go negative
+	if ( d < 0.5 ) {
+		VectorMA( lightDir, (0.5 - d), ground, lightDir );
+		d = DotProduct( lightDir, ground );
+	}
+	d = 1.0 / d;
 
-	colors[numVertexes][0] = 153;
-	colors[numVertexes][1] = 153;
-	colors[numVertexes][2] = 153;
-	colors[numVertexes][3] = 255;
+	light[0] = lightDir[0] * d;
+	light[1] = lightDir[1] * d;
+	light[2] = lightDir[2] * d;
 
-	texCoords[numVertexes][0] = 1.0f;
-	texCoords[numVertexes][1] = 1.0f;
+	for ( i = 0; i < tess.numVertexes; i++, xyz += 4 ) {
+		h = DotProduct( xyz, ground ) + groundDist;
 
-	numVertexes++;
-
-	/* vertex 3 */
-	xyz[numVertexes][0] = 100.0f;
-	xyz[numVertexes][1] = -100.0f;
-	xyz[numVertexes][2] = -10.0f;
-	xyz[numVertexes][3] = 1.0f;
-
-	colors[numVertexes][0] = 153;
-	colors[numVertexes][1] = 153;
-	colors[numVertexes][2] = 153;
-	colors[numVertexes][3] = 255;
-
-	texCoords[numVertexes][0] = 0.0f;
-	texCoords[numVertexes][1] = 0.0f;
-
-	numVertexes++;
-
-	/* vertex 4 */
-	xyz[numVertexes][0] = -100.0f;
-	xyz[numVertexes][1] = -100.0f;
-	xyz[numVertexes][2] = -10.0f;
-	xyz[numVertexes][3] = 1.0f;
-
-	colors[numVertexes][0] = 153;
-	colors[numVertexes][1] = 153;
-	colors[numVertexes][2] = 153;
-	colors[numVertexes][3] = 255;
-
-	texCoords[numVertexes][0] = 1.0f;
-	texCoords[numVertexes][1] = 1.0f;
-
-	numVertexes++;
-
-	/* indexes */
-	indexes[numIndexes++] = 0;
-	indexes[numIndexes++] = 1;
-	indexes[numIndexes++] = 2;
-	indexes[numIndexes++] = 2;
-	indexes[numIndexes++] = 1;
-	indexes[numIndexes++] = 3;
-
-	/* bind vertex buffer object */
-	R_BindIBO(tr.defaultIBO);
-	R_BindVBO(tr.defaultVBO);
-
-	/* bind vertex attributes */
-	GL_VertexAttributeState(tr.passthroughProgram->attributes);
-	GL_VertexAttributePointers(tr.passthroughProgram->attributes);
-
-	/* upload vertex data */
-	R_UpdateIBO(indexes, numIndexes);
-	R_UpdateVBO(xyz, NULL, colors, texCoords, NULL, NULL, NULL, numVertexes);
-
-	/* draw */
-	GL_DrawElements(tess.offsetIndexes, tess.numIndexes);
-
-	/* disable stencil test */
-	qglDisable(GL_STENCIL_TEST);
+		xyz[0] -= light[0] * h;
+		xyz[1] -= light[1] * h;
+		xyz[2] -= light[2] * h;
+	}
 }

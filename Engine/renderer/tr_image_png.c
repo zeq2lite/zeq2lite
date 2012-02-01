@@ -19,11 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ===========================================================================
 */
 
-#include "../../Shared/q_shared.h"
-#include "../../Shared/qfiles.h"
-#include "../../Shared/qcommon.h"
-#include "tr_public.h"
-extern	refimport_t		ri;
+#include "tr_local.h"
 
 #include "../../Shared/puff.h"
 
@@ -2067,7 +2063,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 	{
 		CloseBufferedFile(ThePNG);
 
-		Com_Printf(S_COLOR_YELLOW "%s: invalid image size\n", name);
+		ri.Printf( PRINT_WARNING, "%s: invalid image size\n", name );
 
 		return; 
 	}

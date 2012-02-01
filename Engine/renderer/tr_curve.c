@@ -1,5 +1,4 @@
 /*
- * SLATED FOR REMOVAL
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
@@ -20,7 +19,7 @@ along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-#if 0
+
 #include "tr_local.h"
 
 /*
@@ -205,10 +204,9 @@ static	int	neighbors[8][2] = {
 				VectorAdd( normal, sum, sum );
 				count++;
 			}
-			if ( count == 0 ) {
-//printf("bad normal\n");
-				count = 1;
-			}
+			//if ( count == 0 ) {
+			//	printf("bad normal\n");
+			//}
 			VectorNormalize2( sum, dv->normal );
 		}
 	}
@@ -434,14 +432,14 @@ srfGridMesh_t *R_SubdividePatchToGrid( int width, int height,
 				continue;	// can't subdivide any more
 			}
 
-			if ( maxLen <= 1.0 ) {
+			if ( maxLen <= r_subdivisions->value ) {
 				errorTable[dir][j+1] = 1.0f/maxLen;
 				continue;	// didn't need subdivision
 			}
 
 			errorTable[dir][j+2] = 1.0f/maxLen;
 
-			// insert two columns and replace the peak // @VBO why is this necessary? SEE @VBO
+			// insert two columns and replace the peak
 			width += 2;
 			for ( i = 0 ; i < height ; i++ ) {
 				LerpDrawVert( &ctrl[i][j], &ctrl[i][j+1], &prev );
@@ -469,7 +467,7 @@ srfGridMesh_t *R_SubdividePatchToGrid( int width, int height,
 
 
 	// put all the aproximating points on the curve
-	PutPointsOnCurve( ctrl, width, height ); // @VBO, check if necessary later on
+	PutPointsOnCurve( ctrl, width, height );
 
 	// cull out any rows or columns that are colinear
 	for ( i = 1 ; i < width-1 ; i++ ) {
@@ -625,4 +623,3 @@ srfGridMesh_t *R_GridInsertRow( srfGridMesh_t *grid, int row, int column, vec3_t
 	VectorCopy(lodOrigin, grid->lodOrigin);
 	return grid;
 }
-#endif

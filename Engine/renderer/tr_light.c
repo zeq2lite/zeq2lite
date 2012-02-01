@@ -29,6 +29,82 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	DLIGHT_MINIMUM_RADIUS	16		
 // never calculate a range less than this to prevent huge light numbers
 
+
+/*
+===============
+R_TransformDlights
+
+Transforms the origins of an array of dlights.
+Used by both the front end (for DlightBmodel) and
+the back end (before doing the lighting calculation)
+===============
+*/
+void R_TransformDlights( int count, dlight_t *dl, orientationr_t *or) {
+	int		i;
+	vec3_t	temp;
+
+	for ( i = 0 ; i < count ; i++, dl++ ) {
+		VectorSubtract( dl->origin, or->origin, temp );
+		dl->transformed[0] = DotProduct( temp, or->axis[0] );
+		dl->transformed[1] = DotProduct( temp, or->axis[1] );
+		dl->transformed[2] = DotProduct( temp, or->axis[2] );
+	}
+}
+
+/*
+=============
+R_DlightBmodel
+
+Determine which dynamic lights may effect this bmodel
+=============
+*/
+void R_DlightBmodel( bmodel_t *bmodel ) {
+	int			i, j;
+	dlight_t	*dl;
+	int			mask;
+	msurface_t	*surf;
+
+	// transform all the lights
+	R_TransformDlights( tr.refdef.num_dlights, tr.refdef.dlights, &tr.or );
+
+	mask = 0;
+	for ( i=0 ; i<tr.refdef.num_dlights ; i++ ) {
+		dl = &tr.refdef.dlights[i];
+
+		// see if the point is close enough to the bounds to matter
+		for ( j = 0 ; j < 3 ; j++ ) {
+			if ( dl->transformed[j] - bmodel->bounds[1][j] > dl->radius ) {
+				break;
+			}
+			if ( bmodel->bounds[0][j] - dl->transformed[j] > dl->radius ) {
+				break;
+			}
+		}
+		if ( j < 3 ) {
+			continue;
+		}
+
+		// we need to check this light
+		mask |= 1 << i;
+	}
+
+	tr.currentEntity->needDlights = (mask != 0);
+
+	// set the dlight bits in all the surfaces
+	for ( i = 0 ; i < bmodel->numSurfaces ; i++ ) {
+		surf = bmodel->firstSurface + i;
+
+		if ( *surf->data == SF_FACE ) {
+			((srfSurfaceFace_t *)surf->data)->dlightBits[ tr.smpFrame ] = mask;
+		} else if ( *surf->data == SF_GRID ) {
+			((srfGridMesh_t *)surf->data)->dlightBits[ tr.smpFrame ] = mask;
+		} else if ( *surf->data == SF_TRIANGLES ) {
+			((srfTriangles_t *)surf->data)->dlightBits[ tr.smpFrame ] = mask;
+		}
+	}
+}
+
+
 /*
 =============================================================================
 
@@ -82,6 +158,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 
 	VectorClear( ent->ambientLight );
 	VectorClear( ent->directedLight );
+	VectorClear( ent->dynamicLight );
 	VectorClear( direction );
 
 	assert( tr.world->lightGridData ); // NULL with -nolight maps
@@ -172,7 +249,7 @@ LogLight
 ===============
 */
 static void LogLight( trRefEntity_t *ent ) {
-	int	max1, max2;
+	int	max1, max2, max3;
 
 	if ( !(ent->e.renderfx & RF_FIRST_PERSON ) ) {
 		return;
@@ -192,7 +269,14 @@ static void LogLight( trRefEntity_t *ent ) {
 		max2 = ent->directedLight[2];
 	}
 
-	ri.Printf( PRINT_ALL, "amb:%i  dir:%i\n", max1, max2 );
+	max3 = ent->dynamicLight[0];
+	if ( ent->dynamicLight[1] > max3 ) {
+		max3 = ent->dynamicLight[1];
+	} else if ( ent->dynamicLight[2] > max3 ) {
+		max3 = ent->dynamicLight[2];
+	}
+
+	ri.Printf( PRINT_ALL, "amb:%i  dir:%i  dyn:%i\n", max1, max2, max3 );
 }
 
 /*
@@ -242,6 +326,9 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 		VectorCopy( tr.sunDirection, ent->lightDir );
 	}
 
+	// dynamic lights should have be set to 0.1 when there are no dynamic lights.
+	VectorSet(ent->dynamicLight,0.1,0.1,0.1);
+
 	// bonus items and view weapons have a fixed minimum add
 	if ( 1 /* ent->e.renderfx & RF_MINLIGHT */ ) {
 		// give everything a minimum light add
@@ -268,6 +355,8 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 		d = power / ( d * d );
 
 		VectorMA( ent->directedLight, d, dl->color, ent->directedLight );
+		VectorMA( ent->dynamicLight, d, dl->color, ent->dynamicLight );
+		ent->lightDistance = d;
 		VectorMA( lightDir, d, dir, lightDir );
 	}
 

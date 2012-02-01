@@ -20,11 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "../../Shared/q_shared.h"
-#include "../../Shared/qfiles.h"
-#include "../../Shared/qcommon.h"
-#include "tr_public.h"
-extern	refimport_t		ri;
+#include "tr_local.h"
 
 /*
  * Include file for users of JPEG library.
@@ -99,9 +95,7 @@ void R_LoadJPG(const char *filename, unsigned char **pic, int *width, int *heigh
 		byte *b;
 		void *v;
 	} fbuffer;
-  byte  *buf, *inptr, *outptr;
-  JOCTET color;
-  int i, j;
+  byte  *buf;
 
   /* In this example we want to open the input file before doing anything else,
    * so that the setjmp() error recovery below can assume the file is open.
@@ -180,7 +174,7 @@ void R_LoadJPG(const char *filename, unsigned char **pic, int *width, int *heigh
   }
 
   memcount = pixelcount * 4;
-  row_stride = cinfo.output_width * 4;
+  row_stride = cinfo.output_width * cinfo.output_components;
 
   out = ri.Malloc(memcount);
 
@@ -201,19 +195,6 @@ void R_LoadJPG(const char *filename, unsigned char **pic, int *width, int *heigh
 	buf = ((out+(row_stride*cinfo.output_scanline)));
 	buffer = &buf;
     (void) jpeg_read_scanlines(&cinfo, buffer, 1);
-
-    /* system jpeg delivers RGB data, expand to ARGB */
-    inptr = buf + cinfo.output_width * 3 - 1;
-    outptr = buf + row_stride - 1;
-
-    for (i = 0; i < cinfo.output_width; i++) {
-    	*outptr-- = 255;
-
-    	for (j = 0; j < 3; j++) {
-    		color = *inptr--;
-    		*outptr-- = color;
-    	}
-    }
   }
   
   buf = out;

@@ -105,7 +105,7 @@ void R_AddPolygonSurfaces( void ) {
 
 	for ( i = 0, poly = tr.refdef.polys; i < tr.refdef.numPolys ; i++, poly++ ) {
 		sh = R_GetShaderByHandle( poly->hShader );
-		R_AddDrawSurf(( void * )poly, sh, poly->fogIndex );
+		R_AddDrawSurf( ( void * )poly, sh, poly->fogIndex, qfalse );
 	}
 }
 
@@ -151,6 +151,12 @@ void RE_AddPolyToScene( qhandle_t hShader, int numVerts, const polyVert_t *verts
 		
 		Com_Memcpy( poly->verts, &verts[numVerts*j], numVerts * sizeof( *verts ) );
 
+		if ( glConfig.hardwareType == GLHW_RAGEPRO ) {
+			poly->verts->modulate[0] = 255;
+			poly->verts->modulate[1] = 255;
+			poly->verts->modulate[2] = 255;
+			poly->verts->modulate[3] = 255;
+		}
 		// done.
 		r_numpolys++;
 		r_numpolyverts += numVerts;
@@ -242,7 +248,10 @@ void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, floa
 	if ( intensity <= 0 ) {
 		return;
 	}
-
+	// these cards don't have the correct blend mode
+	if ( glConfig.hardwareType == GLHW_RIVA128 || glConfig.hardwareType == GLHW_PERMEDIA2 ) {
+		return;
+	}
 	dl = &backEndData[tr.smpFrame]->dlights[r_numdlights++];
 	VectorCopy (org, dl->origin);
 	dl->radius = intensity;
@@ -250,6 +259,36 @@ void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, floa
 	dl->color[1] = g;
 	dl->color[2] = b;
 	dl->additive = additive;
+}
+
+/*
+=====================
+RE_AddFogToScene
+
+=====================
+*/
+void RE_AddFogToScene( float start, float end, float r, float g, float b, float opacity, float mode, float hint ) {
+	int fogMode[] = { GL_EXP, GL_EXP2, GL_LINEAR };			// Storage For Three Types Of Fog
+	int fogModefilter = mode;								// Which Fog To Use
+	int fogHint[] = { GL_DONT_CARE, GL_FASTEST, GL_NICEST };// Storage For Three Types Of Fog
+	int fogHintfilter = hint;								// Which Fog To Use
+	float fogColor[4] = {r, g, b, 1.0f};						// Fog Color
+
+	if ( ( start == 0 && end == 0 ) || opacity == 0 ){
+		qglDisable(GL_FOG);									// Disables GL_FOG
+		return;
+	}
+	else
+	{
+		qglEnable(GL_FOG);									// Enables GL_FOG
+	}
+
+	qglFogi(GL_FOG_MODE, fogMode[fogModefilter]);			// Fog Mode
+	qglFogfv(GL_FOG_COLOR, fogColor);						// Set Fog Color
+	qglFogf(GL_FOG_DENSITY, opacity);						// How Dense Will The Fog Be
+	qglHint(GL_FOG_HINT, fogHint[fogHintfilter]);			// Fog Hint Value
+	qglFogf(GL_FOG_START, start);							// Fog Start Depth
+	qglFogf(GL_FOG_END, end);								// Fog End Depth
 }
 
 /*
@@ -358,12 +397,17 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	// turn off dynamic lighting globally by clearing all the
 	// dlights if it needs to be disabled or if vertex lighting is enabled
-	if ( r_dynamiclight->integer == 0 ) {
+	if ( r_dynamiclight->integer == 0 ||
+		 r_vertexLight->integer == 1 ||
+		 glConfig.hardwareType == GLHW_PERMEDIA2 ) {
 		tr.refdef.num_dlights = 0;
 	}
 
 	// a single frame may have multiple scenes draw inside it --
 	// a 3D game view, 3D status bar renderings, 3D menus, etc.
+	// They need to be distinguished by the light flare code, because
+	// the visibility state for a given surface may be different in
+	// each scene / view.
 	tr.frameSceneNum++;
 	tr.sceneCount++;
 
@@ -374,15 +418,8 @@ void RE_RenderScene( const refdef_t *fd ) {
 	// convert to GL's 0-at-the-bottom space
 	//
 	Com_Memset( &parms, 0, sizeof( parms ) );
-
-	if (!tr.refdef.pixelTarget) {
-		parms.viewportX = tr.refdef.x;
-		parms.viewportY = glConfig.vidHeight - (tr.refdef.y + tr.refdef.height);
-	} else {
-		parms.viewportX = glConfig.vidWidth / 2;
-		parms.viewportY = glConfig.vidHeight / 2;
-	}
-
+	parms.viewportX = tr.refdef.x;
+	parms.viewportY = glConfig.vidHeight - ( tr.refdef.y + tr.refdef.height );
 	parms.viewportWidth = tr.refdef.width;
 	parms.viewportHeight = tr.refdef.height;
 	parms.isPortal = qfalse;
