@@ -254,6 +254,8 @@ typedef enum{
 	stZanzokenSpeed,
 	stZanzokenDistance,
 	stZanzokenCost,
+	stZanzokenQuickDistance,
+	stZanzokenQuickCost,
 	stEnergyAttackCost,
 	stBoostCost,
 	stFatigueRecovery,

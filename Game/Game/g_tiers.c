@@ -17,8 +17,10 @@ void syncTier(gclient_t *client){
 	ps->stats[stTransformEffectMaximum] = tier->transformEffectMaximum;
 	ps->baseStats[stSpeed] = tier->speed;
 	ps->baseStats[stZanzokenDistance] = tier->zanzokenDistance;
+	ps->baseStats[stZanzokenQuickDistance] = tier->zanzokenQuickDistance;
 	ps->baseStats[stZanzokenSpeed] = tier->zanzokenSpeed;
 	ps->baseStats[stZanzokenCost] = tier->zanzokenCost;
+	ps->baseStats[stZanzokenQuickCost] = tier->zanzokenQuickCost;
 	ps->baseStats[stBoostCost] = tier->boostCost;
 	ps->baseStats[stFatigueRecovery] = tier->fatigueRecovery;
 	ps->baseStats[stTransformSubsequentDuration] = tier->transformSubsequentDuration;
@@ -37,13 +39,11 @@ void syncTier(gclient_t *client){
 	ps->powerLevel[plDrainMaximum] = tier->effectMaximum;
 }
 
-qboolean checkTierUpTransformation(gclient_t *client, int nextTierIndex, int currentTierIndex, int tierChangeMode)
-{
+qboolean checkTierUpTransformation(gclient_t *client, int nextTierIndex, int currentTierIndex, int tierChangeMode){
 	qboolean hasRequirementsToTransform = qfalse;
 	playerState_t *ps;
 	tierConfig_g *nextTier, *currentTier;
 	int newPowerLevel;
-
 	ps = &client->ps;
 	if(tierChangeMode > 1 )	{
 		if(nextTierIndex > -1 && ((nextTierIndex) < 8) && (client->tiers[nextTierIndex].exists)){
@@ -109,8 +109,7 @@ qboolean checkTierUpTransformation(gclient_t *client, int nextTierIndex, int cur
 	return qfalse;
 }
 
-qboolean checkTierDownTransformation(gclient_t *client, int nextTierIndex, int currentTierIndex, int tierChangeMode)
-{
+qboolean checkTierDownTransformation(gclient_t *client, int nextTierIndex, int currentTierIndex, int tierChangeMode){
 	playerState_t *ps;
 	tierConfig_g *baseTier, *currentTier;
 	int newPowerLevel;
@@ -146,8 +145,7 @@ qboolean checkTierDownTransformation(gclient_t *client, int nextTierIndex, int c
 	return qfalse;
 }
 
-qboolean checkDefaultTierConfiguration(playerState_t *ps)
-{
+qboolean checkDefaultTierConfiguration(playerState_t *ps){
 	//The value of 2 means the player was spawned, and the default tier configuration must be sent to the client
 	if(ps->powerLevel[plTierChanged] == 2) {
 		if(ps->powerLevel[plTierCurrent] == 0 && ps->powerLevel[plTierDesired] == 0) {
@@ -324,6 +322,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				if(!token[0]){break;}
 				tier->zanzokenCost = atof(token);
 			}
+			else if(!Q_stricmp(token,"zanzokenQuickCost")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->zanzokenQuickCost = atof(token);
+			}
 			else if(!Q_stricmp(token,"zanzokenSpeed")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
@@ -333,6 +336,11 @@ void parseTier(char *path,tierConfig_g *tier){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				tier->zanzokenDistance = atof(token);
+			}
+			else if(!Q_stricmp(token,"zanzokenQuickDistance")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				tier->zanzokenQuickDistance = atof(token);
 			}
 			else if(!Q_stricmp(token,"breakLimitRate")){
 				token = COM_Parse(&parse);

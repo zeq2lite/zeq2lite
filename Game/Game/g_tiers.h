@@ -39,8 +39,10 @@ typedef struct{
 	float fatigueRecovery;
 	float boostCost;
 	float zanzokenCost;
+	float zanzokenQuickCost;
 	float zanzokenSpeed;
 	float zanzokenDistance;
+	float zanzokenQuickDistance;
 	float airBrakeCost;
 	float knockbackPower;
 	float knockbackIntensity;

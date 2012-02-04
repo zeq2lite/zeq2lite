@@ -283,7 +283,7 @@ void PM_CheckTalk(void){
 ZANZOKEN
 ===============*/
 void PM_StopZanzoken(void){
-	if(pm->ps->bitFlags & usingZanzoken){
+	if(pm->ps->bitFlags & usingZanzoken || pm->ps->bitFlags & usingQuickZanzoken){
 		pm->ps->bitFlags &= ~usingZanzoken;
 		pm->ps->bitFlags &= ~usingQuickZanzoken;
 		PM_AddEvent(EV_ZANZOKEN_END);
@@ -314,10 +314,11 @@ void PM_CheckZanzoken(void){
 		if(pm->ps->measureTimers[mtZanzokenDistance] < 0 || (!(pm->cmd.buttons & BUTTON_TELEPORT) && !(pm->ps->bitFlags & usingQuickZanzoken))){
 			PM_StopZanzoken();
 		}
+		else{
 		pm->ps->measureTimers[mtZanzoken] += pml.msec;
 		while(pm->ps->measureTimers[mtZanzoken] > 50){
 			pm->ps->buffers[bfZanzokenCost] += stepCost;
-			if(pm->ps->buffers[bfZanzokenCost] > 1){
+			if(pm->ps->buffers[bfZanzokenCost] > 1 && !(pm->ps->bitFlags & usingQuickZanzoken)){
 				transfer = (int)pm->ps->buffers[bfZanzokenCost];
 				pm->ps->powerLevel[plUseFatigue] += transfer;
 				pm->ps->buffers[bfZanzokenCost] -= transfer;
@@ -329,11 +330,13 @@ void PM_CheckZanzoken(void){
 		if(pm->ps->lockedTarget > 0){speed *= 1.5;}
 		VectorScale(pm->ps->velocity,speed,pm->ps->velocity);
 		VectorNormalize2(pm->ps->velocity,post_vel);
+		}
 	}
 	else if(pm->cmd.buttons & BUTTON_TELEPORT){
 		PM_StopDash();
 		pm->ps->bitFlags |= usingZanzoken;
-		pm->ps->timers[tmZanzoken] = (pm->ps->powerLevel[plFatigue] / 93.62) + (pm->ps->baseStats[stZanzokenDistance] * 500);
+		pm->ps->bitFlags &= ~usingQuickZanzoken;
+		pm->ps->timers[tmZanzoken] = (pm->ps->powerLevel[plFatigue] * 0.01) + (pm->ps->baseStats[stZanzokenDistance] * 500);
 		pm->ps->measureTimers[mtZanzokenDistance] = pm->ps->timers[tmZanzoken];
 		cost = (pm->ps->powerLevel[plMaximum] * 0.03) * pm->ps->baseStats[stZanzokenCost];
 		if(pm->ps->lockedTarget > 0){cost *= 0.8;}
@@ -346,9 +349,9 @@ void PM_CheckZanzoken(void){
 		PM_StopDash();
 		pm->ps->bitFlags |= usingZanzoken;
 		pm->ps->bitFlags |= usingQuickZanzoken;
-		pm->ps->timers[tmZanzoken] = (pm->ps->powerLevel[plFatigue] / 187.24);
+		pm->ps->timers[tmZanzoken] = pm->ps->baseStats[stZanzokenQuickDistance] * 500;
 		pm->ps->measureTimers[mtZanzokenDistance] = pm->ps->timers[tmZanzoken];
-		cost = (pm->ps->powerLevel[plMaximum] * 0.01) * pm->ps->baseStats[stZanzokenCost];
+		cost = (pm->ps->powerLevel[plMaximum] * 0.01) * pm->ps->baseStats[stZanzokenQuickCost];
 		pm->ps->powerLevel[plUseFatigue] += cost;
 		PM_AddEvent(EV_ZANZOKEN_START);
 
@@ -576,8 +579,7 @@ void PM_CheckStatus(void){
 	}
 }
 
-void PM_CheckSpecificSequences(signed char buttonValue, int index)
-{
+void PM_CheckSpecificSequences(signed char buttonValue, int index){
 	int oppositeButtonIndex = index+1;
 	int time = pm->cmd.serverTime / 10;
 	int tapTime = 500;
@@ -587,7 +589,6 @@ void PM_CheckSpecificSequences(signed char buttonValue, int index)
 	int sequenceTime = 0;
 	int oppositeButtonSequenceStatus = 0;
 	int oppositeButtonSequenceTime = 0;
-
 	current = pm->ps->sequenceTimers[index];
 	oppositeButtonCurrent = pm->ps->sequenceTimers[oppositeButtonIndex];
 	sequenceStatus = current%10;
@@ -620,7 +621,6 @@ void PM_CheckSpecificSequences(signed char buttonValue, int index)
 	}
 	pm->ps->sequenceTimers[oppositeButtonIndex] = (oppositeButtonSequenceTime * 10) + oppositeButtonSequenceStatus;
 	pm->ps->sequenceTimers[index] = (sequenceTime * 10) + sequenceStatus;
-
 }
 
 void PM_CheckSequences(void){
@@ -653,7 +653,6 @@ void PM_CheckSequences(void){
 	PM_CheckSpecificSequences(pm->cmd.forwardmove, index);
 	PM_CheckSpecificSequences(pm->cmd.rightmove, index+2);
 	PM_CheckSpecificSequences(pm->cmd.upmove, index+4);
-
 }
 
 void PM_CheckContextOperations(void)
