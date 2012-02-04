@@ -377,34 +377,35 @@ typedef enum {
 }buffers_t;
 
 // Player stat bits
-#define hasFlipOffset	0x00000001
-#define usingBoost		0x00000002
-#define usingBlock		0x00000004
-#define usingAlter		0x00000008
-#define usingJump		0x00000010
-#define usingZanzoken	0x00000020
-#define usingWeapon		0x00000040
-#define usingFlight		0x00000080
-#define usingSoar		0x00000100
-#define usingMelee		0x00000200
-#define usingBallFlip	0x00000400
-#define keyTierUp		0x00000800
-#define keyTierDown		0x00001000
-#define isTransforming	0x00002000
-#define isStruggling	0x00004000
-#define isUnconcious	0x00008000
-#define isDead			0x00010000
-#define isBreakingLimit	0x00020000
-#define isCrashed		0x00040000
-#define isGuiding		0x00080000
-#define isCharging		0x00100000
-#define isTargeted		0x00200000
-#define isPreparing		0x00400000
-#define isUnsafe		0x00800000
-#define isBlinking		0x01000000	
-#define atopGround		0x02000000
-#define nearGround		0x04000000
-#define underWater		0x08000000
+#define hasFlipOffset		0x00000001
+#define usingBoost			0x00000002
+#define usingBlock			0x00000004
+#define usingAlter			0x00000008
+#define usingJump			0x00000010
+#define usingZanzoken		0x00000020
+#define usingWeapon			0x00000040
+#define usingFlight			0x00000080
+#define usingSoar			0x00000100
+#define usingMelee			0x00000200
+#define usingBallFlip		0x00000400
+#define keyTierUp			0x00000800
+#define keyTierDown			0x00001000
+#define isTransforming		0x00002000
+#define isStruggling		0x00004000
+#define isUnconcious		0x00008000
+#define isDead				0x00010000
+#define isBreakingLimit		0x00020000
+#define isCrashed			0x00040000
+#define isGuiding			0x00080000
+#define isCharging			0x00100000
+#define isTargeted			0x00200000
+#define isPreparing			0x00400000
+#define isUnsafe			0x00800000
+#define isBlinking			0x01000000
+#define atopGround			0x02000000
+#define nearGround			0x04000000
+#define underWater			0x08000000
+#define usingQuickZanzoken	0x10000000
 
 // States
 #define lockedPitch		0x00000001

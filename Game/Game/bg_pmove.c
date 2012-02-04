@@ -285,6 +285,7 @@ ZANZOKEN
 void PM_StopZanzoken(void){
 	if(pm->ps->bitFlags & usingZanzoken){
 		pm->ps->bitFlags &= ~usingZanzoken;
+		pm->ps->bitFlags &= ~usingQuickZanzoken;
 		PM_AddEvent(EV_ZANZOKEN_END);
 		VectorClear(pm->ps->velocity);
 	}
@@ -310,7 +311,7 @@ void PM_CheckZanzoken(void){
 		stepCost = ((pm->ps->powerLevel[plMaximum] * 0.09) * pm->ps->baseStats[stZanzokenCost]) / (pm->ps->timers[tmZanzoken] / 50.0);
 		speed = (pm->ps->powerLevel[plCurrent] / 13.1) + (pm->ps->baseStats[stZanzokenSpeed] * 4000);
 		pm->ps->measureTimers[mtZanzokenDistance] -= pml.msec;
-		if(pm->ps->measureTimers[mtZanzokenDistance] < 0 || !(pm->cmd.buttons & BUTTON_TELEPORT)){
+		if(pm->ps->measureTimers[mtZanzokenDistance] < 0 || (!(pm->cmd.buttons & BUTTON_TELEPORT) && !(pm->ps->bitFlags & usingQuickZanzoken))){
 			PM_StopZanzoken();
 		}
 		pm->ps->measureTimers[mtZanzoken] += pml.msec;
@@ -339,7 +340,21 @@ void PM_CheckZanzoken(void){
 		if(pm->ps->bitFlags & usingJump){cost *= 0.4;}
 		pm->ps->powerLevel[plUseFatigue] += cost;
 		PM_AddEvent(EV_ZANZOKEN_START);
-	}	
+	}
+	else if(pm->ps->sequenceTimers[15]%10 == 2 || pm->ps->sequenceTimers[16]%10 == 2 || pm->ps->sequenceTimers[17]%10 == 2  || pm->ps->sequenceTimers[18]%10 == 2
+			|| pm->ps->sequenceTimers[19]%10 == 2 || pm->ps->sequenceTimers[20]%10 == 2){
+		PM_StopDash();
+		pm->ps->bitFlags |= usingZanzoken;
+		pm->ps->bitFlags |= usingQuickZanzoken;
+		pm->ps->timers[tmZanzoken] = (pm->ps->powerLevel[plFatigue] / 187.24);
+		pm->ps->measureTimers[mtZanzokenDistance] = pm->ps->timers[tmZanzoken];
+		cost = (pm->ps->powerLevel[plMaximum] * 0.01) * pm->ps->baseStats[stZanzokenCost];
+		pm->ps->powerLevel[plUseFatigue] += cost;
+		PM_AddEvent(EV_ZANZOKEN_START);
+
+	}
+
+
 }
 /*===============
 POWER LEVEL
@@ -559,6 +574,86 @@ void PM_CheckStatus(void){
 		}
 		pm->ps->powerups[PW_STATE] = 0;
 	}
+}
+
+void PM_CheckSpecificSequences(signed char buttonValue, int index)
+{
+	int oppositeButtonIndex = index+1;
+	int time = pm->cmd.serverTime / 10;
+	int tapTime = 500;
+	int current = 0;
+	int oppositeButtonCurrent = 0;
+	int sequenceStatus = 0;
+	int sequenceTime = 0;
+	int oppositeButtonSequenceStatus = 0;
+	int oppositeButtonSequenceTime = 0;
+
+	current = pm->ps->sequenceTimers[index];
+	oppositeButtonCurrent = pm->ps->sequenceTimers[oppositeButtonIndex];
+	sequenceStatus = current%10;
+	sequenceTime = current/10;
+	oppositeButtonSequenceStatus = oppositeButtonCurrent%10;
+	oppositeButtonSequenceTime = oppositeButtonCurrent/10;
+	if(buttonValue > 0){
+		if(sequenceStatus == 0){
+			sequenceStatus = ((time - sequenceTime)*10) <= tapTime ? 2 : 1;
+			sequenceTime = time;
+		}
+		else{
+			sequenceStatus = 1;
+		}
+	}
+	else{
+		sequenceStatus = 0;
+	}
+	if(buttonValue < 0){
+		if(oppositeButtonSequenceStatus == 0){
+			oppositeButtonSequenceStatus = ((time - oppositeButtonSequenceTime)*10) <= tapTime ? 2 : 1;
+			oppositeButtonSequenceTime = time;
+		}
+		else{
+			oppositeButtonSequenceStatus = 1;
+		}
+	}
+	else{
+		oppositeButtonSequenceStatus = 0;
+	}
+	pm->ps->sequenceTimers[oppositeButtonIndex] = (oppositeButtonSequenceTime * 10) + oppositeButtonSequenceStatus;
+	pm->ps->sequenceTimers[index] = (sequenceTime * 10) + sequenceStatus;
+
+}
+
+void PM_CheckSequences(void){
+	int index;
+	int buttonIndex = 1;
+	int time = pm->cmd.serverTime / 10;
+	int tapTime = 500;
+	int current = 0;
+	int sequenceStatus = 0;
+	int sequenceTime = 0;
+	for(index = 0;index < 15;++index){
+		current = pm->ps->sequenceTimers[index];
+		sequenceStatus = current%10;
+		sequenceTime = current/10;
+		if(pm->cmd.buttons & buttonIndex){
+			if(sequenceStatus == 0){
+				sequenceStatus = ((time - sequenceTime)*10) <= tapTime ? 2 : 1;
+				sequenceTime = time;
+			}
+			else{
+				sequenceStatus = 1;
+			}
+		}
+		else{
+			sequenceStatus = 0;
+		}
+		pm->ps->sequenceTimers[index] = (sequenceTime * 10) + sequenceStatus;
+		buttonIndex *= 2;
+	}
+	PM_CheckSpecificSequences(pm->cmd.forwardmove, index);
+	PM_CheckSpecificSequences(pm->cmd.rightmove, index+2);
+	PM_CheckSpecificSequences(pm->cmd.upmove, index+4);
+
 }
 
 void PM_CheckContextOperations(void)
@@ -3351,6 +3446,7 @@ void PmoveSingle(pmove_t *pmove){
 	PM_Ride();
 	PM_CheckKnockback();
 	PM_CheckHover();
+	PM_CheckSequences();
 	PM_CheckContextOperations();
 	if(PM_CheckTransform()){return;}
 	PM_CheckLoopingSound();
