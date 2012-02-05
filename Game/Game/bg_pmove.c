@@ -344,8 +344,8 @@ void PM_CheckZanzoken(void){
 		pm->ps->powerLevel[plUseFatigue] += cost;
 		PM_AddEvent(EV_ZANZOKEN_START);
 	}
-	else if(pm->ps->sequenceTimers[15]%10 == 2 || pm->ps->sequenceTimers[16]%10 == 2 || pm->ps->sequenceTimers[17]%10 == 2  || pm->ps->sequenceTimers[18]%10 == 2
-			|| pm->ps->sequenceTimers[19]%10 == 2 || pm->ps->sequenceTimers[20]%10 == 2){
+	else if(!(pm->cmd.buttons & BUTTON_BOOST) && !(pm->cmd.buttons & BUTTON_POWERLEVEL) && (pm->ps->sequenceTimers[15]%10 == 2 || pm->ps->sequenceTimers[16]%10 == 2 || pm->ps->sequenceTimers[17]%10 == 2  ||
+			pm->ps->sequenceTimers[18]%10 == 2	|| pm->ps->sequenceTimers[19]%10 == 2 || pm->ps->sequenceTimers[20]%10 == 2)){
 		PM_StopDash();
 		pm->ps->bitFlags |= usingZanzoken;
 		pm->ps->bitFlags |= usingQuickZanzoken;
