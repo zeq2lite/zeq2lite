@@ -266,7 +266,7 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   endif
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes \
-    -Wno-self-assign -pipe -DUSE_ICON
+    -pipe -DUSE_ICON
   CLIENT_CFLAGS += $(SDL_CFLAGS)
 
   OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
@@ -532,6 +532,9 @@ ifeq ($(PLATFORM),mingw32)
   else
     CLIENT_CFLAGS += $(SDL_CFLAGS)
     CLIENT_LIBS += $(SDL_LIBS)
+    ifeq ($(USE_CODEC_VORBIS),1)
+      CLIENT_LIBS += -lvorbisfile -lvorbis -logg
+    endif
   endif
 
   BUILD_CLIENT_SMP = 0

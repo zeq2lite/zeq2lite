@@ -1145,7 +1145,7 @@ static void ArenaServers_Event( void* ptr, int event ) {
 		break;	
 
 	case ID_CREATE:
-		UI_StartServerMenu( qtrue );
+		UI_StartServerMenu();
 		break;	
 		
 	case ID_REFRESH:

@@ -971,7 +971,6 @@ void UI_Cache_f( void ) {
 	ServerInfo_Cache();
 	ArenaServers_Cache();
 	StartServer_Cache();
-	ServerOptions_Cache();
 	SystemSettings_Cache();
 }
 

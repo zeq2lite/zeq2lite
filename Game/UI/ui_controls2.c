@@ -56,13 +56,13 @@ typedef struct
 #define ID_BACK2		103
 
 // bindable actions
-#define ID_SPEED		0
-#define ID_FORWARD		1	
-#define ID_BACKPEDAL	2
-#define ID_MOVELEFT		3
-#define ID_MOVERIGHT	4
-#define ID_MOVEUP		5	
-#define ID_MOVEDOWN		6
+#define ID_FORWARD		0
+#define ID_BACKPEDAL	1
+#define ID_MOVELEFT		2
+#define ID_MOVERIGHT	3
+#define ID_MOVEUP		4	
+#define ID_MOVEDOWN		5
+#define ID_SPEED		6
 #define ID_ATTACK		7
 #define ID_WEAPPREV		8
 #define ID_WEAPNEXT		9
@@ -85,25 +85,23 @@ typedef struct
 #define UI_ANIM_CROUCH		5
 #define UI_ANIM_STEPLEFT	6
 #define UI_ANIM_STEPRIGHT	7
-#define UI_ANIM_TURNLEFT	8
-#define UI_ANIM_TURNRIGHT	9
-#define UI_ANIM_ATTACK		10
-#define UI_ANIM_LOCKON		11
-#define UI_ANIM_DIE		12
-#define UI_ANIM_CHAT		13
-#define UI_ANIM_DASH_LEFT	14
-#define UI_ANIM_DASH_RIGHT	15
-#define UI_ANIM_DASH_FORWARD	16
-#define UI_ANIM_DASH_BACKWARD	17
-#define UI_ANIM_KI_CHARGE	18
-#define UI_ANIM_PL_UP		19
-#define UI_ANIM_PL_DOWN	20
-#define UI_ANIM_FLY_IDLE	21
-#define UI_ANIM_FLY_FORWARD	22
-#define UI_ANIM_FLY_BACKWARD	23
-#define UI_ANIM_FLY_UP		24
-#define UI_ANIM_FLY_DOWN	25
-#define UI_ANIM_BLOCK		26
+#define UI_ANIM_ATTACK		8
+#define UI_ANIM_LOCKON		9
+#define UI_ANIM_DIE		10
+#define UI_ANIM_CHAT		11
+#define UI_ANIM_DASH_LEFT	12
+#define UI_ANIM_DASH_RIGHT	13
+#define UI_ANIM_DASH_FORWARD	14
+#define UI_ANIM_DASH_BACKWARD	15
+#define UI_ANIM_KI_CHARGE	16
+#define UI_ANIM_PL_UP		17
+#define UI_ANIM_PL_DOWN	18
+#define UI_ANIM_FLY_IDLE	19
+#define UI_ANIM_FLY_FORWARD	20
+#define UI_ANIM_FLY_BACKWARD	21
+#define UI_ANIM_FLY_UP		22
+#define UI_ANIM_FLY_DOWN	23
+#define UI_ANIM_BLOCK		24
 // End adding
 
 typedef struct
@@ -119,15 +117,13 @@ typedef struct
 	menutext_s			system;
 	menutext_s			general;
 	
-	menuaction_s		run;
 	menuaction_s		walkforward;
 	menuaction_s		backpedal;
 	menuaction_s		stepleft;
 	menuaction_s		stepright;
 	menuaction_s		moveup;
 	menuaction_s		movedown;
-	menuaction_s		turnleft;
-	menuaction_s		turnright;
+	menuaction_s		run;
 	menuaction_s		attack;
 	menuaction_s		prevweapon;
 	menuaction_s		nextweapon;
@@ -166,26 +162,26 @@ static vec4_t controls_binding_color  = {1.0f, 1.00f, 1.00f, 1.00f}; // bk: Win3
 
 static bind_t g_bindings[] = 
 {
-	{"+speed", 			"walk",		ID_SPEED,		UI_ANIM_WALK,			K_SHIFT,		-1,		-1,	-1},
-	{"+forward", 		"move forward",		ID_FORWARD,		UI_ANIM_DASH_FORWARD,	K_UPARROW,		-1,		-1, -1},
-	{"+back", 			"move backward",	ID_BACKPEDAL,	UI_ANIM_DASH_BACKWARD,	K_DOWNARROW,	-1,		-1, -1},
-	{"+moveleft", 		"move left",		ID_MOVELEFT,	UI_ANIM_DASH_LEFT,		',',			-1,		-1, -1},
-	{"+moveright", 		"move right",		ID_MOVERIGHT,	UI_ANIM_DASH_RIGHT,	'.',			-1,		-1, -1},
-	{"+moveup",			"fly up",			ID_MOVEUP,		UI_ANIM_FLY_UP,		K_SPACE,		-1,		-1, -1},
-	{"+movedown",		"fly down",			ID_MOVEDOWN,	UI_ANIM_FLY_DOWN,		'c',			-1,		-1, -1},
-	{"+attack", 		"attack primary",	ID_ATTACK,		UI_ANIM_ATTACK,		K_CTRL,			-1,		-1, -1},
-	{"weapprev",		"previous skill",		ID_WEAPPREV,	UI_ANIM_IDLE,			'[',			-1,		-1, -1},
-	{"weapnext", 		"next skill",		ID_WEAPNEXT,	UI_ANIM_IDLE,			']',			-1,		-1, -1},
-	{"+button3", 		"lock-on",			ID_LOCKON,		UI_ANIM_LOCKON,		K_MOUSE3,		-1,		-1, -1},
-	{"messagemode", 	"chat",				ID_CHAT,		UI_ANIM_CHAT,			't',			-1,		-1, -1},
-	{"+button10",		"attack secondary",	ID_ATTACK2,		UI_ANIM_ATTACK,		K_MOUSE2,		-1,		-1, -1},
-	{"+button5",		"roll left",		ID_ROLLLEFT,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
-	{"+button6",		"roll right",		ID_ROLLRIGHT,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
-	{"+button7",		"energy boost",			ID_BOOST,		UI_ANIM_KI_CHARGE,		-1,				-1,		-1, -1},
-	{"+button12",		"energy manipulate",		ID_CHARGEPL,	UI_ANIM_PL_UP,			-1,				-1,		-1, -1},
-	{"+button13",		"block",			ID_BLOCK,		UI_ANIM_BLOCK,			-1,				-1,		-1, -1},
-	{"+button9",		"zanzoken",			ID_ZANZOKEN,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
-	{"+button14",		"jump",				ID_JUMP,		UI_ANIM_JUMP,			-1,				-1,		-1, -1},
+	{"+forward", 		"Move forward",		ID_FORWARD,		UI_ANIM_DASH_FORWARD,	K_UPARROW,		-1,		-1, -1},
+	{"+back", 			"Move backward",	ID_BACKPEDAL,	UI_ANIM_DASH_BACKWARD,	K_DOWNARROW,	-1,		-1, -1},
+	{"+moveleft", 		"Move left",		ID_MOVELEFT,	UI_ANIM_DASH_LEFT,		',',			-1,		-1, -1},
+	{"+moveright", 		"Move right",		ID_MOVERIGHT,	UI_ANIM_DASH_RIGHT,	'.',			-1,		-1, -1},
+	{"+moveup",			"Fly up",			ID_MOVEUP,		UI_ANIM_FLY_UP,		K_SPACE,		-1,		-1, -1},
+	{"+movedown",		"Fly down",			ID_MOVEDOWN,	UI_ANIM_FLY_DOWN,		'c',			-1,		-1, -1},
+	{"+speed", 			"Walk",		ID_SPEED,		UI_ANIM_WALK,			K_SHIFT,		-1,		-1,	-1},
+	{"+attack", 		"Attack primary",	ID_ATTACK,		UI_ANIM_ATTACK,		K_CTRL,			-1,		-1, -1},
+	{"weapprev",		"Previous skill",		ID_WEAPPREV,	UI_ANIM_IDLE,			'[',			-1,		-1, -1},
+	{"weapnext", 		"Next skill",		ID_WEAPNEXT,	UI_ANIM_IDLE,			']',			-1,		-1, -1},
+	{"+button3", 		"Lock-on",			ID_LOCKON,		UI_ANIM_LOCKON,		K_MOUSE3,		-1,		-1, -1},
+	{"messagemode", 	"Chat",				ID_CHAT,		UI_ANIM_CHAT,			't',			-1,		-1, -1},
+	{"+button10",		"Attack secondary",	ID_ATTACK2,		UI_ANIM_ATTACK,		K_MOUSE2,		-1,		-1, -1},
+	{"+button5",		"Roll left",		ID_ROLLLEFT,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
+	{"+button6",		"Roll right",		ID_ROLLRIGHT,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
+	{"+button7",		"Energy boost",			ID_BOOST,		UI_ANIM_KI_CHARGE,		-1,				-1,		-1, -1},
+	{"+button12",		"Energy manipulate",		ID_CHARGEPL,	UI_ANIM_PL_UP,			-1,				-1,		-1, -1},
+	{"+button13",		"Block",			ID_BLOCK,		UI_ANIM_BLOCK,			-1,				-1,		-1, -1},
+	{"+button9",		"Zanzoken",			ID_ZANZOKEN,	UI_ANIM_IDLE,			-1,				-1,		-1, -1},
+	{"+button14",		"Jump",				ID_JUMP,		UI_ANIM_JUMP,			-1,				-1,		-1, -1},
 	{(char*)NULL,		(char*)NULL,		0,				0,					-1,				-1,		-1,	-1},
 };
 
@@ -195,16 +191,14 @@ static configcvar_t g_configcvars[] =
 };
 
 static menucommon_s *g_controls[] =
-{
-	(menucommon_s *)&s_controls.run,            
+{          
 	(menucommon_s *)&s_controls.walkforward,
 	(menucommon_s *)&s_controls.backpedal,
 	(menucommon_s *)&s_controls.stepleft,      
 	(menucommon_s *)&s_controls.stepright,     
 	(menucommon_s *)&s_controls.moveup,        
-	(menucommon_s *)&s_controls.movedown,      
-	(menucommon_s *)&s_controls.turnleft,      
-	(menucommon_s *)&s_controls.turnright,     
+	(menucommon_s *)&s_controls.movedown,
+	(menucommon_s *)&s_controls.run,           
 	(menucommon_s *)&s_controls.jump,
 	(menucommon_s *)&s_controls.zanzoken,
 	(menucommon_s *)&s_controls.rollleft,
@@ -216,6 +210,7 @@ static menucommon_s *g_controls[] =
 	(menucommon_s *)&s_controls.prevweapon,
 	(menucommon_s *)&s_controls.chargepl,
 	(menucommon_s *)&s_controls.block,
+	(menucommon_s *)&s_controls.lockon,
 	(menucommon_s *)&s_controls.chat,
 	NULL,
 };
@@ -356,14 +351,6 @@ static void Controls_UpdateModel( int anim ) {
 		//s_controls.playerLegs = ANIM_IDLECR;
 		break;
 
-	case UI_ANIM_TURNLEFT:
-		s_controls.playerViewangles[YAW] += 90;
-		break;
-
-	case UI_ANIM_TURNRIGHT:
-		s_controls.playerViewangles[YAW] -= 90;
-		break;
-
 	case UI_ANIM_STEPLEFT:
 		s_controls.playerLegs = ANIM_WALK;
 		s_controls.playerTorso = ANIM_WALK;
@@ -470,14 +457,14 @@ static void Controls_Update( void ) {
 	}
 
 	// position controls
-	y = ( SCREEN_HEIGHT - j * SMALLCHAR_HEIGHT ) / 2;
-	for( j = 0;	(control = controls[j]) ; j++, y += SMALLCHAR_HEIGHT ) {
+	y = ( SCREEN_HEIGHT - j * SMALLCHAR_HEIGHT ) / 1.25;
+	for( j = 0;	(control = controls[j]) ; j++, y += CONTROLSCHAR_HEIGHT ) {
 		control->x      = 320;
 		control->y      = y;
 		control->left   = 320 - 19*SMALLCHAR_WIDTH;
 		control->right  = 320 + 21*SMALLCHAR_WIDTH;
 		control->top    = y;
-		control->bottom = y + SMALLCHAR_HEIGHT;
+		control->bottom = y + CONTROLSCHAR_HEIGHT;
 	}
 
 	if( s_controls.waitingforkey ) {
@@ -521,7 +508,7 @@ static void Controls_DrawKeyBinding( void *self )
 
 	a = (menuaction_s*) self;
 
-	x =	a->generic.x;
+	x = a->generic.x;
 	y = a->generic.y;
 
 	c = (Menu_ItemAtCursor( a->generic.parent ) == a);
@@ -578,17 +565,6 @@ static void Controls_DrawKeyBinding( void *self )
 		}
 	}
 }
-
-/*
-=================
-Controls_StatusBar
-=================
-*/
-static void Controls_StatusBar( void *self )
-{
-	//UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Use Arrow Keys or CLICK to change", UI_TINYFONT|UI_CENTER|UI_DROPSHADOW, colorWhite );
-}
-
 
 /*
 =================
@@ -1024,7 +1000,7 @@ static void Controls_MenuInit( void )
 	s_controls.player.generic.flags     = QMF_INACTIVE;
 	s_controls.player.generic.ownerdraw = Controls_DrawPlayer;
 	s_controls.player.generic.x	        = 400;
-	s_controls.player.generic.y	        = -40;
+	s_controls.player.generic.y	        = 0;
 	s_controls.player.width	            = 32*10;
 	s_controls.player.height            = 56*10;
 
@@ -1162,18 +1138,14 @@ static void Controls_MenuInit( void )
 	
 	Menu_AddItem( &s_controls.menu, &s_controls.player );
 
-	Menu_AddItem( &s_controls.menu, &s_controls.run );
-	Menu_AddItem( &s_controls.menu, &s_controls.boost );
-	Menu_AddItem( &s_controls.menu, &s_controls.zanzoken );
 	Menu_AddItem( &s_controls.menu, &s_controls.walkforward );
 	Menu_AddItem( &s_controls.menu, &s_controls.backpedal );
 	Menu_AddItem( &s_controls.menu, &s_controls.stepleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.stepright );
 	Menu_AddItem( &s_controls.menu, &s_controls.moveup );
 	Menu_AddItem( &s_controls.menu, &s_controls.movedown );
+	Menu_AddItem( &s_controls.menu, &s_controls.run );
 	Menu_AddItem( &s_controls.menu, &s_controls.jump );
-	//Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
-	//Menu_AddItem( &s_controls.menu, &s_controls.turnright );
 	Menu_AddItem( &s_controls.menu, &s_controls.rollleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.rollright );
 
@@ -1182,6 +1154,8 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.nextweapon );
 	Menu_AddItem( &s_controls.menu, &s_controls.prevweapon );
 
+	Menu_AddItem( &s_controls.menu, &s_controls.boost );
+	Menu_AddItem( &s_controls.menu, &s_controls.zanzoken );
 	Menu_AddItem( &s_controls.menu, &s_controls.chargepl );
 	Menu_AddItem( &s_controls.menu, &s_controls.block );
 	Menu_AddItem( &s_controls.menu, &s_controls.lockon );

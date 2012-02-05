@@ -28,13 +28,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 //
-// arena and bot info
+// arena info
 //
 
 #define POOLSIZE	128 * 1024
-
-int				ui_numBots;
-static char		*ui_botInfos[MAX_BOTS];
 
 static int		ui_numArenas;
 static char		*ui_arenaInfos[MAX_ARENAS];
@@ -314,267 +311,12 @@ const char *UI_GetSpecialArenaInfo( const char *tag ) {
 
 /*
 ===============
-UI_LoadBotsFromFile
-===============
-*/
-static void UI_LoadBotsFromFile( char *filename ) {
-	int				len;
-	fileHandle_t	f;
-	char			buf[MAX_BOTS_TEXT];
-
-	len = trap_FS_FOpenFile( filename, &f, FS_READ );
-	if ( !f ) {
-		trap_Print( va( S_COLOR_RED "file not found: %s\n", filename ) );
-		return;
-	}
-	if ( len >= MAX_BOTS_TEXT ) {
-		trap_Print( va( S_COLOR_RED "file too large: %s is %i, max allowed is %i", filename, len, MAX_BOTS_TEXT ) );
-		trap_FS_FCloseFile( f );
-		return;
-	}
-
-	trap_FS_Read( buf, len, f );
-	buf[len] = 0;
-	trap_FS_FCloseFile( f );
-
-	ui_numBots += UI_ParseInfos( buf, MAX_BOTS - ui_numBots, &ui_botInfos[ui_numBots] );
-	if (outOfMemory) trap_Print(S_COLOR_YELLOW"WARNING: not anough memory in pool to load all bots\n");
-}
-
-/*
-===============
-UI_LoadBots
-===============
-*/
-static void UI_LoadBots( void ) {}
-
-
-/*
-===============
-UI_GetBotInfoByNumber
-===============
-*/
-char *UI_GetBotInfoByNumber( int num ) {
-	if( num < 0 || num >= ui_numBots ) {
-		//trap_Print( va( S_COLOR_RED "Invalid bot number: %i\n", num ) );
-		return NULL;
-	}
-	return ui_botInfos[num];
-}
-
-
-/*
-===============
-UI_GetBotInfoByName
-===============
-*/
-char *UI_GetBotInfoByName( const char *name ) {
-	int		n;
-	char	*value;
-
-	for ( n = 0; n < ui_numBots ; n++ ) {
-		value = Info_ValueForKey( ui_botInfos[n], "name" );
-		if ( !Q_stricmp( value, name ) ) {
-			return ui_botInfos[n];
-		}
-	}
-
-	return NULL;
-}
-
-
-//
-// single player game info
-//
-
-/*
-===============
-UI_GetBestScore
-
-Returns the player's best finish on a given level, 0 if the have not played the level
-===============
-*/
-void UI_GetBestScore( int level, int *score, int *skill ) {
-	int		n;
-	int		skillScore;
-	int		bestScore;
-	int		bestScoreSkill;
-	char	arenaKey[16];
-	char	scores[MAX_INFO_VALUE];
-
-	if( !score || !skill ) {
-		return;
-	}
-
-	if( level < 0 || level > ui_numArenas ) {
-		return;
-	}
-
-	bestScore = 0;
-	bestScoreSkill = 0;
-
-	for( n = 1; n <= 5; n++ ) {
-		trap_Cvar_VariableStringBuffer( va( "g_spScores%i", n ), scores, MAX_INFO_VALUE );
-
-		Com_sprintf( arenaKey, sizeof( arenaKey ), "l%i", level );
-		skillScore = atoi( Info_ValueForKey( scores, arenaKey ) );
-
-		if( skillScore < 1 || skillScore > 8 ) {
-			continue;
-		}
-
-		if( !bestScore || skillScore <= bestScore ) {
-			bestScore = skillScore;
-			bestScoreSkill = n;
-		}
-	}
-
-	*score = bestScore;
-	*skill = bestScoreSkill;
-}
-
-
-/*
-===============
-UI_SetBestScore
-
-Set the player's best finish for a level
-===============
-*/
-void UI_SetBestScore( int level, int score ) {
-	int		skill;
-	int		oldScore;
-	char	arenaKey[16];
-	char	scores[MAX_INFO_VALUE];
-
-	// validate score
-	if( score < 1 || score > 8 ) {
-		return;
-	}
-
-	// validate skill
-	skill = (int)trap_Cvar_VariableValue( "g_spSkill" );
-	if( skill < 1 || skill > 5 ) {
-		return;
-	}
-
-	// get scores
-	trap_Cvar_VariableStringBuffer( va( "g_spScores%i", skill ), scores, MAX_INFO_VALUE );
-
-	// see if this is better
-	Com_sprintf( arenaKey, sizeof( arenaKey ), "l%i", level );
-	oldScore = atoi( Info_ValueForKey( scores, arenaKey ) );
-	if( oldScore && oldScore <= score ) {
-		return;
-	}
-
-	// update scores
-	Info_SetValueForKey( scores, arenaKey, va( "%i", score ) );
-	trap_Cvar_Set( va( "g_spScores%i", skill ), scores );
-}
-
-
-/*
-===============
-UI_LogAwardData
-===============
-*/
-void UI_LogAwardData( int award, int data ) {
-	char	key[16];
-	char	awardData[MAX_INFO_VALUE];
-	int		oldValue;
-
-	if( data == 0 ) {
-		return;
-	}
-
-	if( award > AWARD_PERFECT ) {
-		trap_Print( va( S_COLOR_RED "Bad award %i in UI_LogAwardData\n", award ) );
-		return;
-	}
-
-	trap_Cvar_VariableStringBuffer( "g_spAwards", awardData, sizeof(awardData) );
-
-	Com_sprintf( key, sizeof(key), "a%i", award );
-	oldValue = atoi( Info_ValueForKey( awardData, key ) );
-
-	Info_SetValueForKey( awardData, key, va( "%i", oldValue + data ) );
-	trap_Cvar_Set( "g_spAwards", awardData );
-}
-
-/*
-===============
-UI_GetCurrentGame
-
-Returns the next level the player has not won
-===============
-*/
-int UI_GetCurrentGame( void ) {
-	int		level;
-	int		rank;
-	int		skill;
-	const char *info;
-
-	info = UI_GetSpecialArenaInfo( "training" );
-	if( info ) {
-		level = atoi( Info_ValueForKey( info, "num" ) );
-		UI_GetBestScore( level, &rank, &skill );
-		if ( !rank || rank > 1 ) {
-			return level;
-		}
-	}
-
-	for( level = 0; level < ui_numSinglePlayerArenas; level++ ) {
-		UI_GetBestScore( level, &rank, &skill );
-		if ( !rank || rank > 1 ) {
-			return level;
-		}
-	}
-
-	info = UI_GetSpecialArenaInfo( "final" );
-	if( !info ) {
-		return -1;
-	}
-	return atoi( Info_ValueForKey( info, "num" ) );
-}
-
-
-/*
-===============
-UI_NewGame
-
-Clears the scores and sets the difficutly level
-===============
-*/
-void UI_NewGame( void ) {
-	trap_Cvar_Set( "g_spScores1", "" );
-	trap_Cvar_Set( "g_spScores2", "" );
-	trap_Cvar_Set( "g_spScores3", "" );
-	trap_Cvar_Set( "g_spScores4", "" );
-	trap_Cvar_Set( "g_spScores5", "" );
-	trap_Cvar_Set( "g_spAwards", "" );
-	trap_Cvar_Set( "g_spVideos", "" );
-}
-
-
-/*
-===============
 UI_GetNumArenas
 ===============
 */
 int UI_GetNumArenas( void ) {
 	return ui_numArenas;
 }
-
-/*
-===============
-UI_GetNumBots
-===============
-*/
-int UI_GetNumBots( void ) {
-	return ui_numBots;
-}
-
 
 /*
 ===============
@@ -585,7 +327,6 @@ void UI_InitGameinfo( void ) {
 
 	UI_InitMemory();
 	UI_LoadArenas();
-	UI_LoadBots();
 	uis.menuamount = 0;
 	uis.demoversion = qfalse;
 }

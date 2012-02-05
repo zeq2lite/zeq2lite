@@ -83,6 +83,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
+#ifdef __GNUC__
+#define UNUSED_VAR __attribute__((unused))
+#else
+#define UNUSED_VAR
+#endif
+
 #if (defined _MSC_VER)
 #define Q_EXPORT __declspec(dllexport)
 #elif (defined __SUNPRO_C)
@@ -287,7 +293,7 @@ typedef enum {
 #define UI_PULSE		0x00004000
 #define UI_TINYFONT		0x00010000
 
-#if defined(_DEBUG) && !defined(BSPC)
+#if !defined(NDEBUG) && !defined(BSPC)
 	#define HUNK_DEBUG
 #endif
 
@@ -346,6 +352,9 @@ extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
 
 #define TINYCHAR_WIDTH		(SMALLCHAR_WIDTH)
 #define TINYCHAR_HEIGHT		(SMALLCHAR_HEIGHT/2)
+
+#define CONTROLSCHAR_WIDTH	8
+#define CONTROLSCHAR_HEIGHT	14
 
 #define SMALLCHAR_WIDTH		8
 #define SMALLCHAR_HEIGHT	16
