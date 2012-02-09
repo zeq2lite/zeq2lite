@@ -56,9 +56,6 @@ void UpdateTournamentInfo( void ) {
 		if ( !player->inuse ) {
 			continue;
 		}
-		if ( !( player->r.svFlags & SVF_BOT ) ) {
-			break;
-		}
 	}
 	// this should never happen!
 	if ( !player || i == level.maxclients ) {

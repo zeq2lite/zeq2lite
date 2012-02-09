@@ -483,7 +483,6 @@ void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attack
 	gclient_t *tgClient;
 	if(!target->takedamage){return;}
 	if(level.intermissionQueued){return;}
-	if(target->flags & FL_GODMODE){return;}
 	if(!inflictor){inflictor = &g_entities[ENTITYNUM_WORLD];}
 	if(!attacker){attacker = &g_entities[ENTITYNUM_WORLD];}
 	tgClient = target->client;

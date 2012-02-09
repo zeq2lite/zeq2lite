@@ -1302,6 +1302,7 @@ void CG_DrawBigString( int x, int y, const char *s, float alpha );
 void CG_DrawBigStringColor( int x, int y, const char *s, vec4_t color );
 void CG_DrawSmallString( int x, int y, const char *s, float alpha );
 void CG_DrawSmallStringHalfHeight( int x, int y, const char *s, float alpha );
+void CG_DrawSmallStringCustom( int x, int y, int w, int h, const char *s, float alpha,int spacing );
 void CG_DrawSmallStringColor( int x, int y, const char *s, vec4_t color );
 void CG_DrawMediumStringColor( int x, int y, const char *s, vec4_t color );
 
@@ -1329,6 +1330,7 @@ extern  char systemChat[256];
 extern  char teamChat1[256];
 extern  char teamChat2[256];
 
+void CG_DrawChat(char *text );
 void CG_CenterPrint( const char *str, int y, int charWidth );
 void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t headAngles );
 void CG_DrawActive( stereoFrame_t stereoView );

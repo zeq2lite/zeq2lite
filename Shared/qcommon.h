@@ -142,7 +142,6 @@ NET
 
 typedef enum {
 	NA_BAD = 0,					// an address lookup failed
-	NA_BOT,
 	NA_LOOPBACK,
 	NA_BROADCAST,
 	NA_IP,
@@ -895,7 +894,6 @@ extern	fileHandle_t	com_journalDataFile;
 typedef enum {
 	TAG_FREE,
 	TAG_GENERAL,
-	TAG_BOTLIB,
 	TAG_RENDERER,
 	TAG_SMALL,
 	TAG_STATIC
@@ -1085,10 +1083,6 @@ void	*Sys_GetCGameAPI( void );
 
 void	Sys_UnloadUI( void );
 void	*Sys_GetUIAPI( void );
-
-//bot libraries
-void	Sys_UnloadBotLib( void );
-void	*Sys_GetBotLibAPI( void *parms );
 
 char	*Sys_GetCurrentUser( void );
 

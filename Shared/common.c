@@ -1285,11 +1285,10 @@ void Com_Meminfo_f( void ) {
 	memblock_t	*block;
 	int			zoneBytes, zoneBlocks;
 	int			smallZoneBytes, smallZoneBlocks;
-	int			botlibBytes, rendererBytes;
+	int			rendererBytes;
 	int			unused;
 
 	zoneBytes = 0;
-	botlibBytes = 0;
 	rendererBytes = 0;
 	zoneBlocks = 0;
 	for (block = mainzone->blocklist.next ; ; block = block->next) {
@@ -1300,11 +1299,7 @@ void Com_Meminfo_f( void ) {
 		if ( block->tag ) {
 			zoneBytes += block->size;
 			zoneBlocks++;
-			if ( block->tag == TAG_BOTLIB ) {
-				botlibBytes += block->size;
-			} else if ( block->tag == TAG_RENDERER ) {
-				rendererBytes += block->size;
-			}
+			rendererBytes += block->size;
 		}
 
 		if (block->next == &mainzone->blocklist) {
@@ -1362,9 +1357,8 @@ void Com_Meminfo_f( void ) {
 	Com_Printf( "%8i unused highwater\n", unused );
 	Com_Printf( "\n" );
 	Com_Printf( "%8i bytes in %i zone blocks\n", zoneBytes, zoneBlocks	);
-	Com_Printf( "        %8i bytes in dynamic botlib\n", botlibBytes );
 	Com_Printf( "        %8i bytes in dynamic renderer\n", rendererBytes );
-	Com_Printf( "        %8i bytes in dynamic other\n", zoneBytes - ( botlibBytes + rendererBytes ) );
+	Com_Printf( "        %8i bytes in dynamic other\n", zoneBytes - rendererBytes );
 	Com_Printf( "        %8i bytes in small Zone memory\n", smallZoneBytes );
 }
 

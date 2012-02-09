@@ -1219,7 +1219,6 @@ long FS_FOpenFileReadDir(const char *filename, searchpath_t *search, fileHandle_
 						   !FS_IsExt(filename, ".txt", len) &&
 						   !FS_IsExt(filename, ".cfg", len) &&
 						   !FS_IsExt(filename, ".config", len) &&
-						   !FS_IsExt(filename, ".bot", len) &&
 						   !FS_IsExt(filename, ".arena", len) &&
 						   !FS_IsExt(filename, ".menu", len) &&
 						   !strstr(filename, "levelshots"))

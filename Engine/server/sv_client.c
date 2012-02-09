@@ -365,19 +365,9 @@ void SV_DirectConnect( netadr_t from ) {
 			count = 0;
 			for ( i = startIndex; i < sv_maxclients->integer ; i++ ) {
 				cl = &svs.clients[i];
-				if (cl->netchan.remoteAddress.type == NA_BOT) {
-					count++;
-				}
 			}
-			// if they're all bots
-			if (count >= sv_maxclients->integer - startIndex) {
-				SV_DropClient(&svs.clients[sv_maxclients->integer - 1], "only bots on server");
-				newcl = &svs.clients[sv_maxclients->integer - 1];
-			}
-			else {
-				Com_Error( ERR_FATAL, "server is full on local connect" );
-				return;
-			}
+			Com_Error( ERR_FATAL, "server is full on local connect" );
+			return;
 		}
 		else {
 			NET_OutOfBandPrint( NS_SERVER, from, "print\nServer is full.\n" );
@@ -494,23 +484,20 @@ or crashing -- SV_FinalMessage() will handle that
 void SV_DropClient( client_t *drop, const char *reason ) {
 	int		i;
 	challenge_t	*challenge;
-	const qboolean isBot = drop->netchan.remoteAddress.type == NA_BOT;
 
 	if ( drop->state == CS_ZOMBIE ) {
 		return;		// already dropped
 	}
 
-	if ( !isBot ) {
-		// see if we already have a challenge for this ip
-		challenge = &svs.challenges[0];
+	// see if we already have a challenge for this ip
+	challenge = &svs.challenges[0];
 
-		for (i = 0 ; i < MAX_CHALLENGES ; i++, challenge++)
-		{
+	for (i = 0 ; i < MAX_CHALLENGES ; i++, challenge++)
+	{
 			if(NET_CompareAdr(drop->netchan.remoteAddress, challenge->adr))
-			{
+		{
 				Com_Memset(challenge, 0, sizeof(*challenge));
 				break;
-			}
 		}
 	}
 
@@ -530,13 +517,8 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 	// nuke user info
 	SV_SetUserinfo( drop - svs.clients, "" );
 	
-	if ( isBot ) {
-		// bots shouldn't go zombie, as there's no real net connection.
-		drop->state = CS_FREE;
-	} else {
-		Com_DPrintf( "Going to CS_ZOMBIE for %s\n", drop->name );
-		drop->state = CS_ZOMBIE;		// become free in a few seconds
-	}
+	Com_DPrintf( "Going to CS_ZOMBIE for %s\n", drop->name );
+	drop->state = CS_ZOMBIE;		// become free in a few seconds
 
 	// if this was the last client on the server, send a heartbeat
 	// to the master so it is known the server is empty
@@ -1389,8 +1371,6 @@ static ucmd_t ucmds[] = {
 /*
 ==================
 SV_ExecuteClientCommand
-
-Also called by bot code
 ==================
 */
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
@@ -1481,8 +1461,6 @@ static qboolean SV_ClientCommand( client_t *cl, msg_t *msg ) {
 /*
 ==================
 SV_ClientThink
-
-Also called by bot code
 ==================
 */
 void SV_ClientThink (client_t *cl, usercmd_t *cmd) {

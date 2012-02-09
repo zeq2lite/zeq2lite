@@ -647,7 +647,6 @@ void CG_InitConsoleCommands( void ) {
 	// the game server will interpret these commands, which will be automatically
 	// forwarded to the server after they are not recognized locally
 	//
-	trap_AddCommand ("kill");
 	trap_AddCommand ("say");
 	trap_AddCommand ("say_team");
 	trap_AddCommand ("tell");
@@ -658,14 +657,9 @@ void CG_InitConsoleCommands( void ) {
 	trap_AddCommand ("vosay");
 	trap_AddCommand ("vosay_team");
 	trap_AddCommand ("votell");
-	trap_AddCommand ("give");
-	trap_AddCommand ("god");
-	trap_AddCommand ("notarget");
-	trap_AddCommand ("noclip");
 	trap_AddCommand ("team");
 	trap_AddCommand ("follow");
 	trap_AddCommand ("levelshot");
-	trap_AddCommand ("addbot");
 	trap_AddCommand ("setviewpos");
 	trap_AddCommand ("callvote");
 	trap_AddCommand ("vote");

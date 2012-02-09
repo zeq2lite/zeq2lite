@@ -61,7 +61,7 @@ void P_DamageFeedback( gentity_t *player ) {
 	}
 
 	// play an apropriate pain sound
-	if ( (level.time > player->pain_debounce_time) && !(player->flags & FL_GODMODE) ) {
+	if ( (level.time > player->pain_debounce_time) ) {
 		player->pain_debounce_time = level.time + 700;
 		G_AddEvent( player, EV_PAIN, player->powerLevelTotal );
 		client->ps.damageEvent++;
@@ -125,10 +125,6 @@ void ClientImpacts( gentity_t *ent, pmove_t *pm ) {
 			continue;	// duplicated
 		}
 		other = &g_entities[ pm->touchents[i] ];
-
-		if ( ( ent->r.svFlags & SVF_BOT ) && ( ent->touch ) ) {
-			ent->touch( ent, other, &trace );
-		}
 
 		if ( !other->touch ) {
 			continue;
@@ -198,10 +194,6 @@ void	G_TouchTriggers( gentity_t *ent ) {
 
 		if ( hit->touch ) {
 			hit->touch (hit, ent, &trace);
-		}
-
-		if ( ( ent->r.svFlags & SVF_BOT ) && ( ent->touch ) ) {
-			ent->touch( ent, hit, &trace );
 		}
 	}
 
@@ -414,7 +406,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	}
 
 }
-void BotTestSolid(vec3_t origin);
 
 /*
 ==============
@@ -595,12 +586,7 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 	pm.ps = &client->ps;
 	pm.cmd = *ucmd;
-	if ( ent->r.svFlags & SVF_BOT ) {
-		pm.tracemask = MASK_PLAYERSOLID | CONTENTS_BOTCLIP;
-	}
-	else {
-		pm.tracemask = MASK_PLAYERSOLID;
-	}
+	pm.tracemask = MASK_PLAYERSOLID;
 	pm.trace = trap_Trace;
 	pm.pointcontents = trap_PointContents;
 	pm.debugLevel = g_debugMove.integer;
@@ -676,14 +662,14 @@ void ClientThink( int clientNum ) {
 	// phone jack if they don't get any for a while
 	ent->client->lastCmdTime = level.time;
 
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
+	if ( !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
 		ClientThink_real( ent );
 	}
 }
 
 
 void G_RunClient( gentity_t *ent ) {
-	if ( !(ent->r.svFlags & SVF_BOT) && !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
+	if ( !g_synchronousClients.integer && !ent->client->ps.lockedTarget) {
 		return;
 	}
 	ent->client->pers.cmd.serverTime = level.time;

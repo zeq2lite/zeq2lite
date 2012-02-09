@@ -46,6 +46,7 @@ int		c_pmove = 0;
 /*===============
 DECLARATIONS
 ===============*/
+int trap_RealTime( qtime_t *qtime );
 int PM_CheckDirection(vec3_t direction,qboolean player);
 void PM_StopBoost(void);
 void PM_StopBlink(void);

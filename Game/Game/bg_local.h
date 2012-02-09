@@ -77,4 +77,6 @@ void PM_AddEvent( int newEvent );
 qboolean	PM_SlideMove( qboolean gravity );
 void		PM_StepSlideMove( qboolean gravity );
 
+extern int PM_VerifyTrace(int lockBoxSize);
+qboolean PM_WeaponSelectable( int i );
 

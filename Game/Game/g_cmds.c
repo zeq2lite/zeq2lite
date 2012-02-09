@@ -136,83 +136,6 @@ int ClientNumberFromString( gentity_t *to, char *s ) {
 	trap_SendServerCommand( to-g_entities, va("print \"User %s is not on the server\n\"", s));
 	return -1;
 }
-/*
-==================
-Cmd_God_f
-
-Sets client to godmode
-
-argv(0) god
-==================
-*/
-void Cmd_God_f (gentity_t *ent)
-{
-	char	*msg;
-
-	if ( !CheatsOk( ent ) ) {
-		return;
-	}
-
-	ent->flags ^= FL_GODMODE;
-	if (!(ent->flags & FL_GODMODE) )
-		msg = "godmode OFF\n";
-	else
-		msg = "godmode ON\n";
-
-	trap_SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
-}
-
-
-/*
-==================
-Cmd_Notarget_f
-
-Sets client to notarget
-
-argv(0) notarget
-==================
-*/
-void Cmd_Notarget_f( gentity_t *ent ) {
-	char	*msg;
-
-	if ( !CheatsOk( ent ) ) {
-		return;
-	}
-
-	ent->flags ^= FL_NOTARGET;
-	if (!(ent->flags & FL_NOTARGET) )
-		msg = "notarget OFF\n";
-	else
-		msg = "notarget ON\n";
-
-	trap_SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
-}
-
-
-/*
-==================
-Cmd_Noclip_f
-
-argv(0) noclip
-==================
-*/
-void Cmd_Noclip_f( gentity_t *ent ) {
-	char	*msg;
-
-	if ( !CheatsOk( ent ) ) {
-		return;
-	}
-
-	if ( ent->client->noclip ) {
-		msg = "noclip OFF\n";
-	} else {
-		msg = "noclip ON\n";
-	}
-	ent->client->noclip = !ent->client->noclip;
-
-	trap_SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
-}
-
 
 /*
 ==================
@@ -282,7 +205,6 @@ void Cmd_Kill_f( gentity_t *ent ) {
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		return;
 	}
-	ent->flags &= ~FL_GODMODE;
 }
 
 /*
@@ -401,7 +323,6 @@ void SetTeam( gentity_t *ent, char *s ) {
 	client->pers.teamState.state = TEAM_BEGIN;
 	if ( oldTeam != TEAM_SPECTATOR ) {
 		// Kill him (makes sure he loses flags, etc)
-		ent->flags &= ~FL_GODMODE;
 		ent->client->ps.powerLevel[plCurrent] = ent->powerLevelTotal = 0;
 
 	}
@@ -417,8 +338,8 @@ void SetTeam( gentity_t *ent, char *s ) {
 	client->sess.teamLeader = qfalse;
 	if ( team == TEAM_RED || team == TEAM_BLUE ) {
 		teamLeader = TeamLeader( team );
-		// if there is no team leader or the team leader is a bot and this client is not a bot
-		if ( teamLeader == -1 || ( !(g_entities[clientNum].r.svFlags & SVF_BOT) && (g_entities[teamLeader].r.svFlags & SVF_BOT) ) ) {
+		// if there is no team leader
+		if ( teamLeader == -1 ) {
 			SetLeader( team, clientNum );
 		}
 	}
@@ -448,7 +369,6 @@ void StopFollowing( gentity_t *ent ) {
 	ent->client->sess.sessionTeam = TEAM_SPECTATOR;	
 	ent->client->sess.spectatorState = SPECTATOR_FREE;
 	ent->client->ps.pm_flags &= ~PMF_FOLLOW;
-	ent->r.svFlags &= ~SVF_BOT;
 	ent->client->ps.clientNum = ent - g_entities;
 }
 
@@ -752,8 +672,7 @@ static void Cmd_Tell_f( gentity_t *ent ) {
 	G_LogPrintf( "tell: %s to %s: %s\n", ent->client->pers.netname, target->client->pers.netname, p );
 	G_Say( ent, target, SAY_TELL, p );
 	// don't tell to the player self if it was already directed to this player
-	// also don't send the chat back to a bot
-	if ( ent != target && !(ent->r.svFlags & SVF_BOT)) {
+	if ( ent != target ) {
 		G_Say( ent, ent, SAY_TELL, p );
 	}
 }
@@ -876,8 +795,7 @@ static void Cmd_VoiceTell_f( gentity_t *ent, qboolean voiceonly ) {
 	G_LogPrintf( "vtell: %s to %s: %s\n", ent->client->pers.netname, target->client->pers.netname, id );
 	G_Voice( ent, target, SAY_TELL, id, voiceonly );
 	// don't tell to the player self if it was already directed to this player
-	// also don't send the chat back to a bot
-	if ( ent != target && !(ent->r.svFlags & SVF_BOT)) {
+	if ( ent != target ) {
 		G_Voice( ent, ent, SAY_TELL, id, voiceonly );
 	}
 }
@@ -1461,14 +1379,6 @@ void ClientCommand( int clientNum ) {
 		return;
 	}
 
-	else if (Q_stricmp (cmd, "god") == 0)
-		Cmd_God_f (ent);
-	else if (Q_stricmp (cmd, "notarget") == 0)
-		Cmd_Notarget_f (ent);
-	else if (Q_stricmp (cmd, "noclip") == 0)
-		Cmd_Noclip_f (ent);
-	else if (Q_stricmp (cmd, "kill") == 0)
-		Cmd_Kill_f (ent);
 	else if (Q_stricmp (cmd, "teamtask") == 0)
 		Cmd_TeamTask_f (ent);
 	else if (Q_stricmp (cmd, "levelshot") == 0)

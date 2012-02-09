@@ -153,7 +153,7 @@ Restart the server on a different map
 static void SV_Map_f( void ) {
 	char		*cmd;
 	char		*map;
-	qboolean	killBots, cheat;
+	qboolean	cheat;
 	char		expanded[MAX_QPATH];
 	char		mapname[MAX_QPATH];
 
@@ -185,15 +185,12 @@ static void SV_Map_f( void ) {
 		} else {
 			cheat = qfalse;
 		}
-		killBots = qtrue;
 	}
 	else {
 		if ( !Q_stricmp( cmd, "devmap" ) ) {
 			cheat = qtrue;
-			killBots = qtrue;
 		} else {
 			cheat = qfalse;
-			killBots = qfalse;
 		}
 		if( sv_gametype->integer == GT_SINGLE_PLAYER ) {
 			Cvar_SetValue( "g_gametype", GT_FFA );
@@ -205,7 +202,7 @@ static void SV_Map_f( void ) {
 	Q_strncpyz(mapname, map, sizeof(mapname));
 
 	// start up the map
-	SV_SpawnServer( mapname, killBots );
+	SV_SpawnServer( mapname );
 
 	// set the cheat value
 	// if the level was started with "map <levelname>", then
@@ -230,7 +227,6 @@ static void SV_MapRestart_f( void ) {
 	int			i;
 	client_t	*client;
 	char		*denied;
-	qboolean	isBot;
 	int			delay;
 
 	// make sure we aren't restarting twice in the same frame
@@ -269,7 +265,7 @@ static void SV_MapRestart_f( void ) {
 		// restart the map the slow way
 		Q_strncpyz( mapname, Cvar_VariableString( "mapname" ), sizeof( mapname ) );
 
-		SV_SpawnServer( mapname, qfalse );
+		SV_SpawnServer( mapname );
 		return;
 	}
 
@@ -319,17 +315,11 @@ static void SV_MapRestart_f( void ) {
 			continue;
 		}
 
-		if ( client->netchan.remoteAddress.type == NA_BOT ) {
-			isBot = qtrue;
-		} else {
-			isBot = qfalse;
-		}
-
 		// add the map_restart command
 		SV_AddServerCommand( client, "map_restart\n" );
 
 		// connect the client again, without the firstTime flag
-		denied = VM_ExplicitArgPtr( gvm, VM_Call( gvm, GAME_CLIENT_CONNECT, i, qfalse, isBot ) );
+		denied = VM_ExplicitArgPtr( gvm, VM_Call( gvm, GAME_CLIENT_CONNECT, i, qfalse) );
 		if ( denied ) {
 			// this generally shouldn't happen, because the client
 			// was connected before the level change
@@ -375,34 +365,23 @@ static void SV_Kick_f( void ) {
 	}
 
 	if ( Cmd_Argc() != 2 ) {
-		Com_Printf ("Usage: kick <player name>\nkick all = kick everyone\nkick allbots = kick all bots\n");
+		Com_Printf ("Usage: kick <player name>\nkick all = kick everyone\n");
 		return;
 	}
 
 	cl = SV_GetPlayerByHandle();
 	if ( !cl ) {
-		if ( !Q_stricmp(Cmd_Argv(1), "all") ) {
-			for ( i=0, cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++ ) {
-				if ( !cl->state ) {
-					continue;
-				}
-				if( cl->netchan.remoteAddress.type == NA_LOOPBACK ) {
-					continue;
-				}
-				SV_DropClient( cl, "was kicked" );
-				cl->lastPacketTime = svs.time;	// in case there is a funny zombie
+	( !Q_stricmp(Cmd_Argv(1), "all") );
+	 {
+		for ( i=0, cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++ ) {
+			if ( !cl->state ) {
+				continue;
 			}
-		}
-		else if ( !Q_stricmp(Cmd_Argv(1), "allbots") ) {
-			for ( i=0, cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++ ) {
-				if ( !cl->state ) {
-					continue;
-				}
-				if( cl->netchan.remoteAddress.type != NA_BOT ) {
-					continue;
-				}
-				SV_DropClient( cl, "was kicked" );
-				cl->lastPacketTime = svs.time;	// in case there is a funny zombie
+			if( cl->netchan.remoteAddress.type == NA_LOOPBACK ) {
+				continue;
+			}
+			SV_DropClient( cl, "was kicked" );
+			cl->lastPacketTime = svs.time;	// in case there is a funny zombie
 			}
 		}
 		return;

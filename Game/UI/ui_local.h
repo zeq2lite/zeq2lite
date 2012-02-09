@@ -283,6 +283,11 @@ extern vec4_t		text_color_highlight;
 extern char	*ui_medalNames[];
 extern char	*ui_medalPicNames[];
 extern char	*ui_medalSounds[];
+
+extern void trap_S_StopBackgroundTrack( void );
+extern void trap_S_StartBackgroundTrack( const char *intro, const char *loop );
+
+
 //
 // ui_mfield.c
 //

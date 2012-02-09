@@ -48,13 +48,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	MISSILE_PRESTEP_TIME	50
 
 // gentity->flags
-#define	FL_GODMODE				0x00000010
-#define	FL_NOTARGET				0x00000020
-#define	FL_TEAMSLAVE			0x00000400	// not the first on the team
-#define FL_NO_KNOCKBACK			0x00000800
-#define FL_NO_BOTS				0x00002000	// spawn point not for bot use
-#define FL_NO_HUMANS			0x00004000	// spawn point just for bots
-#define FL_FORCE_GESTURE		0x00008000	// force gesture on client
+#define	FL_TEAMSLAVE			0x00000010	// not the first on the team
+#define FL_NO_KNOCKBACK			0x00000020
+#define FL_FORCE_GESTURE		0x00000400	// force gesture on client
 
 // movers are things like doors, plats, buttons, etc
 typedef enum {
@@ -553,7 +549,7 @@ team_t TeamCount( int ignoreClientNum, int team );
 int TeamLeader( int team );
 team_t PickTeam( int ignoreClientNum );
 void SetClientViewAngle( gentity_t *ent, vec3_t angle );
-gentity_t *SelectSpawnPoint (vec3_t avoidPoint, vec3_t origin, vec3_t angles, qboolean isbot);
+gentity_t *SelectSpawnPoint (vec3_t avoidPoint, vec3_t origin, vec3_t angles );
 void CopyToBodyQue( gentity_t *ent );
 void ClientRespawn(gentity_t *ent);
 void BeginIntermission (void);
@@ -614,7 +610,7 @@ void QDECL G_Error( const char *fmt, ... ) __attribute__ ((noreturn, format (pri
 //
 // g_client.c
 //
-char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot );
+char *ClientConnect( int clientNum, qboolean firstTime );
 void ClientUserinfoChanged( int clientNum );
 void ClientDisconnect( int clientNum );
 void ClientBegin( int clientNum );
@@ -659,19 +655,6 @@ void SpawnModelsOnVictoryPads( void );
 void Svcmd_AbortPodium_f( void );
 
 //
-// g_bot.c
-//
-// void G_InitBots( qboolean restart );
-// char *G_GetBotInfoByNumber( int num );
-// char *G_GetBotInfoByName( const char *name );
-// void G_CheckBotSpawn( void );
-// void G_RemoveQueuedBotBegin( int clientNum );
-// qboolean G_BotConnect( int clientNum, qboolean restart );
-// void Svcmd_AddBot_f( void );
-// void Svcmd_BotList_f( void );
-// void BotInterbreedEndMatch( void );
-
-//
 // g_usermissile.c
 //
 
@@ -704,25 +687,17 @@ void G_RadarUpdateCS( void );
 //
 qboolean G_weapPhys_Parse( char *filename, int clientNum );
 
+///
+/// g_userweapons.c
+///
+void G_CheckSkills(playerState_t *ps );
 
-// ai_main.c
-#define MAX_FILEPATH			144
-
-//bot settings
-typedef struct bot_settings_s
-{
-	char characterfile[MAX_FILEPATH];
-	float skill;
-	char team[MAX_FILEPATH];
-} bot_settings_t;
-
-int BotAISetup( int restart );
-int BotAIShutdown( int restart );
-int BotAILoadMap( int restart );
-int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean restart);
-int BotAIShutdownClient( int client, qboolean restart );
-int BotAIStartFrame( int time );
-void BotTestAAS(vec3_t origin);
+///
+/// g_tiers.c
+///
+void checkTier(gclient_t *client );
+void syncTier(gclient_t *client );
+void setupTiers(gclient_t *client );
 
 #include "g_team.h" // teamplay specific stuff
 extern	level_locals_t	level;
@@ -833,96 +808,11 @@ void	trap_LinkEntity( gentity_t *ent );
 void	trap_UnlinkEntity( gentity_t *ent );
 int		trap_EntitiesInBox( const vec3_t mins, const vec3_t maxs, int *entityList, int maxcount );
 qboolean trap_EntityContact( const vec3_t mins, const vec3_t maxs, const gentity_t *ent );
-int		trap_BotAllocateClient( void );
-void	trap_BotFreeClient( int clientNum );
 void	trap_GetUsercmd( int clientNum, usercmd_t *cmd );
 qboolean	trap_GetEntityToken( char *buffer, int bufferSize );
 
 int		trap_DebugPolygonCreate(int color, int numPoints, vec3_t *points);
 void	trap_DebugPolygonDelete(int id);
-
-int		trap_BotLibSetup( void );
-int		trap_BotLibShutdown( void );
-int		trap_BotLibVarSet(char *var_name, char *value);
-int		trap_BotLibVarGet(char *var_name, char *value, int size);
-int		trap_BotLibDefine(char *string);
-int		trap_BotLibStartFrame(float time);
-int		trap_BotLibLoadMap(const char *mapname);
-int		trap_BotLibUpdateEntity(int ent, void /* struct bot_updateentity_s */ *bue);
-int		trap_BotLibTest(int parm0, char *parm1, vec3_t parm2, vec3_t parm3);
-
-int		trap_BotGetSnapshotEntity( int clientNum, int sequence );
-int		trap_BotGetServerCommand(int clientNum, char *message, int size);
-void	trap_BotUserCommand(int client, usercmd_t *ucmd);
-
-int		trap_AAS_BBoxAreas(vec3_t absmins, vec3_t absmaxs, int *areas, int maxareas);
-int		trap_AAS_AreaInfo( int areanum, void /* struct aas_areainfo_s */ *info );
-void	trap_AAS_EntityInfo(int entnum, void /* struct aas_entityinfo_s */ *info);
-
-int		trap_AAS_Initialized(void);
-void	trap_AAS_PresenceTypeBoundingBox(int presencetype, vec3_t mins, vec3_t maxs);
-float	trap_AAS_Time(void);
-
-int		trap_AAS_PointAreaNum(vec3_t point);
-int		trap_AAS_PointReachabilityAreaIndex(vec3_t point);
-int		trap_AAS_TraceAreas(vec3_t start, vec3_t end, int *areas, vec3_t *points, int maxareas);
-
-int		trap_AAS_PointContents(vec3_t point);
-int		trap_AAS_NextBSPEntity(int ent);
-int		trap_AAS_ValueForBSPEpairKey(int ent, char *key, char *value, int size);
-int		trap_AAS_VectorForBSPEpairKey(int ent, char *key, vec3_t v);
-int		trap_AAS_FloatForBSPEpairKey(int ent, char *key, float *value);
-int		trap_AAS_IntForBSPEpairKey(int ent, char *key, int *value);
-
-int		trap_AAS_AreaReachability(int areanum);
-
-int		trap_AAS_AreaTravelTimeToGoalArea(int areanum, vec3_t origin, int goalareanum, int travelflags);
-int		trap_AAS_EnableRoutingArea( int areanum, int enable );
-int		trap_AAS_PredictRoute(void /*struct aas_predictroute_s*/ *route, int areanum, vec3_t origin,
-							int goalareanum, int travelflags, int maxareas, int maxtime,
-							int stopevent, int stopcontents, int stoptfl, int stopareanum);
-
-int		trap_AAS_AlternativeRouteGoals(vec3_t start, int startareanum, vec3_t goal, int goalareanum, int travelflags,
-										void /*struct aas_altroutegoal_s*/ *altroutegoals, int maxaltroutegoals,
-										int type);
-int		trap_AAS_Swimming(vec3_t origin);
-int		trap_AAS_PredictClientMovement(void /* aas_clientmove_s */ *move, int entnum, vec3_t origin, int presencetype, int onground, vec3_t velocity, vec3_t cmdmove, int cmdframes, int maxframes, float frametime, int stopevent, int stopareanum, int visualize);
-
-
-void	trap_EA_Say(int client, char *str);
-void	trap_EA_SayTeam(int client, char *str);
-void	trap_EA_Command(int client, char *command);
-
-void	trap_EA_Action(int client, int action);
-void	trap_EA_Gesture(int client);
-void	trap_EA_Talk(int client);
-void	trap_EA_Attack(int client);
-void	trap_EA_Use(int client);
-void	trap_EA_Respawn(int client);
-void	trap_EA_Crouch(int client);
-void	trap_EA_MoveUp(int client);
-void	trap_EA_MoveDown(int client);
-void	trap_EA_MoveForward(int client);
-void	trap_EA_MoveBack(int client);
-void	trap_EA_MoveLeft(int client);
-void	trap_EA_MoveRight(int client);
-void	trap_EA_SelectWeapon(int client, int weapon);
-void	trap_EA_Jump(int client);
-void	trap_EA_DelayedJump(int client);
-void	trap_EA_Move(int client, vec3_t dir, float speed);
-void	trap_EA_View(int client, vec3_t viewangles);
-
-void	trap_EA_EndRegular(int client, float thinktime);
-void	trap_EA_GetInput(int client, float thinktime, void /* struct bot_input_s */ *input);
-void	trap_EA_ResetInput(int client);
-
-float	trap_Characteristic_Float(int character, int index);
-float	trap_Characteristic_BFloat(int character, int index, float min, float max);
-int		trap_Characteristic_Integer(int character, int index);
-int		trap_Characteristic_BInteger(int character, int index, int min, int max);
-void	trap_Characteristic_String(int character, int index, char *buf, int size);
-
-int		trap_GeneticParentsAndChildSelection(int numranks, float *ranks, int *parent1, int *parent2, int *child);
 
 void	trap_SnapVector( float *v );
 
