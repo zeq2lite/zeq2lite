@@ -764,6 +764,8 @@ extern	vmCvar_t	g_running;
 extern	vmCvar_t	g_pointGravity;
 extern	vmCvar_t	g_quickTransformCost;
 extern	vmCvar_t	g_quickTransformCostPerTier ;
+extern	vmCvar_t	g_quickZanzokenCost ;
+extern	vmCvar_t	g_quickZanzokenDistance ;
 // END ADDING
 #if MAPLENSFLARES	// JUHOX: cvars for map lens flares
 extern	vmCvar_t	g_editmode;

@@ -17,10 +17,10 @@ void syncTier(gclient_t *client){
 	ps->stats[stTransformEffectMaximum] = tier->transformEffectMaximum;
 	ps->baseStats[stSpeed] = tier->speed;
 	ps->baseStats[stZanzokenDistance] = tier->zanzokenDistance;
-	ps->baseStats[stZanzokenQuickDistance] = tier->zanzokenQuickDistance;
+	ps->baseStats[stZanzokenQuickDistance] = g_quickZanzokenDistance.value != -1.0 ? g_quickZanzokenDistance.value : tier->zanzokenQuickDistance;
 	ps->baseStats[stZanzokenSpeed] = tier->zanzokenSpeed;
 	ps->baseStats[stZanzokenCost] = tier->zanzokenCost;
-	ps->baseStats[stZanzokenQuickCost] = tier->zanzokenQuickCost;
+	ps->baseStats[stZanzokenQuickCost] = g_quickZanzokenCost.value != -1.0 ? g_quickZanzokenCost.value : tier->zanzokenQuickCost;
 	ps->baseStats[stBoostCost] = tier->boostCost;
 	ps->baseStats[stFatigueRecovery] = tier->fatigueRecovery;
 	ps->baseStats[stTransformSubsequentDuration] = tier->transformSubsequentDuration;

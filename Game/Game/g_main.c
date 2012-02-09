@@ -106,6 +106,8 @@ vmCvar_t	g_running;
 vmCvar_t	g_pointGravity;
 vmCvar_t	g_quickTransformCost;
 vmCvar_t	g_quickTransformCostPerTier ;
+vmCvar_t	g_quickZanzokenCost;
+vmCvar_t	g_quickZanzokenDistance;
 
 static cvarTable_t		gameCvarTable[] = {
 	// don't override the cheat state set by the system
@@ -191,6 +193,8 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_breakLimitRate, "g_breakLimitRate", "1.0", CVAR_ARCHIVE | CVAR_SERVERINFO, 0, qtrue  },
 	{ &g_quickTransformCost, "g_quickTransformCost", "0.32", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
 	{ &g_quickTransformCostPerTier , "g_quickTransformCostPerTier", "0.08", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_quickZanzokenCost , "g_quickZanzokenCost", "-1.0", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
+	{ &g_quickZanzokenDistance , "g_quickZanzokenDistance", "-1.0", CVAR_ARCHIVE | CVAR_SERVERINFO,0,qtrue },
 	// END ADDING
 
 };
