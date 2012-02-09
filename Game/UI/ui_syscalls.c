@@ -313,15 +313,7 @@ int trap_LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int s
 int trap_MemoryRemaining( void ) {
 	return syscall( UI_MEMORY_REMAINING );
 }
-/*
-void trap_GetCDKey( char *buf, int buflen ) {
-	syscall( UI_GET_CDKEY, buf, buflen );
-}
 
-void trap_SetCDKey( char *buf ) {
-	syscall( UI_SET_CDKEY, buf );
-}
-*/
 int trap_PC_AddGlobalDefine( char *define ) {
 	return syscall( UI_PC_ADD_GLOBAL_DEFINE, define );
 }
@@ -382,10 +374,3 @@ void trap_CIN_DrawCinematic (int handle) {
 void trap_CIN_SetExtents (int handle, int x, int y, int w, int h) {
   syscall(UI_CIN_SETEXTENTS, handle, x, y, w, h);
 }
-
-/*
-qboolean trap_VerifyCDKey( const char *key, const char *chksum) {
-	return syscall( UI_VERIFY_CDKEY, key, chksum);
-}
-*/
-

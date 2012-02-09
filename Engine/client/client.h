@@ -307,14 +307,11 @@ typedef struct {
 	int			maxPing;
 	int			ping;
 	qboolean	visible;
-	int			punkbuster;
 	int			g_humanplayers;
 	int			g_needpass;
 } serverInfo_t;
 
 typedef struct {
-	qboolean	cddialog;			// bring up the cd needed dialog next frame
-
 	// when the server clears the hunk, all of these must be restarted
 	qboolean	rendererStarted;
 	qboolean	soundStarted;
@@ -349,8 +346,6 @@ typedef struct {
 	netadr_t	updateServer;
 	char		updateChallenge[MAX_TOKEN_CHARS];
 	char		updateInfoString[MAX_INFO_STRING];
-
-	netadr_t	authorizeServer;
 
 	// rendering info
 	glconfig_t	glconfig;
@@ -477,7 +472,6 @@ int CL_GetPingQueueCount( void );
 
 void CL_ShutdownRef( void );
 void CL_InitRef( void );
-qboolean CL_CDKeyValidate( const char *key, const char *checksum );
 int CL_ServerStatus( char *serverAddress, char *serverStatusString, int maxLen );
 
 qboolean CL_CheckPaused(void);

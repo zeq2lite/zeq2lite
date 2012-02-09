@@ -188,7 +188,7 @@ void		NET_LeaveMulticast6(void);
 void		NET_Sleep(int msec);
 
 
-#define	MAX_MSGLEN				16384		// max length of a message, which may
+#define	MAX_MSGLEN				32768		// max length of a message, which may
 											// be fragmented into multiple packets
 
 #define MAX_DOWNLOAD_WINDOW		48	// ACK window of 48 download chunks. Cannot set this higher, or clients
@@ -259,21 +259,10 @@ PROTOCOL
 // NOTE: that stuff only works with two digits protocols
 extern int demo_protocols[];
 
-#if !defined UPDATE_SERVER_NAME && !defined STANDALONE
-#define	UPDATE_SERVER_NAME	"update.quake3arena.com"
-#endif
+//#define	UPDATE_SERVER_NAME	"update.quake3arena.com"
 // override on command line, config files etc.
 #ifndef MASTER_SERVER_NAME
 #define MASTER_SERVER_NAME	"master.ioquake3.org"
-#endif
-
-#ifndef STANDALONE
-  #ifndef AUTHORIZE_SERVER_NAME
-    #define	AUTHORIZE_SERVER_NAME	"authorize.quake3arena.com"
-  #endif
-  #ifndef PORT_AUTHORIZE
-  #define	PORT_AUTHORIZE		27952
-  #endif
 #endif
 
 #define	PORT_MASTER			27950
@@ -590,7 +579,7 @@ issues.
 #define FS_GENERAL_REF	0x01
 #define FS_UI_REF		0x02
 #define FS_CGAME_REF	0x04
-#define FS_QAGAME_REF	0x08
+#define FS_GAME_REF	0x08
 // number of id paks that will never be autodownloaded from baseq3/missionpack
 #define NUM_ID_PAKS		9
 #define NUM_TA_PAKS		4
@@ -772,10 +761,6 @@ MISC
 ==============================================================
 */
 
-// centralizing the declarations for cl_cdkey
-// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=470
-extern char cl_cdkey[34];
-
 // returned by Sys_GetProcessorFeatures
 typedef enum
 {
@@ -861,7 +846,6 @@ extern	cvar_t	*com_maxfpsUnfocused;
 extern	cvar_t	*com_minimized;
 extern	cvar_t	*com_maxfpsMinimized;
 extern	cvar_t	*com_altivec;
-extern	cvar_t	*com_standalone;
 extern	cvar_t	*com_basegame;
 extern	cvar_t	*com_homepath;
 
@@ -1001,9 +985,6 @@ void	CL_ForwardCommandToServer( const char *string );
 // things like godmode, noclip, etc, are commands directed to the server,
 // so when they are typed in at the console, they will need to be forwarded.
 
-void CL_CDDialog( void );
-// bring up the "need a cd to play" dialog
-
 void CL_FlushMemory( void );
 // dump all memory on an error
 
@@ -1048,7 +1029,6 @@ int SV_SendQueuedPackets(void);
 // UI interface
 //
 qboolean UI_GameCommand( void );
-qboolean UI_usesUniqueCDKey(void);
 
 /*
 ==============================================================

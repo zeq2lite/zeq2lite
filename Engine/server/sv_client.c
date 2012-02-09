@@ -36,18 +36,9 @@ We do this to prevent denial of service attacks that
 flood the server with invalid connection IPs.  With a
 challenge, they must give a valid IP address.
 
-If we are authorizing, a challenge request will cause a packet
-to be sent to the authorize server.
-
-When an authorizeip is returned, a challenge response will be
-sent to that ip.
-
 ioquake3: we added a possibility for clients to add a challenge
 to their packets, to make it more difficult for malicious servers
 to hi-jack client connections.
-Also, the auth stuff is completely disabled for com_standalone games
-as well as IPv6 connections, since there is no way to use the
-v4-only auth server for these new types of connections.
 =================
 */
 void SV_GetChallenge(netadr_t from)
@@ -121,7 +112,6 @@ void SV_GetChallenge(netadr_t from)
 		challenge = &svs.challenges[oldest];
 		challenge->clientChallenge = clientChallenge;
 		challenge->adr = from;
-		challenge->firstTime = svs.time;
 		challenge->connected = qfalse;
 	}
 
@@ -1232,13 +1222,6 @@ void SV_UserinfoChanged( client_t *cl ) {
 			}
 		} else {
 			cl->rate = 3000;
-		}
-	}
-	val = Info_ValueForKey (cl->userinfo, "handicap");
-	if (strlen(val)) {
-		i = atoi(val);
-		if (i<=0 || i>100 || strlen(val) > 4) {
-			Info_SetValueForKey( cl->userinfo, "handicap", "100" );
 		}
 	}
 

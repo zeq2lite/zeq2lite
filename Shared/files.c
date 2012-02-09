@@ -174,26 +174,6 @@ or configs will never get loaded from disk!
 
 // every time a new demo pk3 file is built, this checksum must be updated.
 // the easiest way to get it is to just run the game and see what it spits out
-#define	DEMO_PAK0_CHECKSUM	2985612116u
-static const unsigned int pak_checksums[] = {
-	1566731103u,
-	298122907u,
-	412165236u,
-	2991495316u,
-	1197932710u,
-	4087071573u,
-	3709064859u,
-	908855077u,
-	977125798u
-};
-
-static const unsigned int missionpak_checksums[] =
-{
-	2430342401u,
-	511014160u,
-	2662638993u,
-	1438664554u
-};
 
 // if this is defined, the executable positively won't work with any paks other
 // than the demo pak, even if productid is present.  This is only used for our
@@ -1227,8 +1207,8 @@ long FS_FOpenFileReadDir(const char *filename, searchpath_t *search, fileHandle_
 						}
 					}
 
-					if(strstr(filename, "qagame.qvm"))
-						pak->referenced |= FS_QAGAME_REF;
+					if(strstr(filename, "game.qvm"))
+						pak->referenced |= FS_GAME_REF;
 					if(strstr(filename, "cgame.qvm"))
 						pak->referenced |= FS_CGAME_REF;
 					if(strstr(filename, "ui.qvm"))
@@ -3131,11 +3111,13 @@ static void FS_ReorderPurePaks( void )
 FS_Startup
 ================
 */
-static void FS_Startup( const char *gameName )
+static void FS_Startup( const char *gameName, qboolean quiet )
 {
 	const char *homePath;
 
-	Com_Printf( "----- FS_Startup -----\n" );
+	if (!quiet) {
+		Com_Printf( "----- FS_Startup -----\n" );
+	}
 
 	fs_packFiles = 0;
 
@@ -3199,19 +3181,21 @@ static void FS_Startup( const char *gameName )
 	// reorder the pure pk3 files according to server order
 	FS_ReorderPurePaks();
 
-	// print the current search paths
-	FS_Path_f();
-
 	fs_gamedirvar->modified = qfalse; // We just loaded, it's not modified
-
-	Com_Printf( "----------------------\n" );
 
 #ifdef FS_MISSING
 	if (missingFiles == NULL) {
 		missingFiles = fopen( "\\missing.txt", "ab" );
 	}
 #endif
-	Com_Printf( "%d files in pk3 files\n", fs_packFiles );
+
+	if (!quiet) {
+		// print the current search paths
+		FS_Path_f();
+
+		Com_Printf( "----------------------\n" );
+		Com_Printf( "%d files in pk3 files\n", fs_packFiles );
+	}
 }
 
 
@@ -3219,7 +3203,7 @@ static void FS_Startup( const char *gameName )
 =====================
 FS_GamePureChecksum
 
-Returns the checksum of the pk3 from which the server loaded the qagame.qvm
+Returns the checksum of the pk3 from which the server loaded the game.qvm
 =====================
 */
 const char *FS_GamePureChecksum( void ) {
@@ -3231,7 +3215,7 @@ const char *FS_GamePureChecksum( void ) {
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
 		// is the element a pak file?
 		if ( search->pack ) {
-			if (search->pack->referenced & FS_QAGAME_REF) {
+			if (search->pack->referenced & FS_GAME_REF) {
 				Com_sprintf(info, sizeof(info), "%d", search->pack->checksum);
 			}
 		}
@@ -3582,7 +3566,8 @@ void FS_InitFilesystem( void ) {
 		Cvar_Set("fs_game", "");
 
 	// try to start up normally
-	FS_Startup(com_basegame->string);
+	FS_Startup(com_basegame->string, qfalse);
+
 
 	// if we can't find default.cfg, assume that the paths are
 	// busted and error out now, rather than getting an unreadable
@@ -3613,7 +3598,8 @@ void FS_Restart( int checksumFeed ) {
 	FS_ClearPakReferences(0);
 
 	// try to start up normally
-	FS_Startup(com_basegame->string);
+	FS_Startup(com_basegame->string, qtrue);
+
 
 	// if we can't find default.cfg, assume that the paths are
 	// busted and error out now, rather than getting an unreadable

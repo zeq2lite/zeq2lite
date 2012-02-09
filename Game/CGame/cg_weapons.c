@@ -229,40 +229,6 @@ static void CG_SpawnRailTrail( centity_t *cent, vec3_t origin ) {return;}
 
 
 /*
-======================
-CG_MachinegunSpinAngle
-======================
-*/
-#define		SPIN_SPEED	0.9
-#define		COAST_TIME	1000
-static float	CG_MachinegunSpinAngle( centity_t *cent ) {
-	int		delta;
-	float	angle;
-	float	speed;
-
-	delta = cg.time - cent->pe.barrelTime;
-	if ( cent->pe.barrelSpinning ) {
-		angle = cent->pe.barrelAngle + delta * SPIN_SPEED;
-	} else {
-		if ( delta > COAST_TIME ) {
-			delta = COAST_TIME;
-		}
-
-		speed = 0.5 * ( SPIN_SPEED + (float)( COAST_TIME - delta ) / COAST_TIME );
-		angle = cent->pe.barrelAngle + delta * speed;
-	}
-
-	if ( cent->pe.barrelSpinning == !(cent->currentState.eFlags & EF_FIRING) ) {
-		cent->pe.barrelTime = cg.time;
-		cent->pe.barrelAngle = AngleMod( angle );
-		cent->pe.barrelSpinning = !!(cent->currentState.eFlags & EF_FIRING);
-	}
-
-	return angle;
-}
-
-
-/*
 ========================
 CG_AddWeaponWithPowerups
 ========================
@@ -939,29 +905,7 @@ void CG_Weapon_f( void ) {
 	cg.weaponSelectionMode = 3;
 }
 
-/*
-===================
-CG_OutOfAmmoChange
-
-The current weapon has just run out of ammo
-===================
-*/
-void CG_OutOfAmmoChange( void ) {
-	int		i;
-
-	cg.weaponSelectTime = cg.time;
-
-	for ( i = 15 ; i > 0 ; i-- ) {
-		if ( CG_WeaponSelectable( i ) ) {
-			cg.weaponSelect = i;
-			break;
-		}
-	}
-}
-
-
-
-/*
+	/*
 ===================================================================================================
 
 WEAPON EVENTS

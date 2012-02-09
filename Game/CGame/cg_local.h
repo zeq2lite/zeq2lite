@@ -155,10 +155,6 @@ typedef struct {
 
 	int				railFireTime;
 
-	// machinegun spinning
-	float			barrelAngle;
-	int				barrelTime;
-	qboolean		barrelSpinning;
 
 	// needed to obtain tag positions after player entity has been processed.
 	// For linking beam attacks, particle systems, etc.
@@ -341,7 +337,6 @@ typedef struct {
 	int				powerLevel;			// you only get this info about your teammates
 	int				armor;
 	int				curWeapon;
-	int				handicap;
 	int				wins, losses;	// in tourney mode
 	int				teamTask;		// task in teamplay (offence/defence)
 	qboolean		teamLeader;		// true when this is a team leader
@@ -369,7 +364,6 @@ typedef struct {
 	vec3_t			headOffset;		// move head in icon views
 	qboolean		overrideHead;
 	footstep_t		footsteps;
-	gender_t		gender;			// from model
 	qhandle_t		legsModel[8];
 	qhandle_t		legsSkin[8];
 	qhandle_t		torsoModel[8];
@@ -411,11 +405,6 @@ typedef struct weaponInfo_s {
 	vec3_t			flashDlightColor;
 	sfxHandle_t		flashSound[4];		// fast firing weapons randomly choose
 	sfxHandle_t		voiceSound[4];
-
-	qhandle_t		weaponIcon;
-	qhandle_t		ammoIcon;
-
-	qhandle_t		ammoModel;
 
 	qhandle_t		missileModel;
 	sfxHandle_t		missileSound;
@@ -720,9 +709,6 @@ typedef struct {
 	char		centerPrint[1024];
 	int			centerPrintLines;
 
-	// low ammo warning state
-	int			lowAmmoWarning;		// 1 = low, 2 = empty
-
 	// Dynamic 2D effects
 	overlay2D	scripted2D[16];
 
@@ -743,13 +729,6 @@ typedef struct {
 	// attacking player
 	int			attackerTime;
 	int			voiceTime;
-
-	// reward medals
-	int			rewardStack;
-	int			rewardTime;
-	int			rewardCount[MAX_REWARDSTACK];
-	qhandle_t	rewardShader[MAX_REWARDSTACK];
-	qhandle_t	rewardSound[MAX_REWARDSTACK];
 
 	// sound buffer mainly for announcer sounds
 	int			soundBufferIn;
@@ -805,12 +784,6 @@ typedef struct {
 	int			nextOrbitTime;
 
 	//qboolean cameraMode;		// if rendering from a loaded camera
-
-	// development tool
-	refEntity_t	testModelEntity;
-	char		testModelName[MAX_QPATH];
-	qboolean	testGun;
-
 
 	qboolean	guide_view;
 	vec3_t		guide_target;	// where to look for guided missiles
@@ -1094,10 +1067,8 @@ extern	vmCvar_t		cg_drawFPS;
 extern	vmCvar_t		cg_drawSnapshot;
 extern	vmCvar_t		cg_draw3dIcons;
 extern	vmCvar_t		cg_drawIcons;
-extern	vmCvar_t		cg_drawAmmoWarning;
 extern	vmCvar_t		cg_drawCrosshair;
 extern	vmCvar_t		cg_drawCrosshairNames;
-extern	vmCvar_t		cg_drawRewards;
 extern	vmCvar_t		cg_drawTeamOverlay;
 extern	vmCvar_t		cg_teamOverlayUserinfo;
 extern	vmCvar_t		cg_crosshairX;
@@ -1123,19 +1094,12 @@ extern	vmCvar_t		cg_footsteps;
 extern	vmCvar_t		cg_addMarks;
 extern	vmCvar_t		cg_brassTime;
 extern	vmCvar_t		cg_chatTime;
-extern	vmCvar_t		cg_gun_frame;
-extern	vmCvar_t		cg_gun_x;
-extern	vmCvar_t		cg_gun_y;
-extern	vmCvar_t		cg_gun_z;
-extern	vmCvar_t		cg_drawGun;
 extern	vmCvar_t		cg_viewsize;
 extern	vmCvar_t		cg_tracerChance;
 extern	vmCvar_t		cg_tracerWidth;
 extern	vmCvar_t		cg_tracerLength;
-extern	vmCvar_t		cg_autoswitch;
 extern	vmCvar_t		cg_displayObituary;
 extern	vmCvar_t		cg_ignore;
-extern	vmCvar_t		cg_simpleItems;
 extern	vmCvar_t		cg_fov;
 extern	vmCvar_t		cg_zoomFov;
 extern	vmCvar_t		cg_advancedFlight;
@@ -1179,23 +1143,9 @@ extern	vmCvar_t		cg_timescale;
 extern	vmCvar_t		cg_cameraMode;
 extern  vmCvar_t		cg_smallFont;
 extern  vmCvar_t		cg_bigFont;
-extern	vmCvar_t		cg_noTaunt;
-extern	vmCvar_t		cg_noProjectileTrail;
-extern	vmCvar_t		cg_oldRail;
-extern	vmCvar_t		cg_oldRocket;
-extern	vmCvar_t		cg_oldPlasma;
 extern	vmCvar_t		cg_trueLightning;
-#ifdef MISSIONPACK
 extern	vmCvar_t		cg_redTeamName;
 extern	vmCvar_t		cg_blueTeamName;
-extern	vmCvar_t		cg_currentSelectedPlayer;
-extern	vmCvar_t		cg_currentSelectedPlayerName;
-extern	vmCvar_t		cg_singlePlayer;
-extern	vmCvar_t		cg_singlePlayerActive;
-extern  vmCvar_t		cg_recordSPDemo;
-extern  vmCvar_t		cg_recordSPDemoName;
-extern	vmCvar_t		cg_obeliskRespawnDelay;
-#endif
 extern	vmCvar_t		cg_enableDust;
 extern	vmCvar_t		cg_enableBreath;
 //ADDING FOR ZEQ2
@@ -1257,12 +1207,6 @@ void CG_LoadLensFlareEntities(void);
 //
 // cg_view.c
 //
-void CG_TestModel_f (void);
-void CG_TestGun_f (void);
-void CG_TestModelNextFrame_f (void);
-void CG_TestModelPrevFrame_f (void);
-void CG_TestModelNextSkin_f (void);
-void CG_TestModelPrevSkin_f (void);
 void CG_ZoomDown_f( void );
 void CG_ZoomUp_f( void );
 void CG_AddBufferedSound( sfxHandle_t sfx);
@@ -1443,7 +1387,6 @@ void CG_RegisterItemVisuals( int itemNum );
 void CG_FireWeapon( centity_t *cent, qboolean altFire );
 void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, impactSound_t soundType );
 void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum );
-void CG_ShotgunFire( entityState_t *es );
 void CG_Bullet( vec3_t origin, int sourceEntityNum, vec3_t normal, qboolean flesh, int fleshEntityNum );
 void CG_Draw3DLine(const vec3_t start, const vec3_t end, qhandle_t shader);	// JUHOX
 
@@ -1453,7 +1396,6 @@ void CG_AddViewWeapon (playerState_t *ps);
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team );
 void CG_DrawWeaponSelect( void );
 
-void CG_OutOfAmmoChange( void );	// should this be in pmove?
 
 // FIXME: Should these be in drawtools instead?
 //        Should these be generalized for use in all manual poly drawing functions? (probably, yes...)

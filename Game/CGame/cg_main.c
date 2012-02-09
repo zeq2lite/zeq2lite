@@ -91,10 +91,8 @@ vmCvar_t	cg_drawFPS;
 vmCvar_t	cg_drawSnapshot;
 vmCvar_t	cg_draw3dIcons;
 vmCvar_t	cg_drawIcons;
-vmCvar_t	cg_drawAmmoWarning;
 vmCvar_t	cg_drawCrosshair;
 vmCvar_t	cg_drawCrosshairNames;
-vmCvar_t	cg_drawRewards;
 vmCvar_t	cg_crosshairSize;
 vmCvar_t	cg_crosshairMargin;
 vmCvar_t	cg_crosshairBars;
@@ -118,15 +116,9 @@ vmCvar_t	cg_addMarks;
 vmCvar_t	cg_brassTime;
 vmCvar_t	cg_chatTime;
 vmCvar_t	cg_viewsize;
-vmCvar_t	cg_drawGun;
-vmCvar_t	cg_gun_frame;
-vmCvar_t	cg_gun_x;
-vmCvar_t	cg_gun_y;
-vmCvar_t	cg_gun_z;
 vmCvar_t	cg_tracerChance;
 vmCvar_t	cg_tracerWidth;
 vmCvar_t	cg_tracerLength;
-vmCvar_t	cg_autoswitch;
 vmCvar_t	cg_displayObituary;
 vmCvar_t	cg_ignore;
 vmCvar_t	cg_fov;
@@ -175,11 +167,6 @@ vmCvar_t	cg_timescaleFadeSpeed;
 vmCvar_t	cg_timescale;
 vmCvar_t	cg_smallFont;
 vmCvar_t	cg_bigFont;
-vmCvar_t	cg_noTaunt;
-vmCvar_t	cg_noProjectileTrail;
-vmCvar_t	cg_oldRail;
-vmCvar_t	cg_oldRocket;
-vmCvar_t	cg_oldPlasma;
 vmCvar_t	cg_trueLightning;
 vmCvar_t	cg_enableDust;
 vmCvar_t	cg_enableBreath;
@@ -215,9 +202,7 @@ typedef struct {
 
 static cvarTable_t cvarTable[] = {
 	{ &cg_ignore, "cg_ignore", "0", 0 },	// used for debugging
-	{ &cg_autoswitch, "cg_autoswitch", "1", CVAR_ARCHIVE },
 	{ &cg_displayObituary, "cg_displayObituary", "0", CVAR_ARCHIVE },
-	{ &cg_drawGun, "cg_drawGun", "1", CVAR_ARCHIVE },
 	{ &cg_zoomFov, "cg_zoomfov", "22.5", CVAR_ARCHIVE },
 	{ &cg_fov, "cg_fov", "90", CVAR_ARCHIVE },
 	{ &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
@@ -233,10 +218,8 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_draw3dIcons, "cg_draw3dIcons", "1", CVAR_ARCHIVE  },
 	{ &cg_advancedFlight, "cg_advancedFlight", "0", CVAR_USERINFO |CVAR_ARCHIVE  },
 	{ &cg_drawIcons, "cg_drawIcons", "1", CVAR_ARCHIVE  },
-	{ &cg_drawAmmoWarning, "cg_drawAmmoWarning", "1", CVAR_ARCHIVE  },
 	{ &cg_drawCrosshair, "cg_drawCrosshair", "4", CVAR_ARCHIVE },
 	{ &cg_drawCrosshairNames, "cg_drawCrosshairNames", "1", CVAR_ARCHIVE },
-	{ &cg_drawRewards, "cg_drawRewards", "1", CVAR_ARCHIVE },
 	{ &cg_crosshairSize, "cg_crosshairSize", "3", CVAR_ARCHIVE },
 	{ &cg_crosshairMargin, "cg_crosshairMargin", "4", CVAR_ARCHIVE },
 	{ &cg_crosshairBars, "cg_crosshairBars", "0", CVAR_ARCHIVE },
@@ -247,9 +230,6 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_chatTime, "cg_chatTime", "3500", CVAR_ARCHIVE },
 	{ &cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE },
 	{ &cg_railTrailTime, "cg_railTrailTime", "400", CVAR_ARCHIVE  },
-	{ &cg_gun_x, "cg_gunX", "0", CVAR_CHEAT },
-	{ &cg_gun_y, "cg_gunY", "0", CVAR_CHEAT },
-	{ &cg_gun_z, "cg_gunZ", "0", CVAR_CHEAT },
 	{ &cg_centertime, "cg_centertime", "3", CVAR_CHEAT },
 	{ &cg_runpitch, "cg_runpitch", "0.002", CVAR_ARCHIVE},
 	{ &cg_runroll, "cg_runroll", "0.005", CVAR_ARCHIVE },
@@ -316,13 +296,8 @@ static cvarTable_t cvarTable[] = {
 
 	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO},
 	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO},
-	{ &cg_noTaunt, "cg_noTaunt", "0", CVAR_ARCHIVE},
-	{ &cg_noProjectileTrail, "cg_noProjectileTrail", "0", CVAR_ARCHIVE},
 	{ &cg_smallFont, "ui_smallFont", "0.25", CVAR_ARCHIVE},
 	{ &cg_bigFont, "ui_bigFont", "0.4", CVAR_ARCHIVE},
-	{ &cg_oldRail, "cg_oldRail", "1", CVAR_ARCHIVE},
-	{ &cg_oldRocket, "cg_oldRocket", "1", CVAR_ARCHIVE},
-	{ &cg_oldPlasma, "cg_oldPlasma", "1", CVAR_ARCHIVE},
 	{ &cg_trueLightning, "cg_trueLightning", "0.0", CVAR_ARCHIVE},
 	// ADDING FOR ZEQ2
 	{ &cg_lockonDistance, "cg_lockonDistance", "150", CVAR_CHEAT },

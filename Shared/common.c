@@ -290,7 +290,7 @@ void QDECL Com_Error( int code, const char *fmt, ... ) {
 	Q_vsnprintf (com_errorMessage, sizeof(com_errorMessage),fmt,argptr);
 	va_end (argptr);
 
-	if (code != ERR_DISCONNECT && code != ERR_NEED_CD)
+	if (code != ERR_DISCONNECT)
 		Cvar_Set("com_errorMessage", com_errorMessage);
 
 	if (code == ERR_DISCONNECT || code == ERR_SERVERDISCONNECT) {
@@ -311,23 +311,6 @@ void QDECL Com_Error( int code, const char *fmt, ... ) {
 		CL_FlushMemory( );
 		VM_Forced_Unload_Done();
 		FS_PureServerSetLoadedPaks("", "");
-		com_errorEntered = qfalse;
-		longjmp (abortframe, -1);
-	} else if ( code == ERR_NEED_CD ) {
-		VM_Forced_Unload_Start();
-		SV_Shutdown( "Server didn't have CD" );
-		if ( com_cl_running && com_cl_running->integer ) {
-			CL_Disconnect( qtrue );
-			CL_FlushMemory( );
-			VM_Forced_Unload_Done();
-			CL_CDDialog();
-		} else {
-			Com_Printf("Server didn't have CD\n" );
-			VM_Forced_Unload_Done();
-		}
-
-		FS_PureServerSetLoadedPaks("", "");
-
 		com_errorEntered = qfalse;
 		longjmp (abortframe, -1);
 	} else {
@@ -2694,10 +2677,10 @@ void Com_Init( char *commandLine ) {
 	if ( !Com_AddStartupCommands() ) {
 		// if the user didn't give any commands, run default action
 		if ( !com_dedicated->integer ) {
-			Cbuf_AddText ("cinematic idlogo.RoQ\n");
+			Cbuf_AddText ("cinematic zeq2logo.roq\n");
 			if( !com_introPlayed->integer ) {
 				Cvar_Set( com_introPlayed->name, "1" );
-				Cvar_Set( "nextmap", "cinematic intro.RoQ" );
+				Cvar_Set( "nextmap", "cinematic zeq2logo.roq" );
 			}
 		}
 	}
@@ -2803,9 +2786,6 @@ Writes key bindings and archived cvars to config file if modified
 ===============
 */
 void Com_WriteConfiguration( void ) {
-#ifndef DEDICATED
-	cvar_t	*fs;
-#endif
 	// if we are quiting without fully initializing, make sure
 	// we don't write out anything
 	if ( !com_fullyInitialized ) {
@@ -2818,11 +2798,6 @@ void Com_WriteConfiguration( void ) {
 	cvar_modifiedFlags &= ~CVAR_ARCHIVE;
 
 	Com_WriteConfigToFile( Q3CONFIG_CFG );
-
-	// not needed for dedicated
-#ifndef DEDICATED
-	fs = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
-#endif
 }
 
 

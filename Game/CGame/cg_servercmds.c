@@ -488,7 +488,6 @@ typedef struct voiceChat_s
 typedef struct voiceChatList_s
 {
 	char name[64];
-	int gender;
 	int numVoiceChats;
 	voiceChat_t voiceChats[MAX_VOICECHATS];
 } voiceChatList_t;
@@ -548,19 +547,6 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 	token = COM_ParseExt(p, qtrue);
 	if (!token || token[0] == 0) {
 		return qtrue;
-	}
-	if (!Q_stricmp(token, "female")) {
-		voiceChatList->gender = GENDER_FEMALE;
-	}
-	else if (!Q_stricmp(token, "male")) {
-		voiceChatList->gender = GENDER_MALE;
-	}
-	else if (!Q_stricmp(token, "neuter")) {
-		voiceChatList->gender = GENDER_NEUTER;
-	}
-	else {
-		trap_Print( va( S_COLOR_RED "expected gender not found in voice chat file: %s\n", filename ) );
-		return qfalse;
 	}
 
 	voiceChatList->numVoiceChats = 0;
@@ -696,7 +682,7 @@ CG_VoiceChatListForClient
 */
 voiceChatList_t *CG_VoiceChatListForClient( int clientNum ) {
 	clientInfo_t *ci;
-	int voiceChatNum, i, j, k, gender;
+	int voiceChatNum, i, j, k;
 	char filename[MAX_QPATH], headModelName[MAX_QPATH];
 
 	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
@@ -743,30 +729,6 @@ voiceChatList_t *CG_VoiceChatListForClient( int clientNum ) {
 				return &voiceChatLists[headModelVoiceChat[i].voiceChatNum];
 			}
 		}
-	}
-	gender = ci->gender;
-	for (k = 0; k < 2; k++) {
-		// just pick the first with the right gender
-		for ( i = 0; i < MAX_VOICEFILES; i++ ) {
-			if (strlen(voiceChatLists[i].name)) {
-				if (voiceChatLists[i].gender == gender) {
-					// store this head model with voice chat for future reference
-					for ( j = 0; j < MAX_HEADMODELS; j++ ) {
-						if (!strlen(headModelVoiceChat[j].headmodel)) {
-							Com_sprintf(headModelVoiceChat[j].headmodel, sizeof ( headModelVoiceChat[j].headmodel ),
-									"%s", headModelName);
-							headModelVoiceChat[j].voiceChatNum = i;
-							break;
-						}
-					}
-					return &voiceChatLists[i];
-				}
-			}
-		}
-		// fall back to male gender because we don't have neuter in the mission pack
-		if (gender == GENDER_MALE)
-			break;
-		gender = GENDER_MALE;
 	}
 	// store this head model with voice chat for future reference
 	for ( j = 0; j < MAX_HEADMODELS; j++ ) {
@@ -932,14 +894,6 @@ void CG_VoiceChat( int mode ) {
 	clientNum = atoi(CG_Argv(2));
 	color = atoi(CG_Argv(3));
 	cmd = CG_Argv(4);
-
-	if (cg_noTaunt.integer != 0) {
-		if (!strcmp(cmd, VOICECHAT_KILLINSULT)  || !strcmp(cmd, VOICECHAT_TAUNT) || \
-			!strcmp(cmd, VOICECHAT_DEATHINSULT) || !strcmp(cmd, VOICECHAT_KILLGAUNTLET) || \
-			!strcmp(cmd, VOICECHAT_PRAISE)) {
-			return;
-		}
-	}
 
 	CG_VoiceChatLocal( mode, voiceOnly, clientNum, color, cmd );
 #endif

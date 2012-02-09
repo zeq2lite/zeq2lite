@@ -28,9 +28,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //=============================================================================
 
-#define	PERS_SCORE				0		// !!! MUST NOT CHANGE, SERVER AND
-										// GAME BOTH REFERENCE !!!
-
 #define	MAX_ENT_CLUSTERS	16
 
 #ifdef USE_VOIP
@@ -214,15 +211,12 @@ typedef struct client_s {
 // while not allowing a single ip to grab all challenge resources
 #define MAX_CHALLENGES_MULTI (MAX_CHALLENGES / 2)
 
-#define	AUTHORIZE_TIMEOUT	5000
-
 typedef struct {
 	netadr_t	adr;
 	int			challenge;
 	int			clientChallenge;		// challenge number coming from the client
 	int			time;				// time the last packet was sent to the autherize server
 	int			pingTime;			// time the challenge response was sent to client
-	int			firstTime;			// time the adr was first used, for authorize timeout checks
 	qboolean	wasrefused;
 	qboolean	connected;
 } challenge_t;
@@ -242,8 +236,6 @@ typedef struct {
 	int			nextHeartbeatTime;
 	challenge_t	challenges[MAX_CHALLENGES];	// to prevent invalid IPs from connecting
 	netadr_t	redirectAddress;			// for rcon return messages
-
-	netadr_t	authorizeAddress;			// for rcon return messages
 } serverStatic_t;
 
 #define SERVER_MAXBANS	1024
@@ -290,9 +282,6 @@ extern	cvar_t	*sv_gametype;
 extern	cvar_t	*sv_pure;
 extern	cvar_t	*sv_floodProtect;
 extern	cvar_t	*sv_lanForceRate;
-#ifndef STANDALONE
-extern	cvar_t	*sv_strictAuth;
-#endif
 extern	cvar_t	*sv_banFile;
 
 extern	serverBan_t serverBans[SERVER_MAXBANS];

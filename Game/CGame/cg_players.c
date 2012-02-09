@@ -115,7 +115,6 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci, qboolean
 
 	ci->footsteps = FOOTSTEP_NORMAL;
 	VectorClear( ci->headOffset );
-	ci->gender = GENDER_MALE;
 	ci->fixedlegs = qfalse;
 	ci->fixedtorso = qfalse;
 	ci->overrideHead = qfalse;
@@ -152,19 +151,6 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci, qboolean
 					break;
 				}
 				ci->headOffset[i] = atof( token );
-			}
-			continue;
-		} else if ( !Q_stricmp( token, "sex" ) ) {
-			token = COM_Parse( &text_p );
-			if ( !*token ) {
-				break;
-			}
-			if ( token[0] == 'f' || token[0] == 'F' ) {
-				ci->gender = GENDER_FEMALE;
-			} else if ( token[0] == 'n' || token[0] == 'N' ) {
-				ci->gender = GENDER_NEUTER;
-			} else {
-				ci->gender = GENDER_MALE;
 			}
 			continue;
 		} else if ( !Q_stricmp( token, "fixedlegs" ) ) {
@@ -548,7 +534,6 @@ static void CG_CopyClientInfoModel( clientInfo_t *from, clientInfo_t *to ) {
 
 	VectorCopy( from->headOffset, to->headOffset );
 	to->footsteps = from->footsteps;
-	to->gender = from->gender;
 
 	for ( i = 0; i < 8; i++ ) {
 		to->legsModel[i] = from->legsModel[i];

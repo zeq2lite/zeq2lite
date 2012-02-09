@@ -87,7 +87,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	const char	*attackerInfo;
 	char		targetName[32];
 	char		attackerName[32];
-	gender_t	gender;
 	clientInfo_t	*ci;
 
 	if ( !cg_displayObituary.integer ) {
@@ -122,10 +121,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	// check for single client messages
 
 	message = NULL;
-
-	if (attacker == target) {
-		gender = ci->gender;
-	}
 
 	if (message) {
 		CG_Printf( "%s %s.\n", targetName, message);

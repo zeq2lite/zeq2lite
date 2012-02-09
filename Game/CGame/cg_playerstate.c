@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cg_local.h"
 
-void CG_CheckAmmo(void){}
 /*==============
 CG_DamageFeedback
 ==============*/
@@ -226,19 +225,6 @@ void CG_CheckChangedPredictableEvents( playerState_t *ps ) {
 	}
 }
 
-/*
-==================
-pushReward
-==================
-*/
-static void pushReward(sfxHandle_t sfx, qhandle_t shader, int rewardCount) {
-	if (cg.rewardStack < (MAX_REWARDSTACK-1)) {
-		cg.rewardStack++;
-		cg.rewardSound[cg.rewardStack] = sfx;
-		cg.rewardShader[cg.rewardStack] = shader;
-		cg.rewardCount[cg.rewardStack] = rewardCount;
-	}
-}
 
 /*
 ==================
@@ -246,7 +232,7 @@ CG_CheckLocalSounds
 ==================
 */
 void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
-	int			highScore, powerLevel, armor, reward;
+	int			highScore, powerLevel, armor;
 	sfxHandle_t sfx;
 
 	// don't play the sounds if the player just changed teams
@@ -290,7 +276,6 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 	if(cg.snap->ps.pm_type != PM_INTERMISSION && ps->persistant[PERS_TEAM] != TEAM_SPECTATOR){
 		CG_CheckLocalSounds(ps,ops);
 	}
-	CG_CheckAmmo();
 	CG_CheckPlayerstateEvents(ps,ops);
 	if(ps->viewheight != ops->viewheight){
 		cg.duckChange = ps->viewheight - ops->viewheight;

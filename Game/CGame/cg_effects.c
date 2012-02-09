@@ -39,9 +39,6 @@ void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing ) {
 	float		len;
 	int			i;
 
-	if ( cg_noProjectileTrail.integer ) {
-		return;
-	}
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);

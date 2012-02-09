@@ -144,17 +144,6 @@ void CL_ShowIP_f(void);
 void CL_ServerStatus_f(void);
 void CL_ServerStatusResponse( netadr_t from, msg_t *msg );
 
-/*
-===============
-CL_CDDialog
-
-Called by Com_Error when a cd is needed
-===============
-*/
-void CL_CDDialog( void ) {
-	cls.cddialog = qtrue;	// start it next frame
-}
-
 #ifdef USE_MUMBLE
 static
 void CL_UpdateMumble(void)
@@ -748,11 +737,6 @@ void CL_Record_f( void ) {
 		return;
 	}
 	clc.demorecording = qtrue;
-	if (Cvar_VariableValue("ui_recordSPDemo")) {
-	  clc.spDemoRecording = qtrue;
-	} else {
-	  clc.spDemoRecording = qfalse;
-	}
 
 	Q_strncpyz( clc.demoName, demoName, sizeof( clc.demoName ) );
 
@@ -2222,8 +2206,6 @@ void CL_CheckForResend( void ) {
 
 	switch ( clc.state ) {
 	case CA_CONNECTING:
-		// requesting a challenge
-
 		// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
 		// Add the gamename so the server knows we're running the correct game or can reject the client
 		// with a meaningful message
@@ -2284,7 +2266,7 @@ to the client so it doesn't have to wait for the full timeout period.
 ===================
 */
 void CL_DisconnectPacket( netadr_t from ) {
-	if ( clc.state < CA_AUTHORIZING ) {
+	if ( clc.state < CA_CONNECTING ) {
 		return;
 	}
 
@@ -2653,12 +2635,6 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		return;
 	}
 
-	// cd check
-	if ( !Q_stricmp(c, "keyAuthorize") ) {
-		// we don't use these now, so dump them on the floor
-		return;
-	}
-
 	// global MOTD from id
 	if ( !Q_stricmp(c, "motd") ) {
 		CL_MotdPacket( from );
@@ -2847,11 +2823,7 @@ void CL_Frame ( int msec ) {
 	}
 #endif
 
-	if ( cls.cddialog ) {
-		// bring up the cd error dialog if needed
-		cls.cddialog = qfalse;
-		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NEED_CD );
-	} else	if ( clc.state == CA_DISCONNECTED && !( Key_GetCatcher( ) & KEYCATCH_UI )
+	if ( clc.state == CA_DISCONNECTED && !( Key_GetCatcher( ) & KEYCATCH_UI )
 		&& !com_sv_running->integer && uivm ) {
 		// if disconnected, bring up the menu
 		S_StopAllSounds();
@@ -3361,10 +3333,6 @@ void CL_Init( void ) {
 
 	cl_serverStatusResendTime = Cvar_Get ("cl_serverStatusResendTime", "750", 0);
 
-	// init autoswitch so the ui will have it correctly even
-	// if the cgame hasn't been started
-	Cvar_Get ("cg_autoswitch", "1", CVAR_ARCHIVE);
-
 	m_pitch = Cvar_Get ("m_pitch", "0.022", CVAR_ARCHIVE);
 	m_yaw = Cvar_Get ("m_yaw", "0.022", CVAR_ARCHIVE);
 	m_forward = Cvar_Get ("m_forward", "0.25", CVAR_ARCHIVE);
@@ -3404,14 +3372,7 @@ void CL_Init( void ) {
 	Cvar_Get ("headmodel", "sarge", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("team_model", "james", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("team_headmodel", "*james", CVAR_USERINFO | CVAR_ARCHIVE );
-	Cvar_Get ("g_redTeam", "Stroggs", CVAR_SERVERINFO | CVAR_ARCHIVE);
-	Cvar_Get ("g_blueTeam", "Pagans", CVAR_SERVERINFO | CVAR_ARCHIVE);
-	Cvar_Get ("color1",  "4", CVAR_USERINFO | CVAR_ARCHIVE );
-	Cvar_Get ("color2", "5", CVAR_USERINFO | CVAR_ARCHIVE );
-	Cvar_Get ("handicap", "100", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get ("teamtask", "0", CVAR_USERINFO );
-	Cvar_Get ("sex", "male", CVAR_USERINFO | CVAR_ARCHIVE );
-	Cvar_Get ("cl_anonymous", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 
 	Cvar_Get ("password", "", CVAR_USERINFO);
 	Cvar_Get ("cg_predictItems", "1", CVAR_USERINFO | CVAR_ARCHIVE );
@@ -3577,7 +3538,6 @@ static void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
 			server->netType = atoi(Info_ValueForKey(info, "nettype"));
 			server->minPing = atoi(Info_ValueForKey(info, "minping"));
 			server->maxPing = atoi(Info_ValueForKey(info, "maxping"));
-			server->punkbuster = atoi(Info_ValueForKey(info, "punkbuster"));
 			server->g_humanplayers = atoi(Info_ValueForKey(info, "g_humanplayers"));
 			server->g_needpass = atoi(Info_ValueForKey(info, "g_needpass"));
 		}
@@ -3722,7 +3682,6 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 	cls.localServers[i].game[0] = '\0';
 	cls.localServers[i].gameType = 0;
 	cls.localServers[i].netType = from.type;
-	cls.localServers[i].punkbuster = 0;
 	cls.localServers[i].g_humanplayers = 0;
 	cls.localServers[i].g_needpass = 0;
 									 
@@ -4414,3 +4373,4 @@ CL_ShowIP_f
 void CL_ShowIP_f(void) {
 	Sys_ShowIP();
 }
+

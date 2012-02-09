@@ -133,8 +133,6 @@ typedef enum {
 } editMode_t;
 #endif
 
-typedef enum { GENDER_MALE, GENDER_FEMALE, GENDER_NEUTER } gender_t;
-
 /*
 ===================================================================================
 

@@ -585,17 +585,13 @@ if desired.
 */
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
-	int		teamTask, teamLeader, team, handicap,shouldRespawn;
+	int		teamTask, teamLeader, team, shouldRespawn;
 	char	*s;
 	char	model[MAX_QPATH];
 	char	headModel[MAX_QPATH];
 	char	legsModel[MAX_QPATH];
 	char	oldname[MAX_STRING_CHARS];
 	gclient_t	*client;
-	char	c1[MAX_INFO_STRING];
-	char	c2[MAX_INFO_STRING];
-	char	redTeam[MAX_INFO_STRING];
-	char	blueTeam[MAX_INFO_STRING];
 	char	userinfo[MAX_INFO_STRING];
 
 	shouldRespawn = 0;
@@ -644,7 +640,6 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 	Q_strncpyz(ent->modelName,model,sizeof(ent->modelName));
 	// set max powerLevel
-	handicap = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	client->playerEntity = ent;
 
 	// setup tier information
@@ -704,18 +699,11 @@ void ClientUserinfoChanged( int clientNum ) {
 	// team Leader (1 = leader, 0 is normal player)
 	teamLeader = client->sess.teamLeader;
 
-	// colors
-	strcpy(c1, Info_ValueForKey( userinfo, "color1" ));
-	strcpy(c2, Info_ValueForKey( userinfo, "color2" ));
-
-	strcpy(redTeam, Info_ValueForKey( userinfo, "g_redteam" ));
-	strcpy(blueTeam, Info_ValueForKey( userinfo, "g_blueteam" ));
-	
 	// send over a subset of the userinfo keys so other clients can
 	// print scoreboards, display models, and play custom sounds
-	s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\lmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
-		client->pers.netname, client->sess.sessionTeam, model, headModel, legsModel,redTeam, blueTeam, c1, c2, 
-		client->pers.maxHealth, client->sess.wins, client->sess.losses, teamTask, teamLeader);
+	s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\lmodel\\%s\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
+		client->pers.netname, client->sess.sessionTeam, model, headModel, legsModel, 
+		client->sess.wins, client->sess.losses, teamTask, teamLeader);
 	client->ps.powerLevel[plTierCurrent] = 0;
 	client->ps.powerLevel[plTierDesired] = 0;
 	client->ps.powerLevel[plTierChanged] = 2;
@@ -969,8 +957,7 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->airOutTime = level.time + 12000;
 
-	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
-	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
+	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );;
 	Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
 	// clear entity values
 	client->ps.eFlags = flags;

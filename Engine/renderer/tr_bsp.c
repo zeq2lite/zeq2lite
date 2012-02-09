@@ -1670,7 +1670,7 @@ void R_LoadLightGrid( lump_t *l ) {
 	numGridPoints = w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
 
 	if ( l->filelen != numGridPoints * 8 ) {
-		ri.Printf( PRINT_WARNING, "WARNING: light grid mismatch\n" );
+		//ri.Printf( PRINT_WARNING, "WARNING: light grid mismatch\n" );
 		w->lightGridData = NULL;
 		return;
 	}
