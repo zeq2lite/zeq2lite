@@ -38,7 +38,6 @@ static char *s_shaderText;
 static	shaderStage_t	stages[MAX_SHADER_STAGES];		
 static	shader_t		shader;
 static	texModInfo_t	texMods[MAX_SHADER_STAGES][TR_MAX_TEXMODS];
-static	qboolean		deferLoad;
 
 #define FILE_HASH_SIZE		1024
 static	shader_t*		hashTable[FILE_HASH_SIZE];
@@ -2025,7 +2024,7 @@ static qboolean ParseStage( shaderStage_t *stage, char **text )
 	}
 
 	// decide which agens we can skip
-	if ( stage->alphaGen == CGEN_IDENTITY ) {
+	if ( stage->alphaGen == AGEN_IDENTITY ) {
 		if ( stage->rgbGen == CGEN_IDENTITY
 			|| stage->rgbGen == CGEN_LIGHTING_DIFFUSE 
 			|| stage->rgbGen == CGEN_LIGHTING_UNIFORM 
@@ -2840,7 +2839,7 @@ static qboolean CollapseMultitexture( void ) {
 			return qfalse;
 		}
 	}
-	if ( stages[0].alphaGen == CGEN_WAVEFORM )
+	if ( stages[0].alphaGen == AGEN_WAVEFORM )
 	{
 		if ( memcmp( &stages[0].alphaWave,
 					 &stages[1].alphaWave,
@@ -4082,8 +4081,6 @@ void R_InitShaders( void ) {
 	ri.Printf( PRINT_ALL, "Initializing Shaders\n" );
 
 	Com_Memset(hashTable, 0, sizeof(hashTable));
-
-	deferLoad = qfalse;
 
 	CreateInternalShaders();
 

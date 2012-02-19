@@ -1311,7 +1311,7 @@ void RB_CalcUniformColor( unsigned char *colors )
 	trRefEntity_t	*ent;
 	vec3_t			ambientLight;
 //	vec3_t			directedLight;
-	vec3_t			uniformLight;
+	vec4_t			uniformLight;
 	int				numVertexes;
 	float			normalize;
 
@@ -1345,7 +1345,7 @@ void RB_CalcDynamicColor( unsigned char *colors )
 {
 	int				i;
 	trRefEntity_t	*ent;
-	vec3_t			dynamic;
+	vec4_t			dynamic;
 	int				numVertexes;
 	float			normalize;
 

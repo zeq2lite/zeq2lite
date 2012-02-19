@@ -3,4 +3,4 @@
 # Change it according to your real path to the Source directory
 
 cd /d/SVN/ZEQ2Lite/Source
-make install
+make BUILD_GAME_SO=0 BUILD_GAME_QVM=0 install

@@ -126,8 +126,8 @@ static int R_CullModel( trRefEntity_t *ent ) {
 	mdxFrame_t  *oldFrame, *newFrame;
 	int i;
 
-	newFrameHeader = R_GetModelByHandle( ent->e.frameModel )->model.mdx;
-	oldFrameHeader = R_GetModelByHandle( ent->e.oldframeModel )->model.mdx;
+	newFrameHeader = R_GetModelByHandle( ent->e.frameModel )->mdx;
+	oldFrameHeader = R_GetModelByHandle( ent->e.oldframeModel )->mdx;
 
 	if ( !newFrameHeader || !oldFrameHeader ) {
 		return CULL_OUT;
@@ -266,7 +266,7 @@ static int R_ComputeFogNum( trRefEntity_t *ent ) {
 		return 0;
 	}
 
-	header = R_GetModelByHandle( ent->e.frameModel )->model.mdx;
+	header = R_GetModelByHandle( ent->e.frameModel )->mdx;
 
 	// compute frame pointers
 	mdxFrame = ( mdxFrame_t * )( ( byte * ) header + header->ofsFrames +
@@ -308,7 +308,7 @@ void R_MDM_AddAnimSurfaces( trRefEntity_t *ent ) {
 	// don't add third_person objects if not in a portal
 	personalModel = ( ent->e.renderfx & RF_THIRD_PERSON ) && !tr.viewParms.isPortal;
 
-	header = tr.currentModel->model.mdm;
+	header = tr.currentModel->mdm;
 
 	//
 	// cull the entire model if merged bounding box of both frames
@@ -322,7 +322,9 @@ void R_MDM_AddAnimSurfaces( trRefEntity_t *ent ) {
 	//
 	// set up lighting now that we know we aren't culled
 	//
-	R_SetupEntityLighting( &tr.refdef, ent );
+	if ( !personalModel || r_shadows->integer > 1 ) {
+		R_SetupEntityLighting( &tr.refdef, ent );
+	}
 
 	//
 	// see if we are in a fog volume
@@ -383,7 +385,7 @@ void R_MDM_AddAnimSurfaces( trRefEntity_t *ent ) {
 
 		// don't add third_person objects if not viewing through a portal
 		if ( !personalModel ) {
-			R_AddDrawSurf( (void *)surface, shader, fogNum );
+			R_AddDrawSurf( (void *)surface, shader, fogNum, qfalse );
 		}
 
 		surface = ( mdmSurface_t * )( (byte *)surface + surface->ofsEnd );
@@ -528,7 +530,7 @@ static void InglesToAxis( int ingles[ 3 ], vec3_t axis[ 3 ] ) {
 ===============================================================================
 */
 
-__inline void Matrix4Multiply( const vec4_t a[4], const vec4_t b[4], vec4_t dst[4] ) {
+__inline void Matrix4MultiplyModel( const vec4_t a[4], const vec4_t b[4], vec4_t dst[4] ) {
 	dst[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0] + a[0][3] * b[3][0];
 	dst[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1] + a[0][3] * b[3][1];
 	dst[0][2] = a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2] + a[0][3] * b[3][2];
@@ -1136,10 +1138,10 @@ static void R_CalcBones( const refEntity_t *refent, int *boneList, int numBones 
 	int i;
 	int     *boneRefs;
 	float torsoWeight;
-	mdxHeader_t *mdxFrameHeader = R_GetModelByHandle( refent->frameModel )->model.mdx;
-	mdxHeader_t *mdxOldFrameHeader = R_GetModelByHandle( refent->oldframeModel )->model.mdx;
-	mdxHeader_t *mdxTorsoFrameHeader = R_GetModelByHandle( refent->torsoFrameModel )->model.mdx;
-	mdxHeader_t *mdxOldTorsoFrameHeader = R_GetModelByHandle( refent->oldTorsoFrameModel )->model.mdx;
+	mdxHeader_t *mdxFrameHeader = R_GetModelByHandle( refent->frameModel )->mdx;
+	mdxHeader_t *mdxOldFrameHeader = R_GetModelByHandle( refent->oldframeModel )->mdx;
+	mdxHeader_t *mdxTorsoFrameHeader = R_GetModelByHandle( refent->torsoFrameModel )->mdx;
+	mdxHeader_t *mdxOldTorsoFrameHeader = R_GetModelByHandle( refent->oldTorsoFrameModel )->mdx;
 
 	if ( !mdxFrameHeader || !mdxOldFrameHeader || !mdxTorsoFrameHeader || !mdxOldTorsoFrameHeader ) {
 		return;
@@ -1316,7 +1318,7 @@ static void R_CalcBones( const refEntity_t *refent, int *boneList, int numBones 
 RB_MDM_SurfaceAnim
 ==============
 */
-void RB_SurfaceMDM( mdmSurface_t *surface ) {
+void RB_MDM_SurfaceAnim( mdmSurface_t *surface ) {
 	int j, k;
 	refEntity_t     *refent;
 	int             *boneList;

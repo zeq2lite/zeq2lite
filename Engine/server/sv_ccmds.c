@@ -371,8 +371,6 @@ static void SV_Kick_f( void ) {
 
 	cl = SV_GetPlayerByHandle();
 	if ( !cl ) {
-	( !Q_stricmp(Cmd_Argv(1), "all") );
-	 {
 		for ( i=0, cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++ ) {
 			if ( !cl->state ) {
 				continue;
@@ -385,7 +383,6 @@ static void SV_Kick_f( void ) {
 			}
 		}
 		return;
-	}
 	if( cl->netchan.remoteAddress.type == NA_LOOPBACK ) {
 		SV_SendServerCommand(NULL, "print \"%s\"", "Cannot kick host player\n");
 		return;

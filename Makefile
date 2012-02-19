@@ -480,16 +480,19 @@ ifeq ($(PLATFORM),mingw32)
   CLIENT_LDFLAGS += -mwindows
   CLIENT_LIBS = -lgdi32 -lole32 -lopengl32
   
+
+  ifeq ($(ARCH),x64)
+    WINLIBDIR=$(LIBSDIR)/win64
+  else
+    WINLIBDIR=$(LIBSDIR)/win32
+  endif
+
   ifeq ($(USE_CURL),1)
     CLIENT_CFLAGS += $(CURL_CFLAGS)
     ifneq ($(USE_CURL_DLOPEN),1)
       ifeq ($(USE_LOCAL_HEADERS),1)
         CLIENT_CFLAGS += -DCURL_STATICLIB
-        ifeq ($(ARCH),x64)
-          CLIENT_LIBS += $(LIBSDIR)/win64/libcurl.a
-        else
-          CLIENT_LIBS += $(LIBSDIR)/win32/libcurl.a
-        endif
+        CLIENT_LIBS += $(WINLIBDIR)/libcurl.a
       else
         CLIENT_LIBS += $(CURL_LIBS)
       endif
@@ -507,28 +510,20 @@ ifeq ($(PLATFORM),mingw32)
   CLIENT_LIBS += -lmingw32
   ifeq ($(USE_LOCAL_HEADERS),1)
     CLIENT_CFLAGS += -I$(SDLHDIR)/include
-    ifeq ($(ARCH), x86)
-    CLIENT_LIBS += $(LIBSDIR)/win32/libSDLmain.a \
-                      $(LIBSDIR)/win32/libSDL.dll.a
+    CLIENT_LIBS += $(WINLIBDIR)/libSDLmain.a
+    ifeq ($(ARCH),x64)
+      CLIENT_LIBS += $(WINLIBDIR)/libSDL64.dll.a
     else
-    CLIENT_LIBS += $(LIBSDIR)/win64/libSDLmain.a \
-                      $(LIBSDIR)/win64/libSDL.dll.a \
-                      $(LIBSDIR)/win64/libSDL.a
+      CLIENT_LIBS += $(WINLIBDIR)/libSDL.dll.a
     endif
-    
-   ifeq ($(USE_CODEC_VORBIS),1)
+
+    ifeq ($(USE_CODEC_VORBIS),1)
       CLIENT_CFLAGS += -I$(OGGDIR)/include \
                       -I$(VORBISDIR)/include
-      ifeq ($(ARCH), x86)
-      CLIENT_LIBS += $(LIBSDIR)/win32/libvorbisfile.a \
-                      $(LIBSDIR)/win32/libvorbis.a \
-                      $(LIBSDIR)/win32/libogg.a
-      else
-      CLIENT_LIBS += $(LIBSDIR)/win64/libvorbisfile.a \
-                      $(LIBSDIR)/win64/libvorbis.a \
-                      $(LIBSDIR)/win64/libogg.a
-	endif
-      endif
+      CLIENT_LIBS += $(WINLIBDIR)/libvorbisfile.a \
+                      $(WINLIBDIR)/libvorbis.a \
+                      $(WINLIBDIR)/libogg.a
+    endif
   else
     CLIENT_CFLAGS += $(SDL_CFLAGS)
     CLIENT_LIBS += $(SDL_LIBS)
@@ -868,6 +863,10 @@ endif
 ifeq ($(USE_INTERNAL_JPEG),1)
   BASE_CFLAGS += -DUSE_INTERNAL_JPEG
   BASE_CFLAGS += -I$(JPDIR)
+endif
+
+ifeq ("$(CC)", $(findstring "$(CC)", "clang" "clang++"))
+  BASE_CFLAGS += -Qunused-arguments
 endif
 
 ifdef DEFAULT_BASEDIR
@@ -1364,9 +1363,16 @@ Q3OBJ = \
   $(B)/client/sdl_input.o \
   $(B)/client/sdl_snd.o \
   \
-  $(B)/client/con_passive.o \
   $(B)/client/con_log.o \
   $(B)/client/sys_main.o
+
+ifeq ($(PLATFORM),mingw32)
+  Q3OBJ += \
+	$(B)/client/con_passive.o
+else
+  Q3OBJ += \
+	$(B)/client/con_tty.o
+endif
 
 ifeq ($(ARCH),i386)
   Q3OBJ += \
