@@ -93,11 +93,6 @@ MULTIPLAYER MENU (SERVER BROWSER)
 static const char *master_items[] = {
 	"Local",
 	"Internet",
-	"Internet2",
-	"Internet3",
-	"Internet4",
-	"Internet5",
-	"Favorites",
 	NULL
 };
 
@@ -1488,7 +1483,7 @@ static void ArenaServers_MenuInit( void ) {
 	
 	ArenaServers_LoadFavorites();
 
-	g_arenaservers.master.curvalue = g_servertype = Com_Clamp( 0, 6, ui_browserMaster.integer );
+	g_arenaservers.master.curvalue = g_servertype = Com_Clamp( 0, 1, ui_browserMaster.integer );
 
 	g_gametype = Com_Clamp( 0, 4, ui_browserGameType.integer );
 	g_arenaservers.gametype.curvalue = g_gametype;

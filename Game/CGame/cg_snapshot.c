@@ -129,57 +129,38 @@ static void CG_TransitionSnapshot( void ) {
 	centity_t			*cent;
 	snapshot_t			*oldFrame;
 	int					i;
-	int originalWeaponIndex = cg.weaponSelect;
-	int offset = 0;
-
-	if ( !cg.snap ) {
-		CG_Error( "CG_TransitionSnapshot: NULL cg.snap" );
-	}
-	if ( !cg.nextSnap ) {
-		CG_Error( "CG_TransitionSnapshot: NULL cg.nextSnap" );
-	}
-
+	if(!cg.snap){CG_Error( "CG_TransitionSnapshot: NULL cg.snap");}
+	if(!cg.nextSnap){CG_Error( "CG_TransitionSnapshot: NULL cg.nextSnap");}
 	// execute any server string commands before transitioning entities
 	CG_ExecuteNewServerCommands( cg.nextSnap->serverCommandSequence );
-
 	// if we had a map_restart, set everthing with initial
-	if ( !cg.snap ) {
-	}
-
+	if(!cg.snap){}
 	// clear the currentValid flag for all entities in the existing snapshot
-	for ( i = 0 ; i < cg.snap->numEntities ; i++ ) {
-		cent = &cg_entities[ cg.snap->entities[ i ].number ];
+	for(i = 0 ; i < cg.snap->numEntities ; i++){
+		cent = &cg_entities[cg.snap->entities[ i ].number];
 		cent->currentValid = qfalse;
 	}
-
 	// move nextSnap to snap and do the transitions
 	oldFrame = cg.snap;
 	cg.snap = cg.nextSnap;
-
 	BG_PlayerStateToEntityState( &cg.snap->ps, &cg_entities[ cg.snap->ps.clientNum ].currentState, qfalse );
 	cg_entities[ cg.snap->ps.clientNum ].interpolate = qfalse;
-
 	for ( i = 0 ; i < cg.snap->numEntities ; i++ ) {
 		cent = &cg_entities[ cg.snap->entities[ i ].number ];
 		CG_TransitionEntity( cent );
-
 		// remember time of snapshot this entity was last updated in
 		cent->snapShotTime = cg.snap->serverTime;
 	}
-
 	cg.nextSnap = NULL;
-
 	// check for playerstate transition events
-	if ( oldFrame ) {
+	if(oldFrame){
 		playerState_t	*ops, *ps;
-
 		ops = &oldFrame->ps;
 		ps = &cg.snap->ps;
 		// teleporting checks are irrespective of prediction
-		if ( ( ps->eFlags ^ ops->eFlags ) & EF_TELEPORT_BIT ) {
+		if((ps->eFlags ^ ops->eFlags) & EF_TELEPORT_BIT){
 			cg.thisFrameTeleport = qtrue;	// will be cleared by prediction code
 		}
-
 		// if we are not doing client side movement prediction for any
 		// reason, then the client events and view changes will be issued now
 		if (cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) || cg_nopredict.integer || cg_synchronousClients.integer || cg.snap->ps.lockedTarget){

@@ -67,8 +67,8 @@ qboolean G_weapPhys_ParseType( g_weapPhysParser_t *parser, g_weapPhysCategoryInd
 	
 	// NOTE: The sequences of the strings in these stringtables are dependant on the
 	//       sequences of enumeration types in g_userweapons.h !!!
-	char *Physics_strings[] = { "Missile", "Beam", "ForceField", "Torch", "Hitscan", "GroundSkim", "Trigger", "None", "" };
-	char *Detonation_strings[] = { "Ki", "Melee", "Slice", "Pierce", "Stone", "Burn", "Candy", "" };
+	char *Physics_strings[] = { "Missile", "Beam", "Hitscan", "Trigger", "None", "" };
+	char *Detonation_strings[] = { "Ki", "" };
 	char *Trajectory_strings[] = { "LineOfSight", "ProxBomb", "Guided", "Homing", "Arch", "Drunken", "Cylinder", "" };
 
 	int i;
@@ -97,7 +97,6 @@ qboolean G_weapPhys_ParseType( g_weapPhysParser_t *parser, g_weapPhysCategoryInd
 				return qfalse;
 			}
 		}
-		g_weapPhysBuffer.damage_meansOfDeath = i;
 		break;
 
 	case CAT_TRAJECTORY:

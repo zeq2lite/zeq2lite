@@ -1511,16 +1511,12 @@ void G_RunFrame( int levelTime ) {
 				trap_UnlinkEntity( ent );
 			}
 		}
-
-		// temporary entities don't think
 		if ( ent->freeAfterEvent ) {
 			continue;
 		}
-
 		if ( !ent->r.linked && ent->neverFree ) {
 			continue;
 		}
-
 		if ( ent->s.eType == ET_MISSILE ) {
 			G_RunUserMissile( ent );
 			continue;
@@ -1531,18 +1527,6 @@ void G_RunFrame( int levelTime ) {
 		}
 		if ( ent->s.eType == ET_BEAMHEAD ) {
 			G_RunUserMissile( ent );
-		}
-
-		if ( ent->s.eType == ET_SKIMMER ) {
-			G_RunUserSkimmer( ent );
-		}
-
-		if ( ent->s.eType == ET_RIFT ) {
-			G_RunRiftWeaponClass( ent );
-		}
-
-		if ( ent->s.eType == ET_TORCH ) {
-			G_RunUserTorch( ent );
 		}
 		if ( ent->s.eType == ET_MOVER ) {
 			G_RunMover( ent );

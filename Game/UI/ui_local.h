@@ -543,14 +543,8 @@ typedef struct {
 	qhandle_t			cursor;
 	qhandle_t			rb_on;
 	qhandle_t			rb_off;
-	// Scale modification from Hunt mod.
-#if 0
-	float				scale;
-	float				bias;
-#else
 	float				scaleX;
 	float				scaleY;
-#endif
 	qboolean			demoversion;
 	qboolean			firstdraw;
 } uiStatic_t;

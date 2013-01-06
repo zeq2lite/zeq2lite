@@ -3136,9 +3136,7 @@ void PM_StopLockon(void){
 	pm->ps->lockonData[lkLastLockedPlayer] = -1;
 	pm->ps->lockedPlayer = NULL;
 }
-
-int PM_VerifyTrace(int lockBoxSize)
-{
+int PM_VerifyTrace(int lockBoxSize){
 	int entityNum = -1;
 	int baseLockBoxValue = 1;
 	trace_t	trace;
@@ -3152,7 +3150,7 @@ int PM_VerifyTrace(int lockBoxSize)
 	maxSize[1] = baseLockBoxValue;
 	maxSize[2] = baseLockBoxValue;
 	pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
-	if((trace.entityNum >= MAX_CLIENTS)) {
+	if((trace.entityNum >= MAX_CLIENTS)){
 		Com_Printf("Second try\n");
 		minSize[0] = -baseLockBoxValue;
 		minSize[1] = -lockBoxSize;
@@ -3161,7 +3159,7 @@ int PM_VerifyTrace(int lockBoxSize)
 		maxSize[1] = lockBoxSize;
 		maxSize[2] = lockBoxSize;
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
-		if((trace.entityNum >= MAX_CLIENTS)) {
+		if((trace.entityNum >= MAX_CLIENTS)){
 			Com_Printf("Third try\n");
 			minSize[0] = -lockBoxSize;
 			minSize[1] = -baseLockBoxValue;
@@ -3179,15 +3177,13 @@ int PM_VerifyTrace(int lockBoxSize)
 				}
 			else { entityNum = trace.entityNum; }
 		}
-		else { entityNum = trace.entityNum; }
+		else{entityNum = trace.entityNum;}
 	}
-	else { entityNum = trace.entityNum; }
+	else{entityNum = trace.entityNum;}
 	return entityNum;
 }
-
 void PM_CheckLockon(void){
 	int	entityNum = -1;
-
 	if(!(pm->ps->options & canLockon)){
 		PM_StopLockon();
 		return;
@@ -3198,7 +3194,6 @@ void PM_CheckLockon(void){
 			pm->ps->lockonData[lkPowerHealth] = pm->ps->lockedPlayer->powerLevel[plHealth];
 			pm->ps->lockonData[lkPowerMaximum] = pm->ps->lockedPlayer->powerLevel[plMaximum];
 			pm->ps->lockedPlayer->bitFlags |= isTargeted;
-
 		}
 	}
 	if((pm->cmd.buttons & BUTTON_GESTURE) && pm->ps->stats[stMeleeState] == 0 && !(pm->ps->bitFlags & usingSoar)){
@@ -3218,12 +3213,12 @@ void PM_CheckLockon(void){
 	else{
 		pm->ps->pm_flags &= ~PMF_LOCK_HELD;
 	}
-	if(pm->ps->lockonData[lkLastLockedPlayer] != -1) {
+	if(pm->ps->lockonData[lkLastLockedPlayer] != -1){
 		pm->ps->timers[tmLockon] += pml.msec;
-		if(pm->ps->timers[tmLockon] < 3000) {
+		if(pm->ps->timers[tmLockon] < 3000){
 			entityNum = PM_VerifyTrace(2500);
 			if(entityNum > -1 && pm->ps->lockedPlayer && !(pm->ps->lockedPlayer->bitFlags & usingZanzoken)){
-				if(entityNum == pm->ps->lockonData[lkLastLockedPlayer] ) {
+				if(entityNum == pm->ps->lockonData[lkLastLockedPlayer]){
 					pm->ps->lockonData[lkLastLockedPlayer] = -1;
 					pm->ps->lockedTarget = entityNum+1;
 					pm->ps->timers[tmLockon] = 0;
@@ -3237,16 +3232,15 @@ void PM_CheckLockon(void){
 		}
 	}
 }
-/*
-================
+/*================
 PM_DropTimers
-================
-*/
+================*/
 void PM_DropTimers(void){
 	if(pm->ps->pm_time){
 		if(pml.msec >= pm->ps->pm_time){
 			pm->ps->pm_time = 0;
-		} else{
+		}
+		else{
 			pm->ps->pm_time -= pml.msec;
 		}
 	}
@@ -3269,7 +3263,6 @@ void PM_DropTimers(void){
 		}
 	}
 }
-
 /*================
 PM_UpdateViewAngles
 ================*/

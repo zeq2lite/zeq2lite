@@ -329,11 +329,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	// END ADDING
 	client = ent->client;
 	ps = &client->ps;
-	if(ps->lockedTarget>0){
-		enemyPS = &g_entities[ps->lockedTarget-1].client->ps;
-	}
+	if(ps->lockedTarget>0){enemyPS = &g_entities[ps->lockedTarget-1].client->ps;}
 	tier = ps->powerLevel[plTierCurrent];
-	if ( oldEventSequence < client->ps.eventSequence - MAX_PS_EVENTS ) {
+	if(oldEventSequence < client->ps.eventSequence - MAX_PS_EVENTS){
 		oldEventSequence = client->ps.eventSequence - MAX_PS_EVENTS;
 	}
 	for ( i = oldEventSequence ; i < client->ps.eventSequence ; i++ ) {
@@ -441,47 +439,7 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 		ps->externalEvent = extEvent;
 	}
 }
-
-void G_CheckSafety(vec3_t origin,playerState_t *ps){
-	/*int radius,distance;
-	int	entityList[MAX_GENTITIES];
-	int areaEntities;
-	int i,e;
-	gentity_t *ent;
-	vec3_t mins,maxs,deltaRadius;
-	if(ps->bitFlags & isTargeted || ps->lockedTarget > 0){
-		ps->bitFlags &= ~isSafe;
-		ps->timers[tmSafe] = level.time;
-		return;
-	}
-	for(i=0;i<3;i++){
-		mins[i] = origin[i] - radius;
-		maxs[i] = origin[i] + radius;
-	}
-	radius = 5000;
-	areaEntities = trap_EntitiesInBox(mins,maxs,entityList,MAX_GENTITIES);
-	for(e=0;e<areaEntities;e++){
-		ent = &g_entities[entityList[e]];
-		for(i=0;i<3;i++){
-			if(origin[i]<ent->r.absmin[i]){deltaRadius[i] = ent->r.absmin[i] - origin[i];}
-			else if(origin[i]>ent->r.absmax[i]){deltaRadius[i] = origin[i] - ent->r.absmax[i];}
-			else{deltaRadius[i] = 0;}
-		}
-		distance = VectorLength(deltaRadius);
-		if(distance >= radius){continue;}
-		if(ent->s.eType == ET_PLAYER && ent->r.currentOrigin != origin){
-			ps->bitFlags &= ~isSafe;
-			ps->timers[tmSafe] = level.time;
-			return;
-		}
-	}*/
-}
-
-
-
-
-void LockonCheck(gclient_t	*client)
-{
+void LockonCheck(gclient_t *client){
 	int entityNum = -1;
 	playerState_t *ps;
 	ps = &client->ps;
@@ -493,10 +451,10 @@ void LockonCheck(gclient_t	*client)
 			ps->lockedTarget = 0;
 			return;
 		}
-		if( ps->lockedPlayer){
+		if(ps->lockedPlayer){
 			ps->timers[tmLockon] += pml.msec;
-			if( ps->lockedPlayer->bitFlags & isTransforming || ps->lockedPlayer->bitFlags & isStruggling || ps->lockedPlayer->bitFlags & isDead ||
-					ps->lockedPlayer->bitFlags & isUnconcious || ps->lockedPlayer->bitFlags & isCrashed ){
+			if(ps->lockedPlayer->bitFlags & isTransforming || ps->lockedPlayer->bitFlags & isStruggling || ps->lockedPlayer->bitFlags & isDead ||
+					ps->lockedPlayer->bitFlags & isUnconcious || ps->lockedPlayer->bitFlags & isCrashed){
 				ps->lockedPosition = 0;
 				ps->lockedPlayer = 0;
 				ps->lockedTarget = 0;
@@ -515,7 +473,6 @@ void LockonCheck(gclient_t	*client)
 		ps->lockedPlayer = &g_entities[ps->lockedTarget-1].client->ps;
 	}
 }
-
 /*
 ==============
 ClientThink
@@ -558,7 +515,6 @@ void ClientThink_real( gentity_t *ent ) {
 		SpectatorThink( ent, ucmd );
 		return;
 	}
-	if(!ClientInactivityTimer(client)){return;}
 	if(client->noclip){
 		client->ps.pm_type = PM_NOCLIP;
 	}
@@ -570,32 +526,19 @@ void ClientThink_real( gentity_t *ent ) {
 	ent->s.attackPowerTotal = client->ps.powerLevel[plMaximum];
 	G_LinkUserWeaponData( &(client->ps) );
 	G_CheckSkills(&(client->ps));
-	G_CheckSafety(ent->r.currentOrigin,&(client->ps));
-	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
-		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
-		Weapon_HookFree(client->hook);
-	}
-
 	// set up for pmove
 	oldEventSequence = client->ps.eventSequence;
-
-	memset (&pm, 0, sizeof(pm));
-	if ( ent->flags & FL_FORCE_GESTURE ) {
-		ent->flags &= ~FL_FORCE_GESTURE;
-		ent->client->pers.cmd.buttons |= BUTTON_GESTURE;
-	}
+	memset(&pm,0,sizeof(pm));
 	pm.ps = &client->ps;
 	pm.cmd = *ucmd;
 	pm.tracemask = MASK_PLAYERSOLID;
 	pm.trace = trap_Trace;
 	pm.pointcontents = trap_PointContents;
 	pm.debugLevel = g_debugMove.integer;
-	pm.noFootsteps = ( g_dmflags.integer & DF_NO_FOOTSTEPS ) > 0;
-
+	pm.noFootsteps = (g_dmflags.integer & DF_NO_FOOTSTEPS) > 0;
 	pm.pmove_fixed = pmove_fixed.integer | client->pers.pmoveFixed;
 	pm.pmove_msec = pmove_msec.integer;
-
-	VectorCopy( client->ps.origin, client->oldOrigin );
+	VectorCopy(client->ps.origin,client->oldOrigin);
 	Pmove(&pm);
 	checkTier(client);
 	if(pm.ps->powerLevel[plTierChanged] == 1)
@@ -612,7 +555,6 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 	}
 	LockonCheck(client);
-
 	if ( ent->client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}
@@ -628,8 +570,8 @@ void ClientThink_real( gentity_t *ent ) {
 	ent->watertype = pm.watertype;
 	ClientEvents(ent,oldEventSequence);
 	trap_LinkEntity (ent);
-	if ( !ent->client->noclip ) {
-		G_TouchTriggers( ent );
+	if(!ent->client->noclip){
+		G_TouchTriggers(ent);
 	}
 	VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
 	ClientImpacts(ent,&pm);

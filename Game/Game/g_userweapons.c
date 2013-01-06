@@ -133,15 +133,8 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 	} else {
 		ps->currentSkill[WPSTAT_BITFLAGS] &= ~WPF_READY;
 	}
-
-	// Torch attacks are implicitly continuous and can't be charged.
-	if ( weaponSettings->general_type == WPT_TORCH ) {
-		ps->currentSkill[WPSTAT_BITFLAGS] |= WPF_CONTINUOUS;
-		ps->currentSkill[WPSTAT_BITFLAGS] &= ~WPF_NEEDSCHARGE;
-	}
-
 	// Guided trajectories and beams should use WEAPON_GUIDING state
-	if ( weaponSettings->homing_type == HOM_GUIDED || weaponSettings->general_type == WPT_BEAM ) {
+	if ( weaponSettings->homing_type == HOM_GUIDED || weaponSettings->general_type == skillTypeBEAM ) {
 		ps->currentSkill[WPSTAT_BITFLAGS] |= WPF_GUIDED;
 	}
 
@@ -159,14 +152,8 @@ void G_LinkUserWeaponData( playerState_t *ps ) {
 		ps->currentSkill[WPSTAT_ALT_RESTRICT_MOVEMENT] = alt_weaponSettings->restrict_movement;
 		ps->currentSkill[WPSTAT_ALT_BITFLAGS] = alt_weaponSettings->general_bitflags;
 		ps->currentSkill[WPSTAT_ALT_RESTRICT_MOVEMENT] = alt_weaponSettings->restrict_movement;
-		// Torch attacks are implicitly continuous and can't be charged.
-		if ( alt_weaponSettings->general_type == WPT_TORCH ) {
-			ps->currentSkill[WPSTAT_ALT_BITFLAGS] |= WPF_CONTINUOUS;
-			ps->currentSkill[WPSTAT_ALT_BITFLAGS] &= ~WPF_NEEDSCHARGE;
-		}
-
 		// Guided trajectories and beams should use WEAPON_GUIDING state
-		if ( alt_weaponSettings->homing_type == HOM_GUIDED || alt_weaponSettings->general_type == WPT_BEAM ) {
+		if ( alt_weaponSettings->homing_type == HOM_GUIDED || alt_weaponSettings->general_type == skillTypeBEAM ) {
 			ps->currentSkill[WPSTAT_ALT_BITFLAGS] |= WPF_GUIDED;
 		}
 

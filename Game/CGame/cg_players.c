@@ -2088,12 +2088,12 @@ void CG_Player( centity_t *cent ) {
 	else{CG_AuraEnd(cent);}
 	CG_AddAuraToScene(cent);
 	if(cg_drawBBox.value){
-	trap_R_ModelBounds( head.hModel, mins, maxs, head.frame );
-	CG_DrawBoundingBox( head.origin, mins, maxs );
-	trap_R_ModelBounds( torso.hModel, mins, maxs, torso.frame );
-	CG_DrawBoundingBox( torso.origin, mins, maxs );
-	trap_R_ModelBounds( legs.hModel, mins, maxs, legs.frame );
-	CG_DrawBoundingBox( legs.origin, mins, maxs );
+		trap_R_ModelBounds( head.hModel, mins, maxs, head.frame);
+		CG_DrawBoundingBox( head.origin, mins, maxs);
+		trap_R_ModelBounds( torso.hModel, mins, maxs, torso.frame);
+		CG_DrawBoundingBox( torso.origin, mins, maxs);
+		trap_R_ModelBounds( legs.hModel, mins, maxs,legs.frame);
+		CG_DrawBoundingBox( legs.origin, mins, maxs);
 	}
 	if(ps->timers[tmKnockback]){
 		if(ps->timers[tmKnockback] > 0){

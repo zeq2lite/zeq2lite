@@ -1614,17 +1614,13 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 	}
 
 	// default handling
-	switch ( key )
-	{
-#ifndef NDEBUG
+	switch ( key ){
 		case K_F11:
 			uis.debug ^= 1;
 			break;
-
 		case K_F12:
 			trap_Cmd_ExecuteText(EXEC_APPEND, "screenshot\n");
 			break;
-#endif
 		case K_KP_UPARROW:
 		case K_UPARROW:
 			cursor_prev    = m->cursor;
@@ -1693,15 +1689,14 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 Menu_Cache
 =================
 */
-void Menu_Cache( void )
-{
-	uis.charset			= trap_R_RegisterShaderNoMip( "consoleFont" );
-	uis.charsetProp		= trap_R_RegisterShaderNoMip( "interface/fonts/font1.png" );
-	uis.charsetPropGlow	= trap_R_RegisterShaderNoMip( "interface/fonts/font1Glow.png" );
-	uis.charsetPropB	= trap_R_RegisterShaderNoMip( "interface/fonts/font2.png" );
-	uis.cursor          = trap_R_RegisterShaderNoMip( "interface/menu/cursor.png" );
-	uis.rb_on           = trap_R_RegisterShaderNoMip( "interface/art/switch_on" );
-	uis.rb_off          = trap_R_RegisterShaderNoMip( "interface/art/switch_off" );
+void Menu_Cache(void){
+	uis.charset			= trap_R_RegisterShaderNoMip("consoleFont");
+	uis.charsetProp		= trap_R_RegisterShaderNoMip("interface/fonts/font1.png");
+	uis.charsetPropGlow	= trap_R_RegisterShaderNoMip("interface/fonts/font1Glow.png");
+	uis.charsetPropB	= trap_R_RegisterShaderNoMip("interface/fonts/font2.png");
+	uis.cursor          = trap_R_RegisterShaderNoMip("interface/menu/cursor.png");
+	uis.rb_on           = trap_R_RegisterShaderNoMip("interface/art/switch_on");
+	uis.rb_off          = trap_R_RegisterShaderNoMip("interface/art/switch_off");
 
 	uis.whiteShader = trap_R_RegisterShaderNoMip("white");
 	uis.menuBackShader	= trap_R_RegisterShaderNoMip("menuback");
@@ -1728,7 +1723,6 @@ void Menu_Cache( void )
 	menu_buzz_sound	= trap_S_RegisterSound( "interface/menu/cancel.ogg", qfalse );
 	menu_exit_sound = trap_S_RegisterSound( "interface/menu/exit.ogg", qfalse );
 
-	// need a nonzero sound, make an empty sound for this
 	menu_null_sound = -1;
 
 	sliderBar = trap_R_RegisterShaderNoMip( "interface/art/slider2" );

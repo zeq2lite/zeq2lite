@@ -1,10 +1,7 @@
 #include "g_local.h"
-#define	MIN_SKIM_NORMAL	0.5f
 #define	MISSILE_PRESTEP_TIME	 50
 #define SOLID_ADD				400  // Add extra to guide line to go behind solids with weapon
 #define BEAM_SECTION_TIME		520  // Timeframe to spawn a new beam section
-#define SKIM_MIN_GROUNDCLEARANCE	 5	// Amount the attack will 'hover' above ground
-#define	SKIM_MAX_GROUNDCLEARANCE	25	// How much distance are we allowed to take to reach ground level again.
 /*-------------------------------
  M I S C   F U N C T I O N S
 -------------------------------*/
@@ -35,29 +32,6 @@ static void G_PushUserMissile( gentity_t *self, gentity_t *other );
 static void G_BounceUserMissile( gentity_t *self, trace_t *trace );
 void G_UserWeaponDamage(gentity_t *target,gentity_t *inflictor,gentity_t *attacker,vec3_t dir,vec3_t point,int damage,int dflags,int knockback);
 void G_LocationImpact(vec3_t point, gentity_t* targ, gentity_t* attacker);
-/*
-=============
-Think_Torch
-=============
-*/
-void Think_Torch( gentity_t *self ) {
-	// NOTE: This function is called to override and destroy a torch type continuous
-	//       attack when its lifetime runs out. It is specificly optimized for torches,
-	//       and doesn't need to be run every frame.
-	g_userWeapon_t	*weaponInfo;
-
-	weaponInfo = G_FindUserWeaponData( self->r.ownerNum, self->s.weapon );
-
-	// Set the weapon state to WEAPON_COOLING
-	g_entities[self->r.ownerNum].client->ps.weaponstate = WEAPON_COOLING;
-	
-	// Set the cooldown time on the weapon
-	g_entities[self->r.ownerNum].client->ps.weaponTime = weaponInfo->costs_cooldownTime;
-	
-	// Free the entity
-	G_FreeEntity( self );
-}
-
 
 /*
 ===============
@@ -594,15 +568,6 @@ qboolean G_UserRadiusDamage ( vec3_t origin, gentity_t *attacker, gentity_t *ign
 	}
 	return hitClient;
 }
-
-
-/*
-   -----------------------------------
-     F I R I N G   F U N C T I O N S
-   -----------------------------------
-*/
-
-
 void UserHitscan_Fire (gentity_t *self, g_userWeapon_t *weaponInfo, int weaponNum, vec3_t muzzle, vec3_t forward ) {
 	trace_t		tr;
 	vec3_t		end;
@@ -794,7 +759,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 	/* MISSILES */
 
-	case WPT_MISSILE:
+	case skillTypeMISSILE:
 		bolt = G_Spawn();
 		bolt->classname = "rocket";
 		bolt->s.eType = ET_MISSILE;
@@ -888,102 +853,84 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 
 		// Set the correct think based on homing properties.
 		switch (weaponInfo->homing_type) {
-		case HOM_PROX:
-			bolt->think = Think_ProxDet;
-			bolt->nextthink = level.time + FRAMETIME;
-			bolt->homRange = weaponInfo->homing_range;
-			break;
+			case HOM_PROX:
+				bolt->think = Think_ProxDet;
+				bolt->nextthink = level.time + FRAMETIME;
+				bolt->homRange = weaponInfo->homing_range;
+				break;
+			case HOM_GUIDED:
+				bolt->think = Think_Guided;
+				bolt->nextthink = level.time + FRAMETIME;
+				// Kill off previously set accel, bounce and gravity. Guided missiles
+				// do not accelerate, bounce or experience gravity.
+				bolt->accel = 0;
+				bolt->bounceFrac = 0;
+				bolt->bouncesLeft = 0;
+				bolt->gravity = 0;
+				// Set guidetarget.
+				bolt->s.eFlags |= EF_GUIDED;
+				self->client->guidetarget = bolt;
+				bolt->guided = qtrue;
+				break;
+			case HOM_REGULAR:
+				bolt->think = Think_Homing;
+				bolt->nextthink = level.time + FRAMETIME;
+				bolt->homRange = weaponInfo->homing_range;
+				//bolt->homAccel = weaponInfo->homing_accel;
+				break;
+			case HOM_CYLINDER:
+				bolt->think = Think_CylinderHoming;
+				bolt->nextthink = level.time + FRAMETIME;
+				bolt->homRange = weaponInfo->homing_range;
+				//bolt->homAccel = weaponInfo->homing_accel;
+				break;
+			case HOM_ARCH:
+				bolt->think = Think_NormalMissile;
+				bolt->nextthink = level.time + FRAMETIME;
+				bolt->bounceFrac = 0;
+				bolt->bouncesLeft = 0;
+				bolt->accel = 0;
+				bolt->gravity = 0;
+				{
+					trace_t	trace;
+					vec3_t  begin, mid, end;
+					float	length;
 
-		case HOM_GUIDED:
-			bolt->think = Think_Guided;
-			bolt->nextthink = level.time + FRAMETIME;
-			
-			// Kill off previously set accel, bounce and gravity. Guided missiles
-			// do not accelerate, bounce or experience gravity.
-			bolt->accel = 0;
-			bolt->bounceFrac = 0;
-			bolt->bouncesLeft = 0;
-			bolt->gravity = 0;
+					VectorCopy( bolt->s.pos.trBase, begin );
+					VectorMA( begin, weaponInfo->homing_range, dir, end );
+					trap_Trace( &trace, begin, NULL, NULL, end, self->s.number, MASK_SHOT );
+					VectorCopy( trace.endpos, end );
 
-			// Set guidetarget.
-			bolt->s.eFlags |= EF_GUIDED;
-			self->client->guidetarget = bolt;
-			
-			bolt->guided = qtrue;
-			break;
+					length = Distance( begin, end );
 
-		case HOM_REGULAR:
-			bolt->think = Think_Homing;
-			bolt->nextthink = level.time + FRAMETIME;
-			bolt->homRange = weaponInfo->homing_range;
-			//bolt->homAccel = weaponInfo->homing_accel;
-			break;
+					VectorMA( begin, length / 2.0f, firingDir, mid );
 
-		case HOM_CYLINDER:
-			bolt->think = Think_CylinderHoming;
-			bolt->nextthink = level.time + FRAMETIME;
-			bolt->homRange = weaponInfo->homing_range;
-			//bolt->homAccel = weaponInfo->homing_accel;
-			break;
-
-		case HOM_ARCH:
-			bolt->think = Think_NormalMissile;
-			bolt->nextthink = level.time + FRAMETIME;
-
-			bolt->bounceFrac = 0;
-			bolt->bouncesLeft = 0;
-			bolt->accel = 0;
-			bolt->gravity = 0;
-
-			{ // Open new block to get some local variables in here
-				trace_t	trace;
-				vec3_t  begin, mid, end;
-				float	length;
-
-				VectorCopy( bolt->s.pos.trBase, begin );
-				VectorMA( begin, weaponInfo->homing_range, dir, end );
-				trap_Trace( &trace, begin, NULL, NULL, end, self->s.number, MASK_SHOT );
-				VectorCopy( trace.endpos, end );
-
-				length = Distance( begin, end );
-
-				VectorMA( begin, length / 2.0f, firingDir, mid );
-
-				bolt->s.pos.trType = TR_ARCH;
-				bolt->s.pos.trDuration = 1000.0f * length / weaponInfo->physics_speed;
-				VectorCopy( begin, bolt->s.pos.trBase );
-				VectorCopy( mid, bolt->s.angles2 );
-				VectorCopy( end, bolt->s.pos.trDelta );
-			}
-			break;
-
-		case HOM_DRUNKEN:
-			bolt->think = Think_NormalMissile;
-			bolt->nextthink = level.time + FRAMETIME;
-
-			bolt->s.pos.trType = TR_DRUNKEN;
-			bolt->s.pos.trDuration = weaponInfo->homing_range;
-			break;
-		
-		case HOM_NONE:
-			bolt->think = Think_NormalMissile;
-			bolt->nextthink = level.time + FRAMETIME;
-			break;
-
-		default:
-			// This should never happen!
-			break;
+					bolt->s.pos.trType = TR_ARCH;
+					bolt->s.pos.trDuration = 1000.0f * length / weaponInfo->physics_speed;
+					VectorCopy( begin, bolt->s.pos.trBase );
+					VectorCopy( mid, bolt->s.angles2 );
+					VectorCopy( end, bolt->s.pos.trDelta );
+				}
+				break;
+			case HOM_DRUNKEN:
+				bolt->think = Think_NormalMissile;
+				bolt->nextthink = level.time + FRAMETIME;
+				bolt->s.pos.trType = TR_DRUNKEN;
+				bolt->s.pos.trDuration = weaponInfo->homing_range;
+				break;
+			case HOM_NONE:
+				bolt->think = Think_NormalMissile;
+				bolt->nextthink = level.time + FRAMETIME;
+				break;
+			default:
+				// This should never happen!
+				break;
 		}
-
-		// Set the lifespan of the weapon.
 		bolt->missileSpawnTime = level.time;
 		bolt->maxMissileTime = weaponInfo->physics_lifetime;
-		break; // END OF MISSILE
-	
-		
+		break;
 	/* BEAMS */
-
-	case WPT_BEAM:
+	case skillTypeBEAM:
 		homingType = weaponInfo->homing_type;
 		bolt = G_Spawn();
 		bolt->classname = "user_beam";
@@ -993,10 +940,10 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		// Set the weapon number correct, depending on altfire status.
 		if ( !altfire ) {
 			bolt->s.weapon = self->s.weapon;
-		} else {
+		}
+		else{
 			bolt->s.weapon = self->s.weapon + ALTWEAPON_OFFSET;
 		}
-
 		bolt->r.ownerNum = self->s.number;
 		bolt->s.clientNum = self->s.number;	// <-- clientNum is free on all but ET_PLAYER so
 		bolt->parent = self;				//     use it to store the owner for clientside.
@@ -1011,7 +958,8 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		if (altfire) {
 			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
 			self->client->ps.stats[stChargePercentSecondary] = 0;
-		} else {
+		}
+		else{
 			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
 			self->client->ps.stats[stChargePercentPrimary] = 0;
 		}
@@ -1020,7 +968,6 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->s.dashDir[0] = bolt->powerLevelTotal; // Use this free field to transfer total power level
 		// FIXME: Hack into the old mod style, since it's still needed for now
 		bolt->takedamage = qtrue;
-				
 		bolt->clipmask = MASK_SHOT;
 		bolt->target_ent = NULL;
 		self->s.dashDir[2] = 0.0f;
@@ -1035,23 +982,17 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			VectorSet( bolt->r.maxs, radius, radius, radius );
 			VectorCopy( bolt->r.mins, bolt->r.absmin );
 			VectorCopy( bolt->r.maxs, bolt->r.absmax );
-
 			bolt->r.contents = CONTENTS_CORPSE; // So we can pass through a missile, but can still fire at it.
-
 			bolt->die = G_DieUserWeapon;			
 		}
-
 		bolt->speed = weaponInfo->physics_speed;
 		bolt->accel = 0;
 		bolt->bounceFrac = 0;
 		bolt->bouncesLeft = 0;
 		bolt->gravity = 0;
 		bolt->s.pos.trType = TR_LINEAR;
-		
 		VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
-		// This saves network bandwidth.
 		SnapVector( bolt->s.pos.trDelta );
-		// move a bit on the very first frame
 		bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;
 		VectorCopy( start, bolt->s.pos.trBase );
 		VectorCopy( start, bolt->r.currentOrigin );
@@ -1059,16 +1000,12 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		VectorCopy( self->client->ps.viewangles, self->s.angles );
 		VectorCopy( self->client->ps.viewangles, bolt->s.angles2 );
 		if(self->client->ps.lockedTarget > 0){homingType = HOM_GUIDED;}
-		// Set the correct think based on homing properties.
 		switch (homingType) {
 		case HOM_GUIDED:
 			bolt->think = Think_Guided;
 			bolt->nextthink = level.time + FRAMETIME;
-
-			// Set guidetarget.
 			bolt->s.eFlags |= EF_GUIDED;
 			self->client->guidetarget = bolt;
-
 			bolt->guided = qtrue;
 			break;
 
@@ -1088,8 +1025,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 		bolt->missileSpawnTime = level.time;
 		bolt->maxMissileTime = weaponInfo->physics_lifetime;
 		break;
-	/* HITSCAN */
-	case WPT_HITSCAN:
+	case skillTypeHITSCAN:
 		if ( !altfire ) {
 			UserHitscan_Fire( self, weaponInfo, self->s.weapon, firingStart, firingDir );
 			self->client->ps.stats[stChargePercentPrimary] = 0;
@@ -1098,113 +1034,7 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			self->client->ps.stats[stChargePercentSecondary] = 0;
 		}
 		break;
-	/* GROUNDSKIMMER */
-	case WPT_GROUNDSKIM:
-		bolt = G_Spawn();
-		bolt->classname = "user_groundskim";
-		bolt->s.eType = ET_SKIMMER;
-		bolt->onGround = qfalse;
-		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-		// Set the weapon number correct, depending on altfire status.
-		if ( !altfire ) {
-			bolt->s.weapon = self->s.weapon;
-		} else {
-			bolt->s.weapon = self->s.weapon + ALTWEAPON_OFFSET;
-		}
-		bolt->r.ownerNum = self->s.number;
-		bolt->s.clientNum = self->s.number;	// <-- clientNum is free on all but ET_PLAYER so
-		bolt->parent = self;				//     use it to store the owner for clientside.
-		bolt->damage = weaponInfo->damage_damage;
-		bolt->splashRadius = weaponInfo->damage_radius;
-		bolt->splashDuration = weaponInfo->damage_radiusDuration;
-		bolt->extraKnockback = weaponInfo->damage_extraKnockback;
-		if (altfire) {
-			bolt->chargelvl = self->client->ps.stats[stChargePercentSecondary];
-			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[stChargePercentSecondary] = 0; // Only reset it here!
-		} else {
-			bolt->chargelvl = self->client->ps.stats[stChargePercentPrimary];
-			bolt->s.powerups = bolt->chargelvl; // Use this free field to transfer chargelvl
-			self->client->ps.stats[stChargePercentPrimary] = 0; // Only reset it here!
-		}
-				
-		bolt->clipmask = MASK_SHOT;
-		bolt->target_ent = NULL;
-
-		bolt->speed = weaponInfo->physics_speed;
-		bolt->accel = 0;
-		bolt->s.pos.trType = TR_LINEAR;
-		
-		VectorScale( firingDir, bolt->speed, bolt->s.pos.trDelta );
-		// This saves network bandwidth.
-		SnapVector( bolt->s.pos.trDelta );
-		// move a bit on the very first frame
-		bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;
-		VectorCopy( firingStart, bolt->s.pos.trBase );
-		VectorCopy( firingStart, bolt->r.currentOrigin );
-
-		// Set the correct think, which for a groundskim is only regular think. 
-		bolt->think = Think_NormalMissile;
-		bolt->nextthink = level.time + FRAMETIME;
-
-		// Set the lifespan of the weapon.
-		bolt->missileSpawnTime = level.time;
-		bolt->maxMissileTime = weaponInfo->physics_lifetime;
-		break; // END OF MISSILE
-
-
-	case WPT_FORCEFIELD:
-//		bolt = G_Spawn();
-//		bolt->classname = "user_forcefield";
-//		bolt->s.eType = ET_FORCEFIELD;
-		break;
-
-
-	case WPT_TORCH:
-		bolt = G_Spawn();
-		bolt->classname = "user_torch";
-		bolt->s.eType = ET_TORCH;
-
-		// Set the properties we need for a torch
-		bolt->clipmask = MASK_SHOT;
-		bolt->target_ent = NULL;
-		bolt->r.ownerNum = self->s.number;
-		bolt->s.clientNum = self->s.number;
-
-		// Set the weapon number correct, depending on altfire status.
-		if ( !altfire ) {
-			bolt->s.weapon = self->s.weapon;
-		} else {
-			bolt->s.weapon = self->s.weapon + ALTWEAPON_OFFSET;
-		}
-
-		// Make sure the entity is in the PVS if you should be able to spot part of the torch
-		VectorSet( bolt->r.maxs,  weaponInfo->physics_range_max,  weaponInfo->physics_range_max,  weaponInfo->physics_range_max );
-		VectorSet( bolt->r.mins, -weaponInfo->physics_range_max, -weaponInfo->physics_range_max, -weaponInfo->physics_range_max );
-
-		// Hijack homRange and homAngle for the torch range and torch width angle.
-		// The latter is built from the physics_radius parameter, which contains
-		// the radius of the torch cone at the maximum distance, and the physics_range_max
-		// parameter, which contains the maximum range of the torch attack.
-		bolt->homRange = Q_fabs(weaponInfo->physics_range_max);
-		bolt->homAngle = atan2( bolt->homRange, Q_fabs(weaponInfo->physics_radius) ); // NOTE: Keep this in radians
-
-		// Set the movement type for the torch to interpolation.
-		bolt->s.pos.trType = TR_INTERPOLATE;
-		bolt->s.apos.trType = TR_INTERPOLATE;
-		VectorCopy( start, bolt->s.pos.trBase );
-		vectoangles( dir, bolt->s.apos.trBase );
-
-		// Hijack trDelta for getting physics_range_max and physics_radius to the client
-		bolt->s.pos.trDelta[0] = Q_fabs(weaponInfo->physics_range_max);
-		bolt->s.pos.trDelta[1] = Q_fabs(weaponInfo->physics_radius);
-	
-		// Set the think function that will demolish the torch if it persists too long
-		bolt->think = Think_Torch;
-		bolt->nextthink = weaponInfo->physics_lifetime;
-		break;
-
-	case WPT_TRIGGER:
+	case skillTypeTRIGGER:
 		{
 			gentity_t		*trigTarget;
 			trace_t			trace;
@@ -1282,18 +1112,12 @@ void Fire_UserWeapon( gentity_t *self, vec3_t start, vec3_t dir, qboolean altfir
 			}
 		}
 		break;
-
-	case WPT_NONE:
-		// We don't need to generate any kind of attack
+	case skillTypeNONE:
 		break;
 	default:
-		// Something is not defined right, so don't fire anything as a precaution
 		break;
 	}
 }
-/*-----------------------------------------
- E X P L O S I O N   F U N C T I O N S
------------------------------------------*/
 void G_DieUserWeapon(gentity_t *self, gentity_t *inflictor,gentity_t *attacker, int damage, int mod ) {
 	if (inflictor == self)
 		return;
@@ -1636,15 +1460,12 @@ void G_ImpactUserWeapon(gentity_t *self,trace_t *trace){
 		SnapVectorTowards( trace->endpos, self->s.pos.trBase );
 		G_SetOrigin( self, trace->endpos );
 		self->powerLevelCurrent *= 0.5;
-		//G_Printf("It's explosion time!\n");
 		self->s.eType = ET_EXPLOSION;
 		self->splashEnd = level.time + self->splashDuration;
 		self->splashTimer = level.time + 100;
 		trap_LinkEntity(self);
 	}
 }
-// Wrapper function to safely remove a user weapon, incase
-// things like fading trails need to be handled.
 void G_DetachUserWeapon (gentity_t *self) {
 	gentity_t *other;
 	other = self->enemy;
@@ -1786,295 +1607,3 @@ void G_RunUserMissile( gentity_t *ent ) {
 	// check think function after bouncing
 	G_RunThink( ent );
 }
-
-
-void G_RunUserSkimmer( gentity_t *ent ) {
-	vec3_t		origin;
-	trace_t		trace;
-	trace_t		groundTrace;
-	int			pass_ent;
-	vec3_t		min_bounds = {0, 0, 0};
-	vec3_t		max_bounds = {0, 0, 0};
-	vec3_t		up = {0, 0, SKIM_MIN_GROUNDCLEARANCE};
-	vec3_t		down = {0, 0, -SKIM_MAX_GROUNDCLEARANCE};
-	vec3_t		floor_target, cross_temp;
-	
-	// extrapolate current position to get total required travel length
-	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, level.time, origin );
-
-	// ignore interactions with the missile owner
-	pass_ent = ent->r.ownerNum;
-
-	// trace a line from the previous position to the current position
-	trap_Trace( &trace, ent->r.currentOrigin, NULL, NULL, origin, pass_ent, ent->clipmask );
-
-	if ( trace.startsolid || trace.allsolid ) {
-		// make sure the trace.entityNum is set to the entity we're stuck in
-		trap_Trace( &trace, ent->r.currentOrigin, NULL, NULL, ent->r.currentOrigin, pass_ent, ent->clipmask );
-		trace.fraction = -1;
-	} else {
-		// Place the endpoint of the trace backwards a small bit, using the calculated
-		// bounds. This prevents a trace.startsolid from happening next time (we hope).
-		VectorAdd( trace.endpos, up, ent->r.currentOrigin );
-	}
-
-	trap_LinkEntity( ent );
-		
-	if ( trace.fraction == -1 ) {
-		// We were stuck in an entity.
-			
-		// A skimmer either is removed or explodes.
-		if ( trace.surfaceFlags & SURF_NOIMPACT ) {
-			G_RemoveUserWeapon( ent );
-		} else {
-			G_ImpactUserWeapon( ent, &trace );
-		}
-		
-		return;
-	}
-
-	if ( trace.fraction < 1 ) {
-
-		if ( trace.plane.normal[2] < MIN_SKIM_NORMAL ) {
-			// The groundplane was too steep to land on
-
-			if ( trace.surfaceFlags & SURF_NOIMPACT ) {
-				G_RemoveUserWeapon( ent );
-			} else {
-				G_ImpactUserWeapon( ent, &trace );
-			}
-
-			return;
-		}
-
-		// Place the currentOrigin on the new polygon.
-		VectorAdd( trace.endpos, up, ent->r.currentOrigin );
-
-		// Copy our collision point to the start position of the trajectory.
-		VectorCopy( ent->r.currentOrigin, ent->s.pos.trBase );
-	 
-		// Setup the new direction for the skimmer.
-		CrossProduct( ent->s.pos.trDelta, trace.plane.normal, cross_temp );
-		CrossProduct( trace.plane.normal, cross_temp, ent->s.pos.trDelta );
-		VectorNormalize( ent->s.pos.trDelta );
-		VectorScale( ent->s.pos.trDelta, ent->speed, ent->s.pos.trDelta);
-		vectoangles( ent->s.pos.trDelta, ent->s.angles);
-
-		// Set the new type and time for the trajectory
-		ent->s.pos.trType = TR_LINEAR;
-		ent->s.pos.trTime = level.time;
-
-		// This will save net bandwidth.
-		SnapVector( ent->s.pos.trDelta );
-
-		// Set the skimmer to have hit ground.
-		ent->onGround = qtrue;
-
-		trap_LinkEntity( ent );
-		return;
-	}
-
-	// NOTE: Getting to this point means trace.fraction == 1
-
-	VectorAdd( ent->r.currentOrigin, down, floor_target );
-	trap_Trace( &groundTrace, ent->r.currentOrigin, NULL, NULL, floor_target, pass_ent, MASK_SOLID );
-	
-	if ( ( groundTrace.fraction == 1 ) && ent->onGround ) {
-		// We didn't reach the ground within specified length.
-
-		if ( groundTrace.surfaceFlags & SURF_NOIMPACT ) {
-			G_RemoveUserWeapon( ent );
-		} else {
-			G_ImpactUserWeapon( ent, &trace );
-		}
-
-		return;
-	}
-
-	if ( groundTrace.fraction < 1 ) {
-
-		if ( groundTrace.plane.normal[2] < MIN_SKIM_NORMAL ) {
-			// The groundplane was too steep to land on
-
-			if ( groundTrace.surfaceFlags & SURF_NOIMPACT ) {
-				G_RemoveUserWeapon( ent );
-			} else {
-				G_ImpactUserWeapon( ent, &trace );
-			}
-
-			return;
-		}
-
-		// Place the currentOrigin on the new ground polygon.
-		VectorAdd( groundTrace.endpos, up, ent->r.currentOrigin );
-
-		// Copy our collision point to the start position of the trajectory.
-		VectorCopy( ent->r.currentOrigin, ent->s.pos.trBase );
-	 
-		// Setup the new direction for the skimmer.
-		CrossProduct( ent->s.pos.trDelta, groundTrace.plane.normal, cross_temp );
-		CrossProduct( groundTrace.plane.normal, cross_temp, ent->s.pos.trDelta );
-		VectorNormalize( ent->s.pos.trDelta );
-		VectorScale( ent->s.pos.trDelta, ent->speed, ent->s.pos.trDelta);
-		vectoangles( ent->s.pos.trDelta, ent->s.angles);
-
-		// Set the new type and time for the trajectory
-		ent->s.pos.trType = TR_LINEAR;
-		ent->s.pos.trTime = level.time;
-
-		// This will save net bandwidth.
-		SnapVector( ent->s.pos.trDelta );
-
-		// Set the skimmer to have hit ground.
-		ent->onGround = qtrue;
-
-		trap_LinkEntity( ent );
-	}
-}
-
-
-#define RIFT_MAX_GROUNDLEVEL_VARIATION 25 // Maximum fluctuation of 25 game units positive/negative in the height
-#define RIFT_DEGRADE_TIME	1000 //msec
-#define RIFT_HEIGHT			200
-void G_RunRiftFrame( gentity_t *ent, int time ) {
-	vec3_t		origin, traceTarget;	
-	trace_t		trace;
-	float		up;
-	int			pass_ent;
-
-	if ( time > level.time ) return;
-	if ( time < (level.time - RIFT_DEGRADE_TIME)) return;
-
-	pass_ent = ent->r.ownerNum;
-
-	// get origin and target point
-	BG_EvaluateTrajectory( &ent->s, &ent->s.pos, time, origin );
-	VectorCopy( origin, traceTarget );
-	traceTarget[2] -= RIFT_MAX_GROUNDLEVEL_VARIATION;
-	origin[2] += RIFT_MAX_GROUNDLEVEL_VARIATION;
-
-	// trace a line between the valid vertical margin for the rift
-	trap_Trace( &trace, origin, NULL, NULL, traceTarget, ENTITYNUM_NONE, MASK_SOLID );
-
-	if ( trace.allsolid ) {
-		// The virtual piercing missile ended up staying inside a volume.
-		// The missile is removed.
-		G_RemoveUserWeapon( ent );
-	}
-	else if (time == level.time) {
-		VectorCopy( origin, ent->r.currentOrigin );
-		ent->r.currentOrigin[2] -= RIFT_MAX_GROUNDLEVEL_VARIATION;
-	}
-
-	// trace upwards from the point of origin to do damge,
-	// trace length modified by timeframe using second degree polynomial
-	VectorCopy( trace.endpos, origin );
-	VectorAdd( origin, trace.plane.normal, origin );
-	up = 2.0f * (float)(level.time - time ) / (float)RIFT_DEGRADE_TIME - 1;
-	up = -1 * (up * up) + 1;
-	up *= RIFT_HEIGHT; // FIXME: Must be replaced by weapon script based field...
-	
-	VectorCopy( origin, traceTarget );
-	traceTarget[2] += up;
-	trap_Trace( &trace, origin, NULL, NULL, traceTarget, pass_ent, ent->clipmask );
-
-	if ( trace.startsolid || trace.allsolid ) {
-		// make sure the trace.entityNum is set to the entity we're stuck in
-		trap_Trace( &trace, ent->r.currentOrigin, NULL, NULL, ent->r.currentOrigin, pass_ent, ent->clipmask );
-		trace.fraction = 0;
-	}
-
-	if ( trace.fraction != 1 ) {
-		// we hit something, now see if we can damage it
-		gentity_t	*traceEnt;
-		vec3_t		upVec = { 0, 0, 1 };
-
-		traceEnt = &g_entities[ trace.entityNum ];
-
-		if ( traceEnt->takedamage) {
-
-			G_UserWeaponDamage( traceEnt, &g_entities[ent->r.ownerNum], ent, upVec,
-								trace.endpos, ent->damage, 0,0 );
-		}
-	}
-}
-
-void G_RunRiftWeaponClass( gentity_t *ent ) {
-	int i;
-
-	for ( i = level.time - RIFT_DEGRADE_TIME; i <= level.time; i += 100 ) {
-		G_RunRiftFrame( ent, i );
-	}
-	
-}
-
-
-void G_RunUserTorch( gentity_t *ent ) {
-	gentity_t	*owner, *target;
-	vec3_t		forward, right, up, muzzle, targetDir, torchEnd;
-	trace_t		trace;
-	int			i;
-	float		targetRange, torchRange, targetAngle;
-
-	owner = &g_entities[ent->r.ownerNum];
-
-	// If the owner no longer is firing the weapon
-	if ( owner->client->ps.weaponstate != WEAPON_FIRING ) {
-		G_FreeEntity( ent );
-		return;
-	}
-
-	// Calculate where we are now aiming.
-	AngleVectors( owner->client->ps.viewangles, forward, right, up );
-	CalcMuzzlePoint( owner, forward, right, up, muzzle );
-
-	// Give the entity the new aiming settings
-	VectorCopy( muzzle, ent->s.pos.trBase );
-	vectoangles( forward, ent->s.apos.trBase );
-
-	// Get the new end point of the torch at the maximum distance
-	VectorMA( ent->s.pos.trBase, ent->homRange, forward, torchEnd );
-
-	// Clamp the end point, so we don't shoot torches straight through walls, but only locally.
-	trap_Trace( &trace, muzzle, NULL, NULL, torchEnd, ent->r.ownerNum, MASK_SOLID );
-	torchRange = Distance( trace.endpos, muzzle );
-	
-	// Do damage to any clients stuck inside the blast, not including the owner client.
-	for ( i = 0; i < level.numConnectedClients; i++ ) {
-		float dmgFrac;
-
-		if ( ent->r.ownerNum == i ) {
-			continue;
-		}
-		
-		target = &g_entities[i];
-		VectorSubtract( target->s.pos.trBase, muzzle, targetDir );
-		targetRange = VectorNormalize( targetDir );
-		if ( targetRange > torchRange ) {
-			continue;
-		}
-
-		targetAngle = hack_acos( DotProduct( targetDir, forward ));
-		if ( ent->homAngle < targetAngle ) {
-			continue;
-		}
-
-		if ( ent->homAngle ) {
-			dmgFrac = 1 - (targetAngle / ent->homAngle);
-
-			// Making sure floating point rounding errors don't cause problems
-			if ( dmgFrac < 0 ) {
-				dmgFrac = 0;
-			}
-		} else {
-			dmgFrac = 1;
-		}
-		
-		G_UserWeaponDamage( target, owner, ent, forward, muzzle, dmgFrac * ent->damage,0,0);
-	}
-
-	// Round off stored vectors
-	SnapVector( ent->s.pos.trBase );
-	SnapVector( ent->s.apos.trBase );
-}
-

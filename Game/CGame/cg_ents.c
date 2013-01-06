@@ -918,17 +918,6 @@ static void CG_Missile( centity_t *cent ) {
 		CG_AddEarthquake(cent->lerpOrigin, 10000, 1, 0, 1, 50);
 	}
 
-	// Check if it is a groundskimmer missile and activate a new debris trail
-	// if the entity is a entering into the PVS this frame.
-	if ( s1->eType == ET_SKIMMER ) {
-		//if ( cent->lastPVSTime < ( cg.time - cg.frametime - 100 )) { // 100 msec leeway for inconsistency in engine timing
-		if (!missileIsStruggling){
-			if ( !CG_FrameHist_WasInPVS( s1->number )) {
-				PSys_SpawnCachedSystem( "TrailDebris", cent->lerpOrigin, NULL, cent, NULL, qfalse, qfalse );
-			}
-		}
-	}
-
 	// Check if we should activate a missile specific particle system
 	//if ( cent->lastPVSTime < ( cg.time - cg.frametime - 100) ) {
 	if ( !CG_FrameHist_WasInPVS( s1->number )) {
@@ -1216,15 +1205,6 @@ static void CG_AddCEntity( centity_t *cent ) {
 		break;
 	case ET_BEAMHEAD:
 		CG_Missile( cent );
-		break;
-	case ET_FORCEFIELD:
-		CG_Missile( cent );
-		break;
-	case ET_SKIMMER:
-		CG_Missile( cent );
-		break;
-	case ET_TORCH:
-		CG_Torch( cent );
 		break;
 	}
 

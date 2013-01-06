@@ -824,19 +824,12 @@ typedef enum {
 	ET_TEAM,
 	// <-- RiO: New entity types for ZEQ2
 	ET_BEAMHEAD,			// a beam's beamhead
-	ET_FORCEFIELD,
-	ET_TORCH,
-	ET_SKIMMER,
-	ET_RIFT,
 	ET_EXPLOSION,
 	// -->
 	ET_EVENTS				// any of the EV_* events can be added freestanding
 							// by setting eType to ET_EVENTS + eventNum
 							// this avoids having to set eFlags and eventNum
 } entityType_t;
-
-
-
 void	BG_EvaluateTrajectory( entityState_t *es, const trajectory_t *tr, int atTime, vec3_t result );
 void	BG_EvaluateTrajectoryDelta( entityState_t *es, const trajectory_t *tr, int atTime, vec3_t result );
 // <-- RiO

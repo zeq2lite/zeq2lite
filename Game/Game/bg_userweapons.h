@@ -11,18 +11,11 @@
 
 // Bit flags for weapon statistics
 
-#define	WPF_NOMOVEFIRE			0x00000001	// can not move while firing weapon 
-#define WPF_NOMOVECHARGE		0x00000002	// can not move while charging weapon
-#define	WPF_NOMOVECOOLDOWN		0x00000004	// can not move while weapon is in 'cooldown'
-#define	WPF_ALTWEAPONPRESENT	0x00000008	// there is an alternate weapon available
-#define	WPF_DUALUSE				0x00000010	// weapon and alternate weapon are usable simultaneously
-#define WPF_NEEDSCHARGE			0x00000020	// determines whether or not the weapon needs to be charged before firing
-#define WPF_READY				0x00000040  // will be set by the server when the weapon is ready to be fired
-#define WPF_CONTINUOUS			0x00000080	// determines whether or not the attack is continuous fire
-#define WPF_GUIDED				0x00000100  // determines whether or not the attack is supposed to be guided
-#define WPF_GROUND				0x00000200
-#define WPF_FLIGHT				0x00000400
-#define WPF_WATER				0x00000800
+#define	WPF_ALTWEAPONPRESENT	0x00000001	// there is an alternate weapon available
+#define WPF_NEEDSCHARGE			0x00000002	// determines whether or not the weapon needs to be charged before firing
+#define WPF_READY				0x00000004  // will be set by the server when the weapon is ready to be fired
+#define WPF_CONTINUOUS			0x00000008	// determines whether or not the attack is continuous fire
+#define WPF_GUIDED				0x00000010  // determines whether or not the attack is supposed to be guided
 
 
 // NOTE: References for numbers when adding future flags

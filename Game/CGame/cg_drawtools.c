@@ -31,11 +31,21 @@ Adjusted for resolution and screen aspect ratio
 ================
 */
 void CG_AdjustFrom640(float *x, float *y, float *w, float *h,qboolean stretch) {
+		float offset = 1.33333333333333 + ((cgs.screenXScale/cgs.screenYScale) - 1.0);
+		float width = *w;
+		float height = *h;
 		stretch = qtrue;
 		*x *= cgs.screenXScale;
 		*y *= cgs.screenYScale;
-		*w *= stretch ? cgs.screenXScale : 1.6;
-		*h *= stretch ? cgs.screenYScale : 1.6;
+		*w *= stretch ? cgs.screenXScale : offset;
+		*h *= stretch ? cgs.screenYScale : offset;
+		if(!stretch){
+			//*x -= *x - width;
+			//*y -= height -*h;
+		}
+		//*x = (*x * cgs.screenXScale) - (*w - width);
+		//*y = (*y * cgs.screenYScale) - (*h - height);
+
 }
 /*
 ================

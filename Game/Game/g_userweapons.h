@@ -1,20 +1,11 @@
-// =========================================================
-//   EVERYTHING ABOVE HERE SHOULD GO INTO THE BG_* HEADERS
-// =========================================================
-
-typedef enum {
-	WPT_MISSILE,	//	Default missile type; ki blasts, discs, etc.
-	WPT_BEAM,		//	Beam type
-	WPT_FORCEFIELD,	//	Explosion effect surrounding player
-	WPT_TORCH,		//	Built in flamethrower primitive, rendering particles all
-					//	clientside to lighten network burden.
-	WPT_HITSCAN,	//	Rail- / lightninggun style hitscan attack
-	WPT_GROUNDSKIM,	//	Missile which travels on the ground after it connects with it
-	WPT_TRIGGER,	//  For redirecting an existing weapon.
-	WPT_NONE		//	Useful for self-healing, since it spawns nothing.
-} userWeaponType_t;
-
-typedef enum {
+typedef enum{
+	skillTypeMISSILE,	//	Default missile type; ki blasts, discs, etc.
+	skillTypeBEAM,		//	Beam type
+	skillTypeHITSCAN,	//	Rail- / lightninggun style hitscan attack
+	skillTypeTRIGGER,	//  For redirecting an existing weapon.
+	skillTypeNONE		//	Useful for self-healing, since it spawns nothing.
+}userWeaponType_t;
+typedef enum{
 	HOM_NONE,		//	Attack doesn't home in any way.
 	HOM_PROX,		//	As soon as a target enters homing range the attack detonates.
 	HOM_GUIDED,		//	Attack is guided by the player. ( NOTE: Bots will use a special kind of homing. )
@@ -26,29 +17,13 @@ typedef enum {
 					//	turning into horizontal travel.)
 					//	FIXME: Do we really need this special case for Kakusan Ha?
 					//	NOTE:  We probably do...
-} userWeaponHoming_t;
-
-typedef enum {
-	UMOD_KI,		//	Ki attack
-	UMOD_MELEE,		//	Punch / Kick
-	UMOD_SLICE,		//	Sliced in half by disc attack / melee weapon ( Trunks' sword )
-	UMOD_PIERCE,	//  Pierced / stabbed ( Freeza beam, Ki no Tsurugi, etc. )
-	UMOD_STONE,		//	Turned to stone ( Dabura's spit )
-	UMOD_BURN,		//	Burned ( Dabura's firebreath, 4-star Dragon's attacks )
-	UMOD_CANDY		//	'Turn to chocolate!'
-} userWeaponMOD_t;
-
-
-
-typedef struct {
+}userWeaponHoming_t;
+typedef struct{
 	// General
 	userWeaponType_t	general_type;				// Weapon's type
 	int					general_bitflags;			// Bitflag settings for weapon (see above)
 
 	// Reactions
-	qboolean			canStruggle;
-	qboolean			canStruggleFeed;
-	qboolean			isBlockable;
 	qboolean			isSwattable;
 
 	// Homing
@@ -58,15 +33,6 @@ typedef struct {
 
 	// Restrictions	
 	int					restrict_movement;
-	int					restrict_zanzoken;
-	int					restrict_dash;
-	int					restrict_walk;
-	int					restrict_jump;
-	int					restrict_boost;
-	int					restrict_alter;
-	int					restrict_soar;
-	int					restrict_attack;
-	int					restrict_block;
 
 	// Requirements
 	int					require_maximum;
@@ -96,21 +62,10 @@ typedef struct {
 	// Damage
 	int					damage_damage;				// Amount of damage, done at the impact point.
 	int					damage_impede;
-	int					damage_burn;
 	int					damage_radius;				// Splash radius of damage. Actual damage linearly decreases the further away you are from the impact point.
 	int					damage_radiusDuration;
 	int					damage_multiplier;			// Damage dealt = damage_damage + multiplier * charge level / 100.
 	int					damage_radiusMultiplier;	// Actual radius = damage_radius + multiplier * charge level / 100.
-	int					damage_playerHitType;
-	int					damage_groundHitType;
-	int					damage_stunTime;
-	int					damage_freezeTime;
-	qboolean			damage_ignoreDefense;	
-	qboolean			damage_piercing;			// Does the attack pierce the target and continue to exist afterwards?
-	qboolean			damage_continuous;			// Does the weapon keep exploding until told otherwise when hitting solid geometry? ( WARNING: Should only be used in conjuction with detonatability! )
-	qboolean			damage_lethal;				// Is the attack a lethal strike?
-	qboolean			damage_planetary;			// Will the attack do planetary damage?
-	userWeaponMOD_t		damage_meansOfDeath;		// How does the player that was hit die.
 	int					damage_extraKnockback;		// Additional knockback to add to an attack's knockback caused directly by damage
 
 	// Physics

@@ -86,8 +86,7 @@ void UI_PushMenu( menuframework_s *menu )
 	// avoid stacking menus invoked by hotkeys
 	for (i=0 ; i<uis.menusp ; i++)
 	{
-		if (uis.stack[i] == menu)
-		{
+		if (uis.stack[i] == menu){
 			uis.menusp = i;
 			break;
 		}
@@ -806,30 +805,24 @@ qboolean UI_IsFullscreen( void ) {
 	return qfalse;
 }
 
-void UI_SetActiveMenu( uiMenuCommand_t menu ) {
-	// this should be the ONLY way the menu system is brought up
-	// enusure minumum menu data is cached
-	Menu_Cache();
-
-	switch ( menu ) {
-	case UIMENU_NONE:
-		UI_ForceMenuOff();
-		return;
-	case UIMENU_MAIN:
-		UI_MainMenu();
-		return;
-	case UIMENU_INGAME:
-		trap_Cvar_Set( "cl_paused", "1" );
-		UI_InGameMenu();
-		return;
-		
-	case UIMENU_TEAM:
-	case UIMENU_POSTGAME:
-	default:
-#ifndef NDEBUG
-	  Com_Printf("UI_SetActiveMenu: bad enum %d\n", menu );
-#endif
-	  break;
+void UI_SetActiveMenu(uiMenuCommand_t menu){
+	//Menu_Cache();
+	switch(menu){
+		case UIMENU_NONE:
+			UI_ForceMenuOff();
+			return;
+		case UIMENU_MAIN:
+			UI_MainMenu();
+			return;
+		case UIMENU_INGAME:
+			trap_Cvar_Set("cl_paused","1");
+			UI_InGameMenu();
+			return;
+		case UIMENU_TEAM:
+		case UIMENU_POSTGAME:
+		default:
+		  Com_Printf("UI_SetActiveMenu: bad enum %d\n", menu );
+		  break;
 	}
 }
 
@@ -946,43 +939,8 @@ UI_Cache
 =================
 */
 void UI_Cache_f( void ) {
-	MainMenu_Cache();
-	InGame_Cache();
-	ConfirmMenu_Cache();
-	PlayerModel_Cache();
-	Controls_Cache();
-	Preferences_Cache();
-	ServerInfo_Cache();
-	ArenaServers_Cache();
-	StartServer_Cache();
-	SystemSettings_Cache();
+
 }
-
-/*
-=================
-JUHOX: UI_LFEdit_f
-=================
-*/
-#if MAPLENSFLARES
-static void UI_LFEdit_f(void) {
-	const char* mapname;
-
-	if (trap_Argc() != 2) return;
-
-	mapname = UI_Argv(1);
-	if (!mapname) return;
-	if (!mapname[0]) return;
-
-	trap_Cvar_SetValue("sv_maxclients", 1);
-	trap_Cvar_SetValue("dedicated", 0);
-	trap_Cvar_SetValue("sv_pure", 0);
-	trap_Cvar_SetValue("g_editmode", EM_mlf);
-	trap_Cvar_SetValue("g_gametype", 0);
-
-	// the wait commands will allow the dedicated to take effect
-	trap_Cmd_ExecuteText(EXEC_APPEND, va( "wait ; wait ; devmap %s\n", mapname));
-}
-#endif
 
 /*
 =================
@@ -991,21 +949,8 @@ UI_ConsoleCommand
 */
 qboolean UI_ConsoleCommand( int realTime ) {
 	char	*cmd;
-
-	cmd = UI_Argv( 0 );
-
-	// ensure minimum menu data is available
-	Menu_Cache();
-	if ( Q_stricmp (cmd, "ui_cache") == 0 ) {
-		UI_Cache_f();
-		return qtrue;
-	}
-#if MAPLENSFLARES	// JUHOX: commands for map lens flares
-	if (Q_stricmp(cmd, "lfedit") == 0) {
-		UI_LFEdit_f();
-		return qtrue;
-	}
-#endif
+	//cmd = UI_Argv(0);
+	//Menu_Cache();
 	return qfalse;
 }
 
@@ -1014,8 +959,7 @@ qboolean UI_ConsoleCommand( int realTime ) {
 UI_Shutdown
 =================
 */
-void UI_Shutdown( void ) {
-}
+void UI_Shutdown( void ){}
 
 /*
 =================
@@ -1025,41 +969,18 @@ UI_Init
 void UI_Init( void ) {
 	UI_RegisterCvars();
 	UI_InitGameinfo();
-
-	// cache redundant calulations
 	trap_GetGlconfig( &uis.glconfig );
-
-	// for 640x480 virtualized screen
-	// JUHOX: wide screen option not very helpful; instead scale X & Y independent from each other
-#if 0
-	uis.scale = uis.glconfig.vidHeight * (1.0/480.0);
-	if ( uis.glconfig.vidWidth * 480 > uis.glconfig.vidHeight * 640 ) {
-		// wide screen
-		uis.bias = 0.5 * ( uis.glconfig.vidWidth - ( uis.glconfig.vidHeight * (640.0/480.0) ) );
-	}
-	else {
-		// no wide screen
-		uis.bias = 0;
-	}
-#else
 	uis.scaleX = uis.glconfig.vidWidth / 640.0;
 	uis.scaleY = uis.glconfig.vidHeight / 480.0;
-#endif
-
-	// initialize the menu system
 	Menu_Cache();
-
 	uis.activemenu = NULL;
-	uis.menusp     = 0;
+	uis.menusp = 0;
 }
 
-/*
-================
+/*================
 UI_AdjustFrom640
-
 Adjusted for resolution and screen aspect ratio
-================
-*/
+================*/
 void UI_AdjustFrom640( float *x, float *y, float *w, float *h ) {
 	qboolean stretch = qtrue;
 	*x *= uis.scaleX;
@@ -1068,14 +989,12 @@ void UI_AdjustFrom640( float *x, float *y, float *w, float *h ) {
 	*h *= stretch ? uis.scaleY : 1.6;
 }
 
-void UI_DrawNamedPic( float x, float y, float width, float height, const char *picname ) {
+void UI_DrawNamedPic(float x, float y, float width, float height, const char *picname){
 	qhandle_t	hShader;
-
 	hShader = trap_R_RegisterShaderNoMip( picname );
 	UI_AdjustFrom640( &x, &y, &width, &height );
 	trap_R_DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader );
 }
-
 void UI_DrawHandlePic( float x, float y, float w, float h, qhandle_t hShader ) {
 	float	s0;
 	float	s1;
@@ -1329,57 +1248,31 @@ void UI_DrawBackPic(qboolean drawPic) {
 UI_Refresh
 =================
 */
-void UI_Refresh( int realtime )
-{
+void UI_Refresh( int realtime ){
 	uis.frametime = realtime - uis.realtime;
 	uis.realtime  = realtime;
-
-	if ( !( trap_Key_GetCatcher() & KEYCATCH_UI ) ) {
+	if(!( trap_Key_GetCatcher() & KEYCATCH_UI)){
 		return;
 	}
-
 	UI_UpdateCvars();
-
-	if ( uis.activemenu )
-	{
-		if (uis.activemenu->fullscreen)
-		{
-			// draw the background
+	if(uis.activemenu){
+		if (uis.activemenu->fullscreen){
 			if(!uis.hideBack){UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader);}
 			if(!uis.hideEarth){UI_MenuScene();}
 			if(uis.showFrame){Menu_Frame();}
 			if(uis.showSide){Menu_Side();}
 			Menu_Common(uis.menuamount);
 		}
+		if(uis.activemenu->draw){uis.activemenu->draw();}
+		else{Menu_Draw(uis.activemenu);}
 
-		if (uis.activemenu->draw)
-			uis.activemenu->draw();
-		else
-			Menu_Draw( uis.activemenu );
-
-		if( uis.firstdraw ) {
-			UI_MouseEvent( 0, 0 );
-			uis.firstdraw = qfalse;
-		}
 	}
-
-	// draw cursor
-	UI_SetColor( NULL );
+	UI_SetColor(NULL);
 	UI_DrawHandlePic( uis.cursorx-16, uis.cursory-16, 32, 32, uis.cursor);
-
-#ifndef NDEBUG
-	if (uis.debug)
-	{
-		// cursor coordinates
+	if (uis.debug){
 		UI_DrawString( 0, 0, va("(%d,%d)",uis.cursorx,uis.cursory), UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW, colorRed );
 	}
-#endif
-
-	// delay playing the enter sound until after the
-	// menu has been drawn, to avoid delay while
-	// caching images
-	if (m_entersound)
-	{
+	if (m_entersound){
 		trap_S_StartLocalSound( menu_in_sound, CHAN_LOCAL_SOUND );
 		m_entersound = qfalse;
 	}
