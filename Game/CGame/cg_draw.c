@@ -686,15 +686,25 @@ void CG_DrawHUD(playerState_t *ps,int clientNum,int x,int y,qboolean flipped){
 		if(ps->powerLevel[plCurrent] == ps->powerLevel[plMaximum] && ps->bitFlags & usingAlter){
 			CG_DrawPic(qfalse,x+243,y+25,40,44,cgs.media.breakLimitShader);
 		}
-		if(ps->powerLevel[plCurrent] == 9001){
+		if(ps->powerLevel[plCurrent] >= 9001 && ps->powerLevel[plCurrent] <= 9010){
 			powerLevelString = "Over ^3NINE-THOUSAND!!!";
 		}
 		multiplier = cgs.clientinfo[clientNum].tierConfig[cgs.clientinfo[clientNum].tierCurrent].hudMultiplier;
 		if(multiplier <= 0){
 			multiplier = 1.0;
 		}
+		if(ps->powerLevel[plCurrent] < 9001){
+			powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
+			powerLevelString = powerLevelDisplay >= 1000000 ? va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0) : va("%i",powerLevelDisplay);
+			powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
+		}
+		if(ps->powerLevel[plCurrent] > 9010){
+			powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
+			powerLevelString = powerLevelDisplay >= 1000000 ? va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0) : va("%i",powerLevelDisplay);
+			powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
+		}
 		powerLevelDisplay = (float)ps->powerLevel[plCurrent] * multiplier;
-		powerLevelString = powerLevelDisplay >= 1000000 ? va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0) : va("%i",powerLevelDisplay);
+		//powerLevelString = powerLevelDisplay >= 1000000 ? va("%.1f ^3mil",(float)powerLevelDisplay / 1000000.0) : va("%i",powerLevelDisplay);
 		powerLevelOffset = (Q_PrintStrlen(powerLevelString)-2)*8;
 	}
 	else{
