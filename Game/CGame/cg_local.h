@@ -39,10 +39,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // If you absolutely need something stored, it can either be kept
 // by the server in the server stored userinfos, or stashed in a cvar.
 
-#ifdef MISSIONPACK
-#define CG_FONT_THRESHOLD 0.1
-#endif
-
 #define	POWERUP_BLINKS		5
 
 #define	POWERUP_BLINK_TIME	1000
@@ -55,7 +51,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	LAND_RETURN_TIME	300
 #define	STEP_TIME			200
 #define	DUCK_TIME			100
-#define	PAIN_TWITCH_TIME	200
 #define	WEAPON_SELECT_TIME	1400
 #define	ITEM_SCALEUP_TIME	1000
 #define	ZOOM_TIME			150
@@ -149,8 +144,6 @@ typedef struct {
 
 typedef struct {
 	lerpFrame_t		legs, torso, head, camera, flag;
-	int				painTime;
-	int				painDirection;	// flip from 0 to 1
 	int				lightningFiring;
 
 	int				railFireTime;
@@ -295,26 +288,6 @@ typedef struct localEntity_s {
 } localEntity_t;
 
 //======================================================================
-
-
-typedef struct {
-	int				client;
-	int				score;
-	int				ping;
-	int				time;
-	int				scoreFlags;
-	int				powerUps;
-	int				accuracy;
-	int				impressiveCount;
-	int				excellentCount;
-	int				guantletCount;
-	int				defendCount;
-	int				assistCount;
-	int				captures;
-	qboolean	perfect;
-	int				team;
-} score_t;
-
 // each client has an associated clientInfo_t
 // that contains media references necessary to present the
 // client model and other color coded effects
@@ -332,9 +305,8 @@ typedef struct {
 	byte c1RGBA[4];
 	byte c2RGBA[4];
 
-	int				score;			// updated by score servercmds
 	int				location;		// location index for team mode
-	int				powerLevel;			// you only get this info about your teammates
+	int				powerLevel;		// you only get this info about your teammates
 	int				armor;
 	int				curWeapon;
 	int				wins, losses;	// in tourney mode
@@ -350,9 +322,7 @@ typedef struct {
 	char			skinName[MAX_QPATH];
 	char			cameraModelName[MAX_QPATH];
 	char			headModelName[MAX_QPATH];
-	char			headSkinName[MAX_QPATH];
 	char			legsModelName[MAX_QPATH];
-	char			legsSkinName[MAX_QPATH];
 	char			redTeam[MAX_TEAMNAME];
 	char			blueTeam[MAX_TEAMNAME];
 	qhandle_t		skinDamageState[8][3][10];
@@ -365,11 +335,9 @@ typedef struct {
 	qboolean		overrideHead;
 	footstep_t		footsteps;
 	qhandle_t		legsModel[8];
-	qhandle_t		legsSkin[8];
 	qhandle_t		torsoModel[8];
-	qhandle_t		torsoSkin[8];
 	qhandle_t		headModel[8];
-	qhandle_t		headSkin[8];
+	qhandle_t		skin[8];
 	qhandle_t		cameraModel[8];
 	qhandle_t		modelIcon;
 	animation_t		animations[MAX_TOTALANIMATIONS];
@@ -611,8 +579,6 @@ typedef struct {
 								// is rendering at.
 	int			oldTime;		// time at last frame, used for missile trails and prediction checking
 	int			physicsTime;	// either cg.snap->time or cg.nextSnap->time
-	int			timelimitWarnings;	// 5 min, 1 min, overtime
-	int			fraglimitWarnings;
 	qboolean	mapRestart;			// set on a map restart to set back the weapon
 	qboolean	renderingThirdPerson;		// during deaths, chasecams, etc
 	// prediction state
@@ -678,24 +644,6 @@ typedef struct {
 	float		zoomSensitivity;
 	// information screen text during loading
 	char		infoScreenText[MAX_STRING_CHARS];
-	// scoreboard
-	int			scoresRequestTime;
-	int			numScores;
-	int			selectedScore;
-	int			teamScores[2];
-	score_t		scores[MAX_CLIENTS];
-	qboolean	showScores;
-	qboolean	scoreBoardShowing;
-	int			scoreFadeTime;
-	char		killerName[MAX_NAME_LENGTH];
-	char		spectatorList[MAX_STRING_CHARS];		// list of names
-	int			spectatorLen;							// length of list
-	float		spectatorWidth;							// width in device units
-	int			spectatorTime;							// next time to offset
-	int			spectatorPaintX;						// current paint x
-	int			spectatorPaintX2;						// current paint x
-	int			spectatorOffset;						// current offset from start
-	int			spectatorPaintLen; 						// current offset from start
 
 #ifdef MISSIONPACK
 	// skull trails
@@ -973,10 +921,6 @@ typedef struct {
 
 	int				levelStartTime;
 
-	int				scores1, scores2;		// from configstrings
-	int				redflag, blueflag;		// flag status from configstrings
-	int				flagStatus;
-
 	qboolean  newHud;
 
 	//
@@ -1130,7 +1074,6 @@ extern	vmCvar_t		cg_drawFriend;
 extern	vmCvar_t		cg_teamChatsOnly;
 extern	vmCvar_t		cg_noVoiceChats;
 extern	vmCvar_t		cg_noVoiceText;
-extern  vmCvar_t		cg_scorePlum;
 extern	vmCvar_t		cg_smoothClients;
 extern	vmCvar_t		pmove_fixed;
 extern	vmCvar_t		pmove_msec;
@@ -1190,8 +1133,6 @@ void CG_KeyEvent(int key, qboolean down);
 void CG_MouseEvent(int x, int y);
 void CG_EventHandling(int type);
 void CG_RankRunFrame( void );
-void CG_SetScoreSelection(void *menu);
-score_t *CG_GetSelectedScore( void );
 void CG_BuildSpectatorString( void );
 
 #if MAPLENSFLARES	// JUHOX: prototypes
@@ -1343,10 +1284,7 @@ void CG_LoadDeferredPlayers( void );
 // cg_events.c
 //
 void CG_CheckEvents( centity_t *cent );
-const char	*CG_PlaceString( int rank );
 void CG_EntityEvent( centity_t *cent, vec3_t position );
-void CG_PainEvent( centity_t *cent, int powerLevel );
-
 
 //
 // cg_ents.c
@@ -1474,7 +1412,6 @@ void CG_InvulnerabilityImpact( vec3_t org, vec3_t angles );
 void CG_InvulnerabilityJuiced( vec3_t org );
 void CG_LightningBoltBeam( vec3_t start, vec3_t end );
 #endif
-void CG_ScorePlum( int client, vec3_t org, int score );
 
 void CG_GibPlayer( vec3_t playerOrigin );
 void CG_BigExplode( vec3_t playerOrigin );
@@ -1499,12 +1436,6 @@ void CG_ProcessSnapshots( void );
 void CG_LoadingString( const char *s );
 void CG_LoadingClient( int clientNum );
 void CG_DrawInformation( void );
-
-//
-// cg_scoreboard.c
-//
-qboolean CG_DrawOldScoreboard( void );
-void CG_DrawOldTourneyScoreboard( void );
 
 //
 // cg_consolecmds.c
@@ -1566,6 +1497,7 @@ int			trap_FS_FOpenFile( const char *qpath, fileHandle_t *f, fsMode_t mode );
 void		trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void		trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void		trap_FS_FCloseFile( fileHandle_t f );
+int			trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
 int			trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize );
 
 // add commands to the local console as if they were typed in

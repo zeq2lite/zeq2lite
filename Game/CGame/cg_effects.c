@@ -532,9 +532,9 @@ void CG_LightningEffect( vec3_t org, clientInfo_t *ci, int tier ) {
 
 		re->reType = RT_SPRITE;
 		re->radius = le->radius;
-		re->shaderRGBA[0] = 0xff;
-		re->shaderRGBA[1] = 0xff;
-		re->shaderRGBA[2] = 0xff;
+		re->shaderRGBA[0] = 0xff * ci->auraConfig[tier]->lightningColor[0];
+		re->shaderRGBA[1] = 0xff * ci->auraConfig[tier]->lightningColor[1];
+		re->shaderRGBA[2] = 0xff * ci->auraConfig[tier]->lightningColor[2];
 		re->shaderRGBA[3] = 0xff;
 
 		re->customShader = ci->auraConfig[tier]->lightningShader;
@@ -914,7 +914,6 @@ void CG_ScorePlum( int client, vec3_t org, int score ) {
 	refEntity_t		*re;
 	vec3_t	angles;
 	static vec3_t lastPos;
-	if (/*client != cg.predictedPlayerState.clientNum || */cg_scorePlum.integer == 0) {return;}
 	le = CG_AllocLocalEntity();
 	le->leFlags = 0;
 	le->leType = LE_SCOREPLUM;

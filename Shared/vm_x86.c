@@ -203,19 +203,25 @@ static void EmitRexString(byte rex, const char *string)
 
 
 #define MASK_REG(modrm, mask) \
-	EmitString("81"); \
-	EmitString((modrm)); \
-	Emit4((mask))
+	do { \
+		EmitString("81"); \
+		EmitString((modrm)); \
+		Emit4((mask)); \
+	} while(0)
 
 // add bl, bytes
 #define STACK_PUSH(bytes) \
-	EmitString("80 C3"); \
-	Emit1(bytes)
+	do { \
+		EmitString("80 C3"); \
+		Emit1(bytes); \
+	} while(0)
 
 // sub bl, bytes
 #define STACK_POP(bytes) \
-	EmitString("80 EB"); \
-	Emit1(bytes)
+	do { \
+		EmitString("80 EB"); \
+		Emit1(bytes); \
+	} while(0)
 
 static void EmitCommand(ELastCommand command)
 {
@@ -381,99 +387,72 @@ Error handler for jump/call to invalid instruction number
 =================
 */
 
-static void ErrJump(void)
+static void __attribute__((__noreturn__)) ErrJump(void)
 { 
 	Com_Error(ERR_DROP, "program tried to execute code outside VM");
-	exit(1);
 }
 
 /*
 =================
 DoSyscall
-Uses asm to retrieve arguments from registers to work around different calling conventions
+
+Assembler helper routines will write its arguments directly to global variables so as to
+work around different calling conventions
 =================
 */
 
-#if defined(_MSC_VER) && idx64
+int vm_syscallNum;
+int vm_programStack;
+int *vm_opStackBase;
+uint8_t vm_opStackOfs;
+intptr_t vm_arg;
 
-extern void qsyscall64(void);
-extern uint8_t qvmcall64(int *programStack, int *opStack, intptr_t *instructionPointers, byte *dataBase);
-
-// Microsoft does not support inline assembler on x64 platforms. Meh.
-void DoSyscall(int syscallNum, int programStack, int *opStackBase, uint8_t opStackOfs, intptr_t arg)
-{
-#else
 static void DoSyscall(void)
 {
-	int syscallNum;
-	int programStack;
-	int *opStackBase;
-	uint8_t opStackOfs;
-	intptr_t arg;
-#endif
-
 	vm_t *savedVM;
-
-#if defined(_MSC_VER)
-  #if !idx64
-	__asm
-	{
-		mov	dword ptr syscallNum, eax
-		mov	dword ptr programStack, esi
-		mov	byte ptr opStackOfs, bl
-		mov	dword ptr opStackBase, edi
-		mov	dword ptr arg, ecx
-	}
-  #endif
-#else
-	__asm__ volatile(
-		""
-		: "=a" (syscallNum), "=S" (programStack), "=D" (opStackBase), "=b" (opStackOfs),
-		  "=c" (arg)
-		);
-#endif
 
 	// save currentVM so as to allow for recursive VM entry
 	savedVM = currentVM;
 	// modify VM stack pointer for recursive VM entry
-	currentVM->programStack = programStack - 4;
+	currentVM->programStack = vm_programStack - 4;
 
-	if(syscallNum < 0)
+	if(vm_syscallNum < 0)
 	{
-		int *data;
+		int *data, *ret;
 #if idx64
 		int index;
-		intptr_t args[16];
+		intptr_t args[MAX_VMSYSCALL_ARGS];
 #endif
 		
-		data = (int *) (savedVM->dataBase + programStack + 4);
+		data = (int *) (savedVM->dataBase + vm_programStack + 4);
+		ret = &vm_opStackBase[vm_opStackOfs + 1];
 
 #if idx64
-		args[0] = ~syscallNum;
+		args[0] = ~vm_syscallNum;
 		for(index = 1; index < ARRAY_LEN(args); index++)
 			args[index] = data[index];
 			
-		opStackBase[opStackOfs + 1] = savedVM->systemCall(args);
+		*ret = savedVM->systemCall(args);
 #else
-		data[0] = ~syscallNum;
-		opStackBase[opStackOfs + 1] = savedVM->systemCall((intptr_t *) data);
+		data[0] = ~vm_syscallNum;
+		*ret = savedVM->systemCall((intptr_t *) data);
 #endif
 	}
 	else
 	{
-		switch(syscallNum)
+		switch(vm_syscallNum)
 		{
 		case VM_JMP_VIOLATION:
 			ErrJump();
 		break;
 		case VM_BLOCK_COPY: 
-			if(opStackOfs < 1)
+			if(vm_opStackOfs < 1)
 				Com_Error(ERR_DROP, "VM_BLOCK_COPY failed due to corrupted opStack");
 			
-			VM_BlockCopy(opStackBase[(opStackOfs - 1)], opStackBase[opStackOfs], arg);
+			VM_BlockCopy(vm_opStackBase[(vm_opStackOfs - 1)], vm_opStackBase[vm_opStackOfs], vm_arg);
 		break;
 		default:
-			Com_Error(ERR_DROP, "Unknown VM operation %d", syscallNum);
+			Com_Error(ERR_DROP, "Unknown VM operation %d", vm_syscallNum);
 		break;
 		}
 	}
@@ -504,13 +483,8 @@ Call to DoSyscall()
 int EmitCallDoSyscall(vm_t *vm)
 {
 	// use edx register to store DoSyscall address
-#if defined(_MSC_VER) && idx64
-	EmitRexString(0x48, "BA");		// mov edx, qsyscall64
-	EmitPtr(qsyscall64);
-#else
 	EmitRexString(0x48, "BA");		// mov edx, DoSyscall
 	EmitPtr(DoSyscall);
-#endif
 
 	// Push important registers to stack as we can't really make
 	// any assumptions about calling conventions.
@@ -522,6 +496,27 @@ int EmitCallDoSyscall(vm_t *vm)
 	EmitRexString(0x41, "51");		// push r9
 #endif
 
+	// write arguments to global vars
+	// syscall number
+	EmitString("A3");			// mov [0x12345678], eax
+	EmitPtr(&vm_syscallNum);
+	// vm_programStack value
+	EmitString("89 F0");			// mov eax, esi
+	EmitString("A3");			// mov [0x12345678], eax
+	EmitPtr(&vm_programStack);
+	// vm_opStackOfs 
+	EmitString("88 D8");			// mov al, bl
+	EmitString("A2");			// mov [0x12345678], al
+	EmitPtr(&vm_opStackOfs);
+	// vm_opStackBase
+	EmitRexString(0x48, "89 F8");		// mov eax, edi
+	EmitRexString(0x48, "A3");		// mov [0x12345678], eax
+	EmitPtr(&vm_opStackBase);
+	// vm_arg
+	EmitString("89 C8");			// mov eax, ecx
+	EmitString("A3");			// mov [0x12345678], eax
+	EmitPtr(&vm_arg);
+	
 	// align the stack pointer to a 16-byte-boundary
 	EmitString("55");			// push ebp
 	EmitRexString(0x48, "89 E5");		// mov ebp, esp
@@ -1099,8 +1094,9 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 
 	// ensure that the optimisation pass knows about all the jump
 	// table targets
+	pc = -1; // a bogus value to be printed in out-of-bounds error messages
 	for( i = 0; i < vm->numJumpTableTargets; i++ ) {
-		jused[ *(int *)(vm->jumpTableTargets + ( i * sizeof( int ) ) ) ] = 1;
+		JUSED( *(int *)(vm->jumpTableTargets + ( i * sizeof( int ) ) ) );
 	}
 
 	// Start buffer with x86-VM specific procedures
@@ -1713,6 +1709,10 @@ This function is called directly by the generated code
 ==============
 */
 
+#if defined(_MSC_VER) && defined(idx64)
+extern uint8_t qvmcall64(int *programStack, int *opStack, intptr_t *instructionPointers, byte *dataBase);
+#endif
+
 int VM_CallCompiled(vm_t *vm, int *args)
 {
 	byte	stack[OPSTACK_SIZE + 15];
@@ -1721,6 +1721,7 @@ int VM_CallCompiled(vm_t *vm, int *args)
 	byte	*image;
 	int	*opStack;
 	int		opStackOfs;
+	int		arg;
 
 	currentVM = vm;
 
@@ -1733,18 +1734,11 @@ int VM_CallCompiled(vm_t *vm, int *args)
 	// set up the stack frame 
 	image = vm->dataBase;
 
-	programStack -= 48;
+	programStack -= ( 8 + 4 * MAX_VMMAIN_ARGS );
 
-	*(int *)&image[ programStack + 44] = args[9];
-	*(int *)&image[ programStack + 40] = args[8];
-	*(int *)&image[ programStack + 36] = args[7];
-	*(int *)&image[ programStack + 32] = args[6];
-	*(int *)&image[ programStack + 28] = args[5];
-	*(int *)&image[ programStack + 24] = args[4];
-	*(int *)&image[ programStack + 20] = args[3];
-	*(int *)&image[ programStack + 16] = args[2];
-	*(int *)&image[ programStack + 12] = args[1];
-	*(int *)&image[ programStack + 8 ] = args[0];
+	for ( arg = 0; arg < MAX_VMMAIN_ARGS; arg++ )
+		*(int *)&image[ programStack + 8 + arg * 4 ] = args[ arg ];
+
 	*(int *)&image[ programStack + 4 ] = 0;	// return stack
 	*(int *)&image[ programStack ] = -1;	// will terminate the loop on return
 
@@ -1806,7 +1800,7 @@ int VM_CallCompiled(vm_t *vm, int *args)
 	{
 		Com_Error(ERR_DROP, "opStack corrupted in compiled code");
 	}
-	if(programStack != stackOnEntry - 48)
+	if(programStack != stackOnEntry - (8 + 4 * MAX_VMMAIN_ARGS))
 		Com_Error(ERR_DROP, "programStack corrupted in compiled code");
 
 	vm->programStack = stackOnEntry;

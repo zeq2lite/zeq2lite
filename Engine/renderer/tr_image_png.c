@@ -19,7 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ===========================================================================
 */
 
-#include "tr_local.h"
+#include "tr_common.h"
 
 #include "../../Shared/puff.h"
 
@@ -540,7 +540,6 @@ static uint32_t DecompressIDATs(struct BufferedFile *BF, uint8_t **Buffer)
 	 */
 
 	DecompressedData = NULL;
-	DecompressedDataLength = 0;
 	*Buffer = DecompressedData;
 
 	CompressedData = NULL;
@@ -962,7 +961,7 @@ static qboolean UnfilterImage(uint8_t  *DecompressedData,
 			PixelLeft = DecompPtr;
 
 			/*
-			 *  We only have a upleft pixel if we are on the second line or above.
+			 *  We only have an upleft pixel if we are on the second line or above.
 			 */
 
 			if(h > 0)
@@ -2131,7 +2130,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 		ChunkHeaderType   = BigLong(CH->Type);
 
 		/*
-		 *  Check if the chunk is an PLTE.
+		 *  Check if the chunk is a PLTE.
 		 */
 
 		if(!(ChunkHeaderType == PNG_ChunkType_PLTE))
@@ -2202,7 +2201,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 	}
 
 	/*
-	 *  transparency information is sometimes stored in an tRNS chunk
+	 *  transparency information is sometimes stored in a tRNS chunk
 	 */
 
 	/*
@@ -2233,7 +2232,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 		ChunkHeaderType   = BigLong(CH->Type);
 
 		/*
-		 *  Check if the chunk is an tRNS.
+		 *  Check if the chunk is a tRNS.
 		 */
 
 		if(!(ChunkHeaderType == PNG_ChunkType_tRNS))
@@ -2275,7 +2274,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 		{
 			case PNG_ColourType_Grey :
 			{
-				if(!ChunkHeaderLength == 2)
+				if(ChunkHeaderLength != 2)
 				{
 					CloseBufferedFile(ThePNG);
 
@@ -2297,7 +2296,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 
 			case PNG_ColourType_True :
 			{
-				if(!ChunkHeaderLength == 6)
+				if(ChunkHeaderLength != 6)
 				{
 					CloseBufferedFile(ThePNG);
 

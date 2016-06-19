@@ -55,11 +55,6 @@ equ trap_Cvar_Update						-52
 equ trap_MemoryRemaining					-53
 equ trap_R_RegisterFont						-54
 equ trap_R_ModelBounds						-55
-equ trap_PC_AddGlobalDefine					-56
-equ	trap_PC_LoadSource						-57
-equ trap_PC_FreeSource						-58
-equ trap_PC_ReadToken						-59
-equ trap_PC_SourceFileAndLine				-60
 equ trap_S_StopBackgroundTrack				-61
 equ trap_S_StartBackgroundTrack				-62
 equ trap_RealTime							-63
@@ -83,7 +78,7 @@ equ trap_LAN_ServerStatus					-80
 equ trap_LAN_GetServerPing					-81
 equ trap_LAN_ServerIsVisible				-82
 equ trap_LAN_CompareServers					-83
-
+equ trap_FS_Seek							-84
 
 equ	memset						-101
 equ	memcpy						-102

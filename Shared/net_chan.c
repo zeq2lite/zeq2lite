@@ -500,7 +500,7 @@ static void NET_QueuePacket( int length, const void *data, netadr_t to,
 	Com_Memcpy(new->data, data, length);
 	new->length = length;
 	new->to = to;
-	new->release = Sys_Milliseconds() + (int)((float)offset / com_timescale->value);	
+	new->release = Sys_Milliseconds() + (int)((float)offset / com_timeScale->value);	
 	new->next = NULL;
 
 	if(!packetQueue) {
@@ -549,11 +549,11 @@ void NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to ) 
 		return;
 	}
 
-	if ( sock == NS_CLIENT && cl_packetdelay->integer > 0 ) {
-		NET_QueuePacket( length, data, to, cl_packetdelay->integer );
+	if ( sock == NS_CLIENT && cl_packetDelay->integer > 0 ) {
+		NET_QueuePacket( length, data, to, cl_packetDelay->integer );
 	}
-	else if ( sock == NS_SERVER && sv_packetdelay->integer > 0 ) {
-		NET_QueuePacket( length, data, to, sv_packetdelay->integer );
+	else if ( sock == NS_SERVER && sv_packetDelay->integer > 0 ) {
+		NET_QueuePacket( length, data, to, sv_packetDelay->integer );
 	}
 	else {
 		Sys_SendPacket( length, data, to );

@@ -814,12 +814,11 @@ void UI_SetActiveMenu(uiMenuCommand_t menu){
 		case UIMENU_MAIN:
 			UI_MainMenu();
 			return;
-		case UIMENU_INGAME:
+		case UIMENU_INWORLD:
 			trap_Cvar_Set("cl_paused","1");
-			UI_InGameMenu();
+			UI_InWorldMenu();
 			return;
-		case UIMENU_TEAM:
-		case UIMENU_POSTGAME:
+		case UIMENU_POSTWORLD:
 		default:
 		  Com_Printf("UI_SetActiveMenu: bad enum %d\n", menu );
 		  break;

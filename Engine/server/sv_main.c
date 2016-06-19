@@ -631,7 +631,7 @@ void SVC_Info( netadr_t from ) {
 	// to prevent timed spoofed reply packets that add ghost servers
 	Info_SetValueForKey( infostring, "challenge", Cmd_Argv(1) );
 
-	Info_SetValueForKey( infostring, "gamename", com_gamename->string );
+	Info_SetValueForKey( infostring, "dirName", com_dirName->string );
 
 #ifdef LEGACY_PROTOCOL
 	if(com_legacyprotocol->integer > 0)
@@ -662,7 +662,7 @@ void SVC_Info( netadr_t from ) {
 	if( sv_maxPing->integer ) {
 		Info_SetValueForKey( infostring, "maxPing", va("%i", sv_maxPing->integer) );
 	}
-	gamedir = Cvar_VariableString( "fs_game" );
+	gamedir = Cvar_VariableString( "fs_dir" );
 	if( *gamedir ) {
 		Info_SetValueForKey( infostring, "game", gamedir );
 	}
@@ -1059,11 +1059,11 @@ void SV_Frame( int msec ) {
 		Cvar_Set( "sv_fps", "10" );
 	}
 
-	frameMsec = 1000 / sv_fps->integer * com_timescale->value;
+	frameMsec = 1000 / sv_fps->integer * com_timeScale->value;
 	// don't let it scale below 1ms
 	if(frameMsec < 1)
 	{
-		Cvar_Set("timescale", va("%f", sv_fps->integer / 1000.0f));
+		Cvar_Set("timeScale", va("%f", sv_fps->integer / 1000.0f));
 		frameMsec = 1;
 	}
 
@@ -1175,7 +1175,7 @@ int SV_RateMsec(client_t *client)
 	else
 		messageSize += UDPIP_HEADER_SIZE;
 		
-	rateMsec = messageSize * 1000 / ((int) (rate * com_timescale->value));
+	rateMsec = messageSize * 1000 / ((int) (rate * com_timeScale->value));
 	rate = Sys_Milliseconds() - client->netchan.lastSentTime;
 	
 	if(rate > rateMsec)

@@ -232,25 +232,11 @@ CG_CheckLocalSounds
 ==================
 */
 void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
-	int			highScore, powerLevel, armor;
-	sfxHandle_t sfx;
-
 	// don't play the sounds if the player just changed teams
 	if ( ps->persistant[PERS_TEAM] != ops->persistant[PERS_TEAM] ) {
 		return;
 	}
-
-	// powerLevel changes of more than -1 should make pain sounds
-	if ( ps->powerLevel[plFatigue] < ops->powerLevel[plFatigue] - 1 ) {
-		// but only if actual damage is there; not if deducting powerLevel for an attack!
-		if (ps->damageCount) {
-			if ( ps->powerLevel[plFatigue] > 0 ) {
-				CG_PainEvent( &cg.predictedPlayerEntity, ps->powerLevel[plFatigue] );
-			}
-		}
-	}
-
-
+	
 	// if we are going into the intermission, don't start any voices
 	if ( cg.intermissionStarted ) {
 		return;

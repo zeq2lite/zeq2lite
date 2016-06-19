@@ -24,22 +24,25 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 
 char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
-	"death",
-	"jump",
-	"highjump",
 	"ballFlip",
-	"pain",
-	"falling",
-	"gasp",
+	"death",
 	"drown",
 	"fall",
+	"falling",
 	"fallSoft",
 	"fallHard",
-	"taunt",
+	"footsteps",
+	"gasp",
+	"highjump",
 	"idleBanter",
 	"idleWinningBanter",
 	"idleLosingBanter",
+	"jump",
+	"painLight",
+	"painMedium",
+	"painHeavy",
 	"struggleBanter",
+	"taunt",
 };
 
 // HACK: We have to copy the entire playerEntity_t information
@@ -66,7 +69,7 @@ sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName ) {
 			return ci->sounds[ci->tierCurrent][(i*9)+nextIndex];
 		}
 	}
-	CG_Printf("Client %i [%s] could not find sound : %s%i\n",clientNum,ci->name,soundName,nextIndex);
+	Com_Printf("^3WARNING: missing custom sound '%s%i' - from [%s^3]\n",soundName,nextIndex, ci->name);
 	return cgs.media.nullSound;
 }
 /*=============================================================================
@@ -195,22 +198,6 @@ qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci, qboolean
 		}
 		animations[i].firstFrame = atoi( token );
 
-
-// ADDING FOR ZEQ2
-
-// Don't do this as it is a retarded fix for an error in the ORIGINAL animation.cfg files,
-// which ZEQ2 won't have in its animation.cfg files.
-
-/*		// leg only frames are adjusted to not count the upper body only frames
-		if ( i == ANIM_WALKCR ) {
-			skip = animations[ANIM_WALKCR].firstFrame - animations[ANIM_GESTURE].firstFrame;
-		}
-		if ( i >= ANIM_WALKCR && i<ANIM_GETFLAG) {
-			animations[i].firstFrame -= skip;
-		}
-*/
-// END ADDING
-
 		token = COM_Parse( &text_p );
 		if(!*token){break;}
 		animations[i].numFrames = atoi( token );
@@ -289,80 +276,6 @@ static qboolean	CG_FileExists(const char *filename) {
 
 /*
 ==========================
-CG_FindClientModelFile
-==========================
-*/
-static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t *ci, const char *teamName, const char *modelName, const char *skinName, const char *base, const char *ext ) {
-	char *team, *charactersFolder;
-	int i;
-	if ( cgs.gametype >= GT_TEAM ) {
-		switch ( ci->team ) {
-			case TEAM_BLUE: {
-				team = "blue";
-				break;
-			}
-			default: {
-				team = "red";
-				break;
-			}
-		}
-	}
-	else {
-		team = "default";
-	}
-	charactersFolder = "";
-	while(1) {
-		for ( i = 0; i < 2; i++ ) {
-			if ( i == 0 && teamName && *teamName ) {
-				//								"players//characters/james/stroggs/lower_lily_red.skin"
-				Com_sprintf( filename, length, "players//%s%s/%s%s_%s_%s.%s", charactersFolder, modelName, teamName, base, skinName, team, ext );
-			}
-			else {
-				//								"players//characters/james/lower_lily_red.skin"
-				Com_sprintf( filename, length, "players//%s%s/%s_%s_%s.%s", charactersFolder, modelName, base, skinName, team, ext );
-			}
-			if ( CG_FileExists( filename ) ) {
-				return qtrue;
-			}
-			if ( cgs.gametype >= GT_TEAM ) {
-				if ( i == 0 && teamName && *teamName ) {
-					//								"players//characters/james/stroggs/lower_red.skin"
-					Com_sprintf( filename, length, "players//%s%s/%s%s_%s.%s", charactersFolder, modelName, teamName, base, team, ext );
-				}
-				else {
-					//								"players//characters/james/lower_red.skin"
-					Com_sprintf( filename, length, "players//%s%s/%s_%s.%s", charactersFolder, modelName, base, team, ext );
-				}
-			}
-			else {
-				if ( i == 0 && teamName && *teamName ) {
-					//								"players//characters/james/stroggs/lower_lily.skin"
-					Com_sprintf( filename, length, "players//%s%s/%s%s_%s.%s", charactersFolder, modelName, teamName, base, skinName, ext );
-				}
-				else {
-					//								"players//characters/james/lower_lily.skin"
-					Com_sprintf( filename, length, "players//%s%s/%s_%s.%s", charactersFolder, modelName, base, skinName, ext );
-				}
-			}
-			if ( CG_FileExists( filename ) ) {
-				return qtrue;
-			}
-			if ( !teamName || !*teamName ) {
-				break;
-			}
-		}
-		// if tried the heads folder first
-		if ( charactersFolder[0] ) {
-			break;
-		}
-		charactersFolder = "characters/";
-	}
-
-	return qfalse;
-}
-
-/*
-==========================
 CG_FindClientHeadFile
 ==========================
 */
@@ -384,7 +297,7 @@ static qboolean	CG_RegisterClientSkin( clientInfo_t *ci, const char *teamName, c
 CG_RegisterClientModelname
 ==========================
 */
-static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelName, const char *skinName, const char *headModelName, const char *headSkinName, const char *teamName ) {
+static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelName, const char *skinName, const char *headModelName, const char *teamName ) {
 	if (!CG_RegisterClientModelnameWithTiers( ci, modelName, skinName ) ) {
 		return qfalse;
 	}
@@ -439,15 +352,14 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 
 	modelloaded = qtrue;
 	//Com_Printf("LoadClientInfo pre CG_RegisterClientModelname\n");
-	if (!CG_RegisterClientModelname(ci,ci->modelName,ci->skinName, ci->headModelName,ci->headSkinName,teamname)){
+	if (!CG_RegisterClientModelname(ci,ci->modelName,ci->skinName, ci->headModelName,teamname)){
 		strcpy(ci->modelName,DEFAULT_MODEL);
 		strcpy(ci->headModelName,DEFAULT_MODEL);
 		strcpy(ci->skinName,"default");
-		strcpy(ci->headSkinName,"default");
 		if ( cg_buildScript.integer ) {
-			CG_Error( "CG_RegisterClientModelname( %s, %s, %s, %s %s ) failed", ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName,teamname);
+			CG_Error( "CG_RegisterClientModelname( %s, %s, %s, %s ) failed", ci, ci->modelName, ci->skinName, ci->headModelName,teamname);
 		}
-		if (!CG_RegisterClientModelname(ci,DEFAULT_MODEL,"default",DEFAULT_MODEL,"default",teamname) ) {
+		if (!CG_RegisterClientModelname(ci,DEFAULT_MODEL,"default",DEFAULT_MODEL,teamname) ) {
 			CG_Error("DEFAULT_MODEL (%s) failed to register",DEFAULT_MODEL);
 		}
 		modelloaded = qfalse;
@@ -537,11 +449,9 @@ static void CG_CopyClientInfoModel( clientInfo_t *from, clientInfo_t *to ) {
 
 	for ( i = 0; i < 8; i++ ) {
 		to->legsModel[i] = from->legsModel[i];
-		to->legsSkin[i] = from->legsSkin[i];
 		to->torsoModel[i] = from->torsoModel[i];
-		to->torsoSkin[i] = from->torsoSkin[i];
 		to->headModel[i] = from->headModel[i];
-		to->headSkin[i] = from->headSkin[i];
+		to->skin[i] = from->skin[i];
 	}
 	to->modelIcon = from->modelIcon;
 
@@ -579,10 +489,8 @@ static qboolean CG_ScanForExistingClientInfo( clientInfo_t *ci ) {
 		if ( !Q_stricmp( ci->modelName, match->modelName )
 			&& !Q_stricmp( ci->skinName, match->skinName )
 			&& !Q_stricmp( ci->legsModelName, match->legsModelName )
-			&& !Q_stricmp( ci->legsSkinName, match->legsSkinName )
 			&& !Q_stricmp( ci->headModelName, match->headModelName )
 			&& !Q_stricmp( ci->cameraModelName, match->cameraModelName )
-			&& !Q_stricmp( ci->headSkinName, match->headSkinName ) 
 			&& !Q_stricmp( ci->blueTeam, match->blueTeam ) 
 			&& !Q_stricmp( ci->redTeam, match->redTeam )
 			&& (cgs.gametype < GT_TEAM || ci->team == match->team) ) {
@@ -627,9 +535,7 @@ static void CG_SetDeferredClientInfo( clientInfo_t *ci ) {
 		if ( Q_stricmp( ci->skinName, match->skinName ) ||
 			 Q_stricmp( ci->modelName, match->modelName ) ||
 			 Q_stricmp( ci->legsModelName, match->legsModelName ) ||
-			 Q_stricmp( ci->legsSkinName, match->legsSkinName ) ||
 			 Q_stricmp( ci->headModelName, match->headModelName ) ||
-			 Q_stricmp( ci->headSkinName, match->headSkinName ) ||
  			 Q_stricmp( ci->cameraModelName, match->cameraModelName ) ||
 			 (cgs.gametype >= GT_TEAM && ci->team != match->team) ) {
 			continue;
@@ -707,12 +613,10 @@ void CG_NewClientInfo( int clientNum ) {
 	v = Info_ValueForKey(configstring, "hmodel");
 	if(!v){v = model;}
 	if(( skin = strchr( v,'/'))== NULL){skin = "default";}else{*skin++ = 0;}
-	Q_strncpyz( newInfo.headSkinName, skin, sizeof( newInfo.headSkinName ) );
 	Q_strncpyz( newInfo.headModelName, v, sizeof( newInfo.headModelName ) );
 	v = Info_ValueForKey(configstring, "lmodel");
 	if(!v){v = model;}
 	if(( skin = strchr( v,'/'))== NULL){skin = "default";}else{*skin++ = 0;}
-	Q_strncpyz( newInfo.legsSkinName, skin, sizeof( newInfo.legsSkinName ) );
 	Q_strncpyz( newInfo.legsModelName, v, sizeof( newInfo.legsModelName ) );
 	v = Info_ValueForKey(configstring, "cmodel");
 	if(!v){v = model;}
@@ -1215,30 +1119,6 @@ static void CG_SwingAngles( float destination, float swingTolerance, float clamp
 }
 
 /*
-=================
-CG_AddPainTwitch
-=================
-*/
-static void CG_AddPainTwitch( centity_t *cent, vec3_t torsoAngles ) {
-	int		t;
-	float	f;
-
-	t = cg.time - cent->pe.painTime;
-	if ( t >= PAIN_TWITCH_TIME ) {
-		return;
-	}
-
-	f = 1.0 - (float)t / PAIN_TWITCH_TIME;
-
-	if ( cent->pe.painDirection ) {
-		torsoAngles[ROLL] += 20 * f;
-	} else {
-		torsoAngles[ROLL] -= 20 * f;
-	}
-}
-
-
-/*
 ===============
 CG_PlayerAngles
 
@@ -1362,9 +1242,6 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	VectorCopy( cent->lerpAngles, cameraAngles );
 	// END ADDING
-
-	// pain twitch
-	CG_AddPainTwitch( cent, torsoAngles );
 
 	// pull the angles back out of the hierarchial chain
 	AnglesSubtract( cameraAngles, torsoAngles, cameraAngles );

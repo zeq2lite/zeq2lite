@@ -153,7 +153,6 @@ vmCvar_t	cg_teamChatsOnly;
 vmCvar_t	cg_noVoiceChats;
 vmCvar_t	cg_noVoiceText;
 vmCvar_t	cg_hudFiles;
-vmCvar_t 	cg_scorePlum;
 vmCvar_t 	cg_smoothClients;
 vmCvar_t	pmove_fixed;
 //vmCvar_t	cg_pmove_fixed;
@@ -202,7 +201,6 @@ typedef struct {
 
 static cvarTable_t cvarTable[] = {
 	{ &cg_ignore, "cg_ignore", "0", 0 },	// used for debugging
-	{ &cg_displayObituary, "cg_displayObituary", "0", CVAR_ARCHIVE },
 	{ &cg_zoomFov, "cg_zoomfov", "22.5", CVAR_ARCHIVE },
 	{ &cg_fov, "cg_fov", "90", CVAR_ARCHIVE },
 	{ &cg_viewsize, "cg_viewsize", "100", CVAR_ARCHIVE },
@@ -290,7 +288,6 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_timescaleFadeEnd, "cg_timescaleFadeEnd", "1", 0},
 	{ &cg_timescaleFadeSpeed, "cg_timescaleFadeSpeed", "0", 0},
 	{ &cg_timescale, "timescale", "1", 0},
-	{ &cg_scorePlum, "cg_scorePlums", "1", CVAR_USERINFO | CVAR_ARCHIVE},
 	{ &cg_smoothClients, "cg_smoothClients", "0", CVAR_USERINFO | CVAR_ARCHIVE},
 	{ &cg_cameraMode, "com_cameraMode", "0", CVAR_CHEAT},
 
@@ -381,18 +378,6 @@ void CG_UpdateCvars( void ) {
 	}
 
 	// check for modications here
-
-	// If team overlay is on, ask for updates from the server.  If it's off,
-	// let the server know so we don't receive it
-	if ( drawTeamOverlayModificationCount != cg_drawTeamOverlay.modificationCount ) {
-		drawTeamOverlayModificationCount = cg_drawTeamOverlay.modificationCount;
-
-		if ( cg_drawTeamOverlay.integer > 0 ) {
-			trap_Cvar_Set( "teamoverlay", "1" );
-		} else {
-			trap_Cvar_Set( "teamoverlay", "0" );
-		}
-	}
 }
 
 int CG_CrosshairPlayer( void ) {
@@ -954,7 +939,7 @@ static qboolean CG_ParseLensFlareEffect(char** p, lensFlareEffect_t* lfe) {
 
 	name = va("%s%s", lfNameBase, token);
 	if (CG_FindLensFlareEffect(name)) {
-		SkipBracedSection(p);
+		SkipBracedSection(p, 0);
 		goto ParseEffect;
 	}
 
@@ -1401,30 +1386,6 @@ static void CG_RegisterGraphics( void ) {
 	CG_ClearParticles ();
 }
 
-
-
-/*																																			
-=======================
-CG_BuildSpectatorString
-
-=======================
-*/
-void CG_BuildSpectatorString(void) {
-	int i;
-	cg.spectatorList[0] = 0;
-	for (i = 0; i < MAX_CLIENTS; i++) {
-		if (cgs.clientinfo[i].infoValid && cgs.clientinfo[i].team == TEAM_SPECTATOR ) {
-			Q_strcat(cg.spectatorList, sizeof(cg.spectatorList), va("%s     ", cgs.clientinfo[i].name));
-		}
-	}
-	i = strlen(cg.spectatorList);
-	if (i != cg.spectatorLen) {
-		cg.spectatorLen = i;
-		cg.spectatorWidth = -1;
-	}
-}
-
-
 /*																																			
 ===================
 CG_RegisterClients
@@ -1455,7 +1416,6 @@ static void CG_RegisterClients( void ) {
 		CG_LoadingClient( i );
 		CG_NewClientInfo( i );
 	}
-	CG_BuildSpectatorString();
 }
 
 //===========================================================================
@@ -1510,9 +1470,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	cg.weaponSelect = 1;
 
-	cgs.redflag = cgs.blueflag = -1; // For compatibily, default to unset for
-	cgs.flagStatus = -1;			 // old servers
-
 	// get the rendering configuration from the client system
 	trap_GetGlconfig( &cgs.glconfig );
 	cgs.screenXScale = cgs.glconfig.vidWidth / 640.0;
@@ -1522,9 +1479,9 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	trap_GetGameState( &cgs.gameState );
 
 	// check version
-	s = CG_ConfigString( CS_GAME_VERSION );
-	if ( strcmp( s, GAME_VERSION ) ) {
-		CG_Error( "Client/Server game mismatch: %s/%s", GAME_VERSION, s );
+	s = CG_ConfigString( CS_PRODUCT_VERSION );
+	if ( strcmp( s, PRODUCT_VERSION ) ) {
+		CG_Error( "Client/Server game mismatch: %s/%s", PRODUCT_VERSION, s );
 	}
 
 	s = CG_ConfigString( CS_LEVEL_START_TIME );

@@ -1,4 +1,4 @@
-#define MUSICTYPES 10
+#define MUSICTYPES 8
 typedef struct{
 	char *playlist[MUSICTYPES][32];
 	int trackLength[MUSICTYPES][32];
@@ -23,9 +23,7 @@ typedef enum {
 	struggle,
 	standoff,
 	standoffDanger,
-	victoryGood,
-	victoryEvil,
-	transform
+	transform,
 }trackTypes;
 void CG_CheckMusic(void);
 int CG_GetMilliseconds(char*);

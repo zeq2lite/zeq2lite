@@ -291,7 +291,9 @@ char *eventnames[] = {
 	"EV_PLAYER_TELEPORT_OUT",
 	"EV_GENERAL_SOUND",
 	"EV_GLOBAL_SOUND",		// no attenuation
-	"EV_PAIN",
+	"EV_PAIN_LIGHT",
+	"EV_PAIN_MEDIUM",
+	"EV_PAIN_HEAVY",
 	"EV_DEATH",
 	"EV_DEATH1",
 	"EV_DEATH2",

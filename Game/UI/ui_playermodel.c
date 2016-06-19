@@ -388,7 +388,7 @@ PlayerModel_BuildList
 static void PlayerModel_BuildList( void )
 {
 	int		numdirs;
-	int		numfiles;
+	int		numFiles;
 	char	dirlist[2048];
 	char	filelist[2048];
 	char	skinname[64];
@@ -418,9 +418,9 @@ static void PlayerModel_BuildList( void )
 			continue;
 			
 		// iterate all skin files in directory
-		numfiles = trap_FS_GetFileList( va("players//%s",dirptr), "png", filelist, 2048 );
+		numFiles = trap_FS_GetFileList( va("players//%s",dirptr), "png", filelist, 2048 );
 		fileptr  = filelist;
-		for (j=0; j<numfiles && s_playermodel.nummodels < MAX_PLAYERMODELS;j++,fileptr+=filelen+1)
+		for (j=0; j<numFiles && s_playermodel.nummodels < MAX_PLAYERMODELS;j++,fileptr+=filelen+1)
 		{
 			filelen = strlen(fileptr);
 

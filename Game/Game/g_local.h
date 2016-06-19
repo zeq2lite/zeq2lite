@@ -32,8 +32,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_public.h"
 //==================================================================
 
-// the "gameversion" client command will print this plus compile date
-#define	GAMEVERSION	BASEGAME
+// the "version" client command will print this plus compile date
+#define	VERSION	BASEDIR + __DATE__
 
 #define BODY_QUEUE_SIZE		8
 
@@ -769,7 +769,7 @@ extern	vmCvar_t	g_quickZanzokenDistance ;
 extern	vmCvar_t	g_editmode;
 #endif
 
-void	trap_Printf( const char *fmt );
+void	trap_Print( const char *fmt );
 void	trap_Error(const char *fmt) __attribute__((noreturn));
 int		trap_Milliseconds( void );
 int		trap_RealTime( qtime_t *qtime );
@@ -781,6 +781,7 @@ void	trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void	trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void	trap_FS_FCloseFile( fileHandle_t f );
 int		trap_FS_GetFileList( const char *path, const char *extension, char *listbuf, int bufsize );
+int		trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
 void	trap_SendConsoleCommand( int exec_when, const char *text );
 void	trap_Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *value, int flags );
 void	trap_Cvar_Update( vmCvar_t *cvar );

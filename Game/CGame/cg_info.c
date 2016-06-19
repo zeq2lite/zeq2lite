@@ -145,4 +145,3 @@ void CG_DrawInformation( void ) {
 	y = 180-32;
 	// Remote Server only
 }
-

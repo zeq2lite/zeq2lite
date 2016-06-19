@@ -30,29 +30,35 @@ MAIN MENU
 
 
 #include "ui_local.h"
+#include "ui_sagas.c"
 
-#define ID_MULTIPLAYER			11
-#define ID_SETUP				12
-#define ID_EXIT					17
-
+#define ID_WORLD				11
+#define ID_SETTINGS				12
+#define ID_EXIT					16					
+#define ID_SAGAS				17
 #define	ID_MODEL				18
 #define MAX_NAMELENGTH			20
 
-int	multiXpos = 28;
-int multiYpos = 119;
+int	worldXpos = 28;
+int worldYpos = 119;
 
-int setupXpos = 28;
-int setupYpos = 157;
+int settingsXpos = 28;
+int settingsYpos = 157;
 
 int exitXpos = 28;
 int exitYpos = 195;
+
+int sagasXpos = 28;
+int sagasYpos = 442;
+
 typedef struct {
 	menuframework_s	menu;
 
-	menutext_s		multiplayer;
-	menutext_s		setup;
-	menufield_s		name;
+	menutext_s		world;
+	menutext_s		settings;
 	menutext_s		exit;
+	menutext_s		sagas;
+	menufield_s		name;
 	menubitmap_s	player;
 	playerInfo_t	playerinfo;
 	char			playerModel[MAX_QPATH];
@@ -179,17 +185,20 @@ void Main_MenuEvent (void* ptr, int event) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_MULTIPLAYER:
+	case ID_WORLD:
 		MainMenu_Save();
 		UI_ArenaServersMenu();
 		break;
-	case ID_SETUP:
+	case ID_SETTINGS:
 		MainMenu_Save();
 		UI_ControlsMenu();
 		break;
 	case ID_EXIT:
 		MainMenu_Save();
 		UI_CreditMenu();
+		break;
+	case ID_SAGAS:
+		UI_SagasMenu();
 		break;
 	case ID_MODEL:
 		MainMenu_Save();
@@ -293,25 +302,25 @@ void UI_MainMenu( void ) {
 	s_main.menu.wrapAround = qtrue;
 	s_main.menu.showlogo = qtrue;
 
-	s_main.multiplayer.generic.type			= MTYPE_PTEXT;
-	s_main.multiplayer.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.multiplayer.generic.x			= multiXpos;
-	s_main.multiplayer.generic.y			= multiYpos;
-	s_main.multiplayer.generic.id			= ID_MULTIPLAYER;
-	s_main.multiplayer.generic.callback		= Main_MenuEvent; 
-	s_main.multiplayer.string				= "PLAY";
-	s_main.multiplayer.color				= color_white;
-	s_main.multiplayer.style				= style;
+	s_main.world.generic.type				= MTYPE_PTEXT;
+	s_main.world.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_main.world.generic.x					= worldXpos;
+	s_main.world.generic.y					= worldYpos;
+	s_main.world.generic.id					= ID_WORLD;
+	s_main.world.generic.callback			= Main_MenuEvent; 
+	s_main.world.string						= "WORLD";
+	s_main.world.color						= color_white;
+	s_main.world.style						= style;
 
-	s_main.setup.generic.type				= MTYPE_PTEXT;
-	s_main.setup.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.setup.generic.x					= setupXpos;
-	s_main.setup.generic.y					= setupYpos;
-	s_main.setup.generic.id					= ID_SETUP;
-	s_main.setup.generic.callback			= Main_MenuEvent; 
-	s_main.setup.string						= "SETUP";
-	s_main.setup.color						= color_white;
-	s_main.setup.style						= style;
+	s_main.settings.generic.type			= MTYPE_PTEXT;
+	s_main.settings.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_main.settings.generic.x				= settingsXpos;
+	s_main.settings.generic.y				= settingsYpos;
+	s_main.settings.generic.id				= ID_SETTINGS;
+	s_main.settings.generic.callback		= Main_MenuEvent; 
+	s_main.settings.string					= "SETTINGS";
+	s_main.settings.color					= color_white;
+	s_main.settings.style					= style;
 
 	s_main.exit.generic.type				= MTYPE_PTEXT;
 	s_main.exit.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -322,6 +331,16 @@ void UI_MainMenu( void ) {
 	s_main.exit.string						= "EXIT";
 	s_main.exit.color						= color_white;
 	s_main.exit.style						= style;
+	
+	s_main.sagas.generic.type			    = MTYPE_PTEXT;
+	s_main.sagas.generic.flags			    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_main.sagas.generic.x				    = sagasXpos;
+	s_main.sagas.generic.y				    = sagasYpos;
+	s_main.sagas.generic.id				    = ID_SAGAS;
+	s_main.sagas.generic.callback		    = Main_MenuEvent; 
+	s_main.sagas.string					    = "SAGAS";
+	s_main.sagas.color					    = color_white;
+	s_main.sagas.style					    = style;
 
 	s_main.name.generic.type				= MTYPE_FIELD;
 	s_main.name.generic.flags				= QMF_NODEFAULTINIT;
@@ -345,9 +364,10 @@ void UI_MainMenu( void ) {
 	s_main.player.width						= 320;
 	s_main.player.height					= 810;
 
-	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
-	Menu_AddItem( &s_main.menu,	&s_main.setup );
+	Menu_AddItem( &s_main.menu,	&s_main.world );
+	Menu_AddItem( &s_main.menu,	&s_main.settings );
 	Menu_AddItem( &s_main.menu,	&s_main.exit );
+	Menu_AddItem( &s_main.menu, &s_main.sagas);
 	Menu_AddItem( &s_main.menu, &s_main.name );
 	Q_strncpyz(s_main.name.field.buffer,UI_Cvar_VariableString("name"),sizeof(s_main.name.field.buffer) );
 	Menu_AddItem( &s_main.menu, &s_main.player );

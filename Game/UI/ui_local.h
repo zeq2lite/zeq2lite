@@ -322,8 +322,7 @@ extern void UI_MusicMenu_Cache( void );
 //
 // ui_ingame.c
 //
-extern void InGame_Cache( void );
-extern void UI_InGameMenu(void);
+extern void UI_InWorldMenu(void);
 
 //
 // ui_confirm.c
@@ -338,12 +337,6 @@ extern void UI_Message( const char **lines );
 //
 extern void UI_SetupMenu_Cache( void );
 extern void UI_SetupMenu(void);
-
-//
-// ui_team.c
-//
-extern void UI_TeamMainMenu( void );
-extern void TeamMain_Cache( void );
 
 //
 // ui_connect.c
@@ -361,6 +354,12 @@ extern void Camera_Cache( void );
 //
 extern void UI_ControlsMenu( void );
 extern void Controls_Cache( void );
+
+//
+// ui_sagas.c
+//
+extern void UI_SagasMenu( void );
+extern void UI_SagasMenu_Cache( void );
 
 //
 // ui_playermodel.c

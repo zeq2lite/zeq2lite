@@ -600,7 +600,7 @@ void G_RankGameOver( void )
 	trap_RankReportStr( -1, -1, QGR_KEY_MAP, str );
 
 	// mod
-	trap_Cvar_VariableStringBuffer( "fs_game", str, sizeof(str) );
+	trap_Cvar_VariableStringBuffer( "fs_dir", str, sizeof(str) );
 	trap_RankReportStr( -1, -1, QGR_KEY_MOD, str );
 
 	// gametype

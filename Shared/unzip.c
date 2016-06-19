@@ -1,4 +1,10 @@
 /* unzip.c -- IO for uncompress .zip files using zlib
+
+   Modified for Quake III Arena to use the Z_Malloc() memory pool;
+   this means a system copy of minizip is not a suitable replacement.
+
+   Based on minizip:
+
    Version 1.01e, February 12th, 2005
 
    Copyright (C) 1998-2005 Gilles Vollant
@@ -35,8 +41,8 @@ woven in by Terry Thorsen 1/2003.
  */
 
 
-#include "../../Shared/q_shared.h"
-#include "../../Shared/qcommon.h"
+#include "q_shared.h"
+#include "qcommon.h"
 #include "unzip.h"
 
 #ifndef local
@@ -376,11 +382,11 @@ local uLong unzlocal_SearchCentralDir(pzlib_filefunc_def,filestream)
 
 /*
   Open a Zip file. path contain the full pathname (by example,
-     on a Windows NT computer "c:\\test\\zlib114.zip" or on an Unix computer
+     on a Windows NT computer "c:\\test\\zlib114.zip" or on a Unix computer
      "zlib/zlib114.zip".
      If the zipfile cannot be opened (file doesn't exist or in not valid), the
        return value is NULL.
-     Else, the return value is a unzFile Handle, usable with other function
+     Else, the return value is an unzFile Handle, usable with other function
        of this unzip package.
 */
 extern unzFile ZEXPORT unzOpen2 (path, pzlib_filefunc_def)
@@ -713,18 +719,13 @@ local int unzlocal_GetCurrentFileInfoInternal (file,
 
         if (lSeek!=0)
         {
-            if (ZSEEK(s->z_filefunc, s->filestream,lSeek,ZLIB_FILEFUNC_SEEK_CUR)==0)
-                lSeek=0;
-            else
+            if (ZSEEK(s->z_filefunc, s->filestream,lSeek,ZLIB_FILEFUNC_SEEK_CUR)!=0)
                 err=UNZ_ERRNO;
         }
         if ((file_info.size_file_comment>0) && (commentBufferSize>0))
             if (ZREAD(s->z_filefunc, s->filestream,szComment,uSizeRead)!=uSizeRead)
                 err=UNZ_ERRNO;
-        lSeek+=file_info.size_file_comment - uSizeRead;
     }
-    else
-        lSeek+=file_info.size_file_comment;
 
     if ((err==UNZ_OK) && (pfile_info!=NULL))
         *pfile_info=file_info;
@@ -1144,13 +1145,12 @@ extern int ZEXPORT unzOpenCurrentFile3 (file, method, level, raw, password)
       pfile_in_zip_read_info->stream.next_in = (voidpf)0;
       pfile_in_zip_read_info->stream.avail_in = 0;
 
-      err=inflateInit2(&pfile_in_zip_read_info->stream, -MAX_WBITS);
-      if (err == Z_OK)
+      if (inflateInit2(&pfile_in_zip_read_info->stream, -MAX_WBITS) == Z_OK)
         pfile_in_zip_read_info->stream_initialised=1;
       else
       {
         TRYFREE(pfile_in_zip_read_info);
-        return err;
+        return UNZ_INTERNALERROR;
       }
         /* windowBits is passed < 0 to tell that there is no zlib header.
          * Note that in this case inflate *requires* an extra "dummy" byte
@@ -1197,7 +1197,7 @@ extern int ZEXPORT unzOpenCurrentFile3 (file, method, level, raw, password)
 #    endif
 
 
-    return UNZ_OK;
+    return err;
 }
 
 extern int ZEXPORT unzOpenCurrentFile (file)

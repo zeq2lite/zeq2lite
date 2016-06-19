@@ -713,7 +713,7 @@ static void CG_Aura_AddDLight( centity_t *player, auraState_t *state, auraConfig
 	vec3_t	lightPos;
 
 	// add dynamic light when necessary
-	if(state->isActive ||(state->lightAmt > config->lightMin)){
+	if((state->isActive ||(state->lightAmt > config->lightMin)) && config->showLight){
 
 		// Since lerpOrigin is the lightingOrigin for the player, this will add a backsplash light for the aura.
 		VectorAdd( player->lerpOrigin, cg.refdef.viewaxis[0], lightPos);
@@ -910,7 +910,7 @@ void parseAura(char *path,auraConfig_t *aura){
 		while(1){
 			token = COM_Parse(&parse);
 			if(!token[0]){break;}
-			else if(!Q_stricmp(token,"auraExists")){
+			else if(!Q_stricmp(token,"showAura")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				aura->showAura = strlen(token) == 4 ? qtrue : qfalse;
@@ -920,64 +920,12 @@ void parseAura(char *path,auraConfig_t *aura){
 				if(!token[0]){break;}
 				aura->auraAlways = strlen(token) == 4 ? qtrue : qfalse;
 			}
-			else if(!Q_stricmp(token,"hasAuraLight")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->showLight = strlen(token) == 4 ? qtrue : qfalse;
-			}
-			else if(!Q_stricmp(token,"hasAuraTrail")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->showTrail = strlen(token) == 4 ? qtrue : qfalse;
-			}
-			else if(!Q_stricmp(token,"hasAuraDebris")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->generatesDebris = strlen(token) == 4 ? qtrue : qfalse;
-			}
-			else if(!Q_stricmp( token, "auraTagCount")){
-				for(i = 0;i < 3;i++){
-					token = COM_Parse(&parse);
-					if(!token[0]){break;}
-					aura->numTags[i] = atoi( token);
-				}
-			}
-			else if(!Q_stricmp( token, "auraShader")){
+			else if(!Q_stricmp(token,"auraShader")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
 				aura->auraShader = trap_R_RegisterShader(token);
 			}
-			else if(!Q_stricmp( token, "auraTrailShader")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->trailShader = trap_R_RegisterShader(token);
-			}
-			else if(!Q_stricmp( token, "auraTrailWidth")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->trailWidth = atoi(token);
-			}
-			else if(!Q_stricmp( token, "auraChargeLoop")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->chargeLoopSound = trap_S_RegisterSound(token,qfalse);
-			}
-			else if(!Q_stricmp( token, "auraChargeStart")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->chargeStartSound = trap_S_RegisterSound(token,qfalse);
-			}
-			else if(!Q_stricmp( token, "auraBoostLoop")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->boostLoopSound = trap_S_RegisterSound(token,qfalse);
-			}
-			else if(!Q_stricmp( token, "auraBoostStart")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->boostStartSound = trap_S_RegisterSound(token,qfalse);
-			}
-			else if (!Q_stricmp( token, "auraColor")){
+			else if (!Q_stricmp(token,"auraColor")){
 				for(i = 0;i < 3;i++){
 					token = COM_Parse(&parse);
 					if(!token[0]){break;}
@@ -986,7 +934,29 @@ void parseAura(char *path,auraConfig_t *aura){
 					if(aura->auraColor[i] > 1) aura->auraColor[i] = 1;
 				}
 			}
-			else if(!Q_stricmp( token, "auraLightColor")){
+			else if(!Q_stricmp(token,"auraScale")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->auraScale = atof(token);
+			}
+			else if(!Q_stricmp(token,"auraLength")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->tailLength = atoi(token);
+			}
+			else if(!Q_stricmp(token,"auraNumTags")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					aura->numTags[i] = atoi( token);
+				}
+			}
+			else if(!Q_stricmp(token,"showLight")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->showLight = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"lightColor")){
 				for(i = 0;i < 3;i++){
 					token = COM_Parse(&parse);
 					if(!token[0]){break;}
@@ -995,7 +965,32 @@ void parseAura(char *path,auraConfig_t *aura){
 					if(aura->lightColor[i] > 1) aura->lightColor[i] = 1;
 				}
 			}
-			else if(!Q_stricmp( token, "auraTrailColor")){
+			else if(!Q_stricmp(token,"lightMin")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->lightMin = atoi(token);
+			}
+			else if(!Q_stricmp(token,"lightMax")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->lightMax = atoi(token);
+			}
+			else if(!Q_stricmp(token,"lightGrowthRate")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->lightGrowthRate = atoi(token);
+			}
+			else if(!Q_stricmp(token,"showTrail")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->showTrail = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"trailShader")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->trailShader = trap_R_RegisterShader(token);
+			}
+			else if(!Q_stricmp(token,"trailColor")){
 				for(i = 0;i < 3;i++){
 					token = COM_Parse(&parse);
 					if(!token[0]){break;}
@@ -1004,30 +999,10 @@ void parseAura(char *path,auraConfig_t *aura){
 					if(aura->trailColor[i] > 1) aura->trailColor[i] = 1;
 				}
 			}
-			else if(!Q_stricmp( token, "auraScale")){
+			else if(!Q_stricmp(token,"trailWidth")){
 				token = COM_Parse(&parse);
 				if(!token[0]){break;}
-				aura->auraScale = atof(token);
-			}
-			else if(!Q_stricmp( token, "auraLength")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->tailLength = atoi(token);
-			}
-			else if(!Q_stricmp( token, "auraLightMin")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->lightMin = atoi(token);
-			}
-			else if(!Q_stricmp( token, "auraLightMax")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->lightMax = atoi(token);
-			}
-			else if(!Q_stricmp( token, "auraLightGrowthRate")){
-				token = COM_Parse(&parse);
-				if(!token[0]){break;}
-				aura->lightGrowthRate = atoi(token);
+				aura->trailWidth = atoi(token);
 			}
 			else if(!Q_stricmp(token,"showLightning")){
 				token = COM_Parse(&parse);
@@ -1039,6 +1014,40 @@ void parseAura(char *path,auraConfig_t *aura){
 				if(!token[0]){break;}
 				aura->lightningShader = trap_R_RegisterShaderNoMip(token);
 			}
+			else if(!Q_stricmp(token,"lightningColor")){
+				for(i = 0;i < 3;i++){
+					token = COM_Parse(&parse);
+					if(!token[0]){break;}
+					aura->lightningColor[i] = atof( token);
+					if(aura->lightningColor[i] < 0) aura->lightningColor[i] = 0;
+					if(aura->lightningColor[i] > 1) aura->lightningColor[i] = 1;
+				}
+			}
+			else if(!Q_stricmp(token,"showDebris")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->generatesDebris = strlen(token) == 4 ? qtrue : qfalse;
+			}
+			else if(!Q_stricmp(token,"chargeLoop")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->chargeLoopSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"chargeStart")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->chargeStartSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"boostLoop")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->boostLoopSound = trap_S_RegisterSound(token,qfalse);
+			}
+			else if(!Q_stricmp(token,"boostStart")){
+				token = COM_Parse(&parse);
+				if(!token[0]){break;}
+				aura->boostStartSound = trap_S_RegisterSound(token,qfalse);
+			}			
 		}
 	}
 }

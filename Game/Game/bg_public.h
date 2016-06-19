@@ -22,11 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 // bg_public.h -- definitions shared by both the server game and client game modules
 
-// because games can change separately from the main system version, we need a
-// second version that must match between game and cgame
-
-#define	GAME_VERSION		"ZEQ2"
-
 #define EARTHQUAKE_SYSTEM	1	// JUHOX
 #define MAPLENSFLARES		1	// JUHOX
 
@@ -89,7 +84,7 @@ typedef struct {
 #define	CS_TEAMVOTE_YES			16
 #define	CS_TEAMVOTE_NO			18
 
-#define	CS_GAME_VERSION			20
+#define	CS_PRODUCT_VERSION		20
 #define	CS_LEVEL_START_TIME		21		// so the timer only shows the current level
 #define	CS_INTERMISSION			22		// when 1, fraglimit/timelimit has been hit and intermission will start in a second or two
 #define CS_FLAGSTATUS			23		// string indicating flag status in CTF
@@ -589,18 +584,14 @@ typedef enum {
 	EV_SHOTGUN,
 	EV_BULLET,				// otherEntity is the shooter
 	EV_AIRBRAKE,
-	EV_PAIN,
-	EV_PAIN1,
-	EV_PAIN2,
-	EV_PAIN3,
-	EV_PAIN4,
-	EV_PAIN5,
+	EV_PAIN_LIGHT,
+	EV_PAIN_MEDIUM,
+	EV_PAIN_HEAVY,
 	EV_DEATH,
 	EV_DEATH1,
 	EV_DEATH2,
 	EV_DEATH3,
 	EV_UNCONCIOUS,
-	EV_OBITUARY,
 	EV_DEBUG_LINE,
 	EV_STOPLOOPINGSOUND,
 	EV_LOCKON_START,

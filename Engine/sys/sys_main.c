@@ -127,6 +127,35 @@ char *Sys_ConsoleInput(void)
 	return CON_Input( );
 }
 
+/*
+==================
+Sys_GetClipboardData
+==================
+*/
+char *Sys_GetClipboardData(void)
+{
+#ifdef DEDICATED
+	return NULL;
+#else
+	char *data = NULL;
+	char *cliptext;
+
+	if ( ( cliptext = SDL_GetClipboardText() ) != NULL ) {
+		if ( cliptext[0] != '\0' ) {
+			size_t bufsize = strlen( cliptext ) + 1;
+
+			data = Z_Malloc( bufsize );
+			Q_strncpyz( data, cliptext, bufsize );
+
+			// find first listed char and set to '\0'
+			strtok( data, "\n\r\b" );
+		}
+		SDL_free( cliptext );
+	}
+	return data;
+#endif
+}
+
 #ifdef DEDICATED
 #	define PID_FILENAME PRODUCT_NAME "_server.pid"
 #else
@@ -140,7 +169,12 @@ Sys_PIDFileName
 */
 static char *Sys_PIDFileName( void )
 {
-	return va( "%s/%s", Sys_TempPath( ), PID_FILENAME );
+	const char *homePath = Cvar_VariableString( "fs_homePath" );
+
+	if( *homePath != '\0' )
+		return va( "%s/%s", homePath, PID_FILENAME );
+
+	return NULL;
 }
 
 /*
@@ -155,6 +189,9 @@ qboolean Sys_WritePIDFile( void )
 	char      *pidFile = Sys_PIDFileName( );
 	FILE      *f;
 	qboolean  stale = qfalse;
+
+	if( pidFile == NULL )
+		return qfalse;
 
 	// First, check if the pid file is already there
 	if( ( f = fopen( pidFile, "r" ) ) != NULL )
@@ -204,8 +241,13 @@ static __attribute__ ((noreturn)) void Sys_Exit( int exitCode )
 	if( exitCode < 2 )
 	{
 		// Normal exit
-		remove( Sys_PIDFileName( ) );
+		char *pidFile = Sys_PIDFileName( );
+
+		if( pidFile != NULL )
+			remove( pidFile );
 	}
+
+	NET_Shutdown( );
 
 	Sys_PlatformExit( );
 
@@ -232,14 +274,12 @@ cpuFeatures_t Sys_GetProcessorFeatures( void )
 	cpuFeatures_t features = 0;
 
 #ifndef DEDICATED
-	if( SDL_HasRDTSC( ) )    features |= CF_RDTSC;
-	if( SDL_HasMMX( ) )      features |= CF_MMX;
-	if( SDL_HasMMXExt( ) )   features |= CF_MMX_EXT;
-	if( SDL_Has3DNow( ) )    features |= CF_3DNOW;
-	if( SDL_Has3DNowExt( ) ) features |= CF_3DNOW_EXT;
-	if( SDL_HasSSE( ) )      features |= CF_SSE;
-	if( SDL_HasSSE2( ) )     features |= CF_SSE2;
-	if( SDL_HasAltiVec( ) )  features |= CF_ALTIVEC;
+	if( SDL_HasRDTSC( ) )      features |= CF_RDTSC;
+	if( SDL_Has3DNow( ) )      features |= CF_3DNOW;
+	if( SDL_HasMMX( ) )        features |= CF_MMX;
+	if( SDL_HasSSE( ) )        features |= CF_SSE;
+	if( SDL_HasSSE2( ) )       features |= CF_SSE2;
+	if( SDL_HasAltiVec( ) )    features |= CF_ALTIVEC;
 #endif
 
 	return features;
@@ -413,7 +453,7 @@ void Sys_UnloadDll( void *dllHandle )
 Sys_LoadDll
 
 First try to load library name from system library path,
-from executable path, then fs_basepath.
+from executable path, then fs_basePath.
 =================
 */
 
@@ -439,7 +479,7 @@ void *Sys_LoadDll(const char *name, qboolean useSystemLib)
 
 		if(!(dllhandle = Sys_LoadLibrary(libPath)))
 		{
-			const char *basePath = Cvar_VariableString("fs_basepath");
+			const char *basePath = Cvar_VariableString("fs_basePath");
 			
 			if(!basePath || !*basePath)
 				basePath = ".";
@@ -515,9 +555,9 @@ void Sys_ParseArgs( int argc, char **argv )
 		{
 			const char* date = __DATE__;
 #ifdef DEDICATED
-			fprintf( stdout, Q3_VERSION " dedicated server (%s)\n", date );
+			fprintf( stdout, PRODUCT_VERSION " dedicated server (%s)\n", date );
 #else
-			fprintf( stdout, Q3_VERSION " client (%s)\n", date );
+			fprintf( stdout, PRODUCT_VERSION " client (%s)\n", date );
 #endif
 			Sys_Exit( 0 );
 		}
@@ -582,19 +622,20 @@ int main( int argc, char **argv )
 #	endif
 
 	// Run time
-	const SDL_version *ver = SDL_Linked_Version( );
+	SDL_version ver;
+	SDL_GetVersion( &ver );
 
-#define MINSDL_VERSION \
+#define MINSDL_PRODUCT_VERSION \
 	XSTRING(MINSDL_MAJOR) "." \
 	XSTRING(MINSDL_MINOR) "." \
 	XSTRING(MINSDL_PATCH)
 
-	if( SDL_VERSIONNUM( ver->major, ver->minor, ver->patch ) <
+	if( SDL_VERSIONNUM( ver.major, ver.minor, ver.patch ) <
 			SDL_VERSIONNUM( MINSDL_MAJOR, MINSDL_MINOR, MINSDL_PATCH ) )
 	{
-		Sys_Dialog( DT_ERROR, va( "SDL version " MINSDL_VERSION " or greater is required, "
+		Sys_Dialog( DT_ERROR, va( "SDL version " MINSDL_PRODUCT_VERSION " or greater is required, "
 			"but only version %d.%d.%d was found. You may be able to obtain a more recent copy "
-			"from http://www.libsdl.org/.", ver->major, ver->minor, ver->patch ), "SDL Library Too Old" );
+			"from http://www.libsdl.org/.", ver.major, ver.minor, ver.patch ), "SDL Library Too Old" );
 
 		Sys_Exit( 1 );
 	}
@@ -604,6 +645,12 @@ int main( int argc, char **argv )
 
 	// Set the initial time base
 	Sys_Milliseconds( );
+
+#ifdef MACOS_X
+	// This is passed if we are launched by double-clicking
+	if ( argc >= 2 && Q_strncmp ( argv[1], "-psn", 4 ) == 0 )
+		argc = 1;
+#endif
 
 	Sys_ParseArgs( argc, argv );
 	Sys_SetBinaryPath( Sys_Dirname( argv[ 0 ] ) );

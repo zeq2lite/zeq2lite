@@ -29,137 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../UI/menudef/menudef.h"
 #endif
 //==========================================================================
-/*
-===================
-CG_PlaceString
-
-Also called by scoreboard drawing
-===================
-*/
-const char	*CG_PlaceString( int rank ) {
-	static char	str[64];
-	char	*s, *t;
-
-	if ( rank & RANK_TIED_FLAG ) {
-		rank &= ~RANK_TIED_FLAG;
-		t = "Tied for ";
-	} else {
-		t = "";
-	}
-
-	if ( rank == 1 ) {
-		s = S_COLOR_BLUE "1st" S_COLOR_WHITE;		// draw in blue
-	} else if ( rank == 2 ) {
-		s = S_COLOR_RED "2nd" S_COLOR_WHITE;		// draw in red
-	} else if ( rank == 3 ) {
-		s = S_COLOR_YELLOW "3rd" S_COLOR_WHITE;		// draw in yellow
-	} else if ( rank == 11 ) {
-		s = "11th";
-	} else if ( rank == 12 ) {
-		s = "12th";
-	} else if ( rank == 13 ) {
-		s = "13th";
-	} else if ( rank % 10 == 1 ) {
-		s = va("%ist", rank);
-	} else if ( rank % 10 == 2 ) {
-		s = va("%ind", rank);
-	} else if ( rank % 10 == 3 ) {
-		s = va("%ird", rank);
-	} else {
-		s = va("%ith", rank);
-	}
-
-	Com_sprintf( str, sizeof( str ), "%s%s", t, s );
-	return str;
-}
-
-/*
-=============
-CG_Obituary
-=============
-*/
-static void CG_Obituary( entityState_t *ent ) {
-	int			mod;
-	int			target, attacker;
-	char		*message;
-	char		*message2;
-	const char	*targetInfo;
-	const char	*attackerInfo;
-	char		targetName[32];
-	char		attackerName[32];
-	clientInfo_t	*ci;
-
-	if ( !cg_displayObituary.integer ) {
-		return;
-	}
-
-	target = ent->otherEntityNum;
-	attacker = ent->otherEntityNum2;
-	mod = ent->eventParm;
-
-	if ( target < 0 || target >= MAX_CLIENTS ) {
-		CG_Error( "CG_Obituary: target out of range" );
-	}
-	ci = &cgs.clientinfo[target];
-
-	if ( attacker < 0 || attacker >= MAX_CLIENTS ) {
-		attacker = ENTITYNUM_WORLD;
-		attackerInfo = NULL;
-	} else {
-		attackerInfo = CG_ConfigString( CS_PLAYERS + attacker );
-	}
-
-	targetInfo = CG_ConfigString( CS_PLAYERS + target );
-	if ( !targetInfo ) {
-		return;
-	}
-	Q_strncpyz( targetName, Info_ValueForKey( targetInfo, "n" ), sizeof(targetName) - 2);
-	strcat( targetName, S_COLOR_WHITE );
-
-	message2 = "";
-
-	// check for single client messages
-
-	message = NULL;
-
-	if (message) {
-		CG_Printf( "%s %s.\n", targetName, message);
-		return;
-	}
-	// check for double client messages
-	if ( !attackerInfo ) {
-		attacker = ENTITYNUM_WORLD;
-		strcpy( attackerName, "noname" );
-	} else {
-		Q_strncpyz( attackerName, Info_ValueForKey( attackerInfo, "n" ), sizeof(attackerName) - 2);
-		strcat( attackerName, S_COLOR_WHITE );
-		// check for kill messages about the current clientNum
-		if ( target == cg.snap->ps.clientNum ) {
-			Q_strncpyz( cg.killerName, attackerName, sizeof( cg.killerName ) );
-		}
-	}
-
-	// we don't know what it was
-	CG_Printf( "%s died.\n", targetName );
-}
-
-//==========================================================================
-
-/*
-================
-CG_PainEvent
-
-Also called by playerstate transition
-================
-*/
-void CG_PainEvent( centity_t *cent, int powerLevel ) {
-	char	*snd;
-	if ( cg.time - cent->pe.painTime < 500 ) {
-		return;
-	}
-}
-
-
 
 /*
 ==============
@@ -212,10 +81,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_FOOTSTEP:
 		DEBUGNAME("EV_FOOTSTEP");
-		if (cg_footsteps.integer) {
-			trap_S_StartSound (NULL, es->number, CHAN_BODY, 
-				cgs.media.footsteps[ ci->footsteps ][rand()&3] );
-		}
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "footsteps" ) );
 		break;
 	case EV_FOOTSTEP_METAL:
 		DEBUGNAME("EV_FOOTSTEP_METAL");
@@ -473,31 +339,17 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			CG_PowerMeleeEffect(cent->lerpOrigin,3);
 			break;
 		}
-	case EV_PAIN:
-		DEBUGNAME("EV_PAIN");
-		if (cent->currentState.number != cg.snap->ps.clientNum){
-			CG_PainEvent( cent, es->eventParm );
-		}
+	case EV_PAIN_LIGHT:
+		DEBUGNAME("EV_PAIN_LIGHT");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"painLight"));
 		break;
-	case EV_PAIN1:
-		DEBUGNAME("EV_PAIN1");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
+	case EV_PAIN_MEDIUM:
+		DEBUGNAME("EV_PAIN_MEDIUM");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"painMedium"));
 		break;
-	case EV_PAIN2:
-		DEBUGNAME("EV_PAIN2");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
-		break;
-	case EV_PAIN3:
-		DEBUGNAME("EV_PAIN3");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
-		break;
-	case EV_PAIN4:
-		DEBUGNAME("EV_PAIN4");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
-		break;
-	case EV_PAIN5:
-		DEBUGNAME("EV_PAIN5");
-		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"pain"));
+	case EV_PAIN_HEAVY:
+		DEBUGNAME("EV_PAIN_HEAVY");
+		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"painHeavy"));
 		break;
 	case EV_DEATH:
 		DEBUGNAME("EV_DEATH");
@@ -506,10 +358,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_UNCONCIOUS:
 		DEBUGNAME("EV_UNCONCIOUS");
 		trap_S_StartSound( NULL, es->number,CHAN_VOICE,CG_CustomSound(es->number,"death"));
-		break;
-	case EV_OBITUARY:
-		DEBUGNAME("EV_OBITUARY");
-		CG_Obituary( es );
 		break;
 	case EV_STOPLOOPINGSOUND:
 		DEBUGNAME("EV_STOPLOOPINGSOUND");
@@ -653,4 +501,3 @@ void CG_CheckEvents( centity_t *cent ) {
 
 	CG_EntityEvent( cent, cent->lerpOrigin );
 }
-

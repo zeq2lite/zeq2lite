@@ -27,28 +27,28 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // A user mod should never modify this file
 
 
-#define PRODUCT_NAME			"zeq2lite"
-#define BASEGAME			"ZEQ2"
-#define CLIENT_WINDOW_TITLE     	"ZEQ2-Lite"
-#define CLIENT_WINDOW_MIN_TITLE 	"ZEQ2-Lite"
-#define HOMEPATH_NAME_UNIX		".zeq2"
+#define PRODUCT_NAME			"ZEQ2-Lite"
+#ifndef PRODUCT_VERSION
+	#define PRODUCT_VERSION		"Revision 1917" 		// update before SVN commit (value = head revision + 1)
+#endif
+#define ENGINE_VERSION			"ioQuake3: Commit 2813" 		// value based on ioq3's github commits count
+#define BASEDIR					"ZEQ2-Lite"
+#define CLIENT_WIN_TITLE     	"ZEQ2-Lite"
+#define CLIENT_WIN_MIN_TITLE 	"ZEQ2-Lite"
+#define HOMEPATH_NAME_UNIX		".ZEQ2-Lite"
 #define HOMEPATH_NAME_WIN		"ZEQ2-Lite"
-#define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
-#define GAMENAME_FOR_MASTER		"zeq2"	// must NOT contain whitespace
+#define HOMEPATH_NAME_MACOSX	HOMEPATH_NAME_WIN
+#define NAME_FOR_MASTER			"ZEQ2-Lite"	// must NOT contain whitespace
 
 // Heartbeat for dpmaster protocol. You shouldn't change this unless you know what you're doing
-#define HEARTBEAT_FOR_MASTER		"DarkPlaces"
+#define HEARTBEAT_FOR_MASTER	"" //DarkPlaces
 
-#ifndef PRODUCT_VERSION
-  #define PRODUCT_VERSION "1.36"
-#endif
 
-#define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
 
-#define MAX_TEAMNAME		32
-#define MAX_MASTER_SERVERS      5	// number of supported master servers
+#define MAX_TEAMNAME			32
+#define MAX_MASTER_SERVERS      1			// number of supported master servers
 
-#define DEMOEXT	"dm_"			// standard demo extension
+#define DEMOEXT	"dm_"						// standard demo extension
 
 #ifdef _MSC_VER
 
@@ -221,7 +221,7 @@ typedef int		clipHandle_t;
 #define	BIG_INFO_VALUE		8192
 
 
-#define	MAX_QPATH			64		// max length of a quake game pathname
+#define	MAX_QPATH			64		// max length of a product pathname
 #ifdef PATH_MAX
 #define MAX_OSPATH			PATH_MAX
 #else
@@ -262,8 +262,8 @@ typedef enum {
 
 // parameters to the main Error routine
 typedef enum {
-	ERR_FATAL,					// exit the entire game with a popup window
-	ERR_DROP,					// print to console and disconnect from game
+	ERR_FATAL,					// integral shutdown plus crash popup window
+	ERR_DROP,					// print to console and disconnect from server
 	ERR_SERVERDISCONNECT,		// don't kill server
 	ERR_DISCONNECT,				// client disconnected from the server
 } errorParm_t;
@@ -390,7 +390,8 @@ extern	vec4_t		colorDkGrey;
 #define COLOR_CYAN	'5'
 #define COLOR_MAGENTA	'6'
 #define COLOR_WHITE	'7'
-#define ColorIndex(c)	(((c) - '0') & 0x07)
+#define ColorIndexForNumber(c) ((c) & 0x07)
+#define ColorIndex(c) (ColorIndexForNumber((c) - '0'))
 
 #define S_COLOR_BLACK	"^0"
 #define S_COLOR_RED		"^1"
@@ -549,7 +550,7 @@ typedef struct {
 #define Byte4Copy(a,b)			((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
 
 #define	SnapVector(v) {v[0]=((int)(v[0]));v[1]=((int)(v[1]));v[2]=((int)(v[2]));}
-// just in case you do't want to use the macros
+// just in case you don't want to use the macros
 vec_t _DotProduct( const vec3_t v1, const vec3_t v2 );
 void _VectorSubtract( const vec3_t veca, const vec3_t vecb, vec3_t out );
 void _VectorAdd( const vec3_t veca, const vec3_t vecb, vec3_t out );
@@ -648,7 +649,6 @@ int Q_log2(int val);
 
 float Q_acos(float c);
 float Q_asin(float c);
-
 
 int		Q_rand( int *seed );
 float	Q_random( int *seed );
@@ -773,7 +773,7 @@ typedef struct pc_token_s
 
 void	COM_MatchToken( char**buf_p, char *match );
 
-void SkipBracedSection (char **program);
+qboolean SkipBracedSection (char **program, int depth);
 void SkipRestOfLine ( char **data );
 
 void Parse1DMatrix (char **buf_p, int x, float *m);
@@ -871,7 +871,7 @@ void Com_TruncateLongString( char *buffer, const char *s );
 //
 char *Info_ValueForKey( const char *s, const char *key );
 void Info_RemoveKey( char *s, const char *key );
-void Info_RemoveKey_big( char *s, const char *key );
+void Info_RemoveKey_Big( char *s, const char *key );
 void Info_SetValueForKey( char *s, const char *key, const char *value );
 void Info_SetValueForKey_Big( char *s, const char *key, const char *value );
 qboolean Info_Validate( const char *s );
@@ -936,6 +936,7 @@ struct cvar_s {
 	qboolean	integral;
 	float			min;
 	float			max;
+	char			*description;
 
 	cvar_t *next;
 	cvar_t *prev;
@@ -1028,7 +1029,7 @@ typedef struct {
 // or ENTITYNUM_NONE, ENTITYNUM_WORLD
 
 
-// markfragments are returned by CM_MarkFragments()
+// markfragments are returned by R_MarkFragments()
 typedef struct {
 	int		firstPoint;
 	int		numPoints;
@@ -1110,7 +1111,7 @@ typedef enum {
 #define	CS_SERVERINFO		0		// an info string with all the serverinfo cvars
 #define	CS_SYSTEMINFO		1		// an info string for server system to client system configuration (timescale, etc)
 
-#define	RESERVED_CONFIGSTRINGS	2	// game can't modify below this, only the system can
+#define	RESERVED_CONFIGSTRINGS	2	// user can't modify below this, only the system can
 
 #define	MAX_GAMESTATE_CHARS	16000
 typedef struct {
@@ -1136,13 +1137,16 @@ typedef struct {
 #define MAX_LOCKED_STATS		8
 
 #define	MAX_PS_EVENTS			2
+
 #define PS_PMOVEFRAMECOUNTBITS	6
 
 // playerState_t is the information needed by both the client and server
 // to predict player motion and actions
 // nothing outside of pmove should modify these, or some degree of prediction error
 // will occur
+
 // you can't add anything to this without modifying the code in msg.c
+
 // playerState_t is a full superset of entityState_t as it is used by players,
 // so if a playerState_t is transmitted, the entityState_t can be fully derived
 // from it.
@@ -1157,23 +1161,27 @@ typedef struct playerState_s {
 	vec3_t		velocity;
 	int			weaponTime;
 	int			gravity[3];
-	int			delta_angles[3];
+	int			delta_angles[3];	// add to command angles to get view direction
+									// changed by spawns, rotating objects, and teleporters
 	int			groundEntityNum;// ENTITYNUM_NONE = in air
 	int			legsTimer;		// don't change low priority animations until this runs out
 	int			legsAnim;		// mask off ANIM_TOGGLEBIT
 	int			torsoTimer;		// don't change low priority animations until this runs out
 	int			torsoAnim;		// mask off ANIM_TOGGLEBIT
 	int			lockTimer;		// timer for toggle lock on/off.
-	int			movementDir;
-	int			eFlags;
-	int			eventSequence;
+	int			movementDir;	// a number 0 to 7 that represents the relative angle
+								// of movement to the view angle (axial and diagonals)
+								// when at rest, the value will remain unchanged
+								// used to twist the legs during strafing
+	int			eFlags;			// copied to entityState_t->eFlags
+	int			eventSequence;	// pmove generated events
 	int			events[MAX_PS_EVENTS];
 	int			eventParms[MAX_PS_EVENTS];
 	int			externalEvent;	// events set on player from another source
 	int			externalEventParm;
 	int			externalEventTime;
 	int			clientNum;		// ranges from 0 to MAX_CLIENTS-1
-	int			weapon;			// copied to entityState_t->weapon`
+	int			weapon;			// copied to entityState_t->weapon
 	int			weaponstate;
 	vec3_t		viewangles;		// for fixed views
 	int			viewheight;
@@ -1200,7 +1208,7 @@ typedef struct playerState_s {
 	float		baseStats[MAX_BASESTATS];
 	float		buffers[MAX_RBUFFERS];
 	int			powerLevel[MAX_POWERSTATS];
-	int			persistant[MAX_PERSISTANT];
+	int			persistant[MAX_PERSISTANT];	// stats that aren't cleared on death
 	int			timers[MAX_TIMERS];
 	int			cooldownTimers[MAX_COOLDOWN];
 	int			sequenceTimers[MAX_SEQUENCE];
@@ -1219,23 +1227,30 @@ typedef struct playerState_s {
 	int			jumppad_frame;
 	int			entityEventSequence;
 } playerState_t;
+//====================================================================
 // usercmd_t->button bits, many of which are generated by the client system,
 // so they aren't game/cgame only definitions
 #define	BUTTON_ATTACK		1
-#define	BUTTON_TALK			2
+#define	BUTTON_TALK			2			// displays talk balloon and disables actions
 #define	BUTTON_USE_HOLDABLE	4
 #define	BUTTON_GESTURE		8
-#define	BUTTON_WALKING		16
+#define	BUTTON_WALKING		16			// walking can't just be infered from MOVE_RUN
+										// because a key pressed late in the frame will
+										// only generate a small move value for that frame
+										// walking will use different animations and
+										// won't generate footsteps
 #define BUTTON_ROLL_LEFT	32
 #define BUTTON_ROLL_RIGHT	64
 #define BUTTON_BOOST		128
 #define BUTTON_TELEPORT		512
 #define BUTTON_ALT_ATTACK	1024
-#define	BUTTON_ANY			2048
+#define	BUTTON_ANY			2048			// any key whatsoever
 #define BUTTON_POWERLEVEL	4096		
 #define BUTTON_BLOCK		8192		
 #define BUTTON_JUMP			16384
-#define	MOVE_RUN			120
+#define	MOVE_RUN			120			// if forwardmove or rightmove are >= MOVE_RUN,
+										// then BUTTON_WALKING should be set
+
 // usercmd_t is sent to the server each client frame
 typedef struct usercmd_s {
 	int				serverTime;
@@ -1247,6 +1262,9 @@ typedef struct usercmd_s {
 	byte			weaponSelectionMode;
 	byte			tierSelectionMode;
 } usercmd_t;
+
+//===================================================================
+
 // if entityState->solid == SOLID_BMODEL, modelindex is an inline model number
 #define	SOLID_BMODEL	0xffffff
 
@@ -1275,6 +1293,12 @@ typedef struct {
 	int	chBase;		// base amount
 	int	chDelta;	// amount charged each second. 16bits!
 } charge_t;
+// entityState_t is the information conveyed from the server
+// in an update message about entities that the client will
+// need to render in some way
+// Different eTypes may use the information in different ways
+// The messages are delta compressed, so it doesn't really matter if
+// the structure size is fairly large
 
 typedef struct entityState_s {
 	int		number;			// entity index
@@ -1332,7 +1356,7 @@ typedef enum {
 	CA_CONNECTED,		// netchan_t established, getting gamestate
 	CA_LOADING,			// only during cgame initialization, never during main loop
 	CA_PRIMED,			// got gamestate, waiting for first frame
-	CA_ACTIVE,			// game views should be displayed
+	CA_ACTIVE,			// environment should be displayed
 	CA_CINEMATIC		// playing a cinematic or a static pic, not connected to a server
 } connstate_t;
 

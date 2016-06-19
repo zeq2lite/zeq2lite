@@ -11,9 +11,9 @@ void CG_CheckMusic(void){
 		CG_StartMusic();
 	}
 	if(ps->bitFlags & isTransforming){
-		if(cgs.music.currentType != 9){
+		if(cgs.music.currentType != 7){
 			char var[8];
-			cgs.music.currentType = 9;
+			cgs.music.currentType = 7;
 			if(tier->transformMusic[0]){
 				CG_PlayTransformTrack();
 			}
@@ -106,6 +106,7 @@ int CG_GetMilliseconds(char *time){
 }
 void CG_ParsePlaylist(void){
 	fileHandle_t playlist;
+	const char	*info;
 	char *token,*parse,*name;
 	char first,last;
 	int trackIndex,typeIndex;

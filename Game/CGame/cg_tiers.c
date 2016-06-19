@@ -1,36 +1,27 @@
+//
+// cg_tiers.c -- client side tier system handling
+
 #include "cg_local.h"
+
 void parseTier(char *path,tierConfig_cg *tier);
+	
 qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *modelName, const char *skinName){
 	int	i,index,partIndex,damageIndex,lastSkinIndex,lastModelIndex;
 	char filename[MAX_QPATH * 2];
 	char tierPath[MAX_QPATH];
-	char tempPath[MAX_QPATH];
-	char legsPath[MAX_QPATH];
-	char headPath[MAX_QPATH];
-	char cameraPath[MAX_QPATH];
-	char headPrefix[8],upperPrefix[8],lowerPrefix[8];
 	qhandle_t tempShader;
-	strcpy(headPrefix,"head_");
-	strcpy(lowerPrefix,"lower_");
-	strcpy(upperPrefix,"upper_");
-	Com_sprintf(legsPath,sizeof(legsPath),"%s",modelName);
-	Com_sprintf(headPath,sizeof(headPath),"%s",modelName);
-	Com_sprintf(cameraPath,sizeof(cameraPath),"%s",modelName);
-	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animCam.cfg",modelName);
-	if(ci->cameraModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(cameraPath,sizeof(modelName),"%s",ci->cameraModelName);}
-	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animation.cfg",ci->legsModelName);
-	if(ci->legsModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(legsPath,sizeof(legsPath),"%s",ci->legsModelName);}
-	Com_sprintf(tempPath,sizeof(tempPath),"players/%s/animation.cfg",ci->headModelName);
-	if(ci->headModelName && trap_FS_FOpenFile(tempPath,0,FS_READ)>0){Com_sprintf(headPath,sizeof(headPath),"%s",ci->headModelName);}
-	Com_sprintf(filename,sizeof(filename),"players/%s/animation.cfg",modelName);
-	if(!CG_ParseAnimationFile(filename,ci,qtrue)){
-		Com_sprintf(filename,sizeof(filename),"players/characters/%s/animation.cfg",modelName);
-		if(!CG_ParseAnimationFile(filename,ci,qtrue)){return qfalse;}
+
+	Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/animation.cfg",modelName,i+1);
+	if(!CG_ParseAnimationFile(filename,ci,qtrue)){ Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/animation.cfg",modelName,i);
+		if(!CG_ParseAnimationFile(filename,ci,qtrue)){ Com_sprintf(filename,sizeof(filename),"players/%s/animation.cfg",modelName);
+			if(!CG_ParseAnimationFile(filename,ci,qtrue)){return qfalse;}
+		}
 	}
-	Com_sprintf(filename,sizeof(filename),"players/%s/animCam.cfg",modelName);
-	if(!CG_ParseAnimationFile(filename,ci,qfalse)){
-		Com_sprintf(filename,sizeof(filename),"players/animCam.cfg");
-		if(!CG_ParseAnimationFile(filename,ci,qfalse)){return qfalse;}
+	Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/animCam.cfg",modelName,i+1);
+	if(!CG_ParseAnimationFile(filename,ci,qfalse)){ Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/animCam.cfg",modelName,i);
+		if(!CG_ParseAnimationFile(filename,ci,qfalse)){ Com_sprintf(filename,sizeof(filename),"players/animCam.cfg");
+			if(!CG_ParseAnimationFile(filename,ci,qfalse)){return qfalse;}
+		}
 	}
 	for(i=0;i<8;++i){
 		// ===================================
@@ -72,56 +63,33 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 		Com_sprintf(filename,sizeof(filename),"players/tierDefault.cfg",modelName,i+1);
 		parseTier(filename,&ci->tierConfig[i]);
 		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/tier.cfg",modelName,i+1);
-		parseTier(filename,&ci->tierConfig[i]);
+		//parseTier(filename,&ci->tierConfig[i]);
 		// ===================================
 		// Models
 		// ===================================
-		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", legsPath, i+1);
+		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower.md3", modelName, i+1);
 		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->legsModel[i] = trap_R_RegisterModel(filename);}
-		else{
-			if(i == 0){return qfalse;}
-			else{ci->legsModel[i] = ci->legsModel[i - 1];}
-		}
+		else if(i!=0){ci->legsModel[i] = ci->legsModel[i - 1];}
+		else{return qfalse;}
 		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/upper.md3", modelName, i+1);
 		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->torsoModel[i] = trap_R_RegisterModel(filename);}
-		else{
-			if(i == 0){return qfalse;}
-			else{ci->torsoModel[i] = ci->torsoModel[i - 1];}
-		}
-		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head.md3", headPath, i+1);
+		else if(i!=0){ci->torsoModel[i] = ci->torsoModel[i - 1];}
+		else{return qfalse;}
+		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head.md3", modelName, i+1);
 		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->headModel[i] = trap_R_RegisterModel(filename);}
-		else{
-			if(i == 0){return qfalse;}
-			else{ci->headModel[i] = ci->headModel[i - 1];}
-		}
+		else if(i!=0){ci->headModel[i] = ci->headModel[i - 1];}
+		else{return qfalse;}
 		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/camera.md3", modelName, i+1);
 		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->cameraModel[i] = trap_R_RegisterModel(filename);}
-		else if(trap_FS_FOpenFile(filename,0,FS_READ)<1){
-			ci->cameraModel[i] = trap_R_RegisterModel("players/cameraDefault.md3");}
-		else{ 
-			if(i == 0){return qfalse;}
-			else{ci->cameraModel[i] = ci->cameraModel[i - 1];}
-		}
+		else if(i!=0){ci->cameraModel[i] = ci->cameraModel[i - 1];}
+		else if(!i && trap_FS_FOpenFile(filename,0,FS_READ)<1){	ci->cameraModel[i] = trap_R_RegisterModel("players/cameraDefault.md3");}
 		// ===================================
 		// Skins
 		// ===================================
-		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/%s.skin",legsPath,i+1,skinName);
-		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
-			strcpy(headPrefix,"");
-			strcpy(lowerPrefix,"");
-			strcpy(upperPrefix,"");
-		}
-		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/%s%s.skin",legsPath,i+1,skinName,lowerPrefix);
-		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->legsSkin[i] = trap_R_RegisterSkin(filename);}
-		else if(i!=0){ci->legsSkin[i] = ci->legsSkin[i - 1];}
+		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/%s.skin",modelName,i+1,skinName);
+		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->skin[i] = trap_R_RegisterSkin(filename);}
+		else if(i!=0){ci->skin[i] = ci->skin[i - 1];}
 		else{return qfalse;}
-		Com_sprintf(filename,sizeof(filename),"players/%s/tier%i/%s%s.skin",modelName,i+1,skinName,upperPrefix);
-		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->torsoSkin[i] = trap_R_RegisterSkin(filename);}
-		else if(i!=0){ci->torsoSkin[i] = ci->torsoSkin[i - 1];}	
-		else{return qfalse;}
-		Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s%s.skin", headPath, i+1,skinName,headPrefix);
-		if(trap_FS_FOpenFile(filename,0,FS_READ)>0){ci->headSkin[i] = trap_R_RegisterSkin(filename);}
-		else if(i!=0){ci->headSkin[i] = ci->headSkin[i - 1];}
 		// ===================================
 		// Damage States
 		// ===================================
@@ -130,18 +98,18 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 			lastModelIndex = -1;
 			for(damageIndex=9;damageIndex>=0;--damageIndex){
 				if(partIndex==0){
-					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head_percent%i.md3",headPath,i+1,(damageIndex+1)*10);
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/head_percent%i.md3",modelName,i+1,(damageIndex+1)*10);
 					if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
 						ci->modelDamageState[i][partIndex][damageIndex] = trap_R_RegisterModel(filename);
 						lastModelIndex = damageIndex;
 					}
-					else{ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->headModel[i];}
-					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s%s_percent%i.skin",headPath,i+1,headPrefix,skinName,(damageIndex+1)*10);
+					else{ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1 ? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->headModel[i];}
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s_percent%i.skin",modelName,i+1,skinName,(damageIndex+1)*10);
 					if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
 						ci->skinDamageState[i][partIndex][damageIndex] = trap_R_RegisterSkin(filename);
 						lastSkinIndex = damageIndex;
 					}
-					else{ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1 ? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->headSkin[i];}
+					else{ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1 ? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->skin[i];}
 				}
 				else if(partIndex==1){
 					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/upper_percent%i.md3",modelName,i+1,(damageIndex+1)*10);
@@ -149,27 +117,27 @@ qboolean CG_RegisterClientModelnameWithTiers(clientInfo_t *ci, const char *model
 						ci->modelDamageState[i][partIndex][damageIndex] = trap_R_RegisterModel(filename);
 						lastModelIndex = damageIndex;
 					}
-					else{ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->torsoModel[i];}
-					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s%s_percent%i.skin",modelName,i+1,upperPrefix,skinName,(damageIndex+1)*10);
+					else{ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1 ? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->torsoModel[i];}
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s_percent%i.skin",modelName,i+1,skinName,(damageIndex+1)*10);
 					if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
 						ci->skinDamageState[i][partIndex][damageIndex] = trap_R_RegisterSkin(filename);
 						lastSkinIndex = damageIndex;
 					}
-					else{ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1 ? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->torsoSkin[i];}
+					else{ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1 ? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->skin[i];}
 				}
 				else if(partIndex==2){
-					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower_percent%i.md3",legsPath,i+1,(damageIndex+1)*10);
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/lower_percent%i.md3",modelName,i+1,(damageIndex+1)*10);
 					if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
 						ci->modelDamageState[i][partIndex][damageIndex] = trap_R_RegisterModel(filename);
 						lastModelIndex = damageIndex;
 					}
-					else{ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->legsModel[i];}
-					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s%s_percent%i.skin",legsPath,i+1,lowerPrefix,skinName,(damageIndex+1)*10);
+					else{ci->modelDamageState[i][partIndex][damageIndex] = lastModelIndex != -1 ? ci->modelDamageState[i][partIndex][lastModelIndex] : ci->legsModel[i];}
+					Com_sprintf(filename, sizeof(filename), "players/%s/tier%i/%s_percent%i.skin",modelName,i+1,skinName,(damageIndex+1)*10);
 					if(trap_FS_FOpenFile(filename,0,FS_READ)>0){
 						ci->skinDamageState[i][partIndex][damageIndex] = trap_R_RegisterSkin(filename);
 						lastSkinIndex = damageIndex;
 					}
-					else{ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1 ? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->legsSkin[i];}
+					else{ci->skinDamageState[i][partIndex][damageIndex] = lastSkinIndex != -1 ? ci->skinDamageState[i][partIndex][lastSkinIndex] : ci->skin[i];}
 				}
 			}
 		}

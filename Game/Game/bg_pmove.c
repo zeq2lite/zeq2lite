@@ -165,7 +165,7 @@ void PM_CheckLoopingSound(void){
 		pm->ps->timers[tmMeleeCharge] != 0 ||
 		pm->ps->timers[tmMeleeIdle]  ||
 		pm->ps->bitFlags & usingMelee ||
-		pm->ps->bitFlags & isUnconcious ||
+		//pm->ps->bitFlags & isUnconcious ||
 		pm->ps->bitFlags & isCrashed ||
 		pm->ps->bitFlags & isDead){
 		PM_AddEvent(EV_STOPLOOPINGSOUND);
@@ -345,8 +345,8 @@ void PM_CheckZanzoken(void){
 		pm->ps->powerLevel[plUseFatigue] += cost;
 		PM_AddEvent(EV_ZANZOKEN_START);
 	}
-	else if(!(pm->cmd.buttons & BUTTON_BOOST) && !(pm->cmd.buttons & BUTTON_POWERLEVEL) && (pm->ps->sequenceTimers[15]%10 == 2 || pm->ps->sequenceTimers[16]%10 == 2 || pm->ps->sequenceTimers[17]%10 == 2  ||
-			pm->ps->sequenceTimers[18]%10 == 2	|| pm->ps->sequenceTimers[19]%10 == 2 || pm->ps->sequenceTimers[20]%10 == 2)){
+	else if(!(pm->cmd.buttons & BUTTON_BOOST) && !(pm->cmd.buttons & BUTTON_POWERLEVEL) && (pm->ps->sequenceTimers[15]%10 == 2 || pm->ps->sequenceTimers[16]%10 == 2 || pm->ps->sequenceTimers[17]%10 == 2 ||
+			pm->ps->sequenceTimers[18]%10 == 2 || pm->ps->sequenceTimers[19]%10 == 2 || pm->ps->sequenceTimers[20]%10 == 2)){
 		PM_StopDash();
 		pm->ps->bitFlags |= usingZanzoken;
 		pm->ps->bitFlags |= usingQuickZanzoken;
@@ -450,6 +450,18 @@ void PM_BurnPowerLevel(){
 		if(pm->ps->powerLevel[plMaximumPool] > limit){pm->ps->powerLevel[plMaximumPool] = limit;}
 		if(burn > 0){
 			newValue = pm->ps->powerLevel[plHealth] - burn;
+			//CG_CheckPainEvent (pain sounds)
+			//Eagle: didn't have any other alternative than implementing it here..
+			//Should be moved to CGame/cg_events.c if possible.
+			if(!(pm->ps->bitFlags & isDead)){
+				if(newValue <= pm->ps->powerLevel[plHealth] - 1 && newValue >= pm->ps->powerLevel[plHealth] - 1999){PM_AddEvent(EV_PAIN_LIGHT);}
+				else if(newValue <= pm->ps->powerLevel[plHealth] - 2000 && newValue >= pm->ps->powerLevel[plHealth] - 4999){PM_AddEvent(EV_PAIN_MEDIUM);}
+				else if(newValue < pm->ps->powerLevel[plHealth] - 4999){PM_AddEvent(EV_PAIN_HEAVY);}
+				if(newValue <= pm->ps->lockedPlayer->powerLevel[plHealth] - 1 && newValue >= pm->ps->lockedPlayer->powerLevel[plHealth] - 1999){PM_AddEvent(EV_PAIN_LIGHT);}
+				else if(newValue <= pm->ps->lockedPlayer->powerLevel[plHealth] - 2000 && newValue >= pm->ps->lockedPlayer->powerLevel[plHealth] - 4999){PM_AddEvent(EV_PAIN_MEDIUM);}
+				else if(newValue < pm->ps->lockedPlayer->powerLevel[plHealth] - 4999){PM_AddEvent(EV_PAIN_HEAVY);}
+			}
+			//End CG_CheckPainEvent
 			if(newValue > limit){newValue = limit;}
 			else if(newValue < 0){newValue = 0;}
 			pm->ps->powerLevel[plHealth] = newValue;
@@ -461,7 +473,7 @@ void PM_BurnPowerLevel(){
 				if(newValue > limit){newValue = limit;}
 				else if(newValue < 0){newValue = 0;}
 				pm->ps->powerLevel[plMaximum] = newValue;
-			}
+			}	
 		}
 		if(burnType == 0){pm->ps->powerLevel[plDamageFromEnergy] = 0;}
 		else if(burnType == 1){pm->ps->powerLevel[plDamageFromMelee] = 0;}
@@ -580,10 +592,9 @@ void PM_CheckStatus(void){
 	}
 }
 
-void PM_CheckSpecificSequences(signed char buttonValue, int index){
+void PM_CheckSpecificSequences(signed char buttonValue, int index, int tapTime){
 	int oppositeButtonIndex = index+1;
 	int time = pm->cmd.serverTime / 10;
-	int tapTime = 500;
 	int current = 0;
 	int oppositeButtonCurrent = 0;
 	int sequenceStatus = 0;
@@ -651,9 +662,9 @@ void PM_CheckSequences(void){
 		pm->ps->sequenceTimers[index] = (sequenceTime * 10) + sequenceStatus;
 		buttonIndex *= 2;
 	}
-	PM_CheckSpecificSequences(pm->cmd.forwardmove, index);
-	PM_CheckSpecificSequences(pm->cmd.rightmove, index+2);
-	PM_CheckSpecificSequences(pm->cmd.upmove, index+4);
+	PM_CheckSpecificSequences(pm->cmd.forwardmove, index, 250);
+	PM_CheckSpecificSequences(pm->cmd.rightmove, index+2, 250);
+	PM_CheckSpecificSequences(pm->cmd.upmove, index+4, 250);
 }
 
 void PM_CheckContextOperations(void)
@@ -1095,7 +1106,7 @@ float PM_CmdScale(usercmd_t *cmd){
 	if(pm->ps->bitFlags & usingBoost){totalSpeed *= pm->ps->timers[tmBoost] <= 1000 ? 4.2 : 2.8;}
 	if(pm->cmd.buttons & BUTTON_WALKING){totalSpeed = 1000;}
 	if(pm->ps->powerups[PW_DRIFTING] > 0){
-		totalSpeed = 1000;
+		totalSpeed = 500;
 		if(pm->ps->lockedPlayer->timers[tmMeleeIdle] > 1500 && pm->ps->timers[tmMeleeIdle] > 1500){totalSpeed = 1500;}
 	}
 	if(pm->ps->timers[tmMeleeIdle] < 0){totalSpeed = 4000;}
@@ -1157,10 +1168,6 @@ void PM_CheckJump(void){
 	float jumpScale,jumpEmphasis;
 	vec3_t pre_vel,post_vel;
 	if(!(pm->ps->options & canJump)){return;}
-	if(pm->ps->bitFlags & usingBallFlip || pm->ps->bitFlags & usingFlight){
-		PM_StopJump();
-		return;
-	}
 	if(pm->ps->timers[tmOnGround] > 1000){PM_StopJumpChain();}
 	if(pm->cmd.buttons & BUTTON_JUMP && (pm->ps->bitFlags & nearGround)){
 		pm->ps->timers[tmJump] += pml.msec;
@@ -1170,13 +1177,10 @@ void PM_CheckJump(void){
 		if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){
 			PM_ContinueLegsAnim(ANIM_FLY_DOWN);
 		}
-		else if(pm->ps->velocity[2] < 200){
+		else if(pm->ps->velocity[2] < 200 && !pm->ps->bitFlags & usingBallFlip){
 			if(pm->ps->pm_flags & PMF_BACKWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_BACK);}
 			else if(pm->ps->pm_flags & PMF_FORWARDS_JUMP){PM_ForceLegsAnim(ANIM_LAND_UP);}
 			else{PM_ForceLegsAnim(ANIM_LAND_UP);}
-		}
-		if((pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING)){
-			PM_StartFlight();
 		}
 		return;
 	}	
@@ -1188,9 +1192,10 @@ void PM_CheckJump(void){
 		qtime_t realRandom;
 		trap_RealTime(&realRandom);
 		pm->ps->bitFlags |= usingJump;
-		jumpPower = (pm->ps->baseStats[stSpeed] * 450);
-		jumpEmphasis = 2500.0;
-		pm->ps->gravity[2] = 12000;
+		jumpPower = (pm->ps->baseStats[stSpeed] * 160);
+		jumpEmphasis = 1500.0;
+		pm->ps->gravity[2] = 1700;
+		pm->ps->gravity[2] += 100;
 		if(pm->ps->timers[tmOnGround] < 500){
 			pm->ps->stats[stJumpTimed] += 1;
 		}
@@ -1200,7 +1205,6 @@ void PM_CheckJump(void){
 		PM_NotOnGround();
 		PM_StopDash();
 		if(pm->ps->timers[tmJump] < 750 && pm->ps->baseStats[stJumpTimedPower] <= 0){
-			PM_StopBoost();
 			extra = pm->ps->stats[stJumpTimed];
 			if(extra > 3){extra = 3;}
 			jumpEmphasis += (700) * extra;
@@ -1213,7 +1217,7 @@ void PM_CheckJump(void){
 			pm->ps->baseStats[stJumpTimedPower] = -1;
 		}
 		else{
-			extra = pm->ps->timers[tmJump] / 1000;
+			extra = pm->ps->timers[tmJump] / 100;
 			if(pm->cmd.forwardmove || pm->cmd.rightmove){extra *= 0.75;}
 			if(extra < 1.0){extra = 1.0;}
 			truePower = pm->ps->stats[stJumpTimed] ? pm->ps->baseStats[stJumpTimedPower] : jumpPower * (6 * extra);
@@ -1406,20 +1410,19 @@ void PM_AirMove(void){
 		&& !(pm->ps->bitFlags & isUnconcious) && !(pm->ps->bitFlags & isDead) && !(pm->ps->bitFlags & isCrashed))){return;}
 	if(pm->ps->bitFlags & isGuiding){return;}
 	if(!(pm->ps->bitFlags & usingFlight) && pm->ps->options & canBallFlip){
-		if(pm->cmd.upmove < 0 && pm->ps->velocity[2] < 0 && !(pm->ps->bitFlags & nearGround) && !(pm->cmd.buttons & BUTTON_POWERLEVEL)){
-			pm->ps->velocity[1] = 0;
-			pm->ps->velocity[0] = 0;
-			pm->ps->gravity[2] = 1000;
-			pm->ps->bitFlags |= usingBallFlip;
-			PM_AddEvent(EV_BALLFLIP);
-			PM_ContinueLegsAnim(ANIM_JUMP_FORWARD);
-		}
-		else if(pm->ps->bitFlags & usingBallFlip){
-			pm->ps->bitFlags &= ~usingBallFlip;
-			PM_AddEvent(EV_STOPLOOPINGSOUND);
-			if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){PM_ContinueLegsAnim(ANIM_FLY_DOWN);}
-		}
-		if(pm->ps->bitFlags & usingBallFlip){PM_StopDirections();}
+			if(pm->ps->bitFlags & usingJump && pm->cmd.upmove < 0){
+				pm->ps->gravity[2] = 3000;
+				pm->ps->bitFlags |= usingBallFlip;
+				PM_AddEvent(EV_BALLFLIP);
+				if(pm->ps->bitFlags & nearGround && pm->ps->velocity[2] < 0){PM_ContinueLegsAnim(ANIM_FLY_DOWN);}
+				else{PM_ContinueLegsAnim(ANIM_JUMP_FORWARD);}
+			}
+			else if(pm->ps->bitFlags & usingJump && pm->ps->bitFlags & usingBallFlip && pm->cmd.upmove == 0){
+				pm->ps->gravity[2] = 6000;
+				pm->ps->bitFlags &= ~usingBallFlip;
+				PM_AddEvent(EV_STOPLOOPINGSOUND);
+			}
+			if(pm->ps->bitFlags & usingBallFlip){PM_StopDirections();}
 	}
 	if(pm->ps->timers[tmMeleeIdle] < 0){
 		PM_StopDirections();
@@ -1484,8 +1487,7 @@ void PM_WalkMove(void){
 	if(!pml.onGround || VectorLength(pm->ps->dashDir)){return;}
 	fmove = pm->cmd.forwardmove;
 	//With smove = 0, the char cannot walk sideways
-	//smove = pm->cmd.rightmove;
-	smove = 0;
+	smove = pm->cmd.rightmove;
 	cmd = pm->cmd;
 	scale = PM_CmdScale(&cmd);
 	// set the movementDir so clients can rotate the legs for strafing
@@ -2002,13 +2004,7 @@ void PM_Footsteps(void){
 	}
 	else{
 		bobmove = 0.3f;
-		//If the player is pressing left or righ and is not moving forward/backwards, the legs must play the idle animation.
-		if(pm->cmd.rightmove != 0 && pm->cmd.forwardmove == 0)
-		{
-			PM_ContinueLegsAnim(ANIM_IDLE);
-		}
-
-		else if(pm->cmd.forwardmove < 0){
+		if(pm->cmd.forwardmove < 0){
 			PM_ContinueLegsAnim(ANIM_BACKWALK );
 		}
 		else{
@@ -2396,9 +2392,11 @@ void PM_SyncMelee(void){
 		pm->ps->pm_flags |= PMF_ATTACK2_HELD;
 		pm->ps->bitFlags |= usingMelee;
 		pm->ps->bitFlags |= usingFlight;
-		pm->ps->bitFlags &= ~isBlinking;
-		pm->ps->timers[tmUpdateMelee] = 300;
-		pm->ps->lockedPlayer->timers[tmUpdateMelee] = 300;
+    
+		//(pm->ps->bitFlags &= ~isBlinking;)
+    
+		pm->ps->timers[tmUpdateMelee] = 200;
+		pm->ps->lockedPlayer->timers[tmUpdateMelee] = 200;
 		pm->ps->lockedPlayer->bitFlags |= usingMelee;
 		pm->ps->lockedPlayer->bitFlags |= usingFlight;
 		pm->ps->lockedPlayer->bitFlags &= ~isBlinking;
@@ -2429,13 +2427,13 @@ void PM_Melee(void){
 	charging = (pm->ps->weaponstate == WEAPON_CHARGING || pm->ps->weaponstate == WEAPON_ALTCHARGING) ? qtrue : qfalse;
 	state = pm->ps->stats[stMeleeState];
 	idleTime = qfalse;
-	distance = 9000;
+	distance = 6000;
 	pm->ps->timers[tmUpdateMelee] += pml.msec;
 	// ===================
 	// Setup
 	// ===================
 	if(pm->ps->lockedTarget > 0 && !charging){
-		if(pm->ps->timers[tmUpdateMelee] >= 300){
+		if(pm->ps->timers[tmUpdateMelee] >= 100){
 			pm->ps->timers[tmUpdateMelee] = 0;
 		}
 		if(pm->ps->bitFlags & usingZanzoken){
@@ -2491,27 +2489,27 @@ void PM_Melee(void){
 				state = stMeleeUsingChargeBreaker;
 				if(enemyState == stMeleeUsingSpeed){
 					//PM_AddEvent(EV_MELEE_BREAKER_BACKFIRE);
-					pm->ps->timers[tmFreeze] = 950;
+					pm->ps->timers[tmFreeze] = 650;
 					pm->ps->powerLevel[plUseFatigue] = damage;
 					state = stMeleeIdle;
 				}
 				else if(pm->ps->lockedPlayer->timers[tmMeleeBreaker]){
 					//PM_AddEvent(EV_MELEE_BREAKER_CLASH);
 					PM_AddEvent(EV_MELEE_KNOCKBACK);
-					pm->ps->timers[tmFreeze] = 500;
-					pm->ps->timers[tmMeleeIdle] = -480;
-					pm->ps->lockedPlayer->timers[tmFreeze] = 500;
-					pm->ps->lockedPlayer->timers[tmMeleeIdle] = -480;
+					pm->ps->timers[tmFreeze] = 300;
+					pm->ps->timers[tmMeleeIdle] = -280;
+					pm->ps->lockedPlayer->timers[tmFreeze] = 300;
+					pm->ps->lockedPlayer->timers[tmMeleeIdle] = -280;
 				}
 				else if(enemyState != stMeleeUsingEvade){
 					PM_EndDrift();
 					PM_AddEvent(EV_MELEE_BREAKER);
 					enemyState = stMeleeIdle;
-					pm->ps->timers[tmFreeze] = 100;
+					pm->ps->timers[tmFreeze] = 50;
 					pm->ps->powerLevel[plHealthPool] += damage * 0.5;
 					pm->ps->powerLevel[plMaximumPool] += damage * 0.3;
 					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] = damage;
-					pm->ps->lockedPlayer->timers[tmFreeze] = 500;
+					pm->ps->lockedPlayer->timers[tmFreeze] = 300;
 					pm->ps->lockedPlayer->timers[tmMeleeCharge] = 0;
 				}
 			}
@@ -2519,17 +2517,17 @@ void PM_Melee(void){
 				state = stMeleeUsingSpeedBreaker;
 				if(pm->ps->lockedPlayer->timers[tmMeleeCharge]){
 					//PM_AddEvent(EV_MELEE_BREAKER_BACKFIRE);
-					pm->ps->timers[tmFreeze] = 300;
-					pm->ps->lockedPlayer->timers[tmMeleeCharge] = 1000;
+					pm->ps->timers[tmFreeze] = 150;
+					pm->ps->lockedPlayer->timers[tmMeleeCharge] = 700;
 					state = stMeleeIdle;
 				}
 				else if(pm->ps->lockedPlayer->timers[tmMeleeBreaker]){
 					//PM_AddEvent(EV_MELEE_CLASH);
 					PM_AddEvent(EV_MELEE_KNOCKBACK);
-					pm->ps->timers[tmFreeze] = 500;
-					pm->ps->timers[tmMeleeIdle] = -480;
-					pm->ps->lockedPlayer->timers[tmFreeze] = 500;
-					pm->ps->lockedPlayer->timers[tmMeleeIdle] = -480;
+					pm->ps->timers[tmFreeze] = 300;
+					pm->ps->timers[tmMeleeIdle] = -280;
+					pm->ps->lockedPlayer->timers[tmFreeze] = 300;
+					pm->ps->lockedPlayer->timers[tmMeleeIdle] = -280;
 				}
 				else if(enemyState != stMeleeUsingBlock){
 					PM_EndDrift();
@@ -2538,8 +2536,8 @@ void PM_Melee(void){
 					pm->ps->powerLevel[plHealthPool] += damage * 0.5;
 					pm->ps->powerLevel[plMaximumPool] += damage * 0.3;
 					pm->ps->lockedPlayer->powerLevel[plDamageFromMelee] = damage;
-					pm->ps->timers[tmFreeze] = 100;
-					pm->ps->lockedPlayer->timers[tmFreeze] = 500;
+					pm->ps->timers[tmFreeze] = 50;
+					pm->ps->lockedPlayer->timers[tmFreeze] = 300;
 				}
 			}
 			pm->ps->timers[tmMeleeBreaker] = 0;
@@ -2549,12 +2547,12 @@ void PM_Melee(void){
 			if((state == stMeleeChargingPower || state == stMeleeStartPower) && (!(pm->cmd.buttons & BUTTON_ALT_ATTACK) || meleeCharge >= 550)){
 				if(meleeCharge >= 550){
 					damage = 0;
-					pm->ps->timers[tmFreeze] = 1000;
+					pm->ps->timers[tmFreeze] = 500;
 					PM_EndDrift();
 					pm->ps->powerLevel[plUseFatigue] += pm->ps->powerLevel[plMaximum] * 0.05;
 					if(pm->ps->lockedPlayer->timers[tmMeleeCharge] > 50){
-						pm->ps->timers[tmMeleeIdle] = -480;
-						pm->ps->lockedPlayer->timers[tmMeleeIdle] = -480;
+						pm->ps->timers[tmMeleeIdle] = -280;
+						pm->ps->lockedPlayer->timers[tmMeleeIdle] = -280;
 						PM_AddEvent(EV_MELEE_KNOCKBACK);
 						//PM_AddEvent(EV_MELEE_CLASH);
 						PM_StopMelee();
@@ -2575,7 +2573,7 @@ void PM_Melee(void){
 							damage *= 1.5;
 							pm->ps->lockedPlayer->powerups[PW_KNOCKBACK_SPEED] *= 1.8;
 						}
-						pm->ps->lockedPlayer->timers[tmKnockback] = 5000;
+						pm->ps->lockedPlayer->timers[tmKnockback] = 1000;
 						PM_StopMelee();
 					}
 					pm->ps->powerLevel[plHealthPool] += damage;
@@ -3151,7 +3149,9 @@ int PM_VerifyTrace(int lockBoxSize){
 	maxSize[2] = baseLockBoxValue;
 	pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
 	if((trace.entityNum >= MAX_CLIENTS)){
-		Com_Printf("Second try\n");
+  
+		//Com_Printf("Second try\n");
+    
 		minSize[0] = -baseLockBoxValue;
 		minSize[1] = -lockBoxSize;
 		minSize[2] = -lockBoxSize;
@@ -3160,14 +3160,18 @@ int PM_VerifyTrace(int lockBoxSize){
 		maxSize[2] = lockBoxSize;
 		pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
 		if((trace.entityNum >= MAX_CLIENTS)){
-			Com_Printf("Third try\n");
+    
+			//Com_Printf("Third try\n");
+      
 			minSize[0] = -lockBoxSize;
 			minSize[1] = -baseLockBoxValue;
 			maxSize[0] = lockBoxSize;
 			maxSize[1] = baseLockBoxValue;
 			pm->trace(&trace,pm->ps->origin,minSize,maxSize,end,pm->ps->clientNum,MASK_PLAYERSOLID);
 			if((trace.entityNum >= MAX_CLIENTS)) {
-				Com_Printf("Fourth try\n");
+      
+				//Com_Printf("Fourth try\n");
+        
 				minSize[1] = -lockBoxSize;
 				minSize[2] = -baseLockBoxValue;
 				maxSize[1] = lockBoxSize;
@@ -3215,8 +3219,8 @@ void PM_CheckLockon(void){
 	}
 	if(pm->ps->lockonData[lkLastLockedPlayer] != -1){
 		pm->ps->timers[tmLockon] += pml.msec;
-		if(pm->ps->timers[tmLockon] < 3000){
-			entityNum = PM_VerifyTrace(2500);
+		if(pm->ps->timers[tmLockon] < 2000){
+			entityNum = PM_VerifyTrace(1500);
 			if(entityNum > -1 && pm->ps->lockedPlayer && !(pm->ps->lockedPlayer->bitFlags & usingZanzoken)){
 				if(entityNum == pm->ps->lockonData[lkLastLockedPlayer]){
 					pm->ps->lockonData[lkLastLockedPlayer] = -1;

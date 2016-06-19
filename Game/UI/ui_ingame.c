@@ -23,239 +23,209 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 /*
 =======================================================================
 
-INGAME MENU
+INWORLD MENU
 
 =======================================================================
 */
 
 #include "ui_local.h"
 
-#define INGAME_FRAME					"interface/art/addbotframe"
-#define INGAME_MENU_VERTICAL_SPACING	28
+#define MENU_FRAME					"interface/art/addbotframe"
+#define MENU_VERTICAL_SPACING	28
 
-#define ID_TEAM					10
-#define ID_SETUP				13
-#define ID_PLAYER				14
+#define ID_SETTINGS				13
+#define ID_CHARACTER			14
 #define ID_CAMERA				15
-#define ID_LEAVEARENA			16
-#define ID_RESTART				17
+#define ID_LEAVE				16
 #define ID_QUIT					18
+#define ID_RESUME				19
 
 typedef struct {
 	menuframework_s	menu;
 	menubitmap_s	frame;
-	menutext_s		setup;
-	menutext_s		player;
+	menutext_s		resume;
+	menutext_s		settings;
+	menutext_s		character;
 	menutext_s		camera;
-	menutext_s		server;
 	menutext_s		leave;
-	menutext_s		team;
-	menutext_s		restart;
 	menutext_s		quit;
-} ingamemenu_t;
+} inworldmenu_t;
 
-static ingamemenu_t	s_ingame;
-
-
-/*
-=================
-InGame_RestartAction
-=================
-*/
-static void InGame_RestartAction( qboolean result ) {
-	if( !result ) {
-		return;
-	}
-
-	UI_PopMenu();
-	trap_Cmd_ExecuteText( EXEC_APPEND, "map_restart 0\n" );
-}
-
+static inworldmenu_t	s_inworld;
 
 /*
 =================
-InGame_QuitAction
+QuitAction
 =================
 */
-static void InGame_QuitAction( qboolean result ) {
-	if( !result ) {
-		return;
-	}
+static void QuitAction( qboolean result ) {
+	if(!result) {return;}
 	UI_PopMenu();
 	UI_CreditMenu();
 }
 
+/*
+=================
+LeaveAction
+=================
+*/
+static void LeaveAction( qboolean result ) {
+	if(!result) {return;}
+	// JUHOX: reset edit mode
+#if MAPLENSFLARES
+	trap_Cvar_Set("g_editmode", "0");
+#endif
+	trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
+}
 
 /*
 =================
-InGame_Event
+InWorld_Event
 =================
 */
-void InGame_Event( void *ptr, int notification ) {
-	if( notification != QM_ACTIVATED ) {
-		return;
-	}
+void InWorld_Event( void *ptr, int notification ) {
+	if( notification != QM_ACTIVATED ) {return;}
 
 	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_TEAM:
-		UI_TeamMainMenu();
+	case ID_RESUME:
+		UI_PopMenu();
 		break;
-	case ID_SETUP:
+	case ID_SETTINGS:
 		UI_SystemSettingsMenu();
 		break;
-	
-	case ID_PLAYER:
+	case ID_CHARACTER:
 		UI_PlayerModelMenu();
 		break;	
-
 	case ID_CAMERA:
 		UI_CameraMenu();
 		break;		
-
-	case ID_LEAVEARENA:
-		// JUHOX: reset edit mode
-#if MAPLENSFLARES
-		trap_Cvar_Set("g_editmode", "0");
-#endif
-		trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
+	case ID_LEAVE:
+		UI_ConfirmMenu( "LEAVE SAGA?",  0, LeaveAction );
 		break;
-
-	case ID_RESTART:
-		UI_ConfirmMenu( "RESTART GAME?", 0, InGame_RestartAction );
-		break;
-
 	case ID_QUIT:
-		UI_ConfirmMenu( "EXIT GAME?",  0, InGame_QuitAction );
+		UI_ConfirmMenu( "QUIT ZEQII-Lite?",  0, QuitAction );
 		break;
-
 	}
 }
 
+/*
+=================
+InWorld_Cache
+=================
+*/
+void InWorld_Cache( void ) {
+	trap_R_RegisterShaderNoMip( MENU_FRAME );
+}
 
 /*
 =================
-InGame_MenuInit
+InWorld_MenuInit
 =================
 */
-void InGame_MenuInit( void ) {
+void InWorld_MenuInit( void ) {
 	int		y;
 	uiClientState_t	cs;
 	char	info[MAX_INFO_STRING];
 
-	memset( &s_ingame, 0 ,sizeof(ingamemenu_t) );
+	memset( &s_inworld, 0 ,sizeof(inworldmenu_t) );
 
-	InGame_Cache();
+	InWorld_Cache();
 
-	s_ingame.menu.wrapAround = qtrue;
-	s_ingame.menu.fullscreen = qfalse;
+	s_inworld.menu.wrapAround = qtrue;
+	s_inworld.menu.fullscreen = qfalse;
 
-	s_ingame.frame.generic.type			= MTYPE_BITMAP;
-	s_ingame.frame.generic.flags		= QMF_INACTIVE;
-	s_ingame.frame.generic.name			= INGAME_FRAME;
-	s_ingame.frame.generic.x			= 320-233;//142;
-	s_ingame.frame.generic.y			= 240-166;//118;
-	s_ingame.frame.width				= 470;//359;
-	s_ingame.frame.height				= 350;//256;
+	s_inworld.frame.generic.type			= MTYPE_BITMAP;
+	s_inworld.frame.generic.flags		= QMF_INACTIVE;
+	s_inworld.frame.generic.name			= MENU_FRAME;
+	s_inworld.frame.generic.x			= 320-233;//142;
+	s_inworld.frame.generic.y			= 240-166;//118;
+	s_inworld.frame.width				= 470;//359;
+	s_inworld.frame.height				= 350;//256;
 
 	//y = 96;
 	y = 125;
 	
-	y += INGAME_MENU_VERTICAL_SPACING;
-	s_ingame.setup.generic.type			= MTYPE_PTEXT;
-	s_ingame.setup.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_ingame.setup.generic.x			= 320;
-	s_ingame.setup.generic.y			= y;
-	s_ingame.setup.generic.id			= ID_SETUP;
-	s_ingame.setup.generic.callback		= InGame_Event; 
-	s_ingame.setup.string				= "OPTIONS";
-	s_ingame.setup.color				= color_white;
-	s_ingame.setup.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
-
-	y += INGAME_MENU_VERTICAL_SPACING;
-	s_ingame.player.generic.type		= MTYPE_PTEXT;
-	s_ingame.player.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_ingame.player.generic.x			= 320;
-	s_ingame.player.generic.y			= y;
-	s_ingame.player.generic.id			= ID_PLAYER;
-	s_ingame.player.generic.callback	= InGame_Event; 
-	s_ingame.player.string				= "PLAYER";
-	s_ingame.player.color				= color_white;
-	s_ingame.player.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	y += MENU_VERTICAL_SPACING;
+	s_inworld.resume.generic.type			= MTYPE_PTEXT;
+	s_inworld.resume.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_inworld.resume.generic.x			= 320;
+	s_inworld.resume.generic.y			= y;
+	s_inworld.resume.generic.id			= ID_RESUME;
+	s_inworld.resume.generic.callback		= InWorld_Event; 
+	s_inworld.resume.string				= "RESUME";
+	s_inworld.resume.color				= color_white;
+	s_inworld.resume.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	
-	y += INGAME_MENU_VERTICAL_SPACING;
-	s_ingame.camera.generic.type		= MTYPE_PTEXT;
-	s_ingame.camera.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_ingame.camera.generic.x			= 320;
-	s_ingame.camera.generic.y			= y;
-	s_ingame.camera.generic.id			= ID_CAMERA;
-	s_ingame.camera.generic.callback	= InGame_Event; 
-	s_ingame.camera.string				= "CAMERA";
-	s_ingame.camera.color				= color_white;
-	s_ingame.camera.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	y += MENU_VERTICAL_SPACING;
+	s_inworld.settings.generic.type			= MTYPE_PTEXT;
+	s_inworld.settings.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_inworld.settings.generic.x			= 320;
+	s_inworld.settings.generic.y			= y;
+	s_inworld.settings.generic.id			= ID_SETTINGS;
+	s_inworld.settings.generic.callback		= InWorld_Event; 
+	s_inworld.settings.string				= "SETTINGS";
+	s_inworld.settings.color				= color_white;
+	s_inworld.settings.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 
-	y += INGAME_MENU_VERTICAL_SPACING;
-	s_ingame.team.generic.type		= MTYPE_PTEXT;
-	s_ingame.team.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_ingame.team.generic.x			= 320;
-	s_ingame.team.generic.y			= y;
-	s_ingame.team.generic.id			= ID_TEAM;
-	s_ingame.team.generic.callback		= InGame_Event; 
-	s_ingame.team.string				= "STATUS";
-	s_ingame.team.color				= color_white;
-	s_ingame.team.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	y += MENU_VERTICAL_SPACING;
+	s_inworld.character.generic.type		= MTYPE_PTEXT;
+	s_inworld.character.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_inworld.character.generic.x			= 320;
+	s_inworld.character.generic.y			= y;
+	s_inworld.character.generic.id			= ID_CHARACTER;
+	s_inworld.character.generic.callback	= InWorld_Event; 
+	s_inworld.character.string				= "CHARACTER";
+	s_inworld.character.color				= color_white;
+	s_inworld.character.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 	
-	y += INGAME_MENU_VERTICAL_SPACING;
-	s_ingame.restart.generic.type		= MTYPE_PTEXT;
-	s_ingame.restart.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_ingame.restart.generic.x			= 320;
-	s_ingame.restart.generic.y			= y;
-	s_ingame.restart.generic.id			= ID_RESTART;
-	s_ingame.restart.generic.callback	= InGame_Event; 
-	s_ingame.restart.string				= "RESTART";
-	s_ingame.restart.color				= color_white;
-	s_ingame.restart.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
-	if( !trap_Cvar_VariableValue( "sv_running" ) ) {
-		s_ingame.restart.generic.flags |= QMF_GRAYED;
-	}
+	y += MENU_VERTICAL_SPACING;
+	s_inworld.camera.generic.type		= MTYPE_PTEXT;
+	s_inworld.camera.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_inworld.camera.generic.x			= 320;
+	s_inworld.camera.generic.y			= y;
+	s_inworld.camera.generic.id			= ID_CAMERA;
+	s_inworld.camera.generic.callback	= InWorld_Event; 
+	s_inworld.camera.string				= "CAMERA";
+	s_inworld.camera.color				= color_white;
+	s_inworld.camera.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 
-	y += INGAME_MENU_VERTICAL_SPACING;
-	s_ingame.leave.generic.type			= MTYPE_PTEXT;
-	s_ingame.leave.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_ingame.leave.generic.x			= 320;
-	s_ingame.leave.generic.y			= y;
-	s_ingame.leave.generic.id			= ID_LEAVEARENA;
-	s_ingame.leave.generic.callback		= InGame_Event; 
-	s_ingame.leave.string				= "LEAVE";
-	s_ingame.leave.color				= color_white;
-	s_ingame.leave.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	y += MENU_VERTICAL_SPACING;
+	s_inworld.leave.generic.type			= MTYPE_PTEXT;
+	s_inworld.leave.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_inworld.leave.generic.x			= 320;
+	s_inworld.leave.generic.y			= y;
+	s_inworld.leave.generic.id			= ID_LEAVE;
+	s_inworld.leave.generic.callback		= InWorld_Event; 
+	s_inworld.leave.string				= "LEAVE";
+	s_inworld.leave.color				= color_white;
+	s_inworld.leave.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
+	
+	y += MENU_VERTICAL_SPACING;
+	s_inworld.quit.generic.type			= MTYPE_PTEXT;
+	s_inworld.quit.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_inworld.quit.generic.x			= 320;
+	s_inworld.quit.generic.y			= y;
+	s_inworld.quit.generic.id			= ID_QUIT;
+	s_inworld.quit.generic.callback		= InWorld_Event; 
+	s_inworld.quit.string				= "QUIT";
+	s_inworld.quit.color				= color_white;
+	s_inworld.quit.style				= UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW;
 
-
-	Menu_AddItem( &s_ingame.menu, &s_ingame.frame );
-	Menu_AddItem( &s_ingame.menu, &s_ingame.restart );
-	Menu_AddItem( &s_ingame.menu, &s_ingame.setup );	
-	Menu_AddItem( &s_ingame.menu, &s_ingame.player );	
-	Menu_AddItem( &s_ingame.menu, &s_ingame.camera );
-	Menu_AddItem( &s_ingame.menu, &s_ingame.team );
-	Menu_AddItem( &s_ingame.menu, &s_ingame.leave );
+	Menu_AddItem( &s_inworld.menu, &s_inworld.frame );
+	Menu_AddItem( &s_inworld.menu, &s_inworld.resume );
+	Menu_AddItem( &s_inworld.menu, &s_inworld.settings );
+	Menu_AddItem( &s_inworld.menu, &s_inworld.character );
+	Menu_AddItem( &s_inworld.menu, &s_inworld.camera );
+	Menu_AddItem( &s_inworld.menu, &s_inworld.leave );
+	Menu_AddItem( &s_inworld.menu, &s_inworld.quit );
 }
-
 
 /*
 =================
-InGame_Cache
+UI_InWorldMenu
 =================
 */
-void InGame_Cache( void ) {
-	trap_R_RegisterShaderNoMip( INGAME_FRAME );
-}
-
-
-/*
-=================
-UI_InGameMenu
-=================
-*/
-void UI_InGameMenu( void ) {
+void UI_InWorldMenu( void ) {
 	// force as top level menu
 	uis.menusp = 0;  
 
@@ -263,6 +233,6 @@ void UI_InGameMenu( void ) {
 	uis.cursorx = 320;
 	uis.cursory = 240;
 
-	InGame_MenuInit();
-	UI_PushMenu( &s_ingame.menu );
+	InWorld_MenuInit();
+	UI_PushMenu( &s_inworld.menu );
 }

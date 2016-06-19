@@ -44,6 +44,9 @@ qboolean stdinIsATTY;
 // Used to determine where to store user-specific files
 static char homePath[ MAX_OSPATH ] = { 0 };
 
+// Used to store the Steam Quake 3 installation path
+static char steamPath[ MAX_OSPATH ] = { 0 };
+
 /*
 ==================
 Sys_DefaultHomePath
@@ -53,7 +56,7 @@ char *Sys_DefaultHomePath(void)
 {
 	char *p;
 
-	if( !*homePath )
+	if( !*homePath && com_homePath != NULL )
 	{
 		if( ( p = getenv( "HOME" ) ) != NULL )
 		{
@@ -62,13 +65,13 @@ char *Sys_DefaultHomePath(void)
 			Q_strcat(homePath, sizeof(homePath),
 				"Library/Application Support/");
 
-			if(com_homepath->string[0])
-				Q_strcat(homePath, sizeof(homePath), com_homepath->string);
+			if(com_homePath->string[0])
+				Q_strcat(homePath, sizeof(homePath), com_homePath->string);
 			else
 				Q_strcat(homePath, sizeof(homePath), HOMEPATH_NAME_MACOSX);
 #else
-			if(com_homepath->string[0])
-				Q_strcat(homePath, sizeof(homePath), com_homepath->string);
+			if(com_homePath->string[0])
+				Q_strcat(homePath, sizeof(homePath), com_homePath->string);
 			else
 				Q_strcat(homePath, sizeof(homePath), HOMEPATH_NAME_UNIX);
 #endif
@@ -78,22 +81,30 @@ char *Sys_DefaultHomePath(void)
 	return homePath;
 }
 
-#ifndef MACOS_X
 /*
 ================
-Sys_TempPath
+Sys_SteamPath
 ================
 */
-const char *Sys_TempPath( void )
+char *Sys_SteamPath( void )
 {
-	const char *TMPDIR = getenv( "TMPDIR" );
+	// Disabled since Steam doesn't let you install Quake 3 on Mac/Linux
+#if 0 //#ifdef STEAMPATH_NAME
+	char *p;
 
-	if( TMPDIR == NULL || TMPDIR[ 0 ] == '\0' )
-		return "/tmp";
-	else
-		return TMPDIR;
-}
+	if( ( p = getenv( "HOME" ) ) != NULL )
+	{
+#ifdef MACOS_X
+		char *steamPathEnd = "/Library/Application Support/Steam/SteamApps/common/" STEAMPATH_NAME;
+#else
+		char *steamPathEnd = "/.steam/steam/SteamApps/common/" STEAMPATH_NAME;
 #endif
+		Com_sprintf(steamPath, sizeof(steamPath), "%s%s", p, steamPathEnd);
+	}
+#endif
+
+	return steamPath;
+}
 
 /*
 ================
@@ -140,7 +151,9 @@ qboolean Sys_RandomBytes( byte *string, int len )
 	if( !fp )
 		return qfalse;
 
-	if( !fread( string, sizeof( byte ), len, fp ) )
+	setvbuf( fp, NULL, _IONBF, 0 ); // don't buffer reads from /dev/urandom
+
+	if( fread( string, sizeof( byte ), len, fp ) != len )
 	{
 		fclose( fp );
 		return qfalse;
@@ -163,16 +176,6 @@ char *Sys_GetCurrentUser( void )
 		return "player";
 	}
 	return p->pw_name;
-}
-
-/*
-==================
-Sys_GetClipboardData
-==================
-*/
-char *Sys_GetClipboardData(void)
-{
-	return NULL;
 }
 
 #define MEM_THRESHOLD 96*1024*1024
@@ -207,6 +210,21 @@ Sys_Dirname
 const char *Sys_Dirname( char *path )
 {
 	return dirname( path );
+}
+
+/*
+==============
+Sys_FOpen
+==============
+*/
+FILE *Sys_FOpen( const char *ospath, const char *mode ) {
+	struct stat buf;
+
+	// check if path exists and is a directory
+	if ( !stat( ospath, &buf ) && S_ISDIR( buf.st_mode ) )
+		return NULL;
+
+	return fopen( ospath, mode );
 }
 
 /*
@@ -287,7 +305,7 @@ DIRECTORY SCANNING
 Sys_ListFilteredFiles
 ==================
 */
-void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, char **list, int *numfiles )
+void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, char **list, int *numFiles )
 {
 	char          search[MAX_OSPATH], newsubdirs[MAX_OSPATH];
 	char          filename[MAX_OSPATH];
@@ -295,7 +313,7 @@ void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, ch
 	struct dirent *d;
 	struct stat   st;
 
-	if ( *numfiles >= MAX_FOUND_FILES - 1 ) {
+	if ( *numFiles >= MAX_FOUND_FILES - 1 ) {
 		return;
 	}
 
@@ -323,17 +341,17 @@ void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, ch
 				else {
 					Com_sprintf( newsubdirs, sizeof(newsubdirs), "%s", d->d_name);
 				}
-				Sys_ListFilteredFiles( basedir, newsubdirs, filter, list, numfiles );
+				Sys_ListFilteredFiles( basedir, newsubdirs, filter, list, numFiles );
 			}
 		}
-		if ( *numfiles >= MAX_FOUND_FILES - 1 ) {
+		if ( *numFiles >= MAX_FOUND_FILES - 1 ) {
 			break;
 		}
 		Com_sprintf( filename, sizeof(filename), "%s/%s", subdirs, d->d_name );
 		if (!Com_FilterPath( filter, filename, qfalse ))
 			continue;
-		list[ *numfiles ] = CopyString( filename );
-		(*numfiles)++;
+		list[ *numFiles ] = CopyString( filename );
+		(*numFiles)++;
 	}
 
 	closedir(fdir);
@@ -344,7 +362,7 @@ void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, ch
 Sys_ListFiles
 ==================
 */
-char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs )
+char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numFiles, qboolean wantsubs )
 {
 	struct dirent *d;
 	DIR           *fdir;
@@ -364,7 +382,7 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 		Sys_ListFilteredFiles( directory, "", filter, list, &nfiles );
 
 		list[ nfiles ] = NULL;
-		*numfiles = nfiles;
+		*numFiles = nfiles;
 
 		if (!nfiles)
 			return NULL;
@@ -392,7 +410,7 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 	nfiles = 0;
 
 	if ((fdir = opendir(directory)) == NULL) {
-		*numfiles = 0;
+		*numFiles = 0;
 		return NULL;
 	}
 
@@ -424,7 +442,7 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 	closedir(fdir);
 
 	// return a copy of the list
-	*numfiles = nfiles;
+	*numFiles = nfiles;
 
 	if ( !nfiles ) {
 		return NULL;
@@ -512,9 +530,10 @@ void Sys_ErrorDialog( const char *error )
 	char buffer[ 1024 ];
 	unsigned int size;
 	int f = -1;
-	const char *homepath = Cvar_VariableString( "fs_homepath" );
-	const char *gamedir = Cvar_VariableString( "fs_game" );
+	const char *homepath = Cvar_VariableString( "fs_homePath" );
+	const char *gamedir = Cvar_VariableString( "fs_dir" );
 	const char *fileName = "crashlog.txt";
+	char *dirpath = FS_BuildOSPath( homepath, gamedir, "");
 	char *ospath = FS_BuildOSPath( homepath, gamedir, fileName );
 
 	Sys_Print( va( "%s\n", error ) );
@@ -524,8 +543,16 @@ void Sys_ErrorDialog( const char *error )
 #endif
 
 	// Make sure the write path for the crashlog exists...
-	if( FS_CreatePath( ospath ) ) {
-		Com_Printf( "ERROR: couldn't create path '%s' for crash log.\n", ospath );
+
+	if(!Sys_Mkdir(homepath))
+	{
+		Com_Printf("ERROR: couldn't create path '%s' for crash log.\n", homepath);
+		return;
+	}
+
+	if(!Sys_Mkdir(dirpath))
+	{
+		Com_Printf("ERROR: couldn't create path '%s' for crash log.\n", dirpath);
 		return;
 	}
 
@@ -722,6 +749,7 @@ dialogResult_t Sys_Dialog( dialogType_t type, const char *message, const char *t
 	qboolean                tried[ NUM_DIALOG_PROGRAMS ] = { qfalse };
 	dialogCommandBuilder_t  commands[ NUM_DIALOG_PROGRAMS ] = { NULL };
 	dialogCommandType_t     preferredCommandType = NONE;
+	int                     i;
 
 	commands[ ZENITY ] = &Sys_ZenityCommand;
 	commands[ KDIALOG ] = &Sys_KdialogCommand;
@@ -733,50 +761,37 @@ dialogResult_t Sys_Dialog( dialogType_t type, const char *message, const char *t
 	else if( !Q_stricmp( session, "kde" ) )
 		preferredCommandType = KDIALOG;
 
-	while( 1 )
+	for( i = NONE + 1; i < NUM_DIALOG_PROGRAMS; i++ )
 	{
-		int i;
+		if( preferredCommandType != NONE && preferredCommandType != i )
+			continue;
 
-		for( i = NONE + 1; i < NUM_DIALOG_PROGRAMS; i++ )
+		if( !tried[ i ] )
 		{
-			if( preferredCommandType != NONE && preferredCommandType != i )
-				continue;
+			int exitCode;
 
-			if( !tried[ i ] )
+			commands[ i ]( type, message, title );
+			exitCode = Sys_Exec( );
+
+			if( exitCode >= 0 )
 			{
-				int exitCode;
-
-				commands[ i ]( type, message, title );
-				exitCode = Sys_Exec( );
-
-				if( exitCode >= 0 )
+				switch( type )
 				{
-					switch( type )
-					{
-						case DT_YES_NO:    return exitCode ? DR_NO : DR_YES;
-						case DT_OK_CANCEL: return exitCode ? DR_CANCEL : DR_OK;
-						default:           return DR_OK;
-					}
-				}
-
-				tried[ i ] = qtrue;
-
-				// The preference failed, so start again in order
-				if( preferredCommandType != NONE )
-				{
-					preferredCommandType = NONE;
-					break;
+					case DT_YES_NO:    return exitCode ? DR_NO : DR_YES;
+					case DT_OK_CANCEL: return exitCode ? DR_CANCEL : DR_OK;
+					default:           return DR_OK;
 				}
 			}
-		}
 
-		for( i = NONE + 1; i < NUM_DIALOG_PROGRAMS; i++ )
-		{
-			if( !tried[ i ] )
-				continue;
-		}
+			tried[ i ] = qtrue;
 
-		break;
+			// The preference failed, so start again in order
+			if( preferredCommandType != NONE )
+			{
+				preferredCommandType = NONE;
+				i = NONE + 1;
+			}
+		}
 	}
 
 	Com_DPrintf( S_COLOR_YELLOW "WARNING: failed to show a dialog\n" );
@@ -828,8 +843,10 @@ void Sys_PlatformInit( void )
 	signal( SIGHUP, Sys_SigHandler );
 	signal( SIGQUIT, Sys_SigHandler );
 	signal( SIGTRAP, Sys_SigHandler );
-	signal( SIGIOT, Sys_SigHandler );
+	signal( SIGABRT, Sys_SigHandler );
 	signal( SIGBUS, Sys_SigHandler );
+
+	Sys_SetFloatEnv();
 
 	stdinIsATTY = isatty( STDIN_FILENO ) &&
 		!( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) );

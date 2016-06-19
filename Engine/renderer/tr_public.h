@@ -134,6 +134,7 @@ typedef struct {
 	void	(*Cvar_Set)( const char *name, const char *value );
 	void	(*Cvar_SetValue) (const char *name, float value);
 	void	(*Cvar_CheckRange)( cvar_t *cv, float minVal, float maxVal, qboolean shouldBeIntegral );
+	void	(*Cvar_SetDescription)( cvar_t *cv, const char *description );
 
 	int		(*Cvar_VariableIntegerValue) (const char *var_name);
 
@@ -155,8 +156,8 @@ typedef struct {
 	int		(*FS_FileIsInPAK)( const char *name, int *pCheckSum );
 	long		(*FS_ReadFile)( const char *name, void **buf );
 	void	(*FS_FreeFile)( void *buf );
-	char **	(*FS_ListFiles)( const char *name, const char *extension, int *numfilesfound );
-	char **	(*FS_ListFilesFull)( const char *name, const char *extension, int *numfilesfound );
+	char **	(*FS_ListFiles)( const char *name, const char *extension, int *numFilesfound );
+	char **	(*FS_ListFilesFull)( const char *name, const char *extension, int *numFilesfound );
 	void	(*FS_FreeFileList)( char **filelist );
 	void	(*FS_WriteFile)( const char *qpath, const void *buffer, int size );
 	qboolean (*FS_FileExists)( const char *file );
@@ -169,7 +170,7 @@ typedef struct {
 	void	(*CL_WriteAVIVideoFrame)( const byte *buffer, int size );
 
 	// input event handling
-	void	(*IN_Init)( void );
+	void	(*IN_Init)( void *windowData );
 	void	(*IN_Shutdown)( void );
 	void	(*IN_Restart)( void );
 

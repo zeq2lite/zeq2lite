@@ -1,3 +1,6 @@
+//
+// cg_tiers.h -- client tier system headers
+
 #define TIERNAMELENGTH 15
 
 typedef struct{

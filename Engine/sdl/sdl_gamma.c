@@ -26,8 +26,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #	include <SDL.h>
 #endif
 
-#include "../renderer/tr_local.h"
+#include "../renderer/tr_common.h"
 #include "../../Shared/qcommon.h"
+
+extern SDL_Window *SDL_window;
 
 /*
 =================
@@ -39,7 +41,7 @@ void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 	Uint16 table[3][256];
 	int i, j;
 
-	if( !glConfig.deviceSupportsGamma || r_ignorehwgamma->integer )
+	if( !glConfig.deviceSupportsGamma || r_ignorehwgamma->integer > 0 )
 		return;
 
 	for (i = 0; i < 256; i++)
@@ -86,6 +88,9 @@ void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 		}
 	}
 
-	SDL_SetGammaRamp(table[0], table[1], table[2]);
+	if (SDL_SetWindowGammaRamp(SDL_window, table[0], table[1], table[2]) < 0)
+	{
+		ri.Printf( PRINT_DEVELOPER, "SDL_SetWindowGammaRamp() failed: %s\n", SDL_GetError() );
+	}
 }
 

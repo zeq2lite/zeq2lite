@@ -375,30 +375,6 @@ float *CG_FadeColor( int startMsec, int totalMsec, int fadeTime ) {
 }
 
 
-/*
-================
-CG_TeamColor
-================
-*/
-float *CG_TeamColor( int team ) {
-	static vec4_t	red = {1, 0.2f, 0.2f, 1};
-	static vec4_t	blue = {0.2f, 0.2f, 1, 1};
-	static vec4_t	other = {1, 1, 1, 1};
-	static vec4_t	spectator = {0.7f, 0.7f, 0.7f, 1};
-
-	switch ( team ) {
-	case TEAM_RED:
-		return red;
-	case TEAM_BLUE:
-		return blue;
-	case TEAM_SPECTATOR:
-		return spectator;
-	default:
-		return other;
-	}
-}
-
-
 
 /*
 =================

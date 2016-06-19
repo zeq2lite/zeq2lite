@@ -50,7 +50,7 @@ void SV_GetChallenge(netadr_t from)
 	int		clientChallenge;
 	challenge_t	*challenge;
 	qboolean wasfound = qfalse;
-	char *gameName;
+	char *dirName;
 	qboolean gameMismatch;
 
 	// ignore if we are in single player
@@ -58,21 +58,21 @@ void SV_GetChallenge(netadr_t from)
 		return;
 	}
 
-	gameName = Cmd_Argv(2);
+	dirName = Cmd_Argv(2);
 
 #ifdef LEGACY_PROTOCOL
-	// gamename is optional for legacy protocol
-	if (com_legacyprotocol->integer && !*gameName)
+	// dirName is optional for legacy protocol
+	if (com_legacyprotocol->integer && !*dirName)
 		gameMismatch = qfalse;
 	else
 #endif
-		gameMismatch = !*gameName || strcmp(gameName, com_gamename->string) != 0;
+		gameMismatch = !*dirName || strcmp(dirName, com_dirName->string) != 0;
 
-	// reject client if the gamename string sent by the client doesn't match ours
+	// reject client if the dirName string sent by the client doesn't match ours
 	if (gameMismatch)
 	{
-		NET_OutOfBandPrint(NS_SERVER, from, "print\nGame mismatch: This is a %s server\n",
-			com_gamename->string);
+		NET_OutOfBandPrint(NS_SERVER, from, "print\nSaga mismatch: This is a %s server\n",
+			com_dirName->string);
 		return;
 	}
 
@@ -764,7 +764,6 @@ int SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
 
 	if(!cl->download)
 	{
-		qboolean idPack = qfalse;
 	
  		// Chop off filename extension.
 		Com_sprintf(pakbuf, sizeof(pakbuf), "%s", cl->downloadName);
@@ -789,11 +788,6 @@ int SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
 					if(!FS_FilenameCompare(Cmd_Argv(curindex), pakbuf))
 					{
 						unreferenced = 0;
-
-						// now that we know the file is referenced,
-						// check whether it's legal to download it.
-						idPack = idPack || FS_idPak(pakbuf, BASEGAME, NUM_ID_PAKS);
-
 						break;
 					}
 				}
@@ -804,18 +798,13 @@ int SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
 
 		// We open the file here
 		if ( !(sv_allowDownload->integer & DLF_ENABLE) ||
-			(sv_allowDownload->integer & DLF_NO_UDP) ||
-			idPack || unreferenced ||
+			(sv_allowDownload->integer & DLF_NO_UDP) || unreferenced ||
 			( cl->downloadSize = FS_SV_FOpenFileRead( cl->downloadName, &cl->download ) ) < 0 ) {
 			// cannot auto-download file
 			if(unreferenced)
 			{
 				Com_Printf("clientDownload: %d : \"%s\" is not referenced and cannot be downloaded.\n", (int) (cl - svs.clients), cl->downloadName);
 				Com_sprintf(errorMessage, sizeof(errorMessage), "File \"%s\" is not referenced and cannot be downloaded.", cl->downloadName);
-			}
-			else if (idPack) {
-				Com_Printf("clientDownload: %d : \"%s\" cannot download id pk3 files\n", (int) (cl - svs.clients), cl->downloadName);
-				Com_sprintf(errorMessage, sizeof(errorMessage), "Cannot autodownload id pk3 file \"%s\"", cl->downloadName);
 			}
 			else if ( !(sv_allowDownload->integer & DLF_ENABLE) ||
 				(sv_allowDownload->integer & DLF_NO_UDP) ) {
@@ -1586,8 +1575,7 @@ static qboolean SV_ShouldIgnoreVoipSender(const client_t *cl)
 	return qfalse;  // don't ignore.
 }
 
-static
-void SV_UserVoip(client_t *cl, msg_t *msg)
+static void SV_UserVoip(client_t *cl, msg_t *msg)
 {
 	int sender, generation, sequence, frames, packetsize;
 	uint8_t recips[(MAX_CLIENTS + 7) / 8];

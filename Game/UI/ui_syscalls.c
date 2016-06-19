@@ -44,8 +44,11 @@ void trap_Print( const char *string ) {
 	syscall( UI_PRINT, string );
 }
 
-void trap_Error( const char *string ) {
-	syscall( UI_ERROR, string );
+void trap_Error(const char *string)
+{
+	syscall(UI_ERROR, string);
+	// shut up GCC warning about returning functions, because we know better
+	exit(1);
 }
 
 int trap_Milliseconds( void ) {
@@ -120,6 +123,10 @@ void trap_FS_FCloseFile( fileHandle_t f ) {
 
 int trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize ) {
 	return syscall( UI_FS_GETFILELIST, path, extension, listbuf, bufsize );
+}
+
+int trap_FS_Seek( fileHandle_t f, long offset, int origin ) {
+	return syscall( UI_FS_SEEK, f, offset, origin );
 }
 
 qhandle_t trap_R_RegisterModel( const char *name ) {
@@ -314,26 +321,6 @@ int trap_MemoryRemaining( void ) {
 	return syscall( UI_MEMORY_REMAINING );
 }
 
-int trap_PC_AddGlobalDefine( char *define ) {
-	return syscall( UI_PC_ADD_GLOBAL_DEFINE, define );
-}
-
-int trap_PC_LoadSource( const char *filename ) {
-	return syscall( UI_PC_LOAD_SOURCE, filename );
-}
-
-int trap_PC_FreeSource( int handle ) {
-	return syscall( UI_PC_FREE_SOURCE, handle );
-}
-
-int trap_PC_ReadToken( int handle, pc_token_t *pc_token ) {
-	return syscall( UI_PC_READ_TOKEN, handle, pc_token );
-}
-
-int trap_PC_SourceFileAndLine( int handle, char *filename, int *line ) {
-	return syscall( UI_PC_SOURCE_FILE_AND_LINE, handle, filename, line );
-}
-
 void trap_S_StopBackgroundTrack( void ) {
 	syscall( UI_S_STOPBACKGROUNDTRACK );
 }
@@ -374,3 +361,9 @@ void trap_CIN_DrawCinematic (int handle) {
 void trap_CIN_SetExtents (int handle, int x, int y, int w, int h) {
   syscall(UI_CIN_SETEXTENTS, handle, x, y, w, h);
 }
+
+
+void	trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset ) {
+	syscall( UI_R_REMAP_SHADER, oldShader, newShader, timeOffset );
+}
+

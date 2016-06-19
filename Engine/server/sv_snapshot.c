@@ -234,8 +234,6 @@ Build a client snapshot structure
 
 =============================================================================
 */
-
-#define	MAX_SNAPSHOT_ENTITIES	1024
 typedef struct {
 	int		numSnapshotEntities;
 	int		snapshotEntities[MAX_SNAPSHOT_ENTITIES];	
@@ -662,7 +660,7 @@ void SV_SendClientMessages(void)
 		{
 			// rate control for clients not on LAN 
 			
-			if(svs.time - c->lastSnapshotTime < c->snapshotMsec * com_timescale->value)
+			if(svs.time - c->lastSnapshotTime < c->snapshotMsec * com_timeScale->value)
 				continue;		// It's not time yet
 
 			if(SV_RateMsec(c) > 0)

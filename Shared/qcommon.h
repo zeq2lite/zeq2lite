@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _QCOMMON_H_
 #define _QCOMMON_H_
 
-#include "../../Shared/cm_public.h"
+#include "cm_public.h"
 
 //Ignore __attribute__ on non-gcc platforms
 #ifndef __GNUC__
@@ -135,6 +135,8 @@ NET
 #define	PACKET_MASK		(PACKET_BACKUP-1)
 
 #define	MAX_PACKET_USERCMDS		32		// max number of usercmd_t in a packet
+
+#define	MAX_SNAPSHOT_ENTITIES	1024
 
 #define	PORT_ANY			-1
 
@@ -259,10 +261,9 @@ PROTOCOL
 // NOTE: that stuff only works with two digits protocols
 extern int demo_protocols[];
 
-//#define	UPDATE_SERVER_NAME	"update.quake3arena.com"
 // override on command line, config files etc.
 #ifndef MASTER_SERVER_NAME
-#define MASTER_SERVER_NAME	"master.ioquake3.org"
+#define MASTER_SERVER_NAME	"master.quake3arena.org"
 #endif
 
 #define	PORT_MASTER			27950
@@ -290,6 +291,7 @@ enum svc_ops_e {
 
 // new commands, supported only by ioquake3 protocol but not legacy
 	svc_voip,     // not wrapped in USE_VOIP, so this value is reserved.
+	svc_voipOpus,      //
 };
 
 
@@ -305,7 +307,8 @@ enum clc_ops_e {
 	clc_EOF,
 
 // new commands, supported only by ioquake3 protocol but not legacy
-	clc_voip,   // not wrapped in USE_VOIP, so this value is reserved.
+	clc_voip,   	// not wrapped in USE_VOIP, so this value is reserved.
+	clc_voipOpus,	//
 };
 
 /*
@@ -551,6 +554,7 @@ char	*Cvar_InfoString_Big( int bit );
 // in their flags ( CVAR_USERINFO, CVAR_SERVERINFO, CVAR_SYSTEMINFO, etc )
 void	Cvar_InfoStringBuffer( int bit, char *buff, int buffsize );
 void Cvar_CheckRange( cvar_t *cv, float minVal, float maxVal, qboolean shouldBeIntegral );
+void Cvar_SetDescription( cvar_t *var, const char *var_description );
 
 void	Cvar_Restart(qboolean unsetVM);
 void	Cvar_Restart_f( void );
@@ -579,17 +583,14 @@ issues.
 #define FS_GENERAL_REF	0x01
 #define FS_UI_REF		0x02
 #define FS_CGAME_REF	0x04
-#define FS_GAME_REF	0x08
-// number of id paks that will never be autodownloaded from baseq3/missionpack
-#define NUM_ID_PAKS		9
-#define NUM_TA_PAKS		4
+#define fs_dir_REF		0x08
 
 #define	MAX_FILE_HANDLES	64
 
 #ifdef DEDICATED
-#	define Q3CONFIG_CFG "zeq2config_server.cfg"
+#	define CONFIG_CFG "server.cfg"
 #else
-#	define Q3CONFIG_CFG "zeq2config.cfg"
+#	define CONFIG_CFG "config.cfg"
 #endif
 
 qboolean FS_Initialized( void );
@@ -599,11 +600,11 @@ void	FS_Shutdown( qboolean closemfp );
 
 qboolean FS_ConditionalRestart(int checksumFeed, qboolean disconnect);
 void	FS_Restart( int checksumFeed );
-// shutdown and restart the filesystem so changes to fs_gamedir can take effect
+// shutdown and restart the filesystem so changes to fs_dir can take effect
 
-void FS_AddGameDirectory( const char *path, const char *dir );
+void FS_AddDirectory( const char *path, const char *dir );
 
-char	**FS_ListFiles( const char *directory, const char *extension, int *numfiles );
+char	**FS_ListFiles( const char *directory, const char *extension, int *numFiles );
 // directory should not have either a leading or trailing /
 // if extension is "/", only subdirectories will be returned
 // the returned files will not include any directories or /
@@ -614,9 +615,9 @@ qboolean FS_FileExists( const char *file );
 
 qboolean FS_CreatePath (char *OSPath);
 
-vmInterpret_t FS_FindVM(void **startSearch, char *found, int foundlen, const char *name, int enableDll);
+int FS_FindVM(void **startSearch, char *found, int foundlen, const char *name, int enableDll);
 
-char   *FS_BuildOSPath( const char *base, const char *game, const char *qpath );
+char   *FS_BuildOSPath( const char *base, const char *dir, const char *qpath );
 qboolean FS_CompareZipChecksum(const char *zipfile);
 
 int		FS_LoadStack( void );
@@ -631,7 +632,7 @@ fileHandle_t	FS_FCreateOpenPipeFile( const char *filename );
 
 fileHandle_t FS_SV_FOpenFileWrite( const char *filename );
 long		FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp );
-void	FS_SV_Rename( const char *from, const char *to );
+void	FS_SV_Rename( const char *from, const char *to, qboolean safe );
 long		FS_FOpenFileRead( const char *qpath, fileHandle_t *file, qboolean uniqueFILE );
 // if uniqueFILE is true, then a new FILE will be fopened even if the file
 // is found in an already open pak file.  If uniqueFILE is false, you must call
@@ -688,8 +689,8 @@ int		FS_Seek( fileHandle_t f, long offset, int origin );
 
 qboolean FS_FilenameCompare( const char *s1, const char *s2 );
 
-const char *FS_GamePureChecksum( void );
-// Returns the checksum of the pk3 from which the server loaded the qagame.qvm
+const char *fs_dirPureChecksum( void );
+// Returns the checksum of the pk3 from which the server loaded the game.qvm
 
 const char *FS_LoadedPakNames( void );
 const char *FS_LoadedPakChecksums( void );
@@ -715,7 +716,6 @@ void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames );
 // sole exception of .cfg files.
 
 qboolean FS_CheckDirTraversal(const char *checkdir);
-qboolean FS_idPak(char *pak, char *base, int numPaks);
 qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring );
 
 void FS_Rename( const char *from, const char *to );
@@ -726,7 +726,7 @@ void FS_HomeRemove( const char *homePath );
 void	FS_FilenameCompletion( const char *dir, const char *ext,
 		qboolean stripExt, void(*callback)(const char *s), qboolean allowNonPureFilesOnDisk );
 
-const char *FS_GetCurrentGameDir(void);
+const char *FS_GetCurrentDir(void);
 qboolean FS_Which(const char *filename, void *searchPath);
 
 /*
@@ -752,6 +752,7 @@ void Field_CompleteFilename( const char *dir,
 		const char *ext, qboolean stripExt, qboolean allowNonPureFilesOnDisk );
 void Field_CompleteCommand( char *cmd,
 		qboolean doCommands, qboolean doCvars );
+void Field_CompleteClientName( const char **names, int count );
 
 /*
 ==============================================================
@@ -783,7 +784,7 @@ typedef enum {
 	SE_NONE = 0,		// evTime is still valid
 	SE_KEY,			// evValue is a key code, evValue2 is the down flag
 	SE_CHAR,		// evValue is an ascii char
-	SE_MOUSE,		// evValue and evValue2 are reletive signed x / y moves
+	SE_MOUSE,		// evValue and evValue2 are relative signed x / y moves
 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
 	SE_CONSOLE		// evPtr is a char*
 } sysEventType_t;
@@ -809,7 +810,7 @@ void 		QDECL Com_Printf( const char *fmt, ... ) __attribute__ ((format (printf, 
 void 		QDECL Com_DPrintf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
 void 		QDECL Com_Error( int code, const char *fmt, ... ) __attribute__ ((noreturn, format(printf, 2, 3)));
 void 		Com_Quit_f( void ) __attribute__ ((noreturn));
-void		Com_GameRestart(int checksumFeed, qboolean disconnect);
+void		Com_AppRestart(int checksumFeed, qboolean disconnect);
 
 int			Com_Milliseconds( void );	// will be journaled properly
 unsigned	Com_BlockChecksum( const void *buffer, int length );
@@ -828,11 +829,15 @@ void		Com_StartupVariable( const char *match );
 // if match is NULL, all set commands will be executed, otherwise
 // only a set with the exact name.  Only used during startup.
 
+qboolean		Com_ClientNameToFieldString( char *str, int length, const char *name );
+qboolean		Com_FieldStringToClientName( char *name, int length, const char *rawname );
+int QDECL	Com_strCompare( const void *a, const void *b );
+
 
 extern	cvar_t	*com_developer;
 extern	cvar_t	*com_dedicated;
 extern	cvar_t	*com_speeds;
-extern	cvar_t	*com_timescale;
+extern	cvar_t	*com_timeScale;
 extern	cvar_t	*com_sv_running;
 extern	cvar_t	*com_cl_running;
 extern	cvar_t	*com_version;
@@ -842,21 +847,21 @@ extern	cvar_t	*com_journal;
 extern	cvar_t	*com_cameraMode;
 extern	cvar_t	*com_ansiColor;
 extern	cvar_t	*com_unfocused;
-extern	cvar_t	*com_maxfpsUnfocused;
+extern	cvar_t	*com_maxFPSUnfocused;
 extern	cvar_t	*com_minimized;
-extern	cvar_t	*com_maxfpsMinimized;
+extern	cvar_t	*com_maxFPSMinimized;
 extern	cvar_t	*com_altivec;
-extern	cvar_t	*com_basegame;
-extern	cvar_t	*com_homepath;
+extern	cvar_t	*com_baseDir;
+extern	cvar_t	*com_homePath;
 
 // both client and server must agree to pause
 extern	cvar_t	*cl_paused;
 extern	cvar_t	*sv_paused;
 
-extern	cvar_t	*cl_packetdelay;
-extern	cvar_t	*sv_packetdelay;
+extern	cvar_t	*cl_packetDelay;
+extern	cvar_t	*sv_packetDelay;
 
-extern	cvar_t	*com_gamename;
+extern	cvar_t	*com_dirName;
 extern	cvar_t	*com_protocol;
 #ifdef LEGACY_PROTOCOL
 extern	cvar_t	*com_legacyprotocol;
@@ -1087,6 +1092,7 @@ qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 qboolean	Sys_IsLANAddress (netadr_t adr);
 void		Sys_ShowIP(void);
 
+FILE	*Sys_FOpen( const char *ospath, const char *mode );
 qboolean Sys_Mkdir( const char *path );
 FILE	*Sys_Mkfifo( const char *ospath );
 char	*Sys_Cwd( void );
@@ -1104,7 +1110,7 @@ const char *Sys_Dirname( char *path );
 const char *Sys_Basename( char *path );
 char *Sys_ConsoleInput(void);
 
-char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs );
+char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numFiles, qboolean wantsubs );
 void	Sys_FreeFileList( char **list );
 void	Sys_Sleep(int msec);
 

@@ -1,4 +1,4 @@
--o "..\..\..\..\Build\ZEQ2\vm\ui.qvm"
+-o "..\..\..\..\Build\ZEQ2-Lite\vm\ui.qvm"
 ui_main
 ..\ui_syscalls
 ui_shared
@@ -9,7 +9,6 @@ ui_controls2
 ui_mfield
 ui_credits
 ui_menu
-ui_team
 ui_ingame
 ui_confirm
 ui_options

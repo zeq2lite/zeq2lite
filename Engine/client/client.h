@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../../Shared/q_shared.h"
 #include "../../Shared/qcommon.h"
-#include "../../Engine/renderer/tr_public.h"
+#include "../renderer/tr_public.h"
 #include "../../Game/UI/ui_public.h"
 #include "keys.h"
 #include "snd_public.h"
@@ -35,8 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif /* USE_CURL */
 
 #ifdef USE_VOIP
-#include "speex/speex.h"
-#include "speex/speex_preprocess.h"
+#include <opus.h>
 #endif
 
 // file full of random crap that gets used to create cl_guid
@@ -87,7 +86,7 @@ typedef struct {
 // the parseEntities array must be large enough to hold PACKET_BACKUP frames of
 // entities, so that when a delta compressed message arives from the server
 // it can be un-deltad from the original 
-#define	MAX_PARSE_ENTITIES	2048
+#define	MAX_PARSE_ENTITIES	( PACKET_BACKUP * MAX_SNAPSHOT_ENTITIES )
 
 extern int g_console_field_width;
 
@@ -117,8 +116,8 @@ typedef struct {
 
 	// cgame communicates a few values to the client system
 	int			cgameUserCmdValue;	// current weapon to add to usercmd_t
-	int 		cgameUserTierCmdValue;
 	float		cgameSensitivity;
+	int 		cgameUserTierCmdValue;
 	byte		cgameUserWeaponSelectionMode;
 	byte		cgameUserTierSelectionMode;
 
@@ -236,16 +235,16 @@ typedef struct {
 	int			timeDemoMaxDuration;	// maximum frame duration
 	unsigned char	timeDemoDurations[ MAX_TIMEDEMO_DURATIONS ];	// log of frame durations
 
+	float		aviVideoFrameRemainder;
+	float		aviSoundFrameRemainder;
+
 #ifdef USE_VOIP
 	qboolean voipEnabled;
-	qboolean speexInitialized;
-	int speexFrameSize;
-	int speexSampleRate;
+	qboolean voipCodecInitialized;
 
 	// incoming data...
 	// !!! FIXME: convert from parallel arrays to array of a struct.
-	SpeexBits speexDecoderBits[MAX_CLIENTS];
-	void *speexDecoder[MAX_CLIENTS];
+	OpusDecoder *opusDecoder[MAX_CLIENTS];
 	byte voipIncomingGeneration[MAX_CLIENTS];
 	int voipIncomingSequence[MAX_CLIENTS];
 	float voipGain[MAX_CLIENTS];
@@ -257,9 +256,7 @@ typedef struct {
 	// then we are sending to clientnum i.
 	uint8_t voipTargets[(MAX_CLIENTS + 7) / 8];
 	uint8_t voipFlags;
-	SpeexPreprocessState *speexPreprocessor;
-	SpeexBits speexEncoderBits;
-	void *speexEncoder;
+	OpusEncoder *opusEncoder;
 	int voipOutgoingDataSize;
 	int voipOutgoingDataFrames;
 	int voipOutgoingSequence;
@@ -283,6 +280,7 @@ extern	clientConnection_t clc;
 
 the clientStatic_t structure is never wiped, and is used even when
 no client connection is active at all
+(except when CL_Shutdown is called)
 
 ==================================================================
 */
@@ -307,7 +305,7 @@ typedef struct {
 	int			maxPing;
 	int			ping;
 	qboolean	visible;
-	int			g_humanplayers;
+	int			punkbuster;
 	int			g_needpass;
 } serverInfo_t;
 
@@ -338,9 +336,6 @@ typedef struct {
 	serverInfo_t	favoriteServers[MAX_OTHER_SERVERS];
 
 	int pingUpdateSource;		// source currently pinging or updating
-	
-	char		oldGame[MAX_QPATH];
-	qboolean	oldGameSet;
 
 	// update server info
 	netadr_t	updateServer;
@@ -356,6 +351,9 @@ typedef struct {
 } clientStatic_t;
 
 extern	clientStatic_t		cls;
+
+extern	char		cl_oldGame[MAX_QPATH];
+extern	qboolean	cl_oldGameSet;
 
 //=============================================================================
 
@@ -442,6 +440,13 @@ extern	cvar_t	*cl_voipGainDuringCapture;
 extern	cvar_t	*cl_voipCaptureMult;
 extern	cvar_t	*cl_voipShowMeter;
 extern	cvar_t	*cl_voip;
+
+// 20ms at 48k
+#define VOIP_MAX_FRAME_SAMPLES		( 20 * 48 )
+
+// 3 frame is 60ms of audio, the max opus will encode at once
+#define VOIP_MAX_PACKET_FRAMES		3
+#define VOIP_MAX_PACKET_SAMPLES		( VOIP_MAX_FRAME_SAMPLES * VOIP_MAX_PACKET_FRAMES )
 #endif
 
 //=================================================
